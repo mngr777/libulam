@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CXXFLAGS = -std=c++17 -iquote $(srcdir)/include -iquote $(srcdir) -Wall -Wpedantic -Werror
+CXXFLAGS = $(AM_CXXFLAGS) # temp hack to make libtool stop adding flags
 
 HEADER_FILES = \
 	include/libulam/libulam.hpp \
@@ -36,7 +37,7 @@ libulam_CXXFLAGS = $(AM_CXXFLAGS) # -O3
 TESTS = \
 	test_memory_str_buf1 \
 	test_memory_notepad1 \
-	test_source_read
+	test_source_copy1
 check_PROGRAMS = $(TESTS)
 
 # NOTE: setting CXXFLAGS for test additionally has side effect of
@@ -77,5 +78,5 @@ TEST_SOURCE_SOURCES = \
 	src/str_storage.hpp \
 	src/str_storage.cpp
 
-test_source_read_SOURCES = tests/source/read.cpp $(TEST_SOURCE_SOURCES)
-test_source_read_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF
+test_source_copy1_SOURCES = tests/source/copy1.cpp $(TEST_SOURCE_SOURCES)
+test_source_copy1_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF

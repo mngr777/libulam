@@ -36,9 +36,16 @@ element A : B {
 
 int main() {
     ulam::SourceManager sm(std::pmr::get_default_resource());
-    auto source = sm.add_string("program", Program);
-    std::string out;
-    while (!source->out().eof()) {
-        source->out().get();
-    }
+    std::string text {Program}, copy;
+    auto source = sm.add_string("program", text);
+    char ch;
+    while (true) {
+        source->out().get(ch);
+        if (source->out().eof())
+            break;
+        copy += ch;
+    };
+    std::cout << "text length: " << text.size() << "\n";
+    std::cout << "copy length: " << copy.size() << "\n";
+    return (copy == Program) ? 0 : -1;
 }
