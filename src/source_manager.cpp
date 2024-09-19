@@ -5,13 +5,12 @@
 
 namespace ulam {
 
-// TODO: add_string/add_file refactoring
-
-std::shared_ptr<Source> SourceManager::add_string(std::string name, std::string text) {
+std::shared_ptr<Source>
+SourceManager::add_string(std::string name, std::string text) {
     std::unique_lock lck(_src_mtx);
     const SrcId id = _srcs.size();
-    auto src =
-        std::make_shared<StrSource>(*this, id, std::move(name), std::move(text), &_src_pool);
+    auto src = std::make_shared<StrSource>(
+        *this, id, std::move(name), std::move(text), &_src_pool);
     return src;
 }
 
@@ -20,7 +19,6 @@ std::shared_ptr<Source> SourceManager::add_file(std::filesystem::path file) {
     const SrcId id = _srcs.size();
     auto src =
         std::make_shared<FileSource>(*this, id, std::move(file), &_src_pool);
-    _srcs.push_back(src);
     return src;
 }
 
@@ -29,12 +27,11 @@ std::shared_ptr<Source> SourceManager::get(const SrcId id) {
     return _srcs[id];
 }
 
-const SrcLocId SourceManager::loc_id(
-    const SrcId src_id, const StrId line_id, const LineNum linum, CharNum chr) {
-
+const SrcLocId
+SourceManager::loc_id(const SrcId src_id, const LineNum linum, const CharNum chr) {
     std::unique_lock lck(_loc_mtx);
     SrcLocId id = _locs.size();
-    _locs.emplace_back(src_id, line_id, linum, chr);
+    _locs.emplace_back(src_id, linum, chr);
     return id;
 }
 

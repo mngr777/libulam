@@ -1,42 +1,70 @@
 #pragma once
 #include "libulam/types.hpp"
 #include "src/source/line_buf.hpp"
-#include "src/str_storage.hpp"
+#include "src/source/line_storage.hpp"
 #include <filesystem>
 #include <fstream>
 #include <memory_resource>
+#include <optional>
 
 namespace ulam {
 
 class SourceManager;
+class Source;
+
+class SourceStream : public std::istream {
+public:
+    SourceStream(Source& src, src::LineBuf& line_buf):
+        std::istream(&line_buf), _src(src), _line_buf(line_buf) {}
+
+    const SrcLocId loc_id();
+    const StrId str_id();
+
+private:
+    Source& _src;
+    src::LineBuf& _line_buf;
+};
 
 class Source {
+    friend SourceStream;
+
 public:
     Source(
         SourceManager& sm,
         const SrcId id,
         std::string name,
         std::pmr::memory_resource* res);
-    virtual ~Source() {};
+    virtual ~Source() {}
 
     Source(const Source&) = delete;
     Source& operator=(const Source&) = delete;
 
-    const SrcId id;
-    const std::string name;
+    SourceStream& stream();
 
-    std::istream& out() { return _out; }
-
-    const SrcLocId loc_id();
+    const SrcId id() const { return _id; }
+    const std::string& name() const { return _name; }
 
 protected:
-    void init(std::istream* is);
+    virtual std::istream& input() = 0;
 
 private:
+    struct Output {
+        Output(Source& src):
+            line_buf(src._lines, src.input(), src._res),
+            stream(src, line_buf) {}
+
+        src::LineBuf line_buf;
+        SourceStream stream;
+    };
+
+    const SrcLocId loc_id(const LineNum linum, const CharNum chr);
+
     SourceManager& _sm;
-    StrStorage _lines;
-    src::LineBuf _buf;
-    std::istream _out;
+    std::pmr::memory_resource* _res;
+    src::LineStorage _lines;
+    SrcId _id;
+    std::string _name;
+    std::optional<Output> _out;
 };
 
 class StrSource : public Source {
@@ -47,6 +75,10 @@ public:
         std::string name,
         std::string text,
         std::pmr::memory_resource* res);
+
+protected:
+    std::istream& input() override { return _is; }
+
 private:
     std::stringstream _is;
 };
@@ -58,6 +90,9 @@ public:
         const SrcId id,
         std::filesystem::path path,
         std::pmr::memory_resource* res);
+
+protected:
+    std::istream& input() override { return _is; }
 
 private:
     std::ifstream _is;

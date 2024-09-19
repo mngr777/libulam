@@ -22,6 +22,8 @@ SOURCE_FILES = \
 	src/source.cpp \
 	src/source/line_buf.hpp \
 	src/source/line_buf.cpp \
+	src/source/line_storage.hpp \
+	src/source/line_storage.cpp \
 	src/source_manager.hpp \
 	src/source_manager.cpp \
 	src/str_storage.hpp \
@@ -37,11 +39,12 @@ libulam_CXXFLAGS = $(AM_CXXFLAGS) # -O3
 TESTS = \
 	test_memory_str_buf1 \
 	test_memory_notepad1 \
-	test_source_copy1
+	test_source_copy1 \
+	test_source_str_buf_store1
 check_PROGRAMS = $(TESTS)
 
 # NOTE: setting CXXFLAGS for test additionally has side effect of
-# building separate object files for test, see
+# building separate object files for tests, see
 # https://www.gnu.org/software/automake/manual/html_node/Objects-created-both-with-libtool-and-without.html
 TEST_CXXFLAGS = $(AM_CXXFLAGS) -O0 -g
 TEST_SOURCES = \
@@ -75,8 +78,13 @@ TEST_SOURCE_SOURCES = \
 	src/source_manager.cpp \
 	src/source/line_buf.hpp \
 	src/source/line_buf.cpp \
+	src/source/line_storage.hpp \
+	src/source/line_storage.cpp \
 	src/str_storage.hpp \
 	src/str_storage.cpp
 
 test_source_copy1_SOURCES = tests/source/copy1.cpp $(TEST_SOURCE_SOURCES)
 test_source_copy1_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF
+
+test_source_str_buf_store1_SOURCES = tests/source/str_buf_store1.cpp $(TEST_SOURCE_SOURCES)
+test_source_str_buf_store1_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF

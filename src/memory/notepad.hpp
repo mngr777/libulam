@@ -6,14 +6,16 @@ namespace ulam::mem {
 
 class Notepad {
 private:
+    using CharT = std::string_view::value_type;
+
     struct Page {
-        Page(char* data, std::size_t size):
+        Page(CharT* data, std::size_t size):
             data(data), cur(data), size(size) {}
 
         std::size_t freespace() { return size - (cur - data); }
 
-        char* data;
-        char* cur;
+        CharT* data;
+        CharT* cur;
         std::size_t size;
         Page* next {nullptr};
     };
@@ -21,19 +23,18 @@ private:
 public:
     static const std::size_t HeadSize = sizeof(Page);
 
-    Notepad(std::pmr::memory_resource* res, std::size_t pagesize = 8192):
-        _res(res), _pagesize(pagesize) {} // TODO: alignment and corresponting size
-    ~Notepad();
+    explicit Notepad(std::pmr::memory_resource* res, std::size_t pagesize = 8192):
+        _pool(res), _pagesize(pagesize) {} // TODO: alignment and corresponting size
 
     Notepad(const Notepad&) = delete;
     Notepad& operator=(const Notepad&) = delete;
 
-    std::string_view write(std::string_view text);
+    const std::string_view write(const std::string_view text);
 
 private:
-    void alloc_next(std::size_t size);
+    void alloc_next(const std::size_t size);
 
-    std::pmr::memory_resource* _res;
+    std::pmr::unsynchronized_pool_resource _pool;
     const std::size_t _pagesize;
     Page* _first {nullptr};
     Page* _last {nullptr};

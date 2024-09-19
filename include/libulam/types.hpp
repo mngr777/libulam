@@ -1,10 +1,10 @@
 #pragma once
 #include <cstdint>
-#include <cstddef>
 
 namespace ulam {
 
-using SrcId = std::uint16_t;
+using SrcId = std::uint32_t;
+constexpr std::uint32_t NoSrcId = -1;
 
 using SrcLocId = std::uint32_t;
 constexpr SrcLocId NoSrcLocId = -1;

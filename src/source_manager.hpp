@@ -11,13 +11,14 @@ namespace ulam {
 class Source;
 
 struct SourceLoc {
-    SourceLoc(SrcId src_id, StrId line_id, LineNum linum, CharNum chr):
-        src_id(src_id), line_id(line_id), linum(linum), chr(chr) {}
+    SourceLoc(): SourceLoc(NoSrcId, 0, 0) {}
 
-    const SrcId src_id;
-    const StrId line_id; // TODO: we would like to do without one or the other.
-    const LineNum linum; //       add linum metadata to notebook?
-    const CharNum chr;
+    SourceLoc(SrcId src_id, LineNum linum, CharNum chr):
+        src_id(src_id), linum(linum), chr(chr) {}
+
+    SrcId src_id;
+    LineNum linum;
+    CharNum chr;
 };
 
 class SourceManager {
@@ -29,14 +30,10 @@ public:
     std::shared_ptr<Source> add_file(std::filesystem::path file);
     std::shared_ptr<Source> get(const SrcId id);
 
-    const SrcLocId loc_id(
-        const SrcId src_id,
-        const StrId line_id,
-        const LineNum linum,
-        CharNum chr);
+    const SrcLocId loc_id(const SrcId src_id, const LineNum linum, const CharNum chr);
 
 private:
-    std::pmr::synchronized_pool_resource _src_pool;
+    std::pmr::unsynchronized_pool_resource _src_pool;
     std::vector<std::shared_ptr<Source>> _srcs;
     std::shared_mutex _src_mtx;
 

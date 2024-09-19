@@ -4,13 +4,13 @@
 #include <unordered_map>
 #include <vector>
 #include "libulam/types.hpp"
-#include "memory/notepad.hpp"
+#include "src/memory/notepad.hpp"
 
 namespace ulam {
 
 class StrStorageBase {
 public:
-    StrStorageBase(std::pmr::memory_resource* res):
+    explicit StrStorageBase(std::pmr::memory_resource* res):
         _notepad(res), _index(res) {}
     virtual ~StrStorageBase() {}
 
@@ -35,7 +35,7 @@ private:
 
 class StrStorage : public StrStorageBase {
 public:
-    StrStorage(std::pmr::memory_resource* res):
+    explicit StrStorage(std::pmr::memory_resource* res):
         StrStorageBase(res) {}
 
 protected:
@@ -45,7 +45,7 @@ protected:
 
 class UniqueStrStorage : public StrStorageBase {
 public:
-    UniqueStrStorage(std::pmr::memory_resource* res):
+    explicit UniqueStrStorage(std::pmr::memory_resource* res):
         StrStorageBase(res), _map(res) {}
 
 protected:

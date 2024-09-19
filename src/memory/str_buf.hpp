@@ -5,6 +5,8 @@
 
 namespace ulam::mem {
 
+// TODO: options as struct
+
 class StrBuf {
 public:
     using CharT = std::string::value_type;

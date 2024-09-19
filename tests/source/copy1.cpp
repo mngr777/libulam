@@ -39,9 +39,10 @@ int main() {
     std::string text {Program}, copy;
     auto source = sm.add_string("program", text);
     char ch;
+    std::istream& out = source->stream();
     while (true) {
-        source->out().get(ch);
-        if (source->out().eof())
+        out.get(ch);
+        if (out.eof())
             break;
         copy += ch;
     };
