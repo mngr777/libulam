@@ -21,23 +21,39 @@ LineBuf::LineBuf(
 
 const CharNum LineBuf::chr() const { return gptr() - eback(); }
 
+void LineBuf::mark() {
+    assert(chr() > 0);
+    _mark = chr() - 1;
+}
+
+std::string_view LineBuf::str() {
+    assert(_mark != NoMark);
+    store();
+    return {eback() + _mark, chr() - _mark};
+}
+
 void LineBuf::store() {
     // already stored?
     if (eback() != _buf.data())
         return;
-
-    _lines.put(
+    auto rec = _lines.put(
         _linum, _is.tellg(),
         {eback(), static_cast<std::size_t>(egptr() - eback())});
+    auto data = const_cast<char_type*>(rec.line.data());
+    setg(data, data + chr(), data + rec.line.size());
 }
 
 int LineBuf::underflow() {
     // anything left at current line?
     if (gptr() < egptr())
         return traits_type::to_int_type(*gptr());
-    // try getting next one
+    // try getting the next one
     return (!_is.eof() && get_next()) ? traits_type::to_int_type(*gptr())
                                       : traits_type::eof();
+}
+
+void LineBuf::unmark() {
+    _mark = NoMark;
 }
 
 bool LineBuf::get_next() {
@@ -49,7 +65,7 @@ bool LineBuf::get_next() {
     auto rec = _lines.get(_linum + 1);
     assert(!rec.empty());
     ++_linum; // moved to next line
-    auto data = const_cast<traits_type::char_type*>(rec.line.data());
+    auto data = const_cast<char_type*>(rec.line.data());
     setg(data, data, data + rec.line.size());
     return true;
 }
@@ -79,7 +95,7 @@ bool LineBuf::read_next() {
             continue; // TODO: set some reasonable limit just in case
         }
         ++_linum; // moved to next line
-        traits_type::char_type* last = _buf.data() + num_read - 1;
+        char_type* last = _buf.data() + num_read - 1;
         *last = '\n';
         setg(_buf.data(), _buf.data(), last + 1);
         break;

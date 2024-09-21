@@ -11,7 +11,6 @@ class LineStorage {
 public:
     static constexpr std::size_t NoOffset = -1;
 
-    // TODO: store (very) short lines in struct?
     struct Rec {
         Rec(): offset(NoOffset) {}
 
@@ -29,7 +28,7 @@ public:
 
     const Rec get(const LineNum linum) const;
 
-    void
+    const Rec&
     put(const LineNum linum,
         const std::size_t offset,
         const std::string_view line);

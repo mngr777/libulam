@@ -7,7 +7,12 @@ namespace ulam {
 
 const SrcLocId SourceStream::loc_id() {
     _line_buf.store();
+    _line_buf.mark();
     return _src.loc_id(_line_buf.linum(), _line_buf.chr());
+}
+
+const StrId SourceStream::str_id() {
+    return 1; // TODO
 }
 
 Source::Source(

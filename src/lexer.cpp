@@ -1,27 +1,75 @@
-#include "src/context.hpp"
 #include "src/lexer.hpp"
+#include "libulam/types.hpp"
+#include "src/source.hpp"
+#include <cassert>
 
 namespace ulam {
 
+Lexer::Lexer(SourceStream& ss): _ss(ss) { next(); }
+
 Lexer& Lexer::operator>>(Token& token) {
-    // TODO
+    token = _token;
+    next();
     return *this;
 }
 
-bool Lexer::next() {
-    // TODO
+Token Lexer::get() {
+    Token token = _token;
+    next();
+    return token;
+}
+
+const Token& Lexer::peek() { return _token; }
+
+void Lexer::next() {
+    if (next_start()) {
+        next_end();
+    } else {
+        _token = {}; // done
+    }
+}
+
+bool Lexer::next_start() {
+    char ch;
+    while (!_ss.eof()) {
+        _ss.get(ch);
+        if (_dfa.step(ch) == lex::dfa::Result::TokenStart) {
+            _token.loc_id = _ss.loc_id();
+            return true;
+        }
+    }
     return false;
 }
 
-Token Lexer::get() {
-    // TODO
-    return {};
-}
+void Lexer::next_end() {
+    char ch;
+    while (true) {
+        if (!_ss.eof()) {
+            _ss.get(ch);
+        } else {
+            ch = '\0';
+        }
+        if (_dfa.step(ch) != lex::dfa::Result::TokenEnd) {
+            assert(ch != '\n' && ch != '\0' && "Token not done on '\n' or '\0'");
+            continue;
+        }
 
-const Token& Lexer::peek() {
-    // TODO
-    return _cur;
+        // Commit type
+        _token.type = _dfa.type();
+        // Store name, number or string
+        switch (_token.type) {
+        case tok::Name:
+        case tok::Number:
+        case tok::String:
+            _token.str_id = _ss.str_id();
+            break;
+        default:
+            _token.str_id = NoStrId;
+        }
+        // Reuse last char
+        _ss.putback(ch); // TODO: what if this has to switch lines?
+        return;
+    }
 }
 
 } // namespace ulam
-

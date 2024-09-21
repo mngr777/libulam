@@ -1,5 +1,6 @@
 #pragma once
-#include "types.hpp"
+#include "libulam/types.hpp"
+#include <string>
 
 namespace ulam {
 namespace tok {
@@ -11,6 +12,8 @@ enum Type {
 #undef TOK_SEL_ALL
 #undef TOK
 };
+
+std::string type_to_str(tok::Type type);
 
 } // namespace tok
 

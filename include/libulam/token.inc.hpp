@@ -94,6 +94,8 @@ TOK(":", Colon) // ??
 #endif
 
 #if defined(TOK_SEL_ALL) // everything else
+TOK(nullptr, PlusSign)  // +/- signs are a special case
+TOK(nullptr, MinusSign) // handled separately by the lexer
 TOK(nullptr, Name)
 TOK(nullptr, Number)
 TOK(nullptr, String)

@@ -1,29 +1,27 @@
 #pragma once
-#include <memory_resource>
-#include <string_view>
 #include "libulam/token.hpp"
+#include "lexer/dfa.hpp"
 
 namespace ulam {
 
-class Context;
-class Source;
+class SourceStream;
 
 class Lexer {
 public:
-    Lexer(Context& ctx, Source& src, std::pmr::memory_resource* res):
-        _ctx(ctx), _src(src) {}
+    explicit Lexer(SourceStream& ss);
 
     Lexer& operator>>(Token& token);
-    bool next();
     Token get();
     const Token& peek();
 
 private:
-    Context& _ctx;
-    Source& _src;
-    Token _cur;
-    std::string_view _line;
+    void next();
+    bool next_start();
+    void next_end();
+
+    SourceStream& _ss;
+    lex::Dfa _dfa;
+    Token _token;
 };
 
 } // namespace ulam
-

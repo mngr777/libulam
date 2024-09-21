@@ -19,6 +19,9 @@ public:
     const LineNum linum() const { return _linum; }
     const CharNum chr() const;
 
+    void mark();
+    std::string_view str();
+
     void store();
 
 protected:
@@ -26,6 +29,10 @@ protected:
     int underflow() override;
 
 private:
+    static constexpr CharNum NoMark = -1;
+
+    void unmark();
+
     bool get_next();
     bool read_next();
 
@@ -33,6 +40,7 @@ private:
     std::istream& _is;
     mem::StrBuf _buf;
     LineNum _linum {0};
+    CharNum _mark{NoMark};
 };
 
 } // namespace ulam::src

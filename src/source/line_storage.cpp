@@ -19,7 +19,7 @@ const LineStorage::Rec LineStorage::get(const LineNum linum) const {
     return _lines[linum_to_idx(linum)];
 }
 
-void LineStorage::put(
+const LineStorage::Rec& LineStorage::put(
     const LineNum linum,
     const std::size_t offset,
     const std::string_view line) {
@@ -27,7 +27,8 @@ void LineStorage::put(
     reserve(linum);
     auto& rec = _lines[linum_to_idx(linum)];
     assert(rec.empty() && "Cannot store a line twice");
-    rec = { offset, _notepad.write(line) };
+    rec = {offset, _notepad.write(line)};
+    return rec;
 }
 
 bool LineStorage::has(const LineNum linum) const {
