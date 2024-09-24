@@ -40,7 +40,7 @@ CLEANFILES = $(GENERATED_FILES)
 BUILT_SOURCES = $(GENERATED_FILES)
 
 src/gen/lexer/dfa.gen.cpp: lexer_dfagen
-	./lexer_dfagen$(EXEEXT) > $(srcdir)/src/gen/lexer/dfa.gen.cpp
+	./lexer_dfagen$(EXEEXT) all > $(srcdir)/src/gen/lexer/dfa.gen.cpp
 
 lib_LTLIBRARIES = libulam.la
 libulam_ladir = $(includedir)

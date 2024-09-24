@@ -33,7 +33,7 @@ bool Lexer::next_start() {
     char ch;
     while (!_ss.eof()) {
         _ss.get(ch);
-        if (_dfa.step(ch) == lex::dfa::Result::TokenStart) {
+        if (_dfa.step(ch) == lex::Dfa::TokenStart) {
             _token.loc_id = _ss.loc_id();
             return true;
         }
@@ -42,15 +42,13 @@ bool Lexer::next_start() {
 }
 
 void Lexer::next_end() {
-    char ch;
     while (true) {
-        if (!_ss.eof()) {
+        char ch = '\0';
+        if (!_ss.eof())
             _ss.get(ch);
-        } else {
-            ch = '\0';
-        }
-        if (_dfa.step(ch) != lex::dfa::Result::TokenEnd) {
-            assert(ch != '\n' && ch != '\0' && "Token not done on '\n' or '\0'");
+        if (_dfa.step(ch) != lex::Dfa::TokenEnd) {
+            assert(
+                ch != '\n' && ch != '\0' && "Token not done on '\n' or '\0'");
             continue;
         }
 
@@ -67,7 +65,8 @@ void Lexer::next_end() {
             _token.str_id = NoStrId;
         }
         // Reuse last char
-        _ss.putback(ch); // TODO: what if this has to switch lines?
+        if (ch != '\0' && ch != '\n')
+            _ss.putback(ch);
         return;
     }
 }

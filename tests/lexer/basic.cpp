@@ -5,6 +5,8 @@
 #include <iostream>
 #include <memory_resource>
 
+#include "src/lexer/dfa.hpp"
+
 static const char* Program = R"END(
 ulam 1;
 

@@ -5,7 +5,7 @@
 namespace ulam {
 namespace tok {
 
-enum Type {
+enum Type : std::uint8_t {
 #define TOK(str, type) type,
 #define TOK_SEL_ALL
 #include "token.inc.hpp"

@@ -5,32 +5,34 @@
 namespace ulam::lex {
 namespace dfa {
 
-using CatFlags = std::uint8_t;
+using ClassFlags = std::uint8_t;
 
-namespace cat {
-constexpr CatFlags None = 0;
-constexpr CatFlags Any = ~0;
-constexpr CatFlags Alpha = 1 << 0;
-constexpr CatFlags Digit = 1 << 1;
-constexpr CatFlags Other = 1 << 2;
-constexpr CatFlags Space = 1 << 3;
-constexpr CatFlags Alnum = Alpha | Digit;
-} // namespace cat
+namespace cls {
+constexpr ClassFlags None = 0;
+constexpr ClassFlags Any = ~0;
+constexpr ClassFlags Alpha = 1 << 0;
+constexpr ClassFlags Digit = 1 << 1;
+constexpr ClassFlags WordNonAlnum = 1 << 2; // non-alnum word chars i.e. '_'
+constexpr ClassFlags Space = 1 << 3;
+constexpr ClassFlags Other = 1 << 4;
+constexpr ClassFlags Word = Alpha | Digit | WordNonAlnum;
+constexpr ClassFlags Alnum = Alpha | Digit;
+} // namespace cls
 
-enum class Result { None, TokenStart, TokenEnd };
-
-CatFlags char_cat(char ch);
+ClassFlags char_class(char ch);
 
 struct Edge {
     char chr{'\0'};
-    CatFlags cat{cat::None};
+    ClassFlags cls{cls::None};
     std::uint16_t next;
 
-    bool match(char ch) { return (cat & char_cat(ch)) || (!cat && ch == chr); }
+    bool match(char ch) {
+        return (cls & char_class(ch)) || (!cls && ch == chr);
+    }
 };
 
 struct Node {
-    Result result{Result::None};
+    bool is_final;
     tok::Type value;
     std::uint16_t first_edge;
 };
@@ -39,9 +41,11 @@ struct Node {
 
 class Dfa {
 public:
+    enum Result { None, TokenStart, TokenEnd };
+
     Dfa();
 
-    dfa::Result step(char ch);
+    Result step(char ch);
 
     const tok::Type type() { return _type; }
 

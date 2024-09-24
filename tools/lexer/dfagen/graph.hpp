@@ -9,6 +9,7 @@
 #include <vector>
 
 namespace dfa = ulam::lex::dfa;
+namespace cls = ulam::lex::dfa::cls;
 namespace tok = ulam::tok;
 
 class Graph {
@@ -27,7 +28,7 @@ private:
 
     struct Edge {
         char chr{'\0'};
-        dfa::CatFlags cat{dfa::cat::None};
+        dfa::ClassFlags cat{cls::None};
         NodeWeakPtr next;
 
         std::string to_string() const;
@@ -37,7 +38,7 @@ private:
         Node(std::string name): name(std::move(name)) {}
 
         std::string name;
-        dfa::Result result{dfa::Result::None};
+        bool is_final;
         tok::Type type{tok::None};
         std::vector<EdgePtr> edges;
         std::size_t index{0};
@@ -45,20 +46,17 @@ private:
 
         void check_valid();
 
-        void add_edge(NodePtr next, char chr, dfa::CatFlags cat);
-
-        void add_cat_edge(NodePtr next, dfa::CatFlags cat) {
+        void add_edge(NodePtr next, char chr, dfa::ClassFlags cat = cls::None);
+        void add_class_edge(NodePtr next, dfa::ClassFlags cat) {
             add_edge(next, '\0', cat);
         }
-        void add_catchall(NodePtr next) { add_cat_edge(next, dfa::cat::Any); }
+        void add_catchall(NodePtr next) { add_class_edge(next, cls::Any); }
 
         void remove_edge(EdgePtr edge);
 
         EdgePtr edge_for(char ch);
-
-        EdgePtr edge_for_cat(dfa::CatFlags cat);
-
-        EdgePtr catchall() { return edge_for_cat(dfa::cat::Any); }
+        EdgePtr edge_for_class(dfa::ClassFlags cat);
+        EdgePtr catchall() { return edge_for_class(cls::Any); }
 
         std::string to_string() const;
     };
@@ -84,7 +82,7 @@ private:
 
     NodePtr make_node(
         std::string name,
-        const dfa::Result result = dfa::Result::None,
+        bool is_final = false,
         const tok::Type type = tok::None);
 
     void for_each(const NodeRecCb& cb);

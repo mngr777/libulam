@@ -9,45 +9,28 @@
 
 namespace {
 
-std::string result_to_str(dfa::Result res) {
-    switch (res) {
-    case dfa::Result::None:
-        return "Result::None";
-    case dfa::Result::TokenStart:
-        return "Result::TokenStart";
-    case dfa::Result::TokenEnd:
-        return "Result::TokenEnd";
-    default:
-        assert(false);
-    }
-}
-
 std::string tok_type_to_str(tok::Type type) {
     return std::string("tok::") + tok::type_to_str(type);
 }
 
-std::string cat_to_str(dfa::CatFlags cat) {
-    if (cat == dfa::cat::None)
-        return "cat::None";
-    if (cat == dfa::cat::Any)
-        return "cat::Any";
-    std::vector<std::string> flags;
-    if (cat & dfa::cat::Alpha)
-        flags.emplace_back("cat::Alpha");
-    if (cat & dfa::cat::Digit)
-        flags.emplace_back("cat::Digit");
-    if (cat & dfa::cat::Other)
-        flags.emplace_back("cat::Other");
-    if (cat & dfa::cat::Space)
-        flags.emplace_back("cat::Space");
-    assert(flags.size() > 0 && "Unknown char category flags used somewhere");
-    std::string str;
-    for (unsigned i = 0; i < flags.size(); i++) {
-        if (i > 0)
-            str += " | ";
-        str += flags[i];
+std::string cat_to_str(dfa::ClassFlags cls) {
+#define CASE(cls)                                                              \
+    case cls:                                                                  \
+        return #cls
+    switch (cls) {
+        CASE(cls::None);
+        CASE(cls::Any);
+        CASE(cls::Alpha);
+        CASE(cls::Digit);
+        CASE(cls::Other);
+        CASE(cls::Space);
+        CASE(cls::Alnum);
+        CASE(cls::Word);
+        CASE(cls::WordNonAlnum); // really?
+    default:
+        throw std::invalid_argument(
+            std::string("Invalid character class value ") + std::to_string(cls));
     }
-    return str;
 }
 
 } // namespace
@@ -58,7 +41,7 @@ std::string Graph::Edge::to_string() const {
 }
 
 void Graph::Node::check_valid() {
-    if (result == dfa::Result::TokenEnd) {
+    if (is_final) {
         // Final node, must not have outgoing edges
         if (edges.size() != 0) {
             throw std::logic_error(
@@ -74,7 +57,7 @@ void Graph::Node::check_valid() {
     }
 }
 
-void Graph::Node::add_edge(NodePtr next, char chr, dfa::CatFlags cat) {
+void Graph::Node::add_edge(NodePtr next, char chr, dfa::ClassFlags cat) {
     auto edge = std::make_shared<Edge>();
     edge->chr = chr;
     edge->cat = cat;
@@ -82,7 +65,7 @@ void Graph::Node::add_edge(NodePtr next, char chr, dfa::CatFlags cat) {
     edges.push_back(edge);
     std::sort(edges.begin(), edges.end(), [](auto e1, auto e2) {
         if (e1->cat != e2->cat)
-            return (e1->cat < e2->cat); // dfa::cat::None < ... < dfa::cat::Any
+            return (e1->cat < e2->cat); // cls::None < ... < cls::Any
         if (e1->chr == '\0' || e2->chr == '\0')
             return e2->chr == '\0';
         if (e1->chr == '\n' || e2->chr == '\n')
@@ -105,7 +88,7 @@ Graph::EdgePtr Graph::Node::edge_for(char ch) {
     return nullptr;
 }
 
-Graph::EdgePtr Graph::Node::edge_for_cat(dfa::CatFlags cat) {
+Graph::EdgePtr Graph::Node::edge_for_class(dfa::ClassFlags cat) {
     for (auto edge : edges) {
         if (edge->cat == cat)
             return edge;
@@ -114,20 +97,20 @@ Graph::EdgePtr Graph::Node::edge_for_cat(dfa::CatFlags cat) {
 }
 
 std::string Graph::Node::to_string() const {
-    return std::string("{") + result_to_str(result) + ", " +
+    return std::string("{") + (is_final ? "true" : "false") + ", " +
            tok_type_to_str(type) + ", " + std::to_string(first_edge_index) +
            "}";
 }
 
 Graph::Graph() {
     // End of name
-    _shared.name_end = make_node("<end-of-name>", dfa::Result::TokenEnd, tok::Name);
+    _shared.name_end = make_node("[name]" /* fin */, true, tok::Name);
     // Reading a name
     assert(_shared.name_end);
-    _shared.name = make_node("<name>", dfa::Result::None, tok::Name);
-    // (name) -- alnum --> (name)
-    _shared.name->add_cat_edge(_shared.name, dfa::cat::Alnum);
-    // (name) -- non-alnum --> (end-of-name)
+    _shared.name = make_node("[name]", false, tok::Name);
+    // (name) -- word --> (name)
+    _shared.name->add_class_edge(_shared.name, cls::Word);
+    // (name) -- non-word --> (end-of-name)
     _shared.name->add_catchall(_shared.name_end);
 
     // Start nodes for names (or keywords)
@@ -135,10 +118,10 @@ Graph::Graph() {
     for (char ch = 'A'; ch <= 'z'; ++ch) {
         if (!std::isalpha(ch))
             continue;
-        auto node = make_node({ch}, dfa::Result::TokenStart, tok::Name);
-        // (letter) -- alnum --> (name)
-        node->add_cat_edge(_shared.name, dfa::cat::Alnum);
-        // (letter) -- non-alnum --> (end-of-name)
+        auto node = make_node({ch}, false, tok::Name);
+        // (letter) -- word --> (name)
+        node->add_class_edge(_shared.name, cls::Word);
+        // (letter) -- non-word --> (end-of-name)
         node->add_catchall(_shared.name_end);
         _start[ch] = node;
     }
@@ -148,63 +131,63 @@ Graph::Graph() {
     // * dot is not allowed, no FP numbers
 
     // End of number
-    _shared.number_end = make_node("<end-of-number>", dfa::Result::TokenEnd, tok::Number);
+    _shared.number_end = make_node("[number]" /* fin */, true, tok::Number);
     // Reading a number
     assert(_shared.number_end);
-    _shared.number = make_node("<number>", dfa::Result::None, tok::Number);
+    _shared.number = make_node("[number]", false, tok::Number);
     // (number) -- alnum --> (number)
-    _shared.number->add_cat_edge(_shared.number, dfa::cat::Alnum);
+    _shared.number->add_class_edge(_shared.number, cls::Alnum);
     // (number) -- non-alnum --> (end of number)
     _shared.number->add_catchall(_shared.number_end);
 
     // Start nodes for numbers
     assert(_shared.number);
     for (char ch = '0'; ch <= '9'; ++ch) {
-        auto node = make_node({ch}, dfa::Result::TokenStart, tok::Number);
+        auto node = make_node({ch}, false, tok::Number);
         _start[ch] = node;
         // (digit) -- alnum --> (number)
-        node->add_cat_edge(_shared.number, dfa::cat::Alnum);
+        node->add_class_edge(_shared.number, cls::Alnum);
         // (digit) -- non-alnum --> (end-of-number)
         node->add_catchall(_shared.number_end);
     }
 
     // End of string
-    _shared.string_end = make_node("<string-end>", dfa::Result::TokenEnd, tok::String);
+    _shared.string_end = make_node("[string]" /* fin */, true, tok::String);
     // Closing `"'
-    _shared.string_close = make_node("<string-close>", dfa::Result::None, tok::String);
+    _shared.string_close = make_node("[string\"]", false, tok::String);
     _shared.string_close->add_catchall(_shared.string_end);
     // String
-    _shared.string = make_node("<string>", dfa::Result::None, tok::String);
-    _shared.string_escape = make_node("<string-escape>", dfa::Result::None, tok::String);
+    _shared.string = make_node("[string]", false, tok::String);
+    _shared.string_escape = make_node("[string\\]", false, tok::String);
     // (string) -- " --> (string end)
-    _shared.string->add_edge(_shared.string_close, '"', dfa::cat::None);
+    _shared.string->add_edge(_shared.string_close, '"');
     // (string) -- \n --> (string end), unterminated string
-    _shared.string->add_edge(_shared.string_end, '\n', dfa::cat::None);
+    _shared.string->add_edge(_shared.string_end, '\n');
     // (string) -- \0 --> (string end), unterminated string
-    _shared.string->add_edge(_shared.string_end, '\0', dfa::cat::None);
+    _shared.string->add_edge(_shared.string_end, '\0');
     // (string) -- \ --> (string escape)
-    _shared.string->add_edge(_shared.string_escape, '\\', dfa::cat::None);
+    _shared.string->add_edge(_shared.string_escape, '\\');
     // (string) -- anything else --> (string)
     _shared.string->add_catchall(_shared.string);
     // (string escape) -- \n --> (string end), unterminated string
-    _shared.string_escape->add_edge(_shared.string_end, '\n', dfa::cat::None);
+    _shared.string_escape->add_edge(_shared.string_end, '\n');
     // (string escape) -- \0 --> (string end), unterminated string
-    _shared.string_escape->add_edge(_shared.string_end, '\0', dfa::cat::None);
+    _shared.string_escape->add_edge(_shared.string_end, '\0');
     // (string escape) -- anything else --> (string)
     _shared.string_escape->add_catchall(_shared.string);
     _start['"'] = _shared.string;
 
     // End of invalid keyword (starts with @, but doesn't match a keyword)
-    _shared.invalid_kw_end = make_node("<invalid-kw-end>", dfa::Result::TokenEnd, tok::None);
+    _shared.invalid_kw_end = make_node("[invalid keyword]" /* fin */, true);
     // Reading invalid keyword
-    _shared.invalid_kw = make_node("<invalid-kw>", dfa::Result::None, tok::None);
-    // (invalid kw) -- alnum --> (invalid kw)
-    _shared.invalid_kw->add_cat_edge(_shared.invalid_kw, dfa::cat::Alnum);
-    // (invalid kw) -- non-alnum -> (end of invalid kw)
-    _shared.invalid_kw->add_cat_edge(_shared.invalid_kw_end, dfa::cat::Any);
+    _shared.invalid_kw = make_node("[invalid keyword]", false);
+    // (invalid kw) -- word --> (invalid kw)
+    _shared.invalid_kw->add_class_edge(_shared.invalid_kw, cls::Word);
+    // (invalid kw) -- non-word -> (end of invalid kw)
+    _shared.invalid_kw->add_class_edge(_shared.invalid_kw_end, cls::Any);
 
     // Invalid string
-    _shared.invalid = make_node("<invalid>", dfa::Result::TokenEnd, tok::None);
+    _shared.invalid = make_node("[invalid]" /* fin */, true);
 }
 
 void Graph::add(const std::string& str, tok::Type type) {
@@ -229,7 +212,7 @@ void Graph::add(const std::string& str, tok::Type type) {
     // Add nodes for the rest of chars
     for (; pos < str.size(); ++pos) {
         auto next = make_node(str.substr(0, pos + 1));
-        cur->add_edge(next, str[pos], dfa::cat::None);
+        cur->add_edge(next, str[pos]);
         init_node(next, str, pos, type);
         cur = next;
     }
@@ -289,7 +272,7 @@ void Graph::gen(std::ostream& os) {
     while (true) {
         if (ch % 16 == 0)
             os << "\n";
-        os << (_start[ch] ? _start[ch]->index : 0) << ", ";
+        os << std::setw(3) << std::right << (_start[ch] ? _start[ch]->index : 0) << ", ";
         if (ch < 127) {
             ++ch;
         } else
@@ -299,36 +282,37 @@ void Graph::gen(std::ostream& os) {
 
     // Output nodes
     os << "Node NodeList[" << nodes.size() << "] = {\n";
-    // /* <idx> */ {<result>, <token>, <first_edge>}, /* <node-name> */
+    // /* n:<idx> */ {<result>, <token>, <first_edge>}, /* <node-name> */
     for (std::size_t i = 0; i < nodes.size(); ++i) {
         const auto& node = nodes[i];
         std::string node_str = node->to_string();
         if (i + 1 < nodes.size())
             node_str += ",";
-        os << "    /* n:" << std::setw(4) << std::left << i << " */ "
-           << std::setw(36) << std::left << node_str;
+        os << "    /* " << std::setw(5) << std::right
+           << (std::string("n:") + std::to_string(i)) << " */ " << std::setw(28)
+           << std::left << node_str;
         os << " /* " << node->name;
-        if (node->result == dfa::Result::TokenEnd)
-            os << " (done)";
+        if (node->is_final)
+            os << " (fin)";
         os << " */\n";
     }
     os << "};\n\n";
 
     // Output edges
-    // /* <idx> */ {<char-dec>, <char-category-flags>, <next-node-idx>} /* -> <node-name>*/
+    // /* e:<idx> */ {<char-dec>, <char-category-flags>, <next-node-idx>} /* ->
+    // <node-name>*/
     os << "Edge EdgeList[" << edges.size() << "] = {\n";
     for (std::size_t i = 0; i < edges.size(); ++i) {
         const auto& edge = edges[i];
         const auto next = edge->next.lock();
-        std::string edge_str = edge->to_string();
+        std::string edge_str{edge->to_string()};
         if (i + 1 < edges.size())
             edge_str += ",";
-        os << "    /* e:" << std::setw(4) << i << " */ " << std::setw(32)
+        os << "    /* " << std::setw(5) << std::right
+           << (std::string("e:") + std::to_string(i)) << " */ " << std::setw(22)
            << std::left << edge_str;
-        os << " /* -> " << next->name;
-        if (next->result == dfa::Result::TokenEnd)
-            os << " (done)";
-        os << " */\n";
+        auto name = std::string(next->name) + (next->is_final ? " (fin)" : "");
+        os << " /* " << std::setw(10) << name << "*/\n";
     }
     os << "};\n";
 
@@ -352,15 +336,15 @@ void Graph::init_node(
     bool is_at_keyword = (str[0] == '@');
 
     // Anythinig alphanumeric and not matching a keyword is a name
-    if (is_name_or_kw && !node->edge_for_cat(dfa::cat::Alnum)) {
+    if (is_name_or_kw && !node->edge_for_class(cls::Alnum)) {
         assert(_shared.name);
-        node->add_cat_edge(_shared.name, dfa::cat::Alnum);
+        node->add_class_edge(_shared.name, cls::Alnum);
     }
 
     if (is_match) {
         // Make "match" node
         auto match = make_node(str);
-        match->result = dfa::Result::TokenEnd;
+        match->is_final = true;
         match->type = type;
         // Remove catchall node if already present,
         // i.e. the string is a substring of a match
@@ -385,10 +369,10 @@ void Graph::init_node(
     }
 }
 
-Graph::NodePtr Graph::make_node(
-    std::string name, const dfa::Result result, const tok::Type type) {
+Graph::NodePtr
+Graph::make_node(std::string name, bool is_final, const tok::Type type) {
     auto node = std::make_shared<Node>(std::move(name));
-    node->result = result;
+    node->is_final = is_final;
     node->type = type;
     _nodes.push_back(node);
     return node;
@@ -420,7 +404,8 @@ void Graph::for_each(const NodeRecCb& cb) {
     }
 }
 
-// TODO: the itself function is currently supposed to check for infinite recursion
+// TODO: the itself function is currently supposed to check for infinite
+// recursion
 void Graph::for_each_rec(NodePtr node, const NodeRecCb& cb) {
     if (cb(node)) {
         for (auto edge : node->edges)
