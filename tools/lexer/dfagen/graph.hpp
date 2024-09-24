@@ -28,7 +28,7 @@ private:
 
     struct Edge {
         char chr{'\0'};
-        dfa::ClassFlags cat{cls::None};
+        dfa::ClassFlags cls{cls::None};
         NodeWeakPtr next;
 
         std::string to_string() const;
@@ -51,6 +51,7 @@ private:
             add_edge(next, '\0', cat);
         }
         void add_catchall(NodePtr next) { add_class_edge(next, cls::Any); }
+        void replace_catchall(NodePtr next);
 
         void remove_edge(EdgePtr edge);
 

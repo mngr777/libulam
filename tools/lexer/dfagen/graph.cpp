@@ -29,7 +29,8 @@ std::string cat_to_str(dfa::ClassFlags cls) {
         CASE(cls::WordNonAlnum); // really?
     default:
         throw std::invalid_argument(
-            std::string("Invalid character class value ") + std::to_string(cls));
+            std::string("Invalid character class value ") +
+            std::to_string(cls));
     }
 }
 
@@ -37,7 +38,7 @@ std::string cat_to_str(dfa::ClassFlags cls) {
 
 std::string Graph::Edge::to_string() const {
     return std::string("{") + std::to_string((int)chr) + ", " +
-           cat_to_str(cat) + ", " + std::to_string(next.lock()->index) + "}";
+           cat_to_str(cls) + ", " + std::to_string(next.lock()->index) + "}";
 }
 
 void Graph::Node::check_valid() {
@@ -57,21 +58,28 @@ void Graph::Node::check_valid() {
     }
 }
 
-void Graph::Node::add_edge(NodePtr next, char chr, dfa::ClassFlags cat) {
+void Graph::Node::add_edge(NodePtr next, char chr, dfa::ClassFlags cls) {
     auto edge = std::make_shared<Edge>();
     edge->chr = chr;
-    edge->cat = cat;
+    edge->cls = cls;
     edge->next = next;
     edges.push_back(edge);
     std::sort(edges.begin(), edges.end(), [](auto e1, auto e2) {
-        if (e1->cat != e2->cat)
-            return (e1->cat < e2->cat); // cls::None < ... < cls::Any
+        if (e1->cls != e2->cls)
+            return (e1->cls < e2->cls); // cls::None < ... < cls::Any
         if (e1->chr == '\0' || e2->chr == '\0')
             return e2->chr == '\0';
         if (e1->chr == '\n' || e2->chr == '\n')
             return e2->chr == '\n';
         return e1->chr < e2->chr;
     });
+}
+
+void Graph::Node::replace_catchall(NodePtr next) {
+    auto edge = catchall();
+    if (edge)
+        remove_edge(edge);
+    add_catchall(next);
 }
 
 void Graph::Node::remove_edge(Graph::EdgePtr edge) {
@@ -88,9 +96,9 @@ Graph::EdgePtr Graph::Node::edge_for(char ch) {
     return nullptr;
 }
 
-Graph::EdgePtr Graph::Node::edge_for_class(dfa::ClassFlags cat) {
+Graph::EdgePtr Graph::Node::edge_for_class(dfa::ClassFlags cls) {
     for (auto edge : edges) {
-        if (edge->cat == cat)
+        if (edge->cls == cls)
             return edge;
     }
     return nullptr;
@@ -270,10 +278,12 @@ void Graph::gen(std::ostream& os) {
     os << "unsigned StartStates[" << _start.size() << "] = {";
     char ch = 0;
     while (true) {
+        bool is_last = (ch == 127);
         if (ch % 16 == 0)
-            os << "\n";
-        os << std::setw(3) << std::right << (_start[ch] ? _start[ch]->index : 0) << ", ";
-        if (ch < 127) {
+            os << "\n    ";
+        os << std::setw(4) << std::right << (_start[ch] ? _start[ch]->index : 0)
+           << (!is_last ? "," : "\n");
+        if (!is_last) {
             ++ch;
         } else
             break;
@@ -342,17 +352,19 @@ void Graph::init_node(
     }
 
     if (is_match) {
-        // Make "match" node
-        auto match = make_node(str);
-        match->is_final = true;
-        match->type = type;
-        // Remove catchall node if already present,
-        // i.e. the string is a substring of a match
-        auto catchall = node->catchall();
-        if (catchall)
-            node->remove_edge(catchall);
-        // Replace catchall node
-        node->add_catchall(match);
+        // Add `*' edge and final node
+        // Replace `*' edge if already present, i.e. current string is a
+        // substring of some other string
+        if (type == tok::Add || type == tok::Sub) {
+            // Special case: '+' and '-' are signs if next char is a digit
+            // NOTE: maybe '+' sign is not needed and can be unary op instead?
+            node->add_class_edge(
+                make_node(str + " sign", true, tok::PlusSign), cls::Digit);
+            node->add_catchall(make_node(str, true, type));
+
+        } else {
+            node->replace_catchall(make_node(str, true, type));
+        }
 
     } else if (is_name_or_kw) {
         // Non-alphanumeric, not a match: end of name.

@@ -38,6 +38,7 @@ void gen_char_class_table() {
     char ch = 0;
     while (true) {
         bool is_last = (ch == 127);
+        bool is_first_col = (ch % ColNum == 0);
         bool is_last_col = (is_last || (ch + 1) % ColNum == 0);
 
         std::stringstream ss;
@@ -68,9 +69,11 @@ void gen_char_class_table() {
         ss << " */";
         if (!is_last)
             ss << ",";
+        if (is_first_col)
+            std::cout << "    ";
         std::cout << std::left;
         if (!is_last_col)
-            std::cout << std::setw(24);
+            std::cout << std::setw(23);
         std::cout << ss.str();
 
         if (!is_last) {
