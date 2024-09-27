@@ -22,14 +22,15 @@ LineBuf::LineBuf(
 const CharNum LineBuf::chr() const { return gptr() - eback(); }
 
 void LineBuf::mark() {
-    assert(chr() > 0);
+    assert(chr() > 0 && "No line character were read yet");
     _mark = chr() - 1;
 }
 
-std::string_view LineBuf::str() {
+const std::string_view LineBuf::substr() {
     assert(_mark != NoMark);
+    assert(_mark + 1 < chr() && "Trying to get empty substring");
     store();
-    return {eback() + _mark, chr() - _mark};
+    return {eback() + _mark, chr() - _mark - 1};
 }
 
 void LineBuf::store() {
@@ -52,11 +53,11 @@ int LineBuf::underflow() {
                                       : traits_type::eof();
 }
 
-void LineBuf::unmark() {
-    _mark = NoMark;
-}
+void LineBuf::unmark() { _mark = NoMark; }
 
 bool LineBuf::get_next() {
+    unmark(); // multi-line substrings are not supported
+
     // is next line already stored?
     if (!_lines.has(_linum + 1))
         return read_next();

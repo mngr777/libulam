@@ -3,6 +3,7 @@
 #include "src/source/line_buf.hpp"
 #include "src/source/line_storage.hpp"
 #include <filesystem>
+#include <string_view>
 #include <fstream>
 #include <memory_resource>
 #include <optional>
@@ -17,8 +18,8 @@ public:
     SourceStream(Source& src, src::LineBuf& line_buf):
         std::istream(&line_buf), _src(src), _line_buf(line_buf) {}
 
-    const SrcLocId loc_id();
-    const StrId str_id();
+    const SrcLocId last_loc_id();
+    const std::string_view substr() const;
 
 private:
     Source& _src;

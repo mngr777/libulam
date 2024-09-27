@@ -1,11 +1,12 @@
 #include "src/lexer.hpp"
 #include "libulam/types.hpp"
+#include "src/context.hpp"
 #include "src/source.hpp"
 #include <cassert>
 
 namespace ulam {
 
-Lexer::Lexer(SourceStream& ss): _ss(ss) { next(); }
+Lexer::Lexer(Context& ctx, SourceStream& ss): _ctx(ctx), _ss(ss) { next(); }
 
 Lexer& Lexer::operator>>(Token& token) {
     token = _token;
@@ -34,7 +35,7 @@ bool Lexer::next_start() {
     while (!_ss.eof()) {
         _ss.get(ch);
         if (_dfa.step(ch) == lex::Dfa::TokenStart) {
-            _token.loc_id = _ss.loc_id();
+            _token.loc_id = _ss.last_loc_id();
             return true;
         }
     }
@@ -57,9 +58,11 @@ void Lexer::next_end() {
         // Store name, number or string
         switch (_token.type) {
         case tok::Name:
+            _token.str_id = _ctx.store_name_str(_ss.substr());
+            break;
         case tok::Number:
         case tok::String:
-            _token.str_id = _ss.str_id();
+            _token.str_id = _ctx.store_value_str(_ss.substr());
             break;
         default:
             _token.str_id = NoStrId;

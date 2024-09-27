@@ -20,7 +20,7 @@ public:
     const CharNum chr() const;
 
     void mark();
-    std::string_view str();
+    const std::string_view substr();
 
     void store();
 
@@ -39,7 +39,7 @@ private:
     LineStorage& _lines;
     std::istream& _is;
     mem::StrBuf _buf;
-    LineNum _linum {0};
+    LineNum _linum{0};
     CharNum _mark{NoMark};
 };
 

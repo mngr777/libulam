@@ -10,7 +10,7 @@
 namespace {
 
 std::string tok_type_to_str(tok::Type type) {
-    return std::string("tok::") + tok::type_to_str(type);
+    return std::string("tok::") + tok::type_name(type);
 }
 
 std::string cat_to_str(dfa::ClassFlags cls) {

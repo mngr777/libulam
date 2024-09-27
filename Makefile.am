@@ -117,6 +117,8 @@ test_source_str_buf_store1_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF
 TEST_LEXER_SOURCE_FILES = \
 	$(TEST_SOURCE_SOURCE_FILES) \
 	include/libulam/token.hpp \
+	src/context.hpp \
+	src/context.cpp \
 	src/lexer.hpp \
 	src/lexer.cpp \
 	src/lexer/dfa.hpp \
