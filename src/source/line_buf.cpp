@@ -1,6 +1,7 @@
 #include "src/source/line_buf.hpp"
 #include <cassert>
 #include <memory_resource>
+#include <string_view>
 
 #ifdef DEBUG_LINEBUF
 #    include <cstring>
@@ -13,7 +14,7 @@ namespace ulam::src {
 
 LineBuf::LineBuf(
     LineStorage& lines, std::istream& is, std::pmr::memory_resource* res):
-    _lines(lines), _is(is), _buf(res ? res : std::pmr::get_default_resource()) {
+    _lines(lines), _is(is), _buf(res) {
     assert(is.tellg() == 0 && "Avoid passing `used' streams for now");
     auto data = _buf.data();
     setg(data, data + _buf.size(), data + _buf.size());
@@ -45,17 +46,22 @@ void LineBuf::store() {
 }
 
 int LineBuf::underflow() {
-    // anything left at current line?
-    if (gptr() < egptr())
+    if (_is.eof()) {
+        assert(gptr() == egptr());
+        return traits_type::eof();
+    }
+    // try getting the next line
+    if (get_next()) {
         return traits_type::to_int_type(*gptr());
-    // try getting the next one
-    return (!_is.eof() && get_next()) ? traits_type::to_int_type(*gptr())
-                                      : traits_type::eof();
+    }
+    assert(gptr() == egptr());
+    return traits_type::eof();
 }
 
 void LineBuf::unmark() { _mark = NoMark; }
 
 bool LineBuf::get_next() {
+    assert(!_is.eof());
     unmark(); // multi-line substrings are not supported
 
     // is next line already stored?
@@ -72,6 +78,7 @@ bool LineBuf::get_next() {
 }
 
 bool LineBuf::read_next() {
+    assert(!_is.eof());
     auto cur = _buf.data();
     std::size_t num_read = 0;
     while (true) {
@@ -83,11 +90,11 @@ bool LineBuf::read_next() {
         _is.getline(cur, count, '\n');
         num_read += _is.gcount();
 
-        if (_is.gcount() == 0) {
-            // no more data
+        if (num_read == 0) {
+            assert(_is.eof());
             return false;
 
-        } else if (_is.fail()) {
+        } else if (!_is.eof() && _is.fail()) {
             // not enough space
             assert(_is.gcount() == count - 1);
             _buf.grow();
@@ -95,10 +102,14 @@ bool LineBuf::read_next() {
             _is.clear();
             continue; // TODO: set some reasonable limit just in case
         }
+
         ++_linum; // moved to next line
-        char_type* last = _buf.data() + num_read - 1;
-        *last = '\n';
-        setg(_buf.data(), _buf.data(), last + 1);
+        char_type* last = _buf.data() + num_read;
+        if (num_read > 0 && !_is.eof()) {
+            --last;
+            *last = '\n';
+        }
+        setg(_buf.data(), _buf.data(), _buf.data() + num_read);
         break;
     }
     return true;

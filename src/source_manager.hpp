@@ -23,8 +23,8 @@ struct SourceLoc {
 
 class SourceManager {
 public:
-    SourceManager(std::pmr::memory_resource* res):
-        _loc_pool(res), _locs(&_loc_pool) {}
+    explicit SourceManager(std::pmr::memory_resource* res):
+        _src_pool(res), _srcs(&_src_pool), _loc_pool(res), _locs(&_loc_pool) {}
 
     std::shared_ptr<Source> add_string(std::string name, std::string text);
     std::shared_ptr<Source> add_file(std::filesystem::path file);
@@ -34,7 +34,7 @@ public:
 
 private:
     std::pmr::unsynchronized_pool_resource _src_pool;
-    std::vector<std::shared_ptr<Source>> _srcs;
+    std::pmr::vector<std::shared_ptr<Source>> _srcs;
     std::shared_mutex _src_mtx;
 
     std::pmr::unsynchronized_pool_resource _loc_pool;

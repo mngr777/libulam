@@ -17,7 +17,7 @@ StrBuf::StrBuf(
     std::pmr::memory_resource* res,
     std::size_t initial_size,
     std::size_t grow_by):
-    _pa(res ? res : std::pmr::get_default_resource()),
+    _pa(res),
     _size(initial_size),
     _grow_by(grow_by),
     _data(_pa.allocate(_size)) {

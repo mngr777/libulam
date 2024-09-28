@@ -4,6 +4,12 @@
 #include "src/source.hpp"
 #include <cassert>
 
+#ifdef DEBUG_LEXER
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::Lexer] "
+#endif
+#include "src/debug.hpp"
+
 namespace ulam {
 
 Lexer::Lexer(Context& ctx, SourceStream& ss): _ctx(ctx), _ss(ss) { next(); }
@@ -15,8 +21,8 @@ Lexer& Lexer::operator>>(Token& token) {
 }
 
 Token Lexer::get() {
-    Token token = _token;
-    next();
+    Token token;
+    *this >> token;
     return token;
 }
 
@@ -31,8 +37,8 @@ void Lexer::next() {
 }
 
 bool Lexer::next_start() {
-    char ch;
     while (!_ss.eof()) {
+        char ch = '\0';
         _ss.get(ch);
         if (_dfa.step(ch) == lex::Dfa::TokenStart) {
             _token.loc_id = _ss.last_loc_id();
@@ -49,7 +55,8 @@ void Lexer::next_end() {
             _ss.get(ch);
         if (_dfa.step(ch) != lex::Dfa::TokenEnd) {
             assert(
-                ch != '\n' && ch != '\0' && "Token not done on '\n' or '\0'");
+                ch != '\n' && ch != '\0' &&
+                "Token doesn't end on '\n' or '\0'");
             continue;
         }
 
@@ -68,9 +75,9 @@ void Lexer::next_end() {
             _token.str_id = NoStrId;
         }
         // Reuse last char
-        if (ch != '\0' && ch != '\n')
-            _ss.putback(ch);
-        return;
+        if (!_ss.eof() && ch != '\n')
+            _ss.unget();
+        break;
     }
 }
 

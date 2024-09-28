@@ -31,8 +31,7 @@ element A : B {
     DebugUtils du;
     du.print("doing stuff...");
   }
-}
-)END";
+})END";
 
 int main() {
     ulam::SourceManager sm(std::pmr::get_default_resource());
@@ -46,7 +45,9 @@ int main() {
             break;
         copy += ch;
     };
+    std::cout << "original:" << text << "\n--------------------\n";
+    std::cout << "copy:" << copy << "\n--------------------\n";
     std::cout << "text length: " << text.size() << "\n";
     std::cout << "copy length: " << copy.size() << "\n";
-    return (copy == Program) ? 0 : -1;
+    return (text == copy) ? 0 : -1;
 }

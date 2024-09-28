@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -std=c++17 -iquote $(srcdir)/include -iquote $(srcdir) -Wall -Wpedantic -Werror
+AM_CXXFLAGS = -std=c++17 -iquote $(srcdir)/include -iquote $(srcdir) -Wall -Wpedantic -Werror -O0 -g
 CXXFLAGS = $(AM_CXXFLAGS) # temp hack to make libtool stop adding flags
 
 # Library

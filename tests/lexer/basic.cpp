@@ -3,6 +3,7 @@
 #include "src/lexer.hpp"
 #include "src/source.hpp"
 #include "src/source_manager.hpp"
+#include <array>
 #include <iostream>
 #include <memory_resource>
 
@@ -39,6 +40,7 @@ element A : B {
 
 int main() {
     auto res = std::pmr::get_default_resource();
+    std::pmr::set_default_resource(std::pmr::null_memory_resource());
     ulam::Context ctx{res};
     ulam::SourceManager sm{res};
     std::string text{Program};
@@ -47,15 +49,13 @@ int main() {
     ulam::Token token;
     do {
         lexer >> token;
-        auto type_str = ulam::tok::type_str(token.type);
-        std::cout << (!type_str.empty() ? type_str : ulam::tok::type_name(token.type));
-        if (token.type == ulam::tok::Name || token.type == ulam::tok::Number ||
-            token.type == ulam::tok::String) {
-            std::cout << " `"
-                      << ((token.type == ulam::tok::Name)
-                              ? ctx.name_str(token.str_id)
-                              : ctx.value_str(token.str_id))
-                      << "'";
+        if (token.is(ulam::tok::Name)) {
+            std::cout << "`" << ctx.name_str(token.str_id) << "'";
+        } else if (token.is(ulam::tok::Number, ulam::tok::String)) {
+            std::cout << ctx.value_str(token.str_id);
+        } else {
+            const char* str = token.type_str();
+            std::cout << (str ? str : token.type_name());
         }
         std::cout << "\n";
     } while (token.type != ulam::tok::None);
