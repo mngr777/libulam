@@ -3,9 +3,9 @@
 
 namespace ulam::tok {
 
-std::string type_str(tok::Type type) {
+const char* type_str(const tok::Type type) {
     switch (type) {
-#define TOK(str, type) case tok::type: return str ? str : "";
+#define TOK(str, type) case tok::type: return str;
 #define TOK_SEL_ALL
 #include "libulam/token.inc.hpp"
 #undef TOK_SEL_ALL
@@ -16,7 +16,7 @@ std::string type_str(tok::Type type) {
 }
 
 
-std::string type_name(tok::Type type) {
+const char* type_name(const tok::Type type) {
     switch (type) {
 #define TOK(str, type) case tok::type: return #type;
 #define TOK_SEL_ALL

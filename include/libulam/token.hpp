@@ -13,8 +13,9 @@ enum Type : std::uint8_t {
 #undef TOK
 };
 
-std::string type_str(tok::Type type);
-std::string type_name(tok::Type type);
+// NOTE: `type_str' may return nullptr
+const char* type_str(const tok::Type type);
+const char* type_name(const tok::Type type);
 
 } // namespace tok
 
