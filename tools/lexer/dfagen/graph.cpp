@@ -355,7 +355,7 @@ void Graph::init_node(
         // Add `*' edge and final node
         // Replace `*' edge if already present, i.e. current string is a
         // substring of some other string
-        if (type == tok::Add || type == tok::Sub) {
+        if (type == tok::Plus || type == tok::Minus) {
             // Special case: '+' and '-' are signs if next char is a digit
             // NOTE: maybe '+' sign is not needed and can be unary op instead?
             node->add_class_edge(

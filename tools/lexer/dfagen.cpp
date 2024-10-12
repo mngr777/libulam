@@ -95,9 +95,7 @@ void gen_dfa_data() {
     if (str) {                                                                 \
         graph.add(str, ulam::tok::type);                                       \
     }
-#define TOK_SEL_ALL
 #include "libulam/token.inc.hpp"
-#undef TOK_SEL_ALL
 #undef TOK
 
     try {

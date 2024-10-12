@@ -13,10 +13,10 @@ public:
 
     Lexer& operator>>(Token& token);
     Token get();
-    const Token& peek();
+    const Token& peek() const;
+    void next();
 
 private:
-    void next();
     bool next_start();
     void next_end();
 

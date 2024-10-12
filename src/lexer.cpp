@@ -26,7 +26,7 @@ Token Lexer::get() {
     return token;
 }
 
-const Token& Lexer::peek() { return _token; }
+const Token& Lexer::peek() const { return _token; }
 
 void Lexer::next() {
     if (next_start()) {

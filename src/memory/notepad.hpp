@@ -23,7 +23,7 @@ private:
 public:
     static const std::size_t HeadSize = sizeof(Page);
 
-    explicit Notepad(std::pmr::memory_resource* res, std::size_t pagesize = 8192):
+    explicit Notepad(std::pmr::memory_resource* res, std::size_t pagesize = 1024):
         _pool(res), _pagesize(pagesize) {} // TODO: alignment and corresponting size
 
     Notepad(const Notepad&) = delete;
