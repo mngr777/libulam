@@ -9,7 +9,7 @@
 #include <memory_resource>
 
 static const char* Program = R"END(
-((1) * (1))
+a.b
 )END";
 
 int main() {

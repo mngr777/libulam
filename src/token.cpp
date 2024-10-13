@@ -27,42 +27,44 @@ const char* type_name(tok::Type type) {
 
 Op bin_op(Type type) {
     switch (type) {
+    case Dot:
+        return Op::MemberAccess;
     case Plus:
-        return Op::sum;
+        return Op::Sum;
     case Minus:
-        return Op::diff;
+        return Op::Diff;
     case Mult:
-        return Op::prod;
+        return Op::Prod;
     case Div:
-        return Op::quot;
+        return Op::Quot;
     default:
-        return Op::none;
+        return Op::None;
     }
 }
 
 Op unary_pre_op(Type type) {
     switch (type) {
     case Plus:
-        return Op::unary_plus;
+        return Op::UnaryPlus;
     case Minus:
-        return Op::unary_minus;
+        return Op::UnaryMinus;
     case Inc:
-        return Op::pre_inc;
+        return Op::PreInc;
     case Dec:
-        return Op::pre_dec;
+        return Op::PreDec;
     default:
-        return Op::none;
+        return Op::None;
     }
 }
 
 Op unary_post_op(Type type) {
     switch (type) {
     case Inc:
-        return Op::post_inc;
+        return Op::PostInc;
     case Dec:
-        return Op::post_dec;
+        return Op::PostDec;
     default:
-        return Op::none;
+        return Op::None;
     }
 }
 

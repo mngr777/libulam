@@ -2,10 +2,15 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/lang/op.hpp>
+#include <libulam/types.hpp>
 
 namespace ulam::ast {
 
 class Expr : public Node {};
+
+class Name : public Expr {
+    ULAM_AST_NODE
+};
 
 class Ident : public Expr {};
 

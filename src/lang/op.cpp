@@ -15,15 +15,17 @@ const char* str(Op op) {
 
 Prec prec(Op op) {
     switch (op) {
-    case Op::unary_minus:
-    case Op::unary_plus:
+    case Op::MemberAccess:
+        return 5;
+    case Op::UnaryMinus:
+    case Op::UnaryPlus:
         return 4;
-    case Op::prod:
-    case Op::quot:
-    case Op::rem:
+    case Op::Prod:
+    case Op::Quot:
+    case Op::Rem:
         return 3;
-    case Op::sum:
-    case Op::diff:
+    case Op::Sum:
+    case Op::Diff:
         return 2;
     default:
         return -1;
@@ -36,11 +38,12 @@ Prec right_prec(Op op) {
 
 Assoc assoc(Op op) {
     switch (op) {
-    case Op::prod:
-    case Op::quot:
-    case Op::rem:
-    case Op::sum:
-    case Op::diff:
+    case Op::MemberAccess:
+    case Op::Prod:
+    case Op::Quot:
+    case Op::Rem:
+    case Op::Sum:
+    case Op::Diff:
         return Assoc::Left;
     default:
         assert(false);

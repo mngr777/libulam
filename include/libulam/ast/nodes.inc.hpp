@@ -4,7 +4,7 @@
 #endif
 
 NODE("Expr", Expr)
-
+NODE("Name", Name)
 NODE("ParenExpr", ParenExpr)
 NODE("BinaryOp", BinaryOp)
 NODE("UnaryOp", UnaryOp)

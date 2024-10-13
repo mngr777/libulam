@@ -21,7 +21,11 @@ ast::Ptr<ast::Node> Parser::parse() {
 
 const Token& Parser::next() const { return _lex.peek(); }
 
-void Parser::consume() { _lex.next(); }
+void Parser::consume() {
+    debug() << next().type_name() << " -> \n";
+    _lex.next();
+    debug() << "-> " << next().type_name() << "\n";
+}
 
 void Parser::expect(tok::Type type) {
     // TODO
@@ -45,55 +49,66 @@ const std::string_view Parser::value_str() const {
 ast::Ptr<ast::Expr> Parser::expr() {
     debug() << "expr\n";
     Op pre = tok::unary_pre_op(next().type);
-    if (pre != Op::none) {
+    if (pre != Op::None) {
         consume();
-        return ast::make<ast::UnaryOp>(pre, expr_climb(op::prec(pre)));
+        return tree<ast::UnaryOp>(pre, expr_climb(op::prec(pre)));
     }
     return expr_climb(0);
 }
 
 ast::Ptr<ast::Expr> Parser::expr_climb(op::Prec min_prec) {
-    debug() << "expr_climb " << (int) min_prec << "\n";
-    auto lhs = atom();
+    debug() << "expr_climb " << (int)min_prec << "\n";
+    auto lhs = cast_expr();
     while (true) {
         Op op = next().bin_op();
         if (op::prec(op) < min_prec)
             break;
+        debug() << "op: " << op::str(op) << "\n";
         consume();
         auto rhs = expr_climb(op::right_prec(op));
-        lhs = ast::make<ast::BinaryOp>(op, std::move(lhs), std::move(rhs));
+        lhs = tree<ast::BinaryOp>(op, std::move(lhs), std::move(rhs));
     }
     return lhs;
 }
 
-ast::Ptr<ast::Expr> Parser::atom() {
-    debug() << "atom " << next().type_name() << "\n";
+ast::Ptr<ast::Expr> Parser::cast_expr() {
+    debug() << "cast_expr " << next().type_name() << "\n";
     switch (next().type) {
+    case tok::Name:
+        return name();
     case tok::Number:
         return number();
     case tok::String:
         return string();
     case tok::ParenOpen:
-        return paren_expr();
+        return paren_expr_or_cast();
     default:
         diag("unexpected token");
     }
     return nullptr;
 }
 
-ast::Ptr<ast::Expr> Parser::paren_expr() {
+ast::Ptr<ast::Expr> Parser::name() {
+    debug() << "name\n";
+    assert(next().is(tok::Name));
+    auto node = tree<ast::Name>();
+    consume();
+    return node;
+}
+
+ast::Ptr<ast::Expr> Parser::paren_expr_or_cast() {
     debug() << "paren_expr\n";
     assert(next().is(tok::ParenOpen));
     consume();
-    auto node = ast::make<ast::ParenExpr>(expr());
+    auto inner = expr();
     expect(tok::ParenClose);
-    return node;
+    return tree<ast::ParenExpr>(std::move(inner));
 }
 
 ast::Ptr<ast::Number> Parser::number() {
     debug() << "number: " << value_str() << "\n";
     assert(next().is(tok::Number));
-    auto node = ast::make<ast::Number>();
+    auto node = tree<ast::Number>();
     consume();
     return node;
 }
@@ -101,7 +116,7 @@ ast::Ptr<ast::Number> Parser::number() {
 ast::Ptr<ast::String> Parser::string() {
     debug() << "string: " << value_str() << "\n";
     assert(next().is(tok::String));
-    auto node = ast::make<ast::String>();
+    auto node = tree<ast::String>();
     consume();
     return node;
 }
