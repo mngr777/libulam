@@ -1,6 +1,6 @@
 #include "print.hpp"
 #include <libulam/ast/traversal.hpp>
-#include <libulam/lang/op.hpp>
+#include <libulam/lang/ops.hpp>
 #include <string>
 
 namespace test::ast {
@@ -31,7 +31,7 @@ bool Printer::visit(ulam::ast::ParenExpr& node) {
 }
 
 bool Printer::visit(ulam::ast::BinaryOp& node) {
-    indent() << "(" << ulam::op::str(node.op()) << "\n";
+    indent() << "(" << ulam::ops::str(node.op()) << "\n";
     inc_level();
     node.lhs()->accept(*this);
     node.rhs()->accept(*this);
@@ -41,7 +41,7 @@ bool Printer::visit(ulam::ast::BinaryOp& node) {
 }
 
 bool Printer::visit(ulam::ast::UnaryOp& node) {
-    indent() << ulam::op::str(node.op()) << "\n";
+    indent() << ulam::ops::str(node.op()) << "\n";
     inc_level();
     node.arg()->accept(*this);
     dec_level();

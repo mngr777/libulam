@@ -1,6 +1,6 @@
 #pragma once
 #include "libulam/types.hpp"
-#include "libulam/lang/op.hpp"
+#include "libulam/lang/ops.hpp"
 
 namespace ulam {
 namespace tok {

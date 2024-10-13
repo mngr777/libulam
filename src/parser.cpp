@@ -1,6 +1,5 @@
 #include "src/parser.hpp"
 #include "libulam/ast/nodes/expr.hpp"
-#include "libulam/lang/op.hpp"
 #include "libulam/token.hpp"
 #include "src/lexer.hpp"
 #include <cassert>
@@ -46,32 +45,48 @@ const std::string_view Parser::value_str() const {
     return _ctx.value_str(next().str_id);
 }
 
-ast::Ptr<ast::Expr> Parser::expr() {
+Parser::ExprPtr
+Parser::binop_tree(Op op, Parser::ExprPtr&& lhs, Parser::ExprPtr&& rhs) {
+    switch (op) {
+    case Op::Funcall: {
+        // TODO
+        return nullptr;
+    }
+    case Op::ArrayAccess: {
+        // TODO
+        return nullptr;
+    }
+    default:
+        return ast::make<ast::BinaryOp>(op, std::move(lhs), std::move(rhs));
+    }
+}
+
+Parser::ExprPtr Parser::expr() {
     debug() << "expr\n";
     Op pre = tok::unary_pre_op(next().type);
     if (pre != Op::None) {
         consume();
-        return tree<ast::UnaryOp>(pre, expr_climb(op::prec(pre)));
+        return tree<ast::UnaryOp>(pre, expr_climb(ops::prec(pre)));
     }
     return expr_climb(0);
 }
 
-ast::Ptr<ast::Expr> Parser::expr_climb(op::Prec min_prec) {
+Parser::ExprPtr Parser::expr_climb(ops::Prec min_prec) {
     debug() << "expr_climb " << (int)min_prec << "\n";
     auto lhs = cast_expr();
     while (true) {
         Op op = next().bin_op();
-        if (op::prec(op) < min_prec)
+        if (ops::prec(op) < min_prec)
             break;
-        debug() << "op: " << op::str(op) << "\n";
+        debug() << "op: " << ops::str(op) << "\n";
         consume();
-        auto rhs = expr_climb(op::right_prec(op));
+        auto rhs = expr_climb(ops::right_prec(op));
         lhs = tree<ast::BinaryOp>(op, std::move(lhs), std::move(rhs));
     }
     return lhs;
 }
 
-ast::Ptr<ast::Expr> Parser::cast_expr() {
+Parser::ExprPtr Parser::cast_expr() {
     debug() << "cast_expr " << next().type_name() << "\n";
     switch (next().type) {
     case tok::Name:
@@ -88,7 +103,7 @@ ast::Ptr<ast::Expr> Parser::cast_expr() {
     return nullptr;
 }
 
-ast::Ptr<ast::Expr> Parser::name() {
+Parser::ExprPtr Parser::name() {
     debug() << "name\n";
     assert(next().is(tok::Name));
     auto node = tree<ast::Name>();
@@ -96,7 +111,7 @@ ast::Ptr<ast::Expr> Parser::name() {
     return node;
 }
 
-ast::Ptr<ast::Expr> Parser::paren_expr_or_cast() {
+Parser::ExprPtr Parser::paren_expr_or_cast() {
     debug() << "paren_expr\n";
     assert(next().is(tok::ParenOpen));
     consume();

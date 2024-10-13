@@ -8,6 +8,7 @@ AST_HEADER_FILES = \
 	include/libulam/ast/context.hpp \
 	include/libulam/ast/node.hpp \
 	include/libulam/ast/nodes/expr.hpp \
+	include/libulam/ast/nodes/params.hpp \
 	include/libulam/ast/nodes.inc.hpp \
 	include/libulam/ast/traversal.hpp
 
@@ -21,8 +22,8 @@ HEADER_FILES = \
 	include/libulam/libulam.hpp \
 	$(AST_HEADER_FILES)
 	include/libulam/lang.hpp \
-	include/libulam/lang/op.hpp \
-	include/libulam/lang/op.inc.hpp \
+	include/libulam/lang/ops.hpp \
+	include/libulam/lang/ops.inc.hpp \
 	include/libulam/types.hpp \
 	include/libulam/token.hpp
 
@@ -32,6 +33,7 @@ SOURCE_FILES = \
 	src/context.hpp \
 	src/context.cpp \
 	src/debug.hpp \
+	src/lang/ops.cpp \
 	src/lexer.hpp \
 	src/lexer.cpp \
 	src/lexer/dfa.hpp \
@@ -159,9 +161,9 @@ TEST_PARSER_SOURCE_FILES = \
 	$(AST_HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
 	$(AST_TEST_SOURCE_FILES) \
-	include/libulam/lang/op.hpp \
-	include/libulam/lang/op.inc.hpp \
-	src/lang/op.cpp \
+	include/libulam/lang/ops.hpp \
+	include/libulam/lang/ops.inc.hpp \
+	src/lang/ops.cpp \
 	src/parser.hpp \
 	src/parser.cpp
 

@@ -5,11 +5,11 @@ namespace ulam {
 
 enum class Op {
 #define OP(str, op) op,
-#include <libulam/lang/op.inc.hpp>
+#include <libulam/lang/ops.inc.hpp>
 #undef OP
 };
 
-namespace op {
+namespace ops {
 
 using Prec = std::int8_t;
 

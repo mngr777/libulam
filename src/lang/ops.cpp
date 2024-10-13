@@ -1,12 +1,12 @@
-#include "libulam/lang/op.hpp"
+#include "libulam/lang/ops.hpp"
 #include <cassert>
 
-namespace ulam::op {
+namespace ulam::ops {
 
 const char* str(Op op) {
 #define OP(str, op) case Op::op: return str;
     switch (op) {
-#include <libulam/lang/op.inc.hpp>
+#include <libulam/lang/ops.inc.hpp>
     default:
         assert(false);
     }
