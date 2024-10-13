@@ -84,7 +84,7 @@ class VarRef : public Expr {};
 
 class Cast : public Expr {};
 
-class BoolLit : public Expr {};
+class Bool : public Expr {};
 
 class Number : public Expr {
     ULAM_AST_NODE

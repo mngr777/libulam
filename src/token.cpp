@@ -24,6 +24,19 @@ const char* type_name(tok::Type type) {
     }
 }
 
+Class::Kind class_kind(Type type) {
+    switch (type) {
+    case Element:
+        return Class::Element;
+    case Quark:
+        return Class::Quark;
+    case Transient:
+        return Class::Transient;
+    default:
+        assert(false);
+    }
+}
+
 Op bin_op(Type type) {
     switch (type) {
     case Dot:

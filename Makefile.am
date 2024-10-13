@@ -17,23 +17,32 @@ AST_SOURCE_FILES = \
 	src/ast/nodes/expr.cpp \
 	src/ast/traversal.cpp
 
+LANG_HEADER_FILES = \
+	include/libulam/lang.hpp \
+	include/libulam/lang/class.hpp \
+	include/libulam/lang/ops.hpp \
+	include/libulam/lang/ops.inc.hpp \
+	include/libulam/lang/symbol.hpp
+
+LANG_SOURCE_FILES = \
+	src/lang/ops.cpp \
+	src/lang/symbol.cpp
+
 # Library
 HEADER_FILES = \
 	include/libulam/libulam.hpp \
-	$(AST_HEADER_FILES)
-	include/libulam/lang.hpp \
-	include/libulam/lang/ops.hpp \
-	include/libulam/lang/ops.inc.hpp \
+	$(AST_HEADER_FILES) \
+	$(LANG_HEADER_FILES) \
 	include/libulam/types.hpp \
 	include/libulam/token.hpp
 
 SOURCE_FILES = \
 	$(HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
+	$(LANG_SOURCE_FILES) \
 	src/context.hpp \
 	src/context.cpp \
 	src/debug.hpp \
-	src/lang/ops.cpp \
 	src/lexer.hpp \
 	src/lexer.cpp \
 	src/lexer/dfa.hpp \
@@ -160,10 +169,9 @@ TEST_PARSER_SOURCE_FILES = \
 	$(TEST_LEXER_SOURCE_FILES) \
 	$(AST_HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
+	$(LANG_HEADER_FILES) \
+	$(LANG_SOURCE_FILES) \
 	$(AST_TEST_SOURCE_FILES) \
-	include/libulam/lang/ops.hpp \
-	include/libulam/lang/ops.inc.hpp \
-	src/lang/ops.cpp \
 	src/parser.hpp \
 	src/parser.cpp
 
