@@ -9,7 +9,9 @@
 #include <memory_resource>
 
 static const char* Program = R"END(
-a.b
+element A {
+  typedef C.D B;
+}
 )END";
 
 int main() {

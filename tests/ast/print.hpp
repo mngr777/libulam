@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/module.hpp"
 #include <libulam/ast/visitor.hpp>
 #include <ostream>
 
@@ -28,6 +29,8 @@ class Printer : public PrinterBase {
 public:
     Printer(std::ostream& os): PrinterBase{os} {}
 
+    bool visit(ulam::ast::ClassDef& node) override;
+    bool visit(ulam::ast::TypeDef& node) override;
     bool visit(ulam::ast::ParenExpr& node) override;
     bool visit(ulam::ast::BinaryOp& node) override;
     bool visit(ulam::ast::UnaryOp& node) override;

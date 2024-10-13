@@ -21,8 +21,18 @@ std::ostream& PrinterBase::indent() {
     return _os << std::string(level() * options.indent, ' ');
 }
 
+bool Printer::visit(ulam::ast::ClassDef& node) {
+    indent() << "ClassDef `" << node.name() << "'\n";
+    return true;
+}
+
+bool Printer::visit(ulam::ast::TypeDef& node) {
+    indent() << "TypeDef `" << node.alias() << "'\n";
+    return true;
+}
+
 bool Printer::visit(ulam::ast::ParenExpr& node) {
-    indent() << "(paren-expr\n";
+    indent() << "(ParenExpr\n";
     inc_level();
     node.inner()->accept(*this);
     dec_level();

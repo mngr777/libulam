@@ -16,7 +16,7 @@
 namespace ulam {
 
 ast::Ptr<ast::Node> Parser::parse() {
-    return expr(); // TEST
+    return module();
 }
 
 const Token& Parser::next() const { return _lex.peek(); }
@@ -46,7 +46,6 @@ ast::Ptr<ast::Module> Parser::module() {
     case tok::Transient:
         node->add(class_def());
         break;
-
     default:
         diag("unexpected token");
     }
@@ -58,7 +57,11 @@ ast::Ptr<ast::ClassDef> Parser::class_def() {
         next().is(tok::Element) || next().is(tok::Quark) ||
         next().is(tok::Transient));
     debug() << "class_def " << next().type_name() << "\n";
-    auto node = tree<ast::ClassDef>(next().class_kind());
+    auto kind = next().class_kind();
+    consume();
+    auto node = tree<ast::ClassDef>(kind, name_str());
+    consume();
+    // TODO: template params, ancestors
     expect(tok::BraceOpen);
     while (!next().is(tok::BraceClose)) {
         switch (next().type) {
@@ -85,7 +88,12 @@ ast::Ptr<ast::ClassDef> Parser::class_def() {
 ast::Ptr<ast::TypeDef> Parser::type_def() {
     assert(next().type == tok::Typedef);
     debug() << "type_def\n";
-    return nullptr; // TODO
+    consume();
+    auto type = expr();
+    auto alias = name_str();
+    consume();
+    expect(tok::SemiColon);
+    return tree<ast::TypeDef>(alias, std::move(type));
 }
 
 ast::Ptr<ast::VarDef>
