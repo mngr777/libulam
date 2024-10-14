@@ -3,6 +3,7 @@
 #include "lexer.hpp"
 #include "libulam/ast.hpp"
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/nodes/params.hpp"
 #include "libulam/lang/ops.hpp"
 #include "libulam/token.hpp"
 #include <string>
@@ -32,10 +33,14 @@ private:
     ast::Ptr<ast::Module> module();
     ast::Ptr<ast::ClassDef> class_def();
     ast::Ptr<ast::TypeDef> type_def();
+    ast::Ptr<ast::VarDef> var_def();
     ast::Ptr<ast::VarDef>
-    var_def_rest(ast::Ptr<ast::Expr>&& type, ast::Ptr<ast::Name>&& id);
+    var_def_rest(ast::Ptr<ast::Expr>&& type, std::string&& name_);
     ast::Ptr<ast::FunDef>
-    fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, ast::Ptr<ast::Name>&& id);
+    fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name_);
+    ast::Ptr<ast::ParamList> param_list();
+    ast::Ptr<ast::Param> param();
+    ast::Ptr<ast::Block> block();
 
     ast::Ptr<ast::Expr> expr();
     ast::Ptr<ast::Expr> expr_climb(ops::Prec min_prec);
@@ -48,8 +53,8 @@ private:
     ast::Ptr<ast::Expr>
     binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
 
-    const std::string_view name_str() const;
-    const std::string_view value_str() const;
+    std::string name_str() const;
+    std::string value_str() const;
 
     Context& _ctx;
     Lexer _lex;

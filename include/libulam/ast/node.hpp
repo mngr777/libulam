@@ -31,8 +31,8 @@ template <typename... Ns> Node* as_node(Variant<Ns...>& v) {
 }
 
 // TODO: use list with child iterator
-template <typename... Ns>
-using ListOf = std::vector<Variant<Ns...>>;
+template <typename N> using List = std::vector<Ptr<N>>;
+template <typename... Ns> using ListOf = std::vector<Variant<Ns...>>;
 
 class Node {
 public:
@@ -45,7 +45,7 @@ public:
     virtual unsigned child_num() const { return 0; }
 
     virtual Node* child(unsigned n) {
-        assert(n < child_num());
+        assert(n < child_num()); // TODO: make virtual protected `get_child` function
         return nullptr;
     }
 };

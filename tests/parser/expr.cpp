@@ -8,9 +8,16 @@
 #include <iostream>
 #include <memory_resource>
 
+/*
+    typedef C.D B;
+
+  B mB = 123;
+ */
+
 static const char* Program = R"END(
 element A {
-  typedef C.D B;
+  C.D foo(E.F c = 1) {
+  }
 }
 )END";
 

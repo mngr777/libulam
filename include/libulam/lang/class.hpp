@@ -16,4 +16,4 @@ private:
     Kind _kind;
 };
 
-}
+} // namespace ulam

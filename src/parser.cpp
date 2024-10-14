@@ -1,6 +1,7 @@
 #include "src/parser.hpp"
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/nodes/params.hpp"
 #include "libulam/token.hpp"
 #include "src/lexer.hpp"
 #include <cassert>
@@ -15,9 +16,7 @@
 
 namespace ulam {
 
-ast::Ptr<ast::Node> Parser::parse() {
-    return module();
-}
+ast::Ptr<ast::Node> Parser::parse() { return module(); }
 
 const Token& Parser::next() const { return _lex.peek(); }
 
@@ -70,11 +69,12 @@ ast::Ptr<ast::ClassDef> Parser::class_def() {
             break;
         case tok::Name: {
             auto type = expr();
-            auto id = name();
+            auto name_ = name_str();
+            consume();
             if (next().is(tok::ParenOpen)) {
-                node->add(fun_def_rest(std::move(type), std::move(id)));
+                node->add(fun_def_rest(std::move(type), std::move(name_)));
             } else {
-                node->add(var_def_rest(std::move(type), std::move(id)));
+                node->add(var_def_rest(std::move(type), std::move(name_)));
             }
         } break;
         default:
@@ -93,19 +93,59 @@ ast::Ptr<ast::TypeDef> Parser::type_def() {
     auto alias = name_str();
     consume();
     expect(tok::SemiColon);
-    return tree<ast::TypeDef>(alias, std::move(type));
+    return tree<ast::TypeDef>(std::move(alias), std::move(type));
 }
 
 ast::Ptr<ast::VarDef>
-Parser::var_def_rest(ast::Ptr<ast::Expr>&& type, ast::Ptr<ast::Name>&& id) {
+Parser::var_def_rest(ast::Ptr<ast::Expr>&& type, std::string&& name_) {
     debug() << "var_def_rest\n";
-    return nullptr;
+    ast::Ptr<ast::Expr> value = nullptr;
+    if (next().is(tok::Assign)) {
+        consume();
+        value = expr();
+    }
+    expect(tok::SemiColon);
+    return tree<ast::VarDef>(std::move(name_), std::move(type), std::move(value));
 }
-ast::Ptr<ast::FunDef>
-Parser::fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, ast::Ptr<ast::Name>&& id) {
+
+ast::Ptr<ast::FunDef> Parser::fun_def_rest(
+    ast::Ptr<ast::Expr>&& ret_type, std::string&& name_) {
     debug() << "fun_def_rest\n";
     assert(next().type == tok::ParenOpen);
-    return nullptr;
+    auto params = param_list();
+    auto blck = block();
+    return tree<ast::FunDef>(
+        name_, std::move(ret_type), std::move(params), std::move(blck));
+}
+
+ast::Ptr<ast::Block> Parser::block() {
+    auto node = tree<ast::Block>();
+    expect(tok::BraceOpen);
+    expect(tok::BraceClose);
+    return node;
+}
+
+ast::Ptr<ast::ParamList> Parser::param_list() {
+    debug() << "param_list\n";
+    assert(next().is(tok::ParenOpen));
+    consume();
+    auto node = tree<ast::ParamList>();
+    while (!next().is(tok::ParenClose)) {
+        auto type = expr();
+        auto name_ = name_str();
+        consume();
+        ast::Ptr<ast::Expr> default_value = nullptr;
+        if (next().is(tok::Assign)) {
+            consume();
+            default_value = expr();
+        }
+        node->add(
+            tree<ast::Param>(std::move(name_), std::move(type), std::move(default_value)));
+        if (next().is(tok::Comma))
+            consume();
+    }
+    expect(tok::ParenClose);
+    return node;
 }
 
 ast::Ptr<ast::Expr> Parser::expr() {
@@ -199,14 +239,14 @@ ast::Ptr<ast::Expr> Parser::binop_tree(
     }
 }
 
-const std::string_view Parser::name_str() const {
+std::string Parser::name_str() const {
     assert(next().is(tok::Name));
-    return _ctx.name_str(next().str_id);
+    return std::string(_ctx.name_str(next().str_id));
 }
 
-const std::string_view Parser::value_str() const {
+std::string Parser::value_str() const {
     assert(next().is(tok::Number) || next().is(tok::String));
-    return _ctx.value_str(next().str_id);
+    return std::string(_ctx.value_str(next().str_id));
 }
 
 } // namespace ulam

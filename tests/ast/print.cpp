@@ -31,6 +31,17 @@ bool Printer::visit(ulam::ast::TypeDef& node) {
     return true;
 }
 
+bool Printer::visit(ulam::ast::VarDef& node) {
+    indent() << "VarDef `" << node.name() << "'" << (node.expr() ? " =" : "")
+             << "\n";
+    return true;
+}
+
+bool Printer::visit(ulam::ast::Param& node) {
+    indent() << "Param `"<< node.name() <<"'\n";
+    return true;
+}
+
 bool Printer::visit(ulam::ast::ParenExpr& node) {
     indent() << "(ParenExpr\n";
     inc_level();
