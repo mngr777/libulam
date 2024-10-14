@@ -30,25 +30,25 @@ private:
         return ast::make<N>(std::forward<Args>(args)...);
     }
 
-    ast::Ptr<ast::Module> module();
-    ast::Ptr<ast::ClassDef> class_def();
-    ast::Ptr<ast::TypeDef> type_def();
-    ast::Ptr<ast::VarDef> var_def();
+    ast::Ptr<ast::Module> parse_module();
+    ast::Ptr<ast::ClassDef> parse_class_def();
+    ast::Ptr<ast::TypeDef> parse_type_def();
+    ast::Ptr<ast::VarDef> parse_var_def();
     ast::Ptr<ast::VarDef>
-    var_def_rest(ast::Ptr<ast::Expr>&& type, std::string&& name_);
+    parse_var_def_rest(ast::Ptr<ast::Expr>&& type, std::string&& name_);
     ast::Ptr<ast::FunDef>
-    fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name_);
-    ast::Ptr<ast::ParamList> param_list();
-    ast::Ptr<ast::Param> param();
-    ast::Ptr<ast::Block> block();
+    parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name_);
+    ast::Ptr<ast::ParamList> parse_param_list();
+    ast::Ptr<ast::Param> parse_param();
+    ast::Ptr<ast::Block> parse_block();
 
-    ast::Ptr<ast::Expr> expr();
-    ast::Ptr<ast::Expr> expr_climb(ops::Prec min_prec);
-    ast::Ptr<ast::Expr> cast_expr();
-    ast::Ptr<ast::Expr> paren_expr_or_cast();
-    ast::Ptr<ast::Name> name();
-    ast::Ptr<ast::Number> number();
-    ast::Ptr<ast::String> string();
+    ast::Ptr<ast::Expr> parse_expr();
+    ast::Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
+    ast::Ptr<ast::Expr> parse_cast_expr();
+    ast::Ptr<ast::Expr> parse_paren_expr_or_cast();
+    ast::Ptr<ast::Name> parse_name();
+    ast::Ptr<ast::Number> parse_number();
+    ast::Ptr<ast::String> parse_string();
 
     ast::Ptr<ast::Expr>
     binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
