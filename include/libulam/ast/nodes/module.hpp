@@ -17,50 +17,29 @@ class ClassDef;
 class FunDef;
 class VarDef;
 
-class Module : public Node {
+class Module : public ListOf<TypeDef, VarDef, ClassDef> {
     ULAM_AST_NODE
-public:
-    template <typename N> void add(Ptr<N>&& member) {
-        _members.push_back(std::move(member));
-    }
-
-    unsigned child_num() const override { return _members.size(); }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        return as_node(_members[n]);
-    }
-
-private:
-    ListOf<ClassDef> _members;
 };
 
-class ClassDef : public Node {
+
+
+class ClassDef : public ListOf<TypeDef, FunDef, VarDef> {
     ULAM_AST_NODE
 public:
     ClassDef(Class::Kind kind, std::string name):
         _kind{kind}, _name(std::move(name)) {}
 
-    template <typename N> void add(Ptr<N>&& member) {
-        _members.push_back(std::move(member));
+    const Class::Kind kind() const {
+        return _kind;
     }
 
-    bool is(Class::Kind kind) const { return _kind == kind; }
-    Class::Kind kind() const { return _kind; }
-
-    const std::string& name() const { return _name; }
-
-    unsigned child_num() const override { return _members.size(); }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        return as_node(_members[n]);
+    const std::string& name() const {
+        return _name;
     }
 
 private:
     Class::Kind _kind;
     std::string _name;
-    ListOf<TypeDef, FunDef, VarDef> _members;
 };
 
 class TypeDef : public Node {

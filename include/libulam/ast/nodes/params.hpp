@@ -35,19 +35,8 @@ private:
     Ptr<Expr> _default_value;
 };
 
-class ParamList : public Node {
-public:
-    void add(Ptr<Param>&& param) { _params.push_back(std::move(param)); }
-
-    unsigned child_num() const override { return _params.size(); }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        return _params[n].get();
-    }
-
-private:
-    List<Param> _params;
+class ParamList : public List<Param> {
+    ULAM_AST_NODE
 };
 
 class ArgList : public Node {

@@ -12,9 +12,11 @@ class Visitor {
 public:
     virtual ~Visitor() {}
     virtual bool visit(Node& node) { return true; }
+    virtual bool visit(const Node& node) { return true; }
 
 #define NODE(str, cls)                                                         \
-    virtual bool visit(cls& node) { return true; }
+    virtual bool visit(cls& node) { return true; }                             \
+    virtual bool visit(const cls& node) { return true; }
 #include <libulam/ast/nodes.inc.hpp>
 #undef NODE
 

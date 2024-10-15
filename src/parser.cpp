@@ -213,6 +213,12 @@ ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
     return nullptr;
 }
 
+ast::Ptr<ast::ArrayAccess> Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
+    debug() << "array_access\n";
+    // TODO
+    return nullptr;
+}
+
 ast::Ptr<ast::Name> Parser::parse_name() {
     debug() << "name\n";
     assert(next().is(tok::Name));
