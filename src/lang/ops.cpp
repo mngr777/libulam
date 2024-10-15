@@ -15,6 +15,8 @@ const char* str(Op op) {
 
 Prec prec(Op op) {
     switch (op) {
+    case Op::FunCall:
+    case Op::ArrayAccess:
     case Op::MemberAccess:
         return 5;
     case Op::UnaryMinus:

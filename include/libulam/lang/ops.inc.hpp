@@ -6,7 +6,7 @@
 OP("<noop>", None)
 OP("++", PostInc)
 OP("--", PostDec)
-OP("()", Funcall)
+OP("()", FunCall)
 OP("[]", ArrayAccess)
 OP(".", MemberAccess)
 OP("++", PreInc)

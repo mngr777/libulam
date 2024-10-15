@@ -50,7 +50,7 @@ private:
     List<Param> _params;
 };
 
-class ArgsList : public Node {
+class ArgList : public Node {
 public:
 };
 

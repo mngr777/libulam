@@ -166,9 +166,17 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
         if (ops::prec(op) < min_prec)
             break;
         debug() << "op: " << ops::str(op) << "\n";
-        consume();
-        auto rhs = parse_expr_climb(ops::right_prec(op));
-        lhs = tree<ast::BinaryOp>(op, std::move(lhs), std::move(rhs));
+        switch (op) {
+        case Op::FunCall:
+            lhs = parse_funcall(std::move(lhs));
+            break;
+        case Op::ArrayAccess:
+            lhs = parse_array_access(std::move(lhs));
+            break;
+        default:
+            consume();
+            lhs = tree<ast::BinaryOp>(op, std::move(lhs), parse_expr_climb(ops::right_prec(op)));
+        }
     }
     return lhs;
 }
@@ -199,6 +207,12 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
     return tree<ast::ParenExpr>(std::move(inner));
 }
 
+ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
+    debug() << "funcall\n";
+    // TODO
+    return nullptr;
+}
+
 ast::Ptr<ast::Name> Parser::parse_name() {
     debug() << "name\n";
     assert(next().is(tok::Name));
@@ -226,7 +240,7 @@ ast::Ptr<ast::String> Parser::parse_string() {
 ast::Ptr<ast::Expr> Parser::binop_tree(
     Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs) {
     switch (op) {
-    case Op::Funcall: {
+    case Op::FunCall: {
         // TODO
         return nullptr;
     }

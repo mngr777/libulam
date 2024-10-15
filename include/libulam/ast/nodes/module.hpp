@@ -123,7 +123,6 @@ private:
     Ptr<Block> _body;
 };
 
-// TODO: type
 class VarDef : public Node {
     ULAM_AST_NODE
 public:

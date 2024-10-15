@@ -16,8 +16,6 @@ class Ident : public Expr {};
 
 class TypeIdent : public Ident {};
 
-class FunCall : public Expr {};
-
 class ParenExpr : public Expr {
     ULAM_AST_NODE
 public:

@@ -46,6 +46,8 @@ private:
     ast::Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
     ast::Ptr<ast::Expr> parse_cast_expr();
     ast::Ptr<ast::Expr> parse_paren_expr_or_cast();
+    ast::Ptr<ast::FunCall> parse_funcall(ast::Ptr<ast::Expr>&& obj);
+    ast::Ptr<ast::ArrayAccess> parse_array_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::Name> parse_name();
     ast::Ptr<ast::Number> parse_number();
     ast::Ptr<ast::String> parse_string();
