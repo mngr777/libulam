@@ -16,15 +16,13 @@ class Ident : public Expr {};
 
 class TypeIdent : public Ident {};
 
-class ParenExpr : public Expr {
+class ParenExpr : public Tuple<Expr, Expr> {
     ULAM_AST_NODE
 public:
-    ParenExpr(Ptr<Expr>&& inner): _inner{std::move(inner)} {}
+    ParenExpr(Ptr<Expr>&& inner):
+        Tuple{std::move(inner)} {}
 
-    Expr* inner() { return _inner.get(); }
-
-private:
-    Ptr<Expr> _inner;
+    ULAM_AST_TUPLE_PROP(inner, 0)
 };
 
 class OpExpr : public Expr {
@@ -37,44 +35,22 @@ protected:
     Op _op;
 };
 
-class BinaryOp : public OpExpr {
+class BinaryOp : public Tuple<OpExpr, Expr, Expr> {
     ULAM_AST_NODE
 public:
     BinaryOp(Op op, Ptr<Expr>&& lhs, Ptr<Expr>&& rhs):
-        OpExpr{op}, _lhs{std::move(lhs)}, _rhs{std::move(rhs)} {}
+        Tuple{std::move(lhs), std::move(rhs), op} {}
 
-    Expr* lhs() { return _lhs.get(); }
-    Expr* rhs() { return _rhs.get(); }
-
-    unsigned child_num() const override { return 1; }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        return n == 0 ? lhs() : rhs();
-    }
-
-private:
-    Ptr<Expr> _lhs;
-    Ptr<Expr> _rhs;
+    ULAM_AST_TUPLE_PROP(lhs, 0)
+    ULAM_AST_TUPLE_PROP(rhs, 0)
 };
 
-class UnaryOp : public OpExpr {
+class UnaryOp : public Tuple<OpExpr, Expr> {
 public:
-    UnaryOp(Op op, Ptr<Expr>&& arg): OpExpr{op}, _arg{std::move(arg)} {
-        assert(_arg);
-    }
+    UnaryOp(Op op, Ptr<Expr>&& arg):
+        Tuple{std::move(arg), op} {}
 
-    Expr* arg() { return _arg.get(); }
-
-    unsigned child_num() const override { return 1; }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        return arg();
-    }
-
-private:
-    Ptr<Expr> _arg;
+    ULAM_AST_TUPLE_PROP(arg, 0)
 };
 
 class VarRef : public Expr {};

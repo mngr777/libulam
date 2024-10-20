@@ -3,7 +3,6 @@
 #include <libulam/ast/visitor.hpp>
 #include <memory>
 #include <tuple>
-#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -14,6 +13,13 @@ public:                                                                        \
     virtual bool accept(Visitor& v) const override { return v.visit(*this); }  \
                                                                                \
 private:
+
+#define ULAM_AST_TUPLE_PROP(name, index)                                       \
+    auto name() { return std::get<index>(_items).get(); }                      \
+    const auto name() const { return std::get<index>(_items).get(); }          \
+    auto replace_##name(ElementT<index>&& repl) {                              \
+        return replace<index>(std::move(repl));                                \
+    }
 
 namespace ulam::ast {
 
@@ -50,16 +56,29 @@ public:
     virtual const Node* child(unsigned n) const { return nullptr; }
 };
 
-template <typename... Ns> class Tuple : public Node {
-private:
-    using T = std::tuple<Ptr<Ns>...>;
-    template <std::size_t I> using E = typename std::tuple_element<I, T>::type;
-
+template <typename B, typename... Ns> class Tuple : public B {
 public:
-    unsigned child_num() const override { return std::tuple_size<T>(); }
+    using TupleT = std::tuple<Ptr<Ns>...>;
+    template <std::size_t I>
+    using ElementT = typename std::tuple_element<I, TupleT>::type;
 
-    Node* child(unsigned n) override { return getters()[n](*this); }
-    const Node* child(unsigned n) const override { return getters()[n](*this); }
+    template <typename... BaseArgs>
+    Tuple(Ptr<Ns>&&... items, BaseArgs&&... base_args):
+        B{std::forward<BaseArgs>(base_args)...},
+        _items(std::forward<Ptr<Ns>>(items)...) {}
+
+    Tuple(Ptr<Ns>&&... items): _items(std::forward<Ptr<Ns>>(items)...) {}
+
+    unsigned child_num() const override { return std::tuple_size<TupleT>(); }
+
+    Node* child(unsigned n) override {
+        auto node =
+            getters(std::make_index_sequence<sizeof...(Ns)>())[n](*this);
+        return const_cast<Node*>(node);
+    }
+    const Node* child(unsigned n) const override {
+        return getters(std::make_index_sequence<sizeof...(Ns)>())[n](*this);
+    }
 
 protected:
     template <std::size_t I> auto get() { return std::get<I>(_items).get(); }
@@ -68,31 +87,30 @@ protected:
         return std::get<I>(_items).get();
     }
 
-    template <std::size_t I> E<I> replace(E<I>&& repl) {
+    template <std::size_t I> ElementT<I> replace(ElementT<I>&& repl) {
         std::swap(std::get<I>(_items), repl);
-        return repl;
+        return std::move(repl);
     }
 
+    TupleT _items;
+
 private:
-    template <std::size_t I> static Node* item_as_node(Tuple& self) {
+    template <std::size_t I>
+    static const Node* item_as_node(const Tuple& self) {
         return std::get<I>(self._items).get();
     }
 
     template <std::size_t... Indices>
-    auto static getters(
-        std::index_sequence<Indices...> seq =
-            std::make_index_sequence<sizeof...(Ns)>()) {
+    auto static getters(std::index_sequence<Indices...>) {
         using Get = decltype(item_as_node<0>);
-        static constexpr Get* table[] = {as_node<Indices>...};
-        return std::decay(table);
+        static constexpr Get* table[] = {item_as_node<Indices>...};
+        return table;
     }
-
-    T _items;
 };
 
 template <typename N> class List : public Node {
 public:
-    using Item = Ptr<N>;
+    using ItemT = Ptr<N>;
 
     void add(Ptr<N>&& item) { _items.push_back(std::move(item)); }
 
@@ -105,10 +123,10 @@ public:
         return _items[n].get();
     }
 
-    Item replace(unsigned n, Ptr<N>&& repl) {
+    ItemT replace(unsigned n, Ptr<N>&& repl) {
         assert(n < _items.size());
         _items[n].swap(repl);
-        return repl;
+        return std::move(repl);
     }
 
     unsigned child_num() const override { return _items.size(); }
@@ -117,30 +135,30 @@ public:
     const Node* child(unsigned n) const override { return _items[n].get(); }
 
 private:
-    std::vector<Item> _items; // TODO: list?
+    std::vector<ItemT> _items; // TODO: list?
 };
 
-template <typename... Ns> class ListOf : public Node {
+template <typename B, typename... Ns> class ListOf : public B {
 public:
-    using Item = Variant<Ns...>;
+    using ItemT = Variant<Ns...>;
 
     template <typename N> void add(Ptr<N>&& item) {
         _items.push_back(std::move(item));
     }
 
-    Item& get(unsigned n) {
+    ItemT& get(unsigned n) {
         assert(n < _items.size());
         return _items[n];
     }
-    const Item& get(unsigned n) const {
+    const ItemT& get(unsigned n) const {
         assert(n < _items.size());
         return _items[n];
     }
 
-    template <typename N> Item replace(unsigned n, Ptr<N>&& repl) {
-        return replace(Item{repl});
+    template <typename N> ItemT replace(unsigned n, Ptr<N>&& repl) {
+        return replace(ItemT{repl});
     }
-    template <typename N> Item replace(unsigned n, Item&& repl) {
+    template <typename N> ItemT replace(unsigned n, ItemT&& repl) {
         assert(n < _items.size());
         _items[n].swap(repl);
         return repl;
@@ -152,7 +170,7 @@ public:
     const Node* child(unsigned n) const override { return as_node(_items[n]); }
 
 private:
-    std::vector<Variant<Ns...>> _items; // TODO: list?
+    std::vector<ItemT> _items; // TODO: list?
 };
 
 } // namespace ulam::ast

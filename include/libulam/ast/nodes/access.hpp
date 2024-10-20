@@ -1,37 +1,30 @@
 #pragma once
+#include "libulam/ast/node.hpp"
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <utility>
 
 namespace ulam::ast {
 
-class FunCall : public Expr {
+class FunCall : public Tuple<Expr, Expr, ArgList> {
     ULAM_AST_NODE
 public:
     FunCall(Ptr<Expr>&& obj, Ptr<ArgList>&& args):
-        _obj{std::move(obj)}, _args{std::move(args)} {}
+        Tuple{std::move(obj), std::move(args)} {}
 
-    Expr* obj() { return _obj.get(); }
-    ArgList* args() { return _args.get(); }
-
-private:
-    Ptr<Expr> _obj;
-    Ptr<ArgList> _args;
+    ULAM_AST_TUPLE_PROP(obj, 0)
+    ULAM_AST_TUPLE_PROP(args, 0)
 };
 
-class ArrayAccess : public Expr {
+class ArrayAccess : public Tuple<Expr, Expr, Expr> {
     ULAM_AST_NODE
 public:
     ArrayAccess(Ptr<Expr>&& array, Ptr<Expr>&& index):
-        _array{std::move(array)}, _index{std::move(index)} {}
+        Tuple{std::move(array), std::move(index)} {}
 
-    Expr* array() { return _array.get(); }
-    Expr* index() { return _index.get(); }
-
-private:
-    Ptr<Expr> _array;
-    Ptr<Expr> _index;
+    ULAM_AST_TUPLE_PROP(array, 0)
+    ULAM_AST_TUPLE_PROP(index, 0)
 };
 
-
-}
+} // namespace ulam::ast

@@ -65,16 +65,16 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
     while (!next().is(tok::BraceClose)) {
         switch (next().type) {
         case tok::Typedef:
-            node->add(parse_type_def());
+            node->body()->add(parse_type_def());
             break;
         case tok::Name: {
             auto type = parse_expr();
             auto name_ = name_str();
             consume();
             if (next().is(tok::ParenOpen)) {
-                node->add(parse_fun_def_rest(std::move(type), std::move(name_)));
+                node->body()->add(parse_fun_def_rest(std::move(type), std::move(name_)));
             } else {
-                node->add(parse_var_def_rest(std::move(type), std::move(name_)));
+                node->body()->add(parse_var_def_rest(std::move(type), std::move(name_)));
             }
         } break;
         default:
@@ -115,7 +115,7 @@ ast::Ptr<ast::FunDef> Parser::parse_fun_def_rest(
     auto params = parse_param_list();
     auto block = parse_block();
     return tree<ast::FunDef>(
-        name_, std::move(ret_type), std::move(params), std::move(block));
+        std::move(name_), std::move(ret_type), std::move(params), std::move(block));
 }
 
 ast::Ptr<ast::Block> Parser::parse_block() {

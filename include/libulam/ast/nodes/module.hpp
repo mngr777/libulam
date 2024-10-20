@@ -6,8 +6,8 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/lang/class.hpp>
+#include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace ulam::ast {
@@ -17,112 +17,76 @@ class ClassDef;
 class FunDef;
 class VarDef;
 
-class Module : public ListOf<TypeDef, VarDef, ClassDef> {
+class Module : public ListOf<Node, TypeDef, VarDef, ClassDef> {
     ULAM_AST_NODE
 };
 
+class ClassDefBody : public ListOf<Node, TypeDef, FunDef, VarDef> {
+    ULAM_AST_NODE
+};
 
-
-class ClassDef : public ListOf<TypeDef, FunDef, VarDef> {
+class ClassDef : public Tuple<Node, ClassDefBody> {
     ULAM_AST_NODE
 public:
     ClassDef(Class::Kind kind, std::string name):
-        _kind{kind}, _name(std::move(name)) {}
+        Tuple{std::make_unique<ClassDefBody>()}, _kind{kind}, _name(std::move(name)) {}
 
-    const Class::Kind kind() const {
-        return _kind;
-    }
+    const Class::Kind kind() const { return _kind; }
+    const std::string& name() const { return _name; }
 
-    const std::string& name() const {
-        return _name;
-    }
+    ULAM_AST_TUPLE_PROP(body, 0)
 
 private:
     Class::Kind _kind;
     std::string _name;
 };
 
-class TypeDef : public Node {
+class TypeDef : public Tuple<Node, Expr> {
     ULAM_AST_NODE
 public:
     TypeDef(std::string alias, Ptr<Expr>&& expr):
-        _alias{std::move(alias)}, _expr{std::move(expr)} {}
+        Tuple{std::move(expr)}, _alias{std::move(alias)} {}
 
     const std::string& alias() const { return _alias; }
 
-    Expr* expr() { return _expr.get(); }
-
-    unsigned child_num() const override { return 1; }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        return expr();
-    }
+    ULAM_AST_TUPLE_PROP(expr, 0)
 
 private:
     std::string _alias;
-    Ptr<Expr> _expr;
 };
 
-class FunDef : public Node {
+class FunDef : public Tuple<Node, Expr, ParamList, Block> {
     ULAM_AST_NODE
 public:
     FunDef(
         std::string name,
         Ptr<Expr>&& ret_type,
         Ptr<ParamList>&& params,
-        Ptr<Block>&& body):
-        _name{std::move(name)},
-        _ret_type{std::move(ret_type)},
-        _params{std::move(params)},
-        _body{std::move(body)} {}
+        Ptr<Block>(block)):
+        Tuple{std::move(ret_type), std::move(params), std::move(block)},
+        _name{std::move(name)} {}
 
-    const std::string& name() const { return _name; }
+    const std::string& name() { return _name; }
 
-    Expr* ret_type() { return _ret_type.get(); }
-    ParamList* params() { return _params.get(); }
-    Block* body() { return _body.get(); }
-
-    unsigned child_num() const override { return 3; }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        if (n == 0)
-            return ret_type();
-        if (n == 1)
-            return params();
-        return body();
-        ;
-    }
+    ULAM_AST_TUPLE_PROP(ret_type, 0)
+    ULAM_AST_TUPLE_PROP(params, 1)
+    ULAM_AST_TUPLE_PROP(body, 2)
 
 private:
     std::string _name;
-    Ptr<Expr> _ret_type;
-    Ptr<ParamList> _params;
-    Ptr<Block> _body;
 };
 
-class VarDef : public Node {
+class VarDef : public Tuple<Node, Expr, Expr> {
     ULAM_AST_NODE
 public:
     VarDef(std::string name, Ptr<Expr>&& type, Ptr<Expr>&& expr):
-        _name{std::move(name)},
-        _type{std::move(type)},
-        _expr{std::move(expr)} {}
+        Tuple{std::move(type), std::move(expr)}, _name{std::move(name)} {}
 
     const std::string& name() const { return _name; }
 
-    Expr* type() { return _type.get(); }
-    Expr* expr() { return _expr.get(); }
+    ULAM_AST_TUPLE_PROP(type, 0)
+    ULAM_AST_TUPLE_PROP(expr, 1)
 
-    unsigned child_num() const override { return 2; }
-
-    Node* child(unsigned n) override {
-        assert(n < child_num());
-        if (n == 0)
-            return type();
-        return expr();
-    }
 
 private:
     std::string _name;
