@@ -58,5 +58,5 @@ int main() {
             std::cout << (str ? str : token.type_name());
         }
         std::cout << "\n";
-    } while (token.type != ulam::tok::None);
+    } while (token.type != ulam::tok::Eof);
 }

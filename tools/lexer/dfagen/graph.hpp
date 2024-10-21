@@ -39,7 +39,7 @@ private:
 
         std::string name;
         bool is_final;
-        tok::Type type{tok::None};
+        tok::Type type{tok::Eof};
         std::vector<EdgePtr> edges;
         std::size_t index{0};
         std::size_t first_edge_index{0};
@@ -84,7 +84,7 @@ private:
     NodePtr make_node(
         std::string name,
         bool is_final = false,
-        const tok::Type type = tok::None);
+        const tok::Type type = tok::Eof);
 
     void for_each(const NodeRecCb& cb);
 

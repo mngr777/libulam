@@ -1,7 +1,8 @@
 #pragma once
-#include "libulam/types.hpp"
-#include "libulam/lang/ops.hpp"
 #include "libulam/lang/class.hpp"
+#include "libulam/lang/ops.hpp"
+#include "libulam/src_loc.hpp"
+#include <string_view>
 
 namespace ulam {
 namespace tok {
@@ -16,6 +17,9 @@ enum Type : std::uint8_t {
 const char* type_str(Type type);
 const char* type_name(Type type);
 
+// NOTE: '@keyword' is allowed
+tok::Type type_by_word(const std::string_view str);
+
 Class::Kind class_kind(Type type);
 
 Op bin_op(Type type);
@@ -24,10 +28,13 @@ Op unary_post_op(Type type);
 
 } // namespace tok
 
+using str_id_t = std::uint32_t; // TODO: move to str_pool
+constexpr str_id_t NoStrId = -1;
+
 struct Token {
-    tok::Type type{tok::None};
-    SrcLocId loc_id{NoSrcLocId};
-    StrId str_id{NoStrId};
+    tok::Type type{tok::Eof};
+    loc_id_t loc_id{NoLocId};
+    str_id_t str_id{NoStrId};
 
     const char* type_str() const { return tok::type_str(type); }
     const char* type_name() const { return tok::type_name(type); }
@@ -35,6 +42,10 @@ struct Token {
     bool is(tok::Type typ) const { return typ == type; }
     bool is(tok::Type typ1, tok::Type typ2) const {
         return is(typ1) || is(typ2);
+    }
+
+    template <typename T, typename... Ts> bool in(T first, Ts... rest) {
+        return is(first) && in(rest...);
     }
 
     Class::Kind class_kind() const { return tok::class_kind(type); }

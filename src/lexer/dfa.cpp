@@ -28,7 +28,7 @@ Dfa::Dfa():
     _nodes(dfa::NodeList),
     _edges(dfa::EdgeList),
     _state(0),
-    _type(tok::None) {}
+    _type(tok::Eof) {}
 
 Dfa::Result Dfa::step(char ch) {
     assert(ch >= 0);
