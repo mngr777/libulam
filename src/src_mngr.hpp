@@ -12,6 +12,9 @@ public:
     Src* file(std::filesystem::path path);
 
     loc_id_t loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t chr);
+    SrcLoc loc(loc_id_t loc_id);
+
+    std::string_view str_at(loc_id_t loc_id, std::size_t size);
 
 private:
     using Ptr = std::unique_ptr<Src>;

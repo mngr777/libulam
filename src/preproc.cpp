@@ -45,7 +45,7 @@ Preproc& Preproc::operator>>(Token& token) {
 
 void Preproc::push(Src* src) {
     assert(src);
-    _stack.emplace(src, Lex{_sm, src->id(), src->content()});
+    _stack.emplace(src, Lex{*this, _sm, src->id(), src->content()});
 }
 
 Lex& Preproc::lexer() {
@@ -74,7 +74,8 @@ void Preproc::preproc_use() {
 }
 
 bool Preproc::preproc_load() {
-    auto path = lexer().lex_path();
+    Token path;
+    lexer().lex_path(path);
     auto src = _sm.file(path);
     if (src)
         push(src);

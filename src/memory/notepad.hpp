@@ -1,30 +1,28 @@
 #pragma once
-#include <memory_resource>
+#include <cassert>
+#include <cstddef>
 #include <string_view>
 
 namespace ulam::mem {
 
 class Notepad {
 private:
-    using CharT = std::string_view::value_type;
-
     struct Page {
-        Page(CharT* data, std::size_t size):
-            data(data), cur(data), size(size) {}
+        Page(char* data, std::size_t size): data(data), cur(data), size(size) {}
 
         std::size_t freespace() { return size - (cur - data); }
 
-        CharT* data;
-        CharT* cur;
+        char* data;
+        char* cur;
         std::size_t size;
-        Page* next {nullptr};
+        Page* next{nullptr};
     };
 
 public:
-    static const std::size_t HeadSize = sizeof(Page);
-
-    explicit Notepad(std::pmr::memory_resource* res, std::size_t pagesize = 1024):
-        _pool(res), _pagesize(pagesize) {} // TODO: alignment and corresponting size
+    explicit Notepad(std::size_t pagesize = 512): _pagesize(pagesize) {
+        assert(pagesize % 8 == 0);
+    }
+    ~Notepad();
 
     Notepad(const Notepad&) = delete;
     Notepad& operator=(const Notepad&) = delete;
@@ -34,11 +32,9 @@ public:
 private:
     void alloc_next(const std::size_t size);
 
-    std::pmr::unsynchronized_pool_resource _pool;
     const std::size_t _pagesize;
-    Page* _first {nullptr};
-    Page* _last {nullptr};
+    Page* _first{nullptr};
+    Page* _last{nullptr};
 };
 
 } // namespace ulam::mem
-

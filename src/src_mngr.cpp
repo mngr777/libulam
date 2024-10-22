@@ -22,4 +22,13 @@ loc_id_t SrcMngr::loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t 
     return id;
 }
 
+SrcLoc SrcMngr::loc(loc_id_t loc_id) {
+    assert(loc_id < _locs.size());
+    return _locs[loc_id];
+}
+
+std::string_view SrcMngr::str_at(loc_id_t loc_id, std::size_t size) {
+    return {loc(loc_id).ptr(), size};
+}
+
 } // namespace ulam

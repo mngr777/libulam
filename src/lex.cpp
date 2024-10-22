@@ -157,9 +157,53 @@ void Lex::lex(Token& token) {
     case '@':
         lex_word();
         break;
-
-        // TODO
-
+    case '[':
+        complete(tok::BracketL);
+        break;
+    case '\\':
+        if (at('\n')) {
+            advance();
+            lex(token);
+        } else if (at('\r') && next() == '\n') {
+            advance(2);
+            lex(token);
+        } else {
+            complete(tok::UnexpectedChar);
+        }
+        break;
+    case ']':
+        complete(tok::BracketR);
+    case '^':
+        if (at('=')) {
+            advance();
+            complete(tok::CaretEqual);
+        } else {
+            complete(tok::Caret);
+        }
+        break;
+    case '`':
+        complete(tok::UnexpectedChar);
+        break;
+    case '{':
+        complete(tok::BraceL);
+        break;
+    case '|':
+        if (at('|')) {
+            advance();
+            complete(tok::PipePipe);
+        } else if (at('=')) {
+            advance();
+            complete(tok::PipeEqual);
+        } else {
+            complete(tok::Pipe);
+        }
+        break;
+    case '}':
+        complete(tok::BraceR);
+        break;
+    case '~':
+        complete(tok::Tilde);
+        break;
     default:
         if (detail::is_digit(ch)) {
             lex_number();
@@ -225,7 +269,7 @@ void Lex::start(Token& token) {
 void Lex::complete(tok::Type type) {
     assert(_token);
     _token->type = type;
-    // length?
+    _token->size = _cur - _token_start;
 }
 
 void Lex::newline(std::size_t size) {

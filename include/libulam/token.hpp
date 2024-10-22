@@ -32,7 +32,10 @@ using str_id_t = std::uint32_t; // TODO: move to str_pool
 constexpr str_id_t NoStrId = -1;
 
 struct Token {
+    using size_t = std::uint16_t;
+
     tok::Type type{tok::Eof};
+    size_t size{0};
     loc_id_t loc_id{NoLocId};
     str_id_t str_id{NoStrId};
 
