@@ -1,6 +1,6 @@
-#include "src/src.hpp"
-#include <cstring>
+#include "libulam/src.hpp"
 #include <cstdio>
+#include <cstring>
 
 namespace ulam {
 

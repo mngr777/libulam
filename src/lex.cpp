@@ -1,8 +1,8 @@
-#include "src/lex.hpp"
+#include "libulam/lex.hpp"
+#include "libulam/preproc.hpp"
+#include "libulam/src_mngr.hpp"
 #include "libulam/token.hpp"
 #include "src/detail/str.hpp"
-#include "src/preproc.hpp"
-#include "src/src_mngr.hpp"
 #include <string_view>
 
 namespace ulam {
@@ -10,7 +10,7 @@ namespace ulam {
 void Lex::lex(Token& token) {
     skip_whitespace();
     start(token);
-    char ch = cur();
+    char ch = _cur[0];
     advance();
     switch (ch) {
     case '\0':
@@ -73,7 +73,7 @@ void Lex::lex(Token& token) {
         if (at('=')) {
             advance();
             complete(tok::PlusEqual);
-        } else if (detail::is_digit(cur())) {
+        } else if (detail::is_digit(_cur[0])) {
             complete(tok::PlusSign);
         } else {
             complete(tok::Plus);
@@ -86,14 +86,14 @@ void Lex::lex(Token& token) {
         if (at('=')) {
             advance();
             complete(tok::MinusEqual);
-        } else if (detail::is_digit(cur())) {
+        } else if (detail::is_digit(_cur[0])) {
             complete(tok::MinusSign);
         } else {
             complete(tok::Minus);
         }
         break;
     case '.':
-        if (at('.') && next(1) == '.') {
+        if (at('.') && _cur[1] == '.') {
             advance(2);
             complete(tok::Ellipsis);
         } else {
@@ -164,7 +164,7 @@ void Lex::lex(Token& token) {
         if (at('\n')) {
             advance();
             lex(token);
-        } else if (at('\r') && next() == '\n') {
+        } else if (at('\r') && _cur[1] == '\n') {
             advance(2);
             lex(token);
         } else {
@@ -221,30 +221,20 @@ void Lex::lex_path(Token& token) {
     _expect_path = false;
 }
 
-char Lex::next(std::size_t off) const {
-    assert(off > 0 && _cur + off < _buf.end());
-    return _cur[off];
-}
-
-char Lex::prev() const {
-    assert(_cur > _buf.start());
-    return _cur[-1];
-}
-
-void Lex::advance(std::size_t steps) {
-    assert(_cur + steps < _buf.end());
-    _cur += steps;
+void Lex::advance(std::size_t len) {
+    assert(_cur + len <= _buf.end());
+    _cur += len;
 }
 
 void Lex::skip_whitespace() {
     while (true) {
-        switch (cur()) {
+        switch (_cur[0]) {
         case ' ':
         case '\t':
             advance();
             break;
         case '\r':
-            if (next() == '\n')
+            if (_cur[1] == '\n')
                 newline(2);
             break;
         case '\n':
@@ -256,12 +246,10 @@ void Lex::skip_whitespace() {
     }
 }
 
-loc_id_t Lex::loc_id() {
-    return _sm.loc_id(_src_id, _cur, _linum, chr());
-}
+loc_id_t Lex::loc_id() { return _sm.loc_id(_src_id, _cur, _linum, chr()); }
 
 void Lex::start(Token& token) {
-    _token_start = _cur;
+    _tok_start = _cur;
     _token = &token;
     token.loc_id = loc_id();
 }
@@ -269,7 +257,7 @@ void Lex::start(Token& token) {
 void Lex::complete(tok::Type type) {
     assert(_token);
     _token->type = type;
-    _token->size = _cur - _token_start;
+    _token->size = _cur - _tok_start;
 }
 
 void Lex::newline(std::size_t size) {
@@ -282,11 +270,11 @@ void Lex::newline(std::size_t size) {
 void Lex::lex_str(char closing) {
     bool esc = false;
     while (true) {
-        switch (cur()) {
+        switch (_cur[0]) {
         case '\0':
             goto Done;
         case '\r':
-            if (next() == '\n') {
+            if (_cur[1] == '\n') {
                 if (!esc)
                     goto Done; // unterminated
                 advance();
@@ -333,11 +321,11 @@ Done:
 void Lex::lex_comment() {
     bool esc = false;
     while (true) {
-        switch (cur()) {
+        switch (_cur[0]) {
         case '\0':
             return;
         case '\r':
-            if (next() == '\n' && !esc)
+            if (_cur[1] == '\n' && !esc)
                 return;
         case '\n':
             return;
@@ -355,33 +343,33 @@ void Lex::lex_comment() {
 }
 
 void Lex::lex_number() {
-    assert(_token_start);
-    assert(detail::is_digit(_token_start[0]));
+    assert(_tok_start);
+    assert(detail::is_digit(_tok_start[0]));
     bool hex = false;
-    if (_token_start[0] == '0') {
+    if (_tok_start[0] == '0') {
         // Scroll over `0x' or `0b' prefix if there's a digit after
         hex = at('x');
-        if ((hex || at('b')) && detail::is_digit(next()))
+        if ((hex || at('b')) && detail::is_digit(_cur[1]))
             advance();
     }
-    while (hex ? detail::is_xdigit(cur()) : detail::is_digit(cur()))
+    while (hex ? detail::is_xdigit(_cur[0]) : detail::is_digit(_cur[0]))
         advance();
     // Allow `u' suffix if there were some digits before it
-    if ((at('u') || at('U')) && detail::is_digit(prev()))
+    if ((at('u') || at('U')) && detail::is_digit(_cur[-1]))
         advance();
     // Check if separated from next token if required
-    if (detail::is_word(cur()) || detail::is_digit(cur()))
+    if (detail::is_word(_cur[0]) || detail::is_digit(_cur[0]))
         _pp.diag(loc_id(), "Number not separated");
     complete(tok::Number);
 }
 
 void Lex::lex_word() {
-    assert(_token_start);
-    assert(detail::is_word(cur()));
-    while (detail::is_word(cur()))
+    assert(_tok_start);
+    assert(_cur[-1] == '@' || detail::is_word(_cur[-1]));
+    while (detail::is_word(_cur[0]))
         advance();
     auto type = tok::type_by_word(
-        {_token_start, static_cast<std::size_t>(_cur - _token_start)});
+        {_tok_start, static_cast<std::size_t>(_cur - _tok_start)});
     complete(type);
 }
 

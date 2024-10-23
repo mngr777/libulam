@@ -1,12 +1,7 @@
-#include "libulam/token.hpp"
-#include "src/context.hpp"
-#include "src/parser.hpp"
-#include "src/lexer.hpp"
-#include "src/source.hpp"
-#include "src/source_manager.hpp"
+#include "libulam/parser.hpp"
+#include "libulam/src_mngr.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream>
-#include <memory_resource>
 
 /*
     typedef C.D B;
@@ -22,16 +17,11 @@ element A {
 )END";
 
 int main() {
-    auto res = std::pmr::get_default_resource();
-    std::pmr::set_default_resource(std::pmr::null_memory_resource());
+    ulam::SrcMngr sm;
+    ulam::Parser parser{sm};
 
-    ulam::SourceManager sm{res};
     std::string text{Program};
-    auto src = sm.add_string("", text);
-
-    ulam::Context ctx{res};
-    ulam::Parser parser{ctx, src->stream()};
-    auto ast = parser.parse();
+    auto ast = parser.parse_str(text);
 
     std::cout << text << "\n";
     test::ast::Printer p{std::cout};

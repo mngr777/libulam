@@ -1,6 +1,6 @@
-#include "src/src_mngr.hpp"
+#include "libulam/src_mngr.hpp"
+#include "libulam/src_loc.hpp"
 #include <cassert>
-#include <memory>
 
 namespace ulam {
 
@@ -23,6 +23,7 @@ loc_id_t SrcMngr::loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t 
 }
 
 SrcLoc SrcMngr::loc(loc_id_t loc_id) {
+    assert(loc_id != NoLocId);
     assert(loc_id < _locs.size());
     return _locs[loc_id];
 }

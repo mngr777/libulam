@@ -2,7 +2,7 @@
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/nodes/params.hpp"
-#include <libulam/ast/visitor.hpp>
+#include "libulam/ast/visitor.hpp"
 #include <ostream>
 
 namespace test::ast {
@@ -11,7 +11,7 @@ class PrinterBase : public ulam::ast::Visitor {
 public:
     PrinterBase(std::ostream& os): _os{os} {}
 #define NODE(str, cls) bool visit(ulam::ast::cls& node) override;
-#include <libulam/ast/nodes.inc.hpp>
+#include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
     void print(ulam::ast::Node* node);

@@ -9,8 +9,8 @@ namespace {
 auto make_word_type_table() {
     std::map<std::string_view, Type> table;
 #define TOK(str, type)                                                         \
-    if (str && detail::is_word(*(char*)str))                                   \
-        table[str] = type;
+    if (str && (*((char*)str) == '@' || detail::is_word(*(char*)str)))         \
+        table[str ? str : "_dummy_"] = type;
 #include "libulam/token.inc.hpp"
 #undef TOK
     return table;

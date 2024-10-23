@@ -1,11 +1,9 @@
+#include "libulam/lex.hpp"
+#include "libulam/preproc.hpp"
+#include "libulam/src.hpp"
+#include "libulam/src_mngr.hpp"
 #include "libulam/token.hpp"
-#include "src/context.hpp"
-#include "src/lexer.hpp"
-#include "src/source.hpp"
-#include "src/source_manager.hpp"
-#include <array>
 #include <iostream>
-#include <memory_resource>
 
 static const char* Program = R"END(
 ulam 1;
@@ -39,24 +37,22 @@ element A : B {
 )END";
 
 int main() {
-    auto res = std::pmr::get_default_resource();
-    std::pmr::set_default_resource(std::pmr::null_memory_resource());
-    ulam::Context ctx{res};
-    ulam::SourceManager sm{res};
+    ulam::SrcMngr sm;
+    ulam::Preproc pp{sm};
     std::string text{Program};
-    auto source = sm.add_string("program", text);
-    ulam::Lexer lexer{ctx, source->stream()};
+    auto src = sm.str(text);
+    ulam::Lex lex{pp, sm, src->id(), src->content()};
     ulam::Token token;
     do {
-        lexer >> token;
-        if (token.is(ulam::tok::Name)) {
-            std::cout << "`" << ctx.name_str(token.str_id) << "'";
-        } else if (token.is(ulam::tok::Number, ulam::tok::String)) {
-            std::cout << ctx.value_str(token.str_id);
+        lex.lex(token);
+        if (token.in(ulam::tok::Name, ulam::tok::Number, ulam::tok::String)) {
+            std::cout << "`" << sm.str_at(token.loc_id, token.size) << "'";
         } else {
             const char* str = token.type_str();
             std::cout << (str ? str : token.type_name());
         }
         std::cout << "\n";
     } while (token.type != ulam::tok::Eof);
+
+    token.type = ulam::tok::Name;
 }

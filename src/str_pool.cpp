@@ -1,4 +1,4 @@
-#include "src/str_pool.hpp"
+#include "libulam/str_pool.hpp"
 #include <cassert>
 
 namespace ulam {

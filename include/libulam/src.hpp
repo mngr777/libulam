@@ -1,6 +1,6 @@
 #pragma once
 #include "libulam/src_loc.hpp"
-#include "src/memory/buf.hpp"
+#include "libulam/memory/buf.hpp"
 #include <filesystem>
 #include <optional>
 
@@ -10,6 +10,9 @@ class Src {
 public:
     Src(src_id_t id): _id{id} {}
     virtual ~Src() {}
+
+    Src(const Src&) = delete;
+    Src& operator=(const Src&) = delete;
 
     virtual const mem::BufRef content() = 0;
 

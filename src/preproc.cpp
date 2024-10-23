@@ -1,4 +1,4 @@
-#include "src/preproc.hpp"
+#include "libulam/preproc.hpp"
 #include "libulam/token.hpp"
 #include <cassert>
 
@@ -53,9 +53,7 @@ Lex& Preproc::lexer() {
     return _stack.top().second;
 }
 
-void Preproc::lex(Token& token) {
-    return lexer().lex(token);
-}
+void Preproc::lex(Token& token) { return lexer().lex(token); }
 
 void Preproc::preproc_ulam() {
     Token token;
@@ -76,7 +74,7 @@ void Preproc::preproc_use() {
 bool Preproc::preproc_load() {
     Token path;
     lexer().lex_path(path);
-    auto src = _sm.file(path);
+    auto src = _sm.file(_sm.str_at(path.loc_id, path.size));
     if (src)
         push(src);
     return src;

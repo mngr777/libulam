@@ -32,9 +32,16 @@ LANG_SOURCE_FILES = \
 
 # Library
 HEADER_FILES = \
-	include/libulam/libulam.hpp \
 	$(AST_HEADER_FILES) \
 	$(LANG_HEADER_FILES) \
+	include/libulam/memory/buf.hpp \
+	include/libulam/memory/notepad.hpp \
+	include/libulam/parser.hpp \
+	include/libulam/preproc.hpp \
+	include/libulam/src.hpp \
+	include/libulam/src_loc.hpp \
+	include/libulam/src_mngr.hpp \
+	include/libulam/str_pool.hpp \
 	include/libulam/types.hpp \
 	include/libulam/token.hpp
 
@@ -42,38 +49,16 @@ SOURCE_FILES = \
 	$(HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
 	$(LANG_SOURCE_FILES) \
-	src/context.hpp \
-	src/context.cpp \
 	src/debug.hpp \
-	src/lexer.hpp \
-	src/lexer.cpp \
-	src/lexer/dfa.hpp \
-	src/lexer/dfa.cpp \
-	src/memory/notepad.hpp \
 	src/memory/notepad.cpp \
-	src/memory/str_buf.hpp \
-	src/memory/str_buf.cpp \
-	src/parser.hpp \
+	src/memory/buf.cpp \
 	src/parser.cpp \
-	src/source.hpp \
-	src/source.cpp \
-	src/source/line_buf.hpp \
-	src/source/line_buf.cpp \
-	src/source/line_storage.hpp \
-	src/source/line_storage.cpp \
-	src/source_manager.hpp \
-	src/source_manager.cpp \
-	src/str_storage.hpp \
-	src/str_storage.cpp \
+	src/preproc.cpp \
+	src/src.cpp \
+	src/src_loc.cpp \
+	src/src_mngr.cpp \
+	src/str_pool.cpp \
 	src/token.cpp
-
-GENERATED_FILES = \
-	src/gen/lexer/dfa.gen.cpp
-CLEANFILES = $(GENERATED_FILES)
-BUILT_SOURCES = $(GENERATED_FILES)
-
-src/gen/lexer/dfa.gen.cpp: lexer_dfagen
-	./lexer_dfagen$(EXEEXT) all > $(srcdir)/src/gen/lexer/dfa.gen.cpp
 
 lib_LTLIBRARIES = libulam.la
 libulam_ladir = $(includedir)
@@ -81,101 +66,56 @@ nobase_libulam_la_HEADERS = $(HEADER_FILES)
 libulam_la_SOURCES = $(SOURCE_FILES)
 libulam_CXXFLAGS = $(AM_CXXFLAGS) # -O3
 
-# Tools
-noinst_PROGRAMS= \
-	lexer_dfagen
-
-# Lexer DFA generator
-lexer_dfagen_SOURCES = \
-	tools/lexer/dfagen.cpp \
-	tools/lexer/dfagen/graph.hpp \
-	tools/lexer/dfagen/graph.cpp \
-	include/libulam/token.hpp \
-	include/libulam/token.inc.hpp \
-	src/token.cpp \
-	src/lexer/dfa.hpp
-lexer_dfagen_CXXFLAGS = $(AM_CXXFLAGS) -ggdb -O0
-
-
 TESTS = \
-	test_memory_str_buf1 \
 	test_memory_notepad1 \
-	test_source_copy1 \
-	test_source_str_buf_store1 \
-	test_lexer_basic \
-	test_parser_expr
+	test_parser_expr \
+	test_lex_basic
 check_PROGRAMS = $(TESTS)
 
 # NOTE: setting CXXFLAGS for test additionally has side effect of
 # building separate object files for tests, see
 # https://www.gnu.org/software/automake/manual/html_node/Objects-created-both-with-libtool-and-without.html
-TEST_CXXFLAGS = $(AM_CXXFLAGS) -O0 -g
-TEST_SOURCE_FILES = \
-	src/debug.hpp
-
-AST_TEST_SOURCE_FILES = \
-	tests/ast/print.hpp \
-	tests/ast/print.cpp
 
 # Memory tests
-TEST_MEMORY_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_STR_BUF -D DEBUG_NOTEPAD
+TEST_MEMORY_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_NOTEPAD
 TEST_MEMORY_SOURCE_FILES = \
-	$(TEST_SOURCE_FILES) \
-	src/memory/notepad.hpp \
-	src/memory/notepad.cpp \
-	src/memory/str_buf.hpp \
-	src/memory/str_buf.cpp
-test_memory_str_buf1_SOURCES = tests/memory/str_buf1.cpp $(TEST_MEMORY_SOURCE_FILES)
-test_memory_str_buf1_CXXFLAGS = $(TEST_MEMORY_CXXFLAGS)
+	src/debug.hpp \
+	libulam/include/memory/notepad.hpp \
+	src/memory/notepad.cpp
 
 test_memory_notepad1_SOURCES = tests/memory/notepad1.cpp $(TEST_MEMORY_SOURCE_FILES)
 test_memory_notepad1_CXXFLAGS = $(TEST_MEMORY_CXXFLAGS)
 
-# Source tests
-TEST_SOURCE_SOURCE_FILES = \
+# TODO: source tests
+
+TEST_LEX_SOURCE_FILES = \
 	$(TEST_MEMORY_SOURCE_FILES) \
-	src/source.hpp \
-	src/source.cpp \
-	src/source_manager.hpp \
-	src/source_manager.cpp \
-	src/source/line_buf.hpp \
-	src/source/line_buf.cpp \
-	src/source/line_storage.hpp \
-	src/source/line_storage.cpp \
-	src/str_storage.hpp \
-	src/str_storage.cpp
-
-test_source_copy1_SOURCES = tests/source/copy1.cpp $(TEST_SOURCE_SOURCE_FILES)
-test_source_copy1_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF
-
-test_source_str_buf_store1_SOURCES = tests/source/str_buf_store1.cpp $(TEST_SOURCE_SOURCE_FILES)
-test_source_str_buf_store1_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_LINEBUF
-
-# Lexer tests
-TEST_LEXER_SOURCE_FILES = \
-	$(TEST_SOURCE_SOURCE_FILES) \
 	include/libulam/token.hpp \
-	src/context.hpp \
-	src/context.cpp \
-	src/lexer.hpp \
-	src/lexer.cpp \
-	src/lexer/dfa.hpp \
-	src/lexer/dfa.cpp \
+	include/libulam/lex.hpp \
+	include/libulam/preproc.hpp \
+	include/libulam/src.hpp \
+	include/libulam/src_mngr.hpp \
+	src/lex.cpp \
+	src/preproc.cpp \
+	src/src.cpp \
+	src/src_mngr.cpp \
 	src/token.cpp
+test_lex_basic_SOURCES = tests/lex/basic.cpp $(TEST_LEX_SOURCE_FILES)
+test_lex_basic_CXXFLAGS = $(TEST_CXXFLAGS)
 
-test_lexer_basic_SOURCES = tests/lexer/basic.cpp $(TEST_LEXER_SOURCE_FILES)
-test_lexer_basic_CXXFLAGS = $(TEST_CXXFLAGS)
 
 # Parser tests
 TEST_PARSER_SOURCE_FILES = \
-	$(TEST_LEXER_SOURCE_FILES) \
+	$(TEST_LEX_SOURCE_FILES) \
 	$(AST_HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
 	$(LANG_HEADER_FILES) \
 	$(LANG_SOURCE_FILES) \
 	$(AST_TEST_SOURCE_FILES) \
-	src/parser.hpp \
-	src/parser.cpp
+	include/libulam/parser.hpp \
+	src/parser.cpp \
+	tests/ast/print.hpp \
+	tests/ast/print.cpp
 
 test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_PARSER_SOURCE_FILES)
 test_parser_expr_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_PARSER

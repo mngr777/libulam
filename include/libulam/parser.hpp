@@ -1,25 +1,25 @@
 #pragma once
-#include "context.hpp"
-#include "lexer.hpp"
 #include "libulam/ast.hpp"
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/nodes/params.hpp"
 #include "libulam/lang/ops.hpp"
 #include "libulam/token.hpp"
+#include "libulam/preproc.hpp"
 #include <string>
 
 namespace ulam {
 
-class SourceStream;
+class Preproc;
+class SrcMngr;
 
 class Parser {
 public:
-    Parser(Context& ctx, SourceStream& ss): _ctx{ctx}, _lex{_ctx, ss} {}
+    Parser(SrcMngr& sm): _sm{sm}, _pp{sm} {}
 
-    ast::Ptr<ast::Node> parse();
+    ast::Ptr<ast::Module> parse_file(const std::filesystem::path& path);
+    ast::Ptr<ast::Module> parse_str(const std::string& text);
 
 private:
-    const Token& next() const;
     void consume();
     void expect(tok::Type type);
     bool eof();
@@ -55,11 +55,13 @@ private:
     ast::Ptr<ast::Expr>
     binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
 
-    std::string name_str() const;
-    std::string value_str() const;
+    std::string name_str();
+    std::string value_str();
 
-    Context& _ctx;
-    Lexer _lex;
+    SrcMngr& _sm;
+    Preproc _pp;
+
+    Token _tok;
 };
 
 } // namespace ulam

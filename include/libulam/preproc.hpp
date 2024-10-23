@@ -1,8 +1,8 @@
 #pragma once
 #include "libulam/src_loc.hpp"
 #include "libulam/token.hpp"
-#include "src/lex.hpp"
-#include "src/src_mngr.hpp"
+#include "libulam/lex.hpp"
+#include "libulam/src_mngr.hpp"
 #include <stack>
 
 namespace ulam {
@@ -12,7 +12,10 @@ using Version = std::uint8_t;
 class Preproc {
     friend Lex;
 public:
-    Preproc(SrcMngr& sm): _sm{sm} {}
+    explicit Preproc(SrcMngr& sm): _sm{sm} {}
+
+    Preproc(const Preproc&) = delete;
+    Preproc& operator=(Preproc) = delete;
 
     void main_file(std::filesystem::path path);
     void main_str(std::string text);

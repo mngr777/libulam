@@ -1,11 +1,12 @@
 #pragma once
-#include "src/memory/notepad.hpp"
+#include "libulam/memory/notepad.hpp"
 #include <unordered_map>
 #include <vector>
 
 namespace ulam {
 
 using str_id_t = std::uint32_t;
+constexpr str_id_t NoStrId = -1;
 
 class StrPoolBase {
 public:

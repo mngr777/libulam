@@ -2,6 +2,7 @@
 #include "libulam/lang/class.hpp"
 #include "libulam/lang/ops.hpp"
 #include "libulam/src_loc.hpp"
+#include "libulam/str_pool.hpp"
 #include <string_view>
 
 namespace ulam {
@@ -28,9 +29,6 @@ Op unary_post_op(Type type);
 
 } // namespace tok
 
-using str_id_t = std::uint32_t; // TODO: move to str_pool
-constexpr str_id_t NoStrId = -1;
-
 struct Token {
     using size_t = std::uint16_t;
 
@@ -43,13 +41,11 @@ struct Token {
     const char* type_name() const { return tok::type_name(type); }
 
     bool is(tok::Type typ) const { return typ == type; }
-    bool is(tok::Type typ1, tok::Type typ2) const {
-        return is(typ1) || is(typ2);
-    }
 
     template <typename T, typename... Ts> bool in(T first, Ts... rest) {
-        return is(first) && in(rest...);
+        return is(first) || in(rest...);
     }
+    bool in() { return false; }
 
     Class::Kind class_kind() const { return tok::class_kind(type); }
 

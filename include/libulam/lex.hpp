@@ -1,7 +1,7 @@
 #pragma once
 #include "libulam/src_loc.hpp"
 #include "libulam/token.hpp"
-#include "src/memory/buf.hpp"
+#include "libulam/memory/buf.hpp"
 
 namespace ulam {
 
@@ -23,14 +23,10 @@ public:
     void lex_path(Token& token);
 
 private:
-    char cur() const { return *_cur; }
     chr_t chr() const { return _cur + 1 - _line; }
     bool at(char ch) const { return *_cur == ch; }
 
-    char next(std::size_t off = 1) const;
-    char prev() const;
-
-    void advance(std::size_t steps = 1);
+    void advance(std::size_t len = 1);
     void skip_whitespace();
     void newline(std::size_t size = 1);
 
@@ -50,7 +46,7 @@ private:
 
     const char* _cur;
     const char* _line;
-    const char* _token_start;
+    const char* _tok_start;
     Token* _token;
 
     linum_t _linum{1};

@@ -1,6 +1,6 @@
 #include "print.hpp"
-#include <libulam/ast/traversal.hpp>
-#include <libulam/lang/ops.hpp>
+#include "libulam/ast/traversal.hpp"
+#include "libulam/lang/ops.hpp"
 #include <string>
 
 namespace test::ast {
@@ -10,7 +10,7 @@ namespace test::ast {
         indent() << str << "\n";                                               \
         return true;                                                           \
     }
-#include <libulam/ast/nodes.inc.hpp>
+#include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
 void PrinterBase::print(ulam::ast::Node* node) {
