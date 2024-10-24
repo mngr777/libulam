@@ -59,6 +59,7 @@ public:
 template <typename B, typename... Ns> class Tuple : public B {
 public:
     using TupleT = std::tuple<Ptr<Ns>...>;
+
     template <std::size_t I>
     using ElementT = typename std::tuple_element<I, TupleT>::type;
 

@@ -26,10 +26,6 @@ private:
 
     void diag(std::string message) {}
 
-    template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args) {
-        return ast::make<N>(std::forward<Args>(args)...);
-    }
-
     ast::Ptr<ast::Module> parse_module();
     ast::Ptr<ast::ClassDef> parse_class_def();
     ast::Ptr<ast::TypeDef> parse_type_def();
@@ -48,15 +44,19 @@ private:
     ast::Ptr<ast::Expr> parse_paren_expr_or_cast();
     ast::Ptr<ast::FunCall> parse_funcall(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::ArrayAccess> parse_array_access(ast::Ptr<ast::Expr>&& array);
+    ast::Ptr<ast::TypeName> parse_type_name();
     ast::Ptr<ast::Name> parse_name();
     ast::Ptr<ast::Number> parse_number();
     ast::Ptr<ast::String> parse_string();
 
+    template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args) {
+        return ast::make<N>(std::forward<Args>(args)...);
+    }
+
     ast::Ptr<ast::Expr>
     binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
 
-    std::string name_str();
-    std::string value_str();
+    std::string tok_str();
 
     SrcMngr& _sm;
     Preproc _pp;

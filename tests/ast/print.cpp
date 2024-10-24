@@ -22,28 +22,44 @@ std::ostream& PrinterBase::indent() {
 }
 
 bool Printer::visit(ulam::ast::ClassDef& node) {
-    indent() << "ClassDef `" << node.name() << "'\n";
+    indent() << "class `" << node.name() << "'\n";
     return true;
 }
 
 bool Printer::visit(ulam::ast::TypeDef& node) {
-    indent() << "TypeDef `" << node.alias() << "'\n";
+    indent() << "typedef `" << node.alias() << "'\n";
     return true;
 }
 
 bool Printer::visit(ulam::ast::VarDef& node) {
-    indent() << "VarDef `" << node.name() << "'" << (node.expr() ? " =" : "")
+    indent() << "var `" << node.name() << "'" << (node.expr() ? " =" : "")
              << "\n";
     return true;
 }
 
+bool Printer::visit(ulam::ast::FunDef& node) {
+    indent() << "fun `" << node.name() << "'\n";
+    return true;
+}
+
+bool Printer::visit(ulam::ast::ParamList& node) {
+    indent() << "(\n";
+    for (unsigned n = 0; n < node.child_num(); ++n) {
+        if (n > 0)
+            _os << ",\n";
+        node.child(n)->accept(*this);
+    }
+    indent() << ")\n";
+    return false;
+}
+
 bool Printer::visit(ulam::ast::Param& node) {
-    indent() << "Param `"<< node.name() <<"'\n";
+    indent() << "`"<< node.name() <<"'\n";
     return true;
 }
 
 bool Printer::visit(ulam::ast::ParenExpr& node) {
-    indent() << "(ParenExpr\n";
+    indent() << "(\n";
     inc_level();
     node.inner()->accept(*this);
     dec_level();
@@ -67,6 +83,16 @@ bool Printer::visit(ulam::ast::UnaryOp& node) {
     node.arg()->accept(*this);
     dec_level();
     indent() << ")\n";
+    return false;
+}
+
+bool Printer::visit(ulam::ast::TypeName& node) {
+    indent() << "TypeName `" << node.name() << "'\n";
+    return false;
+}
+
+bool Printer::visit(ulam::ast::Name& node) {
+    indent() << "Name `" << node.name() << "'\n";
     return false;
 }
 

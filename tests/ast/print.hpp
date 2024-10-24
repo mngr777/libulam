@@ -33,10 +33,14 @@ public:
     bool visit(ulam::ast::ClassDef& node) override;
     bool visit(ulam::ast::TypeDef& node) override;
     bool visit(ulam::ast::VarDef& node) override;
-    bool visit(ulam::ast::Param& node) override; // TODO
+    bool visit(ulam::ast::FunDef& node) override;
+    bool visit(ulam::ast::ParamList& node) override;
+    bool visit(ulam::ast::Param& node) override;
     bool visit(ulam::ast::ParenExpr& node) override;
     bool visit(ulam::ast::BinaryOp& node) override;
     bool visit(ulam::ast::UnaryOp& node) override;
+    bool visit(ulam::ast::TypeName& node) override;
+    bool visit(ulam::ast::Name& node) override;
 };
 
 } // namespace test::ast

@@ -28,7 +28,7 @@ ast::Ptr<ast::Module> Parser::parse_str(const std::string& text) {
 }
 
 void Parser::consume() {
-    debug() << _tok.type_name() << " -> \n";
+    debug() << _tok.type_name() << " ->\n";
     _pp >> _tok;
     debug() << "-> " << _tok.type_name() << "\n";
 }
@@ -65,18 +65,18 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
     debug() << "class_def " << _tok.type_name() << "\n";
     auto kind = _tok.class_kind();
     consume();
-    auto node = tree<ast::ClassDef>(kind, name_str());
+    auto node = tree<ast::ClassDef>(kind, tok_str());
     consume();
     // TODO: template params, ancestors
     expect(tok::BraceL);
-    while (!_tok.is(tok::BraceR)) {
+    while (!_tok.in(tok::BraceR, tok::Eof)) {
         switch (_tok.type) {
         case tok::Typedef:
             node->body()->add(parse_type_def());
             break;
-        case tok::Name: {
+        case tok::TypeName: {
             auto type = parse_expr();
-            auto name_ = name_str();
+            auto name_ = tok_str();
             consume();
             if (_tok.is(tok::ParenL)) {
                 node->body()->add(
@@ -87,7 +87,8 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
             }
         } break;
         default:
-            diag("unexpected token");
+            diag("Unexpected token");
+            consume();
         }
     }
     expect(tok::BraceR);
@@ -99,7 +100,7 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     debug() << "type_def\n";
     consume();
     auto type = parse_expr();
-    auto alias = name_str();
+    auto alias = tok_str();
     consume();
     expect(tok::Semicol);
     return tree<ast::TypeDef>(std::move(alias), std::move(type));
@@ -143,7 +144,7 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     auto node = tree<ast::ParamList>();
     while (!_tok.is(tok::ParenR)) {
         auto type = parse_expr();
-        auto name_ = name_str();
+        auto name_ = tok_str();
         consume();
         ast::Ptr<ast::Expr> default_value = nullptr;
         if (_tok.is(tok::Equal)) {
@@ -196,6 +197,8 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
 ast::Ptr<ast::Expr> Parser::parse_cast_expr() {
     debug() << "cast_expr " << _tok.type_name() << "\n";
     switch (_tok.type) {
+    case tok::TypeName:
+        return parse_type_name();
     case tok::Name:
         return parse_name();
     case tok::Number:
@@ -232,16 +235,24 @@ Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
     return nullptr;
 }
 
+ast::Ptr<ast::TypeName> Parser::parse_type_name() {
+    debug() << "type_name: " << tok_str() << "\n";
+    assert(_tok.is(tok::TypeName));
+    auto node = tree<ast::TypeName>(tok_str());
+    consume();
+    return node;
+}
+
 ast::Ptr<ast::Name> Parser::parse_name() {
-    debug() << "name\n";
+    debug() << "name: " << tok_str() << "\n";
     assert(_tok.is(tok::Name));
-    auto node = tree<ast::Name>();
+    auto node = tree<ast::Name>(tok_str());
     consume();
     return node;
 }
 
 ast::Ptr<ast::Number> Parser::parse_number() {
-    debug() << "number: " << value_str() << "\n";
+    debug() << "number: " << tok_str() << "\n";
     assert(_tok.is(tok::Number));
     auto node = tree<ast::Number>();
     consume();
@@ -249,7 +260,7 @@ ast::Ptr<ast::Number> Parser::parse_number() {
 }
 
 ast::Ptr<ast::String> Parser::parse_string() {
-    debug() << "string: " << value_str() << "\n";
+    debug() << "string: " << tok_str() << "\n";
     assert(_tok.is(tok::String));
     auto node = tree<ast::String>();
     consume();
@@ -272,13 +283,8 @@ ast::Ptr<ast::Expr> Parser::binop_tree(
     }
 }
 
-std::string Parser::name_str() {
-    assert(_tok.in(tok::Name, tok::TypeName));
-    return std::string(_sm.str_at(_tok.loc_id, _tok.size));
-}
-
-std::string Parser::value_str() {
-    assert(_tok.is(tok::Number) || _tok.is(tok::String));
+std::string Parser::tok_str() {
+    assert(_tok.in(tok::Name, tok::TypeName, tok::Number, tok::String));
     return std::string(_sm.str_at(_tok.loc_id, _tok.size));
 }
 
