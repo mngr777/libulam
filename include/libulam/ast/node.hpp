@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/ast/visitor.hpp>
 #include <memory>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <variant>
@@ -60,6 +61,16 @@ public:
     virtual const Ref<Node> child(unsigned n) const { return nullptr; }
 };
 
+class Named {
+public:
+    Named(std::string&& name): _name{std::move(name)} {}
+
+    const std::string& name() const { return _name; }
+
+private:
+    std::string _name;
+};
+
 template <typename B, typename... Ns> class Tuple : public B {
 public:
     using TupleT = std::tuple<Ptr<Ns>...>;
@@ -115,7 +126,7 @@ private:
     }
 };
 
-template <typename N> class List : public Node {
+template <typename B, typename N> class List : public B {
 public:
     using ItemT = Ptr<N>;
 

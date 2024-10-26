@@ -6,6 +6,7 @@
 NODE("Module", Module)
 NODE("ClassDef", ClassDef)
 NODE("TypeDef", TypeDef)
+NODE("VarDefList", VarDefList)
 NODE("VarDef", VarDef)
 NODE("FunDef", FunDef)
 NODE("Param", Param)

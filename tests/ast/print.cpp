@@ -32,10 +32,27 @@ bool Printer::visit(ulam::ast::TypeDef& node) {
     return true;
 }
 
+bool Printer::visit(ulam::ast::VarDefList& node) {
+    indent();
+    accept_me(node.base_type());
+    _os << " ";
+    for (unsigned n = 0; n < node.def_num(); ++n) {
+        if (n > 0)
+            _os << ", ";
+        accept_me(node.def(n));
+    }
+    _os << "\n";
+    return false;
+}
+
 bool Printer::visit(ulam::ast::VarDef& node) {
-    indent() << "var `" << node.name() << "'" << (node.expr() ? " =" : "")
-             << "\n";
-    return true;
+    _os << node.name();
+    auto value = node.value();
+    if (value) {
+        _os << " = ";
+        accept_me(value);
+    }
+    return false;
 }
 
 bool Printer::visit(ulam::ast::FunDef& node) {
@@ -71,7 +88,7 @@ bool Printer::visit(ulam::ast::Param& node) {
 bool Printer::visit(ulam::ast::MemberAccess& node) {
     paren_l();
     accept_me(node.obj());
-    _os << "." << node.name();
+    _os << "." << node.mem_name();
     paren_r();
     return false;
 }

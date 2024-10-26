@@ -59,7 +59,7 @@ ast::Ptr<ast::Module> Parser::parse_module() {
         node->add(parse_class_def());
         break;
     default:
-        diag("unexpected token");
+        diag("unexpected token in module");
     }
     return node;
 }
@@ -83,7 +83,7 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
         case tok::TypeName: {
             auto type = parse_expr();
             if (!_tok.is(tok::Name))
-                diag("Unexpected token");
+                diag("Unexpected token in class def, expecting name");
             auto name_ = tok_str();
             consume();
             if (_tok.is(tok::ParenL)) {
@@ -91,17 +91,18 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
                     parse_fun_def_rest(std::move(type), std::move(name_)));
             } else {
                 node->body()->add(
-                    parse_var_def_rest(std::move(type), std::move(name_)));
+                    parse_var_def_list_rest(std::move(type), std::move(name_)));
             }
         } break;
         default:
-            diag("Unexpected token");
+            diag("Unexpected token in class def");
         }
     }
     expect(tok::BraceR);
     return node;
 }
 
+// TODO: TypeDefList
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     assert(_tok.type == tok::Typedef);
     debug() << "type_def\n";
@@ -113,27 +114,39 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     return tree<ast::TypeDef>(std::move(alias), std::move(type));
 }
 
-ast::Ptr<ast::VarDef>
-Parser::parse_var_def_rest(ast::Ptr<ast::Expr>&& type, std::string&& name_) {
-    debug() << "var_def_rest\n";
-    ast::Ptr<ast::Expr> value = nullptr;
-    if (_tok.is(tok::Equal)) {
+ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
+    ast::Ptr<ast::Expr>&& base_type, std::string&& first_name) {
+    debug() << "var_def_list_rest\n";
+    auto node = tree<ast::VarDefList>(std::move(base_type));
+    std::string name{first_name};
+    while (true) {
+        ast::Ptr<ast::Expr> expr;
+        if (_tok.is(tok::Equal)) {
+            consume();
+            expr = parse_expr();
+        }
+        node->add(tree<ast::VarDef>(
+            node->base_type(), std::move(name), std::move(expr)));
+        if (_tok.in(tok::Semicol, tok::Eof))
+            break;
+        expect(tok::Comma);
+        if (!_tok.is(tok::Name))
+            diag("unexpected token in var def list, expecting name after comma");
+        name = tok_str();
         consume();
-        value = parse_expr();
     }
     expect(tok::Semicol);
-    return tree<ast::VarDef>(
-        std::move(name_), std::move(type), std::move(value));
+    return node;
 }
 
-ast::Ptr<ast::FunDef> Parser::parse_fun_def_rest(
-    ast::Ptr<ast::Expr>&& ret_type, std::string&& name_) {
+ast::Ptr<ast::FunDef>
+Parser::parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name) {
     debug() << "fun_def_rest\n";
     assert(_tok.type == tok::ParenL);
     auto params = parse_param_list();
     auto block = parse_block();
     return tree<ast::FunDef>(
-        std::move(name_), std::move(ret_type), std::move(params),
+        std::move(name), std::move(ret_type), std::move(params),
         std::move(block));
 }
 

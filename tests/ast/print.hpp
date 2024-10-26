@@ -45,6 +45,7 @@ public:
 
     bool visit(ulam::ast::ClassDef& node) override;
     bool visit(ulam::ast::TypeDef& node) override;
+    bool visit(ulam::ast::VarDefList& node) override;
     bool visit(ulam::ast::VarDef& node) override;
     bool visit(ulam::ast::FunDef& node) override;
     bool visit(ulam::ast::ParamList& node) override;
@@ -60,7 +61,7 @@ public:
     bool visit(ulam::ast::String& node) override;
 
 private:
-    void accept_me(ulam::ast::Node* node) {
+    void accept_me(ulam::ast::Ref<ulam::ast::Node> node) {
         if (node) {
             node->accept(*this);
         } else {

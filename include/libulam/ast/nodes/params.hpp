@@ -7,27 +7,22 @@
 
 namespace ulam::ast {
 
-class Param : public Tuple<Expr, Expr, Expr> {
+class Param : public Tuple<Expr, Expr, Expr>, public Named {
     ULAM_AST_NODE
 public:
-    Param(std::string name, Ptr<Expr>&& type, Ptr<Expr>&& default_value):
+    Param(std::string&& name, Ptr<Expr>&& type, Ptr<Expr>&& default_value):
         Tuple{std::move(type), std::move(default_value)},
-        _name{std::move(name)} {}
-
-    const std::string& name() const { return _name; }
+        Named{std::move(name)} {}
 
     ULAM_AST_TUPLE_PROP(type, 0)
     ULAM_AST_TUPLE_PROP(default_value, 1)
-
-private:
-    std::string _name;
 };
 
-class ParamList : public List<Param> {
+class ParamList : public List<Node, Param> {
     ULAM_AST_NODE
 };
 
-class ArgList : public List<Expr> {
+class ArgList : public List<Node, Expr> {
     ULAM_AST_NODE
 };
 

@@ -21,14 +21,14 @@ public:
 class MemberAccess : public Tuple<Expr, Expr> {
     ULAM_AST_NODE
 public:
-    MemberAccess(Ptr<Expr>&& obj, std::string name):
-        Tuple{std::move(obj)}, _name(std::move(name)) {}
+    MemberAccess(Ptr<Expr>&& obj, std::string&& mem_name):
+        Tuple{std::move(obj)}, _mem_name(std::move(mem_name)) {}
 
-    const std::string& name() const { return _name; }
+    const std::string& mem_name() const { return _mem_name; }
 
     ULAM_AST_TUPLE_PROP(obj, 0);
 private:
-    std::string _name;
+    std::string _mem_name;
 };
 
 class ArrayAccess : public Tuple<Expr, Expr, Expr> {

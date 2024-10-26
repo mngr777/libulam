@@ -2,32 +2,21 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/lang/ops.hpp>
-#include <string>
 
 namespace ulam::ast {
 
 class Expr : public Node {};
 
-class TypeName : public Expr {
+class TypeName : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    TypeName(std::string name): _name{std::move(name)} {}
-
-    const std::string& name() const { return _name; }
-
-private:
-    std::string _name;
+    explicit TypeName(std::string&& name): Named{std::move(name)} {}
 };
 
-class Name : public Expr {
+class Name : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    Name(std::string name): _name{std::move(name)} {}
-
-    const std::string& name() const { return _name; }
-
-private:
-    std::string _name;
+    explicit Name(std::string&& name): Named{std::move(name)} {}
 };
 
 class Ident : public Expr {};
@@ -44,7 +33,7 @@ public:
 
 class OpExpr : public Expr {
 public:
-    OpExpr(Op op): _op{op} {}
+    explicit OpExpr(Op op): _op{op} {}
 
     Op op() const { return _op; }
 

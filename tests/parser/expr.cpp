@@ -11,6 +11,9 @@
 
 static const char* Program = R"END(
 element A {
+  B.C.D a = 1, b, c = 2;
+  C.D.E d = 3;
+
   C.D.E foo(F.G c = 1) {
   }
 }
