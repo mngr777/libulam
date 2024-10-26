@@ -55,6 +55,20 @@ Lex& Preproc::lexer() {
 
 void Preproc::lex(Token& token) { return lexer().lex(token); }
 
+template <typename... Ts>
+bool Preproc::expect(Token& token, tok::Type type, Ts... stop) {
+    lex(token);
+    if (token.is(type))
+        return true;
+    while (true) {
+        lex(token);
+        if (token.in(stop...))
+            break;
+        diag(token.loc_id, "Unexpected token");
+    }
+    return false;
+}
+
 void Preproc::preproc_ulam() {
     Token token;
     if (expect(token, tok::Number, tok::Semicol, tok::Eof)) {

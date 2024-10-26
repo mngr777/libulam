@@ -1,12 +1,6 @@
 #include "libulam/parser.hpp"
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/params.hpp"
-#include "libulam/lang/ops.hpp"
-#include "libulam/token.hpp"
 #include <cassert>
-#include <stdexcept> // TEST
+#include <stdexcept> // TMP
 #include <string>
 
 #ifdef DEBUG_PARSER
@@ -138,7 +132,8 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
             break;
         expect(tok::Comma);
         if (!_tok.is(tok::Name))
-            diag("unexpected token in var def list, expecting name after comma");
+            diag(
+                "unexpected token in var def list, expecting name after comma");
         name = tok_str();
         consume();
     }
@@ -348,6 +343,10 @@ ast::Ptr<ast::String> Parser::parse_string() {
     auto node = tree<ast::String>();
     consume();
     return node;
+}
+
+template <typename N, typename... Args> ast::Ptr<N> Parser::tree(Args&&... args) {
+    return ast::make<N>(std::forward<Args>(args)...);
 }
 
 ast::Ptr<ast::Expr> Parser::binop_tree(

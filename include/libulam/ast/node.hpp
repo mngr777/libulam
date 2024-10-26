@@ -38,13 +38,13 @@ template <typename N, typename... Args> Ptr<N> make(Args&&... args) {
     return std::make_unique<N>(std::forward<Args>(args)...);
 }
 
-template <typename... Ns> using Variant = std::variant<Ptr<Ns>...>;
+template <typename... Ns> using _Variant = std::variant<Ptr<Ns>...>;
 
-template <typename... Ns> Ref<Node> as_node(Variant<Ns...>& v) {
+template <typename... Ns> Ref<Node> as_node(_Variant<Ns...>& v) {
     return std::visit([](auto&& ptr) -> Node* { return ref(ptr); }, v);
 }
 
-template <typename... Ns> const Ref<Node> as_node(const Variant<Ns...>& v) {
+template <typename... Ns> const Ref<Node> as_node(const _Variant<Ns...>& v) {
     return std::visit([](auto&& ptr) -> Node* { return ref(ptr); }, v);
 }
 
@@ -160,7 +160,7 @@ private:
 
 template <typename B, typename... Ns> class ListOf : public B {
 public:
-    using ItemT = Variant<Ns...>;
+    using ItemT = _Variant<Ns...>;
 
     template <typename N> void add(Ptr<N>&& item) {
         _items.push_back(std::move(item));

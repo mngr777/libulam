@@ -1,8 +1,8 @@
 #pragma once
-#include "libulam/src_loc.hpp"
-#include "libulam/token.hpp"
 #include "libulam/lex.hpp"
+#include "libulam/src_loc.hpp"
 #include "libulam/src_mngr.hpp"
+#include "libulam/token.hpp"
 #include <stack>
 
 namespace ulam {
@@ -11,6 +11,7 @@ using Version = std::uint8_t;
 
 class Preproc {
     friend Lex;
+
 public:
     explicit Preproc(SrcMngr& sm): _sm{sm} {}
 
@@ -34,18 +35,7 @@ private:
     void lex(Token& token);
 
     template <typename... Ts>
-    bool expect(Token& token, tok::Type type, Ts... stop) {
-        lex(token);
-        if (token.is(type))
-            return true;
-        while (true) {
-            lex(token);
-            if (token.in(stop...))
-                break;
-            diag(token.loc_id, "Unexpected token");
-        }
-        return false;
-    }
+    bool expect(Token& token, tok::Type type, Ts... stop);
 
     loc_id_t loc_id();
     void diag(loc_id_t, std::string) {}

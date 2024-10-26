@@ -1,11 +1,8 @@
 #pragma once
 #include "libulam/ast.hpp"
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/params.hpp"
 #include "libulam/lang/ops.hpp"
-#include "libulam/token.hpp"
 #include "libulam/preproc.hpp"
+#include "libulam/token.hpp"
 #include <string>
 
 namespace ulam {
@@ -31,8 +28,8 @@ private:
     ast::Ptr<ast::ClassDef> parse_class_def();
     ast::Ptr<ast::TypeDef> parse_type_def();
     ast::Ptr<ast::VarDefList> parse_var_def_list();
-    ast::Ptr<ast::VarDefList>
-    parse_var_def_list_rest(ast::Ptr<ast::Expr>&& base_type, std::string&& first_name);
+    ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
+        ast::Ptr<ast::Expr>&& base_type, std::string&& first_name);
     ast::Ptr<ast::FunDef>
     parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name_);
     ast::Ptr<ast::ParamList> parse_param_list();
@@ -54,9 +51,7 @@ private:
     ast::Ptr<ast::Number> parse_number();
     ast::Ptr<ast::String> parse_string();
 
-    template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args) {
-        return ast::make<N>(std::forward<Args>(args)...);
-    }
+    template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args);
 
     ast::Ptr<ast::Expr>
     binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
