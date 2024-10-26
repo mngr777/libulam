@@ -102,16 +102,23 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
     return node;
 }
 
-// TODO: TypeDefList
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     assert(_tok.type == tok::Typedef);
     debug() << "type_def\n";
     consume();
     auto type = parse_expr();
-    auto alias = tok_str();
-    consume();
+    auto node = tree<ast::TypeDef>(std::move(type));
+    while (true) {
+        if (!_tok.is(tok::TypeName))
+            diag("Unexpected token in parse_type_def, expecting type name");
+        node->add_alias(tok_str());
+        consume();
+        if (!_tok.is(tok::Comma))
+            break;
+        consume();
+    }
     expect(tok::Semicol);
-    return tree<ast::TypeDef>(std::move(alias), std::move(type));
+    return node;
 }
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(

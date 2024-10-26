@@ -41,15 +41,26 @@ private:
 class TypeDef : public Tuple<Node, Expr> {
     ULAM_AST_NODE
 public:
-    TypeDef(std::string alias, Ptr<Expr>&& expr):
-        Tuple{std::move(expr)}, _alias{std::move(alias)} {}
+    TypeDef(Ptr<Expr>&& expr):
+        Tuple{std::move(expr)} {}
 
-    const std::string& alias() const { return _alias; }
+    unsigned alias_num() const {
+        return _aliases.size();
+    }
+
+    const std::string& alias(unsigned n) const {
+        assert(n < _aliases.size());
+        return _aliases[n];
+    }
+
+    void add_alias(std::string&& alias) {
+        _aliases.push_back(std::move(alias));
+    }
 
     ULAM_AST_TUPLE_PROP(expr, 0)
 
 private:
-    std::string _alias;
+    std::vector<std::string> _aliases; // TMP
 };
 
 class FunDef : public Tuple<Stmt, Expr, ParamList, Block>, public Named {
@@ -93,8 +104,6 @@ class VarDefList : public Tuple<List<Stmt, VarDef>, Expr> {
 public:
     explicit VarDefList(Ptr<Expr>&& base_type): Tuple{std::move(base_type)} {}
 
-    ULAM_AST_TUPLE_PROP(base_type, 0);
-
     unsigned def_num() const { return List::child_num(); }
 
     Ref<VarDef> def(unsigned n) { return List::get(n); }
@@ -103,6 +112,8 @@ public:
     unsigned child_num() const override {
         return Tuple::child_num() + List::child_num();
     }
+
+    ULAM_AST_TUPLE_PROP(base_type, 0);
 
     Ref<Node> child(unsigned n) override {
         return (n == 0) ? Tuple::child(n) : List::child(n - 1);

@@ -28,7 +28,13 @@ bool Printer::visit(ulam::ast::ClassDef& node) {
 }
 
 bool Printer::visit(ulam::ast::TypeDef& node) {
-    indent() << "typedef `" << node.alias() << "'\n";
+    indent() << "typedef ";
+    for (unsigned n = 0; n < node.alias_num(); ++n) {
+        if (n > 0)
+            _os << ", ";
+        _os << node.alias(n);
+    }
+    _os << "\n";
     return true;
 }
 
