@@ -11,7 +11,7 @@
 
 static const char* Program = R"END(
 element A {
-  C.D foo(E.F c = 1) {
+  C.D.E foo(F.G c = 1) {
   }
 }
 )END";
@@ -25,5 +25,5 @@ int main() {
 
     std::cout << text << "\n";
     test::ast::Printer p{std::cout};
-    p.print(ast.get());
+    p.print(ulam::ast::ref(ast));
 }

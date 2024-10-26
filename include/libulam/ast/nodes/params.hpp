@@ -27,10 +27,8 @@ class ParamList : public List<Param> {
     ULAM_AST_NODE
 };
 
-class ArgList : public Node {
+class ArgList : public List<Expr> {
     ULAM_AST_NODE
-public:
-
 };
 
 } // namespace ulam::ast

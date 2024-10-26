@@ -2,7 +2,6 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/lang/ops.hpp>
-#include <libulam/types.hpp>
 #include <string>
 
 namespace ulam::ast {

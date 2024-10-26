@@ -4,6 +4,6 @@ namespace ulam::ast {
 
 class Visitor;
 
-void traverse(Node* node, Visitor& v);
+void traverse(Ref<Node> node, Visitor& v);
 
 } // namespace ulam::ast

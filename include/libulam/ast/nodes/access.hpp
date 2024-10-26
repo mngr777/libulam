@@ -3,6 +3,7 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <string>
 #include <utility>
 
 namespace ulam::ast {
@@ -15,6 +16,19 @@ public:
 
     ULAM_AST_TUPLE_PROP(obj, 0)
     ULAM_AST_TUPLE_PROP(args, 0)
+};
+
+class MemberAccess : public Tuple<Expr, Expr> {
+    ULAM_AST_NODE
+public:
+    MemberAccess(Ptr<Expr>&& obj, std::string name):
+        Tuple{std::move(obj)}, _name(std::move(name)) {}
+
+    const std::string& name() const { return _name; }
+
+    ULAM_AST_TUPLE_PROP(obj, 0);
+private:
+    std::string _name;
 };
 
 class ArrayAccess : public Tuple<Expr, Expr, Expr> {

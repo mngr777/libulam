@@ -7,7 +7,7 @@ namespace ulam::ast {
 
 namespace {
 
-void _traverse(Node* node, Visitor& v) {
+void _traverse(Ref<Node> node, Visitor& v) {
     if (!node || !node->accept(v))
         return;
 
@@ -19,7 +19,7 @@ void _traverse(Node* node, Visitor& v) {
 
 } // namespace
 
-void traverse(Node* node, Visitor& v) {
+void traverse(Ref<Node> node, Visitor& v) {
     v.set_level(0);
     _traverse(node, v);
     assert(v.level() == 0);

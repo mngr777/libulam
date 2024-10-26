@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast.hpp"
+#include "libulam/ast/nodes/access.hpp"
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/nodes/params.hpp"
 #include "libulam/lang/ops.hpp"
@@ -24,7 +25,7 @@ private:
     void expect(tok::Type type);
     bool eof();
 
-    void diag(std::string message) {}
+    void diag(std::string message);
 
     ast::Ptr<ast::Module> parse_module();
     ast::Ptr<ast::ClassDef> parse_class_def();
@@ -36,14 +37,18 @@ private:
     parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name_);
     ast::Ptr<ast::ParamList> parse_param_list();
     ast::Ptr<ast::Param> parse_param();
+
     ast::Ptr<ast::Block> parse_block();
+    ast::Ptr<ast::Stmt> parse_stmt();
 
     ast::Ptr<ast::Expr> parse_expr();
     ast::Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
     ast::Ptr<ast::Expr> parse_cast_expr();
     ast::Ptr<ast::Expr> parse_paren_expr_or_cast();
     ast::Ptr<ast::FunCall> parse_funcall(ast::Ptr<ast::Expr>&& obj);
+    ast::Ptr<ast::ArgList> parse_args();
     ast::Ptr<ast::ArrayAccess> parse_array_access(ast::Ptr<ast::Expr>&& array);
+    ast::Ptr<ast::MemberAccess> parse_member_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::TypeName> parse_type_name();
     ast::Ptr<ast::Name> parse_name();
     ast::Ptr<ast::Number> parse_number();

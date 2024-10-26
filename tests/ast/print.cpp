@@ -13,7 +13,8 @@ namespace test::ast {
 #include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
-void PrinterBase::print(ulam::ast::Node* node) {
+void PrinterBase::print(ulam::ast::Ref<ulam::ast::Node> node) {
+    assert(node);
     ulam::ast::traverse(node, *this);
 }
 
@@ -38,61 +39,84 @@ bool Printer::visit(ulam::ast::VarDef& node) {
 }
 
 bool Printer::visit(ulam::ast::FunDef& node) {
-    indent() << "fun `" << node.name() << "'\n";
-    return true;
+    indent();
+    accept_me(node.ret_type());
+    _os << " " << node.name();
+    accept_me(node.params());
+    _os << "\n";
+    return false;
 }
 
 bool Printer::visit(ulam::ast::ParamList& node) {
-    indent() << "(\n";
+    _os << "(";
     for (unsigned n = 0; n < node.child_num(); ++n) {
         if (n > 0)
-            _os << ",\n";
-        node.child(n)->accept(*this);
+            _os << ",";
+        accept_me(node.child(n));
     }
-    indent() << ")\n";
+    _os << ")";
     return false;
 }
 
 bool Printer::visit(ulam::ast::Param& node) {
-    indent() << "`"<< node.name() <<"'\n";
+    accept_me(node.type());
+    _os << " " << node.name();
+    if (node.default_value()) {
+        _os << " = ";
+        accept_me(node.default_value());
+    }
     return true;
 }
 
+bool Printer::visit(ulam::ast::MemberAccess& node) {
+    paren_l();
+    accept_me(node.obj());
+    _os << "." << node.name();
+    paren_r();
+    return false;
+}
+
 bool Printer::visit(ulam::ast::ParenExpr& node) {
-    indent() << "(\n";
-    inc_level();
-    node.inner()->accept(*this);
-    dec_level();
-    indent() << ")\n";
+    _os << "(";
+    accept_me(node.inner());
+    _os << ")";
     return false;
 }
 
 bool Printer::visit(ulam::ast::BinaryOp& node) {
-    indent() << "(" << ulam::ops::str(node.op()) << "\n";
-    inc_level();
-    node.lhs()->accept(*this);
-    node.rhs()->accept(*this);
-    dec_level();
-    indent() << ")\n";
+    paren_l();
+    accept_me(node.lhs());
+    _os << " " << ulam::ops::str(node.op()) << " ";
+    accept_me(node.rhs());
+    paren_r();
     return false;
 }
 
 bool Printer::visit(ulam::ast::UnaryOp& node) {
-    indent() << ulam::ops::str(node.op()) << "\n";
-    inc_level();
-    node.arg()->accept(*this);
-    dec_level();
-    indent() << ")\n";
+    paren_l();
+    _os << ulam::ops::str(node.op());
+    accept_me(node.arg());
+    paren_r();
     return false;
 }
 
 bool Printer::visit(ulam::ast::TypeName& node) {
-    indent() << "TypeName `" << node.name() << "'\n";
+    _os << node.name();
     return false;
 }
 
 bool Printer::visit(ulam::ast::Name& node) {
-    indent() << "Name `" << node.name() << "'\n";
+    _os << node.name();
+    return false;
+}
+
+bool Printer::visit(ulam::ast::Number& node) {
+    _os << "<number>";
+    return false;
+}
+
+bool Printer::visit(ulam::ast::String& node) {
+    _os << "<string>";
     return false;
 }
 

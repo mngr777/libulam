@@ -1,7 +1,9 @@
 #include "libulam/parser.hpp"
+#include "libulam/ast/nodes/access.hpp"
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/nodes/params.hpp"
+#include "libulam/lang/ops.hpp"
 #include "libulam/token.hpp"
 #include <cassert>
 #include <stdexcept> // TEST
@@ -44,6 +46,10 @@ void Parser::expect(tok::Type type) {
 
 bool Parser::eof() { return _tok.is(tok::Eof); }
 
+void Parser::diag(std::string message) {
+    throw std::invalid_argument(message); // TEST
+}
+
 ast::Ptr<ast::Module> Parser::parse_module() {
     auto node = tree<ast::Module>();
     switch (_tok.type) {
@@ -76,6 +82,8 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
             break;
         case tok::TypeName: {
             auto type = parse_expr();
+            if (!_tok.is(tok::Name))
+                diag("Unexpected token");
             auto name_ = tok_str();
             consume();
             if (_tok.is(tok::ParenL)) {
@@ -88,7 +96,6 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
         } break;
         default:
             diag("Unexpected token");
-            consume();
         }
     }
     expect(tok::BraceR);
@@ -133,8 +140,18 @@ ast::Ptr<ast::FunDef> Parser::parse_fun_def_rest(
 ast::Ptr<ast::Block> Parser::parse_block() {
     auto node = tree<ast::Block>();
     expect(tok::BraceL);
+    while (!_tok.in(tok::BraceR, tok::Eof))
+        if (_tok.is(tok::BraceL)) {
+            node->add(parse_block());
+        } else {
+            node->add(parse_stmt());
+        }
     expect(tok::BraceR);
     return node;
+}
+
+ast::Ptr<ast::Stmt> Parser::parse_stmt() {
+    return nullptr; // TODO
 }
 
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {
@@ -143,6 +160,7 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     consume();
     auto node = tree<ast::ParamList>();
     while (!_tok.is(tok::ParenR)) {
+        // TODO: define and use parse_param
         auto type = parse_expr();
         auto name_ = tok_str();
         consume();
@@ -184,6 +202,8 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
             break;
         case Op::ArrayAccess:
             lhs = parse_array_access(std::move(lhs));
+        case Op::MemberAccess:
+            lhs = parse_member_access(std::move(lhs));
             break;
         default:
             consume();
@@ -208,7 +228,7 @@ ast::Ptr<ast::Expr> Parser::parse_cast_expr() {
     case tok::ParenL:
         return parse_paren_expr_or_cast();
     default:
-        diag("unexpected token");
+        diag("unexpected token, expected expr");
     }
     return nullptr;
 }
@@ -216,6 +236,7 @@ ast::Ptr<ast::Expr> Parser::parse_cast_expr() {
 ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
     debug() << "paren_expr\n";
     assert(_tok.is(tok::ParenL));
+    // TODO: cast
     consume();
     auto inner = parse_expr();
     expect(tok::ParenR);
@@ -224,15 +245,57 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
 
 ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
     debug() << "funcall\n";
-    // TODO
-    return nullptr;
+    expect(tok::ParenL);
+    auto args = parse_args();
+    expect(tok::ParenR);
+    return tree<ast::FunCall>(std::move(obj), std::move(args));
+}
+
+ast::Ptr<ast::ArgList> Parser::parse_args() {
+    debug() << "parse_args\n";
+    auto args = tree<ast::ArgList>();
+    while (!_tok.in(tok::ParenR, tok::Eof)) {
+        // argument
+        auto expr = parse_expr();
+        if (expr) {
+            args->add(std::move(expr));
+        } else {
+            while (_tok.in(tok::ParenR, tok::Eof))
+                ;
+            break;
+        }
+        // ,?
+        if (!_tok.is(tok::ParenR)) {
+            expect(tok::Comma);
+            if (_tok.is(tok::ParenR))
+                diag("unexpected ), expecting expr");
+        }
+    }
+    return args;
 }
 
 ast::Ptr<ast::ArrayAccess>
 Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
     debug() << "array_access\n";
-    // TODO
-    return nullptr;
+    assert(_tok.is(tok::BracketL));
+    consume();
+    auto index = parse_expr();
+    expect(tok::BracketR);
+    return tree<ast::ArrayAccess>(std::move(array), std::move(index));
+}
+
+ast::Ptr<ast::MemberAccess>
+Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
+    debug() << "member_access\n";
+    assert(_tok.is(tok::Dot));
+    consume();
+    if (!_tok.in(tok::Name, tok::TypeName)) {
+        diag("expecting name or type name");
+        return nullptr;
+    }
+    auto node = tree<ast::MemberAccess>(std::move(obj), tok_str());
+    consume();
+    return node;
 }
 
 ast::Ptr<ast::TypeName> Parser::parse_type_name() {

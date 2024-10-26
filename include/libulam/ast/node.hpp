@@ -15,8 +15,8 @@ public:                                                                        \
 private:
 
 #define ULAM_AST_TUPLE_PROP(name, index)                                       \
-    auto name() { return std::get<index>(_items).get(); }                      \
-    const auto name() const { return std::get<index>(_items).get(); }          \
+    auto name() { return ref(std::get<index>(_items)); }                  \
+    const auto name() const { return ref(std::get<index>(_items)); }      \
     auto replace_##name(ElementT<index>&& repl) {                              \
         return replace<index>(std::move(repl));                                \
     }
@@ -26,7 +26,11 @@ namespace ulam::ast {
 class Node;
 
 // TODO: type constraints
-template <typename N> using Ptr = std::unique_ptr<N>;
+template <typename N> using Ptr = std::unique_ptr<N>; // owning pointer
+template <typename N> using Ref = N*;                 // nullable reference
+
+template <typename N> Ref<N> ref(Ptr<N>& ptr) { return ptr.get(); }
+template <typename N> const Ref<N> ref(const Ptr<N>& ptr) { return ptr.get(); }
 
 // TODO: pass context
 template <typename N, typename... Args> Ptr<N> make(Args&&... args) {
@@ -35,12 +39,12 @@ template <typename N, typename... Args> Ptr<N> make(Args&&... args) {
 
 template <typename... Ns> using Variant = std::variant<Ptr<Ns>...>;
 
-template <typename... Ns> Node* as_node(Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Node* { return ptr.get(); }, v);
+template <typename... Ns> Ref<Node> as_node(Variant<Ns...>& v) {
+    return std::visit([](auto&& ptr) -> Node* { return ref(ptr); }, v);
 }
 
-template <typename... Ns> const Node* as_node(const Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Node* { return ptr.get(); }, v);
+template <typename... Ns> const Ref<Node> as_node(const Variant<Ns...>& v) {
+    return std::visit([](auto&& ptr) -> Node* { return ref(ptr); }, v);
 }
 
 class Node {
@@ -52,8 +56,8 @@ public:
 
     virtual unsigned child_num() const { return 0; }
 
-    virtual Node* child(unsigned n) { return nullptr; }
-    virtual const Node* child(unsigned n) const { return nullptr; }
+    virtual Ref<Node> child(unsigned n) { return nullptr; }
+    virtual const Ref<Node> child(unsigned n) const { return nullptr; }
 };
 
 template <typename B, typename... Ns> class Tuple : public B {
@@ -72,20 +76,22 @@ public:
 
     unsigned child_num() const override { return std::tuple_size<TupleT>(); }
 
-    Node* child(unsigned n) override {
+    Ref<Node> child(unsigned n) override {
         auto node =
             getters(std::make_index_sequence<sizeof...(Ns)>())[n](*this);
         return const_cast<Node*>(node);
     }
-    const Node* child(unsigned n) const override {
+    const Ref<Node> child(unsigned n) const override {
         return getters(std::make_index_sequence<sizeof...(Ns)>())[n](*this);
     }
 
 protected:
-    template <std::size_t I> auto get() { return std::get<I>(_items).get(); }
+    template <std::size_t I> auto get() {
+        return ref(std::get<I>(_items));
+    }
 
     template <std::size_t I> const auto get() const {
-        return std::get<I>(_items).get();
+        return ref(std::get<I>(_items));
     }
 
     template <std::size_t I> ElementT<I> replace(ElementT<I>&& repl) {
@@ -97,8 +103,8 @@ protected:
 
 private:
     template <std::size_t I>
-    static const Node* item_as_node(const Tuple& self) {
-        return std::get<I>(self._items).get();
+    static const Ref<Node> item_as_node(const Tuple& self) {
+        return ref(std::get<I>(self._items));
     }
 
     template <std::size_t... Indices>
@@ -115,13 +121,13 @@ public:
 
     void add(Ptr<N>&& item) { _items.push_back(std::move(item)); }
 
-    N* get(unsigned n) {
+    Ref<N> get(unsigned n) {
         assert(n < _items.size());
-        return _items[n].get();
+        return ref(_items[n]);
     }
-    const N* get(unsigned n) const {
+    const Ref<N> get(unsigned n) const {
         assert(n < _items.size());
-        return _items[n].get();
+        return ref(_items[n]);
     }
 
     ItemT replace(unsigned n, Ptr<N>&& repl) {
@@ -132,8 +138,10 @@ public:
 
     unsigned child_num() const override { return _items.size(); }
 
-    Node* child(unsigned n) override { return _items[n].get(); }
-    const Node* child(unsigned n) const override { return _items[n].get(); }
+    Ref<Node> child(unsigned n) override { return ref(_items[n]); }
+    const Ref<Node> child(unsigned n) const override {
+        return ref(_items[n]);
+    }
 
 private:
     std::vector<ItemT> _items; // TODO: list?
@@ -167,8 +175,10 @@ public:
 
     unsigned child_num() const override { return _items.size(); }
 
-    Node* child(unsigned n) override { return as_node(_items[n]); }
-    const Node* child(unsigned n) const override { return as_node(_items[n]); }
+    Ref<Node> child(unsigned n) override { return as_node(_items[n]); }
+    const Ref<Node> child(unsigned n) const override {
+        return as_node(_items[n]);
+    }
 
 private:
     std::vector<ItemT> _items; // TODO: list?

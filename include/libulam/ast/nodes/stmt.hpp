@@ -5,7 +5,7 @@ namespace ulam::ast {
 
 class Stmt : public Node {};
 
-class Block : public List<Stmt> {
+class Block : public ListOf<Stmt, Block, Stmt> {
     ULAM_AST_NODE
 };
 

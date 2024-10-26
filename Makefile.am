@@ -42,7 +42,6 @@ HEADER_FILES = \
 	include/libulam/src_loc.hpp \
 	include/libulam/src_mngr.hpp \
 	include/libulam/str_pool.hpp \
-	include/libulam/types.hpp \
 	include/libulam/token.hpp
 
 SOURCE_FILES = \

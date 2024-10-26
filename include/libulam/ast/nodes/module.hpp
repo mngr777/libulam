@@ -6,7 +6,6 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/lang/class.hpp>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -25,11 +24,11 @@ class ClassDefBody : public ListOf<Node, TypeDef, FunDef, VarDef> {
     ULAM_AST_NODE
 };
 
-class ClassDef : public Tuple<Node, ClassDefBody> {
+class ClassDef : public Tuple<Stmt, ClassDefBody> {
     ULAM_AST_NODE
 public:
     ClassDef(Class::Kind kind, std::string name):
-        Tuple{std::make_unique<ClassDefBody>()}, _kind{kind}, _name(std::move(name)) {}
+        Tuple{make<ClassDefBody>()}, _kind{kind}, _name(std::move(name)) {}
 
     const Class::Kind kind() const { return _kind; }
     const std::string& name() const { return _name; }
@@ -55,7 +54,7 @@ private:
     std::string _alias;
 };
 
-class FunDef : public Tuple<Node, Expr, ParamList, Block> {
+class FunDef : public Tuple<Stmt, Expr, ParamList, Block> {
     ULAM_AST_NODE
 public:
     FunDef(
@@ -75,6 +74,24 @@ public:
 private:
     std::string _name;
 };
+
+// class VarDef : public Tuple<Node, Expr> {
+// public:
+//     VarDef(Ptr<Expr>&& type, std::string name):
+//         Tuple{std::move(type)}, _name(std::move(name)) {}
+
+//     const std::string& name() { return _name; }
+
+//     ULAM_AST_TUPLE_PROP(type, 0);
+// private:
+//     std::string _name;
+// };
+
+// class VarDefList : public ListOf<VarDef> {
+//     ULAM_AST_NODE
+// public:
+//     VarDefList(Ptr<Expr>&& base_type)
+// };
 
 class VarDef : public Tuple<Node, Expr, Expr> {
     ULAM_AST_NODE

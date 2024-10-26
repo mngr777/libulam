@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/node.hpp"
+#include "libulam/ast/nodes/access.hpp"
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/nodes/params.hpp"
@@ -14,10 +16,21 @@ public:
 #include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
-    void print(ulam::ast::Node* node);
+    void print(ulam::ast::Ref<ulam::ast::Node> node);
+
+    void paren_l() {
+        if (options.explicit_parens)
+            _os << "(";
+    }
+
+    void paren_r() {
+        if (options.explicit_parens)
+            _os << ")";
+    }
 
     struct {
         unsigned indent = 2;
+        bool explicit_parens = true;
     } options;
 
 protected:
@@ -36,11 +49,24 @@ public:
     bool visit(ulam::ast::FunDef& node) override;
     bool visit(ulam::ast::ParamList& node) override;
     bool visit(ulam::ast::Param& node) override;
+    // bool visit(ulam::ast::FunCall& node) override;
+    bool visit(ulam::ast::MemberAccess& node) override;
     bool visit(ulam::ast::ParenExpr& node) override;
     bool visit(ulam::ast::BinaryOp& node) override;
     bool visit(ulam::ast::UnaryOp& node) override;
     bool visit(ulam::ast::TypeName& node) override;
     bool visit(ulam::ast::Name& node) override;
+    bool visit(ulam::ast::Number& node) override;
+    bool visit(ulam::ast::String& node) override;
+
+private:
+    void accept_me(ulam::ast::Node* node) {
+        if (node) {
+            node->accept(*this);
+        } else {
+            _os << "<empty>";
+        }
+    }
 };
 
 } // namespace test::ast
