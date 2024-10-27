@@ -14,8 +14,16 @@ class Block : public ListOf<_Stmt, Block, Stmt> {
     ULAM_AST_NODE
 };
 
-class Branch : public OneOf<Stmt, Stmt, Block> {
+class Branch : public WrapOneOf<Stmt, Stmt, Block> {
     ULAM_AST_NODE
+};
+
+class ExprStmt : public Tuple<Stmt, Expr> {
+    ULAM_AST_NODE
+public:
+    explicit ExprStmt(Ptr<Expr>&& expr): Tuple{std::move(expr)} {}
+
+    ULAM_AST_TUPLE_PROP(expr, 0);
 };
 
 class If : public Tuple<Stmt, Expr, Branch, Branch> {

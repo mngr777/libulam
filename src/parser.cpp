@@ -1,4 +1,5 @@
 #include "libulam/parser.hpp"
+#include "libulam/token.hpp"
 #include <cassert>
 #include <stdexcept> // TMP
 #include <string>
@@ -261,10 +262,13 @@ ast::Ptr<ast::Expr> Parser::parse_cast_expr() {
         return parse_type_name();
     case tok::Name:
         return parse_name();
+    case tok::True:
+    case tok::False:
+        return parse_bool_lit();
     case tok::Number:
-        return parse_number();
+        return parse_num_lit();
     case tok::String:
-        return parse_string();
+        return parse_str_lit();
     case tok::ParenL:
         return parse_paren_expr_or_cast();
     default:
@@ -354,18 +358,26 @@ ast::Ptr<ast::Name> Parser::parse_name() {
     return node;
 }
 
-ast::Ptr<ast::Number> Parser::parse_number() {
-    debug() << "number: " << tok_str() << "\n";
-    assert(_tok.is(tok::Number));
-    auto node = tree<ast::Number>();
+ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
+    debug() << "bool_lit: " << tok_str() << "\n";
+    assert(_tok.in(tok::True, tok::False));
+    auto node = tree<ast::BoolLit>(_tok.is(tok::True));
     consume();
     return node;
 }
 
-ast::Ptr<ast::String> Parser::parse_string() {
-    debug() << "string: " << tok_str() << "\n";
+ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
+    debug() << "num_lit: " << tok_str() << "\n";
+    assert(_tok.is(tok::Number));
+    auto node = tree<ast::NumLit>();
+    consume();
+    return node;
+}
+
+ast::Ptr<ast::StrLit> Parser::parse_str_lit() {
+    debug() << "bool_lit: " << tok_str() << "\n";
     assert(_tok.is(tok::String));
-    auto node = tree<ast::String>();
+    auto node = tree<ast::StrLit>();
     consume();
     return node;
 }

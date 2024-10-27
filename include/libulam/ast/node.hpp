@@ -26,28 +26,66 @@ namespace ulam::ast {
 
 class Node;
 
-// TODO: type constraints
+// TODO:
+// - pass AST context to `make`
+// - type constraints
+// - child iterators
+
+// Owning pointer and nullable reference, aka (non-owning) pointer
+
 template <typename N> using Ptr = std::unique_ptr<N>; // owning pointer
 template <typename N> using Ref = N*;                 // nullable reference
 
 template <typename N> Ref<N> ref(Ptr<N>& ptr) { return ptr.get(); }
 template <typename N> const Ref<N> ref(const Ptr<N>& ptr) { return ptr.get(); }
 
-// TODO: pass context
 template <typename N, typename... Args> Ptr<N> make(Args&&... args) {
     return std::make_unique<N>(std::forward<Args>(args)...);
 }
 
+// Variant
+
 template <typename... Ns> using Variant = std::variant<Ptr<Ns>...>;
 
-template <typename... Ns> auto as_node(Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
+template <typename N, typename... Ns> bool is(const Variant<Ns...>& v) {
+    return std::holds_alternative<Ptr<N>>(v);
 }
 
-template <typename... Ns> auto as_node(const Variant<Ns...>& v) {
-    return std::visit(
-        [](auto&& ptr) -> const Ref<Node> { return ref(ptr); }, v);
+// ref to node
+template <typename N, typename... Ns> auto as_ref(Variant<Ns...>& v) {
+    return std::visit([](auto&& ptr) -> Ref<N> { return ref(ptr); }, v);
 }
+template <typename N, typename... Ns> auto as_ref(const Variant<Ns...>& v) {
+    return std::visit([](auto&& ptr) -> const Ref<N> { return ref(ptr); }, v);
+}
+
+// to node ptr
+template <typename N, typename... Ns> auto get(Variant<Ns...>&& v) {
+    return std::visit([](auto&& ptr) -> Ptr<N> { return ptr; }, std::move(v));
+}
+template <typename N, typename... Ns> auto get(const Variant<Ns...>&& v) {
+    return std::visit([](auto&& ptr) -> Ptr<N> { return ptr; }, std::move(v));
+}
+
+class Node;
+
+// ref to node base
+template <typename... Ns> auto as_node_ref(Variant<Ns...>& v) {
+    return as_ref<Node>(v);
+}
+template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
+    return as_ref<Node>(v);
+}
+
+// template <typename... Ns> auto as_node_ref(Variant<Ns...>& v) {
+//     return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
+// }
+// template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
+//     return std::visit(
+//         [](auto&& ptr) -> const Ref<Node> { return ref(ptr); }, v);
+// }
+
+// Node base
 
 class Node {
 public:
@@ -62,6 +100,8 @@ public:
     virtual const Ref<Node> child(unsigned n) const { return nullptr; }
 };
 
+// "Named" trait
+
 class Named {
 public:
     Named(std::string&& name): _name{std::move(name)} {}
@@ -72,12 +112,14 @@ private:
     std::string _name;
 };
 
-template <typename B, typename... Ns> class OneOf : public B {
+// Wrapper node
+
+template <typename B, typename... Ns> class WrapOneOf : public B {
 public:
     using VariantT = Variant<Ns...>;
 
     template <typename N>
-    explicit OneOf(Ptr<N>&& inner): _inner{std::move(inner)} {}
+    explicit WrapOneOf(Ptr<N>&& inner): _inner{std::move(inner)} {}
 
     template <typename N> bool is() {
         return std::holds_alternative<Ptr<N>>(_inner);
@@ -86,12 +128,16 @@ public:
     // NOTE: we may still want to visit the wrapper node itself
     virtual unsigned child_num() const { return 1; }
 
-    virtual Ref<Node> child(unsigned n) { return as_node(_inner); }
-    virtual const Ref<Node> child(unsigned n) const { return as_node(_inner); }
+    virtual Ref<Node> child(unsigned n) { return as_node_ref(_inner); }
+    virtual const Ref<Node> child(unsigned n) const {
+        return as_node_ref(_inner);
+    }
 
 private:
     VariantT _inner;
 };
+
+// Tuple
 
 template <typename B, typename... Ns> class Tuple : public B {
 public:
@@ -134,17 +180,19 @@ protected:
 
 private:
     template <std::size_t I>
-    static const Ref<Node> item_as_node(const Tuple& self) {
+    static const Ref<Node> item_as_node_ref(const Tuple& self) {
         return ref(std::get<I>(self._items));
     }
 
     template <std::size_t... Indices>
     auto static getters(std::index_sequence<Indices...>) {
-        using Get = decltype(item_as_node<0>);
-        static constexpr Get* table[] = {item_as_node<Indices>...};
+        using Get = decltype(item_as_node_ref<0>);
+        static constexpr Get* table[] = {item_as_node_ref<Indices>...};
         return table;
     }
 };
+
+// List of nodes of same type
 
 template <typename B, typename N> class List : public B {
 public:
@@ -176,6 +224,8 @@ private:
     std::vector<ItemT> _items; // TODO: list?
 };
 
+// List of nodes of multiple types
+
 template <typename B, typename... Ns> class ListOf : public B {
 public:
     using ItemT = Variant<Ns...>;
@@ -204,9 +254,9 @@ public:
 
     unsigned child_num() const override { return _items.size(); }
 
-    Ref<Node> child(unsigned n) override { return as_node(_items[n]); }
+    Ref<Node> child(unsigned n) override { return as_node_ref(_items[n]); }
     const Ref<Node> child(unsigned n) const override {
-        return as_node(_items[n]);
+        return as_node_ref(_items[n]);
     }
 
 private:

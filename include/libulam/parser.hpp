@@ -51,8 +51,9 @@ private:
     ast::Ptr<ast::MemberAccess> parse_member_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::TypeName> parse_type_name();
     ast::Ptr<ast::Name> parse_name();
-    ast::Ptr<ast::Number> parse_number();
-    ast::Ptr<ast::String> parse_string();
+    ast::Ptr<ast::BoolLit> parse_bool_lit();
+    ast::Ptr<ast::NumLit> parse_num_lit();
+    ast::Ptr<ast::StrLit> parse_str_lit();
 
     template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args);
 
