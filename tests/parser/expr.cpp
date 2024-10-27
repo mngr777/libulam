@@ -11,7 +11,7 @@
 
 static const char* Program = R"END(
 element A {
-  typedef B.C D, E;
+  typedef B.C D;
 
   B.C.D a = 1, b, c = 2;
   C.D.E d = 3;

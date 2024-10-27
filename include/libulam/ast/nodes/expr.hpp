@@ -19,10 +19,6 @@ public:
     explicit Name(std::string&& name): Named{std::move(name)} {}
 };
 
-class Ident : public Expr {};
-
-class TypeIdent : public Ident {};
-
 class ParenExpr : public Tuple<Expr, Expr> {
     ULAM_AST_NODE
 public:

@@ -101,18 +101,12 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     debug() << "type_def\n";
     consume();
     auto type = parse_expr();
-    auto node = tree<ast::TypeDef>(std::move(type));
-    while (true) {
-        if (!_tok.is(tok::TypeName))
-            diag("Unexpected token in parse_type_def, expecting type name");
-        node->add_alias(tok_str());
-        consume();
-        if (!_tok.is(tok::Comma))
-            break;
-        consume();
-    }
+    if (!_tok.is(tok::TypeName))
+        diag("Unexpected token in parse_type_def, expecting type name");
+    auto alias = tok_str();
+    consume();
     expect(tok::Semicol);
-    return node;
+    return tree<ast::TypeDef>(std::move(type), std::move(alias));
 }
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
@@ -166,7 +160,38 @@ ast::Ptr<ast::Block> Parser::parse_block() {
 }
 
 ast::Ptr<ast::Stmt> Parser::parse_stmt() {
-    return nullptr; // TODO
+    switch (_tok.type) {
+    case tok::If:
+        break;
+    case tok::For:
+        break;
+    case tok::While:
+        break;
+    default:
+        break;
+    }
+    return nullptr;
+}
+
+ast::Ptr<ast::If> Parser::parse_if() {
+    debug() << "if\n";
+    expect(tok::If);
+    expect(tok::ParenL);
+    auto expr = parse_expr();
+    expect(tok::ParenR);
+    return nullptr;
+}
+
+ast::Ptr<ast::For> Parser::parse_for() {
+    debug() << "for\n";
+    expect(tok::For);
+    return nullptr;
+}
+
+ast::Ptr<ast::While> Parser::parse_while() {
+    debug() << "while\n";
+    expect(tok::While);
+    return nullptr;
 }
 
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {

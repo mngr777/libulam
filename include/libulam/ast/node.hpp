@@ -16,8 +16,8 @@ public:                                                                        \
 private:
 
 #define ULAM_AST_TUPLE_PROP(name, index)                                       \
-    auto name() { return ref(std::get<index>(_items)); }                  \
-    const auto name() const { return ref(std::get<index>(_items)); }      \
+    auto name() { return ref(std::get<index>(_items)); }                       \
+    const auto name() const { return ref(std::get<index>(_items)); }           \
     auto replace_##name(ElementT<index>&& repl) {                              \
         return replace<index>(std::move(repl));                                \
     }
@@ -38,14 +38,15 @@ template <typename N, typename... Args> Ptr<N> make(Args&&... args) {
     return std::make_unique<N>(std::forward<Args>(args)...);
 }
 
-template <typename... Ns> using _Variant = std::variant<Ptr<Ns>...>;
+template <typename... Ns> using Variant = std::variant<Ptr<Ns>...>;
 
-template <typename... Ns> Ref<Node> as_node(_Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Node* { return ref(ptr); }, v);
+template <typename... Ns> auto as_node(Variant<Ns...>& v) {
+    return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
 }
 
-template <typename... Ns> const Ref<Node> as_node(const _Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Node* { return ref(ptr); }, v);
+template <typename... Ns> auto as_node(const Variant<Ns...>& v) {
+    return std::visit(
+        [](auto&& ptr) -> const Ref<Node> { return ref(ptr); }, v);
 }
 
 class Node {
@@ -69,6 +70,27 @@ public:
 
 private:
     std::string _name;
+};
+
+template <typename B, typename... Ns> class OneOf : public B {
+public:
+    using VariantT = Variant<Ns...>;
+
+    template <typename N>
+    explicit OneOf(Ptr<N>&& inner): _inner{std::move(inner)} {}
+
+    template <typename N> bool is() {
+        return std::holds_alternative<Ptr<N>>(_inner);
+    }
+
+    // NOTE: we may still want to visit the wrapper node itself
+    virtual unsigned child_num() const { return 1; }
+
+    virtual Ref<Node> child(unsigned n) { return as_node(_inner); }
+    virtual const Ref<Node> child(unsigned n) const { return as_node(_inner); }
+
+private:
+    VariantT _inner;
 };
 
 template <typename B, typename... Ns> class Tuple : public B {
@@ -97,9 +119,7 @@ public:
     }
 
 protected:
-    template <std::size_t I> auto get() {
-        return ref(std::get<I>(_items));
-    }
+    template <std::size_t I> auto get() { return ref(std::get<I>(_items)); }
 
     template <std::size_t I> const auto get() const {
         return ref(std::get<I>(_items));
@@ -150,9 +170,7 @@ public:
     unsigned child_num() const override { return _items.size(); }
 
     Ref<Node> child(unsigned n) override { return ref(_items[n]); }
-    const Ref<Node> child(unsigned n) const override {
-        return ref(_items[n]);
-    }
+    const Ref<Node> child(unsigned n) const override { return ref(_items[n]); }
 
 private:
     std::vector<ItemT> _items; // TODO: list?
@@ -160,7 +178,7 @@ private:
 
 template <typename B, typename... Ns> class ListOf : public B {
 public:
-    using ItemT = _Variant<Ns...>;
+    using ItemT = Variant<Ns...>;
 
     template <typename N> void add(Ptr<N>&& item) {
         _items.push_back(std::move(item));

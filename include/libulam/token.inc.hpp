@@ -9,6 +9,8 @@ TOK("load", Load)
 
 TOK("if", If)
 TOK("else", Else)
+TOK("for", For)
+TOK("while", While)
 TOK("return", Return)
 
 TOK("element", Element)

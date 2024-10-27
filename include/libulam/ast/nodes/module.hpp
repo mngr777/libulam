@@ -16,11 +16,11 @@ class ClassDef;
 class FunDef;
 class VarDefList;
 
-class Module : public ListOf<Node, TypeDef, VarDefList, ClassDef> {
+class Module : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
 };
 
-class ClassDefBody : public ListOf<Node, TypeDef, FunDef, VarDefList> {
+class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
     ULAM_AST_NODE
 };
 
@@ -41,26 +41,15 @@ private:
 class TypeDef : public Tuple<Node, Expr> {
     ULAM_AST_NODE
 public:
-    TypeDef(Ptr<Expr>&& expr):
-        Tuple{std::move(expr)} {}
+    TypeDef(Ptr<Expr>&& expr, std::string&& alias):
+        Tuple{std::move(expr)}, _alias{alias} {}
 
-    unsigned alias_num() const {
-        return _aliases.size();
-    }
-
-    const std::string& alias(unsigned n) const {
-        assert(n < _aliases.size());
-        return _aliases[n];
-    }
-
-    void add_alias(std::string&& alias) {
-        _aliases.push_back(std::move(alias));
-    }
+    const std::string& alias() const { return _alias; }
 
     ULAM_AST_TUPLE_PROP(expr, 0)
 
 private:
-    std::vector<std::string> _aliases; // TMP
+    std::string _alias;
 };
 
 class FunDef : public Tuple<Stmt, Expr, ParamList, Block>, public Named {
