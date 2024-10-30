@@ -129,12 +129,12 @@ bool Printer::visit(ulam::ast::Name& node) {
     return false;
 }
 
-bool Printer::visit(ulam::ast::Number& node) {
+bool Printer::visit(ulam::ast::NumLit& node) {
     _os << "<number>";
     return false;
 }
 
-bool Printer::visit(ulam::ast::String& node) {
+bool Printer::visit(ulam::ast::StrLit& node) {
     _os << "<string>";
     return false;
 }

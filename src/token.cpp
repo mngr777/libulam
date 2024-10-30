@@ -6,7 +6,9 @@
 namespace ulam::tok {
 namespace {
 
-auto make_word_type_table() {
+auto make_keyword_type_table() {
+    // "_dummy_" keys are never inserted, they are only here to keep
+    // compiler happy, as are type conversions
     std::map<std::string_view, Type> table;
 #define TOK(str, type)                                                         \
     if (str && (*((char*)str) == '@' || detail::is_word(*(char*)str)))         \
@@ -42,11 +44,11 @@ const char* type_name(tok::Type type) {
     }
 }
 
-Type type_by_word(std::string_view str) {
-    static std::map<std::string_view, Type> types{make_word_type_table()};
+Type type_by_keyword(std::string_view str) {
+    static std::map<std::string_view, Type> table{make_keyword_type_table()};
     assert(str[0] == '@' || detail::is_word(str[0]));
-    auto it = types.find(str);
-    if (it != types.end())
+    auto it = table.find(str);
+    if (it != table.end())
         return it->second;
     if (str[0] == '@')
         return InvalidAtKeyword;

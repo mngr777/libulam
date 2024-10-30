@@ -18,8 +18,7 @@ enum Type : std::uint8_t {
 const char* type_str(Type type);
 const char* type_name(Type type);
 
-// NOTE: '@keyword' is allowed
-tok::Type type_by_word(const std::string_view str);
+tok::Type type_by_keyword(const std::string_view str);
 
 Class::Kind class_kind(Type type);
 

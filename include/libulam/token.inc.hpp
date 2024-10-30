@@ -93,8 +93,6 @@ TOK(nullptr, TypeName)
 TOK(nullptr, Name)
 TOK(nullptr, Number)
 TOK(nullptr, String)
-TOK(nullptr, PlusSign)
-TOK(nullptr, MinusSign)
 TOK(nullptr, InvalidAtKeyword) // @something
 TOK(nullptr, UnexpectedChar)
 TOK(nullptr, Eof)

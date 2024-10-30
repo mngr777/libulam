@@ -21,7 +21,7 @@ public:
     loc_id_t loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t chr);
     SrcLoc loc(loc_id_t loc_id);
 
-    std::string_view str_at(loc_id_t loc_id, std::size_t size);
+    std::string_view str_at(loc_id_t loc_id, std::size_t size, int off = 0);
 
 private:
     std::vector<std::unique_ptr<Src>> _srcs;

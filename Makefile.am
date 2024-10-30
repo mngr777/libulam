@@ -49,9 +49,12 @@ SOURCE_FILES = \
 	$(AST_SOURCE_FILES) \
 	$(LANG_SOURCE_FILES) \
 	src/debug.hpp \
+	src/detail/str.hpp \
 	src/memory/notepad.cpp \
 	src/memory/buf.cpp \
 	src/parser.cpp \
+	src/parser/number.hpp \
+	src/parser/number.cpp \
 	src/preproc.cpp \
 	src/src.cpp \
 	src/src_loc.cpp \
@@ -94,6 +97,7 @@ TEST_LEX_SOURCE_FILES = \
 	include/libulam/preproc.hpp \
 	include/libulam/src.hpp \
 	include/libulam/src_mngr.hpp \
+	src/detail/str.hpp \
 	src/lex.cpp \
 	src/preproc.cpp \
 	src/src.cpp \
@@ -113,6 +117,8 @@ TEST_PARSER_SOURCE_FILES = \
 	$(AST_TEST_SOURCE_FILES) \
 	include/libulam/parser.hpp \
 	src/parser.cpp \
+	src/parser/number.hpp \
+	src/parser/number.cpp \
 	tests/ast/print.hpp \
 	tests/ast/print.cpp
 

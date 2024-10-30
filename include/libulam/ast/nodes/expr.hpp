@@ -1,14 +1,15 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/node.hpp>
+#include <libulam/lang/number.hpp>
 #include <libulam/lang/ops.hpp>
 
 namespace ulam::ast {
 
 class Expr : public Node {};
 
-class TypeName;
-class Name;
+class TypeName; // TODO: TypeIdent
+class Name; // TODO: Ident
 class ParenExpr;
 class BinaryOp;
 class UnaryOp;
@@ -16,17 +17,6 @@ class Cast;
 class BoolLit;
 class NumLit;
 class StrLit;
-
-using ExprVariant = Variant<
-    TypeName,
-    Name,
-    ParenExpr,
-    BinaryOp,
-    UnaryOp,
-    Cast,
-    BoolLit,
-    NumLit,
-    StrLit>;
 
 class TypeName : public Expr, public Named {
     ULAM_AST_NODE
@@ -100,6 +90,13 @@ private:
 
 class NumLit : public Expr {
     ULAM_AST_NODE
+public:
+    NumLit(Number&& number): _number{std::move(number)} {}
+
+    const Number& number() const { return _number; }
+
+private:
+    Number _number;
 };
 
 class StrLit : public Expr {

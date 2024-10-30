@@ -1,8 +1,9 @@
 #pragma once
-#include "libulam/ast.hpp"
-#include "libulam/lang/ops.hpp"
-#include "libulam/preproc.hpp"
-#include "libulam/token.hpp"
+
+#include <libulam/ast.hpp>
+#include <libulam/lang/ops.hpp>
+#include <libulam/preproc.hpp>
+#include <libulam/token.hpp>
 #include <string>
 
 namespace ulam {
@@ -41,7 +42,7 @@ private:
     ast::Ptr<ast::For> parse_for();
     ast::Ptr<ast::While> parse_while();
 
-    ast::Ptr<ast::Expr> parse_expr();
+    ast::Ptr<ast::Expr> parse_expr(ops::Prec min_prec = 0);
     ast::Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
     ast::Ptr<ast::Expr> parse_cast_expr();
     ast::Ptr<ast::Expr> parse_paren_expr_or_cast();

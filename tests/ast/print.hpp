@@ -57,8 +57,8 @@ public:
     bool visit(ulam::ast::UnaryOp& node) override;
     bool visit(ulam::ast::TypeName& node) override;
     bool visit(ulam::ast::Name& node) override;
-    bool visit(ulam::ast::Number& node) override;
-    bool visit(ulam::ast::String& node) override;
+    bool visit(ulam::ast::NumLit& node) override;
+    bool visit(ulam::ast::StrLit& node) override;
 
 private:
     void accept_me(ulam::ast::Ref<ulam::ast::Node> node) {

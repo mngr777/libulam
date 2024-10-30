@@ -14,6 +14,8 @@ void Lex::lex(Token& token) {
     advance();
     switch (ch) {
     case '\0':
+        if (_cur != _buf.end())
+            _pp.diag(_tok->loc_id, "\\0 before end of input");
         complete(tok::Eof);
         break;
     case '!':
@@ -73,8 +75,6 @@ void Lex::lex(Token& token) {
         if (at('=')) {
             advance();
             complete(tok::PlusEqual);
-        } else if (detail::is_digit(_cur[0])) {
-            complete(tok::PlusSign);
         } else {
             complete(tok::Plus);
         }
@@ -86,8 +86,6 @@ void Lex::lex(Token& token) {
         if (at('=')) {
             advance();
             complete(tok::MinusEqual);
-        } else if (detail::is_digit(_cur[0])) {
-            complete(tok::MinusSign);
         } else {
             complete(tok::Minus);
         }
@@ -250,14 +248,14 @@ loc_id_t Lex::loc_id() { return _sm.loc_id(_src_id, _cur, _linum, chr()); }
 
 void Lex::start(Token& token) {
     _tok_start = _cur;
-    _token = &token;
+    _tok = &token;
     token.loc_id = loc_id();
 }
 
 void Lex::complete(tok::Type type) {
-    assert(_token);
-    _token->type = type;
-    _token->size = _cur - _tok_start;
+    assert(_tok);
+    _tok->type = type;
+    _tok->size = _cur - _tok_start;
 }
 
 void Lex::newline(std::size_t size) {
@@ -368,7 +366,7 @@ void Lex::lex_word() {
     assert(_cur[-1] == '@' || detail::is_word(_cur[-1]));
     while (detail::is_word(_cur[0]))
         advance();
-    auto type = tok::type_by_word(
+    auto type = tok::type_by_keyword(
         {_tok_start, static_cast<std::size_t>(_cur - _tok_start)});
     complete(type);
 }

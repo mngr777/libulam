@@ -34,6 +34,14 @@ public:
 
     ULAM_AST_TUPLE_PROP(body, 0)
 
+    void add_vars(ast::Ptr<ast::VarDefList>&& var_def) {
+        body()->add(std::move(var_def));
+    }
+
+    void add_fun(ast::Ptr<ast::FunDef>&& fun_def) {
+        body()->add(std::move(fun_def));
+    }
+
 private:
     Class::Kind _kind;
 };

@@ -1,6 +1,7 @@
-#include "libulam/parser.hpp"
-#include "libulam/token.hpp"
+#include "src/parser/number.hpp"
 #include <cassert>
+#include <libulam/parser.hpp>
+#include <libulam/token.hpp>
 #include <stdexcept> // TMP
 #include <string>
 
@@ -31,18 +32,15 @@ void Parser::consume() {
 }
 
 void Parser::expect(tok::Type type) {
-    // TODO
     if (_tok.type != type)
-        throw std::invalid_argument(
-            std::string("Unexpected token: ") + _tok.type_name() +
-            " expecting " + tok::type_name(type));
+        diag("Unexpected token");
     consume();
 }
 
 bool Parser::eof() { return _tok.is(tok::Eof); }
 
 void Parser::diag(std::string message) {
-    throw std::invalid_argument(message); // TEST
+    throw std::invalid_argument(message); // TMP
 }
 
 ast::Ptr<ast::Module> Parser::parse_module() {
@@ -60,9 +58,7 @@ ast::Ptr<ast::Module> Parser::parse_module() {
 }
 
 ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
-    assert(
-        _tok.is(tok::Element) || _tok.is(tok::Quark) ||
-        _tok.is(tok::Transient));
+    assert(_tok.in(tok::Element, tok::Quark, tok::Transient));
     debug() << "class_def " << _tok.type_name() << "\n";
     auto kind = _tok.class_kind();
     consume();
@@ -82,10 +78,10 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
             auto name_ = tok_str();
             consume();
             if (_tok.is(tok::ParenL)) {
-                node->body()->add(
+                node->add_fun(
                     parse_fun_def_rest(std::move(type), std::move(name_)));
             } else {
-                node->body()->add(
+                node->add_vars(
                     parse_var_def_list_rest(std::move(type), std::move(name_)));
             }
         } break;
@@ -219,14 +215,14 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     return node;
 }
 
-ast::Ptr<ast::Expr> Parser::parse_expr() {
+ast::Ptr<ast::Expr> Parser::parse_expr(ops::Prec min_prec) {
     debug() << "expr\n";
     Op pre = tok::unary_pre_op(_tok.type);
     if (pre != Op::None) {
         consume();
-        return tree<ast::UnaryOp>(pre, parse_expr_climb(ops::prec(pre)));
+        return tree<ast::UnaryOp>(pre, parse_expr(ops::prec(pre)));
     }
-    return parse_expr_climb(0);
+    return parse_expr_climb(min_prec);
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
@@ -304,8 +300,9 @@ ast::Ptr<ast::ArgList> Parser::parse_args() {
         if (expr) {
             args->add(std::move(expr));
         } else {
-            while (_tok.in(tok::ParenR, tok::Eof))
-                ;
+            while (_tok.in(tok::ParenR, tok::Eof)) {
+                diag("unexpected token in fun args");
+            }
             break;
         }
         // ,?
@@ -368,8 +365,10 @@ ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 
 ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
     debug() << "num_lit: " << tok_str() << "\n";
-    assert(_tok.is(tok::Number));
-    auto node = tree<ast::NumLit>();
+    auto res = detail::parse_num_str(*this, tok_str());
+    if (res.second.error != detail::ParseNumStatus::Ok)
+        diag("Number parse error");
+    auto node = tree<ast::NumLit>(std::move(res.first));
     consume();
     return node;
 }
@@ -382,7 +381,8 @@ ast::Ptr<ast::StrLit> Parser::parse_str_lit() {
     return node;
 }
 
-template <typename N, typename... Args> ast::Ptr<N> Parser::tree(Args&&... args) {
+template <typename N, typename... Args>
+ast::Ptr<N> Parser::tree(Args&&... args) {
     return ast::make<N>(std::forward<Args>(args)...);
 }
 
