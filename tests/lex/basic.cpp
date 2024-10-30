@@ -45,7 +45,7 @@ int main() {
     ulam::Token token;
     do {
         lex.lex(token);
-        if (token.in(ulam::tok::Name, ulam::tok::Number, ulam::tok::String)) {
+        if (token.in(ulam::tok::Ident, ulam::tok::Number, ulam::tok::String)) {
             std::cout << "`" << sm.str_at(token.loc_id, token.size) << "'";
         } else {
             const char* str = token.type_str();
@@ -54,5 +54,5 @@ int main() {
         std::cout << "\n";
     } while (token.type != ulam::tok::Eof);
 
-    token.type = ulam::tok::Name;
+    token.type = ulam::tok::Ident;
 }

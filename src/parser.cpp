@@ -73,7 +73,7 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
             break;
         case tok::TypeIdent: {
             auto type = parse_expr();
-            if (!_tok.is(tok::Name))
+            if (!_tok.is(tok::Ident))
                 diag("Unexpected token in class def, expecting name");
             auto name_ = tok_str();
             consume();
@@ -122,7 +122,7 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
         if (_tok.in(tok::Semicol, tok::Eof))
             break;
         expect(tok::Comma);
-        if (!_tok.is(tok::Name))
+        if (!_tok.is(tok::Ident))
             diag(
                 "unexpected token in var def list, expecting name after comma");
         name = tok_str();
@@ -256,7 +256,7 @@ ast::Ptr<ast::Expr> Parser::parse_cast_expr() {
     switch (_tok.type) {
     case tok::TypeIdent:
         return parse_type_ident();
-    case tok::Name:
+    case tok::Ident:
         return parse_name();
     case tok::True:
     case tok::False:
@@ -330,7 +330,7 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
     debug() << "member_access\n";
     assert(_tok.is(tok::Dot));
     consume();
-    if (!_tok.in(tok::Name, tok::TypeIdent)) {
+    if (!_tok.in(tok::Ident, tok::TypeIdent)) {
         diag("expecting name or type name");
         return nullptr;
     }
@@ -347,10 +347,10 @@ ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     return node;
 }
 
-ast::Ptr<ast::Name> Parser::parse_name() {
+ast::Ptr<ast::Ident> Parser::parse_name() {
     debug() << "name: " << tok_str() << "\n";
-    assert(_tok.is(tok::Name));
-    auto node = tree<ast::Name>(tok_str());
+    assert(_tok.is(tok::Ident));
+    auto node = tree<ast::Ident>(tok_str());
     consume();
     return node;
 }
@@ -403,7 +403,7 @@ ast::Ptr<ast::Expr> Parser::binop_tree(
 }
 
 std::string Parser::tok_str() {
-    assert(_tok.in(tok::Name, tok::TypeIdent, tok::Number, tok::String));
+    assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
     return std::string(_sm.str_at(_tok.loc_id, _tok.size));
 }
 

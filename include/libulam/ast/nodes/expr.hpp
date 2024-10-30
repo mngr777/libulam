@@ -9,7 +9,7 @@ namespace ulam::ast {
 class Expr : public Node {};
 
 class TypeIdent; // TODO: TypeIdent
-class Name; // TODO: Ident
+class Ident; // TODO: Ident
 class ParenExpr;
 class BinaryOp;
 class UnaryOp;
@@ -24,10 +24,10 @@ public:
     explicit TypeIdent(std::string&& name): Named{std::move(name)} {}
 };
 
-class Name : public Expr, public Named {
+class Ident : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    explicit Name(std::string&& name): Named{std::move(name)} {}
+    explicit Ident(std::string&& name): Named{std::move(name)} {}
 };
 
 class ParenExpr : public Tuple<Expr, Expr> {

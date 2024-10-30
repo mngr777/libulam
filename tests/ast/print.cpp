@@ -124,7 +124,7 @@ bool Printer::visit(ulam::ast::TypeIdent& node) {
     return false;
 }
 
-bool Printer::visit(ulam::ast::Name& node) {
+bool Printer::visit(ulam::ast::Ident& node) {
     _os << node.name();
     return false;
 }

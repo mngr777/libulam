@@ -51,7 +51,7 @@ private:
     ast::Ptr<ast::ArrayAccess> parse_array_access(ast::Ptr<ast::Expr>&& array);
     ast::Ptr<ast::MemberAccess> parse_member_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::TypeIdent> parse_type_ident();
-    ast::Ptr<ast::Name> parse_name();
+    ast::Ptr<ast::Ident> parse_name();
     ast::Ptr<ast::BoolLit> parse_bool_lit();
     ast::Ptr<ast::NumLit> parse_num_lit();
     ast::Ptr<ast::StrLit> parse_str_lit();

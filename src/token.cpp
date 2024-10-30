@@ -54,7 +54,7 @@ Type type_by_keyword(std::string_view str) {
         return InvalidAtKeyword;
     if (detail::is_upper(str[0]))
         return TypeIdent;
-    return Name;
+    return Ident;
 }
 
 Class::Kind class_kind(Type type) {

@@ -90,7 +90,7 @@ TOK(",", Comma)
 TOK("...", Ellipsis)
 
 TOK(nullptr, TypeIdent)
-TOK(nullptr, Name)
+TOK(nullptr, Ident)
 TOK(nullptr, Number)
 TOK(nullptr, String)
 TOK(nullptr, InvalidAtKeyword) // @something
