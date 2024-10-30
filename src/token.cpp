@@ -53,7 +53,7 @@ Type type_by_keyword(std::string_view str) {
     if (str[0] == '@')
         return InvalidAtKeyword;
     if (detail::is_upper(str[0]))
-        return TypeName;
+        return TypeIdent;
     return Name;
 }
 

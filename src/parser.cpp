@@ -71,7 +71,7 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
         case tok::Typedef:
             node->body()->add(parse_type_def());
             break;
-        case tok::TypeName: {
+        case tok::TypeIdent: {
             auto type = parse_expr();
             if (!_tok.is(tok::Name))
                 diag("Unexpected token in class def, expecting name");
@@ -98,7 +98,7 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     debug() << "type_def\n";
     consume();
     auto type = parse_expr();
-    if (!_tok.is(tok::TypeName))
+    if (!_tok.is(tok::TypeIdent))
         diag("Unexpected token in parse_type_def, expecting type name");
     auto alias = tok_str();
     consume();
@@ -254,8 +254,8 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
 ast::Ptr<ast::Expr> Parser::parse_cast_expr() {
     debug() << "cast_expr " << _tok.type_name() << "\n";
     switch (_tok.type) {
-    case tok::TypeName:
-        return parse_type_name();
+    case tok::TypeIdent:
+        return parse_type_ident();
     case tok::Name:
         return parse_name();
     case tok::True:
@@ -330,7 +330,7 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
     debug() << "member_access\n";
     assert(_tok.is(tok::Dot));
     consume();
-    if (!_tok.in(tok::Name, tok::TypeName)) {
+    if (!_tok.in(tok::Name, tok::TypeIdent)) {
         diag("expecting name or type name");
         return nullptr;
     }
@@ -339,10 +339,10 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
     return node;
 }
 
-ast::Ptr<ast::TypeName> Parser::parse_type_name() {
+ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     debug() << "type_name: " << tok_str() << "\n";
-    assert(_tok.is(tok::TypeName));
-    auto node = tree<ast::TypeName>(tok_str());
+    assert(_tok.is(tok::TypeIdent));
+    auto node = tree<ast::TypeIdent>(tok_str());
     consume();
     return node;
 }
@@ -403,7 +403,7 @@ ast::Ptr<ast::Expr> Parser::binop_tree(
 }
 
 std::string Parser::tok_str() {
-    assert(_tok.in(tok::Name, tok::TypeName, tok::Number, tok::String));
+    assert(_tok.in(tok::Name, tok::TypeIdent, tok::Number, tok::String));
     return std::string(_sm.str_at(_tok.loc_id, _tok.size));
 }
 

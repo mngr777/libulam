@@ -8,7 +8,7 @@ namespace ulam::ast {
 
 class Expr : public Node {};
 
-class TypeName; // TODO: TypeIdent
+class TypeIdent; // TODO: TypeIdent
 class Name; // TODO: Ident
 class ParenExpr;
 class BinaryOp;
@@ -18,10 +18,10 @@ class BoolLit;
 class NumLit;
 class StrLit;
 
-class TypeName : public Expr, public Named {
+class TypeIdent : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    explicit TypeName(std::string&& name): Named{std::move(name)} {}
+    explicit TypeIdent(std::string&& name): Named{std::move(name)} {}
 };
 
 class Name : public Expr, public Named {

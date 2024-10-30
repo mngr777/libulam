@@ -89,7 +89,7 @@ TOK(".", Dot)
 TOK(",", Comma)
 TOK("...", Ellipsis)
 
-TOK(nullptr, TypeName)
+TOK(nullptr, TypeIdent)
 TOK(nullptr, Name)
 TOK(nullptr, Number)
 TOK(nullptr, String)

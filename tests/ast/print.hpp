@@ -55,7 +55,7 @@ public:
     bool visit(ulam::ast::ParenExpr& node) override;
     bool visit(ulam::ast::BinaryOp& node) override;
     bool visit(ulam::ast::UnaryOp& node) override;
-    bool visit(ulam::ast::TypeName& node) override;
+    bool visit(ulam::ast::TypeIdent& node) override;
     bool visit(ulam::ast::Name& node) override;
     bool visit(ulam::ast::NumLit& node) override;
     bool visit(ulam::ast::StrLit& node) override;

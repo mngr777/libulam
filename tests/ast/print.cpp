@@ -119,7 +119,7 @@ bool Printer::visit(ulam::ast::UnaryOp& node) {
     return false;
 }
 
-bool Printer::visit(ulam::ast::TypeName& node) {
+bool Printer::visit(ulam::ast::TypeIdent& node) {
     _os << node.name();
     return false;
 }
