@@ -24,7 +24,8 @@ LANG_HEADER_FILES = \
 	include/libulam/lang/class.hpp \
 	include/libulam/lang/ops.hpp \
 	include/libulam/lang/ops.inc.hpp \
-	include/libulam/lang/symbol.hpp
+	include/libulam/lang/symbol.hpp \
+	include/libulam/lang/type_ops.hpp
 
 LANG_SOURCE_FILES = \
 	src/lang/ops.cpp \

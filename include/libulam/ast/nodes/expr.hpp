@@ -3,25 +3,63 @@
 #include <libulam/ast/node.hpp>
 #include <libulam/lang/number.hpp>
 #include <libulam/lang/ops.hpp>
+#include <libulam/lang/type_ops.hpp>
 
 namespace ulam::ast {
 
 class Expr : public Node {};
 
-class TypeIdent; // TODO: TypeIdent
-class Ident; // TODO: Ident
-class ParenExpr;
-class BinaryOp;
-class UnaryOp;
-class Cast;
-class BoolLit;
-class NumLit;
-class StrLit;
+class ArgList;
 
 class TypeIdent : public Expr, public Named {
     ULAM_AST_NODE
 public:
     explicit TypeIdent(std::string&& name): Named{std::move(name)} {}
+};
+
+class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {
+    ULAM_AST_NODE
+public:
+    TypeSpec(Ptr<TypeIdent>&& ident, Ptr<ArgList>&& args):
+        Tuple{std::move(ident), std::move(args)} {}
+    TypeSpec(Ptr<TypeIdent>&& ident): TypeSpec{std::move(ident), nullptr} {}
+
+    ULAM_AST_TUPLE_PROP(ident, 0);
+    ULAM_AST_TUPLE_PROP(args, 1);
+};
+
+class TypeName : public Tuple<ListOf<TypeIdent>, TypeSpec> {
+    ULAM_AST_NODE
+public:
+    explicit TypeName(Ptr<TypeSpec>&& spec): Tuple{std::move(spec)} {}
+
+    unsigned child_num() const override {
+        return Tuple::child_num() + ListOf::child_num();
+    }
+
+    ULAM_AST_TUPLE_PROP(first, 0)
+
+    Ref<Node> child(unsigned n) override {
+        return (n == 0) ? Tuple::child(0) : ListOf::child(n - 1);
+    }
+
+    const Ref<Node> child(unsigned n) const override {
+        return (n == 0) ? Tuple::child(0) : ListOf::child(n - 1);
+    }
+};
+
+class TypeOpExpr : public Tuple<Expr, TypeName> {
+    ULAM_AST_NODE
+public:
+    TypeOpExpr(Ptr<TypeName>&& type, TypeOp op):
+        Tuple{std::move(type)}, _op(op) {
+        assert(op != TypeOp::None);
+    }
+
+    TypeOp op() const { return _op; }
+
+private:
+    TypeOp _op;
 };
 
 class Ident : public Expr, public Named {
@@ -33,14 +71,14 @@ public:
 class ParenExpr : public Tuple<Expr, Expr> {
     ULAM_AST_NODE
 public:
-    ParenExpr(Ptr<Expr>&& inner): Tuple{std::move(inner)} {}
+    explicit ParenExpr(Ptr<Expr>&& inner): Tuple{std::move(inner)} {}
 
     ULAM_AST_TUPLE_PROP(inner, 0)
 };
 
 class _OpExpr : public Expr {
 public:
-    explicit _OpExpr(Op op): _op{op} {}
+    explicit _OpExpr(Op op): _op{op} { assert(op != Op::None); }
 
     Op op() const { return _op; }
 
@@ -67,10 +105,10 @@ public:
 
 class VarRef : public Expr {}; // ??
 
-class Cast : public Tuple<Expr, Expr, Expr> {
+class Cast : public Tuple<Expr, TypeName, Expr> {
     ULAM_AST_NODE
 public:
-    Cast(Ptr<Expr>&& type, Ptr<Expr>&& expr):
+    Cast(Ptr<TypeName>&& type, Ptr<Expr>&& expr):
         Tuple{std::move(type), std::move(expr)} {}
 
     ULAM_AST_TUPLE_PROP(type, 0)

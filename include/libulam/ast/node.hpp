@@ -77,14 +77,6 @@ template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
     return as_ref<Node>(v);
 }
 
-// template <typename... Ns> auto as_node_ref(Variant<Ns...>& v) {
-//     return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
-// }
-// template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
-//     return std::visit(
-//         [](auto&& ptr) -> const Ref<Node> { return ref(ptr); }, v);
-// }
-
 // Node base
 
 class Node {
@@ -100,7 +92,7 @@ public:
     virtual const Ref<Node> child(unsigned n) const { return nullptr; }
 };
 
-// "Named" trait
+// "Named" trait (TMP)
 
 class Named {
 public:

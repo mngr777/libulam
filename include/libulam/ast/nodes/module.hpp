@@ -113,10 +113,10 @@ public:
     ULAM_AST_TUPLE_PROP(base_type, 0);
 
     Ref<Node> child(unsigned n) override {
-        return (n == 0) ? Tuple::child(n) : List::child(n - 1);
+        return (n == 0) ? Tuple::child(0) : List::child(n - 1);
     }
     const Ref<Node> child(unsigned n) const override {
-        return (n == 0) ? Tuple::child(n) : List::child(n - 1);
+        return (n == 0) ? Tuple::child(0) : List::child(n - 1);
     }
 };
 

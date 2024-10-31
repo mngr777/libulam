@@ -1,5 +1,6 @@
 #pragma once
 
+#include "libulam/ast/nodes/expr.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/lang/ops.hpp>
 #include <libulam/preproc.hpp>
@@ -44,14 +45,19 @@ private:
 
     ast::Ptr<ast::Expr> parse_expr(ops::Prec min_prec = 0);
     ast::Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
-    ast::Ptr<ast::Expr> parse_cast_expr();
+    ast::Ptr<ast::Expr> parse_expr_lhs();
     ast::Ptr<ast::Expr> parse_paren_expr_or_cast();
+    ast::Ptr<ast::TypeOpExpr> parse_type_op();
+    ast::Ptr<ast::TypeOpExpr>
+    parse_type_op_rest(ast::Ptr<ast::TypeName>&& type);
+    ast::Ptr<ast::TypeName> parse_type_name();
+    ast::Ptr<ast::TypeSpec> parse_type_spec();
     ast::Ptr<ast::FunCall> parse_funcall(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::ArgList> parse_args();
     ast::Ptr<ast::ArrayAccess> parse_array_access(ast::Ptr<ast::Expr>&& array);
     ast::Ptr<ast::MemberAccess> parse_member_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::TypeIdent> parse_type_ident();
-    ast::Ptr<ast::Ident> parse_name();
+    ast::Ptr<ast::Ident> parse_ident();
     ast::Ptr<ast::BoolLit> parse_bool_lit();
     ast::Ptr<ast::NumLit> parse_num_lit();
     ast::Ptr<ast::StrLit> parse_str_lit();
@@ -61,6 +67,7 @@ private:
     ast::Ptr<ast::Expr>
     binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
 
+    // TODO: string_view
     std::string tok_str();
 
     SrcMngr& _sm;

@@ -70,6 +70,35 @@ Class::Kind class_kind(Type type) {
     }
 }
 
+bool is_type_op(Type type) {
+    return type_op(type) != TypeOp::None;
+}
+
+TypeOp type_op(Type type) {
+    switch (type) {
+    case MinOf:
+        return TypeOp::MinOf;
+    case MaxOf:
+        return TypeOp::MaxOf;
+    case SizeOf:
+        return TypeOp::SizeOf;
+    case LengthOf:
+        return TypeOp::LengthOf;
+    case ClassIdOf:
+        return TypeOp::ClassIdOf;
+    case ConstantOf:
+        return TypeOp::ConstantOf;
+    case PositionOf:
+        return TypeOp::PositionOf;
+    case AtomOf:
+        return TypeOp::AtomOf;
+    case InstanceOf:
+        return TypeOp::InstanceOf;
+    default:
+        return TypeOp::None;
+    }
+}
+
 Op bin_op(Type type) {
     switch (type) {
     case Dot:
