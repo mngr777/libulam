@@ -1,13 +1,14 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/node.hpp>
+#include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/lang/number.hpp>
 #include <libulam/lang/ops.hpp>
 #include <libulam/lang/type_ops.hpp>
 
 namespace ulam::ast {
 
-class Expr : public Node {};
+class Expr : public Stmt {};
 
 class ArgList;
 

@@ -11,6 +11,7 @@ AST_HEADER_FILES = \
 	include/libulam/ast/nodes/expr.hpp \
 	include/libulam/ast/nodes/params.hpp \
 	include/libulam/ast/nodes/stmt.hpp \
+	include/libulam/ast/nodes/stmts.hpp \
 	include/libulam/ast/nodes.inc.hpp \
 	include/libulam/ast/traversal.hpp
 

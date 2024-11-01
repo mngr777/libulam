@@ -1,10 +1,5 @@
 #pragma once
-#include "libulam/ast/node.hpp"
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/params.hpp"
-#include "libulam/ast/visitor.hpp"
+#include <libulam/ast.hpp>
 #include <ostream>
 
 namespace test::ast {

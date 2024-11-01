@@ -2,7 +2,6 @@
 #include "libulam/ast/node.hpp"
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
-#include <libulam/ast/nodes/stmt.hpp>
 #include <string>
 #include <utility>
 

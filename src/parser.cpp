@@ -1,4 +1,4 @@
-#include "libulam/ast/nodes/expr.hpp"
+#include <libulam/ast/nodes/expr.hpp>
 #include "src/parser/number.hpp"
 #include <cassert>
 #include <libulam/parser.hpp>
@@ -162,20 +162,20 @@ ast::Ptr<ast::Block> Parser::parse_block() {
 ast::Ptr<ast::Stmt> Parser::parse_stmt() {
     switch (_tok.type) {
     case tok::If:
-        break;
+        return parse_if();
     case tok::For:
-        break;
+        return parse_for();
     case tok::While:
-        break;
+        return parse_while();
     default:
-        break;
+        return parse_expr();
     }
-    return {};
 }
 
 ast::Ptr<ast::If> Parser::parse_if() {
     debug() << "if\n";
-    expect(tok::If);
+    assert(_tok.is(tok::If));
+    consume();
     expect(tok::ParenL);
     auto expr = parse_expr();
     expect(tok::ParenR);
