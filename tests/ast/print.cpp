@@ -27,6 +27,11 @@ bool Printer::visit(ulam::ast::ClassDef& node) {
     return true;
 }
 
+bool Printer::visit(ulam::ast::ClassDefBody& node) {
+    indent() << "class-body:" << "\n";
+    return true;
+}
+
 bool Printer::visit(ulam::ast::TypeDef& node) {
     indent() << "typedef ";
     accept_me(node.expr());
@@ -87,6 +92,17 @@ bool Printer::visit(ulam::ast::Param& node) {
     return true;
 }
 
+bool Printer::visit(ulam::ast::ArgList& node) {
+    _os << "(";
+    for (unsigned n = 0; n < node.child_num(); ++n) {
+        if (n > 0)
+            _os << ",";
+        accept_me(node.child(n));
+    }
+    _os << ")";
+    return false;
+}
+
 bool Printer::visit(ulam::ast::MemberAccess& node) {
     paren_l();
     accept_me(node.obj());
@@ -119,6 +135,22 @@ bool Printer::visit(ulam::ast::UnaryOp& node) {
     return false;
 }
 
+bool Printer::visit(ulam::ast::TypeName& node) {
+    for (unsigned n = 0; n < node.child_num(); ++n) {
+        if (n > 0)
+            _os << ".";
+        accept_me(node.child(n));
+    }
+    return false;
+}
+
+bool Printer::visit(ulam::ast::TypeSpec& node) {
+    accept_me(node.ident());
+    if (node.args())
+        accept_me(node.args());
+    return false;
+}
+
 bool Printer::visit(ulam::ast::TypeIdent& node) {
     _os << node.name();
     return false;
@@ -130,7 +162,7 @@ bool Printer::visit(ulam::ast::Ident& node) {
 }
 
 bool Printer::visit(ulam::ast::NumLit& node) {
-    _os << "<number>";
+    _os << node.number().value;
     return false;
 }
 

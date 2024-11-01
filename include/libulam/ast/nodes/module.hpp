@@ -34,22 +34,14 @@ public:
 
     ULAM_AST_TUPLE_PROP(body, 0)
 
-    void add_vars(ast::Ptr<ast::VarDefList>&& var_def) {
-        body()->add(std::move(var_def));
-    }
-
-    void add_fun(ast::Ptr<ast::FunDef>&& fun_def) {
-        body()->add(std::move(fun_def));
-    }
-
 private:
     Class::Kind _kind;
 };
 
-class TypeDef : public Tuple<Node, Expr> {
+class TypeDef : public Tuple<Node, TypeName> {
     ULAM_AST_NODE
 public:
-    TypeDef(Ptr<Expr>&& expr, std::string&& alias):
+    TypeDef(Ptr<TypeName>&& expr, std::string&& alias):
         Tuple{std::move(expr)}, _alias{alias} {}
 
     const std::string& alias() const { return _alias; }

@@ -73,17 +73,17 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
             node->body()->add(parse_type_def());
             break;
         case tok::TypeIdent: {
-            auto type = parse_expr();
+            auto type = parse_type_name();
             if (!_tok.is(tok::Ident))
                 diag("Unexpected token in class def, expecting name");
-            auto name_ = tok_str();
+            auto name = tok_str();
             consume();
             if (_tok.is(tok::ParenL)) {
-                node->add_fun(
-                    parse_fun_def_rest(std::move(type), std::move(name_)));
+                node->body()->add(
+                    parse_fun_def_rest(std::move(type), std::move(name)));
             } else {
-                node->add_vars(
-                    parse_var_def_list_rest(std::move(type), std::move(name_)));
+                node->body()->add(
+                    parse_var_def_list_rest(std::move(type), std::move(name)));
             }
         } break;
         default:
@@ -98,7 +98,7 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     assert(_tok.type == tok::Typedef);
     debug() << "type_def\n";
     consume();
-    auto type = parse_expr();
+    auto type = parse_type_name();
     if (!_tok.is(tok::TypeIdent))
         diag("Unexpected token in parse_type_def, expecting type name");
     auto alias = tok_str();
@@ -197,10 +197,12 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     assert(_tok.is(tok::ParenL));
     consume();
     auto node = tree<ast::ParamList>();
-    while (!_tok.is(tok::ParenR)) {
+    while (!_tok.in(tok::ParenR, tok::Eof)) {
         // TODO: define and use parse_param
-        auto type = parse_expr();
-        auto name_ = tok_str();
+        auto type = parse_type_name();
+        if (!_tok.is(tok::Ident))
+            diag("unexpected token after param type");
+        auto name = tok_str();
         consume();
         ast::Ptr<ast::Expr> default_value{};
         if (_tok.is(tok::Equal)) {
@@ -208,7 +210,7 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
             default_value = parse_expr();
         }
         node->add(tree<ast::Param>(
-            std::move(name_), std::move(type), std::move(default_value)));
+            std::move(name), std::move(type), std::move(default_value)));
         if (_tok.is(tok::Comma))
             consume();
     }
@@ -312,7 +314,7 @@ Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
     auto type_op = _tok.type_op();
     if (type_op == TypeOp::None)
         diag("unexpected token in type op expr");
-    return tree<ast::TypeOpExpr>(type, type_op);
+    return tree<ast::TypeOpExpr>(std::move(type), type_op);
 }
 
 ast::Ptr<ast::TypeName> Parser::parse_type_name() {

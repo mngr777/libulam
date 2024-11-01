@@ -28,7 +28,7 @@ public:
     ULAM_AST_TUPLE_PROP(args, 1);
 };
 
-class TypeName : public Tuple<ListOf<TypeIdent>, TypeSpec> {
+class TypeName : public Tuple<ListOf<Expr, TypeIdent>, TypeSpec> {
     ULAM_AST_NODE
 public:
     explicit TypeName(Ptr<TypeSpec>&& spec): Tuple{std::move(spec)} {}
