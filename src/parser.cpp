@@ -34,7 +34,9 @@ void Parser::consume() {
 
 void Parser::expect(tok::Type type) {
     if (_tok.type != type)
-        diag("Unexpected token");
+        diag(
+            std::string("Unexpected token '") + tok_str() + "', expecting " +
+            tok::type_name(type));
     consume();
 }
 
@@ -336,23 +338,21 @@ ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     auto ident = tree<ast::TypeIdent>(tok_str());
     consume();
     ast::Ptr<ast::ArgList> args{};
-    if (_tok.is(tok::ParenL)) {
+    if (_tok.is(tok::ParenL))
         args = parse_args();
-        expect(tok::ParenR);
-    }
     return tree<ast::TypeSpec>(std::move(ident), std::move(args));
 }
 
 ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
     debug() << "funcall\n";
-    expect(tok::ParenL);
     auto args = parse_args();
-    expect(tok::ParenR);
     return tree<ast::FunCall>(std::move(obj), std::move(args));
 }
 
 ast::Ptr<ast::ArgList> Parser::parse_args() {
     debug() << "parse_args\n";
+    assert(_tok.is(tok::ParenL));
+    consume();
     auto args = tree<ast::ArgList>();
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         // argument
@@ -372,6 +372,7 @@ ast::Ptr<ast::ArgList> Parser::parse_args() {
                 diag("unexpected ), expecting expr");
         }
     }
+    expect(tok::ParenR);
     return args;
 }
 
