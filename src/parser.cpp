@@ -1,6 +1,8 @@
-#include <libulam/ast/nodes/expr.hpp>
+#include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/nodes/stmt.hpp"
 #include "src/parser/number.hpp"
 #include <cassert>
+#include <libulam/ast/nodes/expr.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/token.hpp>
 #include <stdexcept> // TMP
@@ -97,8 +99,8 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
 }
 
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
-    assert(_tok.type == tok::Typedef);
     debug() << "type_def\n";
+    assert(_tok.is(tok::Typedef));
     consume();
     auto type = parse_type_name();
     if (!_tok.is(tok::TypeIdent))
@@ -113,8 +115,10 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     ast::Ptr<ast::Expr>&& base_type, std::string&& first_name) {
     debug() << "var_def_list_rest\n";
     auto node = tree<ast::VarDefList>(std::move(base_type));
+    // first ident
     std::string name{first_name};
     while (true) {
+        // init value
         ast::Ptr<ast::Expr> expr;
         if (_tok.is(tok::Equal)) {
             consume();
@@ -122,12 +126,15 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
         }
         node->add(tree<ast::VarDef>(
             node->base_type(), std::move(name), std::move(expr)));
+        // end of list?
         if (_tok.in(tok::Semicol, tok::Eof))
             break;
+        // ,
         expect(tok::Comma);
         if (!_tok.is(tok::Ident))
             diag(
                 "unexpected token in var def list, expecting name after comma");
+        // next ident
         name = tok_str();
         consume();
     }
@@ -150,48 +157,99 @@ ast::Ptr<ast::Block> Parser::parse_block() {
     auto node = tree<ast::Block>();
     expect(tok::BraceL);
     while (!_tok.in(tok::BraceR, tok::Eof))
-        if (_tok.is(tok::BraceL)) {
-            node->add(parse_block());
-        } else {
-            node->add(parse_stmt());
-        }
+        node->add(parse_stmt());
     expect(tok::BraceR);
     return node;
 }
 
 ast::Ptr<ast::Stmt> Parser::parse_stmt() {
     switch (_tok.type) {
+    case tok::TypeIdent: {
+        auto type = parse_type_name();
+        if (_tok.is(tok::Dot)) {
+            return parse_type_op_rest(std::move(type));
+        } else if (_tok.is(tok::Ident)) {
+            auto first_name = tok_str();
+            consume();
+            return parse_var_def_list_rest(std::move(type), std::move(first_name));
+        } else {
+            diag("Unexpected token after type name");
+        }
+        expect(tok::Semicol);
+        return tree<ast::EmptyStmt>();
+    }
     case tok::If:
         return parse_if();
     case tok::For:
         return parse_for();
     case tok::While:
         return parse_while();
+    case tok::BraceL:
+        return parse_block();
+    case tok::Semicol:
+        consume();
+        return tree<ast::EmptyStmt>();
     default:
-        return parse_expr();
+        auto expr = parse_expr();
+        expect(tok::Semicol);
+        return expr;
     }
 }
 
 ast::Ptr<ast::If> Parser::parse_if() {
     debug() << "if\n";
     assert(_tok.is(tok::If));
+    // if
     consume();
+    // (cond)
     expect(tok::ParenL);
-    auto expr = parse_expr();
+    auto cond = parse_expr();
     expect(tok::ParenR);
-    return {};
+    // then
+    auto if_branch = parse_stmt();
+    ast::Ptr<ast::Stmt> else_branch{};
+    // else
+    if (_tok.is(tok::Else)) {
+        consume();
+        else_branch = parse_stmt();
+    }
+    return tree<ast::If>(
+        std::move(cond), std::move(if_branch), std::move(else_branch));
 }
 
 ast::Ptr<ast::For> Parser::parse_for() {
     debug() << "for\n";
-    expect(tok::For);
-    return {};
+    assert(_tok.is(tok::For));
+    // for (
+    consume();
+    expect(tok::ParenL);
+    // <init>;
+    auto init = parse_stmt(); // TODO: enforce appropriate type
+    // <init>; <cond>;
+    ast::Ptr<ast::Expr> cond{};
+    if (!_tok.is(tok::Semicol))
+        cond = parse_expr();
+    expect(tok::Semicol);
+    // <init>; <cond>; <upd>
+    ast::Ptr<ast::Expr> upd{};
+    if (!_tok.is(tok::ParenR))
+        upd = parse_expr();
+    // )
+    expect(tok::ParenR);
+    return tree<ast::For>(
+        std::move(init), std::move(cond), std::move(upd), parse_stmt());
 }
 
 ast::Ptr<ast::While> Parser::parse_while() {
     debug() << "while\n";
-    expect(tok::While);
-    return {};
+    assert(_tok.is(tok::While));
+    // while (
+    consume();
+    expect(tok::ParenL);
+    auto cond = parse_expr();
+    // )
+    expect(tok::ParenR);
+    return tree<ast::While>(std::move(cond), parse_stmt());
 }
 
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {
@@ -259,7 +317,7 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
-    debug() << "cast_expr " << _tok.type_name() << "\n";
+    debug() << "expr_lhs " << _tok.type_name() << "\n";
     switch (_tok.type) {
     case tok::TypeIdent:
         return parse_type_op();
@@ -464,7 +522,7 @@ ast::Ptr<ast::Expr> Parser::binop_tree(
 }
 
 std::string Parser::tok_str() {
-    assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
+    // assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
     return std::string(_sm.str_at(_tok.loc_id, _tok.size));
 }
 

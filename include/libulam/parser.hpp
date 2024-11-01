@@ -27,7 +27,6 @@ private:
     ast::Ptr<ast::Module> parse_module();
     ast::Ptr<ast::ClassDef> parse_class_def();
     ast::Ptr<ast::TypeDef> parse_type_def();
-    ast::Ptr<ast::VarDefList> parse_var_def_list();
     ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
         ast::Ptr<ast::Expr>&& base_type, std::string&& first_name);
     ast::Ptr<ast::FunDef>

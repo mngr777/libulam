@@ -19,23 +19,23 @@ void PrinterBase::print(ulam::ast::Ref<ulam::ast::Node> node) {
 }
 
 std::ostream& PrinterBase::indent() {
-    return _os << std::string(level() * options.indent, ' ');
+    return _no_indent ? _os : _os << std::string(level() * options.indent, ' ');
 }
 
 bool Printer::visit(ulam::ast::ClassDef& node) {
-    indent() << "class `" << node.name() << "'\n";
-    return true;
-}
-
-bool Printer::visit(ulam::ast::ClassDefBody& node) {
-    indent() << "class-body:" << "\n";
-    return true;
+    indent() << "class `" << node.name() << "'" << nl();
+    inc_level();
+    assert(node.body());
+    for (unsigned n = 0; n < node.body()->child_num(); ++n)
+        accept_me(node.body()->child(n));
+    dec_level();
+    return false;
 }
 
 bool Printer::visit(ulam::ast::TypeDef& node) {
     indent() << "typedef ";
     accept_me(node.expr());
-    _os << " " << node.alias() << "\n";
+    _os << " " << node.alias() << ";" << nl();
     return false;
 }
 
@@ -48,7 +48,7 @@ bool Printer::visit(ulam::ast::VarDefList& node) {
             _os << ", ";
         accept_me(node.def(n));
     }
-    _os << "\n";
+    _os << ";" << nl();
     return false;
 }
 
@@ -67,7 +67,8 @@ bool Printer::visit(ulam::ast::FunDef& node) {
     accept_me(node.ret_type());
     _os << " " << node.name();
     accept_me(node.params());
-    _os << "\n";
+    _os << nl();
+    accept_me(node.body());
     return false;
 }
 
@@ -100,6 +101,54 @@ bool Printer::visit(ulam::ast::ArgList& node) {
         accept_me(node.child(n));
     }
     _os << ")";
+    return false;
+}
+
+bool Printer::visit(ulam::ast::EmptyStmt& node) {
+    indent() << "<empty-stmt>;" << nl();
+    return false;
+}
+
+bool Printer::visit(ulam::ast::Block& node) {
+    indent() << "{" << nl();
+    inc_level();
+    for (unsigned n = 0; n < node.child_num(); ++n)
+        accept_me(node.child(n));
+    dec_level();
+    indent() << "}" << nl();
+    return false;
+}
+
+bool Printer::visit(ulam::ast::If& node) {
+    indent() << "if (";
+    accept_me(node.cond());
+    _os << ")" << nl();
+    accept_me(node.if_branch());
+    _os << "else" << nl();
+    accept_me(node.else_branch());
+    return false;
+}
+
+bool Printer::visit(ulam::ast::For& node) {
+    indent() << "for (";
+    bool no_indent = set_no_indent(true);
+    bool no_newline = set_no_newline(true);
+    accept_me(node.init());
+    set_no_indent(no_indent);
+    set_no_newline(no_newline);
+    accept_me(node.cond());
+    _os << "; ";
+    accept_me(node.upd());
+    _os << ")" << nl();
+    accept_me(node.body());
+    return false;
+}
+
+bool Printer::visit(ulam::ast::While& node) {
+    indent() << "while (";
+    accept_me(node.cond());
+    _os << ")" << nl();
+    accept_me(node.body());
     return false;
 }
 

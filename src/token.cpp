@@ -111,6 +111,14 @@ Op bin_op(Type type) {
         return Op::Prod;
     case Slash:
         return Op::Quot;
+    case Less:
+        return Op::Less;
+    case LessEqual:
+        return Op::LessOrEq;
+    case Greater:
+        return Op::Greater;
+    case GreaterEqual:
+        return Op::GreaterOrEq;
     default:
         return Op::None;
     }

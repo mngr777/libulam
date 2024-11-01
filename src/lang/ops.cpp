@@ -29,6 +29,11 @@ Prec prec(Op op) {
     case Op::Sum:
     case Op::Diff:
         return 2;
+    case Op::Less:
+    case Op::LessOrEq:
+    case Op::Greater:
+    case Op::GreaterOrEq:
+        return 1;
     default:
         return -1;
     }
@@ -46,6 +51,10 @@ Assoc assoc(Op op) {
     case Op::Rem:
     case Op::Sum:
     case Op::Diff:
+    case Op::Less:
+    case Op::LessOrEq:
+    case Op::Greater:
+    case Op::GreaterOrEq:
         return Assoc::Left;
     default:
         assert(false);

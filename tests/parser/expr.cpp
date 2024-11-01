@@ -17,6 +17,8 @@ element A {
   C.D.E d = 3;
 
   C(2).D.E foo(F.G c = 1) {
+    H(2) a = 1;
+    for (; a < 5; ++a) {}
   }
 }
 )END";

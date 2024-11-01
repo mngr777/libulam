@@ -104,31 +104,6 @@ private:
     std::string _name;
 };
 
-// Wrapper node
-
-template <typename B, typename... Ns> class WrapOneOf : public B {
-public:
-    using VariantT = Variant<Ns...>;
-
-    template <typename N>
-    explicit WrapOneOf(Ptr<N>&& inner): _inner{std::move(inner)} {}
-
-    template <typename N> bool is() {
-        return std::holds_alternative<Ptr<N>>(_inner);
-    }
-
-    // NOTE: we may still want to visit the wrapper node itself
-    virtual unsigned child_num() const { return 1; }
-
-    virtual Ref<Node> child(unsigned n) { return as_node_ref(_inner); }
-    virtual const Ref<Node> child(unsigned n) const {
-        return as_node_ref(_inner);
-    }
-
-private:
-    VariantT _inner;
-};
-
 // Tuple
 
 template <typename B, typename... Ns> class Tuple : public B {

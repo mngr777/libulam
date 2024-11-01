@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/stmt.hpp"
 #include <libulam/ast.hpp>
 #include <ostream>
 
@@ -23,6 +24,10 @@ public:
             _os << ")";
     }
 
+    const char* nl() const {
+        return _no_newline ? "" : "\n";
+    }
+
     struct {
         unsigned indent = 2;
         bool explicit_parens = true;
@@ -31,7 +36,21 @@ public:
 protected:
     std::ostream& indent();
 
+    bool set_no_indent(bool val) {
+        bool cur = _no_indent;
+        _no_indent = val;
+        return cur;
+    }
+
+    bool set_no_newline(bool val) {
+        bool cur = _no_newline;
+        _no_newline = val;
+        return cur;
+    }
+
     std::ostream& _os;
+    bool _no_newline{false};
+    bool _no_indent{false};
 };
 
 class Printer : public PrinterBase {
@@ -39,7 +58,6 @@ public:
     Printer(std::ostream& os): PrinterBase{os} {}
 
     bool visit(ulam::ast::ClassDef& node) override;
-    bool visit(ulam::ast::ClassDefBody& node) override;
     bool visit(ulam::ast::TypeDef& node) override;
     bool visit(ulam::ast::VarDefList& node) override;
     bool visit(ulam::ast::VarDef& node) override;
@@ -47,6 +65,11 @@ public:
     bool visit(ulam::ast::ParamList& node) override;
     bool visit(ulam::ast::Param& node) override;
     bool visit(ulam::ast::ArgList& node) override;
+    bool visit(ulam::ast::EmptyStmt& node) override;
+    bool visit(ulam::ast::Block& node) override;
+    bool visit(ulam::ast::If& node) override;
+    bool visit(ulam::ast::For& node) override;
+    bool visit(ulam::ast::While& node) override;
     // bool visit(ulam::ast::FunCall& node) override;
     bool visit(ulam::ast::MemberAccess& node) override;
     bool visit(ulam::ast::ParenExpr& node) override;

@@ -38,7 +38,7 @@ private:
     Class::Kind _kind;
 };
 
-class TypeDef : public Tuple<Node, TypeName> {
+class TypeDef : public Tuple<Stmt, TypeName> {
     ULAM_AST_NODE
 public:
     TypeDef(Ptr<TypeName>&& expr, std::string&& alias):

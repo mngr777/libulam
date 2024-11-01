@@ -5,11 +5,7 @@
 
 namespace ulam::ast {
 
-class Block : public ListOf<Stmt, Block, Stmt> {
-    ULAM_AST_NODE
-};
-
-class Branch : public WrapOneOf<Stmt, Stmt, Block> {
+class Block : public List<Stmt, Stmt> {
     ULAM_AST_NODE
 };
 
@@ -21,10 +17,10 @@ public:
     ULAM_AST_TUPLE_PROP(expr, 0);
 };
 
-class If : public Tuple<Stmt, Expr, Branch, Branch> {
+class If : public Tuple<Stmt, Expr, Stmt, Stmt> {
     ULAM_AST_NODE
 public:
-    If(Ptr<Expr>&& cond, Ptr<Branch>&& if_branch, Ptr<Branch>&& else_branch):
+    If(Ptr<Expr>&& cond, Ptr<Stmt>&& if_branch, Ptr<Stmt>&& else_branch):
         Tuple{std::move(cond), std::move(if_branch), std::move(else_branch)} {}
 
     ULAM_AST_TUPLE_PROP(cond, 0);
@@ -32,13 +28,13 @@ public:
     ULAM_AST_TUPLE_PROP(else_branch, 1);
 };
 
-class For : public Tuple<Stmt, Stmt, Expr, Expr, Branch> {
+class For : public Tuple<Stmt, Stmt, Expr, Expr, Stmt> {
     ULAM_AST_NODE
 public:
     For(Ptr<Stmt>&& init,
         Ptr<Expr>&& cond,
         Ptr<Expr>&& upd,
-        Ptr<Branch>&& body):
+        Ptr<Stmt>&& body):
         Tuple{
             std::move(init), std::move(cond), std::move(upd), std::move(body)} {
     }
@@ -49,9 +45,9 @@ public:
     ULAM_AST_TUPLE_PROP(body, 3)
 };
 
-class While : public Tuple<Stmt, Expr, Branch> {
+class While : public Tuple<Stmt, Expr, Stmt> {
 public:
-    While(Ptr<Expr>&& cond, Ptr<Branch>&& body):
+    While(Ptr<Expr>&& cond, Ptr<Stmt>&& body):
         Tuple{std::move(cond), std::move(body)} {}
 
     ULAM_AST_TUPLE_PROP(cond, 0);

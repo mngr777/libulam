@@ -3,7 +3,9 @@
 
 namespace ulam::ast {
 
-class Stmt : public Node {
+class Stmt : public Node {};
+
+class EmptyStmt : public Stmt {
     ULAM_AST_NODE
 };
 
