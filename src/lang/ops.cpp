@@ -18,6 +18,8 @@ Prec prec(Op op) {
     case Op::FunCall:
     case Op::ArrayAccess:
     case Op::MemberAccess:
+    case Op::PreInc:
+    case Op::PreDec:
         return 5;
     case Op::UnaryMinus:
     case Op::UnaryPlus:
@@ -56,6 +58,11 @@ Assoc assoc(Op op) {
     case Op::Greater:
     case Op::GreaterOrEq:
         return Assoc::Left;
+    case Op::UnaryMinus:
+    case Op::UnaryPlus:
+    case Op::PreInc:
+    case Op::PreDec:
+        return Assoc::Right;
     default:
         assert(false);
     }

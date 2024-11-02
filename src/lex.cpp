@@ -75,6 +75,9 @@ void Lex::lex(Token& token) {
         if (at('=')) {
             advance();
             complete(tok::PlusEqual);
+        } else if (at('+')) {
+            advance();
+            complete(tok::PlusPlus);
         } else {
             complete(tok::Plus);
         }
@@ -86,6 +89,9 @@ void Lex::lex(Token& token) {
         if (at('=')) {
             advance();
             complete(tok::MinusEqual);
+        } else if (at('-')) {
+            advance();
+            complete(tok::MinusMinus);
         } else {
             complete(tok::Minus);
         }

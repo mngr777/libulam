@@ -29,9 +29,7 @@ ast::Ptr<ast::Module> Parser::parse_str(const std::string& text) {
 }
 
 void Parser::consume() {
-    debug() << _tok.type_name() << " ->\n";
     _pp >> _tok;
-    debug() << "-> " << _tok.type_name() << "\n";
 }
 
 void Parser::expect(tok::Type type) {
@@ -64,7 +62,6 @@ ast::Ptr<ast::Module> Parser::parse_module() {
 
 ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
     assert(_tok.in(tok::Element, tok::Quark, tok::Transient));
-    debug() << "class_def " << _tok.type_name() << "\n";
     auto kind = _tok.class_kind();
     consume();
     auto node = tree<ast::ClassDef>(kind, tok_str());
@@ -99,7 +96,6 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
 }
 
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
-    debug() << "type_def\n";
     assert(_tok.is(tok::Typedef));
     consume();
     auto type = parse_type_name();
@@ -113,7 +109,6 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     ast::Ptr<ast::Expr>&& base_type, std::string&& first_name) {
-    debug() << "var_def_list_rest\n";
     auto node = tree<ast::VarDefList>(std::move(base_type));
     // first ident
     std::string name{first_name};
@@ -144,7 +139,6 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
 
 ast::Ptr<ast::FunDef>
 Parser::parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name) {
-    debug() << "fun_def_rest\n";
     assert(_tok.type == tok::ParenL);
     auto params = parse_param_list();
     auto block = parse_block();
@@ -197,7 +191,6 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
 }
 
 ast::Ptr<ast::If> Parser::parse_if() {
-    debug() << "if\n";
     assert(_tok.is(tok::If));
     // if
     consume();
@@ -218,7 +211,6 @@ ast::Ptr<ast::If> Parser::parse_if() {
 }
 
 ast::Ptr<ast::For> Parser::parse_for() {
-    debug() << "for\n";
     assert(_tok.is(tok::For));
     // for (
     consume();
@@ -241,7 +233,6 @@ ast::Ptr<ast::For> Parser::parse_for() {
 }
 
 ast::Ptr<ast::While> Parser::parse_while() {
-    debug() << "while\n";
     assert(_tok.is(tok::While));
     // while (
     consume();
@@ -253,7 +244,6 @@ ast::Ptr<ast::While> Parser::parse_while() {
 }
 
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {
-    debug() << "param_list\n";
     assert(_tok.is(tok::ParenL));
     consume();
     auto node = tree<ast::ParamList>();
@@ -278,26 +268,21 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     return node;
 }
 
-ast::Ptr<ast::Expr> Parser::parse_expr(ops::Prec min_prec) {
-    debug() << "expr\n";
-    Op pre = tok::unary_pre_op(_tok.type);
-    if (pre != Op::None) {
-        consume();
-        return tree<ast::UnaryOp>(pre, parse_expr(ops::prec(pre)));
-    }
-    return parse_expr_climb(min_prec);
+ast::Ptr<ast::Expr> Parser::parse_expr() {
+    return parse_expr_climb(0);
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
-    debug() << "expr_climb " << (int)min_prec << "\n";
-    auto lhs = parse_expr_lhs();
+    Op pre = tok::unary_pre_op(_tok.type);
+    auto lhs = (pre != Op::None)
+        ? consume(), tree<ast::UnaryOp>(pre, parse_expr_climb(ops::prec(pre)))
+        : parse_expr_lhs();
     if (!lhs)
         return lhs;
     while (true) {
         Op op = _tok.bin_op();
-        if (ops::prec(op) < min_prec)
+        if (op == Op::None || ops::prec(op) < min_prec)
             break;
-        debug() << "op: " << ops::str(op) << "\n";
         switch (op) {
         case Op::FunCall:
             lhs = parse_funcall(std::move(lhs));
@@ -317,7 +302,6 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
-    debug() << "expr_lhs " << _tok.type_name() << "\n";
     switch (_tok.type) {
     case tok::TypeIdent:
         return parse_type_op();
@@ -339,7 +323,6 @@ ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
 }
 
 ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
-    debug() << "paren_expr\n";
     assert(_tok.is(tok::ParenL));
     consume();
     ast::Ptr<ast::Expr> inner{};
@@ -362,7 +345,6 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
 
 ast::Ptr<ast::TypeOpExpr> Parser::parse_type_op() {
     assert(_tok.is(tok::TypeIdent));
-    debug() << "type_op_expr: " << tok_str() << "\n";
     auto type = parse_type_name();
     assert(type);
     return parse_type_op_rest(std::move(type));
@@ -378,7 +360,6 @@ Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
 }
 
 ast::Ptr<ast::TypeName> Parser::parse_type_name() {
-    debug() << "type_name: " << tok_str() << "\n";
     assert(_tok.is(tok::TypeIdent));
     auto node = tree<ast::TypeName>(parse_type_spec());
     while (_tok.is(tok::Dot)) {
@@ -391,7 +372,6 @@ ast::Ptr<ast::TypeName> Parser::parse_type_name() {
 }
 
 ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
-    debug() << "type_spec: " << tok_str() << "\n";
     assert(_tok.is(tok::TypeIdent));
     auto ident = tree<ast::TypeIdent>(tok_str());
     consume();
@@ -402,13 +382,11 @@ ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
 }
 
 ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
-    debug() << "funcall\n";
     auto args = parse_args();
     return tree<ast::FunCall>(std::move(obj), std::move(args));
 }
 
 ast::Ptr<ast::ArgList> Parser::parse_args() {
-    debug() << "parse_args\n";
     assert(_tok.is(tok::ParenL));
     consume();
     auto args = tree<ast::ArgList>();
@@ -436,7 +414,6 @@ ast::Ptr<ast::ArgList> Parser::parse_args() {
 
 ast::Ptr<ast::ArrayAccess>
 Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
-    debug() << "array_access\n";
     assert(_tok.is(tok::BracketL));
     consume();
     auto index = parse_expr();
@@ -446,7 +423,6 @@ Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
 
 ast::Ptr<ast::MemberAccess>
 Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
-    debug() << "member_access\n";
     assert(_tok.is(tok::Dot));
     consume();
     if (!_tok.in(tok::Ident, tok::TypeIdent)) {
@@ -459,7 +435,6 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
 }
 
 ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
-    debug() << "type_name: " << tok_str() << "\n";
     assert(_tok.is(tok::TypeIdent));
     auto node = tree<ast::TypeIdent>(tok_str());
     consume();
@@ -467,7 +442,6 @@ ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
 }
 
 ast::Ptr<ast::Ident> Parser::parse_ident() {
-    debug() << "name: " << tok_str() << "\n";
     assert(_tok.is(tok::Ident));
     auto node = tree<ast::Ident>(tok_str());
     consume();
@@ -475,7 +449,6 @@ ast::Ptr<ast::Ident> Parser::parse_ident() {
 }
 
 ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
-    debug() << "bool_lit: " << tok_str() << "\n";
     assert(_tok.in(tok::True, tok::False));
     auto node = tree<ast::BoolLit>(_tok.is(tok::True));
     consume();
@@ -483,7 +456,6 @@ ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 }
 
 ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
-    debug() << "num_lit: " << tok_str() << "\n";
     auto res = detail::parse_num_str(*this, tok_str());
     if (res.second.error != detail::ParseNumStatus::Ok)
         diag("Number parse error");
@@ -493,7 +465,6 @@ ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
 }
 
 ast::Ptr<ast::StrLit> Parser::parse_str_lit() {
-    debug() << "bool_lit: " << tok_str() << "\n";
     assert(_tok.is(tok::String));
     auto node = tree<ast::StrLit>();
     consume();
