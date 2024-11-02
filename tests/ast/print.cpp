@@ -274,15 +274,22 @@ bool Printer::visit(ulam::ast::Ident& node) {
     return false;
 }
 
+bool Printer::visit(ulam::ast::BoolLit& node) {
+    indent();
+    _os << (node.value() ? "true" : "false") << nl();
+    return false;
+}
+
 bool Printer::visit(ulam::ast::NumLit& node) {
     indent();
-    _os << node.number().value << nl();
+    _os << node.value().value << nl();
     return false;
 }
 
 bool Printer::visit(ulam::ast::StrLit& node) {
     indent();
-    _os << "<string>" << nl();
+    const auto& value = node.value();
+    _os << value.quote << value.value << value.quote << nl();
     return false;
 }
 

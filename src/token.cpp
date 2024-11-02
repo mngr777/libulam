@@ -1,5 +1,5 @@
 #include "libulam/token.hpp"
-#include "src/detail/str.hpp"
+#include "src/detail/string.hpp"
 #include <cassert>
 #include <map>
 
@@ -8,7 +8,7 @@ namespace {
 
 auto make_keyword_type_table() {
     // "_dummy_" keys are never inserted, they are only here to keep
-    // compiler happy, as are type conversions
+    // compiler happy
     std::map<std::string_view, Type> table;
 #define TOK(str, type)                                                         \
     if (str && (*((char*)str) == '@' || detail::is_word(*(char*)str)))         \

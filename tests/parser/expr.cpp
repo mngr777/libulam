@@ -4,7 +4,7 @@
 #include <iostream>
 
 static const char* Program = R"END(
-quark Q(B.C param1 = 12345) {
+quark Q(B.C param1 = 12345, S param2 = "text value") {
 
 }
 )END";
@@ -32,7 +32,7 @@ int main() {
     ulam::Parser parser{sm};
 
     std::string text{Program};
-    auto ast = parser.parse_str(text);
+    auto ast = parser.parse_string(text);
 
     std::cout << text << "\n";
     test::ast::Printer p{std::cout};

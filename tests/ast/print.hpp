@@ -103,6 +103,7 @@ public:
     bool visit(ulam::ast::TypeSpec& node) override;
     bool visit(ulam::ast::TypeIdent& node) override;
     bool visit(ulam::ast::Ident& node) override;
+    bool visit(ulam::ast::BoolLit& node) override;
     bool visit(ulam::ast::NumLit& node) override;
     bool visit(ulam::ast::StrLit& node) override;
 

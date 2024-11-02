@@ -57,6 +57,8 @@ SOURCE_FILES = \
 	src/parser.cpp \
 	src/parser/number.hpp \
 	src/parser/number.cpp \
+	src/parser/string.hpp \
+	src/parser/string.cpp \
 	src/preproc.cpp \
 	src/src.cpp \
 	src/src_loc.cpp \
@@ -121,6 +123,8 @@ TEST_PARSER_SOURCE_FILES = \
 	src/parser.cpp \
 	src/parser/number.hpp \
 	src/parser/number.cpp \
+	src/parser/string.hpp \
+	src/parser/string.cpp \
 	tests/ast/print.hpp \
 	tests/ast/print.cpp
 

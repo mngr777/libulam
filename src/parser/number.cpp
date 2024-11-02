@@ -1,32 +1,34 @@
 #include "src/parser/number.hpp"
-#include "src/detail/str.hpp"
+#include "src/detail/string.hpp"
+#include <cassert>
 #include <cstddef>
+#include <limits>
 
 namespace ulam::detail {
 namespace {
 
-constexpr char Binary[] = "binary";
-constexpr char Octal[] = "octal";
-constexpr char Decimal[] = "decimal";
-constexpr char Hexadecimal[] = "hexadecimal";
+// constexpr char Binary[] = "binary";
+// constexpr char Octal[] = "octal";
+// constexpr char Decimal[] = "decimal";
+// constexpr char Hexadecimal[] = "hexadecimal";
 
 constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
 constexpr std::uint64_t MaxSigned = std::numeric_limits<std::int64_t>::max();
 
-constexpr const char* radix_to_str(std::uint8_t radix) {
-    switch (radix) {
-    case 2:
-        return Binary;
-    case 8:
-        return Octal;
-    case 10:
-        return Decimal;
-    case 16:
-        return Hexadecimal;
-    default:
-        assert(false && "Invalid radix value");
-    }
-}
+// constexpr const char* radix_to_str(std::uint8_t radix) {
+//     switch (radix) {
+//     case 2:
+//         return Binary;
+//     case 8:
+//         return Octal;
+//     case 10:
+//         return Decimal;
+//     case 16:
+//         return Hexadecimal;
+//     default:
+//         assert(false && "Invalid radix value");
+//     }
+// }
 
 // Max unsigned number that can be safely multiplied by radix
 constexpr std::uint64_t radix_threshold(std::uint8_t radix) {
@@ -43,8 +45,7 @@ constexpr std::uint64_t radix_threshold_rem(std::uint8_t radix) {
 
 // NOTE: numeric literals cannot have a sign
 // TODO: implement exp notation
-std::pair<Number, ParseNumStatus>
-parse_num_str(const std::string_view str) {
+std::pair<Number, ParseNumStatus> parse_num_str(const std::string_view str) {
     assert(str.size() > 0);
     assert(is_digit(str[0])); // guaranteed by lexer
     Number number{};

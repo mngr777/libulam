@@ -2,7 +2,7 @@
 #include "libulam/preproc.hpp"
 #include "libulam/src_mngr.hpp"
 #include "libulam/token.hpp"
-#include "src/detail/str.hpp"
+#include "src/detail/string.hpp"
 #include <string_view>
 
 namespace ulam {

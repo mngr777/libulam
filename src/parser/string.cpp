@@ -1,0 +1,36 @@
+#include "src/parser/string.hpp"
+#include "src/detail/string.hpp"
+#include <cassert>
+
+namespace ulam::detail {
+
+// TODO: support hex/oct escape sequences
+String parse_str(const std::string_view str) {
+    assert(str.size() > 0);
+    std::string parsed;
+    parsed.reserve(str.size());
+    std::size_t cur = 0;
+    const char quote = str[cur++];
+    bool is_terminated = false;
+    assert(quote == '\'' || quote == '"');
+    while (cur < str.size()) {
+        char ch = str[cur++];
+        if (ch == quote) {
+            is_terminated = true;
+            break;
+        }
+        if (ch == '\\') {
+            assert(cur + 1 < str.size());
+            parsed += escaped(str[cur++]);
+        } else {
+            parsed += ch;
+        }
+    }
+    assert(cur == str.size());
+    // TODO: if not terminated, report
+    (void)(is_terminated);
+    parsed.shrink_to_fit();
+    return {quote, parsed};
+}
+
+} // namespace ulam::detail

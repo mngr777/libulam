@@ -29,7 +29,7 @@ inline bool is_word(char ch) {
 
 constexpr std::uint8_t NotDigit = -1;
 
-inline constexpr std::uint8_t digit_value(char digit) {
+inline std::uint8_t digit_value(char digit) {
     if ('0' <= digit && digit <= '9')
         return digit - '0';
     if ('A' <= digit && digit <= 'F')
@@ -37,6 +37,29 @@ inline constexpr std::uint8_t digit_value(char digit) {
     if ('a' <= digit && digit <= 'f')
         return 10 + digit - 'a';
     return NotDigit;
+}
+
+inline char escaped(char ch) {
+    switch (ch) {
+    case '0':
+        return '\0';
+    case 'a':
+        return '\a';
+    case 'b':
+        return '\b';
+    case 'f':
+        return '\f';
+    case 'n':
+        return '\n';
+    case 'r':
+        return '\r';
+    case 't':
+        return '\t';
+    case 'v':
+        return '\v';
+    default:
+        return ch;
+    }
 }
 
 } // namespace ulam::detail

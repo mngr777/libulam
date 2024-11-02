@@ -4,6 +4,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/lang/number.hpp>
 #include <libulam/lang/ops.hpp>
+#include <libulam/lang/string.hpp>
 #include <libulam/lang/type_ops.hpp>
 
 namespace ulam::ast {
@@ -130,30 +131,32 @@ public:
     ULAM_AST_TUPLE_PROP(expr, 1)
 };
 
-class BoolLit : public Expr {
-    ULAM_AST_NODE
+template <typename T> class _Literal : public Expr {
 public:
-    BoolLit(bool value): _value{value} {}
+    _Literal(T&& value): _value{value} {}
 
-    bool value() const { return _value; }
+    const T& value() const { return _value; }
 
 private:
-    bool _value;
+    T _value;
 };
 
-class NumLit : public Expr {
+class BoolLit : public _Literal<bool> {
     ULAM_AST_NODE
 public:
-    NumLit(Number&& number): _number{std::move(number)} {}
-
-    const Number& number() const { return _number; }
-
-private:
-    Number _number;
+    BoolLit(bool value): _Literal{std::move(value)} {}
 };
 
-class StrLit : public Expr {
+class NumLit : public _Literal<Number> {
     ULAM_AST_NODE
+public:
+    NumLit(Number&& number): _Literal{std::move(number)} {}
+};
+
+class StrLit : public _Literal<String> {
+    ULAM_AST_NODE
+public:
+    StrLit(String&& string): _Literal{std::move(string)} {}
 };
 
 } // namespace ulam::ast

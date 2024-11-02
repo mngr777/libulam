@@ -1,7 +1,5 @@
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/params.hpp"
-#include "libulam/ast/nodes/stmt.hpp"
 #include "src/parser/number.hpp"
+#include "src/parser/string.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/parser.hpp>
@@ -23,7 +21,7 @@ ast::Ptr<ast::Module> Parser::parse_file(const std::filesystem::path& path) {
     return parse_module();
 }
 
-ast::Ptr<ast::Module> Parser::parse_str(const std::string& text) {
+ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
     _pp.main_str(text);
     _pp >> _tok;
     return parse_module();
@@ -484,7 +482,7 @@ ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
 
 ast::Ptr<ast::StrLit> Parser::parse_str_lit() {
     assert(_tok.is(tok::String));
-    auto node = tree<ast::StrLit>();
+    auto node = tree<ast::StrLit>(detail::parse_str(tok_str()));
     consume();
     return node;
 }
