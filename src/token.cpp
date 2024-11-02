@@ -70,10 +70,6 @@ Class::Kind class_kind(Type type) {
     }
 }
 
-bool is_type_op(Type type) {
-    return type_op(type) != TypeOp::None;
-}
-
 TypeOp type_op(Type type) {
     switch (type) {
     case MinOf:

@@ -23,6 +23,8 @@ Prec prec(Op op) {
         return 5;
     case Op::UnaryMinus:
     case Op::UnaryPlus:
+    case Op::PostInc:
+    case Op::PostDec:
         return 4;
     case Op::Prod:
     case Op::Quot:
@@ -57,6 +59,8 @@ Assoc assoc(Op op) {
     case Op::LessOrEq:
     case Op::Greater:
     case Op::GreaterOrEq:
+    case Op::PostInc:
+    case Op::PostDec:
         return Assoc::Left;
     case Op::UnaryMinus:
     case Op::UnaryPlus:

@@ -97,12 +97,23 @@ public:
     ULAM_AST_TUPLE_PROP(rhs, 1)
 };
 
-class UnaryOp : public Tuple<_OpExpr, Expr> {
-    ULAM_AST_NODE
+class _UnaryOp : public Tuple<_OpExpr, Expr> {
 public:
-    UnaryOp(Op op, Ptr<Expr>&& arg): Tuple{std::move(arg), op} {}
+    _UnaryOp(Op op, Ptr<Expr>&& arg): Tuple{std::move(arg), op} {}
 
     ULAM_AST_TUPLE_PROP(arg, 0)
+};
+
+class UnaryPreOp : public _UnaryOp {
+    ULAM_AST_NODE
+public:
+    UnaryPreOp(Op op, Ptr<Expr>&& arg): _UnaryOp{op, std::move(arg)} {}
+};
+
+class UnaryPostOp : public _UnaryOp {
+    ULAM_AST_NODE
+public:
+    UnaryPostOp(Op op, Ptr<Expr>&& arg): _UnaryOp{op, std::move(arg)} {}
 };
 
 class VarRef : public Expr {}; // ??

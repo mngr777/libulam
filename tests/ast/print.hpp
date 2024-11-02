@@ -24,9 +24,7 @@ public:
             _os << ")";
     }
 
-    const char* nl() const {
-        return _no_newline ? "" : "\n";
-    }
+    const char* nl() const { return _no_newline ? "" : "\n"; }
 
     struct {
         unsigned indent = 2;
@@ -35,6 +33,31 @@ public:
 
 protected:
     std::ostream& indent();
+
+    class FormatOpts {
+    public:
+        FormatOpts(PrinterBase& printer, bool no_indent, bool no_newline):
+            _printer(printer),
+            _no_indent{printer.set_no_indent(no_indent)},
+            _no_newline(printer.set_no_newline(no_newline)) {}
+        ~FormatOpts() {
+            _printer.set_no_indent(_no_indent);
+            _printer.set_no_newline(_no_newline);
+        }
+
+    private:
+        PrinterBase& _printer;
+        bool _no_indent;
+        bool _no_newline;
+    };
+
+    FormatOpts format(bool no_indent, bool no_newline) {
+        return {*this, no_indent, no_newline};
+    }
+
+    FormatOpts no_ws() {
+        return format(true, true);
+    }
 
     bool set_no_indent(bool val) {
         bool cur = _no_indent;
@@ -74,7 +97,8 @@ public:
     bool visit(ulam::ast::MemberAccess& node) override;
     bool visit(ulam::ast::ParenExpr& node) override;
     bool visit(ulam::ast::BinaryOp& node) override;
-    bool visit(ulam::ast::UnaryOp& node) override;
+    bool visit(ulam::ast::UnaryPreOp& node) override;
+    bool visit(ulam::ast::UnaryPostOp& node) override;
     bool visit(ulam::ast::TypeName& node) override;
     bool visit(ulam::ast::TypeSpec& node) override;
     bool visit(ulam::ast::TypeIdent& node) override;

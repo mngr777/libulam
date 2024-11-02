@@ -23,7 +23,6 @@ tok::Type type_by_keyword(const std::string_view str);
 
 Class::Kind class_kind(Type type);
 
-bool is_type_op(Type type);
 TypeOp type_op(Type type);
 
 Op bin_op(Type type);
@@ -52,12 +51,11 @@ struct Token {
 
     Class::Kind class_kind() const { return tok::class_kind(type); }
 
-    bool is_type_op() const { return tok::is_type_op(type); }
     TypeOp type_op() const { return tok::type_op(type); }
 
     Op bin_op() const { return tok::bin_op(type); }
-    Op unary_pre_op() const { return tok::bin_op(type); }
-    Op unary_post_op() const { return tok::bin_op(type); }
+    Op unary_pre_op() const { return tok::unary_pre_op(type); }
+    Op unary_post_op() const { return tok::unary_post_op(type); }
 };
 
 } // namespace ulam

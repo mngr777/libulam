@@ -3,12 +3,6 @@
 #include "tests/ast/print.hpp"
 #include <iostream>
 
-/*
-    typedef C.D B;
-
-  B mB = 123;
- */
-
 static const char* Program = R"END(
 element A {
   typedef B.C D;
@@ -18,7 +12,7 @@ element A {
 
   C(2).D.E foo(F.G c = 1) {
     H(2) a = 1;
-    for (; a < 5; ++a + 1) {}
+    for (; a < 5; a++) {}
   }
 }
 )END";

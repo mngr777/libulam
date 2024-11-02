@@ -273,16 +273,26 @@ ast::Ptr<ast::Expr> Parser::parse_expr() {
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
-    Op pre = tok::unary_pre_op(_tok.type);
-    auto lhs = (pre != Op::None)
-        ? consume(), tree<ast::UnaryOp>(pre, parse_expr_climb(ops::prec(pre)))
+    Op op = Op::None;
+    // unary prefix
+    op = tok::unary_pre_op(_tok.type);
+    auto lhs = (op != Op::None)
+        ? consume(), tree<ast::UnaryPreOp>(op, parse_expr_climb(ops::prec(op)))
         : parse_expr_lhs();
     if (!lhs)
         return lhs;
+    // binary or suffix
     while (true) {
-        Op op = _tok.bin_op();
-        if (op == Op::None || ops::prec(op) < min_prec)
-            break;
+        op = _tok.bin_op();
+        if (op == Op::None || ops::prec(op) < min_prec) {
+            // suffix
+            op = _tok.unary_post_op();
+            if (op == Op::None || ops::prec(op) < min_prec)
+                break;
+            consume();
+            lhs = tree<ast::UnaryPostOp>(op, std::move(lhs));
+            continue;
+        }
         switch (op) {
         case Op::FunCall:
             lhs = parse_funcall(std::move(lhs));
