@@ -3,7 +3,6 @@
 #include <libulam/lang/ops.hpp>
 #include <libulam/lang/type_ops.hpp>
 #include <libulam/src_loc.hpp>
-#include <libulam/str_pool.hpp>
 #include <string_view>
 
 namespace ulam {
@@ -37,7 +36,6 @@ struct Token {
     tok::Type type{tok::Eof};
     size_t size{0};
     loc_id_t loc_id{NoLocId};
-    str_id_t str_id{NoStrId};
 
     const char* type_str() const { return tok::type_str(type); }
     const char* type_name() const { return tok::type_name(type); }
