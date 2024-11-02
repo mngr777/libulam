@@ -166,10 +166,10 @@ void Lex::lex(Token& token) {
         break;
     case '\\':
         if (at('\n')) {
-            advance();
+            newline(1);
             lex(token);
         } else if (at('\r') && _cur[1] == '\n') {
-            advance(2);
+            newline(2);
             lex(token);
         } else {
             complete(tok::UnexpectedChar);
@@ -279,43 +279,43 @@ void Lex::lex_str(char closing) {
             goto Done;
         case '\r':
             if (_cur[1] == '\n') {
+                newline(2);
                 if (!esc)
                     goto Done; // unterminated
+            } else {
                 advance();
-                break;
             }
             break;
         case '\n':
+            newline(1);
             if (!esc)
                 goto Done; // unterminated
             break;
         case '"':
-            if (closing == '"' && !esc) {
-                advance();
+            advance();
+            if (closing == '"' && !esc)
                 goto Done;
-            }
             break;
         case '\'':
-            if (closing == '\'' && !esc) {
-                advance();
+            advance();
+            if (closing == '\'' && !esc)
                 goto Done;
-            }
             break;
         case '>':
             // include path in angled brackets
-            if (closing == '>' && !esc) {
-                advance();
+            advance();
+            if (closing == '>' && !esc)
                 goto Done;
-            }
         case '\\':
+            advance();
             if (!esc) {
                 esc = true;
-                advance();
                 continue;
             }
             break;
+        default:
+            advance();
         }
-        advance();
         esc = false;
     }
 Done:
@@ -330,18 +330,21 @@ void Lex::lex_comment() {
             return;
         case '\r':
             if (_cur[1] == '\n' && !esc)
-                return;
+                newline(2);
+            return;
         case '\n':
+            newline(1);
             return;
         case '\\':
+            advance();
             if (!esc) {
                 esc = true;
-                advance();
                 continue;
             }
             break;
+        default:
+            advance();
         }
-        advance();
         esc = false;
     }
 }
