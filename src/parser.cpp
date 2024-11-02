@@ -474,7 +474,7 @@ ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 }
 
 ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
-    auto res = detail::parse_num_str(*this, tok_str());
+    auto res = detail::parse_num_str(tok_str());
     if (res.second.error != detail::ParseNumStatus::Ok)
         diag("Number parse error");
     auto node = tree<ast::NumLit>(std::move(res.first));

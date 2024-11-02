@@ -4,22 +4,28 @@
 #include <iostream>
 
 static const char* Program = R"END(
-quark Q(B.C param1 = 1) {
+quark Q(B.C param1 = 12345) {
 
-}
-
-element A {
-  typedef B.C D;
-
-  B.C.D a = 1, b, c = 2;
-  C.D.E d = 3;
-
-  C(2).D.E foo(F.G c = 1) {
-    H(2) a = 1;
-    for (; a < 5; a++) {}
-  }
 }
 )END";
+
+// static const char* Program = R"END(
+// quark Q(B.C param1 = 1) {
+
+// }
+
+// element A {
+//   typedef B.C D;
+
+//   B.C.D a = 1, b, c = 2;
+//   C.D.E d = 3;
+
+//   C(2).D.E foo(F.G c = 1) {
+//     H(2) a = 1;
+//     for (; a < 5; a++) {}
+//   }
+// }
+// )END";
 
 int main() {
     ulam::SrcMngr sm;

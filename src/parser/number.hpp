@@ -1,6 +1,5 @@
 #pragma once
 #include <libulam/lang/number.hpp>
-#include <libulam/parser.hpp>
 #include <string_view>
 #include <utility>
 
@@ -13,6 +12,6 @@ struct ParseNumStatus {
 };
 
 std::pair<Number, ParseNumStatus>
-parse_num_str(Parser& parser, const std::string_view str);
+parse_num_str(const std::string_view str);
 
 } // namespace ulam::detail

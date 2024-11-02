@@ -41,11 +41,10 @@ constexpr std::uint64_t radix_threshold_rem(std::uint8_t radix) {
 
 } // namespace
 
-// NOTE:
-// - numeric literals cannot have a sign
-// -
+// NOTE: numeric literals cannot have a sign
+// TODO: implement exp notation
 std::pair<Number, ParseNumStatus>
-parse_num_str(Parser& parser, const std::string_view str) {
+parse_num_str(const std::string_view str) {
     assert(str.size() > 0);
     assert(is_digit(str[0])); // guaranteed by lexer
     Number number{};
@@ -80,13 +79,13 @@ parse_num_str(Parser& parser, const std::string_view str) {
     }
 
     // Eat leading zeros
-    while (cur < str.size() && str[cur])
+    while (cur < str.size() && str[cur] == '0')
         ++cur;
 
     // Value
     auto threshold = radix_threshold(number.radix);
     auto threshold_rem = radix_threshold_rem(number.radix);
-    while (cur < str.size()) {
+    for (; cur < str.size(); ++cur) {
         std::uint8_t dv = digit_value(str[cur]);
         // is part of suffix?
         if (dv == NotDigit)
