@@ -61,9 +61,6 @@ private:
 
     template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args);
 
-    ast::Ptr<ast::Expr>
-    binop_tree(Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs);
-
     // TODO: string_view
     std::string tok_str();
 

@@ -492,22 +492,6 @@ ast::Ptr<N> Parser::tree(Args&&... args) {
     return ast::make<N>(std::forward<Args>(args)...);
 }
 
-ast::Ptr<ast::Expr> Parser::binop_tree(
-    Op op, ast::Ptr<ast::Expr>&& lhs, ast::Ptr<ast::Expr>&& rhs) {
-    switch (op) {
-    case Op::FunCall: {
-        // TODO
-        return {};
-    }
-    case Op::ArrayAccess: {
-        // TODO
-        return {};
-    }
-    default:
-        return ast::make<ast::BinaryOp>(op, std::move(lhs), std::move(rhs));
-    }
-}
-
 std::string Parser::tok_str() {
     // assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
     return std::string(_sm.str_at(_tok.loc_id, _tok.size));
