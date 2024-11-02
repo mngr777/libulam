@@ -169,7 +169,7 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
     switch (_tok.type) {
     case tok::TypeIdent: {
         auto type = parse_type_name();
-        if (_tok.is(tok::Dot)) {
+        if (_tok.is(tok::Period)) {
             return parse_type_op_rest(std::move(type));
         } else if (_tok.is(tok::Ident)) {
             auto first_name = tok_str();
@@ -377,7 +377,7 @@ ast::Ptr<ast::TypeOpExpr> Parser::parse_type_op() {
 
 ast::Ptr<ast::TypeOpExpr>
 Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
-    expect(tok::Dot);
+    expect(tok::Period);
     auto type_op = _tok.type_op();
     if (type_op == TypeOp::None)
         diag("unexpected token in type op expr");
@@ -388,7 +388,7 @@ ast::Ptr<ast::TypeName> Parser::parse_type_name() {
     if (!_tok.is(tok::TypeIdent))
         diag("unexpected token in type name");
     auto node = tree<ast::TypeName>(parse_type_spec());
-    while (_tok.is(tok::Dot)) {
+    while (_tok.is(tok::Period)) {
         consume();
         if (!_tok.is(tok::TypeIdent))
             diag("Unexpected token in type name");
@@ -439,7 +439,7 @@ Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
 
 ast::Ptr<ast::MemberAccess>
 Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
-    assert(_tok.is(tok::Dot));
+    assert(_tok.is(tok::Period));
     consume();
     if (!_tok.in(tok::Ident, tok::TypeIdent)) {
         diag("expecting name or type name");

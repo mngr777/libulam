@@ -95,7 +95,7 @@ TOK("|=", PipeEqual)
 TOK("^=", CaretEqual)
 TOK("<<=", LessLessEqual)
 TOK(">>=", GreaterGreaterEqual)
-TOK(".", Dot)
+TOK(".", Period)
 TOK(",", Comma)
 TOK("...", Ellipsis)
 

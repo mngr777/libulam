@@ -97,7 +97,7 @@ TypeOp type_op(Type type) {
 
 Op bin_op(Type type) {
     switch (type) {
-    case Dot:
+    case Period:
         return Op::MemberAccess;
     case Plus:
         return Op::Sum;

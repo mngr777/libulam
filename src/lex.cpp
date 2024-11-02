@@ -101,7 +101,7 @@ void Lex::lex(Token& token) {
             advance(2);
             complete(tok::Ellipsis);
         } else {
-            complete(tok::Dot);
+            complete(tok::Period);
         }
         break;
     case '/':
