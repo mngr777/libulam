@@ -24,7 +24,7 @@ inline bool is_xdigit(char ch) {
 inline bool is_upper(char ch) { return 'A' <= ch && ch <= 'Z'; }
 inline bool is_lower(char ch) { return 'a' <= ch && ch <= 'z'; }
 inline bool is_word(char ch) {
-    return ch == '_' || is_upper(ch) || is_lower(ch);
+    return ch == '_' || is_upper(ch) || is_lower(ch) || is_digit(ch);
 }
 
 constexpr std::uint8_t NotDigit = -1;

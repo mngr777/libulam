@@ -4,6 +4,10 @@
 #include <iostream>
 
 static const char* Program = R"END(
+quark Q(B.C param1 = 1) {
+
+}
+
 element A {
   typedef B.C D;
 

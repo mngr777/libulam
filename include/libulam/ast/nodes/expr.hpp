@@ -12,6 +12,8 @@ class Expr : public Stmt {};
 
 class ArgList;
 
+// TODO: types are not expressions
+
 class TypeIdent : public Expr, public Named {
     ULAM_AST_NODE
 public:

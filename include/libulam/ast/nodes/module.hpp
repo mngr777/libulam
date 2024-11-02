@@ -24,15 +24,18 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
     ULAM_AST_NODE
 };
 
-class ClassDef : public Tuple<Stmt, ClassDefBody>, public Named {
+class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
     ULAM_AST_NODE
 public:
-    ClassDef(Class::Kind kind, std::string&& name):
-        Tuple{make<ClassDefBody>()}, Named{std::move(name)}, _kind{kind} {}
+    ClassDef(Class::Kind kind, std::string&& name, Ptr<ParamList>&& params):
+        Tuple{std::move(params), make<ClassDefBody>()},
+        Named{std::move(name)},
+        _kind{kind} {}
 
     const Class::Kind kind() const { return _kind; }
 
-    ULAM_AST_TUPLE_PROP(body, 0)
+    ULAM_AST_TUPLE_PROP(params, 0)
+    ULAM_AST_TUPLE_PROP(body, 1)
 
 private:
     Class::Kind _kind;
