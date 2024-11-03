@@ -2,6 +2,7 @@
 #include "src/parser/string.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
+#include <libulam/context.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/token.hpp>
 #include <stdexcept> // TMP
@@ -22,7 +23,7 @@ ast::Ptr<ast::Module> Parser::parse_file(const std::filesystem::path& path) {
 }
 
 ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
-    _pp.main_str(text);
+    _pp.main_string(text);
     _pp >> _tok;
     return parse_module();
 }
@@ -494,7 +495,7 @@ ast::Ptr<N> Parser::tree(Args&&... args) {
 
 std::string Parser::tok_str() {
     // assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
-    return std::string(_sm.str_at(_tok.loc_id, _tok.size));
+    return std::string(_ctx.sm().str_at(_tok.loc_id, _tok.size));
 }
 
 } // namespace ulam

@@ -1,25 +1,27 @@
 #pragma once
-#include "libulam/lex.hpp"
-#include "libulam/src_loc.hpp"
-#include "libulam/src_mngr.hpp"
-#include "libulam/token.hpp"
+#include <libulam/diag.hpp>
+#include <libulam/lex.hpp>
+#include <libulam/src_loc.hpp>
+#include <libulam/token.hpp>
 #include <stack>
 
 namespace ulam {
 
 using Version = std::uint8_t;
 
+class Context;
+
 class Preproc {
     friend Lex;
 
 public:
-    explicit Preproc(SrcMngr& sm): _sm{sm} {}
+    explicit Preproc(Context& ctx): _ctx{ctx} {}
 
     Preproc(const Preproc&) = delete;
     Preproc& operator=(Preproc) = delete;
 
     void main_file(std::filesystem::path path);
-    void main_str(std::string text);
+    void main_string(std::string text);
 
     Preproc& operator>>(Token& token);
 
@@ -44,7 +46,7 @@ private:
     void preproc_use();
     bool preproc_load();
 
-    SrcMngr& _sm;
+    Context& _ctx;
     std::stack<std::pair<Src*, Lex>> _stack;
 };
 

@@ -21,7 +21,6 @@ AST_SOURCE_FILES = \
 	src/ast/traversal.cpp
 
 LANG_HEADER_FILES = \
-	include/libulam/lang.hpp \
 	include/libulam/lang/class.hpp \
 	include/libulam/lang/ops.hpp \
 	include/libulam/lang/ops.inc.hpp \
@@ -36,6 +35,8 @@ LANG_SOURCE_FILES = \
 HEADER_FILES = \
 	$(AST_HEADER_FILES) \
 	$(LANG_HEADER_FILES) \
+	include/libulam/context.hpp \
+	include/libulam/diag.hpp \
 	include/libulam/memory/buf.hpp \
 	include/libulam/memory/notepad.hpp \
 	include/libulam/parser.hpp \
@@ -51,7 +52,8 @@ SOURCE_FILES = \
 	$(AST_SOURCE_FILES) \
 	$(LANG_SOURCE_FILES) \
 	src/debug.hpp \
-	src/detail/str.hpp \
+	src/detail/string.hpp \
+	src/diag.cpp \
 	src/memory/notepad.cpp \
 	src/memory/buf.cpp \
 	src/parser.cpp \
@@ -86,6 +88,7 @@ check_PROGRAMS = $(TESTS)
 TEST_MEMORY_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_NOTEPAD
 TEST_MEMORY_SOURCE_FILES = \
 	src/debug.hpp \
+	libulam/include/diag.hpp \
 	libulam/include/memory/notepad.hpp \
 	src/memory/notepad.cpp
 
@@ -96,12 +99,14 @@ test_memory_notepad1_CXXFLAGS = $(TEST_MEMORY_CXXFLAGS)
 
 TEST_LEX_SOURCE_FILES = \
 	$(TEST_MEMORY_SOURCE_FILES) \
-	include/libulam/token.hpp \
+	include/libulam/context.hpp \
 	include/libulam/lex.hpp \
 	include/libulam/preproc.hpp \
 	include/libulam/src.hpp \
 	include/libulam/src_mngr.hpp \
-	src/detail/str.hpp \
+	include/libulam/token.hpp \
+	src/detail/string.hpp \
+	src/diag.cpp \
 	src/lex.cpp \
 	src/preproc.cpp \
 	src/src.cpp \

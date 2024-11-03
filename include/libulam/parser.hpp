@@ -7,12 +7,11 @@
 
 namespace ulam {
 
-class Preproc;
-class SrcMngr;
+class Context;
 
 class Parser {
 public:
-    Parser(SrcMngr& sm): _sm{sm}, _pp{sm} {}
+    explicit Parser(Context& ctx): _ctx{ctx}, _pp{ctx} {}
 
     ast::Ptr<ast::Module> parse_file(const std::filesystem::path& path);
     ast::Ptr<ast::Module> parse_string(const std::string& text);
@@ -64,7 +63,7 @@ private:
     // TODO: string_view
     std::string tok_str();
 
-    SrcMngr& _sm;
+    Context& _ctx;
     Preproc _pp;
 
     Token _tok;

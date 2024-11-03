@@ -1,7 +1,7 @@
-#include "libulam/parser.hpp"
-#include "libulam/src_mngr.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream>
+#include <libulam/context.hpp>
+#include <libulam/parser.hpp>
 
 static const char* Program = R"END(
 quark Q(B.C param1 = 1) {
@@ -22,8 +22,8 @@ element A {
 )END";
 
 int main() {
-    ulam::SrcMngr sm;
-    ulam::Parser parser{sm};
+    ulam::Context ctx;
+    ulam::Parser parser{ctx};
 
     std::string text{Program};
     auto ast = parser.parse_string(text);

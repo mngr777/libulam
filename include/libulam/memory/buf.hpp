@@ -12,7 +12,10 @@ public:
     const char* start() const { return _data; }
     const char* end() const { return _data + _size; }
 
-    operator bool() const { return _size > 0; }
+    std::size_t size() const { return _size; }
+    bool empty() const { return _size == 0; }
+
+    operator bool() const { return !empty(); }
 
 private:
     const char* _data;

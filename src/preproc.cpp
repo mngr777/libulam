@@ -1,18 +1,20 @@
-#include "libulam/preproc.hpp"
-#include "libulam/token.hpp"
 #include <cassert>
+#include <libulam/context.hpp>
+#include <libulam/preproc.hpp>
+#include <libulam/src_mngr.hpp>
+#include <libulam/token.hpp>
 
 namespace ulam {
 
 void Preproc::main_file(std::filesystem::path path) {
     assert(_stack.empty());
-    auto src = _sm.file(std::move(path));
+    auto src = _ctx.sm().file(std::move(path));
     push(src);
 }
 
-void Preproc::main_str(std::string text) {
+void Preproc::main_string(std::string text) {
     assert(_stack.empty());
-    auto src = _sm.str(std::move(text));
+    auto src = _ctx.sm().string(std::move(text));
     push(src);
 }
 
@@ -45,7 +47,7 @@ Preproc& Preproc::operator>>(Token& token) {
 
 void Preproc::push(Src* src) {
     assert(src);
-    _stack.emplace(src, Lex{*this, _sm, src->id(), src->content()});
+    _stack.emplace(src, Lex{*this, _ctx.sm(), src->id(), src->content()});
 }
 
 Lex& Preproc::lexer() {
@@ -88,7 +90,7 @@ void Preproc::preproc_use() {
 bool Preproc::preproc_load() {
     Token path;
     lexer().lex_path(path);
-    auto src = _sm.file(_sm.str_at(path.loc_id, path.size));
+    auto src = _ctx.sm().file(_ctx.sm().str_at(path.loc_id, path.size));
     if (src)
         push(src);
     return src;

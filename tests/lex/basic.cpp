@@ -1,9 +1,10 @@
-#include "libulam/lex.hpp"
-#include "libulam/preproc.hpp"
-#include "libulam/src.hpp"
-#include "libulam/src_mngr.hpp"
 #include "libulam/token.hpp"
 #include <iostream>
+#include <libulam/context.hpp>
+#include <libulam/lex.hpp>
+#include <libulam/preproc.hpp>
+#include <libulam/src.hpp>
+#include <libulam/src_mngr.hpp>
 
 static const char* Program = R"END(
 ulam 1;
@@ -37,16 +38,17 @@ element A : B {
 )END";
 
 int main() {
-    ulam::SrcMngr sm;
-    ulam::Preproc pp{sm};
+    ulam::Context ctx;
+    ulam::Preproc pp{ctx};
     std::string text{Program};
-    auto src = sm.str(text);
-    ulam::Lex lex{pp, sm, src->id(), src->content()};
+    auto src = ctx.sm().string(text);
+    ulam::Lex lex{pp, ctx.sm(), src->id(), src->content()};
     ulam::Token token;
     do {
         lex.lex(token);
         if (token.in(ulam::tok::Ident, ulam::tok::Number, ulam::tok::String)) {
-            std::cout << "`" << sm.str_at(token.loc_id, token.size) << "'";
+            std::cout << "`" << ctx.sm().str_at(token.loc_id, token.size)
+                      << "'";
         } else {
             const char* str = token.type_str();
             std::cout << (str ? str : token.type_name());
