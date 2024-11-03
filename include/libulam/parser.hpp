@@ -17,14 +17,19 @@ public:
     ast::Ptr<ast::Module> parse_string(const std::string& text);
 
 private:
-    void consume();
-    void expect(tok::Type type);
+    template <typename... Ts> void consume(Ts... types);
     bool eof();
 
-    void diag(std::string message);
+    bool match(tok::Type type);
+    bool expect(tok::Type type);
+    void unexpected();
+    void diag(std::string text);
+    template <typename... Ts> void panic(Ts... stop);
 
     ast::Ptr<ast::Module> parse_module();
     ast::Ptr<ast::ClassDef> parse_class_def();
+    ast::Ptr<ast::ClassDef> parse_class_def_head();
+    void parse_class_def_body(ast::Ref<ast::ClassDef> node);
     ast::Ptr<ast::TypeDef> parse_type_def();
     ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
         ast::Ptr<ast::Expr>&& base_type, std::string&& first_name);

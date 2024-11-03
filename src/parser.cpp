@@ -1,3 +1,4 @@
+#include "libulam/diag.hpp"
 #include "src/parser/number.hpp"
 #include "src/parser/string.hpp"
 #include <cassert>
@@ -5,7 +6,6 @@
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/token.hpp>
-#include <stdexcept> // TMP
 #include <string>
 
 #ifdef DEBUG_PARSER
@@ -28,21 +28,46 @@ ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
     return parse_module();
 }
 
-void Parser::consume() { _pp >> _tok; }
+template <typename... Ts> void Parser::consume(Ts... types) {
+    if constexpr (sizeof...(types) == 0) {
+        _pp >> _tok;
+    } else if (_tok.in(types...)) {
+        _pp >> _tok;
+    }
+}
 
-void Parser::expect(tok::Type type) {
-    if (_tok.type != type)
-        diag(
-            std::string("Unexpected token '") + tok_str() + "', expecting " +
-            tok::type_name(type));
-    consume();
+bool Parser::match(tok::Type type) {
+    if (!_tok.is(type)) {
+        auto text = std::string("unexpected ") + _tok.type_name() +
+                    ", expecting " + tok::type_name(type);
+        _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, text);
+        return false;
+    }
+    return true;
+}
+
+bool Parser::expect(tok::Type type) {
+    bool is_match = match(type);
+    if (is_match)
+        consume();
+    return is_match;
+}
+
+template <typename... Ts> void Parser::panic(Ts... stop) {
+    while (!_tok.in(stop...) && !eof())
+        consume();
+}
+
+void Parser::unexpected() {
+    auto text = std::string("unexpected ") + _tok.type_name();
+    _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, text);
+}
+
+void Parser::diag(std::string text) {
+    _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, text);
 }
 
 bool Parser::eof() { return _tok.is(tok::Eof); }
-
-void Parser::diag(std::string message) {
-    throw std::invalid_argument(message); // TMP
-}
 
 ast::Ptr<ast::Module> Parser::parse_module() {
     auto node = tree<ast::Module>();
@@ -54,65 +79,103 @@ ast::Ptr<ast::Module> Parser::parse_module() {
             node->add(parse_class_def());
             break;
         default:
-            diag("unexpected token in module");
+            unexpected();
+            panic(tok::Semicol);
+            consume(tok::Semicol);
         }
     }
     return node;
 }
 
 ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
+    auto node = parse_class_def_head();
+    if (node)
+        parse_class_def_body(ast::ref(node));
+    return node;
+}
+
+ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     assert(_tok.in(tok::Element, tok::Quark, tok::Transient));
     // element/quark/transient TODO: union
     auto kind = _tok.class_kind();
     consume();
     // name
-    if (!_tok.is(tok::TypeIdent))
-        diag("Class name is not a type ident");
-    auto name = tok_str();
+    std::string name;
+    if (match(tok::TypeIdent))
+        name = tok_str();
     consume();
     // params
     ast::Ptr<ast::ParamList> params{};
     if (_tok.is(tok::ParenL))
         params = parse_param_list();
-    auto node = tree<ast::ClassDef>(kind, std::move(name), std::move(params));
     // TODO: ancestors
+    return tree<ast::ClassDef>(kind, std::move(name), std::move(params));
+}
+
+void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
     // body
     expect(tok::BraceL);
     while (!_tok.in(tok::BraceR, tok::Eof)) {
         switch (_tok.type) {
-        case tok::Typedef:
-            node->body()->add(parse_type_def());
-            break;
+        case tok::Typedef: {
+            auto type_def = parse_type_def();
+            if (type_def)
+                node->body()->add(std::move(type_def));
+        } break;
         case tok::TypeIdent: {
+            // fun or var def
+            // type
             auto type = parse_type_name();
-            if (!_tok.is(tok::Ident))
-                diag("Unexpected token in class def, expecting name");
+            if (!type) {
+                panic(tok::Semicol, tok::BraceL, tok::BraceR);
+                consume(tok::Semicol);
+                break;
+            }
+            // name
+            if (!match(tok::Ident)) {
+                panic(tok::Semicol, tok::BraceL, tok::BraceR);
+                consume(tok::Semicol);
+                break;
+            }
             auto name = tok_str();
             consume();
             if (_tok.is(tok::ParenL)) {
-                node->body()->add(
-                    parse_fun_def_rest(std::move(type), std::move(name)));
+                auto fun = parse_fun_def_rest(std::move(type), std::move(name));
+                if (fun)
+                    node->body()->add(std::move(fun));
             } else {
-                node->body()->add(
-                    parse_var_def_list_rest(std::move(type), std::move(name)));
+                auto vars = parse_var_def_list_rest(std::move(type), std::move(name));
+                if (vars)
+                    node->body()->add(std::move(vars));
             }
         } break;
         default:
-            diag("Unexpected token in class def");
+            unexpected();
+            panic(tok::Semicol, tok::BraceL, tok::BraceR);
         }
     }
-    expect(tok::BraceR);
-    return node;
+    if (!expect(tok::BraceR)) {
+        panic(tok::BraceL, tok::BraceR);
+        consume(tok::BraceR);
+    }
 }
 
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
+    // typedef
     assert(_tok.is(tok::Typedef));
     consume();
+    // type
     auto type = parse_type_name();
-    if (!_tok.is(tok::TypeIdent))
-        diag("Unexpected token in parse_type_def, expecting type name");
+    if (!type)
+        return {};
+    // alias
+    if (!match(tok::TypeIdent)) {
+        panic(tok::Semicol, tok::BraceL, tok::BraceR);
+        return {};
+    }
     auto alias = tok_str();
     consume();
+    // ;
     expect(tok::Semicol);
     return tree<ast::TypeDef>(std::move(type), std::move(alias));
 }
@@ -123,26 +186,35 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     // first ident
     std::string name{first_name};
     while (true) {
-        // init value
+        // value
         ast::Ptr<ast::Expr> expr;
         if (_tok.is(tok::Equal)) {
             consume();
             expr = parse_expr();
         }
+        // add var
         node->add(tree<ast::VarDef>(
             node->base_type(), std::move(name), std::move(expr)));
         // end of list?
         if (_tok.in(tok::Semicol, tok::Eof))
             break;
         // ,
-        expect(tok::Comma);
-        if (!_tok.is(tok::Ident))
-            diag(
-                "unexpected token in var def list, expecting name after comma");
+        // if next is ident, pretend there is a comma
+        if (!expect(tok::Comma) && !_tok.is(tok::Ident)) {
+            panic(tok::Semicol);
+            consume(tok::Semicol);
+            break;
+        }
         // next ident
+        if (!match(tok::Ident)) {
+            panic(tok::Semicol);
+            consume(tok::Semicol);
+            break;
+        }
         name = tok_str();
         consume();
     }
+    // ;
     expect(tok::Semicol);
     return node;
 }
@@ -150,8 +222,17 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
 ast::Ptr<ast::FunDef>
 Parser::parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name) {
     assert(_tok.type == tok::ParenL);
+    // params
     auto params = parse_param_list();
+    if (!params)
+        panic(tok::BraceL, tok::BraceR, tok::Semicol);
+    // body
     auto block = parse_block();
+    if (!block) {
+        panic(tok::BraceL, tok::BraceR, tok::Semicol);
+        consume(tok::Semicol);
+        return {};
+    }
     return tree<ast::FunDef>(
         std::move(name), std::move(ret_type), std::move(params),
         std::move(block));
@@ -178,7 +259,7 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
             return parse_var_def_list_rest(
                 std::move(type), std::move(first_name));
         } else {
-            diag("Unexpected token after type name");
+            unexpected();
         }
         expect(tok::Semicol);
         return tree<ast::EmptyStmt>();
@@ -256,26 +337,33 @@ ast::Ptr<ast::While> Parser::parse_while() {
 
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     assert(_tok.is(tok::ParenL));
+    // (
     consume();
     auto node = tree<ast::ParamList>();
     while (!_tok.in(tok::ParenR, tok::Eof)) {
+        // param
         node->add(parse_param());
+        // ,
         if (_tok.is(tok::Comma)) {
             consume();
             if (_tok.is(tok::ParenR))
-                diag("Trailing comma in param list");
+                diag("trailing comma in parameter list");
         }
     }
+    // )
     expect(tok::ParenR);
     return node;
 }
 
 ast::Ptr<ast::Param> Parser::parse_param() {
+    // type
     auto type = parse_type_name();
     if (!_tok.is(tok::Ident))
         diag("Expecting identifiers");
+    // name
     auto name = tok_str();
     consume();
+    // value
     ast::Ptr<ast::Expr> default_value{};
     if (_tok.is(tok::Equal)) {
         consume();
@@ -343,7 +431,7 @@ ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
     case tok::ParenL:
         return parse_paren_expr_or_cast();
     default:
-        diag("unexpected token, expected expr");
+        unexpected();
         return {};
     }
 }
@@ -353,7 +441,7 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
     consume();
     ast::Ptr<ast::Expr> inner{};
     if (_tok.is(tok::TypeIdent)) {
-        // maybe cast
+        // cast or type op
         auto type_name = parse_type_name();
         if (_tok.is(tok::ParenR)) {
             // cast

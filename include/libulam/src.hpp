@@ -27,7 +27,7 @@ public:
 private:
     src_id_t _id;
     std::string _name;
-    std::vector<std::size_t> _line_off;
+    std::vector<std::size_t> _line_off; // line offsets, starting from 2nd line
 };
 
 class FileSrc : public Src {

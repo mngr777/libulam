@@ -37,8 +37,8 @@ void Diag::emit(diag::Level lvl, loc_id_t loc_id, std::size_t len, const std::st
     std::cerr << level_prefix(lvl) << "in " << src->name() << ":" << loc.linum()
               << ":" << loc.chr() << "\n";
     std::cerr << _sm.line_at(loc);
-    std::cerr << std::string(' ', loc.chr() - 1) << "^\n";
-    std::cerr << std::string(' ', loc.chr() - 1) << text;
+    std::cerr << std::string(loc.chr() - 1, ' ') << "^\n";
+    std::cerr << std::string(loc.chr() - 1, ' ') << text << "\n";
     if (lvl < diag::Warn)
         ++_err_num;
     if (lvl == diag::Fatal || _err_num == MaxErrorNum)
