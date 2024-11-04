@@ -54,7 +54,7 @@ private:
     ast::Ptr<ast::TypeName> parse_type_name();
     ast::Ptr<ast::TypeSpec> parse_type_spec();
     ast::Ptr<ast::FunCall> parse_funcall(ast::Ptr<ast::Expr>&& obj);
-    ast::Ptr<ast::ArgList> parse_args();
+    ast::Ptr<ast::ArgList> parse_arg_list();
     ast::Ptr<ast::ArrayAccess> parse_array_access(ast::Ptr<ast::Expr>&& array);
     ast::Ptr<ast::MemberAccess> parse_member_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::TypeIdent> parse_type_ident();

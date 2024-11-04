@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/stmt.hpp"
 #include "libulam/diag.hpp"
 #include "src/parser/number.hpp"
 #include "src/parser/string.hpp"
@@ -13,6 +14,8 @@
 #    define ULAM_DEBUG_PREFIX "[ulam::Parser] "
 #endif
 #include "src/debug.hpp"
+
+// FIXME: panic calls
 
 namespace ulam {
 
@@ -277,7 +280,10 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
         return tree<ast::EmptyStmt>();
     default:
         auto expr = parse_expr();
-        expect(tok::Semicol);
+        if (!expect(tok::Semicol))
+            panic(tok::Semicol, tok::BraceL, tok::BraceR);
+        if (!expr)
+            return tree<ast::EmptyStmt>();
         return expr;
     }
 }
@@ -289,7 +295,10 @@ ast::Ptr<ast::If> Parser::parse_if() {
     // (cond)
     expect(tok::ParenL);
     auto cond = parse_expr();
-    expect(tok::ParenR);
+    if (!expect(tok::ParenR)) {
+        panic(tok::ParenR, tok::BraceL);
+        consume(tok::ParenR);
+    }
     // then
     auto if_branch = parse_stmt();
     ast::Ptr<ast::Stmt> else_branch{};
@@ -358,8 +367,11 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
 ast::Ptr<ast::Param> Parser::parse_param() {
     // type
     auto type = parse_type_name();
-    if (!_tok.is(tok::Ident))
-        diag("Expecting identifiers");
+    if (!match(tok::Ident)) {
+        panic(tok::Ident, tok::Comma, tok::ParenR);
+        if (!_tok.is(tok::Ident))
+            return {};
+    }
     // name
     auto name = tok_str();
     consume();
@@ -468,19 +480,21 @@ ast::Ptr<ast::TypeOpExpr>
 Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
     expect(tok::Period);
     auto type_op = _tok.type_op();
-    if (type_op == TypeOp::None)
-        diag("unexpected token in type op expr");
+    if (type_op == TypeOp::None) {
+        unexpected();
+        return {};
+    }
     return tree<ast::TypeOpExpr>(std::move(type), type_op);
 }
 
 ast::Ptr<ast::TypeName> Parser::parse_type_name() {
-    if (!_tok.is(tok::TypeIdent))
-        diag("unexpected token in type name");
+    if (!match(tok::TypeIdent))
+        return {};
     auto node = tree<ast::TypeName>(parse_type_spec());
     while (_tok.is(tok::Period)) {
         consume();
-        if (!_tok.is(tok::TypeIdent))
-            diag("Unexpected token in type name");
+        if (!match(tok::TypeIdent))
+            return {};
         node->add(parse_type_ident());
     }
     return node;
@@ -492,16 +506,16 @@ ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     consume();
     ast::Ptr<ast::ArgList> args{};
     if (_tok.is(tok::ParenL))
-        args = parse_args();
+        args = parse_arg_list();
     return tree<ast::TypeSpec>(std::move(ident), std::move(args));
 }
 
 ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
-    auto args = parse_args();
+    auto args = parse_arg_list();
     return tree<ast::FunCall>(std::move(obj), std::move(args));
 }
 
-ast::Ptr<ast::ArgList> Parser::parse_args() {
+ast::Ptr<ast::ArgList> Parser::parse_arg_list() {
     assert(_tok.is(tok::ParenL));
     consume();
     auto args = tree<ast::ArgList>();
@@ -510,7 +524,7 @@ ast::Ptr<ast::ArgList> Parser::parse_args() {
         if (_tok.is(tok::Comma)) {
             consume();
             if (_tok.is(tok::ParenR))
-                diag("Trailing comma in param list");
+                diag("trailing comma in argument list");
         }
     }
     expect(tok::ParenR);
@@ -531,7 +545,8 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
     assert(_tok.is(tok::Period));
     consume();
     if (!_tok.in(tok::Ident, tok::TypeIdent)) {
-        diag("expecting name or type name");
+        unexpected();
+        panic(tok::Semicol, tok::BraceL, tok::BraceR);
         return {};
     }
     auto node = tree<ast::MemberAccess>(std::move(obj), tok_str());
@@ -563,7 +578,7 @@ ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
     auto res = detail::parse_num_str(tok_str());
     if (res.second.error != detail::ParseNumStatus::Ok)
-        diag("Number parse error");
+        diag("number parse error");
     auto node = tree<ast::NumLit>(std::move(res.first));
     consume();
     return node;
