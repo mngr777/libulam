@@ -14,7 +14,7 @@ element A {
   B.C.D a = 1, b, c = 2;
   C.D.E d = 3;
 
-  C(2).D.E foo(F.G c = 1,) {
+  C(2).D.E foo(F.G c = 1,  ) {
     H(2) a = 1;
     for (; a < 5; a++) {}
   }

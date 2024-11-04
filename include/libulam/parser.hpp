@@ -17,13 +17,14 @@ public:
     ast::Ptr<ast::Module> parse_string(const std::string& text);
 
 private:
-    template <typename... Ts> void consume(Ts... types);
+    template <typename... Ts> Token consume(Ts... types);
     bool eof();
 
     bool match(tok::Type type);
     bool expect(tok::Type type);
     void unexpected();
     void diag(std::string text);
+    void diag(const Token& token, std::string text);
     template <typename... Ts> void panic(Ts... stop);
 
     ast::Ptr<ast::Module> parse_module();

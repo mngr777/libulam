@@ -31,12 +31,14 @@ ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
     return parse_module();
 }
 
-template <typename... Ts> void Parser::consume(Ts... types) {
+template <typename... Ts> Token Parser::consume(Ts... types) {
+    auto token = _tok;
     if constexpr (sizeof...(types) == 0) {
         _pp >> _tok;
     } else if (_tok.in(types...)) {
         _pp >> _tok;
     }
+    return token;
 }
 
 bool Parser::match(tok::Type type) {
@@ -67,7 +69,11 @@ void Parser::unexpected() {
 }
 
 void Parser::diag(std::string text) {
-    _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, text);
+    _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, std::move(text));
+}
+
+void Parser::diag(const Token& token, std::string text) {
+    _ctx.diag().emit(diag::Error, token.loc_id, token.size, std::move(text));
 }
 
 bool Parser::eof() { return _tok.is(tok::Eof); }
@@ -354,9 +360,9 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
         node->add(parse_param());
         // ,
         if (_tok.is(tok::Comma)) {
-            consume();
+            Token comma = consume();
             if (_tok.is(tok::ParenR))
-                diag("trailing comma in parameter list");
+                diag(comma, "trailing comma in parameter list");
         }
     }
     // )
@@ -522,9 +528,9 @@ ast::Ptr<ast::ArgList> Parser::parse_arg_list() {
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         args->add(parse_expr());
         if (_tok.is(tok::Comma)) {
-            consume();
+            Token comma = consume();
             if (_tok.is(tok::ParenR))
-                diag("trailing comma in argument list");
+                diag(comma, "trailing comma in argument list");
         }
     }
     expect(tok::ParenR);
