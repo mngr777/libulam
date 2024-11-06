@@ -17,7 +17,7 @@ public:
     ast::Ptr<ast::Module> parse_string(const std::string& text);
 
 private:
-    template <typename... Ts> Token consume(Ts... types);
+    template <typename... Ts> void consume(Ts... types);
     bool eof();
 
     bool match(tok::Type type);

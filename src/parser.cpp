@@ -31,14 +31,12 @@ ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
     return parse_module();
 }
 
-template <typename... Ts> Token Parser::consume(Ts... types) {
-    auto token = _tok;
+template <typename... Ts> void Parser::consume(Ts... types) {
     if constexpr (sizeof...(types) == 0) {
         _pp >> _tok;
     } else if (_tok.in(types...)) {
         _pp >> _tok;
     }
-    return token;
 }
 
 bool Parser::match(tok::Type type) {
@@ -350,7 +348,7 @@ ast::Ptr<ast::While> Parser::parse_while() {
     return tree<ast::While>(std::move(cond), parse_stmt());
 }
 
-ast::Ptr<ast::ParamList> Parser::parse_param_list() {
+ast::Ptr<ast::ParamList> Parser::parse_param_list () {
     assert(_tok.is(tok::ParenL));
     // (
     consume();
@@ -360,7 +358,7 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
         node->add(parse_param());
         // ,
         if (_tok.is(tok::Comma)) {
-            Token comma = consume();
+            auto comma = _tok;
             if (_tok.is(tok::ParenR))
                 diag(comma, "trailing comma in parameter list");
         }
@@ -528,7 +526,7 @@ ast::Ptr<ast::ArgList> Parser::parse_arg_list() {
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         args->add(parse_expr());
         if (_tok.is(tok::Comma)) {
-            Token comma = consume();
+            auto comma = _tok;
             if (_tok.is(tok::ParenR))
                 diag(comma, "trailing comma in argument list");
         }
