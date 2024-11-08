@@ -5,9 +5,12 @@
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/visitor.hpp>
-#include <libulam/lang/class.hpp>
 #include <string>
 #include <utility>
+
+namespace ulam {
+class Class;
+}
 
 namespace ulam::ast {
 
@@ -27,18 +30,19 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
 class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
     ULAM_AST_NODE
 public:
-    ClassDef(Class::Kind kind, std::string&& name, Ptr<ParamList>&& params):
+    ClassDef(std::string&& name, Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},
         Named{std::move(name)},
-        _kind{kind} {}
+        _klass{} {}
 
-    const Class::Kind kind() const { return _kind; }
+    Ref<Class> klass() { return _klass; }
+    void set_klass(Ref<Class> klass) { _klass = klass; }
 
     ULAM_AST_TUPLE_PROP(params, 0)
     ULAM_AST_TUPLE_PROP(body, 1)
 
 private:
-    Class::Kind _kind;
+    Ref<Class> _klass;
 };
 
 class TypeDef : public Tuple<Stmt, TypeName> {

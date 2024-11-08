@@ -116,7 +116,10 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     if (_tok.is(tok::ParenL))
         params = parse_param_list();
     // TODO: ancestors
-    return tree<ast::ClassDef>(kind, std::move(name), std::move(params));
+    auto node = tree<ast::ClassDef>(std::move(name), std::move(params));
+    auto klass = ulam::make<Class>(ast::ref(node), kind);
+    // TODO: add to node and scope
+    return node;
 }
 
 void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {

@@ -21,15 +21,17 @@ AST_SOURCE_FILES = \
 	src/ast/traversal.cpp
 
 LANG_HEADER_FILES = \
-	include/libulam/lang/class.hpp \
 	include/libulam/lang/ops.hpp \
 	include/libulam/lang/ops.inc.hpp \
+	include/libulam/lang/params.hpp \
+	include/libulam/lang/scope.hpp \
 	include/libulam/lang/symbol.hpp \
-	include/libulam/lang/type_ops.hpp
+	include/libulam/lang/type.hpp \
+	include/libulam/lang/type_ops.hpp \
+	include/libulam/lang/var.hpp
 
 LANG_SOURCE_FILES = \
-	src/lang/ops.cpp \
-	src/lang/symbol.cpp
+	src/lang/ops.cpp
 
 # Library
 HEADER_FILES = \
