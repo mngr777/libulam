@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/module.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/lang/ops.hpp>
 #include <libulam/preproc.hpp>
@@ -11,12 +12,19 @@ class Context;
 
 class Parser {
 public:
-    explicit Parser(Context& ctx): _ctx{ctx}, _pp{ctx} {}
+    explicit Parser(Context& ctx):
+        _ctx{ctx}, _pp{ctx}, _ast_ctx{ast::make<ast::Context>()} {}
 
     ast::Ptr<ast::Module> parse_file(const std::filesystem::path& path);
     ast::Ptr<ast::Module> parse_string(const std::string& text);
 
 private:
+    void start_module(ast::Ref<ast::Module> module);
+    void end_module();
+
+    void start_class(ast::Ref<ast::ClassDef> class_def);
+    void end_class();
+
     template <typename... Ts> void consume(Ts... types);
     bool eof();
 
@@ -71,6 +79,10 @@ private:
 
     Context& _ctx;
     Preproc _pp;
+
+    ast::Ptr<ast::Context> _ast_ctx; // TODO: move to ast root
+    ast::Ref<ast::Module> _module;
+    ast::Ref<ast::ClassDef> _class;
 
     Token _tok;
 };

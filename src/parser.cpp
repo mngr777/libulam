@@ -31,6 +31,30 @@ ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
     return parse_module();
 }
 
+void Parser::start_module(ast::Ref<ast::Module> module) {
+    assert(!_module);
+    _module = module;
+}
+
+void Parser::end_module() {
+    assert(_module);
+    _module = {};
+}
+
+void Parser::start_class(ast::Ref<ast::ClassDef> class_def) {
+    assert(_module);
+    assert(!_class);
+    auto type = ulam::make<Class>(class_def, class_def->kind());
+    // TODO: add to scope
+    // class_def->set_type(ast::ref(type));
+    _class = class_def;
+}
+
+void Parser::end_class() {
+    assert(_class);
+    _class = {};
+}
+
 template <typename... Ts> void Parser::consume(Ts... types) {
     if constexpr (sizeof...(types) == 0) {
         _pp >> _tok;
@@ -116,9 +140,9 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     if (_tok.is(tok::ParenL))
         params = parse_param_list();
     // TODO: ancestors
-    auto node = tree<ast::ClassDef>(std::move(name), std::move(params));
-    auto klass = ulam::make<Class>(ast::ref(node), kind);
-    // TODO: add to node and scope
+    assert(_module);
+    auto node = tree<ast::ClassDef>(_module, kind, std::move(name), std::move(params));
+    start_class(ast::ref(node));
     return node;
 }
 

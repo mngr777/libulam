@@ -14,6 +14,7 @@ public:
     template <typename T>
     Symbol(str_id_t name_id, Ptr<T>&& value):
         _name_id{name_id}, _value{std::move(value)} {}
+    ~Symbol();
 
     str_id_t name_id() const { return _name_id; }
 
@@ -28,11 +29,11 @@ private:
 
 class SymbolTable {
 public:
-    Ref<Symbol> get(str_id_t name_id);
+    Symbol* get(str_id_t name_id);
 
     template <typename T> void set(str_id_t name_id, Ptr<T>&& value) {
         assert(_table.count(name_id) == 0);
-        _table[name_id] = Symbol(std::move(value));
+        _table.emplace(name_id, Symbol(name_id, std::move(value)));
     }
 
     void unset(str_id_t name_id);

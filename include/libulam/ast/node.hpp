@@ -22,6 +22,15 @@ private:
         return replace<index>(std::move(repl));                                \
     }
 
+#define ULAM_AST_REF_ATTR(type, name)                                          \
+public:                                                                        \
+    Ref<type> name() { return _attr_##name; }                                  \
+    Ref<const type> name() const { return _attr_##name; }                      \
+    void set_##name(Ref<type> value) { _attr_##name = value; }                 \
+                                                                               \
+private:                                                                       \
+    Ref<type> _attr_##name{};
+
 namespace ulam::ast {
 
 class Node;
