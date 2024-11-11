@@ -23,7 +23,7 @@ std::ostream& PrinterBase::indent() {
 }
 
 bool Printer::visit(ulam::ast::ClassDef& node) {
-    indent() << "class `" << node.name() << "'";
+    indent() << "class `" << node.name_id() << "'";
     if (node.params())
         accept_me(node.params());
     _os << " {" << nl();

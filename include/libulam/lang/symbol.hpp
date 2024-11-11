@@ -1,13 +1,12 @@
 #pragma once
+#include <libulam/lang/fun.hpp>
+#include <libulam/lang/type.hpp>
+#include <libulam/lang/var.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
 
 namespace ulam {
-
-class Type;
-class Fun;
-class Var;
 
 class Symbol {
 public:
@@ -15,6 +14,9 @@ public:
     Symbol(str_id_t name_id, Ptr<T>&& value):
         _name_id{name_id}, _value{std::move(value)} {}
     ~Symbol();
+
+    Symbol(Symbol&& other) = default;
+    Symbol& operator=(Symbol&& other) = default;
 
     str_id_t name_id() const { return _name_id; }
 
@@ -31,9 +33,11 @@ class SymbolTable {
 public:
     Symbol* get(str_id_t name_id);
 
-    template <typename T> void set(str_id_t name_id, Ptr<T>&& value) {
+    template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         assert(_table.count(name_id) == 0);
-        _table.emplace(name_id, Symbol(name_id, std::move(value)));
+        auto [it, inserted] =
+            _table.emplace(name_id, Symbol{name_id, std::move(value)});
+        return inserted ? &it->second : nullptr;
     }
 
     void unset(str_id_t name_id);

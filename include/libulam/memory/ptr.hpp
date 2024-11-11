@@ -14,7 +14,7 @@ template <typename T, typename... Args> Ptr<T> make(Args&&... args) {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
-template <typename... Ns> using Variant = std::variant<Ptr<Ns>...>;
+template <typename... Ts> using Variant = std::variant<Ptr<Ts>...>;
 
 template <typename T, typename... Ts> bool is(const Variant<Ts...>& v) {
     return std::holds_alternative<Ptr<T>>(v);

@@ -44,9 +44,12 @@ void Parser::end_module() {
 void Parser::start_class(ast::Ref<ast::ClassDef> class_def) {
     assert(_module);
     assert(!_class);
-    auto type = ulam::make<Class>(class_def, class_def->kind());
-    // TODO: add to scope
-    // class_def->set_type(ast::ref(type));
+    // create class type
+    auto type = ast::make<Class>(class_def, class_def->kind());
+    class_def->set_type(ast::ref(type));
+    // store in global scope
+    _ast_ctx->global_scope()->set(class_def->name_id(), std::move(type));
+    // set current class (node)
     _class = class_def;
 }
 
@@ -102,6 +105,7 @@ bool Parser::eof() { return _tok.is(tok::Eof); }
 
 ast::Ptr<ast::Module> Parser::parse_module() {
     auto node = tree<ast::Module>();
+    start_module(ast::ref(node));
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
         case tok::Element:
@@ -122,6 +126,7 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
     auto node = parse_class_def_head();
     if (node)
         parse_class_def_body(ast::ref(node));
+    end_class();
     return node;
 }
 
@@ -131,9 +136,9 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     auto kind = _tok.class_kind();
     consume();
     // name
-    std::string name;
+    str_id_t name_id{};
     if (match(tok::TypeIdent))
-        name = tok_str();
+        name_id = tok_str_id();
     consume();
     // params
     ast::Ptr<ast::ParamList> params{};
@@ -141,7 +146,7 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
         params = parse_param_list();
     // TODO: ancestors
     assert(_module);
-    auto node = tree<ast::ClassDef>(_module, kind, std::move(name), std::move(params));
+    auto node = tree<ast::ClassDef>(_module, kind, name_id, std::move(params));
     start_class(ast::ref(node));
     return node;
 }
@@ -386,6 +391,7 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list () {
         // ,
         if (_tok.is(tok::Comma)) {
             auto comma = _tok;
+            consume();
             if (_tok.is(tok::ParenR))
                 diag(comma, "trailing comma in parameter list");
         }
@@ -554,6 +560,7 @@ ast::Ptr<ast::ArgList> Parser::parse_arg_list() {
         args->add(parse_expr());
         if (_tok.is(tok::Comma)) {
             auto comma = _tok;
+            consume();
             if (_tok.is(tok::ParenR))
                 diag(comma, "trailing comma in argument list");
         }
@@ -630,6 +637,11 @@ ast::Ptr<N> Parser::tree(Args&&... args) {
 std::string Parser::tok_str() {
     // assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
     return std::string(_ctx.sm().str_at(_tok.loc_id, _tok.size));
+}
+
+str_id_t Parser::tok_str_id() {
+    assert(_tok.in(tok::Ident, tok::TypeIdent));
+    return _ast_ctx->str_id(tok_str());
 }
 
 } // namespace ulam

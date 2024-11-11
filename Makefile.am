@@ -31,7 +31,9 @@ LANG_HEADER_FILES = \
 	include/libulam/lang/var.hpp
 
 LANG_SOURCE_FILES = \
-	src/lang/ops.cpp
+	src/lang/ops.cpp \
+	src/lang/symbol.cpp \
+	src/lang/type.cpp
 
 # Library
 HEADER_FILES = \
@@ -106,6 +108,7 @@ TEST_LEX_SOURCE_FILES = \
 	include/libulam/preproc.hpp \
 	include/libulam/src.hpp \
 	include/libulam/src_mngr.hpp \
+	include/libulam/str_pool.hpp \
 	include/libulam/token.hpp \
 	src/detail/string.hpp \
 	src/diag.cpp \
@@ -113,6 +116,7 @@ TEST_LEX_SOURCE_FILES = \
 	src/preproc.cpp \
 	src/src.cpp \
 	src/src_mngr.cpp \
+	src/str_pool.cpp \
 	src/token.cpp
 test_lex_basic_SOURCES = tests/lex/basic.cpp $(TEST_LEX_SOURCE_FILES)
 test_lex_basic_CXXFLAGS = $(TEST_CXXFLAGS)

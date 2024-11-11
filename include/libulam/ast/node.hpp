@@ -1,6 +1,8 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/src_loc.hpp>
+#include <libulam/str_pool.hpp>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -21,6 +23,15 @@ private:
     auto replace_##name(ElementT<index>&& repl) {                              \
         return replace<index>(std::move(repl));                                \
     }
+
+#define ULAM_AST_SIMPLE_ATTR(type, name)                                       \
+public:                                                                        \
+    type name() { return _attr_##name; }                                       \
+    type name() const { return _attr_##name; }                                 \
+    void set_##name(type value) { _attr_##name = value; }                      \
+                                                                               \
+private:                                                                       \
+    type _attr_##name{};
 
 #define ULAM_AST_REF_ATTR(type, name)                                          \
 public:                                                                        \
@@ -99,6 +110,8 @@ public:
 
     virtual Ref<Node> child(unsigned n) { return nullptr; }
     virtual const Ref<Node> child(unsigned n) const { return nullptr; }
+
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
 };
 
 // "Named" trait (TMP)
@@ -111,6 +124,17 @@ public:
 
 private:
     std::string _name;
+};
+
+// TODO: replace Named
+class Named_ {
+public:
+    Named_(str_id_t name_id): _name_id{name_id} {}
+
+    str_id_t name_id() const { return _name_id; }
+
+private:
+    str_id_t _name_id;
 };
 
 // Tuple

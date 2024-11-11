@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/str_pool.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/lang/ops.hpp>
 #include <libulam/preproc.hpp>
@@ -76,13 +77,14 @@ private:
 
     // TODO: string_view
     std::string tok_str();
+    str_id_t tok_str_id();
 
     Context& _ctx;
     Preproc _pp;
 
     ast::Ptr<ast::Context> _ast_ctx; // TODO: move to ast root
-    ast::Ref<ast::Module> _module;
-    ast::Ref<ast::ClassDef> _class;
+    ast::Ref<ast::Module> _module{};
+    ast::Ref<ast::ClassDef> _class{};
 
     Token _tok;
 };

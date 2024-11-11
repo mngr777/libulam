@@ -36,17 +36,17 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
     ULAM_AST_NODE
 };
 
-class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
+class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named_ {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
 public:
     ClassDef(
         Ref<Module> module,
         Class::Kind kind,
-        std::string&& name,
+        str_id_t name_id,
         Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},
-        Named{std::move(name)},
+        Named_{name_id},
         _kind{kind},
         _scope{&module->scope()} {}
 
