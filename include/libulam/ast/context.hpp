@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/diag.hpp>
 #include <libulam/lang/scope.hpp>
 #include <libulam/str_pool.hpp>
 
@@ -6,7 +7,9 @@ namespace ulam::ast {
 
 class Context {
 public:
-    Context(): _global_scope{nullptr}, _str_pool{} {}
+    Context(Diag& diag): _diag{diag}, _global_scope{nullptr}, _str_pool{} {}
+
+    Diag& diag() { return _diag; }
 
     Scope* global_scope() { return &_global_scope; }
 
@@ -16,6 +19,7 @@ public:
     }
 
 private:
+    Diag& _diag;
     Scope _global_scope;
     StrPool _str_pool;
 };

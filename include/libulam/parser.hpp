@@ -1,6 +1,5 @@
 #pragma once
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/str_pool.hpp"
+#include <libulam/str_pool.hpp>
 #include <libulam/ast.hpp>
 #include <libulam/lang/ops.hpp>
 #include <libulam/preproc.hpp>
@@ -13,8 +12,7 @@ class Context;
 
 class Parser {
 public:
-    explicit Parser(Context& ctx):
-        _ctx{ctx}, _pp{ctx}, _ast_ctx{ast::make<ast::Context>()} {}
+    explicit Parser(Context& ctx);
 
     ast::Ptr<ast::Module> parse_file(const std::filesystem::path& path);
     ast::Ptr<ast::Module> parse_string(const std::string& text);

@@ -1,12 +1,11 @@
-#include "libulam/ast/nodes/stmt.hpp"
-#include "libulam/diag.hpp"
-#include "src/parser/number.hpp"
-#include "src/parser/string.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/context.hpp>
+#include <libulam/diag.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/token.hpp>
+#include <src/parser/number.hpp>
+#include <src/parser/string.hpp>
 #include <string>
 
 #ifdef DEBUG_PARSER
@@ -18,6 +17,9 @@
 // FIXME: panic calls
 
 namespace ulam {
+
+Parser::Parser(Context& ctx):
+    _ctx{ctx}, _pp{ctx}, _ast_ctx{ast::make<ast::Context>(_ctx.diag())} {}
 
 ast::Ptr<ast::Module> Parser::parse_file(const std::filesystem::path& path) {
     _pp.main_file(path);
@@ -45,10 +47,9 @@ void Parser::start_class(ast::Ref<ast::ClassDef> class_def) {
     assert(_module);
     assert(!_class);
     // create class type
-    auto type = ast::make<Class>(class_def, class_def->kind());
-    class_def->set_type(ast::ref(type));
-    // store in global scope
-    _ast_ctx->global_scope()->set(class_def->name_id(), std::move(type));
+    // auto type = ast::make<Class>(class_def, class_def->kind());
+    // _module->scope()->set(class_def->name_id(), std::move(type));
+    // class_def->set_type(ast::ref(type));
     // set current class (node)
     _class = class_def;
 }
@@ -104,14 +105,15 @@ void Parser::diag(const Token& token, std::string text) {
 bool Parser::eof() { return _tok.is(tok::Eof); }
 
 ast::Ptr<ast::Module> Parser::parse_module() {
-    auto node = tree<ast::Module>();
+    auto node = tree<ast::Module>(ast::ref(_ast_ctx));
     start_module(ast::ref(node));
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
         case tok::Element:
         case tok::Quark:
         case tok::Transient:
-            node->add(parse_class_def());
+            // node->add(parse_class_def());
+            node->add_class_def(parse_class_def());
             break;
         default:
             unexpected();
@@ -183,7 +185,8 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
                 if (fun)
                     node->body()->add(std::move(fun));
             } else {
-                auto vars = parse_var_def_list_rest(std::move(type), std::move(name));
+                auto vars =
+                    parse_var_def_list_rest(std::move(type), std::move(name));
                 if (vars)
                     node->body()->add(std::move(vars));
             }
@@ -380,7 +383,7 @@ ast::Ptr<ast::While> Parser::parse_while() {
     return tree<ast::While>(std::move(cond), parse_stmt());
 }
 
-ast::Ptr<ast::ParamList> Parser::parse_param_list () {
+ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     assert(_tok.is(tok::ParenL));
     // (
     consume();

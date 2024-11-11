@@ -8,8 +8,6 @@ class ClassDef;
 
 namespace ulam {
 
-class Scope;
-
 using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
 
@@ -65,17 +63,13 @@ class Class : public BaseType {
 public:
     enum Kind { Element, Quark, Transient };
 
-    Class(Ref<ast::ClassDef> node, Kind kind);
+    Class(Ref<ast::ClassDef> node);
     ~Class();
-
-    Kind kind() const { return _kind; }
 
     Ref<ast::ClassDef> node() { return _node; }
 
 private:
     Ref<ast::ClassDef> _node;
-    Kind _kind;
-    Ptr<Scope> _scope;
 };
 
 class PrimType : public BaseType {};

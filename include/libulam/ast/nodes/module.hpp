@@ -4,9 +4,11 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/lang/scope.hpp>
 #include <libulam/lang/type.hpp>
+#include <libulam/str_pool.hpp>
 #include <string>
 #include <utility>
 
@@ -16,6 +18,8 @@ class Class;
 
 namespace ulam::ast {
 
+class Context;
+
 class TypeDef;
 class ClassDef;
 class FunDef;
@@ -24,11 +28,16 @@ class VarDefList;
 class Module : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
 public:
-    Module(): _scope{nullptr} {}
+    Module(Ref<Context> ctx): _ctx{ctx}, _scope{nullptr} {}
 
-    Scope& scope() { return _scope; }
+    void add_class_def(Ptr<ClassDef>&& class_def);
+
+    Ref<Context> ctx() { return _ctx; }
+
+    Scope* scope() { return &_scope; }
 
 private:
+    Ref<Context> _ctx;
     Scope _scope;
 };
 
@@ -48,7 +57,7 @@ public:
         Tuple{std::move(params), make<ClassDefBody>()},
         Named_{name_id},
         _kind{kind},
-        _scope{&module->scope()} {}
+        _scope{module->scope()} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
     ULAM_AST_TUPLE_PROP(body, 1)
