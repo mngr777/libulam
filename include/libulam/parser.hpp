@@ -23,7 +23,8 @@ public:
 private:
     void parse();
 
-    template <typename... Ts> void consume(Ts... types);
+    void consume();
+    void consume_if(tok::Type type);
     bool eof();
 
     bool match(tok::Type type);

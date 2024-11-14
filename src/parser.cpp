@@ -39,12 +39,11 @@ void Parser::parse() {
     _ast->add(parse_module());
 }
 
-template <typename... Ts> void Parser::consume(Ts... types) {
-    if constexpr (sizeof...(types) == 0) {
-        _pp >> _tok;
-    } else if (_tok.in(types...)) {
-        _pp >> _tok;
-    }
+void Parser::consume() { _pp >> _tok; }
+
+void Parser::consume_if(tok::Type type) {
+    if (_tok.is(type))
+        consume();
 }
 
 bool Parser::match(tok::Type type) {
@@ -96,7 +95,7 @@ ast::Ptr<ast::Module> Parser::parse_module() {
         default:
             unexpected();
             panic(tok::Semicol);
-            consume(tok::Semicol);
+            consume_if(tok::Semicol);
         }
     }
     return node;
@@ -150,13 +149,13 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
             auto type = parse_type_name();
             if (!type) {
                 panic(tok::Semicol, tok::BraceL, tok::BraceR);
-                consume(tok::Semicol);
+                consume_if(tok::Semicol);
                 break;
             }
             // name
             if (!match(tok::Ident)) {
                 panic(tok::Semicol, tok::BraceL, tok::BraceR);
-                consume(tok::Semicol);
+                consume_if(tok::Semicol);
                 break;
             }
             auto name = tok_str();
@@ -179,7 +178,7 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
     }
     if (!expect(tok::BraceR)) {
         panic(tok::BraceL, tok::BraceR);
-        consume(tok::BraceR);
+        consume_if(tok::BraceR);
     }
 }
 
@@ -225,13 +224,13 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
         // if next is ident, pretend there is a comma
         if (!expect(tok::Comma) && !_tok.is(tok::Ident)) {
             panic(tok::Semicol);
-            consume(tok::Semicol);
+            consume_if(tok::Semicol);
             break;
         }
         // next ident
         if (!match(tok::Ident)) {
             panic(tok::Semicol);
-            consume(tok::Semicol);
+            consume_if(tok::Semicol);
             break;
         }
         name = tok_str();
@@ -253,7 +252,7 @@ Parser::parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name) {
     auto block = parse_block();
     if (!block) {
         panic(tok::BraceL, tok::BraceR, tok::Semicol);
-        consume(tok::Semicol);
+        consume_if(tok::Semicol);
         return {};
     }
     return tree<ast::FunDef>(
@@ -317,7 +316,7 @@ ast::Ptr<ast::If> Parser::parse_if() {
     auto cond = parse_expr();
     if (!expect(tok::ParenR)) {
         panic(tok::ParenR, tok::BraceL);
-        consume(tok::ParenR);
+        consume_if(tok::ParenR);
     }
     // then
     auto if_branch = parse_stmt();
