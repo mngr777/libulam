@@ -34,10 +34,21 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/symbol.cpp \
 	src/semantic/type.cpp
 
+SEMA_HEADER_FILES = \
+	include/libulam/sema.hpp \
+	include/libulam/sema/type_init.hpp \
+	include/libulam/sema/visitor.hpp
+
+SEMA_SOURCE_FILES = \
+	src/sema.cpp \
+	src/sema/type_init.cpp \
+	src/sema/visitor.cpp
+
 # Library
 HEADER_FILES = \
 	$(AST_HEADER_FILES) \
 	$(SEMANTIC_HEADER_FILES) \
+	$(SEMA_HEADER_FILES) \
 	include/libulam/context.hpp \
 	include/libulam/diag.hpp \
 	include/libulam/lex.hpp \
@@ -55,6 +66,7 @@ SOURCE_FILES = \
 	$(HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
 	$(SEMANTIC_SOURCE_FILES) \
+	$(SEMA_SOURCE_FILES) \
 	src/debug.hpp \
 	src/detail/string.hpp \
 	src/diag.cpp \
@@ -82,7 +94,8 @@ libulam_CXXFLAGS = $(AM_CXXFLAGS) # -O3
 TESTS = \
 	test_memory_notepad1 \
 	test_lex_basic \
-	test_parser_expr
+	test_parser_expr \
+	test_sema_basic
 check_PROGRAMS = $(TESTS)
 
 TEST_LIBS = libulam.la
@@ -93,9 +106,12 @@ test_memory_notepad1_LDADD = $(TEST_LIBS)
 test_lex_basic_SOURCES = tests/lex/basic.cpp
 test_lex_basic_LDADD = $(TEST_LIBS)
 
-TEST_PARSER_SOURCE_FILES = \
+TEST_AST_SOURCE_FILES = \
 	tests/ast/print.hpp \
 	tests/ast/print.cpp
 
-test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_PARSER_SOURCE_FILES)
+test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_AST_SOURCE_FILES)
 test_parser_expr_LDADD = $(TEST_LIBS)
+
+test_sema_basic_SOURCES = tests/sema/basic.cpp $(TEST_AST_SOURCE_FILES)
+test_sema_basic_LDADD = $(TEST_LIBS)
