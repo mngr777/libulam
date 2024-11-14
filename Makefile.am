@@ -40,6 +40,7 @@ HEADER_FILES = \
 	$(SEMANTIC_HEADER_FILES) \
 	include/libulam/context.hpp \
 	include/libulam/diag.hpp \
+	include/libulam/lex.hpp \
 	include/libulam/memory/buf.hpp \
 	include/libulam/memory/notepad.hpp \
 	include/libulam/parser.hpp \
@@ -57,6 +58,7 @@ SOURCE_FILES = \
 	src/debug.hpp \
 	src/detail/string.hpp \
 	src/diag.cpp \
+	src/lex.cpp \
 	src/memory/notepad.cpp \
 	src/memory/buf.cpp \
 	src/parser.cpp \
@@ -79,64 +81,21 @@ libulam_CXXFLAGS = $(AM_CXXFLAGS) # -O3
 
 TESTS = \
 	test_memory_notepad1 \
-	test_parser_expr \
-	test_lex_basic
+	test_lex_basic \
+	test_parser_expr
 check_PROGRAMS = $(TESTS)
 
-# NOTE: setting CXXFLAGS for test additionally has side effect of
-# building separate object files for tests, see
-# https://www.gnu.org/software/automake/manual/html_node/Objects-created-both-with-libtool-and-without.html
+TEST_LIBS = libulam.la
 
-# Memory tests
-TEST_MEMORY_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_NOTEPAD
-TEST_MEMORY_SOURCE_FILES = \
-	src/debug.hpp \
-	libulam/include/diag.hpp \
-	libulam/include/memory/notepad.hpp \
-	src/memory/notepad.cpp
+test_memory_notepad1_SOURCES = tests/memory/notepad1.cpp
+test_memory_notepad1_LDADD = $(TEST_LIBS)
 
-test_memory_notepad1_SOURCES = tests/memory/notepad1.cpp $(TEST_MEMORY_SOURCE_FILES)
-test_memory_notepad1_CXXFLAGS = $(TEST_MEMORY_CXXFLAGS)
+test_lex_basic_SOURCES = tests/lex/basic.cpp
+test_lex_basic_LDADD = $(TEST_LIBS)
 
-# TODO: source tests
-
-TEST_LEX_SOURCE_FILES = \
-	$(TEST_MEMORY_SOURCE_FILES) \
-	include/libulam/context.hpp \
-	include/libulam/lex.hpp \
-	include/libulam/preproc.hpp \
-	include/libulam/src.hpp \
-	include/libulam/src_mngr.hpp \
-	include/libulam/str_pool.hpp \
-	include/libulam/token.hpp \
-	src/detail/string.hpp \
-	src/diag.cpp \
-	src/lex.cpp \
-	src/preproc.cpp \
-	src/src.cpp \
-	src/src_mngr.cpp \
-	src/str_pool.cpp \
-	src/token.cpp
-test_lex_basic_SOURCES = tests/lex/basic.cpp $(TEST_LEX_SOURCE_FILES)
-test_lex_basic_CXXFLAGS = $(TEST_CXXFLAGS)
-
-
-# Parser tests
 TEST_PARSER_SOURCE_FILES = \
-	$(TEST_LEX_SOURCE_FILES) \
-	$(AST_HEADER_FILES) \
-	$(AST_SOURCE_FILES) \
-	$(SEMANTIC_HEADER_FILES) \
-	$(SEMANTIC_SOURCE_FILES) \
-	$(AST_TEST_SOURCE_FILES) \
-	include/libulam/parser.hpp \
-	src/parser.cpp \
-	src/parser/number.hpp \
-	src/parser/number.cpp \
-	src/parser/string.hpp \
-	src/parser/string.cpp \
 	tests/ast/print.hpp \
 	tests/ast/print.cpp
 
 test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_PARSER_SOURCE_FILES)
-test_parser_expr_CXXFLAGS = $(TEST_CXXFLAGS) -D DEBUG_PARSER
+test_parser_expr_LDADD = $(TEST_LIBS)
