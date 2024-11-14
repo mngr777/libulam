@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/lang/symbol.hpp>
+#include <libulam/semantic/symbol.hpp>
 #include <libulam/str_pool.hpp>
 
 namespace ulam {

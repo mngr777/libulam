@@ -1,7 +1,7 @@
 #pragma once
-#include <libulam/lang/fun.hpp>
-#include <libulam/lang/type.hpp>
-#include <libulam/lang/var.hpp>
+#include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/var.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>

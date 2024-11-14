@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/str_pool.hpp>
 #include <libulam/ast.hpp>
-#include <libulam/lang/ops.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/token.hpp>
 #include <string>

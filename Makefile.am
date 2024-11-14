@@ -19,25 +19,25 @@ AST_SOURCE_FILES = \
 	src/ast/node.cpp \
 	src/ast/traversal.cpp
 
-LANG_HEADER_FILES = \
-	include/libulam/lang/ops.hpp \
-	include/libulam/lang/ops.inc.hpp \
-	include/libulam/lang/params.hpp \
-	include/libulam/lang/scope.hpp \
-	include/libulam/lang/symbol.hpp \
-	include/libulam/lang/type.hpp \
-	include/libulam/lang/type_ops.hpp \
-	include/libulam/lang/var.hpp
+SEMANTIC_HEADER_FILES = \
+	include/libulam/semantic/ops.hpp \
+	include/libulam/semantic/ops.inc.hpp \
+	include/libulam/semantic/params.hpp \
+	include/libulam/semantic/scope.hpp \
+	include/libulam/semantic/symbol.hpp \
+	include/libulam/semantic/type.hpp \
+	include/libulam/semantic/type_ops.hpp \
+	include/libulam/semantic/var.hpp
 
-LANG_SOURCE_FILES = \
-	src/lang/ops.cpp \
-	src/lang/symbol.cpp \
-	src/lang/type.cpp
+SEMANTIC_SOURCE_FILES = \
+	src/semantic/ops.cpp \
+	src/semantic/symbol.cpp \
+	src/semantic/type.cpp
 
 # Library
 HEADER_FILES = \
 	$(AST_HEADER_FILES) \
-	$(LANG_HEADER_FILES) \
+	$(SEMANTIC_HEADER_FILES) \
 	include/libulam/context.hpp \
 	include/libulam/diag.hpp \
 	include/libulam/memory/buf.hpp \
@@ -53,7 +53,7 @@ HEADER_FILES = \
 SOURCE_FILES = \
 	$(HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
-	$(LANG_SOURCE_FILES) \
+	$(SEMANTIC_SOURCE_FILES) \
 	src/debug.hpp \
 	src/detail/string.hpp \
 	src/diag.cpp \
@@ -126,8 +126,8 @@ TEST_PARSER_SOURCE_FILES = \
 	$(TEST_LEX_SOURCE_FILES) \
 	$(AST_HEADER_FILES) \
 	$(AST_SOURCE_FILES) \
-	$(LANG_HEADER_FILES) \
-	$(LANG_SOURCE_FILES) \
+	$(SEMANTIC_HEADER_FILES) \
+	$(SEMANTIC_SOURCE_FILES) \
 	$(AST_TEST_SOURCE_FILES) \
 	include/libulam/parser.hpp \
 	src/parser.cpp \

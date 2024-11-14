@@ -2,10 +2,10 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
-#include <libulam/lang/number.hpp>
-#include <libulam/lang/ops.hpp>
-#include <libulam/lang/string.hpp>
-#include <libulam/lang/type_ops.hpp>
+#include <libulam/semantic/number.hpp>
+#include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/string.hpp>
+#include <libulam/semantic/type_ops.hpp>
 
 namespace ulam::ast {
 

@@ -1,4 +1,4 @@
-#include <libulam/lang/symbol.hpp>
+#include <libulam/semantic/symbol.hpp>
 
 namespace ulam {
 

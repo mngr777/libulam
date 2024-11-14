@@ -1,7 +1,7 @@
 #pragma once
-#include <libulam/lang/type.hpp>
-#include <libulam/lang/ops.hpp>
-#include <libulam/lang/type_ops.hpp>
+#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>
 #include <string_view>
 

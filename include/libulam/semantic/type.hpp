@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/lang/ops.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/memory/ptr.hpp>
 
 namespace ulam::ast {

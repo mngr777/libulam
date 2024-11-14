@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/lang/string.hpp>
+#include <libulam/semantic/string.hpp>
 #include <string_view>
 
 namespace ulam::detail {

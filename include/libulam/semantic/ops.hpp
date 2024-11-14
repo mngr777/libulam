@@ -5,7 +5,7 @@ namespace ulam {
 
 enum class Op {
 #define OP(str, op) op,
-#include <libulam/lang/ops.inc.hpp>
+#include <libulam/semantic/ops.inc.hpp>
 #undef OP
 };
 

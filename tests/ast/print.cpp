@@ -1,6 +1,6 @@
 #include "print.hpp"
 #include "libulam/ast/traversal.hpp"
-#include "libulam/lang/ops.hpp"
+#include "libulam/semantic/ops.hpp"
 #include <string>
 
 namespace test::ast {

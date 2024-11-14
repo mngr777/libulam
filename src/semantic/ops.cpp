@@ -1,4 +1,4 @@
-#include "libulam/lang/ops.hpp"
+#include "libulam/semantic/ops.hpp"
 #include <cassert>
 
 namespace ulam::ops {
@@ -6,7 +6,7 @@ namespace ulam::ops {
 const char* str(Op op) {
 #define OP(str, op) case Op::op: return str;
     switch (op) {
-#include <libulam/lang/ops.inc.hpp>
+#include <libulam/semantic/ops.inc.hpp>
     default:
         assert(false);
     }

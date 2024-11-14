@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/lang/number.hpp>
+#include <libulam/semantic/number.hpp>
 #include <string_view>
 #include <utility>
 

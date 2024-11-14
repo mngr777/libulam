@@ -1,6 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/lang/type.hpp>
+#include <libulam/semantic/type.hpp>
 
 namespace ulam {
 

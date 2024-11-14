@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/lang/type.hpp>
+#include <libulam/semantic/type.hpp>
 #include <libulam/memory/ptr.hpp>
 
 namespace ulam {
