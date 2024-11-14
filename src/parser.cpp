@@ -83,8 +83,8 @@ void Parser::diag(const Token& token, std::string text) {
 
 bool Parser::eof() { return _tok.is(tok::Eof); }
 
-ast::Ptr<ast::Module> Parser::parse_module() {
-    auto node = tree<ast::Module>();
+ast::Ptr<ast::ModuleDef> Parser::parse_module() {
+    auto node = tree<ast::ModuleDef>();
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
         case tok::Element:

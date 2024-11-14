@@ -4,7 +4,7 @@
 #endif
 
 NODE("Root", Root)
-NODE("Module", Module)
+NODE("ModuleDef", ModuleDef)
 NODE("ClassDef", ClassDef)
 NODE("ClassDefBody", ClassDefBody)
 NODE("TypeDef", TypeDef)

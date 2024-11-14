@@ -31,7 +31,7 @@ class Visitor : public _Visitor {
 public:
     explicit Visitor(Sema& sema): _Visitor{sema} {}
 
-    virtual bool visit(ast::Module& module);
+    virtual bool visit(ast::ModuleDef& module);
     virtual bool visit(ast::ClassDefBody& class_body);
     // TODO: blocks, loops, ...
 

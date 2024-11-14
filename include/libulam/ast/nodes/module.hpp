@@ -19,13 +19,13 @@ class Class;
 namespace ulam::ast {
 
 class Context;
-class Module;
+class ModuleDef;
 class TypeDef;
 class ClassDef;
 class FunDef;
 class VarDefList;
 
-class Root : public List<Node, Module> {
+class Root : public List<Node, ModuleDef> {
     ULAM_AST_NODE
 public:
     Root(): _ctx{} {}
@@ -37,7 +37,7 @@ private:
     Context _ctx;
 };
 
-class Module : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
+class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
 };
 

@@ -34,7 +34,7 @@ private:
     void diag(const Token& token, std::string text);
     template <typename... Ts> void panic(Ts... stop);
 
-    ast::Ptr<ast::Module> parse_module();
+    ast::Ptr<ast::ModuleDef> parse_module();
     ast::Ptr<ast::ClassDef> parse_class_def();
     ast::Ptr<ast::ClassDef> parse_class_def_head();
     void parse_class_def_body(ast::Ref<ast::ClassDef> node);
