@@ -1,3 +1,4 @@
+#include "libulam/src_loc.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/context.hpp>
@@ -19,7 +20,7 @@
 namespace ulam {
 
 Parser::Parser(Context& ctx):
-    _ctx{ctx}, _pp{ctx}, _ast_ctx{ast::make<ast::Context>(_ctx.diag())} {}
+    _ctx{ctx}, _pp{ctx}, _ast_ctx{ast::make<ast::Context>()} {}
 
 ast::Ptr<ast::Module> Parser::parse_file(const std::filesystem::path& path) {
     _pp.main_file(path);
@@ -31,32 +32,6 @@ ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
     _pp.main_string(text);
     _pp >> _tok;
     return parse_module();
-}
-
-void Parser::start_module(ast::Ref<ast::Module> module) {
-    assert(!_module);
-    _module = module;
-}
-
-void Parser::end_module() {
-    assert(_module);
-    _module = {};
-}
-
-void Parser::start_class(ast::Ref<ast::ClassDef> class_def) {
-    assert(_module);
-    assert(!_class);
-    // create class type
-    // auto type = ast::make<Class>(class_def, class_def->kind());
-    // _module->scope()->set(class_def->name_id(), std::move(type));
-    // class_def->set_type(ast::ref(type));
-    // set current class (node)
-    _class = class_def;
-}
-
-void Parser::end_class() {
-    assert(_class);
-    _class = {};
 }
 
 template <typename... Ts> void Parser::consume(Ts... types) {
@@ -105,15 +80,13 @@ void Parser::diag(const Token& token, std::string text) {
 bool Parser::eof() { return _tok.is(tok::Eof); }
 
 ast::Ptr<ast::Module> Parser::parse_module() {
-    auto node = tree<ast::Module>(ast::ref(_ast_ctx));
-    start_module(ast::ref(node));
+    auto node = tree<ast::Module>();
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
         case tok::Element:
         case tok::Quark:
         case tok::Transient:
-            // node->add(parse_class_def());
-            node->add_class_def(parse_class_def());
+            node->add(parse_class_def());
             break;
         default:
             unexpected();
@@ -128,7 +101,6 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
     auto node = parse_class_def_head();
     if (node)
         parse_class_def_body(ast::ref(node));
-    end_class();
     return node;
 }
 
@@ -136,20 +108,24 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     assert(_tok.in(tok::Element, tok::Quark, tok::Transient));
     // element/quark/transient TODO: union
     auto kind = _tok.class_kind();
+    auto loc_id = _tok.loc_id;
     consume();
     // name
     str_id_t name_id{};
-    if (match(tok::TypeIdent))
+    auto name_loc_id = NoLocId;
+    if (match(tok::TypeIdent)) {
         name_id = tok_str_id();
+        name_loc_id = _tok.loc_id;
+    }
     consume();
     // params
     ast::Ptr<ast::ParamList> params{};
     if (_tok.is(tok::ParenL))
         params = parse_param_list();
     // TODO: ancestors
-    assert(_module);
-    auto node = tree<ast::ClassDef>(_module, kind, name_id, std::move(params));
-    start_class(ast::ref(node));
+    auto node = tree<ast::ClassDef>(kind, name_id, std::move(params));
+    node->set_loc_id(loc_id);
+    node->set_name_loc_id(name_loc_id);
     return node;
 }
 

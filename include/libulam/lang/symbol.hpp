@@ -31,7 +31,10 @@ private:
 
 class SymbolTable {
 public:
-    Symbol* get(str_id_t name_id);
+    Symbol* get(str_id_t name_id) {
+        auto it = _table.find(name_id);
+        return (it != _table.end()) ? &it->second : nullptr;
+    }
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         assert(_table.count(name_id) == 0);

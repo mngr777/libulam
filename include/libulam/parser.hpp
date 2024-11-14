@@ -18,12 +18,6 @@ public:
     ast::Ptr<ast::Module> parse_string(const std::string& text);
 
 private:
-    void start_module(ast::Ref<ast::Module> module);
-    void end_module();
-
-    void start_class(ast::Ref<ast::ClassDef> class_def);
-    void end_class();
-
     template <typename... Ts> void consume(Ts... types);
     bool eof();
 
@@ -73,7 +67,7 @@ private:
 
     template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args);
 
-    // TODO: string_view
+    // TODO: return string_view
     std::string tok_str();
     str_id_t tok_str_id();
 
@@ -81,8 +75,6 @@ private:
     Preproc _pp;
 
     ast::Ptr<ast::Context> _ast_ctx; // TODO: move to ast root
-    ast::Ref<ast::Module> _module{};
-    ast::Ref<ast::ClassDef> _class{};
 
     Token _tok;
 };

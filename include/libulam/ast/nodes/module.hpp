@@ -6,7 +6,6 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/visitor.hpp>
-#include <libulam/lang/scope.hpp>
 #include <libulam/lang/type.hpp>
 #include <libulam/str_pool.hpp>
 #include <string>
@@ -27,18 +26,6 @@ class VarDefList;
 
 class Module : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
-public:
-    Module(Ref<Context> ctx): _ctx{ctx}, _scope{nullptr} {}
-
-    void add_class_def(Ptr<ClassDef>&& class_def);
-
-    Ref<Context> ctx() { return _ctx; }
-
-    Scope* scope() { return &_scope; }
-
-private:
-    Ref<Context> _ctx;
-    Scope _scope;
 };
 
 class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
@@ -48,16 +35,13 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
 class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named_ {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, name_loc_id)
 public:
-    ClassDef(
-        Ref<Module> module,
-        Class::Kind kind,
-        str_id_t name_id,
-        Ptr<ParamList>&& params):
+    ClassDef(Class::Kind kind, str_id_t name_id, Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},
         Named_{name_id},
-        _kind{kind},
-        _scope{module->scope()} {}
+        _kind{kind} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
     ULAM_AST_TUPLE_PROP(body, 1)
@@ -66,7 +50,6 @@ public:
 
 private:
     Class::Kind _kind;
-    Scope _scope;
 };
 
 class TypeDef : public Tuple<Stmt, TypeName> {
