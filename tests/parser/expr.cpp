@@ -26,7 +26,8 @@ int main() {
     ulam::Parser parser{ctx};
 
     std::string text{Program};
-    auto ast = parser.parse_string(text);
+    parser.parse_string(text);
+    auto ast = parser.move_ast();
 
     std::cout << text << "\n";
     test::ast::Printer p{std::cout};

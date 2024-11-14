@@ -3,6 +3,7 @@
 #    error "NODE() macro is not defined"
 #endif
 
+NODE("Root", Root)
 NODE("Module", Module)
 NODE("ClassDef", ClassDef)
 NODE("ClassDefBody", ClassDefBody)

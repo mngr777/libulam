@@ -12,12 +12,17 @@ class Context;
 
 class Parser {
 public:
-    explicit Parser(Context& ctx);
+    explicit Parser(Context& ctx):
+        _ctx{ctx}, _pp{ctx}, _ast{ast::make<ast::Root>()} {}
 
-    ast::Ptr<ast::Module> parse_file(const std::filesystem::path& path);
-    ast::Ptr<ast::Module> parse_string(const std::string& text);
+    void parse_file(const std::filesystem::path& path);
+    void parse_string(const std::string& text);
+
+    ast::Ptr<ast::Root> move_ast();
 
 private:
+    void parse();
+
     template <typename... Ts> void consume(Ts... types);
     bool eof();
 
@@ -74,7 +79,7 @@ private:
     Context& _ctx;
     Preproc _pp;
 
-    ast::Ptr<ast::Context> _ast_ctx; // TODO: move to ast root
+    ast::Ptr<ast::Root> _ast;
 
     Token _tok;
 };

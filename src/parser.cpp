@@ -1,9 +1,8 @@
-#include "libulam/src_loc.hpp"
 #include <cassert>
-#include <libulam/ast/nodes/expr.hpp>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/parser.hpp>
+#include <libulam/src_loc.hpp>
 #include <libulam/token.hpp>
 #include <src/parser/number.hpp>
 #include <src/parser/string.hpp>
@@ -19,19 +18,25 @@
 
 namespace ulam {
 
-Parser::Parser(Context& ctx):
-    _ctx{ctx}, _pp{ctx}, _ast_ctx{ast::make<ast::Context>()} {}
-
-ast::Ptr<ast::Module> Parser::parse_file(const std::filesystem::path& path) {
+void Parser::parse_file(const std::filesystem::path& path) {
     _pp.main_file(path);
-    _pp >> _tok;
-    return parse_module();
+    parse();
 }
 
-ast::Ptr<ast::Module> Parser::parse_string(const std::string& text) {
+void Parser::parse_string(const std::string& text) {
     _pp.main_string(text);
+    parse();
+}
+
+ast::Ptr<ast::Root> Parser::move_ast() {
+    ast::Ptr<ast::Root> ast;
+    std::swap(ast, _ast);
+    return ast;
+}
+
+void Parser::parse() {
     _pp >> _tok;
-    return parse_module();
+    _ast->add(parse_module());
 }
 
 template <typename... Ts> void Parser::consume(Ts... types) {
@@ -620,7 +625,7 @@ std::string Parser::tok_str() {
 
 str_id_t Parser::tok_str_id() {
     assert(_tok.in(tok::Ident, tok::TypeIdent));
-    return _ast_ctx->str_id(tok_str());
+    return _ast->ctx().str_id(tok_str());
 }
 
 } // namespace ulam

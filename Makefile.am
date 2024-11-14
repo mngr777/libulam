@@ -17,8 +17,6 @@ AST_HEADER_FILES = \
 
 AST_SOURCE_FILES = \
 	src/ast/node.cpp \
-	src/ast/nodes/expr.cpp \
-	src/ast/nodes/module.cpp \
 	src/ast/traversal.cpp
 
 LANG_HEADER_FILES = \
