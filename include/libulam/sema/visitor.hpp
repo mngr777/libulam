@@ -14,13 +14,13 @@ public:
 
 #define NODE(str, cls)                                                         \
 public:                                                                        \
-    virtual bool visit(ast::cls& node) override {                              \
+    virtual bool visit(ast::Ref<ast::cls> node) override {                     \
         do_visit(node);                                                        \
         return true;                                                           \
     }                                                                          \
                                                                                \
 protected:                                                                     \
-    virtual bool do_visit(ast::cls& node) { return true; }
+    virtual bool do_visit(ast::Ref<ast::cls> node) { return true; }
 #include <libulam/ast/nodes.inc.hpp>
 #undef NODE
 
@@ -31,8 +31,8 @@ class Visitor : public _Visitor {
 public:
     explicit Visitor(Sema& sema): _Visitor{sema} {}
 
-    virtual bool visit(ast::ModuleDef& module);
-    virtual bool visit(ast::ClassDefBody& class_body);
+    virtual bool visit(ast::Ref<ast::ModuleDef> module);
+    virtual bool visit(ast::Ref<ast::ClassDefBody> class_body);
     // TODO: blocks, loops, ...
 
 protected:

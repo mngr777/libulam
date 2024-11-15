@@ -1,9 +1,9 @@
 #pragma once
 #include <cassert>
+#include <libulam/ast/ptr.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
-#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -12,8 +12,7 @@
 
 #define ULAM_AST_NODE                                                          \
 public:                                                                        \
-    virtual bool accept(Visitor& v) override { return v.visit(*this); }        \
-    virtual bool accept(Visitor& v) const override { return v.visit(*this); }  \
+    virtual bool accept(Visitor& v) override { return v.visit(this); }         \
                                                                                \
 private:
 
@@ -50,18 +49,6 @@ class Node;
 // - pass AST context to `make`
 // - type constraints
 // - child iterators
-
-// Owning pointer and nullable reference, aka (non-owning) pointer
-
-template <typename N> using Ptr = std::unique_ptr<N>; // owning pointer
-template <typename N> using Ref = N*;                 // nullable reference
-
-template <typename N> Ref<N> ref(Ptr<N>& ptr) { return ptr.get(); }
-template <typename N> const Ref<N> ref(const Ptr<N>& ptr) { return ptr.get(); }
-
-template <typename N, typename... Args> Ptr<N> make(Args&&... args) {
-    return std::make_unique<N>(std::forward<Args>(args)...);
-}
 
 // Variant
 
@@ -104,7 +91,6 @@ public:
     virtual ~Node();
 
     virtual bool accept(Visitor& visitor);
-    virtual bool accept(Visitor& visitor) const;
 
     virtual unsigned child_num() const { return 0; }
 

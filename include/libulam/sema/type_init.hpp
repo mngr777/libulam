@@ -8,8 +8,8 @@ class TypeInit : public Visitor {
 public:
     explicit TypeInit(Sema& sema): Visitor{sema} {}
 
-    bool do_visit(ast::ModuleDef& module) override;
-    bool do_visit(ast::ClassDef& class_def) override;
+    bool do_visit(ast::Ref<ast::ModuleDef> module) override;
+    bool do_visit(ast::Ref<ast::ClassDef> class_def) override;
 };
 
 } // namespace ulam::sema
