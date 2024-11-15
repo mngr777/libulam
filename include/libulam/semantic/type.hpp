@@ -8,6 +8,8 @@ class ClassDef;
 
 namespace ulam {
 
+class Scope;
+
 using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
 
@@ -68,8 +70,11 @@ public:
 
     Ref<ast::ClassDef> node() { return _node; }
 
+    Ref<Scope> scope() { return ref(_scope); }
+
 private:
     Ref<ast::ClassDef> _node;
+    Ptr<Scope> _scope;
 };
 
 class PrimType : public BaseType {};
@@ -96,6 +101,12 @@ public:
 
 private:
     Ref<Type> _parent;
+};
+
+class TypePh : public _TypeDec {
+public:
+    TypePh(): _TypeDec{nullptr} {}
+
 };
 
 class TypeAlias : public _TypeDec {

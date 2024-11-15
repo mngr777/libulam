@@ -1,11 +1,13 @@
 #pragma once
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/visitor.hpp"
-#include <libulam/ast.hpp>
+#include <libulam/ast/nodes.hpp>
 #include <libulam/str_pool.hpp>
+#include <libulam/semantic/scope.hpp>
 
 namespace ulam {
 class Diag;
+class Program;
 class Scope;
 class Sema;
 } // namespace ulam
@@ -18,29 +20,21 @@ public:
 
     RecVisitor(Sema& sema, ast::Ref<ast::Root> ast): _sema{sema}, _ast{ast} {}
 
-    bool visit(ast::Ref<ast::ModuleDef> module_def) override;
-    bool visit(ast::Ref<ast::ClassDef> class_def) override;
-    bool visit(ast::Ref<ast::ClassDefBody> class_def_body) override;
+    bool visit(ast::Ref<ast::ModuleDef> node) override;
+    bool visit(ast::Ref<ast::ClassDef> node) override;
+    bool visit(ast::Ref<ast::ClassDefBody> node) override;
     // TODO: blocks, loops, ...
 
 protected:
-    class InScope {
-    public:
-        explicit InScope(Sema& sema);
-        ~InScope();
-
-    private:
-        Sema& _sema;
-    };
-
-    InScope in_scope() { return InScope{_sema}; }
-
     Diag& diag();
-    Scope* scope();
+    Ref<Program> program();
+    Ref<Scope> scope();
 
     const std::string_view str(str_id_t str_id) {
         return _ast->ctx().str(str_id);
     }
+
+    // TODO: private?
 
     Sema& _sema;
     ast::Ref<ast::Root> _ast;

@@ -7,25 +7,26 @@ namespace ulam {
 
 class Scope {
 public:
-    using ScopeFlag = std::uint16_t;
-    static const ScopeFlag NoFlags = 0;
-    static const ScopeFlag Module = 1;
-    static const ScopeFlag Class = 1 << 1;
+    using Flag = std::uint16_t;
+    static const Flag NoFlags = 0;
+    static const Flag Program = 1;
+    static const Flag Module = 1 << 1;
+    static const Flag Class = 1 << 2;
 
-    explicit Scope(Scope* parent, ScopeFlag flags = NoFlags):
+    explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}
 
-    bool is(ScopeFlag flags) { return _flags & flags; }
+    bool is(Flag flags) { return _flags & flags; }
 
-    bool has(str_id_t name_id, ScopeFlag upto) {
-        return get(name_id, upto);
-    }
+    bool in(Flag flags) { return is(flags) || (_parent && _parent->in(flags)); }
+
+    bool has(str_id_t name_id, Flag upto) { return get(name_id, upto); }
 
     bool has(str_id_t name_id, bool current = false) {
         return get(name_id, current);
     }
 
-    Symbol* get(str_id_t name_id, ScopeFlag upto) {
+    Symbol* get(str_id_t name_id, Flag upto) {
         auto sym = _symbols.get(name_id);
         if (sym || _flags & upto)
             return sym;
@@ -43,11 +44,11 @@ public:
         return _symbols.set(name_id, std::move(value));
     }
 
-    ScopeFlag flags() { return _flags; }
+    Flag flags() { return _flags; }
 
 private:
-    Scope* _parent;
-    ScopeFlag _flags;
+    Ref<Scope> _parent;
+    Flag _flags;
     SymbolTable _symbols;
 };
 

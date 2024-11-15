@@ -14,6 +14,7 @@
 
 namespace ulam {
 class Class;
+class Module;
 }
 
 namespace ulam::ast {
@@ -39,6 +40,7 @@ private:
 
 class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
+    ULAM_AST_REF_ATTR(Module, module)
 };
 
 class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {

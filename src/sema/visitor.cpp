@@ -1,36 +1,70 @@
-#include "libulam/ast/nodes/module.hpp"
+#include <cassert>
+#include <libulam/diag.hpp>
 #include <libulam/sema.hpp>
 #include <libulam/sema/visitor.hpp>
+#include <libulam/semantic/module.hpp>
+#include <libulam/semantic/program.hpp>
+#include <libulam/semantic/type.hpp>
 
 namespace ulam::sema {
 
-RecVisitor::InScope::InScope(Sema& sema): _sema{sema} { _sema.enter_scope(); }
-RecVisitor::InScope::~InScope() { _sema.exit_scope(); }
-
-bool RecVisitor::visit(ast::Ref<ast::ModuleDef> module_def) {
-    auto scoped = in_scope();
-    _module_def = module_def;
-    if (do_visit(module_def))
-        traverse(module_def);
+bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
+    // make module
+    if (!node->module()) {
+        auto module = ulam::make<Module>(node);
+        auto module_ref = ref(module);
+        program()->add_module(std::move(module));
+        node->set_module(module_ref);
+    }
+    _module_def = node;
+    _sema.enter_scope(node->module()->scope());
+    if (do_visit(node))
+        traverse(node);
+    _sema.exit_scope();
+    _module_def = {};
     return false;
 }
 
-bool RecVisitor::visit(ast::Ref<ast::ClassDef> class_def) {
-    _class_def = class_def;
-    do_visit(class_def);
-    traverse(class_def);
+bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
+    // make class
+    if (!node->type()) {
+        // make
+        auto name_id = node->name_id();
+        auto type = ulam::make<Class>(node);
+        auto type_ref = ref(type);
+        // add to module scope
+        if (scope()->has(name_id, Scope::Module)) {
+            // TODO: already defined where?
+            diag().emit(
+                diag::Error, node->name_loc_id(), str(name_id).size(),
+                "already defined");
+            return false;
+        }
+        assert(scope()->is(Scope::Module));
+        scope()->set(name_id, std::move(type));
+        // set node attr
+        node->set_type(type_ref);
+    }
+    _class_def = node;
+    if (do_visit(node))
+        traverse(node);
+    _class_def = {};
     return false;
 }
 
-bool RecVisitor::visit(ast::Ref<ast::ClassDefBody> class_def_body) {
-    auto scoped = in_scope();
-    do_visit(class_def_body);
-    traverse(class_def_body);
+bool RecVisitor::visit(ast::Ref<ast::ClassDefBody> node) {
+    assert(_class_def && _class_def->type());
+    _sema.enter_scope(_class_def->type()->scope());
+    if (do_visit(node))
+        traverse(node);
+    _sema.exit_scope();
     return false;
 }
-
-Scope* RecVisitor::scope() { return _sema.scope(); }
 
 Diag& RecVisitor::diag() { return _sema.diag(); }
+
+Ref<Program> RecVisitor::program() { return _sema.program(); }
+
+Ref<Scope> RecVisitor::scope() { return _sema.scope(); }
 
 } // namespace ulam::sema
