@@ -4,6 +4,7 @@
 #include <stack>
 
 namespace ulam {
+
 namespace sema {
 class Visitor;
 }

@@ -35,7 +35,7 @@ public:
     virtual bool visit(ast::ClassDefBody& class_body);
     // TODO: blocks, loops, ...
 
-private:
+protected:
     class InScope {
     public:
         explicit InScope(Sema& sema);
@@ -46,6 +46,9 @@ private:
     };
 
     InScope in_scope() { return InScope{_sema}; }
+
+    // ast::Ref<ast::ModuleDef> _module_def;
+    // ast::Ref<ast::ClassDef> _class_def;
 };
 
 } // namespace ulam::sema
