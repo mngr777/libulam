@@ -1,38 +1,26 @@
 #pragma once
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/visitor.hpp"
 #include <libulam/ast.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam {
+class Diag;
+class Scope;
 class Sema;
-}
+} // namespace ulam
 
 namespace ulam::sema {
 
-class _Visitor : public ast::Visitor {
+class RecVisitor : public ast::RecVisitor {
 public:
-    explicit _Visitor(Sema& sema): _sema{sema} {}
+    using ast::RecVisitor::visit;
 
-#define NODE(str, cls)                                                         \
-public:                                                                        \
-    virtual bool visit(ast::Ref<ast::cls> node) override {                     \
-        do_visit(node);                                                        \
-        return true;                                                           \
-    }                                                                          \
-                                                                               \
-protected:                                                                     \
-    virtual bool do_visit(ast::Ref<ast::cls> node) { return true; }
-#include <libulam/ast/nodes.inc.hpp>
-#undef NODE
+    RecVisitor(Sema& sema, ast::Ref<ast::Root> ast): _sema{sema}, _ast{ast} {}
 
-    Sema& _sema;
-};
-
-class Visitor : public _Visitor {
-public:
-    explicit Visitor(Sema& sema): _Visitor{sema} {}
-
-    virtual bool visit(ast::Ref<ast::ModuleDef> module);
-    virtual bool visit(ast::Ref<ast::ClassDefBody> class_body);
+    bool visit(ast::Ref<ast::ModuleDef> module_def) override;
+    bool visit(ast::Ref<ast::ClassDef> class_def) override;
+    bool visit(ast::Ref<ast::ClassDefBody> class_def_body) override;
     // TODO: blocks, loops, ...
 
 protected:
@@ -47,8 +35,18 @@ protected:
 
     InScope in_scope() { return InScope{_sema}; }
 
-    // ast::Ref<ast::ModuleDef> _module_def;
-    // ast::Ref<ast::ClassDef> _class_def;
+    Diag& diag();
+    Scope* scope();
+
+    const std::string_view str(str_id_t str_id) {
+        return _ast->ctx().str(str_id);
+    }
+
+    Sema& _sema;
+    ast::Ref<ast::Root> _ast;
+
+    ast::Ref<ast::ModuleDef> _module_def{};
+    ast::Ref<ast::ClassDef> _class_def{};
 };
 
 } // namespace ulam::sema

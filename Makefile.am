@@ -17,7 +17,8 @@ AST_HEADER_FILES = \
 
 AST_SOURCE_FILES = \
 	src/ast/node.cpp \
-	src/ast/traversal.cpp
+	src/ast/traversal.cpp \
+	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/ops.hpp \

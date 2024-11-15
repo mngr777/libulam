@@ -6,13 +6,13 @@
 namespace ulam {
 
 namespace sema {
-class Visitor;
+class RecVisitor;
 }
 
 class Diag;
 
 class Sema {
-    friend sema::Visitor;
+    friend sema::RecVisitor;
 
 public:
     explicit Sema(Diag& diag): _diag{diag} {}
@@ -24,7 +24,8 @@ private:
     void enter_scope();
     void exit_scope();
 
-    Scope& scope();
+    Diag& diag() { return _diag; }
+    Scope* scope();
 
     Diag& _diag;
     std::stack<Scope> _scopes;

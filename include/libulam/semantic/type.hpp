@@ -63,7 +63,7 @@ class Class : public BaseType {
 public:
     enum Kind { Element, Quark, Transient };
 
-    Class(Ref<ast::ClassDef> node);
+    explicit Class(Ref<ast::ClassDef> node);
     ~Class();
 
     Ref<ast::ClassDef> node() { return _node; }

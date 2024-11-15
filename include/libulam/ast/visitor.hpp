@@ -5,6 +5,7 @@
 namespace ulam::ast {
 
 class Node;
+
 #define NODE(str, cls) class cls;
 #include <libulam/ast/nodes.inc.hpp>
 #undef NODE
@@ -30,6 +31,18 @@ public:
 
 private:
     unsigned _level = 0;
+};
+
+class RecVisitor : public Visitor {
+#define NODE(str, cls)                                                         \
+public:                                                                        \
+    virtual bool visit(Ref<cls> node) override;                                \
+                                                                               \
+protected:                                                                     \
+    virtual bool do_visit(Ref<cls> node) { return true; }                      \
+    virtual void traverse(Ref<cls> node);
+#include <libulam/ast/nodes.inc.hpp>
+#undef NODE
 };
 
 } // namespace ulam::ast

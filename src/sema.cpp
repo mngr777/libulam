@@ -5,8 +5,8 @@ namespace ulam {
 
 void Sema::analyze(ast::Ref<ast::Root> ast) {
     reset();
-    sema::TypeInit type_init{*this};
-    ast::traverse(ast, type_init);
+    sema::TypeInit type_init{*this, ast};
+    type_init.visit(ast);
 }
 
 void Sema::reset() {
@@ -16,16 +16,16 @@ void Sema::reset() {
 }
 
 void Sema::enter_scope() {
-    _scopes.emplace(&scope());
+    _scopes.emplace(scope());
 }
 
 void Sema::exit_scope() {
     _scopes.pop();
 }
 
-Scope& Sema::scope() {
+Scope* Sema::scope() {
     assert(!_scopes.empty());
-    return _scopes.top();
+    return &_scopes.top();
 }
 
 } // namespace ulam
