@@ -10,7 +10,7 @@ public:
     void add_module(Ptr<Module>&& module);
 
 private:
-    std::list<Ptr<Module>> _module;
+    std::list<Ptr<Module>> _modules;
 };
 
 } // namespace ulam

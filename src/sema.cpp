@@ -7,13 +7,19 @@ namespace ulam {
 
 Sema::Sema(Diag& diag): _diag{diag}, _program{make<Program>()} {}
 
+Sema::~Sema() {}
+
 void Sema::analyze(ast::Ref<ast::Root> ast) {
     reset();
     sema::TypeInit type_init{*this, ast};
     type_init.visit(ast);
 }
 
-Ptr<Program> Sema::move_program() { return std::move(_program); }
+Ptr<Program> Sema::move_program() {
+    Ptr<Program> program;
+    std::swap(program, _program);
+    return program;
+}
 
 void Sema::reset() {
     while (!_scopes.empty())
@@ -26,7 +32,8 @@ void Sema::enter_scope(Ref<Scope> scope) {
 }
 
 void Sema::enter_scope(Scope::Flag flags) {
-    auto scope = make<Scope>(this->scope(), flags);
+    auto parent = _scopes.size() ? _scopes.top().first : Ref<Scope>{};
+    auto scope = make<Scope>(parent, flags);
     auto scope_ref = ref(scope);
     _scopes.emplace(scope_ref, std::move(scope));
 }

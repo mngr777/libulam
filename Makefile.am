@@ -21,9 +21,11 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
+	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/ops.hpp \
 	include/libulam/semantic/ops.inc.hpp \
 	include/libulam/semantic/params.hpp \
+	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
 	include/libulam/semantic/symbol.hpp \
 	include/libulam/semantic/type.hpp \
@@ -31,7 +33,9 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
+	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
+	src/semantic/program.cpp \
 	src/semantic/symbol.cpp \
 	src/semantic/type.cpp
 

@@ -1,14 +1,17 @@
 #pragma once
-#include <libulam/str_pool.hpp>
-#include <libulam/ast.hpp>
-#include <libulam/semantic/ops.hpp>
+#include <libulam/ast/nodes.hpp>
+#include <libulam/ast/ptr.hpp>
 #include <libulam/preproc.hpp>
+#include <libulam/semantic/ops.hpp>
+#include <libulam/str_pool.hpp>
 #include <libulam/token.hpp>
+#include <filesystem>
 #include <string>
 
 namespace ulam {
 
 class Context;
+class Preproc;
 
 class Parser {
 public:

@@ -19,6 +19,7 @@ class Sema {
 
 public:
     explicit Sema(Diag& diag);
+    ~Sema();
 
     void analyze(ast::Ref<ast::Root> ast);
 

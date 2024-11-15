@@ -8,10 +8,10 @@ namespace ulam {
 class Scope {
 public:
     using Flag = std::uint16_t;
-    static const Flag NoFlags = 0;
-    static const Flag Program = 1;
-    static const Flag Module = 1 << 1;
-    static const Flag Class = 1 << 2;
+    static constexpr Flag NoFlags = 0;
+    static constexpr Flag Program = 1;
+    static constexpr Flag Module = 1 << 1;
+    static constexpr Flag Class = 1 << 2;
 
     explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}
