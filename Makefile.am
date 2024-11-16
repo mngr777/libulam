@@ -22,7 +22,8 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
-	include/libulam/semantic/class.hpp \
+	include/libulam/semantic/type/class.hpp \
+	include/libulam/semantic/type/ph_type.hpp \
 	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/ops.hpp \
 	include/libulam/semantic/ops.inc.hpp \

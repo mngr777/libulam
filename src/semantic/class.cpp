@@ -1,4 +1,4 @@
-#include <libulam/semantic/class.hpp>
+#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/scope.hpp>
 
 namespace ulam {
