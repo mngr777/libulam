@@ -57,14 +57,14 @@ Type type_by_keyword(std::string_view str) {
     return Ident;
 }
 
-Class::Kind class_kind(Type type) {
+ClassKind class_kind(Type type) {
     switch (type) {
     case Element:
-        return Class::Element;
+        return ClassKind::Element;
     case Quark:
-        return Class::Quark;
+        return ClassKind::Quark;
     case Transient:
-        return Class::Transient;
+        return ClassKind::Transient;
     default:
         assert(false);
     }

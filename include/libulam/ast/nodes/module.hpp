@@ -7,7 +7,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/visitor.hpp>
-#include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/str_pool.hpp>
 #include <string>
 #include <utility>
@@ -56,7 +56,7 @@ class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named_ {
     ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
     ULAM_AST_SIMPLE_ATTR(loc_id_t, name_loc_id)
 public:
-    ClassDef(Class::Kind kind, str_id_t name_id, Ptr<ParamList>&& params):
+    ClassDef(ClassKind kind, str_id_t name_id, Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},
         Named_{name_id},
         _kind{kind} {}
@@ -64,10 +64,10 @@ public:
     ULAM_AST_TUPLE_PROP(params, 0)
     ULAM_AST_TUPLE_PROP(body, 1)
 
-    Class::Kind kind() const { return _kind; }
+    ClassKind kind() const { return _kind; }
 
 private:
-    Class::Kind _kind;
+    ClassKind _kind;
 };
 
 class TypeDef : public Tuple<Stmt, TypeName> {

@@ -23,6 +23,7 @@ AST_SOURCE_FILES = \
 
 SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/class.hpp \
+	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/ph_type.hpp \
 	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/ops.hpp \
@@ -36,7 +37,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
-	src/semantic/class.cpp \
+	src/semantic/type/class.cpp \
+	src/semantic/type/class_kind.cpp \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
 	src/semantic/program.cpp \

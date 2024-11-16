@@ -9,8 +9,6 @@ namespace ulam {
 
 class Class : public BaseType {
 public:
-    enum Kind { Element, Quark, Transient };
-
     explicit Class(type_id_t id, Ref<ast::ClassDef> node);
     ~Class();
 

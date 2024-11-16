@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>
@@ -20,7 +20,7 @@ const char* type_name(Type type);
 
 tok::Type type_by_keyword(const std::string_view str);
 
-Class::Kind class_kind(Type type);
+ClassKind class_kind(Type type);
 
 TypeOp type_op(Type type);
 
@@ -47,7 +47,7 @@ struct Token {
     }
     bool in() { return false; }
 
-    Class::Kind class_kind() const { return tok::class_kind(type); }
+    ClassKind class_kind() const { return tok::class_kind(type); }
 
     TypeOp type_op() const { return tok::type_op(type); }
 
