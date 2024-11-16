@@ -30,7 +30,7 @@ bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
     if (!node->type()) {
         // make
         auto name_id = node->name_id();
-        auto type = ulam::make<Class>(node);
+        auto type = ulam::make<Class>(program()->next_type_id(), node);
         auto type_ref = ref(type);
         // add to module scope
         if (scope()->has(name_id, Scope::Module)) {
