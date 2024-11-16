@@ -3,5 +3,8 @@
 
 namespace ulam {
 
+_TypeDec::~_TypeDec() {}
+
+CompType::~CompType() {}
 
 } // namespace ulam

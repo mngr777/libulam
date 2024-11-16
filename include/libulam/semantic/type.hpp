@@ -36,7 +36,7 @@ public:
     bool is_array() const { return array_size() != 0; }
     virtual array_size_t array_size() const { return 0; }
 
-    virtual bool is_ref() const { return false; }
+    virtual bool is_reference() const { return false; }
 
     virtual Ref<Operator> op(Op op, Ref<Type> rhs_type) = 0;
     // virtual void add_op(Op op, Ref<Type> rhs_type, Ptr<Operator>&& oper);
@@ -65,9 +65,10 @@ public:
 
 class PrimType : public BaseType {};
 
-class CompType : public Type {
+class _TypeDec : public Type {
 public:
-    CompType(type_id_t id, Ref<Type> prev): Type{id}, _prev{prev} {}
+    _TypeDec(type_id_t id, Ref<Type> prev): Type{id}, _prev{prev} {}
+    virtual ~_TypeDec() = 0;
 
     Ref<Type> prev() override { return _prev; }
     Ref<const Type> prev() const override { return _prev; }
@@ -77,7 +78,7 @@ public:
 
     array_size_t array_size() const override { return _prev->array_size(); }
 
-    bool is_ref() const override { return _prev->is_ref(); }
+    bool is_reference() const override { return _prev->is_reference(); }
 
     Ref<Operator> op(Op op, Ref<Type> rhs_type) override {
         return _prev->op(op, rhs_type);
@@ -87,9 +88,15 @@ private:
     Ref<Type> _prev;
 };
 
-class AliasType : public CompType {
+class AliasType : public _TypeDec {
 public:
-    AliasType(type_id_t id, Ref<Type> prev): CompType{id, prev} {}
+    AliasType(type_id_t id, Ref<Type> prev): _TypeDec{id, prev} {}
+};
+
+class CompType : public _TypeDec {
+public:
+    CompType(type_id_t id, Ref<Type> prev): _TypeDec{id, prev} {}
+    ~CompType() = 0;
 };
 
 class ArrayType : public CompType {
@@ -109,7 +116,7 @@ class RefType : public CompType {
 public:
     RefType(type_id_t id, Ref<Type> prev): CompType{id, prev} {}
 
-    bool is_ref() const override { return true; }
+    bool is_reference() const override { return true; }
 };
 
 } // namespace ulam
