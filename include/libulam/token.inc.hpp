@@ -44,12 +44,13 @@ TOK(";", Semicol)
 TOK("?", Quest)
 TOK(":", Colon)
 
-TOK("Void", VoidT)
 TOK("Int", IntT)
-TOK("Unsigned", Unsigned)
+TOK("Unsigned", UnsignedT)
 TOK("Bool", BoolT)
 TOK("Unary", UnaryT)
 TOK("Bits", BitsT)
+TOK("Atom", AtomT)
+TOK("Void", VoidT)
 TOK("String", StringT)
 
 TOK("minof", MinOf)
@@ -100,10 +101,11 @@ TOK(",", Comma)
 TOK("...", Ellipsis)
 
 TOK(nullptr, TypeIdent)
+TOK(nullptr, BuiltinTypeIdent)
 TOK(nullptr, Ident)
 TOK(nullptr, Number)
 TOK(nullptr, String)
-TOK(nullptr, InvalidAtKeyword) // @something
+TOK(nullptr, InvalidAtKeyword)
 TOK(nullptr, UnexpectedChar)
 TOK(nullptr, Eof)
 

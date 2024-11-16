@@ -1,6 +1,7 @@
 #include "print.hpp"
 #include "libulam/ast/traversal.hpp"
 #include "libulam/semantic/ops.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <string>
 
 namespace test::ast {
@@ -268,7 +269,11 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeName> node) {
 bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
     // no indent
     auto f = no_ws();
-    accept_me(node->ident());
+    if (node->is_builtin()) {
+        _os << builtin_type_str(node->builtin_type_id());
+    } else {
+        accept_me(node->ident());
+    }
     if (node->args())
         accept_me(node->args());
     return false;

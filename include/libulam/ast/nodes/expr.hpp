@@ -6,6 +6,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/string.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type_ops.hpp>
 
 namespace ulam::ast {
@@ -28,11 +29,19 @@ class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {
     ULAM_AST_LINK_ATTR(Type, type)
 public:
     TypeSpec(Ptr<TypeIdent>&& ident, Ptr<ArgList>&& args):
-        Tuple{std::move(ident), std::move(args)} {}
-    TypeSpec(Ptr<TypeIdent>&& ident): TypeSpec{std::move(ident), nullptr} {}
+        Tuple{std::move(ident), std::move(args)},
+        _builtin_type_id{NoBuiltinTypeId} {}
+    TypeSpec(BuiltinTypeId builtin_type_id, Ptr<ArgList>&& args):
+        Tuple{{}, std::move(args)}, _builtin_type_id(builtin_type_id) {}
+
+    bool is_builtin() const { return _builtin_type_id != NoBuiltinTypeId; }
+    BuiltinTypeId builtin_type_id() const { return _builtin_type_id; }
 
     ULAM_AST_TUPLE_PROP(ident, 0);
     ULAM_AST_TUPLE_PROP(args, 1);
+
+private:
+    BuiltinTypeId _builtin_type_id;
 };
 
 class TypeName : public Tuple<ListOf<Expr, TypeIdent>, TypeSpec> {

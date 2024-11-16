@@ -22,6 +22,7 @@ Preproc& Preproc::operator>>(Token& token) {
     assert(!_stack.empty());
     while (true) {
         lex(token);
+        token.orig_type = token.type;
         switch (token.type) {
         case tok::Ulam:
             preproc_ulam();
@@ -30,15 +31,26 @@ Preproc& Preproc::operator>>(Token& token) {
             preproc_use();
             break;
         case tok::Load:
-            if (!preproc_load())
-                return *this;
-            break;
-        case tok::Eof:
-            if (!_stack.empty()) {
-                _stack.pop();
-            } else {
+            if (!preproc_load()) {
+                // TODO: emit error
                 return *this;
             }
+            break;
+        case tok::Eof:
+            _stack.pop();
+            if (_stack.empty())
+                return *this;
+            break;
+        case tok::IntT:
+        case tok::UnsignedT:
+        case tok::BoolT:
+        case tok::UnaryT:
+        case tok::BitsT:
+        case tok::AtomT:
+        case tok::VoidT:
+        case tok::StringT:
+            token.type = tok::BuiltinTypeIdent;
+            // fallthru
         default:
             return *this;
         }

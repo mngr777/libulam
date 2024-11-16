@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/semantic/type/class_kind.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>
@@ -22,6 +23,8 @@ tok::Type type_by_keyword(const std::string_view str);
 
 ClassKind class_kind(Type type);
 
+BuiltinTypeId builtin_type_id(Type type);
+
 TypeOp type_op(Type type);
 
 Op bin_op(Type type);
@@ -34,6 +37,7 @@ struct Token {
     using size_t = std::uint16_t;
 
     tok::Type type{tok::Eof};
+    tok::Type orig_type{tok::Eof};
     size_t size{0};
     loc_id_t loc_id{NoLocId};
 
@@ -48,6 +52,8 @@ struct Token {
     bool in() { return false; }
 
     ClassKind class_kind() const { return tok::class_kind(type); }
+
+    BuiltinTypeId builtin_type_id() const { return tok::builtin_type_id(orig_type); }
 
     TypeOp type_op() const { return tok::type_op(type); }
 

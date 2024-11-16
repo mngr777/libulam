@@ -1,3 +1,5 @@
+#include "libulam/ast/nodes/expr.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -143,6 +145,7 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
             if (type_def)
                 node->body()->add(std::move(type_def));
         } break;
+        case tok::BuiltinTypeIdent:
         case tok::TypeIdent: {
             // fun or var def
             // type
@@ -271,6 +274,7 @@ ast::Ptr<ast::Block> Parser::parse_block() {
 
 ast::Ptr<ast::Stmt> Parser::parse_stmt() {
     switch (_tok.type) {
+    case tok::BuiltinTypeIdent:
     case tok::TypeIdent: {
         auto type = parse_type_name();
         if (_tok.is(tok::Period)) {
@@ -449,6 +453,7 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
 
 ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
     switch (_tok.type) {
+    case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
         return parse_type_op();
     case tok::Ident:
@@ -472,7 +477,7 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
     assert(_tok.is(tok::ParenL));
     consume();
     ast::Ptr<ast::Expr> inner{};
-    if (_tok.is(tok::TypeIdent)) {
+    if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
         // cast or type op
         auto type_name = parse_type_name();
         if (_tok.is(tok::ParenR)) {
@@ -490,7 +495,7 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
 }
 
 ast::Ptr<ast::TypeOpExpr> Parser::parse_type_op() {
-    assert(_tok.is(tok::TypeIdent));
+    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
     auto type = parse_type_name();
     assert(type);
     return parse_type_op_rest(std::move(type));
@@ -508,8 +513,10 @@ Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
 }
 
 ast::Ptr<ast::TypeName> Parser::parse_type_name() {
-    if (!match(tok::TypeIdent))
+    if (!_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
+        unexpected();
         return {};
+    }
     auto node = tree<ast::TypeName>(parse_type_spec());
     while (_tok.is(tok::Period)) {
         consume();
@@ -521,12 +528,22 @@ ast::Ptr<ast::TypeName> Parser::parse_type_name() {
 }
 
 ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
-    assert(_tok.is(tok::TypeIdent));
-    auto ident = parse_type_ident();
+    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
+    ast::Ptr<ast::TypeIdent> ident{};
+    BuiltinTypeId builtin_type_id = NoBuiltinTypeId;
+    if (_tok.is(tok::BuiltinTypeIdent)) {
+        // built-in type
+        builtin_type_id = _tok.builtin_type_id();
+    } else {
+        // user type
+        ident = parse_type_ident();
+    }
     ast::Ptr<ast::ArgList> args{};
     if (_tok.is(tok::ParenL))
         args = parse_arg_list();
-    return tree<ast::TypeSpec>(std::move(ident), std::move(args));
+    return (builtin_type_id == NoBuiltinTypeId)
+        ? tree<ast::TypeSpec>(std::move(ident), std::move(args))
+        : tree<ast::TypeSpec>(builtin_type_id, std::move(args));
 }
 
 ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {

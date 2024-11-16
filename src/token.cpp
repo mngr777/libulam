@@ -70,6 +70,29 @@ ClassKind class_kind(Type type) {
     }
 }
 
+BuiltinTypeId builtin_type_id(Type type) {
+    switch (type) {
+    case IntT:
+        return IntId;
+    case UnsignedT:
+        return UnsignedId;
+    case BoolT:
+        return BoolId;
+    case UnaryT:
+        return UnaryId;
+    case BitsT:
+        return BitsId;
+    case AtomT:
+        return AtomId;
+    case VoidT:
+        return VoidId;
+    case StringT:
+        return StringId;
+    default:
+        return NoBuiltinTypeId;
+    }
+}
+
 TypeOp type_op(Type type) {
     switch (type) {
     case MinOf:
