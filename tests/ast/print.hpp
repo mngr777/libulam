@@ -5,6 +5,8 @@
 
 namespace test::ast {
 
+// TODO: use RecVisitor
+
 class PrinterBase : public ulam::ast::Visitor {
 public:
     PrinterBase(std::ostream& os): _os{os} {}
@@ -12,7 +14,8 @@ public:
 #include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
-    void print(ulam::ast::Ref<ulam::ast::Node> node);
+    void print(ulam::ast::Ref<ulam::ast::Root> ast, ulam::ast::Ref<ulam::ast::Node> node);
+    void print(ulam::ast::Ref<ulam::ast::Root> ast);
 
     void paren_l() {
         if (options.explicit_parens)
@@ -33,6 +36,9 @@ public:
 
 protected:
     std::ostream& indent();
+    const std::string_view str(ulam::str_id_t str_id);
+
+    ulam::ast::Ref<ulam::ast::Root> ast() { return _ast; }
 
     class FormatOpts {
     public:
@@ -72,6 +78,9 @@ protected:
     std::ostream& _os;
     bool _no_newline{false};
     bool _no_indent{false};
+
+private:
+    ulam::ast::Ref<ulam::ast::Root> _ast{};
 };
 
 class Printer : public PrinterBase {

@@ -16,10 +16,10 @@ class ArgList;
 
 // TODO: types are not expressions
 
-class TypeIdent : public Expr, public Named {
+class TypeIdent : public Expr, public Named_ {
     ULAM_AST_NODE
 public:
-    explicit TypeIdent(std::string&& name): Named{std::move(name)} {}
+    explicit TypeIdent(str_id_t name_id): Named_{name_id} {}
 };
 
 class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {

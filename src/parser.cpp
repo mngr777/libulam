@@ -522,8 +522,7 @@ ast::Ptr<ast::TypeName> Parser::parse_type_name() {
 
 ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     assert(_tok.is(tok::TypeIdent));
-    auto ident = tree<ast::TypeIdent>(tok_str());
-    consume();
+    auto ident = parse_type_ident();
     ast::Ptr<ast::ArgList> args{};
     if (_tok.is(tok::ParenL))
         args = parse_arg_list();
@@ -577,7 +576,7 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
 
 ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     assert(_tok.is(tok::TypeIdent));
-    auto node = tree<ast::TypeIdent>(tok_str());
+    auto node = tree<ast::TypeIdent>(tok_str_id());
     consume();
     return node;
 }

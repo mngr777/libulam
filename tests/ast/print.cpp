@@ -13,17 +13,29 @@ namespace test::ast {
 #include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
-void PrinterBase::print(ulam::ast::Ref<ulam::ast::Node> node) {
-    assert(node);
+void PrinterBase::print(
+    ulam::ast::Ref<ulam::ast::Root> ast, ulam::ast::Ref<ulam::ast::Node> node) {
+    assert(ast && node);
+    _ast = ast;
     ulam::ast::traverse(node, *this);
+    _ast = {};
+}
+
+void PrinterBase::print(ulam::ast::Ref<ulam::ast::Root> ast) {
+    print(ast, ast);
 }
 
 std::ostream& PrinterBase::indent() {
     return _no_indent ? _os : _os << std::string(level() * options.indent, ' ');
 }
 
+const std::string_view PrinterBase::str(ulam::str_id_t str_id) {
+    assert(_ast);
+    return ast()->ctx().str(str_id);
+}
+
 bool Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
-    indent() << "class `" << node->name_id() << "'";
+    indent() << "class `" << str(node->name_id()) << "'";
     if (node->params())
         accept_me(node->params());
     _os << " {" << nl();
@@ -264,7 +276,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeIdent> node) {
     // no indent
-    _os << node->name();
+    _os << str(node->name_id());
     return false;
 }
 
