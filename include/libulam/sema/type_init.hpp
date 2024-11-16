@@ -10,9 +10,7 @@ public:
     explicit TypeInit(Sema& sema, ast::Ref<ast::Root> ast):
         RecVisitor{sema, ast} {}
 
-    bool do_visit(ast::Ref<ast::ModuleDef> module) override;
-    bool do_visit(ast::Ref<ast::ClassDef> class_def) override;
-    // bool do_visit(ast::Ref<ast::TypeDef> type_def) override;
+    bool do_visit(ast::Ref<ast::TypeDef> type_def) override;
 };
 
 } // namespace ulam::sema

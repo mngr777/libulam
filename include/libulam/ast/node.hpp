@@ -55,10 +55,11 @@ private:                                                                       \
 
 #define ULAM_AST_LINK_ATTR(type, name)                                         \
 public:                                                                        \
-    Link* name##_link() { return &_attr_##name; }                              \
+    Link<type>* name##_link() { return &_attr_##name; }                        \
+    const Link<type>* name##_link() const { return &_attr_##name; }            \
     ulam::Ref<type> name() { return _attr_##name.get(); }                      \
     ulam::Ref<const type> name() const { return _attr_##name.get(); }          \
-    void set_##name(ulam::Ref<type> value) { _attr_##name = value; }           \
+    void set_##name(ulam::Ref<type> value) { _attr_##name.set(value); }        \
                                                                                \
 private:                                                                       \
     Link<type> _attr_##name;
@@ -68,7 +69,7 @@ namespace ulam::ast {
 template <typename T> class Link {
 public:
     ulam::Ref<T> get() { return _value; }
-
+    ulam::Ref<const T> get() const { return _value; }
     void set(ulam::Ref<T> value) { _value = value; }
 
 private:
