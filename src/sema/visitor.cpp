@@ -63,7 +63,10 @@ bool RecVisitor::visit(ast::Ref<ast::ClassDefBody> node) {
 
 Diag& RecVisitor::diag() { return _sema.diag(); }
 
-Ref<Program> RecVisitor::program() { return _sema.program(); }
+Ref<Program> RecVisitor::program() {
+    assert(_ast->program());
+    return _ast->program();
+}
 
 Ref<Scope> RecVisitor::scope() { return _sema.scope(); }
 

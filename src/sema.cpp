@@ -5,20 +5,16 @@
 
 namespace ulam {
 
-Sema::Sema(Diag& diag): _diag{diag}, _program{make<Program>()} {}
+Sema::Sema(Diag& diag): _diag{diag} {}
 
 Sema::~Sema() {}
 
 void Sema::analyze(ast::Ref<ast::Root> ast) {
     reset();
+    if (!ast->program())
+        ast->set_program(make<Program>());
     sema::TypeInit type_init{*this, ast};
     type_init.visit(ast);
-}
-
-Ptr<Program> Sema::move_program() {
-    Ptr<Program> program;
-    std::swap(program, _program);
-    return program;
 }
 
 void Sema::reset() {

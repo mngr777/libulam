@@ -34,12 +34,23 @@ private:                                                                       \
 
 #define ULAM_AST_REF_ATTR(type, name)                                          \
 public:                                                                        \
-    Ref<type> name() { return _attr_##name; }                                  \
-    Ref<const type> name() const { return _attr_##name; }                      \
-    void set_##name(Ref<type> value) { _attr_##name = value; }                 \
+    ulam::Ref<type> name() { return _attr_##name; }                            \
+    ulam::Ref<const type> name() const { return _attr_##name; }                \
+    void set_##name(ulam::Ref<type> value) { _attr_##name = value; }           \
                                                                                \
 private:                                                                       \
     Ref<type> _attr_##name{};
+
+#define ULAM_AST_PTR_ATTR(type, name)                                          \
+public:                                                                        \
+    ulam::Ref<type> name() { return ulam::ref(_attr_##name); }                 \
+    ulam::Ref<const type> name() const { return ulam::ref(_attr_##name); }     \
+    void set_##name(ulam::Ptr<type>&& value) {                                 \
+        std::swap(_attr_##name, value);                                        \
+    }                                                                          \
+                                                                               \
+private:                                                                       \
+    Ptr<type> _attr_##name{};
 
 namespace ulam::ast {
 

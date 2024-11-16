@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/semantic/ops.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <unordered_map>
 
 namespace ulam::ast {
 class ClassDef;

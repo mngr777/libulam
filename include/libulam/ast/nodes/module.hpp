@@ -15,7 +15,8 @@
 namespace ulam {
 class Class;
 class Module;
-}
+class Program;
+} // namespace ulam
 
 namespace ulam::ast {
 
@@ -28,8 +29,10 @@ class VarDefList;
 
 class Root : public List<Node, ModuleDef> {
     ULAM_AST_NODE
+    ULAM_AST_PTR_ATTR(Program, program)
 public:
-    Root(): _ctx{} {}
+    Root();
+    ~Root();
 
     Context& ctx() { return _ctx; }
     const Context& ctx() const { return _ctx; }

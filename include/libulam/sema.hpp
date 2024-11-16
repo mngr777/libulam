@@ -23,8 +23,6 @@ public:
 
     void analyze(ast::Ref<ast::Root> ast);
 
-    Ptr<Program> move_program();
-
 private:
     void reset();
     void enter_scope(Ref<Scope> scope);
@@ -32,11 +30,9 @@ private:
     void exit_scope();
 
     Diag& diag() { return _diag; }
-    Ref<Program> program() { return ref(_program); }
     Ref<Scope> scope();
 
     Diag& _diag;
-    Ptr<Program> _program;
     std::stack<std::pair<Ref<Scope>, Ptr<Scope>>> _scopes;
 };
 
