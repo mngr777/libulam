@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/class.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>

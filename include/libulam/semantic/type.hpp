@@ -2,10 +2,6 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/ops.hpp>
 
-namespace ulam::ast {
-class ClassDef;
-}
-
 namespace ulam {
 
 class Scope;
@@ -16,13 +12,11 @@ using array_size_t = array_idx_t;
 
 constexpr array_size_t UnkArraySize = -1;
 
-class TypeTpl {};
-
-class ClassTpl : public TypeTpl {};
-
 class Operator {};
 
+class ArrayType;
 class BaseType;
+class RefType;
 
 class Type {
 public:
@@ -31,8 +25,10 @@ public:
 
     type_id_t id() const { return _id; }
 
-    virtual Ref<Type> parent() = 0;
-    virtual Ref<const Type> parent() const = 0;
+    virtual bool is_placeholder() const { return true; }
+
+    virtual Ref<Type> prev() = 0;
+    virtual Ref<const Type> prev() const = 0;
 
     virtual Ref<BaseType> base() = 0;
     virtual Ref<const BaseType> base() const = 0;
@@ -43,6 +39,10 @@ public:
     virtual bool is_ref() const { return false; }
 
     virtual Ref<Operator> op(Op op, Ref<Type> rhs_type) = 0;
+    // virtual void add_op(Op op, Ref<Type> rhs_type, Ptr<Operator>&& oper);
+
+    virtual Ref<ArrayType> array(array_size_t size) { return {}; };
+    virtual Ref<RefType> reference() { return {}; }
 
 private:
     type_id_t _id{};
@@ -52,8 +52,10 @@ class BaseType : public Type {
 public:
     explicit BaseType(type_id_t id): Type{id} {}
 
-    Ref<Type> parent() override { return this; }
-    Ref<const Type> parent() const override { return this; }
+    void add_op();
+
+    Ref<Type> prev() override { return this; }
+    Ref<const Type> prev() const override { return this; }
 
     Ref<BaseType> base() override { return this; }
     Ref<const BaseType> base() const override { return this; }
@@ -61,55 +63,39 @@ public:
     Ref<Operator> op(Op op, Ref<Type> rhs_type) override { return {}; } // TODO
 };
 
-class Class : public BaseType {
-public:
-    enum Kind { Element, Quark, Transient };
-
-    explicit Class(type_id_t id, Ref<ast::ClassDef> node);
-    ~Class();
-
-    Ref<ast::ClassDef> node() { return _node; }
-
-    Ref<Scope> scope() { return ref(_scope); }
-
-private:
-    Ref<ast::ClassDef> _node;
-    Ptr<Scope> _scope;
-};
-
 class PrimType : public BaseType {};
 
 class CompType : public Type {
 public:
-    CompType(type_id_t id, Ref<Type> parent): Type{id}, _parent{parent} {}
+    CompType(type_id_t id, Ref<Type> prev): Type{id}, _prev{prev} {}
 
-    Ref<Type> parent() override { return _parent; }
-    Ref<const Type> parent() const override { return _parent; }
+    Ref<Type> prev() override { return _prev; }
+    Ref<const Type> prev() const override { return _prev; }
 
-    Ref<BaseType> base() override { return _parent->base(); }
-    Ref<const BaseType> base() const override { return _parent->base(); }
+    Ref<BaseType> base() override { return _prev->base(); }
+    Ref<const BaseType> base() const override { return _prev->base(); }
 
-    array_size_t array_size() const override { return _parent->array_size(); }
+    array_size_t array_size() const override { return _prev->array_size(); }
 
-    bool is_ref() const override { return _parent->is_ref(); }
+    bool is_ref() const override { return _prev->is_ref(); }
 
     Ref<Operator> op(Op op, Ref<Type> rhs_type) override {
-        return _parent->op(op, rhs_type);
+        return _prev->op(op, rhs_type);
     }
 
 private:
-    Ref<Type> _parent;
+    Ref<Type> _prev;
 };
 
-class TypeAlias : public CompType {
+class AliasType : public CompType {
 public:
-    TypeAlias(type_id_t id, Ref<Type> parent): CompType{id, parent} {}
+    AliasType(type_id_t id, Ref<Type> prev): CompType{id, prev} {}
 };
 
 class ArrayType : public CompType {
 public:
-    ArrayType(type_id_t id, Ref<Type> parent, array_size_t array_size):
-        CompType{id, parent}, _array_size{array_size} {}
+    ArrayType(type_id_t id, Ref<Type> prev, array_size_t array_size):
+        CompType{id, prev}, _array_size{array_size} {}
 
     array_size_t array_size() const override { return _array_size; }
 
@@ -121,7 +107,7 @@ private:
 
 class RefType : public CompType {
 public:
-    RefType(type_id_t id, Ref<Type> parent): CompType{id, parent} {}
+    RefType(type_id_t id, Ref<Type> prev): CompType{id, prev} {}
 
     bool is_ref() const override { return true; }
 };

@@ -4,7 +4,7 @@
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
-#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/class.hpp>
 
 namespace ulam::sema {
 

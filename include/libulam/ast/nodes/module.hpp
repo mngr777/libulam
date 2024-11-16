@@ -7,7 +7,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/visitor.hpp>
-#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/class.hpp>
 #include <libulam/str_pool.hpp>
 #include <string>
 #include <utility>
