@@ -1,7 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <unordered_map>
 
 namespace ulam::ast {
 class ClassDef;
@@ -80,9 +79,9 @@ private:
 
 class PrimType : public BaseType {};
 
-class _TypeDec : public Type {
+class CompType : public Type {
 public:
-    _TypeDec(type_id_t id, Ref<Type> parent): Type{id}, _parent{parent} {}
+    CompType(type_id_t id, Ref<Type> parent): Type{id}, _parent{parent} {}
 
     Ref<Type> parent() override { return _parent; }
     Ref<const Type> parent() const override { return _parent; }
@@ -102,15 +101,15 @@ private:
     Ref<Type> _parent;
 };
 
-class TypeAlias : public _TypeDec {
+class TypeAlias : public CompType {
 public:
-    TypeAlias(type_id_t id, Ref<Type> parent): _TypeDec{id, parent} {}
+    TypeAlias(type_id_t id, Ref<Type> parent): CompType{id, parent} {}
 };
 
-class ArrayType : public _TypeDec {
+class ArrayType : public CompType {
 public:
     ArrayType(type_id_t id, Ref<Type> parent, array_size_t array_size):
-        _TypeDec{id, parent}, _array_size{array_size} {}
+        CompType{id, parent}, _array_size{array_size} {}
 
     array_size_t array_size() const override { return _array_size; }
 
@@ -120,9 +119,9 @@ private:
     array_size_t _array_size;
 };
 
-class RefType : public _TypeDec {
+class RefType : public CompType {
 public:
-    RefType(type_id_t id, Ref<Type> parent): _TypeDec{id, parent} {}
+    RefType(type_id_t id, Ref<Type> parent): CompType{id, parent} {}
 
     bool is_ref() const override { return true; }
 };

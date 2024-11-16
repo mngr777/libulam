@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/memory/ptr.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
 #include <string>
@@ -52,9 +53,27 @@ public:                                                                        \
 private:                                                                       \
     Ptr<type> _attr_##name{};
 
+#define ULAM_AST_LINK_ATTR(type, name)                                         \
+public:                                                                        \
+    Link* name##_link() { return &_attr_##name; }                              \
+    ulam::Ref<type> name() { return _attr_##name.get(); }                      \
+    ulam::Ref<const type> name() const { return _attr_##name.get(); }          \
+    void set_##name(ulam::Ref<type> value) { _attr_##name = value; }           \
+                                                                               \
+private:                                                                       \
+    Link<type> _attr_##name;
+
 namespace ulam::ast {
 
-class Node;
+template <typename T> class Link {
+public:
+    ulam::Ref<T> get() { return _value; }
+
+    void set(ulam::Ref<T> value) { _value = value; }
+
+private:
+    ulam::Ref<T> _value;
+};
 
 // TODO:
 // - pass AST context to `make`
