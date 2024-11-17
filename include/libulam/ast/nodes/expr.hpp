@@ -4,7 +4,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/semantic/number.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/string.hpp>
+#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type_ops.hpp>

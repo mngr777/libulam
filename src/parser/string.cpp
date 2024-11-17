@@ -1,11 +1,12 @@
 #include "src/parser/string.hpp"
 #include "src/detail/string.hpp"
 #include <cassert>
+#include <libulam/diag.hpp>
 
 namespace ulam::detail {
 
 // TODO: support hex/oct escape sequences
-String parse_str(const std::string_view str) {
+String parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     assert(str.size() > 0);
     std::string parsed;
     parsed.reserve(str.size());
@@ -27,10 +28,10 @@ String parse_str(const std::string_view str) {
         }
     }
     assert(cur == str.size());
-    // TODO: if not terminated, report
-    (void)(is_terminated);
+    if (!is_terminated)
+        diag.emit(diag::Error, loc_id, cur, 0, "untermitated string");
     parsed.shrink_to_fit();
-    return {quote, parsed};
+    return parsed;
 }
 
 } // namespace ulam::detail

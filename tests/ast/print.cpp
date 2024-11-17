@@ -306,7 +306,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::NumLit> node) {
 bool Printer::visit(ulam::ast::Ref<ulam::ast::StrLit> node) {
     indent();
     const auto& value = node->value();
-    _os << value.quote << value.value << value.quote << nl();
+    _os << '"' << value << value << '"' << nl();
     return false;
 }
 

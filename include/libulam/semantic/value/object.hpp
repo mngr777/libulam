@@ -18,4 +18,4 @@ private:
     Ref<Type> _type;
 };
 
-}; // namespace ulam
+} // namespace ulam

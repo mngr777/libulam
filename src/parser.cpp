@@ -542,8 +542,8 @@ ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     if (_tok.is(tok::ParenL))
         args = parse_arg_list();
     return (builtin_type_id == NoBuiltinTypeId)
-        ? tree<ast::TypeSpec>(std::move(ident), std::move(args))
-        : tree<ast::TypeSpec>(builtin_type_id, std::move(args));
+               ? tree<ast::TypeSpec>(std::move(ident), std::move(args))
+               : tree<ast::TypeSpec>(builtin_type_id, std::move(args));
 }
 
 ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
@@ -620,9 +620,9 @@ ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
 
 ast::Ptr<ast::StrLit> Parser::parse_str_lit() {
     assert(_tok.is(tok::String));
-    auto node = tree<ast::StrLit>(detail::parse_str(tok_str()));
+    auto str = detail::parse_str(_ctx.diag(), _tok.loc_id, tok_str());
     consume();
-    return node;
+    return tree<ast::StrLit>(std::move(str));
 }
 
 template <typename N, typename... Args>
