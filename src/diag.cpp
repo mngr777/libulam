@@ -30,8 +30,21 @@ const char* level_prefix(diag::Level lvl) {
 
 } // namespace
 
+void Diag::emit(
+    diag::Level lvl,
+    loc_id_t loc_id,
+    std::size_t len,
+    const std::string& text) {
+    emit(lvl, loc_id, 0, len, text);
+}
+
 // TMP: output to stderr
-void Diag::emit(diag::Level lvl, loc_id_t loc_id, std::size_t len, const std::string& text) {
+void Diag::emit(
+    diag::Level lvl,
+    loc_id_t loc_id,
+    int off,
+    std::size_t len,
+    const std::string& text) {
     const auto& loc = _sm.loc(loc_id);
     auto src = _sm.src(loc.src_id());
     std::cerr << level_prefix(lvl) << "in " << src->name() << ":" << loc.linum()

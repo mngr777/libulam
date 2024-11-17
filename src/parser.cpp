@@ -613,12 +613,9 @@ ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 }
 
 ast::Ptr<ast::NumLit> Parser::parse_num_lit() {
-    auto res = detail::parse_num_str(tok_str());
-    if (res.second.error != detail::ParseNumStatus::Ok)
-        diag("number parse error");
-    auto node = tree<ast::NumLit>(std::move(res.first));
+    auto number = detail::parse_num_str(_ctx.diag(), _tok.loc_id, tok_str());
     consume();
-    return node;
+    return tree<ast::NumLit>(std::move(number));
 }
 
 ast::Ptr<ast::StrLit> Parser::parse_str_lit() {

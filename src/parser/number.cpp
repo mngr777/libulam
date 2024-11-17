@@ -2,33 +2,30 @@
 #include "src/detail/string.hpp"
 #include <cassert>
 #include <cstddef>
+#include <libulam/diag.hpp>
 #include <limits>
+#include <string>
 
 namespace ulam::detail {
 namespace {
 
-// constexpr char Binary[] = "binary";
-// constexpr char Octal[] = "octal";
-// constexpr char Decimal[] = "decimal";
-// constexpr char Hexadecimal[] = "hexadecimal";
-
 constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
 constexpr std::uint64_t MaxSigned = std::numeric_limits<std::int64_t>::max();
 
-// constexpr const char* radix_to_str(std::uint8_t radix) {
-//     switch (radix) {
-//     case 2:
-//         return Binary;
-//     case 8:
-//         return Octal;
-//     case 10:
-//         return Decimal;
-//     case 16:
-//         return Hexadecimal;
-//     default:
-//         assert(false && "Invalid radix value");
-//     }
-// }
+constexpr const char* radix_to_str(std::uint8_t radix) {
+    switch (radix) {
+    case 2:
+        return "binary";
+    case 8:
+        return "octal";
+    case 10:
+        return "decimal";
+    case 16:
+        return "hexadecimal";
+    default:
+        assert(false);
+    }
+}
 
 // Max unsigned number that can be safely multiplied by radix
 constexpr std::uint64_t radix_threshold(std::uint8_t radix) {
@@ -45,7 +42,7 @@ constexpr std::uint64_t radix_threshold_rem(std::uint8_t radix) {
 
 // NOTE: numeric literals cannot have a sign
 // TODO: implement exp notation
-std::pair<Number, ParseNumStatus> parse_num_str(const std::string_view str) {
+Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     assert(str.size() > 0);
     assert(is_digit(str[0])); // guaranteed by lexer
     Number number{};
@@ -60,15 +57,25 @@ std::pair<Number, ParseNumStatus> parse_num_str(const std::string_view str) {
         case 'b':
             number.radix = 2;
             cur += 2;
-            if (cur == str.size() || !is_digit(str[cur]))
-                return {number, {ParseNumStatus::Incomplete, cur}};
+            // are there any digits after prefix?
+            if (cur == str.size() || !is_digit(str[cur])) {
+                diag.emit(
+                    diag::Error, loc_id, str.size(),
+                    "incomplete binary number");
+                return number;
+            }
             break;
         case 'X':
         case 'x':
             number.radix = 16;
             cur += 2;
-            if (cur == str.size() || !is_xdigit(str[cur]))
-                return {number, {ParseNumStatus::Incomplete, cur}};
+            // are there any hex digits after prefix?
+            if (cur == str.size() || !is_xdigit(str[cur])) {
+                diag.emit(
+                    diag::Error, loc_id, str.size(),
+                    "incomplete hexadecimal number");
+                return number;
+            }
             break;
         default:
             // NOTE: leave single '0' decimal
@@ -92,8 +99,13 @@ std::pair<Number, ParseNumStatus> parse_num_str(const std::string_view str) {
         if (dv == NotDigit)
             break;
         // is valid for radix?
-        if (dv + 1 > number.radix)
-            return {number, {ParseNumStatus::InvalidDigit, cur}};
+        if (dv + 1 > number.radix) {
+            diag.emit(
+                diag::Error, loc_id, cur, 1,
+                std::string("invalid digit in ") + radix_to_str(number.radix) +
+                    " number");
+            return number;
+        }
         // already overflown?
         if (number.overflow)
             continue;
@@ -114,7 +126,10 @@ std::pair<Number, ParseNumStatus> parse_num_str(const std::string_view str) {
             ++cur;
         }
         if (cur < str.size()) {
-            return {number, {ParseNumStatus::InvalidSuffix, cur}};
+            diag.emit(
+                diag::Error, loc_id, cur, str.size() - cur,
+                "invalid number suffix");
+            return number;
         }
     }
 
@@ -122,13 +137,16 @@ std::pair<Number, ParseNumStatus> parse_num_str(const std::string_view str) {
     if (number.is_signed) {
         if (value > MaxSigned) {
             number.overflow = true;
+            diag.emit(
+                diag::Error, loc_id, str.size(),
+                "number overflow");
             value = MaxSigned;
         }
         number.value = value;
     } else {
         number.uvalue = value;
     }
-    return {number, {ParseNumStatus::Ok, 0}};
+    return number;
 }
 
 } // namespace ulam::detail

@@ -18,6 +18,13 @@ public:
         std::size_t len,
         const std::string& text);
 
+    void emit(
+        diag::Level lvl,
+        loc_id_t loc_id,
+        int off,
+        std::size_t len,
+        const std::string& text);
+
 private:
     SrcMngr& _sm;
     unsigned _err_num{0};
