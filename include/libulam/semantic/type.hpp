@@ -63,8 +63,6 @@ public:
     Ref<Operator> op(Op op, Ref<Type> rhs_type) override { return {}; } // TODO
 };
 
-class PrimType : public BaseType {};
-
 class _TypeDec : public Type {
 public:
     _TypeDec(type_id_t id, Ref<Type> prev): Type{id}, _prev{prev} {}

@@ -10,7 +10,7 @@ struct Number {
         std::int64_t value{0};
         std::uint64_t uvalue;
     };
-    bool overflow = false;
+    bool overflow{false};
 };
 
 } // namespace ulam
