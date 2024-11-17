@@ -50,15 +50,18 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
     ULAM_AST_NODE
 };
 
-class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named_ {
+class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
     ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
-    ULAM_AST_SIMPLE_ATTR(loc_id_t, name_loc_id)
 public:
-    ClassDef(ClassKind kind, str_id_t name_id, Ptr<ParamList>&& params):
+    ClassDef(
+        ClassKind kind,
+        str_id_t name_id,
+        loc_id_t name_loc_id,
+        Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},
-        Named_{name_id},
+        Named{name_id, name_loc_id},
         _kind{kind} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
@@ -70,60 +73,47 @@ private:
     ClassKind _kind;
 };
 
-class TypeDef : public Tuple<Stmt, TypeName> {
+class TypeDef : public Tuple<Stmt, TypeName>, public Named {
     ULAM_AST_NODE
 public:
-    TypeDef(Ptr<TypeName>&& expr, std::string&& alias):
-        Tuple{std::move(expr)}, _alias{alias} {}
-
-    const std::string& alias() const { return _alias; }
+    TypeDef(Ptr<TypeName>&& expr, str_id_t name_id, loc_id_t name_loc_id):
+        Tuple{std::move(expr)}, Named{name_id, name_loc_id} {}
 
     ULAM_AST_TUPLE_PROP(expr, 0)
-
-private:
-    std::string _alias;
 };
 
-class FunDef : public Tuple<Stmt, Expr, ParamList, Block>, public Named {
+class FunDef : public Tuple<Stmt, TypeName, ParamList, Block>, public Named {
     ULAM_AST_NODE
 public:
     FunDef(
-        std::string&& name,
-        Ptr<Expr>&& ret_type,
+        str_id_t name_id,
+        loc_id_t name_loc_id,
+        Ptr<TypeName>&& ret_type,
         Ptr<ParamList>&& params,
         Ptr<Block>(block)):
         Tuple{std::move(ret_type), std::move(params), std::move(block)},
-        Named{std::move(name)} {}
+        Named{name_id, name_loc_id} {}
 
     ULAM_AST_TUPLE_PROP(ret_type, 0)
     ULAM_AST_TUPLE_PROP(params, 1)
     ULAM_AST_TUPLE_PROP(body, 2)
 };
 
-class VarDef : public Tuple<Node, Expr, Expr>, public Named {
+// TODO: array/reference suffix
+class VarDef : public Tuple<Stmt, Expr>, public Named {
     ULAM_AST_NODE
 public:
-    VarDef(Ref<Expr>&& type_ref, std::string&& name, Ptr<Expr>&& value):
-        Tuple{nullptr, std::move(value)},
-        Named{std::move(name)},
-        _type_ref{type_ref} {}
+    VarDef(str_id_t name_id, loc_id_t name_loc_id, Ptr<Expr>&& value):
+        Tuple{std::move(value)}, Named{name_id, name_loc_id} {}
 
-    VarDef(Ptr<Expr>&& type, std::string name, Ptr<Expr>&& value):
-        Tuple{std::move(type), std::move(value)},
-        Named{std::move(name)},
-        _type_ref{get<0>()} {}
-
-    ULAM_AST_TUPLE_PROP(type, 0);
-    ULAM_AST_TUPLE_PROP(value, 1);
-
-private:
-    Ref<Expr> _type_ref;
+    ULAM_AST_TUPLE_PROP(value, 0);
 };
 
-class VarDefList : public Tuple<List<Stmt, VarDef>, Expr> {
+class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {
     ULAM_AST_NODE
 public:
-    explicit VarDefList(Ptr<Expr>&& base_type): Tuple{std::move(base_type)} {}
+    explicit VarDefList(Ptr<TypeName>&& basic_type):
+        Tuple{std::move(basic_type)} {}
 
     unsigned def_num() const { return List::child_num(); }
 

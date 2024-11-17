@@ -20,12 +20,12 @@ public:
         return {};
     }
 
-    Ref<BaseType> base() override {
+    Ref<BasicType> basic() override {
         assert(false);
         return {};
     };
 
-    Ref<const BaseType> base() const override {
+    Ref<const BasicType> basic() const override {
         assert(false);
         return {};
     }
@@ -44,8 +44,6 @@ public:
         assert(false);
         return {};
     }
-
-    
 };
 
 } // namespace ulam

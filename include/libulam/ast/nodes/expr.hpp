@@ -4,10 +4,11 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/semantic/number.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type_ops.hpp>
+#include <libulam/semantic/value.hpp>
+#include <libulam/src_loc.hpp>
 
 namespace ulam::ast {
 
@@ -17,10 +18,11 @@ class ArgList;
 
 // TODO: types are not expressions
 
-class TypeIdent : public Expr, public Named_ {
+class TypeIdent : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    explicit TypeIdent(str_id_t name_id): Named_{name_id} {}
+    explicit TypeIdent(str_id_t name_id, loc_id_t name_loc_id):
+        Named{name_id, name_loc_id} {}
 };
 
 class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {
@@ -81,7 +83,8 @@ private:
 class Ident : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    explicit Ident(std::string&& name): Named{std::move(name)} {}
+    Ident(str_id_t name_id, loc_id_t name_loc_id):
+        Named{name_id, name_loc_id} {}
 };
 
 class ParenExpr : public Tuple<Expr, Expr> {

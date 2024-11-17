@@ -14,7 +14,9 @@ public:
 #include "libulam/ast/nodes.inc.hpp"
 #undef NODE
 
-    void print(ulam::ast::Ref<ulam::ast::Root> ast, ulam::ast::Ref<ulam::ast::Node> node);
+    void print(
+        ulam::ast::Ref<ulam::ast::Root> ast,
+        ulam::ast::Ref<ulam::ast::Node> node);
     void print(ulam::ast::Ref<ulam::ast::Root> ast);
 
     void paren_l() {
@@ -36,6 +38,9 @@ public:
 
 protected:
     std::ostream& indent();
+    const std::string_view name(ulam::ast::Ref<ulam::ast::Named> node) {
+        return str(node->name_id());
+    }
     const std::string_view str(ulam::str_id_t str_id);
 
     ulam::ast::Ref<ulam::ast::Root> ast() { return _ast; }

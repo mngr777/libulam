@@ -36,7 +36,7 @@ const std::string_view PrinterBase::str(ulam::str_id_t str_id) {
 }
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
-    indent() << "class `" << str(node->name_id()) << "'";
+    indent() << "class `" << name(node) << "'";
     if (node->params())
         accept_me(node->params());
     _os << " {" << nl();
@@ -55,7 +55,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
         auto f = no_ws();
         accept_me(node->expr());
     }
-    _os << " " << node->alias() << ";" << nl();
+    _os << " " << name(node) << ";" << nl();
     return false;
 }
 
@@ -77,7 +77,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::VarDefList> node) {
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::VarDef> node) {
     // no indent
-    _os << node->name();
+    _os << name(node);
     auto value = node->value();
     if (value) {
         _os << " = ";
@@ -91,7 +91,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
     {
         auto f = no_ws();
         accept_me(node->ret_type());
-        _os << " " << node->name();
+        _os << " " << name(node);
         accept_me(node->params());
     }
     _os << nl();
@@ -115,7 +115,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
     // no indent
     auto f = no_ws();
     accept_me(node->type());
-    _os << " " << node->name();
+    _os << " " << name(node);
     if (node->default_value()) {
         _os << " = ";
         accept_me(node->default_value());
@@ -197,7 +197,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) {
         auto f = no_ws();
         accept_me(node->obj());
     }
-    _os << "." << node->mem_name();
+    _os << "." << name(node->ident());
     paren_r();
     _os << nl();
     return false;
@@ -281,13 +281,13 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeIdent> node) {
     // no indent
-    _os << str(node->name_id());
+    _os << name(node);
     return false;
 }
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::Ident> node) {
     indent();
-    _os << node->name() << nl();
+    _os << name(node) << nl();
     return false;
 }
 

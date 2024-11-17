@@ -1,11 +1,11 @@
 #pragma once
+#include <filesystem>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/str_pool.hpp>
 #include <libulam/token.hpp>
-#include <filesystem>
 #include <string>
 
 namespace ulam {
@@ -43,9 +43,13 @@ private:
     void parse_class_def_body(ast::Ref<ast::ClassDef> node);
     ast::Ptr<ast::TypeDef> parse_type_def();
     ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
-        ast::Ptr<ast::Expr>&& base_type, std::string&& first_name);
-    ast::Ptr<ast::FunDef>
-    parse_fun_def_rest(ast::Ptr<ast::Expr>&& ret_type, std::string&& name_);
+        ast::Ptr<ast::TypeName>&& base_type,
+        str_id_t first_name_id,
+        loc_id_t first_name_loc_id);
+    ast::Ptr<ast::FunDef> parse_fun_def_rest(
+        ast::Ptr<ast::TypeName>&& ret_type,
+        str_id_t name_id,
+        loc_id_t name_loc_id);
     ast::Ptr<ast::ParamList> parse_param_list();
     ast::Ptr<ast::Param> parse_param();
 

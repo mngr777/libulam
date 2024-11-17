@@ -131,27 +131,18 @@ public:
     ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
 };
 
-// "Named" trait (TMP)
-
+// Named node trait
 class Named {
 public:
-    Named(std::string&& name): _name{std::move(name)} {}
-
-    const std::string& name() const { return _name; }
-
-private:
-    std::string _name;
-};
-
-// TODO: replace Named
-class Named_ {
-public:
-    Named_(str_id_t name_id): _name_id{name_id} {}
+    Named(str_id_t name_id, loc_id_t name_loc_id):
+        _name_id{name_id}, _name_loc_id{name_loc_id} {}
 
     str_id_t name_id() const { return _name_id; }
+    loc_id_t name_loc_id() const { return _name_loc_id; }
 
 private:
     str_id_t _name_id;
+    loc_id_t _name_loc_id;
 };
 
 // Tuple
