@@ -2,25 +2,22 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/semantic/type.hpp>
-#include <string>
-#include <unordered_map>
 
 namespace ulam {
 
+class Diag;
+class TypeIdGen;
+
 class TypeTpl {
 public:
-    TypeTpl(ast::Ref<ast::ParamList> params): _params{params} {}
+    TypeTpl(type_id_t id): _id{id} {}
 
-    Ref<Type> inst(type_id_t type_id, ast::Ref<ast::ArgList> args);
+    virtual Ref<Type> type(Diag& diag, TypeIdGen& type_id_gen, ast::Ref<ast::ArgList> args) = 0;
 
-    auto params() { return _params; }
-
-protected:
-    virtual Ptr<Type> make(type_id_t type_id, ast::Ref<ast::ArgList> args) = 0;
+    type_id_t id() const { return _id; }
 
 private:
-    ast::Ref<ast::ParamList> _params;
-    std::unordered_map<std::string, Ptr<Type>> _types;
+    type_id_t _id;
 };
 
 } // namespace ulam

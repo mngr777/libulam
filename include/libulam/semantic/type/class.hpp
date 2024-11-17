@@ -7,7 +7,7 @@ class ClassDef;
 
 namespace ulam {
 
-class Class : public BaseType {
+class Class : public BasicType {
 public:
     explicit Class(type_id_t id, Ref<ast::ClassDef> node);
     ~Class();

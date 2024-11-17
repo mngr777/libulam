@@ -35,6 +35,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/ph_type.hpp \
 	include/libulam/semantic/type.hpp \
 	include/libulam/semantic/type_ops.hpp \
+	include/libulam/semantic/type_tpl.hpp \
 	include/libulam/semantic/value.hpp \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/object.hpp \

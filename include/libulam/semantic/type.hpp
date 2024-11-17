@@ -15,7 +15,7 @@ constexpr array_size_t UnkArraySize = -1;
 class Operator {};
 
 class ArrayType;
-class BaseType;
+class BasicType;
 class RefType;
 
 class Type {
@@ -30,8 +30,8 @@ public:
     virtual Ref<Type> prev() = 0;
     virtual Ref<const Type> prev() const = 0;
 
-    virtual Ref<BaseType> base() = 0;
-    virtual Ref<const BaseType> base() const = 0;
+    virtual Ref<BasicType> basic() = 0;
+    virtual Ref<const BasicType> basic() const = 0;
 
     bool is_array() const { return array_size() != 0; }
     virtual array_size_t array_size() const { return 0; }
@@ -48,17 +48,17 @@ private:
     type_id_t _id{};
 };
 
-class BaseType : public Type {
+class BasicType : public Type {
 public:
-    explicit BaseType(type_id_t id): Type{id} {}
+    explicit BasicType(type_id_t id): Type{id} {}
 
     void add_op();
 
     Ref<Type> prev() override { return this; }
     Ref<const Type> prev() const override { return this; }
 
-    Ref<BaseType> base() override { return this; }
-    Ref<const BaseType> base() const override { return this; }
+    Ref<BasicType> basic() override { return this; }
+    Ref<const BasicType> basic() const override { return this; }
 
     Ref<Operator> op(Op op, Ref<Type> rhs_type) override { return {}; } // TODO
 };
@@ -71,8 +71,8 @@ public:
     Ref<Type> prev() override { return _prev; }
     Ref<const Type> prev() const override { return _prev; }
 
-    Ref<BaseType> base() override { return _prev->base(); }
-    Ref<const BaseType> base() const override { return _prev->base(); }
+    Ref<BasicType> basic() override { return _prev->basic(); }
+    Ref<const BasicType> basic() const override { return _prev->basic(); }
 
     array_size_t array_size() const override { return _prev->array_size(); }
 
