@@ -45,6 +45,14 @@ public:
         return _symbols.set(name_id, std::move(value));
     }
 
+    void set_placeholder(str_id_t name_id) {
+        _symbols.set_placeholder(name_id);
+    }
+
+    void unset_placeholders() {
+        _symbols.unset_placeholders();
+    }
+
     Flag flags() { return _flags; }
 
 private:

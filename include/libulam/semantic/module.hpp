@@ -1,9 +1,9 @@
 #pragma once
-#include "libulam/ast/nodes/module.hpp"
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/export_import.hpp>
-#include <list>
+#include <libulam/str_pool.hpp>
+#include <unordered_map>
 
 namespace ulam::ast {
 class ModuleDef;
@@ -22,18 +22,18 @@ public:
     auto& exports() { return _exports; }
     const auto& exports() const { return _exports; }
 
-    void add_export(Export&& exp) { _exports.push_back(std::move(exp)); }
+    void add_export(ast::Ref<ast::ClassDef> node);
 
     auto& imports() { return _imports; }
     const auto& imports() const { return _imports; }
 
-    void add_import(Import&& imp) { _imports.push_back(std::move(imp)); }
+    void add_import(ast::Ref<ast::TypeSpec> node);
 
 private:
     ast::Ref<ast::ModuleDef> _node;
     Ptr<Scope> _scope;
-    std::list<Export> _exports;
-    std::list<Import> _imports;
+    std::unordered_map<str_id_t, Export> _exports;
+    std::unordered_map<str_id_t, Import> _imports;
 };
 
 } // namespace ulam

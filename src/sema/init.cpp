@@ -1,26 +1,31 @@
+#include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/init.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/ph_type.hpp>
-#include <utility>
 
 namespace ulam::sema {
 
 bool Init::do_visit(ast::Ref<ast::TypeDef> node) {
-    // auto type_spec = node->type()->first();
-    auto alias_id = node->name().str_id();
-
-    auto alias_type = make<PhType>(program()->next_type_id());
-    scope()->set(alias_id, std::move(alias_type));
-
+    auto alias_str_id = node->name().str_id();
+    if (scope()->has(alias_str_id, true)) {
+        // TODO: after types are resolved, report error if types don't match
+        return false;
+    }
+    scope()->set_placeholder(alias_str_id);
     return true;
 }
 
 bool Init::do_visit(ast::Ref<ast::TypeSpec> node) {
-    // TODO
-    return true;
+    if (!node->is_builtin())
+        return true;
+    assert(module_def()->module());
+    auto str_id = node->ident()->name().str_id();
+    if (!scope()->has(str_id, Scope::Module))
+        module_def()->module()->add_import(node);
+    return false;
 }
 
 } // namespace ulam::sema
