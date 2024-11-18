@@ -6,10 +6,10 @@
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
+#include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/str_pool.hpp>
-#include <string>
 #include <utility>
 
 namespace ulam {
@@ -53,15 +53,10 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
 class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
-    ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
 public:
-    ClassDef(
-        ClassKind kind,
-        str_id_t name_id,
-        loc_id_t name_loc_id,
-        Ptr<ParamList>&& params):
+    ClassDef(ClassKind kind, ast::Str name, Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},
-        Named{name_id, name_loc_id},
+        Named{name},
         _kind{kind} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
@@ -76,8 +71,8 @@ private:
 class TypeDef : public Tuple<Stmt, TypeName>, public Named {
     ULAM_AST_NODE
 public:
-    TypeDef(Ptr<TypeName>&& expr, str_id_t name_id, loc_id_t name_loc_id):
-        Tuple{std::move(expr)}, Named{name_id, name_loc_id} {}
+    TypeDef(Ptr<TypeName>&& expr, Str name):
+        Tuple{std::move(expr)}, Named{name} {}
 
     ULAM_AST_TUPLE_PROP(expr, 0)
 };
@@ -86,13 +81,12 @@ class FunDef : public Tuple<Stmt, TypeName, ParamList, Block>, public Named {
     ULAM_AST_NODE
 public:
     FunDef(
-        str_id_t name_id,
-        loc_id_t name_loc_id,
+        Str name,
         Ptr<TypeName>&& ret_type,
         Ptr<ParamList>&& params,
         Ptr<Block>(block)):
         Tuple{std::move(ret_type), std::move(params), std::move(block)},
-        Named{name_id, name_loc_id} {}
+        Named{name} {}
 
     ULAM_AST_TUPLE_PROP(ret_type, 0)
     ULAM_AST_TUPLE_PROP(params, 1)
@@ -103,8 +97,7 @@ public:
 class VarDef : public Tuple<Stmt, Expr>, public Named {
     ULAM_AST_NODE
 public:
-    VarDef(str_id_t name_id, loc_id_t name_loc_id, Ptr<Expr>&& value):
-        Tuple{std::move(value)}, Named{name_id, name_loc_id} {}
+    VarDef(Str name, Ptr<Expr>&& value): Tuple{std::move(value)}, Named{name} {}
 
     ULAM_AST_TUPLE_PROP(value, 0);
 };

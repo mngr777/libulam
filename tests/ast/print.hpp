@@ -39,7 +39,7 @@ public:
 protected:
     std::ostream& indent();
     const std::string_view name(ulam::ast::Ref<ulam::ast::Named> node) {
-        return str(node->name_id());
+        return str(node->name().str_id());
     }
     const std::string_view str(ulam::str_id_t str_id);
 

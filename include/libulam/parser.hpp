@@ -6,7 +6,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/str_pool.hpp>
 #include <libulam/token.hpp>
-#include <string>
+#include <string_view>
 
 namespace ulam {
 
@@ -42,14 +42,10 @@ private:
     ast::Ptr<ast::ClassDef> parse_class_def_head();
     void parse_class_def_body(ast::Ref<ast::ClassDef> node);
     ast::Ptr<ast::TypeDef> parse_type_def();
-    ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
-        ast::Ptr<ast::TypeName>&& base_type,
-        str_id_t first_name_id,
-        loc_id_t first_name_loc_id);
-    ast::Ptr<ast::FunDef> parse_fun_def_rest(
-        ast::Ptr<ast::TypeName>&& ret_type,
-        str_id_t name_id,
-        loc_id_t name_loc_id);
+    ast::Ptr<ast::VarDefList>
+    parse_var_def_list_rest(ast::Ptr<ast::TypeName>&& base_type, ast::Str first_name);
+    ast::Ptr<ast::FunDef>
+    parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name);
     ast::Ptr<ast::ParamList> parse_param_list();
     ast::Ptr<ast::Param> parse_param();
 
@@ -80,8 +76,8 @@ private:
 
     template <typename N, typename... Args> ast::Ptr<N> tree(Args&&... args);
 
-    // TODO: return string_view
-    std::string tok_str();
+    std::string_view tok_str();
+    ast::Str tok_ast_str();
     str_id_t tok_str_id();
 
     Context& _ctx;

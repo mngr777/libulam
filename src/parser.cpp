@@ -117,20 +117,16 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     auto loc_id = _tok.loc_id;
     consume();
     // name
-    str_id_t name_id{};
-    auto name_loc_id = NoLocId;
-    if (match(tok::TypeIdent)) {
-        name_id = tok_str_id();
-        name_loc_id = _tok.loc_id;
-    }
+    ast::Str name;
+    if (match(tok::TypeIdent))
+        name = tok_ast_str();
     consume();
     // params
     ast::Ptr<ast::ParamList> params{};
     if (_tok.is(tok::ParenL))
         params = parse_param_list();
     // TODO: ancestors
-    auto node =
-        tree<ast::ClassDef>(kind, name_id, name_loc_id, std::move(params));
+    auto node = tree<ast::ClassDef>(kind, name, std::move(params));
     node->set_loc_id(loc_id);
     return node;
 }
@@ -161,17 +157,14 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
                 consume_if(tok::Semicol);
                 break;
             }
-            auto name_id = tok_str_id();
-            auto name_loc_id = _tok.loc_id;
+            auto name = tok_ast_str();
             consume();
             if (_tok.is(tok::ParenL)) {
-                auto fun =
-                    parse_fun_def_rest(std::move(type), name_id, name_loc_id);
+                auto fun = parse_fun_def_rest(std::move(type), name);
                 if (fun)
                     node->body()->add(std::move(fun));
             } else {
-                auto vars = parse_var_def_list_rest(
-                    std::move(type), name_id, name_loc_id);
+                auto vars = parse_var_def_list_rest(std::move(type), name);
                 if (vars)
                     node->body()->add(std::move(vars));
             }
@@ -200,22 +193,18 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
         panic(tok::Semicol, tok::BraceL, tok::BraceR);
         return {};
     }
-    auto name_id = tok_str_id();
-    auto name_loc_id = _tok.loc_id;
+    auto name = tok_ast_str();
     consume();
     // ;
     expect(tok::Semicol);
-    return tree<ast::TypeDef>(std::move(type), name_id, name_loc_id);
+    return tree<ast::TypeDef>(std::move(type), name);
 }
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
-    ast::Ptr<ast::TypeName>&& base_type,
-    str_id_t first_name_id,
-    loc_id_t first_name_loc_id) {
+    ast::Ptr<ast::TypeName>&& base_type, ast::Str first_name) {
     auto node = tree<ast::VarDefList>(std::move(base_type));
     // first ident
-    str_id_t name_id{first_name_id};
-    loc_id_t name_loc_id{first_name_loc_id};
+    auto name = first_name;
     while (true) {
         // value
         ast::Ptr<ast::Expr> expr;
@@ -224,7 +213,7 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
             expr = parse_expr();
         }
         // add var
-        node->add(tree<ast::VarDef>(name_id, name_loc_id, std::move(expr)));
+        node->add(tree<ast::VarDef>(name, std::move(expr)));
         // end of list?
         if (_tok.in(tok::Semicol, tok::Eof))
             break;
@@ -241,8 +230,7 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
             consume_if(tok::Semicol);
             break;
         }
-        name_id = tok_str_id();
-        name_loc_id = _tok.loc_id;
+        name = tok_ast_str();
         consume();
     }
     // ;
@@ -250,10 +238,8 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     return node;
 }
 
-ast::Ptr<ast::FunDef> Parser::parse_fun_def_rest(
-    ast::Ptr<ast::TypeName>&& ret_type,
-    str_id_t name_id,
-    loc_id_t name_loc_id) {
+ast::Ptr<ast::FunDef>
+Parser::parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name) {
     assert(_tok.type == tok::ParenL);
     // params
     auto params = parse_param_list();
@@ -267,8 +253,7 @@ ast::Ptr<ast::FunDef> Parser::parse_fun_def_rest(
         return {};
     }
     return tree<ast::FunDef>(
-        name_id, name_loc_id, std::move(ret_type), std::move(params),
-        std::move(block));
+        name, std::move(ret_type), std::move(params), std::move(block));
 }
 
 ast::Ptr<ast::Block> Parser::parse_block() {
@@ -288,11 +273,9 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
         if (_tok.is(tok::Period)) {
             return parse_type_op_rest(std::move(type));
         } else if (_tok.is(tok::Ident)) {
-            auto first_name_id = tok_str_id();
-            auto first_name_loc_id = _tok.loc_id;
+            auto first_name = tok_ast_str();
             consume();
-            return parse_var_def_list_rest(
-                std::move(type), first_name_id, first_name_loc_id);
+            return parse_var_def_list_rest(std::move(type), first_name);
         } else {
             unexpected();
         }
@@ -406,8 +389,7 @@ ast::Ptr<ast::Param> Parser::parse_param() {
             return {};
     }
     // name
-    auto name_id = tok_str_id();
-    auto name_loc_id = _tok.loc_id;
+    auto name = tok_ast_str();
     consume();
     // value
     ast::Ptr<ast::Expr> default_value{};
@@ -415,8 +397,7 @@ ast::Ptr<ast::Param> Parser::parse_param() {
         consume();
         default_value = parse_expr();
     }
-    return tree<ast::Param>(
-        name_id, name_loc_id, std::move(type), std::move(default_value));
+    return tree<ast::Param>(name, std::move(type), std::move(default_value));
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr() { return parse_expr_climb(0); }
@@ -601,14 +582,14 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
 
 ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     assert(_tok.is(tok::TypeIdent));
-    auto node = tree<ast::TypeIdent>(tok_str_id(), _tok.loc_id);
+    auto node = tree<ast::TypeIdent>(tok_ast_str());
     consume();
     return node;
 }
 
 ast::Ptr<ast::Ident> Parser::parse_ident() {
     assert(_tok.is(tok::Ident));
-    auto node = tree<ast::Ident>(tok_str_id(), _tok.loc_id);
+    auto node = tree<ast::Ident>(tok_ast_str());
     consume();
     return node;
 }
@@ -638,9 +619,14 @@ ast::Ptr<N> Parser::tree(Args&&... args) {
     return ast::make<N>(std::forward<Args>(args)...);
 }
 
-std::string Parser::tok_str() {
-    // assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
-    return std::string(_ctx.sm().str_at(_tok.loc_id, _tok.size));
+std::string_view Parser::tok_str() {
+    assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
+    return _ctx.sm().str_at(_tok.loc_id, _tok.size);
+}
+
+ast::Str Parser::tok_ast_str() {
+    assert(_tok.in(tok::Ident, tok::TypeIdent));
+    return {tok_str_id(), _tok.loc_id};
 }
 
 str_id_t Parser::tok_str_id() {

@@ -16,6 +16,7 @@ public:
 
 private:
     std::set<str_id_t> _imports;
+    std::set<str_id_t> _exports;
 };
 
 } // namespace ulam::sema

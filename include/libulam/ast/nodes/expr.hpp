@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <libulam/ast/str.hpp>
 #include <libulam/semantic/number.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type.hpp>
@@ -21,8 +22,7 @@ class ArgList;
 class TypeIdent : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    explicit TypeIdent(str_id_t name_id, loc_id_t name_loc_id):
-        Named{name_id, name_loc_id} {}
+    explicit TypeIdent(Str name): Named{name} {}
 };
 
 class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {
@@ -83,8 +83,7 @@ private:
 class Ident : public Expr, public Named {
     ULAM_AST_NODE
 public:
-    Ident(str_id_t name_id, loc_id_t name_loc_id):
-        Named{name_id, name_loc_id} {}
+    Ident(Str name): Named{name} {}
 };
 
 class ParenExpr : public Tuple<Expr, Expr> {

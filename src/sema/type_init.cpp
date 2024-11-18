@@ -9,10 +9,10 @@
 namespace ulam::sema {
 
 bool TypeInit::do_visit(ast::Ref<ast::TypeDef> node) {
-    auto name_id = node->name_id();
+    auto name_id = node->name().str_id();
     if (scope()->has(name_id, true)) {
         diag().emit(
-            diag::Error, node->name_loc_id(), str(name_id).size(),
+            diag::Error, node->name().loc_id(), str(name_id).size(),
             "type already defined");
         return false; // do not search for aliased type then
     }

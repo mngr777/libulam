@@ -29,14 +29,14 @@ bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
     // make class
     if (!node->type()) {
         // make
-        auto name_id = node->name_id();
+        auto name_id = node->name().str_id();
         auto type = ulam::make<Class>(program()->next_type_id(), node);
         auto type_ref = ref(type);
         // add to module scope
         if (scope()->has(name_id, Scope::Module)) {
             // TODO: already defined where?
             diag().emit(
-                diag::Error, node->name_loc_id(), str(name_id).size(),
+                diag::Error, node->name().loc_id(), str(name_id).size(),
                 "already defined");
             return false;
         }

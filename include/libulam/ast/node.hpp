@@ -1,11 +1,11 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/ptr.hpp>
+#include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
-#include <string>
 #include <tuple>
 #include <utility>
 #include <variant>
@@ -24,14 +24,14 @@ private:
         return replace<index>(std::move(repl));                                \
     }
 
-#define ULAM_AST_SIMPLE_ATTR(type, name)                                       \
+#define ULAM_AST_SIMPLE_ATTR(type, name, init)                                 \
 public:                                                                        \
     type name() { return _attr_##name; }                                       \
     type name() const { return _attr_##name; }                                 \
     void set_##name(type value) { _attr_##name = value; }                      \
                                                                                \
 private:                                                                       \
-    type _attr_##name{};
+    type _attr_##name{init};
 
 #define ULAM_AST_REF_ATTR(type, name)                                          \
 public:                                                                        \
@@ -118,6 +118,7 @@ template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
 // Node base
 
 class Node {
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id, NoLocId)
 public:
     virtual ~Node();
 
@@ -127,22 +128,13 @@ public:
 
     virtual Ref<Node> child(unsigned n) { return nullptr; }
     virtual const Ref<Node> child(unsigned n) const { return nullptr; }
-
-    ULAM_AST_SIMPLE_ATTR(loc_id_t, loc_id)
 };
 
 // Named node trait
 class Named {
+    ULAM_AST_SIMPLE_ATTR(Str, name, Str{})
 public:
-    Named(str_id_t name_id, loc_id_t name_loc_id):
-        _name_id{name_id}, _name_loc_id{name_loc_id} {}
-
-    str_id_t name_id() const { return _name_id; }
-    loc_id_t name_loc_id() const { return _name_loc_id; }
-
-private:
-    str_id_t _name_id;
-    loc_id_t _name_loc_id;
+    Named(Str name): _attr_name{name} {}
 };
 
 // Tuple
