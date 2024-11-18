@@ -7,17 +7,16 @@
 
 namespace ulam::sema {
 
-class ExportImport : public sema::RecVisitor {
+class Init : public sema::RecVisitor {
 public:
-    explicit ExportImport(Sema& sema, ast::Ref<ast::Root> ast):
-        RecVisitor{sema, ast} {}
+    explicit Init(Diag& diag, ast::Ref<ast::Root> ast):
+        RecVisitor{diag, ast} {}
 
     bool do_visit(ast::Ref<ast::TypeDef> node) override;
     bool do_visit(ast::Ref<ast::TypeSpec> node) override;
 
 private:
     std::unordered_map<str_id_t, Export> _exports;
-    std::unordered_map<str_id_t, Import> _maybe_imports;
     std::unordered_map<str_id_t, Import> _imports;
 };
 

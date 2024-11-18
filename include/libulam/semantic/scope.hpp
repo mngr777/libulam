@@ -12,6 +12,7 @@ public:
     static constexpr Flag Program = 1;
     static constexpr Flag Module = 1 << 1;
     static constexpr Flag Class = 1 << 2;
+    static constexpr Flag Fun = 1 << 3;
 
     explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}

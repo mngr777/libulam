@@ -91,17 +91,19 @@ template <typename N, typename... Ns> bool is(const Variant<Ns...>& v) {
 
 // ref to node
 template <typename N, typename... Ns> auto as_ref(Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Ref<N> { return ref(ptr); }, v);
+    assert(std::holds_alternative<Ptr<N>>(v));
+    return ref(std::get<Ptr<N>>(v));
 }
 template <typename N, typename... Ns> auto as_ref(const Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> const Ref<N> { return ref(ptr); }, v);
+    assert(std::holds_alternative<Ptr<N>>(v));
+    return ref(std::get<Ptr<N>>(v));
 }
 
-// to node ptr
-template <typename N, typename... Ns> auto get(Variant<Ns...>&& v) {
+// move node ptr
+template <typename N, typename... Ns> auto move_as(Variant<Ns...>&& v) {
     return std::visit([](auto&& ptr) -> Ptr<N> { return ptr; }, std::move(v));
 }
-template <typename N, typename... Ns> auto get(const Variant<Ns...>&& v) {
+template <typename N, typename... Ns> auto move_as(const Variant<Ns...>&& v) {
     return std::visit([](auto&& ptr) -> Ptr<N> { return ptr; }, std::move(v));
 }
 
@@ -109,10 +111,10 @@ class Node;
 
 // ref to node base
 template <typename... Ns> auto as_node_ref(Variant<Ns...>& v) {
-    return as_ref<Node>(v);
+    return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
 }
 template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
-    return as_ref<Node>(v);
+    return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
 }
 
 // Node base

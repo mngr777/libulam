@@ -54,12 +54,12 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
-	include/libulam/sema/export_import.hpp \
+	include/libulam/sema/init.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
-	src/sema/export_import.cpp \
+	src/sema/init.cpp \
 	src/sema/visitor.cpp
 
 # Library
