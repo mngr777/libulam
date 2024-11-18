@@ -1,6 +1,6 @@
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/sema/type_init.hpp>
+#include <libulam/sema/export_import.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/ph_type.hpp>
@@ -8,7 +8,7 @@
 
 namespace ulam::sema {
 
-bool TypeInit::do_visit(ast::Ref<ast::TypeDef> node) {
+bool ExportImport::do_visit(ast::Ref<ast::TypeDef> node) {
     auto name_id = node->name().str_id();
     if (scope()->has(name_id, true)) {
         diag().emit(
@@ -21,7 +21,7 @@ bool TypeInit::do_visit(ast::Ref<ast::TypeDef> node) {
     return true;
 }
 
-bool TypeInit::do_visit(ast::Ref<ast::TypeSpec> node) {
+bool ExportImport::do_visit(ast::Ref<ast::TypeSpec> node) {
     // TODO
     return true;
 }

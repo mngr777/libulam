@@ -1,6 +1,6 @@
 #include <cassert>
 #include <libulam/sema.hpp>
-#include <libulam/sema/type_init.hpp>
+#include <libulam/sema/export_import.hpp>
 #include <libulam/semantic/program.hpp>
 
 namespace ulam {
@@ -13,8 +13,8 @@ void Sema::analyze(ast::Ref<ast::Root> ast) {
     reset();
     if (!ast->program())
         ast->set_program(make<Program>());
-    sema::TypeInit type_init{*this, ast};
-    type_init.visit(ast);
+    sema::ExportImport export_import{*this, ast};
+    export_import.visit(ast);
 }
 
 void Sema::reset() {

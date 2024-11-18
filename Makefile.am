@@ -42,6 +42,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
+	src/semantic/export_import.hpp \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \
 	src/semantic/type/class_kind.cpp \
@@ -53,12 +54,12 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
-	include/libulam/sema/type_init.hpp \
+	include/libulam/sema/export_import.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
-	src/sema/type_init.cpp \
+	src/sema/export_import.cpp \
 	src/sema/visitor.cpp
 
 # Library
