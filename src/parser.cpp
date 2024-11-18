@@ -1,4 +1,5 @@
 #include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/module.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
@@ -246,23 +247,23 @@ Parser::parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name) {
     if (!params)
         panic(tok::BraceL, tok::BraceR, tok::Semicol);
     // body
-    auto block = parse_block();
-    if (!block) {
-        panic(tok::BraceL, tok::BraceR, tok::Semicol);
-        consume_if(tok::Semicol);
-        return {};
-    }
+    auto body = ast::make<ast::FunDefBody>();
+    parse_as_block(ast::ref(body));
     return tree<ast::FunDef>(
-        name, std::move(ret_type), std::move(params), std::move(block));
+        name, std::move(ret_type), std::move(params), std::move(body));
 }
 
 ast::Ptr<ast::Block> Parser::parse_block() {
     auto node = tree<ast::Block>();
+    parse_as_block(ast::ref(node));
+    return node;
+}
+
+void Parser::parse_as_block(ast::Ref<ast::Block> node) {
     expect(tok::BraceL);
     while (!_tok.in(tok::BraceR, tok::Eof))
         node->add(parse_stmt());
     expect(tok::BraceR);
-    return node;
 }
 
 ast::Ptr<ast::Stmt> Parser::parse_stmt() {

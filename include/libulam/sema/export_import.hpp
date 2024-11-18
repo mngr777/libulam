@@ -1,8 +1,9 @@
 #pragma once
-#include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast.hpp>
+#include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/visitor.hpp>
-#include <set>
+#include <libulam/semantic/export_import.hpp>
+#include <unordered_map>
 
 namespace ulam::sema {
 
@@ -15,8 +16,9 @@ public:
     bool do_visit(ast::Ref<ast::TypeSpec> node) override;
 
 private:
-    std::set<str_id_t> _imports;
-    std::set<str_id_t> _exports;
+    std::unordered_map<str_id_t, Export> _exports;
+    std::unordered_map<str_id_t, Import> _maybe_imports;
+    std::unordered_map<str_id_t, Import> _imports;
 };
 
 } // namespace ulam::sema

@@ -71,21 +71,25 @@ private:
 class TypeDef : public Tuple<Stmt, TypeName>, public Named {
     ULAM_AST_NODE
 public:
-    TypeDef(Ptr<TypeName>&& expr, Str name):
-        Tuple{std::move(expr)}, Named{name} {}
+    TypeDef(Ptr<TypeName>&& type, Str name):
+        Tuple{std::move(type)}, Named{name} {}
 
-    ULAM_AST_TUPLE_PROP(expr, 0)
+    ULAM_AST_TUPLE_PROP(type, 0)
 };
 
-class FunDef : public Tuple<Stmt, TypeName, ParamList, Block>, public Named {
+class FunDefBody : public Block {
+    ULAM_AST_NODE
+};
+
+class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>, public Named {
     ULAM_AST_NODE
 public:
     FunDef(
         Str name,
         Ptr<TypeName>&& ret_type,
         Ptr<ParamList>&& params,
-        Ptr<Block>(block)):
-        Tuple{std::move(ret_type), std::move(params), std::move(block)},
+        Ptr<FunDefBody>&& body):
+        Tuple{std::move(ret_type), std::move(params), std::move(body)},
         Named{name} {}
 
     ULAM_AST_TUPLE_PROP(ret_type, 0)

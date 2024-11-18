@@ -50,6 +50,7 @@ private:
     ast::Ptr<ast::Param> parse_param();
 
     ast::Ptr<ast::Block> parse_block();
+    void parse_as_block(ast::Ref<ast::Block> node);
     ast::Ptr<ast::Stmt> parse_stmt();
     ast::Ptr<ast::If> parse_if();
     ast::Ptr<ast::For> parse_for();
