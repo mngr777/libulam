@@ -1,8 +1,8 @@
 #pragma once
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/var.hpp>
-#include <libulam/memory/ptr.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
 
@@ -11,12 +11,12 @@ namespace ulam {
 class Symbol {
 private:
     struct Placeholder {};
+
 public:
     template <typename T>
     Symbol(str_id_t name_id, Ptr<T>&& value):
         _name_id{name_id}, _value{std::move(value)} {}
-    Symbol(str_id_t name_id):
-        Symbol{name_id, Ptr<Placeholder>{}} {};
+    Symbol(str_id_t name_id): Symbol{name_id, Ptr<Placeholder>{}} {};
     ~Symbol();
 
     Symbol(Symbol&& other) = default;
@@ -44,7 +44,7 @@ public:
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         assert(_table.count(name_id) == 0);
-        auto [it, inserted] =
+        auto [it, _] =
             _table.emplace(name_id, Symbol{name_id, std::move(value)});
         return &it->second;
     }

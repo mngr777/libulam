@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
+#include <libulam/ast/ptr.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/str_pool.hpp>
 #include <stack>
@@ -44,10 +45,16 @@ protected:
     void exit_scope();
 
     Diag& diag();
-    Ref<Program> program();
     Ref<Scope> scope();
 
-    ast::Ref<ast::Root> ast() { return _ast; }
+    Ref<Program> program() {
+        assert(_ast->program());
+        return _ast->program();
+    }
+    ast::Ref<ast::Root> ast() {
+        assert(_ast);
+        return _ast;
+    }
     ast::Ref<ast::ModuleDef> module_def() { return _module_def; }
     ast::Ref<ast::ClassDef> class_def() { return _class_def; }
     ast::Ref<ast::FunDef> fun_def() { return _fun_def; }

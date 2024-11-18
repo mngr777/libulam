@@ -11,6 +11,10 @@ public:
     explicit Init(Diag& diag, ast::Ref<ast::Root> ast):
         RecVisitor{diag, ast} {}
 
+    bool visit(ast::Ref<ast::Root> node) override;
+    bool visit(ast::Ref<ast::ModuleDef> node) override;
+    bool visit(ast::Ref<ast::ClassDef> node) override;
+
     bool do_visit(ast::Ref<ast::TypeDef> node) override;
     bool do_visit(ast::Ref<ast::TypeSpec> node) override;
 };

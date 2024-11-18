@@ -7,19 +7,23 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/class.hpp>
 
+// TODO: move object initialization to sema::Init
+
 namespace ulam::sema {
 
 void RecVisitor::analyze() { visit(_ast); }
 
+bool RecVisitor::visit(ast::Ref<ast::Root> node) {
+    assert(node->program());
+    enter_scope(node->program()->scope());
+    return {};
+}
+
+
 bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
-    // make module
-    if (!node->module()) {
-        auto module = ulam::make<Module>(node);
-        auto module_ref = ref(module);
-        program()->add_module(std::move(module));
-        node->set_module(module_ref);
-    }
+    assert(node->module());
     _module_def = node;
+    assert(node->module());
     enter_scope(node->module()->scope());
     if (do_visit(node))
         traverse(node);
@@ -28,34 +32,7 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     return {};
 }
 
-bool RecVisitor::visit(ast::Ref<ast::Root> node) {
-    // make program
-    if (!node->program())
-        node->set_program(ulam::make<Program>(node));
-    enter_scope(node->program()->scope());
-    return {};
-}
-
 bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
-    // make class
-    if (!node->type()) {
-        // make
-        auto name_id = node->name().str_id();
-        auto type = ulam::make<Class>(program()->next_type_id(), node);
-        auto type_ref = ref(type);
-        // add to module scope
-        if (scope()->has(name_id, Scope::Module)) {
-            // TODO: already defined where?
-            diag().emit(
-                diag::Error, node->name().loc_id(), str(name_id).size(),
-                "already defined");
-            return {};
-        }
-        assert(scope()->is(Scope::Module));
-        scope()->set(name_id, std::move(type));
-        // set node attr
-        node->set_type(type_ref);
-    }
     _class_def = node;
     if (do_visit(node))
         traverse(node);
@@ -137,10 +114,5 @@ Ref<Scope> RecVisitor::scope() {
 }
 
 Diag& RecVisitor::diag() { return _diag; }
-
-Ref<Program> RecVisitor::program() {
-    assert(_ast->program());
-    return _ast->program();
-}
 
 } // namespace ulam::sema
