@@ -14,7 +14,7 @@ public:
     static constexpr Flag Class = 1 << 2;
     static constexpr Flag Fun = 1 << 3;
 
-    explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
+    explicit Scope(Scope* parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}
 
     bool is(Flag flags) { return _flags & flags; }
@@ -58,7 +58,7 @@ public:
     Flag flags() { return _flags; }
 
 private:
-    Ref<Scope> _parent;
+    Scope* _parent;
     Flag _flags;
     SymbolTable _symbols;
 };

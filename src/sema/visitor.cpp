@@ -100,24 +100,19 @@ void RecVisitor::traverse(ast::Ref<ast::FunDef> node) {
     _fun_def = {};
 }
 
-void RecVisitor::enter_scope(Ref<Scope> scope) {
-    _scopes.emplace(scope, Ptr<Scope>{});
-}
 
 void RecVisitor::enter_scope(Scope::Flag flags) {
-    auto parent = _scopes.size() ? _scopes.top().first : Ref<Scope>{};
-    auto scope = make<Scope>(parent, flags);
-    auto scope_ref = ref(scope);
-    _scopes.emplace(scope_ref, std::move(scope));
+    auto parent = _scopes.size() ? &_scopes.top() : nullptr;
+    _scopes.emplace(parent, flags);
 }
 
 void RecVisitor::exit_scope() {
     _scopes.pop();
 }
 
-Ref<Scope> RecVisitor::scope() {
+Scope* RecVisitor::scope() {
     assert(!_scopes.empty());
-    return _scopes.top().first;
+    return &_scopes.top();
 }
 
 Diag& RecVisitor::diag() { return _diag; }

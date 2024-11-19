@@ -39,12 +39,11 @@ protected:
     void traverse_class_defs(ast::Ref<ast::ClassDefBody> node);
     void traverse_fun_bodies(ast::Ref<ast::ClassDefBody> node);
 
-    void enter_scope(Ref<Scope> scope);
     void enter_scope(Scope::Flag flags = Scope::NoFlags);
     void exit_scope();
 
     Diag& diag();
-    Ref<Scope> scope();
+    Scope* scope();
 
     Ref<Program> program() {
         assert(_ast->program());
@@ -71,7 +70,7 @@ private:
     ast::Ref<ast::ClassDef> _class_def{};
     ast::Ref<ast::FunDef> _fun_def{};
 
-    std::stack<std::pair<Ref<Scope>, Ptr<Scope>>> _scopes;
+    std::stack<Scope> _scopes;
 };
 
 } // namespace ulam::sema
