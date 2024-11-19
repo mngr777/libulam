@@ -17,6 +17,9 @@ public:
 
     bool do_visit(ast::Ref<ast::TypeDef> node) override;
     bool do_visit(ast::Ref<ast::TypeSpec> node) override;
+
+    void init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node);
+    void init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
 };
 
 } // namespace ulam::sema

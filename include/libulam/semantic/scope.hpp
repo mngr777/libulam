@@ -45,13 +45,15 @@ public:
         return _symbols.set(name_id, std::move(value));
     }
 
+    template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
+        return _symbols.set(name_id, value);
+    }
+
     void set_placeholder(str_id_t name_id) {
         _symbols.set_placeholder(name_id);
     }
 
-    void unset_placeholders() {
-        _symbols.unset_placeholders();
-    }
+    void unset_placeholders() { _symbols.unset_placeholders(); }
 
     Flag flags() { return _flags; }
 

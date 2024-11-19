@@ -32,13 +32,12 @@ protected:
     bool visit(ast::Ref<ast::ClassDefBody> node) override;
     void traverse(ast::Ref<ast::ClassDefBody> node) override;
     bool visit(ast::Ref<ast::FunDef> node) override { assert(false); }
-    void traverse(ast::Ref<ast::FunDef> node) override { assert(false); }
+    void traverse(ast::Ref<ast::FunDef> node) override;
     bool visit(ast::Ref<ast::FunDefBody> node) override;
     // TODO: blocks, loops, ...
 
     void traverse_class_defs(ast::Ref<ast::ClassDefBody> node);
     void traverse_fun_bodies(ast::Ref<ast::ClassDefBody> node);
-    void traverse_fun_body(ast::Ref<ast::FunDef> node);
 
     void enter_scope(Ref<Scope> scope);
     void enter_scope(Scope::Flag flags = Scope::NoFlags);

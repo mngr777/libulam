@@ -1,13 +1,14 @@
 #pragma once
-#include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/export_import.hpp>
+#include <libulam/semantic/import.hpp>
+#include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
 
 namespace ulam::ast {
 class ModuleDef;
-}
+class TypeSpec;
+} // namespace ulam::ast
 
 namespace ulam {
 
@@ -17,12 +18,14 @@ class Module {
 public:
     Module(ast::Ref<ast::ModuleDef> node);
 
-    Ref<Scope> scope() { return ref(_scope); }
+    void export_classes(Scope* scope);
 
-    auto& exports() { return _exports; }
-    const auto& exports() const { return _exports; }
+    auto& classes() { return _classes; }
+    const auto& classes() const { return _classes; }
 
-    void add_export(ast::Ref<ast::ClassDef> node);
+    bool has_class(str_id_t name_id);
+    Ref<Class> get_class(str_id_t name_id);
+    void add_class(Ptr<Class>&& cls);
 
     auto& imports() { return _imports; }
     const auto& imports() const { return _imports; }
@@ -31,8 +34,7 @@ public:
 
 private:
     ast::Ref<ast::ModuleDef> _node;
-    Ptr<Scope> _scope;
-    std::unordered_map<str_id_t, Export> _exports;
+    std::unordered_map<str_id_t, Ptr<Class>> _classes;
     std::unordered_map<str_id_t, Import> _imports;
 };
 

@@ -5,8 +5,7 @@ namespace ulam {
 
 Class::Class(type_id_t id, Ref<ast::ClassDef> node):
     BasicType{id},
-    _node{node},
-    _scope{make<Scope>(Ref<Scope>{}, Scope::Class)} {}
+    _node{node} {}
 
 Class::~Class() {}
 

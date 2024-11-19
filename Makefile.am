@@ -42,7 +42,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
-	src/semantic/export_import.hpp \
+	src/semantic/import.hpp \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \
 	src/semantic/type/class_kind.cpp \

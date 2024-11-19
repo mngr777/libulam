@@ -14,8 +14,6 @@ public:
 
     Ref<ast::ClassDef> node() { return _node; }
 
-    Ref<Scope> scope() { return ref(_scope); }
-
 private:
     Ref<ast::ClassDef> _node;
     Ptr<Scope> _scope;

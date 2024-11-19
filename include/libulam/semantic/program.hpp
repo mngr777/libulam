@@ -21,18 +21,17 @@ private:
 
 class Program {
 public:
-    Program(ast::Ref<ast::Root> ast);
+    Program(ast::Ref<ast::Root> ast): _ast{ast} {}
 
-    void add_module(Ptr<Module>&& module);
-
-    Ref<Scope> scope() { return ref(_scope); }
+    void add_module(Ptr<Module>&& module) {
+        _modules.push_back(std::move(module));
+    }
 
     type_id_t next_type_id() { return _type_id_gen.next(); }
     TypeIdGen& type_id_gen() { return _type_id_gen; }
 
 private:
     ast::Ref<ast::Root> _ast;
-    Ptr<Scope> _scope;
     TypeIdGen _type_id_gen;
     std::list<Ptr<Module>> _modules;
 };

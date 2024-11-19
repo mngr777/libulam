@@ -15,7 +15,10 @@ void RecVisitor::analyze() { visit(_ast); }
 
 bool RecVisitor::visit(ast::Ref<ast::Root> node) {
     assert(node->program());
-    enter_scope(node->program()->scope());
+    enter_scope(Scope::Program);
+    if (do_visit(node))
+        traverse(node);
+    exit_scope();
     return {};
 }
 
@@ -24,7 +27,8 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     assert(node->module());
     _module_def = node;
     assert(node->module());
-    enter_scope(node->module()->scope());
+    enter_scope(Scope::Module);
+    node->module()->export_classes(scope());
     if (do_visit(node))
         traverse(node);
     exit_scope();
@@ -42,7 +46,8 @@ bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
 
 bool RecVisitor::visit(ast::Ref<ast::ClassDefBody> node) {
     assert(_class_def && _class_def->type());
-    enter_scope(_class_def->type()->scope());
+    enter_scope(Scope::Class);
+    // TODO: export?
     if (do_visit(node))
         traverse(node);
     exit_scope();
@@ -69,8 +74,10 @@ void RecVisitor::traverse_class_defs(ast::Ref<ast::ClassDefBody> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (ast::is<ast::FunDef>(child_v)) {
+            // directly visit fun def
             do_visit(ast::as_ref<ast::FunDef>(child_v));
         } else {
+            // continue as usual
             ast::as_node_ref(child_v)->accept(*this);
         }
     }
@@ -80,11 +87,11 @@ void RecVisitor::traverse_fun_bodies(ast::Ref<ast::ClassDefBody> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (ast::is<ast::FunDef>(child_v))
-            traverse_fun_body(ast::as_ref<ast::FunDef>(child_v));
+            traverse(ast::as_ref<ast::FunDef>(child_v));
     }
 }
 
-void RecVisitor::traverse_fun_body(ast::Ref<ast::FunDef> node) {
+void RecVisitor::traverse(ast::Ref<ast::FunDef> node) {
     _fun_def = node;
     enter_scope(Scope::Fun);
     // TODO: add params to scope
