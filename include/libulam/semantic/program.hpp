@@ -23,6 +23,8 @@ class Program {
 public:
     Program(ast::Ref<ast::Root> ast): _ast{ast} {}
 
+    auto& modules() { return _modules; }
+
     void add_module(Ptr<Module>&& module) {
         _modules.push_back(std::move(module));
     }

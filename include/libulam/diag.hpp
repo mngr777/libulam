@@ -12,6 +12,11 @@ class Diag {
 public:
     Diag(SrcMngr& sm): _sm{sm} {}
 
+    // TMP, for when we don't have location yet
+    void emit(
+        diag::Level lvl,
+        const std::string& text);
+
     void emit(
         diag::Level lvl,
         loc_id_t loc_id,

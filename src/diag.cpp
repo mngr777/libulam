@@ -30,6 +30,15 @@ const char* level_prefix(diag::Level lvl) {
 
 } // namespace
 
+// TMP: output to stderr
+void Diag::emit(diag::Level lvl, const std::string& text) {
+    std::cerr << text;
+    if (lvl < diag::Warn)
+        ++_err_num;
+    if (lvl == diag::Fatal || _err_num == MaxErrorNum)
+        std::exit(-1);
+}
+
 void Diag::emit(
     diag::Level lvl,
     loc_id_t loc_id,

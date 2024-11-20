@@ -16,6 +16,8 @@ void RecVisitor::analyze() { visit(_ast); }
 bool RecVisitor::visit(ast::Ref<ast::Root> node) {
     assert(node->program());
     enter_scope(Scope::Program);
+    for (auto& module : node->program()->modules())
+        module->export_symbols(scope());
     if (do_visit(node))
         traverse(node);
     exit_scope();
@@ -28,7 +30,7 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     _module_def = node;
     assert(node->module());
     enter_scope(Scope::Module);
-    node->module()->export_symbols(scope());
+    // node->module()->export_symbols(scope());
     if (do_visit(node))
         traverse(node);
     exit_scope();

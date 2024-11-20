@@ -13,7 +13,7 @@ class Type;
 
 class Fun {
 public:
-    Fun(ast::Ref<ast::FunDef> def, Ref<Type> ret_type) {}
+    Fun(ast::Ref<ast::FunDef> node, Ref<Type> ret_type) {}
 
     Ref<Type> ret_type() { return _ret_type; }
 
@@ -25,12 +25,12 @@ private:
 
 class FunTpl {
 public:
-    FunTpl(ast::Ref<ast::FunDef> def): _def{def} {}
+    FunTpl(ast::Ref<ast::FunDef> node): _node{node} {}
 
-    auto def() { return _def; }
+    auto node() { return _node; }
 
 private:
-    ast::Ref<ast::FunDef> _def;
+    ast::Ref<ast::FunDef> _node;
 };
 
 } // namespace ulam

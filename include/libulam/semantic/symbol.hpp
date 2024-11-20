@@ -76,6 +76,9 @@ public:
     _SymbolTable(_SymbolTable&&) = default;
     _SymbolTable& operator=(_SymbolTable&&) = default;
 
+    auto begin() { return _symbols.begin(); }
+    auto end() { return _symbols.end(); }
+
     template <typename... Ts> void export_symbols(_SymbolTable<Ts...>& other) {
         for (auto& pair : _symbols) {
             auto name_id = pair.first;

@@ -53,6 +53,7 @@ protected:
         assert(_ast);
         return _ast;
     }
+
     ast::Ref<ast::ModuleDef> module_def() { return _module_def; }
     ast::Ref<ast::ClassDef> class_def() { return _class_def; }
     ast::Ref<ast::FunDef> fun_def() { return _fun_def; }

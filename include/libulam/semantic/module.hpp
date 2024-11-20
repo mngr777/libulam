@@ -25,6 +25,9 @@ public:
     Module(Module&&) = default;
     Module& operator=(Module&&) = default;
 
+    auto begin() { return _symbols.begin(); }
+    auto end() { return _symbols.end(); }
+
     void export_symbols(Scope* scope);
 
     Symbol* get(str_id_t name_id) {

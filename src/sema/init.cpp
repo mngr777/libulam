@@ -8,6 +8,8 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/ph_type.hpp>
+#include <set>
+#include <unordered_map>
 
 namespace ulam::sema {
 
@@ -15,7 +17,9 @@ bool Init::visit(ast::Ref<ast::Root> node) {
     assert(!node->program());
     // make program
     node->set_program(ulam::make<Program>(node));
-    return RecVisitor::visit(node);
+    RecVisitor::visit(node);
+    check_module_deps();
+    return false;
 }
 
 bool Init::visit(ast::Ref<ast::ModuleDef> node) {
@@ -87,6 +91,49 @@ void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
         auto cls_ref = ref(cls);
         module->set<Type>(name_id, std::move(cls));
         node->set_type(cls_ref);
+    }
+}
+
+void Init::check_module_deps() {
+    using ModuleSet = std::set<Ref<Module>>;
+    std::unordered_map<str_id_t, ModuleSet> exporting_modules;
+    // collect all exports (with possible duplicates)
+    for (auto& module : program()->modules()) {
+        for (auto& pair : *module) {
+            auto name_id = pair.first;
+            auto it = exporting_modules.find(name_id);
+            if (it == exporting_modules.end()) {
+                exporting_modules.emplace(name_id, ModuleSet{ref(module)});
+            } else {
+                it->second.insert(ref(module));
+            }
+        }
+    }
+    // check for duplicates
+    bool has_dups = false;
+    for (auto& pair : exporting_modules) {
+        auto name_id = pair.first;
+        if (pair.second.size() > 1) {
+            has_dups = true;
+            // TODO: locations, module names
+            diag().emit(
+                diag::Error,
+                std::string(str(name_id)) + " defined in multiple modules");
+        }
+    }
+    if (has_dups)
+        diag().emit(diag::Fatal, "duplicate class definitions");
+    // check for unresolved dependencies
+    for (auto& module : program()->modules()) {
+        for (auto& pair : module->imports()) {
+            auto name_id = pair.first;
+            if (exporting_modules.find(name_id) == exporting_modules.end()) {
+                // TODO: locations, module name
+                diag().emit(
+                    diag::Error, std::string("unresolved dependency ") +
+                                     std::string(str(name_id)));
+            }
+        }
     }
 }
 

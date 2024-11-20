@@ -20,6 +20,8 @@ public:
 
     void init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node);
     void init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
+
+    void check_module_deps();
 };
 
 } // namespace ulam::sema
