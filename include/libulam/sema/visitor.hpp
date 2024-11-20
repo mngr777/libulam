@@ -5,7 +5,6 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/str_pool.hpp>
 #include <stack>
-#include <utility>
 
 namespace ulam {
 class Diag;
