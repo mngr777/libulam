@@ -7,7 +7,6 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
-#include <libulam/semantic/type/ph_type.hpp>
 #include <set>
 #include <unordered_map>
 
