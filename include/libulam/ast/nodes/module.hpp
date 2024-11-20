@@ -14,6 +14,7 @@
 
 namespace ulam {
 class Class;
+class ClassTpl;
 class Module;
 class Program;
 } // namespace ulam
@@ -53,6 +54,7 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
 class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
+    ULAM_AST_REF_ATTR(ClassTpl, type_tpl)
 public:
     ClassDef(ClassKind kind, ast::Str name, Ptr<ParamList>&& params):
         Tuple{std::move(params), make<ClassDefBody>()},

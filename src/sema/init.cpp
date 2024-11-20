@@ -1,10 +1,11 @@
-#include "libulam/sema/visitor.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/init.hpp>
+#include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/ph_type.hpp>
 
@@ -73,10 +74,18 @@ void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
         return;
     }
     // add to module, set node attr
-    auto cls = ulam::make<Class>(program()->next_type_id(), node);
-    auto cls_ref = ref(cls);
-    module->set<Type>(name_id, std::move(cls));
-    node->set_type(cls_ref);
+    if (node->params()) {
+        assert(node->params()->child_num() > 0);
+        auto tpl = ulam::make<ClassTpl>(program()->next_type_id(), node);
+        auto tpl_ref = ref(tpl);
+        module->set<TypeTpl>(name_id, std::move(tpl));
+        node->set_type_tpl(tpl_ref);
+    } else {
+        auto cls = ulam::make<Class>(program()->next_type_id(), node);
+        auto cls_ref = ref(cls);
+        module->set<Type>(name_id, std::move(cls));
+        node->set_type(cls_ref);
+    }
 }
 
 } // namespace ulam::sema

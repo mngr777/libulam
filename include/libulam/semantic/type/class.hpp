@@ -24,7 +24,7 @@ public:
     Class(Class&&) = default;
     Class& operator=(Class&&) = default;
 
-    Ref<ast::ClassDef> node() { return _node; }
+    auto node() { return _node; }
 
 private:
     Ref<ast::ClassDef> _node;
@@ -36,14 +36,20 @@ public:
     using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, FunTpl, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    ClassTpl(type_id_t id): TypeTpl{id} {}
+    ClassTpl(type_id_t id, Ref<ast::ClassDef> node): TypeTpl{id} {}
+
+    ClassTpl(ClassTpl&&) = default;
+    ClassTpl& operator=(ClassTpl&&) = default;
 
     Ref<Type> type(
         Diag& diag,
         TypeIdGen& type_id_gen,
         ast::Ref<ast::ArgList> args) override;
 
+     auto node() { return _node; }
+
 private:
+    Ref<ast::ClassDef> _node;
     SymbolTable _members;
     std::unordered_map<std::string, Ptr<Class>> _types;
 };
