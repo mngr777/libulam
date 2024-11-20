@@ -43,14 +43,16 @@ bool Init::do_visit(ast::Ref<ast::TypeDef> node) {
     return true;
 }
 
-bool Init::do_visit(ast::Ref<ast::TypeSpec> node) {
-    if (!node->is_builtin())
-        return true;
+bool Init::do_visit(ast::Ref<ast::TypeName> node) {
+    assert(node->first());
+    auto spec = node->first();
+    if (!spec->is_builtin())
+        return false;
     // add specs of unseen types to module imports
     assert(module_def()->module());
-    auto str_id = node->ident()->name().str_id();
+    auto str_id = spec->ident()->name().str_id();
     if (!scope()->has(str_id, Scope::Module))
-        module_def()->module()->add_import(node);
+        module_def()->module()->add_import(spec);
     return false;
 }
 

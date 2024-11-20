@@ -1,6 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/stmt.hpp"
-#include <libulam/ast.hpp>
+#include "libulam/ast.hpp"
 #include <ostream>
 
 namespace test::ast {

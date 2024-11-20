@@ -2,6 +2,7 @@
 #include "libulam/ast/traversal.hpp"
 #include "libulam/semantic/ops.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/type/class_kind.hpp"
 #include <string>
 
 namespace test::ast {
@@ -36,7 +37,7 @@ const std::string_view PrinterBase::str(ulam::str_id_t str_id) {
 }
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
-    indent() << "class `" << name(node) << "'";
+    indent() << class_kind_str(node->kind()) << " `" << name(node) << "'";
     if (node->params())
         accept_me(node->params());
     _os << " {" << nl();
@@ -114,7 +115,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
 bool Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
     // no indent
     auto f = no_ws();
-    accept_me(node->type());
+    accept_me(node->type_name());
     _os << " " << name(node);
     if (node->default_value()) {
         _os << " = ";

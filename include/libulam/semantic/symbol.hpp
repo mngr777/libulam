@@ -81,6 +81,7 @@ public:
             auto name_id = pair.first;
             auto& symbol = pair.second;
             symbol.visit([&](auto&& value) {
+                // NOTE: excludes placeholders, ptrs are exported as refs
                 using T = typename std::decay_t<decltype(value)>::Type;
                 if constexpr ((std::is_same_v<T, Ts> || ...))
                     other.set(name_id, value.ref);
