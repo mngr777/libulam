@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/import.hpp>
+#include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
@@ -16,16 +17,24 @@ class Scope;
 
 class Module {
 public:
+    using SymbolTable = _SymbolTable<Type, TypeTpl>;
+    using Symbol = SymbolTable::Symbol;
+
     Module(ast::Ref<ast::ModuleDef> node);
 
-    void export_classes(Scope* scope);
+    Module(Module&&) = default;
+    Module& operator=(Module&&) = default;
 
-    auto& classes() { return _classes; }
-    const auto& classes() const { return _classes; }
+    void export_symbols(Scope* scope);
 
-    bool has_class(str_id_t name_id);
-    Ref<Class> get_class(str_id_t name_id);
-    void add_class(Ptr<Class>&& cls);
+    Symbol* get(str_id_t name_id) {
+        return _symbols.get(name_id);
+    }
+
+    template <typename T>
+    void set(str_id_t name_id, Ptr<T>&& value) {
+        _symbols.set(name_id, std::move(value));
+    }
 
     auto& imports() { return _imports; }
     const auto& imports() const { return _imports; }
@@ -34,7 +43,7 @@ public:
 
 private:
     ast::Ref<ast::ModuleDef> _node;
-    std::unordered_map<str_id_t, Ptr<Class>> _classes;
+    SymbolTable _symbols;
     std::unordered_map<str_id_t, Import> _imports;
 };
 

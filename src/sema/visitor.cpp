@@ -28,7 +28,7 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     _module_def = node;
     assert(node->module());
     enter_scope(Scope::Module);
-    node->module()->export_classes(scope());
+    node->module()->export_symbols(scope());
     if (do_visit(node))
         traverse(node);
     exit_scope();

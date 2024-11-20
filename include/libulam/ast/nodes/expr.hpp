@@ -5,11 +5,15 @@
 #include <libulam/ast/str.hpp>
 #include <libulam/semantic/number.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/src_loc.hpp>
+
+namespace ulam {
+class Type;
+class TypeTpl;
+}
 
 namespace ulam::ast {
 
@@ -27,8 +31,8 @@ public:
 
 class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {
     ULAM_AST_NODE
-    ULAM_AST_LINK_ATTR(Type, base_type)
-    ULAM_AST_LINK_ATTR(Type, type)
+    ULAM_AST_REF_ATTR(TypeTpl, type_tpl)
+    ULAM_AST_REF_ATTR(Type, type)
 public:
     TypeSpec(Ptr<TypeIdent>&& ident, Ptr<ArgList>&& args):
         Tuple{std::move(ident), std::move(args)},

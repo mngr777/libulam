@@ -49,7 +49,6 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
 	src/semantic/program.cpp \
-	src/semantic/symbol.cpp \
 	src/semantic/type.cpp
 
 SEMA_HEADER_FILES = \

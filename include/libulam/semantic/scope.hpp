@@ -7,6 +7,9 @@ namespace ulam {
 
 class Scope {
 public:
+    using SymbolTable = _SymbolTable<Type, TypeTpl, ulam::Fun, FunTpl, Var>;
+    using Symbol = SymbolTable::Symbol;
+
     using Flag = std::uint16_t;
     static constexpr Flag NoFlags = 0;
     static constexpr Flag Program = 1;
@@ -49,11 +52,13 @@ public:
         return _symbols.set(name_id, value);
     }
 
+    template <typename... Ts> void import_symbols(_SymbolTable<Ts...>& st) {
+        st.export_symbols(_symbols);
+    }
+
     void set_placeholder(str_id_t name_id) {
         _symbols.set_placeholder(name_id);
     }
-
-    void unset_placeholders() { _symbols.unset_placeholders(); }
 
     Flag flags() { return _flags; }
 

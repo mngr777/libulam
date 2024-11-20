@@ -65,7 +65,7 @@ void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     assert(!node->type());
     auto name_id = node->name().str_id();
     // already defined?
-    auto prev = module->get_class(name_id);
+    auto prev = module->get(name_id);
     if (prev) {
         diag().emit(
             diag::Error, node->name().loc_id(), str(name_id).size(),
@@ -75,7 +75,7 @@ void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     // add to module, set node attr
     auto cls = ulam::make<Class>(program()->next_type_id(), node);
     auto cls_ref = ref(cls);
-    module->add_class(std::move(cls));
+    module->set<Type>(name_id, std::move(cls));
     node->set_type(cls_ref);
 }
 
