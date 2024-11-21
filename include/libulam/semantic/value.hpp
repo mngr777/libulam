@@ -4,6 +4,7 @@
 #include <variant>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/object.hpp>
+#include <list>
 
 namespace ulam {
 
@@ -29,5 +30,7 @@ public:
 private:
     std::variant<std::monostate, Integer, Unsigned, Bits, String> _value;
 };
+
+using ValueList = std::list<Value>;
 
 } // namespace ulam

@@ -43,8 +43,9 @@ public:
 
     Ref<Type> type(
         Diag& diag,
+        ast::Ref<ast::ArgList> arg_list,
         TypeIdGen& type_id_gen,
-        ast::Ref<ast::ArgList> args) override;
+        ValueList& args) override;
 
      auto node() { return _node; }
 

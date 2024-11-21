@@ -5,14 +5,13 @@
 namespace ulam {
 
 class Scope;
+class Value;
 
 using type_id_t = std::uint16_t;
 using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
 
 constexpr array_size_t UnkArraySize = -1;
-
-class Operator {};
 
 class ArrayType;
 class BasicType;
@@ -38,8 +37,7 @@ public:
 
     virtual bool is_reference() const { return false; }
 
-    virtual Ref<Operator> op(Op op, Ref<Type> rhs_type) = 0;
-    // virtual void add_op(Op op, Ref<Type> rhs_type, Ptr<Operator>&& oper);
+    // virtual op();
 
     virtual Ref<ArrayType> array(array_size_t size) { return {}; };
     virtual Ref<RefType> reference() { return {}; }
@@ -59,8 +57,6 @@ public:
 
     Ref<BasicType> basic() override { return this; }
     Ref<const BasicType> basic() const override { return this; }
-
-    Ref<Operator> op(Op op, Ref<Type> rhs_type) override { return {}; } // TODO
 };
 
 class _TypeDec : public Type {
@@ -77,10 +73,6 @@ public:
     array_size_t array_size() const override { return _prev->array_size(); }
 
     bool is_reference() const override { return _prev->is_reference(); }
-
-    Ref<Operator> op(Op op, Ref<Type> rhs_type) override {
-        return _prev->op(op, rhs_type);
-    }
 
 private:
     Ref<Type> _prev;
@@ -103,8 +95,6 @@ public:
         CompType{id, prev}, _array_size{array_size} {}
 
     array_size_t array_size() const override { return _array_size; }
-
-    Ref<Operator> op(Op op, Ref<Type> rhs_type) override { return {}; }
 
 private:
     array_size_t _array_size;

@@ -1,3 +1,4 @@
+#include <libulam/ast/nodes/params.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/class.hpp>
 
@@ -9,7 +10,10 @@ Class::Class(type_id_t id, Ref<ast::ClassDef> node):
 Class::~Class() {}
 
 Ref<Type> ClassTpl::type(
-    Diag& diag, TypeIdGen& type_id_gen, ast::Ref<ast::ArgList> args) {
+    Diag& diag,
+    ast::Ref<ast::ArgList> arg_list,
+    TypeIdGen& type_id_gen,
+    ValueList& args) {
     return {};
 }
 

@@ -545,8 +545,10 @@ ast::Ptr<ast::FunCall> Parser::parse_funcall(ast::Ptr<ast::Expr>&& obj) {
 
 ast::Ptr<ast::ArgList> Parser::parse_arg_list() {
     assert(_tok.is(tok::ParenL));
+    auto loc_id = _tok.loc_id;
     consume();
     auto args = tree<ast::ArgList>();
+    args->set_loc_id(loc_id);
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         args->add(parse_expr());
         if (_tok.is(tok::Comma)) {

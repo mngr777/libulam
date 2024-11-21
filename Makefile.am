@@ -29,11 +29,13 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
 	include/libulam/semantic/symbol.hpp \
+	include/libulam/semantic/type/builtin.hpp \
 	include/libulam/semantic/type/builtin_type_id.hpp \
 	include/libulam/semantic/type/class.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
-	include/libulam/semantic/type/ph_type.hpp \
+	include/libulam/semantic/type/prim.hpp \
 	include/libulam/semantic/type.hpp \
+	include/libulam/semantic/type_id_gen.hpp \
 	include/libulam/semantic/type_ops.hpp \
 	include/libulam/semantic/type_tpl.hpp \
 	include/libulam/semantic/value.hpp \

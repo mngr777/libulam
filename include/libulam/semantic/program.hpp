@@ -3,7 +3,10 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type_id_gen.hpp>
 #include <list>
+#include <unordered_map>
 
 namespace ulam::ast {
 class Root;
@@ -11,17 +14,11 @@ class Root;
 
 namespace ulam {
 
-class TypeIdGen {
-public:
-    type_id_t next() { return _next++; }
-
-private:
-    type_id_t _next{1};
-};
-
 class Program {
 public:
-    Program(ast::Ref<ast::Root> ast): _ast{ast} {}
+    Program(ast::Ref<ast::Root> ast);
+
+    Ref<Type> builtin_type(BuiltinTypeId id);
 
     auto& modules() { return _modules; }
 
@@ -35,6 +32,7 @@ public:
 private:
     ast::Ref<ast::Root> _ast;
     TypeIdGen _type_id_gen;
+    std::unordered_map<BuiltinTypeId, Ptr<Type>> _builtin_types;
     std::list<Ptr<Module>> _modules;
 };
 
