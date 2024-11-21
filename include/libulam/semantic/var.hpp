@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam {
 
@@ -11,6 +12,7 @@ public:
 
 private:
     Ref<Type> _type;
+    Value _value;
 };
 
 } // namespace ulam

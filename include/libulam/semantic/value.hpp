@@ -1,10 +1,10 @@
 #pragma once
 #include <cstdint>
-#include <string>
-#include <variant>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/object.hpp>
 #include <list>
+#include <string>
+#include <variant>
 
 namespace ulam {
 
@@ -12,9 +12,12 @@ using Integer = std::int64_t;
 using Unsigned = std::uint64_t;
 using String = std::string;
 
-class Value {
+class Type;
+class Var;
+
+template <typename... Ts> class _Value {
 public:
-    Value() {}
+    _Value() {}
 
     bool is_unknown() const { return is<std::monostate>(); }
 
@@ -28,7 +31,29 @@ public:
     template <typename T> void set(T&& value) { _value = value; }
 
 private:
-    std::variant<std::monostate, Integer, Unsigned, Bits, String> _value;
+    std::variant<std::monostate, Ts...> _value;
+};
+
+class LValue : public _Value<Ref<Var>> { // TODO: array access
+public:
+    LValue(): _Value() {}
+};
+
+class RValue : public _Value<Integer, Unsigned, Bits, String> {
+public:
+    RValue(): _Value() {}
+};
+
+class Value {
+public:
+    bool is_nil() const {
+        return std::holds_alternative<std::monostate>(_value);
+    }
+
+    bool is_lvalue() { return std::holds_alternative<LValue>(_value); }
+
+private:
+    std::variant<std::monostate, LValue, RValue> _value;
 };
 
 using ValueList = std::list<Value>;

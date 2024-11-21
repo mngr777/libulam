@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
 
 namespace ulam {
@@ -37,7 +38,9 @@ public:
 
     virtual bool is_reference() const { return false; }
 
-    // virtual op();
+    virtual ExprRes op(Value& lhs, Ref<Type> rhs_type, Value& rhs) {
+        return {ExprError::NoOperator};
+    };
 
     virtual Ref<ArrayType> array(array_size_t size) { return {}; };
     virtual Ref<RefType> reference() { return {}; }
