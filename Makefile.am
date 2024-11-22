@@ -57,12 +57,14 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
-	include/libulam/sema/init.hpp \
+	include/libulam/sema/resolve_deps.hpp \
+	include/libulam/sema/init_members.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
-	src/sema/init.cpp \
+	src/sema/resolve_deps.cpp \
+	src/sema/init_members.cpp \
 	src/sema/visitor.cpp
 
 # Library

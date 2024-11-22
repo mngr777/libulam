@@ -1,7 +1,7 @@
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/sema/init.hpp>
+#include <libulam/sema/resolve_deps.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -12,7 +12,7 @@
 
 namespace ulam::sema {
 
-bool Init::visit(ast::Ref<ast::Root> node) {
+bool ResolveDeps::visit(ast::Ref<ast::Root> node) {
     assert(!node->program());
     // make program
     node->set_program(ulam::make<Program>(diag(), node));
@@ -21,7 +21,7 @@ bool Init::visit(ast::Ref<ast::Root> node) {
     return false;
 }
 
-bool Init::visit(ast::Ref<ast::ModuleDef> node) {
+bool ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
     assert(!node->module());
     // make module
     auto module = ulam::make<Module>(node);
@@ -31,12 +31,9 @@ bool Init::visit(ast::Ref<ast::ModuleDef> node) {
     return RecVisitor::visit(node);
 }
 
-bool Init::visit(ast::Ref<ast::ClassDef> node) {
-    return RecVisitor::visit(node);
-}
-
-bool Init::do_visit(ast::Ref<ast::TypeDef> node) {
-    // set placeholder for alias type
+bool ResolveDeps::do_visit(ast::Ref<ast::TypeDef> node) {
+    // NOTE: in general we do not know it a name refers to a type or a
+    // template at this point, using placeholders to track known types
     auto alias_str_id = node->name().str_id();
     if (scope()->has(alias_str_id, true)) {
         // TODO: after types are resolved, report error if types don't match
@@ -46,7 +43,7 @@ bool Init::do_visit(ast::Ref<ast::TypeDef> node) {
     return true;
 }
 
-bool Init::do_visit(ast::Ref<ast::TypeName> node) {
+bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
     assert(node->first());
     auto spec = node->first();
     if (!spec->is_builtin())
@@ -59,7 +56,7 @@ bool Init::do_visit(ast::Ref<ast::TypeName> node) {
     return false;
 }
 
-void Init::init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node) {
+void ResolveDeps::init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (ast::is<ast::ClassDef>(child_v))
@@ -67,7 +64,7 @@ void Init::init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node) {
     }
 }
 
-void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
+void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     assert(!node->type());
     auto name_id = node->name().str_id();
     // already defined?
@@ -93,7 +90,7 @@ void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     }
 }
 
-void Init::check_module_deps() {
+void ResolveDeps::check_module_deps() {
     using ModuleSet = std::set<Ref<Module>>;
     std::unordered_map<str_id_t, ModuleSet> exporting_modules;
     // collect all exports (with possible duplicates)

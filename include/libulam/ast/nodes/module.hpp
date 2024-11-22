@@ -111,8 +111,8 @@ public:
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {
     ULAM_AST_NODE
 public:
-    explicit VarDefList(Ptr<TypeName>&& basic_type):
-        Tuple{std::move(basic_type)} {}
+    explicit VarDefList(Ptr<TypeName>&& type):
+        Tuple{std::move(type)} {}
 
     unsigned def_num() const { return List::child_num(); }
 
@@ -123,7 +123,7 @@ public:
         return Tuple::child_num() + List::child_num();
     }
 
-    ULAM_AST_TUPLE_PROP(base_type, 0);
+    ULAM_AST_TUPLE_PROP(type, 0);
 
     Ref<Node> child(unsigned n) override {
         return (n == 0) ? Tuple::child(0) : List::child(n - 1);

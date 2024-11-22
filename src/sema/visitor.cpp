@@ -1,5 +1,3 @@
-#include "libulam/ast/node.hpp"
-#include "libulam/ast/nodes/module.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/visitor.hpp>
@@ -71,11 +69,17 @@ bool RecVisitor::visit(ast::Ref<ast::FunDefBody> node) {
     return {};
 }
 
+bool RecVisitor::do_visit(ast::Ref<ast::TypeDef>) {
+    // TODO: add alias to scope
+    return false;
+}
+
 void RecVisitor::traverse_class_defs(ast::Ref<ast::ClassDefBody> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (ast::is<ast::FunDef>(child_v)) {
             // directly visit fun def
+            // TODO: store result?
             do_visit(ast::as_ref<ast::FunDef>(child_v));
         } else {
             // continue as usual

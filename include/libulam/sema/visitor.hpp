@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
+#include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/str_pool.hpp>
 #include <stack>
@@ -15,6 +16,7 @@ namespace ulam::sema {
 
 class RecVisitor : public ast::RecVisitor {
 public:
+    using ast::RecVisitor::do_visit;
     using ast::RecVisitor::traverse;
     using ast::RecVisitor::visit;
 
@@ -34,6 +36,8 @@ protected:
     void traverse(ast::Ref<ast::FunDef> node) override;
     bool visit(ast::Ref<ast::FunDefBody> node) override;
     // TODO: blocks, loops, ...
+
+    bool do_visit(ast::Ref<ast::TypeDef>) override;
 
     void traverse_class_defs(ast::Ref<ast::ClassDefBody> node);
     void traverse_fun_bodies(ast::Ref<ast::ClassDefBody> node);

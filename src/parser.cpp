@@ -202,8 +202,8 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
 }
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
-    ast::Ptr<ast::TypeName>&& base_type, ast::Str first_name) {
-    auto node = tree<ast::VarDefList>(std::move(base_type));
+    ast::Ptr<ast::TypeName>&& type, ast::Str first_name) {
+    auto node = tree<ast::VarDefList>(std::move(type));
     // first ident
     auto name = first_name;
     while (true) {
