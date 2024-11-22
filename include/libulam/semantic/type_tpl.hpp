@@ -1,27 +1,31 @@
 #pragma once
-#include <libulam/ast/nodes/params.hpp>
+#include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
 
+namespace ulam::ast {
+class ArgList;
+}
+
 namespace ulam {
 
-class Diag;
-class TypeIdGen;
+class Program;
 
 class TypeTpl {
 public:
-    TypeTpl(type_id_t id): _id{id} {}
+    TypeTpl(Ref<Program> program);
 
-    virtual Ref<Type> type(
-        Diag& diag,
-        ast::Ref<ast::ArgList> arg_list,
-        TypeIdGen& type_id_gen,
-        ValueList& args) = 0;
+    virtual Ref<Type>
+    type(ast::Ref<ast::ArgList> arg_list, ValueList& args) = 0;
 
     type_id_t id() const { return _id; }
 
+protected:
+    Ref<Program> program() { return _program; }
+
 private:
+    Ref<Program> _program;
     type_id_t _id;
 };
 

@@ -9,11 +9,7 @@ Class::Class(type_id_t id, Ref<ast::ClassDef> node):
 
 Class::~Class() {}
 
-Ref<Type> ClassTpl::type(
-    Diag& diag,
-    ast::Ref<ast::ArgList> arg_list,
-    TypeIdGen& type_id_gen,
-    ValueList& args) {
+Ref<Type> ClassTpl::type(ast::Ref<ast::ArgList> arg_list, ValueList& args) {
     return {};
 }
 

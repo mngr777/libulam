@@ -1,6 +1,5 @@
 #pragma once
 #include <cassert>
-#include <cstdint>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -10,21 +9,34 @@
 #include <libulam/semantic/value.hpp>
 #include <string>
 #include <unordered_map>
-#include <libulam/semantic/type_id_gen.hpp>
 
 namespace ulam {
 
 using bitsize_t = std::uint16_t;
+
+class Program;
+
+class PrimType : public BasicType {
+public:
+    PrimType(Ref<Program> program);
+
+protected:
+    Ref<Program> program() { return _program; }
+
+private:
+    Ref<Program> _program;
+};
 
 template <
     BuiltinTypeId _TypeId,
     bitsize_t Min,
     bitsize_t Max,
     bitsize_t Default>
-class PrimType : public BasicType {
+class _PrimType : public PrimType {
+    static_assert(_TypeId != BuiltinTypeId::NoBuiltinTypeId);
     static_assert(_TypeId != BuiltinTypeId::AtomId);
-    static_assert(Min > 0 == Max > 0);
-    static_assert(Max > 0 == Default > 0);
+    static_assert(!Min == !Max);
+    static_assert(!Max == !Default);
 
 public:
     static constexpr BuiltinTypeId TypeId = _TypeId;
@@ -32,84 +44,97 @@ public:
     static constexpr bitsize_t MaxSize = Max;
     static constexpr bitsize_t DefaultSize = Default;
 
-    PrimType(type_id_t id, bitsize_t bitsize):
-        BasicType{id}, _bitsize{bitsize} {}
+    _PrimType(Ref<Program> program, bitsize_t bitsize):
+        PrimType{program}, _bitsize{bitsize} {}
 
-    bitsize_t bitsize() const { return _bitsize; }
+    BuiltinTypeId builtin_type_id() const override { return TypeId; }
+    bitsize_t bitsize() const override { return _bitsize; }
 
 private:
     bitsize_t _bitsize;
 };
 
-template <typename T> class PrimTypeTpl : public TypeTpl {
+class PrimTypeTpl : public TypeTpl {
 public:
-    Ref<Type> type(
-        Diag& diag,
-        ast::Ref<ast::ArgList> arg_list,
-        TypeIdGen& id_gen,
-        ValueList& args) {
-        // TODO: more precise error locations
-        if constexpr (T::MaxSize == 0) {
-            if (args.size() > 0) {
-                diag.emit(
-                    diag::Error, arg_list->loc_id(), 1,
-                    std::string(type_str()) + " does not have parameters");
-                // continue
-            }
-            return get(id_gen, 0);
-        }
+    PrimTypeTpl(Ref<Program> program);
+
+    Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override = 0;
+    virtual Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
+
+protected:
+    Diag& _diag;
+};
+
+template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
+    static_assert(T::MaxSize > 0);
+
+public:
+    _PrimTypeTpl(Ref<Program> program): PrimTypeTpl{program} {}
+
+    Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) {
         bitsize_t size = 0;
         if (args.size() == 0) {
             size = T::DefaultSize;
         } else {
             if (args.size() > 1) {
-                diag.emit(
+                _diag.emit(
                     diag::Error, arg_list->loc_id(), 1,
-                    "too many arguments for " + type_str());
+                    std::string("too many arguments for ") + type_str());
                 // continue
             }
             // get first arg
             auto& arg = args.front();
-            if (arg.is<Integer>()) {
-                auto int_val = arg.get<Integer>();
+            RValue* value = arg.rvalue();
+            assert(value);
+            if (value->is<Integer>()) {
+                auto int_val = value->get<Integer>();
                 size = (int_val < 0) ? 0 : static_cast<Unsigned>(int_val);
-            } else if (arg.is<Unsigned>()) {
-                size = arg.get<Unsigned>();
+            } else if (value->is<Unsigned>()) {
+                size = value->get<Unsigned>();
             } else {
-                diag.emit(
+                _diag.emit(
                     diag::Error, arg_list->loc_id(), 1,
                     "cannot convert to bit size");
                 return {};
             }
-            // check, adjust and continue on error
-            if (size < T::MinSize) {
-                diag.emit(
-                    diag::Error, arg_list->loc_id(), 1,
-                    "bit size argument must be at least " +
-                        std::to_string(T::MinSize));
-                size = T::MinSize;
-            } else if (size > T::MaxSize) {
-                diag.emit(
-                    diag::Error, arg_list->loc_id(), 1,
-                    "bit size argument must be at most " +
-                        std::to_string(T::MaxSize));
-                size = T::MaxSize;
-            }
         }
-        return get(id_gen, size);
+        return type(arg_list, size);
+    }
+
+    Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t size) {
+        // check, adjust and continue on error
+        if (size < T::MinSize) {
+            _diag.emit(
+                diag::Error, node->loc_id(), 1,
+                std::string("bit size argument must be at least ") +
+                    std::to_string(T::MinSize));
+            size = T::MinSize;
+        } else if (size > T::MaxSize) {
+            _diag.emit(
+                diag::Error, node->loc_id(), 1,
+                std::string("bit size argument must be at most ") +
+                    std::to_string(T::MaxSize));
+            size = T::MaxSize;
+        }
+        return get(size);
     }
 
 private:
-    Ref<Type> get(TypeIdGen& id_gen, bitsize_t size) {
+    Ref<Type> get(bitsize_t size) {
         {
             auto it = _types.find(size);
             if (it != _types.end())
                 return ref(it->second);
         }
-        auto type = make<T>(id_gen.next(), size);
+        auto type = make<T>(program(), size);
+        auto type_ref = ref(type);
+        _types[size] = std::move(type);
+        return type_ref;
     }
 
-    std::string_view type_str() { return builtin_type_str(T::TypeId); }
+    std::string type_str() const {
+        return std::string{builtin_type_str(T::TypeId)};
+    }
 
     std::unordered_map<bitsize_t, Ptr<T>> _types;
 };

@@ -1,7 +1,14 @@
 #pragma once
+#include <cstdint>
+#include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
+
+namespace ulam::ast {
+class BinaryOp;
+}
 
 namespace ulam {
 
@@ -9,10 +16,11 @@ class Scope;
 class Value;
 
 using type_id_t = std::uint16_t;
+using bitsize_t = std::uint16_t;
 using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
 
-constexpr array_size_t UnkArraySize = -1;
+constexpr array_size_t UnknownArraySize = -1;
 
 class ArrayType;
 class BasicType;
@@ -24,6 +32,9 @@ public:
     virtual ~Type() {}
 
     type_id_t id() const { return _id; }
+
+    virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
+    virtual bitsize_t bitsize() const { return 0; }
 
     virtual bool is_placeholder() const { return true; }
 
@@ -38,7 +49,11 @@ public:
 
     virtual bool is_reference() const { return false; }
 
-    virtual ExprRes op(Value& lhs, Ref<Type> rhs_type, Value& rhs) {
+    virtual ExprRes binary_op(
+        ast::Ref<ast::BinaryOp> node,
+        Value& lhs,
+        Ref<Type> rhs_type,
+        Value& rhs) {
         return {ExprError::NoOperator};
     };
 

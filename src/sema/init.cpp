@@ -15,7 +15,7 @@ namespace ulam::sema {
 bool Init::visit(ast::Ref<ast::Root> node) {
     assert(!node->program());
     // make program
-    node->set_program(ulam::make<Program>(node));
+    node->set_program(ulam::make<Program>(diag(), node));
     RecVisitor::visit(node);
     check_module_deps();
     return false;
@@ -81,7 +81,7 @@ void Init::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     // add to module, set node attr
     if (node->params()) {
         assert(node->params()->child_num() > 0);
-        auto tpl = ulam::make<ClassTpl>(program()->next_type_id(), node);
+        auto tpl = ulam::make<ClassTpl>(program(), node);
         auto tpl_ref = ref(tpl);
         module->set<TypeTpl>(name_id, std::move(tpl));
         node->set_type_tpl(tpl_ref);

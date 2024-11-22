@@ -34,14 +34,16 @@ private:
     std::variant<std::monostate, Ts...> _value;
 };
 
-class LValue : public _Value<Ref<Var>> { // TODO: array access
-public:
-    LValue(): _Value() {}
-};
-
 class RValue : public _Value<Integer, Unsigned, Bits, String> {
 public:
     RValue(): _Value() {}
+};
+
+class LValue : public _Value<Ref<Var>> { // TODO: array access
+public:
+    LValue(): _Value() {}
+
+    RValue* rvalue() { return nullptr; } // TODO
 };
 
 class Value {
@@ -50,7 +52,16 @@ public:
         return std::holds_alternative<std::monostate>(_value);
     }
 
-    bool is_lvalue() { return std::holds_alternative<LValue>(_value); }
+    bool is_lvalue() const { return std::holds_alternative<LValue>(_value); }
+
+    LValue* lvalue() {
+        if (is_nil() || !is_lvalue())
+            return nullptr;
+        return &std::get<LValue>(_value);
+    }
+    RValue* rvalue() {
+        return is_lvalue() ? lvalue()->rvalue() : &std::get<RValue>(_value);
+    }
 
 private:
     std::variant<std::monostate, LValue, RValue> _value;

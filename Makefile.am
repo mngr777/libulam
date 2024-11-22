@@ -48,10 +48,12 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \
 	src/semantic/type/class_kind.cpp \
+	src/semantic/type/prim.cpp \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
 	src/semantic/program.cpp \
-	src/semantic/type.cpp
+	src/semantic/type.cpp \
+	src/semantic/type_tpl.cpp
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \

@@ -13,6 +13,8 @@ class ClassDef;
 
 namespace ulam {
 
+class Program;
+
 class Class : public BasicType {
 public:
     using SymbolTable = _SymbolTable<Type, Fun, Var>;
@@ -36,18 +38,14 @@ public:
     using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, FunTpl, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    ClassTpl(type_id_t id, Ref<ast::ClassDef> node): TypeTpl{id} {}
+    ClassTpl(Ref<Program> program, Ref<ast::ClassDef> node): TypeTpl{program} {}
 
     ClassTpl(ClassTpl&&) = default;
     ClassTpl& operator=(ClassTpl&&) = default;
 
-    Ref<Type> type(
-        Diag& diag,
-        ast::Ref<ast::ArgList> arg_list,
-        TypeIdGen& type_id_gen,
-        ValueList& args) override;
+    Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override;
 
-     auto node() { return _node; }
+    auto node() { return _node; }
 
 private:
     Ref<ast::ClassDef> _node;
