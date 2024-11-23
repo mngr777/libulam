@@ -52,7 +52,7 @@ private:
     ast::Ptr<ast::FunDef>
     parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name);
     ast::Ptr<ast::ParamList> parse_param_list();
-    ast::Ptr<ast::Param> parse_param();
+    ast::Ptr<ast::Param> parse_param(bool requires_value);
 
     ast::Ptr<ast::Block> parse_block();
     void parse_as_block(ast::Ref<ast::Block> node);

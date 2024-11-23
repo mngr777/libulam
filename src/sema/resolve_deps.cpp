@@ -34,7 +34,7 @@ bool ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
 
 bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     // don't skip the type name
-    node->type()->accept(*this);
+    node->type_name()->accept(*this);
     if (!scope()->is(Scope::Module) && !scope()->is(Scope::Class))
         return false;
     // create and set module/class/tpl variables
@@ -51,7 +51,7 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
             continue;
         }
         Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
-        auto var = ulam::make<Var>(node->type(), def_node, Ref<Type>{}, flags);
+        auto var = ulam::make<Var>(node->type_name(), def_node, Ref<Type>{}, flags);
         auto var_ref = ref(var);
         if (class_node) {
             // class/tpl variable
@@ -135,6 +135,7 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     }
     // add to module, set node attr
     if (node->params()) {
+        // class tpl
         auto params = node->params();
         assert(params->child_num() > 0);
         // make class tpl
@@ -150,6 +151,7 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
         module->set<TypeTpl>(name_id, std::move(tpl));
         node->set_type_tpl(tpl_ref);
     } else {
+        // class
         auto cls = ulam::make<Class>(program()->next_type_id(), node);
         auto cls_ref = ref(cls);
         module->set<Type>(name_id, std::move(cls));

@@ -127,7 +127,7 @@ public:
         return Tuple::child_num() + List::child_num();
     }
 
-    ULAM_AST_TUPLE_PROP(type, 0);
+    ULAM_AST_TUPLE_PROP(type_name, 0);
 
     Ref<Node> child(unsigned n) override {
         return (n == 0) ? Tuple::child(0) : List::child(n - 1);

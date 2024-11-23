@@ -432,9 +432,19 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     // (
     consume();
     auto node = tree<ast::ParamList>();
+    bool requires_value = false;
+    ast::Ref<ast::Param> prev{};
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         // param
-        node->add(parse_param());
+        auto param = parse_param(requires_value);
+        prev = ast::ref(param);
+        if (!param)
+            return {};
+        if (requires_value && !param->value()) {
+            // unset previous default value
+            prev->replace_value({});
+            requires_value = false;
+        }
         // ,
         if (_tok.is(tok::Comma)) {
             auto comma = _tok;
@@ -448,7 +458,7 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     return node;
 }
 
-ast::Ptr<ast::Param> Parser::parse_param() {
+ast::Ptr<ast::Param> Parser::parse_param(bool requires_value) {
     bool is_const = false;
     if (_tok.is(tok::Constant)) {
         is_const = true;
@@ -469,6 +479,9 @@ ast::Ptr<ast::Param> Parser::parse_param() {
     if (_tok.is(tok::Equal)) {
         consume();
         default_value = parse_expr();
+    } else {
+        // TODO: name location
+        diag("missing default value");
     }
     auto node = tree<ast::Param>(name, std::move(type), std::move(default_value));
     node->set_is_const(is_const);

@@ -64,7 +64,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::VarDefList> node) {
     indent();
     {
         auto f = no_ws();
-        accept_me(node->type());
+        accept_me(node->type_name());
         _os << " ";
         for (unsigned n = 0; n < node->def_num(); ++n) {
             if (n > 0)
