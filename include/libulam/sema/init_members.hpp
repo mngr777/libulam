@@ -5,9 +5,10 @@
 
 namespace ulam::sema {
 
-class InitMembers : public sema::RecVisitor {
+class InitMembers : public RecVisitor {
 public:
     using RecVisitor::visit;
+    using RecVisitor::do_visit;
 
     InitMembers(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast, true} {}
 

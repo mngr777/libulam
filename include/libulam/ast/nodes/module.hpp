@@ -7,6 +7,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/nodes/type.hpp>
+#include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/type.hpp>
@@ -105,15 +106,10 @@ public:
     ULAM_AST_TUPLE_PROP(body, 2)
 };
 
-// TODO: array/reference suffix
-class VarDef : public Tuple<Stmt, Expr>, public Named {
+class VarDef : public VarDecl {
     ULAM_AST_NODE
-    ULAM_AST_PTR_ATTR(Var, var) // module local constants live here, other are
-                                // either transient or live in classes/tpls
 public:
-    VarDef(Str name, Ptr<Expr>&& value): Tuple{std::move(value)}, Named{name} {}
-
-    ULAM_AST_TUPLE_PROP(value, 0);
+    VarDef(Str name, Ptr<Expr>&& expr): VarDecl{name, std::move(expr)} {}
 };
 
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {

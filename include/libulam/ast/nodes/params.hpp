@@ -4,27 +4,20 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/type.hpp>
+#include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/src_loc.hpp>
 #include <utility>
 
-namespace ulam {
-class Type;
-class TypeTpl;
-}
-
 namespace ulam::ast {
 
-class Param : public Tuple<Stmt, TypeName, Expr>, public Named {
+class Param : public Tuple<VarDecl, TypeName> {
     ULAM_AST_NODE
-    ULAM_AST_REF_ATTR(Type, type)
-    ULAM_AST_REF_ATTR(TypeTpl, type_tpl)
 public:
-    Param(Str name, Ptr<TypeName>&& type, Ptr<Expr>&& default_value):
-        Tuple{std::move(type), std::move(default_value)}, Named{name} {}
+    Param(Str name, Ptr<TypeName>&& type_name, Ptr<Expr>&& value):
+        Tuple{std::move(type_name), name, std::move(value)} {}
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
-    ULAM_AST_TUPLE_PROP(default_value, 1)
 };
 
 class ParamList : public List<Node, Param> {

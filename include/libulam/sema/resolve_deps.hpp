@@ -13,7 +13,8 @@ namespace ulam::sema {
 // * whole subtree is traversed and all unseen type/template names are added to
 // module's list of imports. After all modules have been processed,
 // `check_module_deps` checks for duplicates and unsatified dependencies.
-class ResolveDeps : public sema::RecVisitor {
+// TODO: update
+class ResolveDeps : public RecVisitor {
     using RecVisitor::visit;
     using RecVisitor::do_visit;
 public:

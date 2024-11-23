@@ -449,6 +449,11 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
 }
 
 ast::Ptr<ast::Param> Parser::parse_param() {
+    bool is_const = false;
+    if (_tok.is(tok::Constant)) {
+        is_const = true;
+        consume();
+    }
     // type
     auto type = parse_type_name();
     if (!match(tok::Ident)) {
@@ -465,7 +470,9 @@ ast::Ptr<ast::Param> Parser::parse_param() {
         consume();
         default_value = parse_expr();
     }
-    return tree<ast::Param>(name, std::move(type), std::move(default_value));
+    auto node = tree<ast::Param>(name, std::move(type), std::move(default_value));
+    node->set_is_const(is_const);
+    return node;
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr() { return parse_expr_climb(0); }

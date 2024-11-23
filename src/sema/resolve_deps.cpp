@@ -50,9 +50,9 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
                 diag::Error, def_node->loc_id(), 1, "variable already defined");
             continue;
         }
-        auto var = ulam::make<Var>(node, def_node, Ref<Type>{});
+        Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
+        auto var = ulam::make<Var>(node->type(), def_node, Ref<Type>{}, flags);
         auto var_ref = ref(var);
-        var->set_is_const(node->is_const());
         if (class_node) {
             // class/tpl variable
             if (class_node->type()) {
@@ -135,9 +135,18 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     }
     // add to module, set node attr
     if (node->params()) {
-        assert(node->params()->child_num() > 0);
+        auto params = node->params();
+        assert(params->child_num() > 0);
+        // make class tpl
         auto tpl = ulam::make<ClassTpl>(program(), node);
         auto tpl_ref = ref(tpl);
+        // add params
+        for (unsigned n = 0; n < params->child_num(); ++n) {
+            auto param = params->get(n);
+            auto var = ulam::make<Var>(
+                param->type_name(), param, Ref<Type>{}, Var::ClassParam);
+            tpl->set(param->name().str_id(), std::move(var));
+        }
         module->set<TypeTpl>(name_id, std::move(tpl));
         node->set_type_tpl(tpl_ref);
     } else {

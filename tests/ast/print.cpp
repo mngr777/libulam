@@ -117,9 +117,9 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
     auto f = no_ws();
     accept_me(node->type_name());
     _os << " " << name(node);
-    if (node->default_value()) {
+    if (node->value()) {
         _os << " = ";
-        accept_me(node->default_value());
+        accept_me(node->value());
     }
     return true;
 }

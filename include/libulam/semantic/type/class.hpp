@@ -15,6 +15,9 @@ class ClassDef;
 
 namespace ulam {
 
+// TODO: common base?
+
+class Scope;
 class Program;
 class Var;
 
@@ -28,6 +31,8 @@ public:
 
     Class(Class&&) = default;
     Class& operator=(Class&&) = default;
+
+    void export_symbols(Scope* scope);
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
@@ -57,6 +62,8 @@ public:
 
     ClassTpl(ClassTpl&&) = default;
     ClassTpl& operator=(ClassTpl&&) = default;
+
+    void export_symbols(Scope* scope);
 
     Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override;
 

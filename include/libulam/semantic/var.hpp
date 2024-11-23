@@ -5,35 +5,42 @@
 #include <libulam/semantic/value.hpp>
 
 namespace ulam::ast {
-class VarDefList;
-class VarDef;
+class TypeName;
+class VarDecl;
 } // namespace ulam::ast
 
 namespace ulam {
 
 class Var {
 public:
-    Var(ast::Ref<ast::VarDefList> list_node,
-        ast::Ref<ast::VarDef> node,
-        Ref<Type> type):
-        _list_node{list_node}, _node{node}, _type{type} {}
+    using Flag = std::uint8_t;
+    static constexpr Flag NoFlags = 0;
+    static constexpr Flag IsConst = 1;
+    static constexpr Flag ClassParam = 1 << 1 | IsConst;
 
-    ast::Ref<ast::VarDefList> list_node() { return _list_node; }
-    ast::Ref<ast::VarDef> node() { return _node; }
+    Var(ast::Ref<ast::TypeName> type_node,
+        ast::Ref<ast::VarDecl> node,
+        Ref<Type> type,
+        Flag flags = NoFlags):
+        _type_node{type_node}, _node{node}, _type{type}, _flags{flags} {}
+
+    ast::Ref<ast::TypeName> type_node() { return _type_node; }
+    ast::Ref<ast::VarDecl> node() { return _node; }
 
     Ref<Type> type() { return _type; }
 
     Value& value() { return _value; }
 
-    bool is_const() const { return _is_const; }
-    void set_is_const(bool is_const) { _is_const = is_const; }
+    bool is_const() const { return _flags & IsConst; }
+
+    Flag flags() { return _flags; }
 
 private:
-    ast::Ref<ast::VarDefList> _list_node;
-    ast::Ref<ast::VarDef> _node;
+    ast::Ref<ast::TypeName> _type_node;
+    ast::Ref<ast::VarDecl> _node;
     Ref<Type> _type;
     Value _value;
-    bool _is_const{false};
+    Flag _flags;
 };
 
 } // namespace ulam
