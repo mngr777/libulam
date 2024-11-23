@@ -6,12 +6,14 @@ CXXFLAGS = $(AM_CXXFLAGS) # temp hack to make libtool stop adding flags
 AST_HEADER_FILES = \
 	include/libulam/ast.hpp \
 	include/libulam/ast/context.hpp \
+	include/libulam/ast/expr_visitor.hpp \
 	include/libulam/ast/node.hpp \
 	include/libulam/ast/nodes/access.hpp \
 	include/libulam/ast/nodes/expr.hpp \
 	include/libulam/ast/nodes/params.hpp \
 	include/libulam/ast/nodes/stmt.hpp \
 	include/libulam/ast/nodes/stmts.hpp \
+	include/libulam/ast/nodes/type.hpp \
 	include/libulam/ast/nodes.inc.hpp \
 	include/libulam/ast/traversal.hpp
 
@@ -57,12 +59,14 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
+	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
 	include/libulam/sema/init_members.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
+	src/sema/expr_visitor.cpp \
 	src/sema/resolve_deps.cpp \
 	src/sema/init_members.cpp \
 	src/sema/visitor.cpp

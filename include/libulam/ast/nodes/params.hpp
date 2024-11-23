@@ -2,6 +2,8 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
+#include <libulam/ast/nodes/stmt.hpp>
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/src_loc.hpp>
 #include <utility>
@@ -13,7 +15,7 @@ class TypeTpl;
 
 namespace ulam::ast {
 
-class Param : public Tuple<Expr, TypeName, Expr>, public Named {
+class Param : public Tuple<Stmt, TypeName, Expr>, public Named {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Type, type)
     ULAM_AST_REF_ATTR(TypeTpl, type_tpl)

@@ -2,6 +2,11 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
 
+namespace ulam::ast {
+class TypeName;
+class VarDef;
+}
+
 namespace ulam {
 
 class Var {

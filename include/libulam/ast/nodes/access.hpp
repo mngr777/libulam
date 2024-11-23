@@ -1,13 +1,12 @@
 #pragma once
-#include "libulam/ast/node.hpp"
+#include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
-#include <utility>
 
 namespace ulam::ast {
 
 class FunCall : public Tuple<Expr, Expr, ArgList> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     FunCall(Ptr<Expr>&& obj, Ptr<ArgList>&& args):
         Tuple{std::move(obj), std::move(args)} {}
@@ -17,7 +16,7 @@ public:
 };
 
 class MemberAccess : public Tuple<Expr, Expr, Ident> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     MemberAccess(Ptr<Expr>&& obj, Ptr<Ident>&& ident):
         Tuple{std::move(obj), std::move(ident)} {}
@@ -27,7 +26,7 @@ public:
 };
 
 class ArrayAccess : public Tuple<Expr, Expr, Expr> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     ArrayAccess(Ptr<Expr>&& array, Ptr<Expr>&& index):
         Tuple{std::move(array), std::move(index)} {}

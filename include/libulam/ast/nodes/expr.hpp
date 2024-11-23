@@ -1,77 +1,33 @@
 #pragma once
 #include <cassert>
+#include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/semantic/number.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/src_loc.hpp>
 
-namespace ulam {
-class Type;
-class TypeTpl;
-}
+#define ULAM_AST_EXPR                                                          \
+    ULAM_AST_NODE                                                              \
+public:                                                                        \
+    virtual ExprRes accept(ExprVisitor& v) override { return v.visit(this); }  \
+                                                                               \
+private:
 
 namespace ulam::ast {
 
-class Expr : public Stmt {};
-
-class ArgList;
-
-// TODO: types are not expressions
-
-class TypeIdent : public Expr, public Named {
+class Expr : public Stmt {
     ULAM_AST_NODE
 public:
-    explicit TypeIdent(Str name): Named{name} {}
-};
-
-class TypeSpec : public Tuple<Expr, TypeIdent, ArgList> {
-    ULAM_AST_NODE
-    ULAM_AST_REF_ATTR(TypeTpl, type_tpl)
-    ULAM_AST_REF_ATTR(Type, type)
-public:
-    TypeSpec(Ptr<TypeIdent>&& ident, Ptr<ArgList>&& args):
-        Tuple{std::move(ident), std::move(args)},
-        _builtin_type_id{NoBuiltinTypeId} {}
-    TypeSpec(BuiltinTypeId builtin_type_id, Ptr<ArgList>&& args):
-        Tuple{{}, std::move(args)}, _builtin_type_id(builtin_type_id) {}
-
-    bool is_builtin() const { return _builtin_type_id != NoBuiltinTypeId; }
-    BuiltinTypeId builtin_type_id() const { return _builtin_type_id; }
-
-    ULAM_AST_TUPLE_PROP(ident, 0);
-    ULAM_AST_TUPLE_PROP(args, 1);
-
-private:
-    BuiltinTypeId _builtin_type_id;
-};
-
-class TypeName : public Tuple<ListOf<Expr, TypeIdent>, TypeSpec> {
-    ULAM_AST_NODE
-public:
-    explicit TypeName(Ptr<TypeSpec>&& spec): Tuple{std::move(spec)} {}
-
-    unsigned child_num() const override {
-        return Tuple::child_num() + ListOf::child_num();
-    }
-
-    ULAM_AST_TUPLE_PROP(first, 0)
-
-    Ref<Node> child(unsigned n) override {
-        return (n == 0) ? Tuple::child(0) : ListOf::child(n - 1);
-    }
-
-    const Ref<Node> child(unsigned n) const override {
-        return (n == 0) ? Tuple::child(0) : ListOf::child(n - 1);
-    }
+    virtual ExprRes accept(ExprVisitor& v) { return {}; };
 };
 
 class TypeOpExpr : public Tuple<Expr, TypeName> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     TypeOpExpr(Ptr<TypeName>&& type, TypeOp op):
         Tuple{std::move(type)}, _op(op) {
@@ -85,13 +41,13 @@ private:
 };
 
 class Ident : public Expr, public Named {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     Ident(Str name): Named{name} {}
 };
 
 class ParenExpr : public Tuple<Expr, Expr> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     explicit ParenExpr(Ptr<Expr>&& inner): Tuple{std::move(inner)} {}
 
@@ -109,7 +65,7 @@ protected:
 };
 
 class BinaryOp : public Tuple<_OpExpr, Expr, Expr> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     BinaryOp(Op op, Ptr<Expr>&& lhs, Ptr<Expr>&& rhs):
         Tuple{std::move(lhs), std::move(rhs), op} {}
@@ -126,13 +82,13 @@ public:
 };
 
 class UnaryPreOp : public _UnaryOp {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     UnaryPreOp(Op op, Ptr<Expr>&& arg): _UnaryOp{op, std::move(arg)} {}
 };
 
 class UnaryPostOp : public _UnaryOp {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     UnaryPostOp(Op op, Ptr<Expr>&& arg): _UnaryOp{op, std::move(arg)} {}
 };
@@ -140,7 +96,7 @@ public:
 class VarRef : public Expr {}; // ??
 
 class Cast : public Tuple<Expr, TypeName, Expr> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     Cast(Ptr<TypeName>&& type, Ptr<Expr>&& expr):
         Tuple{std::move(type), std::move(expr)} {}
@@ -160,19 +116,19 @@ private:
 };
 
 class BoolLit : public _Literal<bool> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     BoolLit(bool value): _Literal{std::move(value)} {}
 };
 
 class NumLit : public _Literal<Number> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     NumLit(Number&& number): _Literal{std::move(number)} {}
 };
 
 class StrLit : public _Literal<String> {
-    ULAM_AST_NODE
+    ULAM_AST_EXPR
 public:
     StrLit(String&& string): _Literal{std::move(string)} {}
 };

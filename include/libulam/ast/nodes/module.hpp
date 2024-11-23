@@ -6,6 +6,7 @@
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/type/class_kind.hpp>

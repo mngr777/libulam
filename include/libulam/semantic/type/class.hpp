@@ -4,7 +4,9 @@
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
+#include <libulam/semantic/var.hpp>
 #include <unordered_map>
+#include <utility>
 
 namespace ulam::ast {
 class ArgList;
@@ -14,6 +16,7 @@ class ClassDef;
 namespace ulam {
 
 class Program;
+class Var;
 
 class Class : public BasicType {
 public:
@@ -26,6 +29,16 @@ public:
     Class(Class&&) = default;
     Class& operator=(Class&&) = default;
 
+    Symbol* get(str_id_t name_id) { return _members.get(name_id); }
+
+    Symbol* set(str_id_t name_id, Ptr<Type>&& type) {
+        return _members.set(name_id, std::move(type));
+    }
+
+    Symbol* set(str_id_t name_id, Ptr<Var>&& var) {
+        return _members.set(name_id, std::move(var));
+    }
+
     auto node() { return _node; }
 
 private:
@@ -35,7 +48,7 @@ private:
 
 class ClassTpl : public TypeTpl {
 public:
-    using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, FunTpl, Var>;
+    using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
     ClassTpl(Ref<Program> program, Ref<ast::ClassDef> node): TypeTpl{program} {}
@@ -44,6 +57,20 @@ public:
     ClassTpl& operator=(ClassTpl&&) = default;
 
     Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override;
+
+    Symbol* get(str_id_t name_id) { return _members.get(name_id); }
+
+    Symbol* set(str_id_t name_id, Ptr<Type>&& type) {
+        return _members.set(name_id, std::move(type));
+    }
+
+    Symbol* set(str_id_t name_id, Ptr<TypeTpl>&& type_tpl) {
+        return _members.set(name_id, std::move(type_tpl));
+    }
+
+    Symbol* set(str_id_t name_id, Ptr<Var>&& var) {
+        return _members.set(name_id, std::move(var));
+    }
 
     auto node() { return _node; }
 
