@@ -90,11 +90,19 @@ ast::Ptr<ast::ModuleDef> Parser::parse_module() {
     auto node = tree<ast::ModuleDef>();
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
+        case tok::Local:
+        case tok::Typedef:
+        case tok::Constant:
+        case tok::TypeIdent:
+            parse_module_var_or_type_def(ast::ref(node));
+            break;
         case tok::Element:
         case tok::Quark:
-        case tok::Transient:
-            node->add(parse_class_def());
-            break;
+        case tok::Transient: {
+            auto class_def = parse_class_def();
+            if (class_def)
+                node->add(std::move(class_def));
+        } break;
         default:
             unexpected();
             panic(tok::Semicol);
@@ -102,6 +110,37 @@ ast::Ptr<ast::ModuleDef> Parser::parse_module() {
         }
     }
     return node;
+}
+
+void Parser::parse_module_var_or_type_def(ast::Ref<ast::ModuleDef> node) {
+    assert(_tok.in(tok::Local, tok::Typedef, tok::Constant, tok::TypeIdent));
+    // is marked as local?
+    if (_tok.is(tok::Local)) {
+        consume();
+    } else if (_tok.is(tok::Typedef)) {
+        diag("module typedefs must be marked as local");
+    } else {
+        assert(_tok.in(tok::Constant, tok::TypeIdent));
+        diag("module variables must be marked as local");
+    }
+
+    if (_tok.is(tok::Typedef)) {
+        // typedef
+        auto type_def = parse_type_def();
+        if (type_def)
+            node->add(std::move(type_def));
+    } else {
+        // vars
+        assert(_tok.in(tok::Constant, tok::TypeIdent));
+        if (_tok.is(tok::Constant)) {
+            consume();
+        } else {
+            diag("module variables must be constants");
+        }
+        auto var_def_list = parse_var_def_list(true);
+        if (var_def_list)
+            node->add(std::move(var_def_list));
+    }
 }
 
 ast::Ptr<ast::ClassDef> Parser::parse_class_def() {
@@ -165,10 +204,16 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
                 if (fun)
                     node->body()->add(std::move(fun));
             } else {
-                auto vars = parse_var_def_list_rest(std::move(type), name);
+                auto vars = parse_var_def_list_rest(std::move(type), name, false);
                 if (vars)
                     node->body()->add(std::move(vars));
             }
+        } break;
+        case tok::Constant: {
+            consume();
+            auto vars = parse_var_def_list(true);
+            if (vars)
+                node->body()->add(std::move(vars));
         } break;
         default:
             unexpected();
@@ -201,9 +246,28 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     return tree<ast::TypeDef>(std::move(type), name);
 }
 
+ast::Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
+    // type
+    auto type = parse_type_name();
+    if (!type) {
+        panic(tok::Semicol, tok::BraceL, tok::BraceR);
+        consume_if(tok::Semicol);
+        return {};
+    }
+    // name
+    if (!match(tok::Ident)) {
+        panic(tok::Semicol, tok::BraceL, tok::BraceR);
+        return {};
+    }
+    auto first_name = tok_ast_str();
+    consume();
+    return parse_var_def_list_rest(std::move(type), first_name, is_const);
+}
+
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
-    ast::Ptr<ast::TypeName>&& type, ast::Str first_name) {
+    ast::Ptr<ast::TypeName>&& type, ast::Str first_name, bool is_const) {
     auto node = tree<ast::VarDefList>(std::move(type));
+    node->set_is_const(is_const);
     // first ident
     auto name = first_name;
     while (true) {
@@ -276,13 +340,16 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
         } else if (_tok.is(tok::Ident)) {
             auto first_name = tok_ast_str();
             consume();
-            return parse_var_def_list_rest(std::move(type), first_name);
+            return parse_var_def_list_rest(std::move(type), first_name, false);
         } else {
             unexpected();
         }
         expect(tok::Semicol);
         return tree<ast::EmptyStmt>();
     }
+    case tok::Constant:
+        consume();
+        return parse_var_def_list(true);
     case tok::If:
         return parse_if();
     case tok::For:

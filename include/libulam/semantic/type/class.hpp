@@ -31,12 +31,14 @@ public:
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
-    Symbol* set(str_id_t name_id, Ptr<Type>&& type) {
-        return _members.set(name_id, std::move(type));
+    template <typename T>
+    Symbol* set(str_id_t name_id, Ptr<T>&& value) {
+        return _members.set(name_id, std::move(value));
     }
 
-    Symbol* set(str_id_t name_id, Ptr<Var>&& var) {
-        return _members.set(name_id, std::move(var));
+    template <typename T>
+    Symbol* set(str_id_t name_id, Ref<T> value) {
+        return _members.set(name_id, value);
     }
 
     auto node() { return _node; }
@@ -60,16 +62,14 @@ public:
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
-    Symbol* set(str_id_t name_id, Ptr<Type>&& type) {
-        return _members.set(name_id, std::move(type));
+    template <typename T>
+    Symbol* set(str_id_t name_id, Ptr<T>&& value) {
+        return _members.set(name_id, std::move(value));
     }
 
-    Symbol* set(str_id_t name_id, Ptr<TypeTpl>&& type_tpl) {
-        return _members.set(name_id, std::move(type_tpl));
-    }
-
-    Symbol* set(str_id_t name_id, Ptr<Var>&& var) {
-        return _members.set(name_id, std::move(var));
+    template <typename T>
+    Symbol* set(str_id_t name_id, Ref<T> value) {
+        return _members.set(name_id, value);
     }
 
     auto node() { return _node; }

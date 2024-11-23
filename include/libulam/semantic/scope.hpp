@@ -65,7 +65,8 @@ public:
 private:
     Scope* _parent;
     Flag _flags;
-    SymbolTable _symbols;
+    SymbolTable _symbols; // NOTE: scope can potentially have separate symbol
+                          // tables for types and funs/vars
 };
 
 } // namespace ulam

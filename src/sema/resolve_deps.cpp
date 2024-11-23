@@ -7,6 +7,7 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/var.hpp>
 #include <set>
 #include <unordered_map>
 
@@ -31,15 +32,71 @@ bool ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
     return RecVisitor::visit(node);
 }
 
+bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
+    // don't skip the type name
+    node->type()->accept(*this);
+    if (!scope()->is(Scope::Module) && !scope()->is(Scope::Class))
+        return false;
+    // create and set module/class/tpl variables
+    assert(!scope()->is(Scope::Module) || node->is_const());
+    auto class_node = class_def();
+    for (unsigned n = 0; n < node->def_num(); ++n) {
+        auto def_node = node->def(n);
+        auto name_id = def_node->name().str_id();
+        // name is already in current scope?
+        if (scope()->has(name_id, true)) {
+            // TODO: where?
+            diag().emit(
+                diag::Error, def_node->loc_id(), 1, "variable already defined");
+            continue;
+        }
+        auto var = ulam::make<Var>(node, def_node, Ref<Type>{});
+        auto var_ref = ref(var);
+        var->set_is_const(node->is_const());
+        if (class_node) {
+            // class/tpl variable
+            if (class_node->type()) {
+                class_node->type()->set(name_id, std::move(var));
+            } else {
+                assert(class_node->type_tpl());
+                class_node->type_tpl()->set(name_id, std::move(var));
+            }
+        } else {
+            // module constant, move to node
+            def_node->set_var(std::move(var));
+        }
+        // add to scope
+        scope()->set(name_id, var_ref);
+    }
+    return false;
+}
+
 bool ResolveDeps::do_visit(ast::Ref<ast::TypeDef> node) {
-    // NOTE: in general we do not know it a name refers to a type or a
-    // template at this point, using placeholders to track known types
-    auto alias_str_id = node->name().str_id();
-    if (scope()->has(alias_str_id, true)) {
-        // TODO: after types are resolved, report error if types don't match
+    auto alias_id = node->name().str_id();
+    // name is already in current scope?
+    if (scope()->has(alias_id, true)) {
+        // NOTE: after types are resolves, complain if types don't match
         return false;
     }
-    scope()->set_placeholder(alias_str_id);
+    // make alias type
+    auto type =
+        ulam::make<AliasType>(program()->next_type_id(), node, Ref<Type>{});
+    auto type_ref = ref(type);
+    // set node attr
+    node->set_alias_type(std::move(type));
+    // add to scope
+    scope()->set(alias_id, type_ref);
+    // if in class/tpl scope, add to class/tpl
+    if (scope()->is(Scope::Class)) {
+        auto class_node = class_def();
+        assert(class_node);
+        if (class_node->type()) {
+            class_node->type()->set(alias_id, type_ref);
+        } else {
+            assert(class_node->type_tpl());
+            class_node->type_tpl()->set(alias_id, type_ref);
+        }
+    }
     return true;
 }
 
@@ -56,7 +113,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
     return false;
 }
 
-void ResolveDeps::init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node) {
+void ResolveDeps::init_classes(
+    Ref<Module> module, ast::Ref<ast::ModuleDef> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (ast::is<ast::ClassDef>(child_v))

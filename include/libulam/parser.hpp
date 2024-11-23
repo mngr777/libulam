@@ -38,12 +38,17 @@ private:
     template <typename... Ts> void panic(Ts... stop);
 
     ast::Ptr<ast::ModuleDef> parse_module();
+    void parse_module_var_or_type_def(ast::Ref<ast::ModuleDef> node);
+    ast::Ptr<ast::TypeDef> parse_module_type_def(bool is_marked_local);
     ast::Ptr<ast::ClassDef> parse_class_def();
     ast::Ptr<ast::ClassDef> parse_class_def_head();
     void parse_class_def_body(ast::Ref<ast::ClassDef> node);
     ast::Ptr<ast::TypeDef> parse_type_def();
-    ast::Ptr<ast::VarDefList>
-    parse_var_def_list_rest(ast::Ptr<ast::TypeName>&& base_type, ast::Str first_name);
+    ast::Ptr<ast::VarDefList> parse_var_def_list(bool is_const);
+    ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
+        ast::Ptr<ast::TypeName>&& base_type,
+        ast::Str first_name,
+        bool is_const);
     ast::Ptr<ast::FunDef>
     parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name);
     ast::Ptr<ast::ParamList> parse_param_list();

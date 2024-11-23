@@ -11,15 +11,17 @@ namespace ulam::sema {
 // * before traversing the subtree, each class def is added to the module
 // (see `init_classes`);
 // * whole subtree is traversed and all unseen type/template names are added to
-// module's list of imports, placeholder symbols are used to track local
-// typedefs. After all modules have been processed, `check_module_deps` checks
-// for duplicates and unsatified dependencies.
+// module's list of imports. After all modules have been processed,
+// `check_module_deps` checks for duplicates and unsatified dependencies.
 class ResolveDeps : public sema::RecVisitor {
+    using RecVisitor::visit;
+    using RecVisitor::do_visit;
 public:
     ResolveDeps(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast} {}
 
     bool visit(ast::Ref<ast::Root> node) override;
     bool visit(ast::Ref<ast::ModuleDef> node) override;
+    bool visit(ast::Ref<ast::VarDefList> node) override;
 
     bool do_visit(ast::Ref<ast::TypeDef> node) override;
     bool do_visit(ast::Ref<ast::TypeName> node) override;

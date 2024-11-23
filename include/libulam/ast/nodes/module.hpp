@@ -9,15 +9,18 @@
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
+#include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
 #include <utility>
 
 namespace ulam {
+class Program;
+class Module;
 class Class;
 class ClassTpl;
-class Module;
-class Program;
+class Var;
 } // namespace ulam
 
 namespace ulam::ast {
@@ -73,6 +76,7 @@ private:
 
 class TypeDef : public Tuple<Stmt, TypeName>, public Named {
     ULAM_AST_NODE
+    ULAM_AST_PTR_ATTR(AliasType, alias_type) // NODE: alias types live here
 public:
     TypeDef(Ptr<TypeName>&& type, Str name):
         Tuple{std::move(type)}, Named{name} {}
@@ -84,7 +88,8 @@ class FunDefBody : public Block {
     ULAM_AST_NODE
 };
 
-class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>, public Named {
+class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>,
+               public Named {
     ULAM_AST_NODE
 public:
     FunDef(
@@ -103,6 +108,8 @@ public:
 // TODO: array/reference suffix
 class VarDef : public Tuple<Stmt, Expr>, public Named {
     ULAM_AST_NODE
+    ULAM_AST_PTR_ATTR(Var, var) // module local constants live here, other are
+                                // either transient or live in classes/tpls
 public:
     VarDef(Str name, Ptr<Expr>&& value): Tuple{std::move(value)}, Named{name} {}
 
@@ -111,9 +118,9 @@ public:
 
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {
     ULAM_AST_NODE
+    ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
 public:
-    explicit VarDefList(Ptr<TypeName>&& type):
-        Tuple{std::move(type)} {}
+    explicit VarDefList(Ptr<TypeName>&& type): Tuple{std::move(type)} {}
 
     unsigned def_num() const { return List::child_num(); }
 

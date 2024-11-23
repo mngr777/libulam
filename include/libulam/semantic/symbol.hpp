@@ -13,6 +13,7 @@ namespace ulam {
 
 template <typename... Ss> class _Symbol {
 private:
+    // TODO: do we really need placeholder symbols?
     struct Placeholder {};
 
     template <typename T> struct Value {
@@ -65,8 +66,6 @@ private:
     Variant<Placeholder, Ss...> _value;
 };
 
-// NOTE: scope can potentially have separate symbol tables for types and
-// funs/vars
 template <typename... Ss> class _SymbolTable {
 public:
     using Symbol = _Symbol<Ss...>;

@@ -8,7 +8,8 @@
 
 namespace ulam::ast {
 class BinaryOp;
-}
+class TypeDef;
+} // namespace ulam::ast
 
 namespace ulam {
 
@@ -98,7 +99,13 @@ private:
 
 class AliasType : public _TypeDec {
 public:
-    AliasType(type_id_t id, Ref<Type> prev): _TypeDec{id, prev} {}
+    AliasType(type_id_t id, ast::Ref<ast::TypeDef> node, Ref<Type> prev):
+        _TypeDec{id, prev}, _node(node) {}
+
+    ast::Ref<ast::TypeDef> node() { return _node; }
+
+private:
+    ast::Ref<ast::TypeDef> _node;
 };
 
 class CompType : public _TypeDec {
