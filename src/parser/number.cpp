@@ -9,33 +9,17 @@
 namespace ulam::detail {
 namespace {
 
-constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
 constexpr std::uint64_t MaxSigned = std::numeric_limits<std::int64_t>::max();
-
-constexpr const char* radix_to_str(std::uint8_t radix) {
-    switch (radix) {
-    case 2:
-        return "binary";
-    case 8:
-        return "octal";
-    case 10:
-        return "decimal";
-    case 16:
-        return "hexadecimal";
-    default:
-        assert(false);
-    }
-}
+constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
 
 // Max unsigned number that can be safely multiplied by radix
-constexpr std::uint64_t radix_threshold(std::uint8_t radix) {
-    assert(radix == 2 || radix == 8 || radix == 10 || radix == 16);
-    return MaxUnsigned / radix;
+constexpr std::uint64_t radix_threshold(Radix radix) {
+    return MaxUnsigned / radix_to_int(radix);
 }
 
-// Remainder of max unsigned number division by threshold value
-constexpr std::uint64_t radix_threshold_rem(std::uint8_t radix) {
-    return MaxUnsigned - radix_threshold(radix) * radix;
+// Remainder of max unsigned number divided by threshold value
+constexpr std::uint64_t radix_threshold_rem(Radix radix) {
+    return MaxUnsigned - radix_threshold(radix) * radix_to_int(radix);
 }
 
 } // namespace
@@ -45,42 +29,46 @@ constexpr std::uint64_t radix_threshold_rem(std::uint8_t radix) {
 Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     assert(str.size() > 0);
     assert(is_digit(str[0])); // guaranteed by lexer
-    Number number{};
+    // Number number{};
 
     std::size_t cur = 0;
     std::uint64_t value = 0; // abs value
+
+    Radix radix = Radix::Decimal;
+    bool overflow = false;
+    bool is_signed = true;
 
     // Radix
     if (str[cur] == '0' && str.size() > 1) {
         switch (str[cur + 1]) {
         case 'B':
         case 'b':
-            number.radix = 2;
+            radix = Radix::Binary;
             cur += 2;
             // are there any digits after prefix?
             if (cur == str.size() || !is_digit(str[cur])) {
                 diag.emit(
                     diag::Error, loc_id, str.size(),
                     "incomplete binary number");
-                return number;
+                return {radix, (std::int64_t)0};
             }
             break;
         case 'X':
         case 'x':
-            number.radix = 16;
+            radix = Radix::Hexadecimal;
             cur += 2;
             // are there any hex digits after prefix?
             if (cur == str.size() || !is_xdigit(str[cur])) {
                 diag.emit(
                     diag::Error, loc_id, str.size(),
                     "incomplete hexadecimal number");
-                return number;
+                return {radix, (std::int64_t)0};
             }
             break;
         default:
             // NOTE: leave single '0' decimal
             if (is_digit(str[cur + 1])) {
-                number.radix = 8;
+                radix = Radix::Octal;
                 cur += 1;
             }
         }
@@ -91,62 +79,58 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
         ++cur;
 
     // Value
-    auto threshold = radix_threshold(number.radix);
-    auto threshold_rem = radix_threshold_rem(number.radix);
+    auto threshold = radix_threshold(radix);
+    auto threshold_rem = radix_threshold_rem(radix);
     for (; cur < str.size(); ++cur) {
         std::uint8_t dv = digit_value(str[cur]);
         // is part of suffix?
         if (dv == NotDigit)
             break;
         // is valid for radix?
-        if (dv + 1 > number.radix) {
+        if (dv + 1 > radix_to_int(radix)) {
             diag.emit(
                 diag::Error, loc_id, cur, 1,
-                std::string("invalid digit in ") + radix_to_str(number.radix) +
+                std::string("invalid digit in ") + radix_to_str(radix) +
                     " number");
-            return number;
+            return {radix, (std::int64_t)0};
         }
         // already overflown?
-        if (number.overflow)
+        if (overflow)
             continue;
         // will overflow?
         if (value > threshold || (value == threshold && dv > threshold_rem)) {
             value = MaxUnsigned;
-            number.overflow = true;
+            overflow = true;
             continue;
         }
-        // Update value
-        value = value * number.radix + dv;
+        // update value
+        value = value * radix_to_int(radix) + dv;
     }
 
     // Suffix
     if (cur < str.size()) {
         if (str[cur] == 'U' || str[cur] == 'u') {
-            number.is_signed = false;
+            is_signed = false;
             ++cur;
         }
         if (cur < str.size()) {
             diag.emit(
                 diag::Error, loc_id, cur, str.size() - cur,
                 "invalid number suffix");
-            return number;
         }
     }
 
-    // Overflow
-    if (number.is_signed) {
-        if (value > MaxSigned) {
-            number.overflow = true;
-            diag.emit(
-                diag::Error, loc_id, str.size(),
-                "number overflow");
+    // Overflow?
+    overflow = overflow || (is_signed && value > MaxSigned);
+    if (overflow) {
+        diag.emit(diag::Error, loc_id, str.size(), "number overflow");
+        if (is_signed)
             value = MaxSigned;
-        }
-        number.value = value;
-    } else {
-        number.uvalue = value;
     }
-    return number;
+
+    // Done
+    return is_signed ? Number{radix, (std::int64_t)value}
+                     : Number{radix, value};
 }
 
 } // namespace ulam::detail

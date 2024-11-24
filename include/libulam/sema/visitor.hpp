@@ -49,8 +49,8 @@ protected:
     Scope* scope();
 
     Ref<Program> program() {
-        assert(_ast->program());
-        return _ast->program();
+        assert(ast()->program());
+        return ast()->program();
     }
     ast::Ref<ast::Root> ast() {
         assert(_ast);

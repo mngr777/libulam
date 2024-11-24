@@ -33,10 +33,12 @@ template <
     bitsize_t Max,
     bitsize_t Default>
 class _PrimType : public PrimType {
-    static_assert(_TypeId != BuiltinTypeId::NoBuiltinTypeId);
-    static_assert(_TypeId != BuiltinTypeId::AtomId);
-    static_assert(!Min == !Max);
-    static_assert(!Max == !Default);
+    static_assert(_TypeId != NoBuiltinTypeId);
+    static_assert(_TypeId != AtomId);
+    static_assert(_TypeId != StringId);
+    static_assert(0 < Min);
+    static_assert(Min <= Max);
+    static_assert(Min <= Default && Default <= Max);
 
 public:
     static constexpr BuiltinTypeId TypeId = _TypeId;

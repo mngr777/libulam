@@ -17,6 +17,7 @@ class Var;
 
 template <typename... Ts> class _Value {
 public:
+    template <typename T> _Value(T&& value): _value{std::forward<T>(value)} {}
     _Value() {}
 
     bool is_unknown() const { return is<std::monostate>(); }
@@ -36,18 +37,24 @@ private:
 
 class RValue : public _Value<Integer, Unsigned, Bits, String> {
 public:
-    RValue(): _Value() {}
+    template <typename T> RValue(T&& value): _Value{std::forward<T>(value)} {}
+    RValue(): _Value{} {}
 };
 
 class LValue : public _Value<Ref<Var>> { // TODO: array access
 public:
-    LValue(): _Value() {}
+    template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
+    LValue(): _Value{} {}
 
-    RValue* rvalue() { return nullptr; } // TODO
+    RValue* rvalue();
 };
 
 class Value {
 public:
+    Value() {}
+    explicit Value(LValue&& lvalue): _value{std::move(lvalue)} {}
+    explicit Value(RValue&& rvalue): _value{std::move(rvalue)} {}
+
     bool is_nil() const {
         return std::holds_alternative<std::monostate>(_value);
     }

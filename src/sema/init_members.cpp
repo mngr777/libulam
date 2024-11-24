@@ -2,10 +2,8 @@
 
 namespace ulam::sema {
 
-bool InitMembers::visit(ast::Ref<ast::VarDefList> node) {
+bool visit(ast::Ref<ast::TypeName> node) {
     return {};
 }
-
-bool InitMembers::do_visit(ast::Ref<ast::FunDef> node) { return {}; }
 
 } // namespace ulam::sema

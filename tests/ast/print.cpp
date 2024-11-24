@@ -1,5 +1,6 @@
 #include "print.hpp"
 #include "libulam/ast/traversal.hpp"
+#include "libulam/semantic/number.hpp"
 #include "libulam/semantic/ops.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
 #include "libulam/semantic/type/class_kind.hpp"
@@ -300,7 +301,13 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::BoolLit> node) {
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::NumLit> node) {
     indent();
-    _os << node->value().value << nl();
+    // TODO: ostream operator<<(ostream&, const Number&), print prefix/suffix
+    const auto& value = node->value();
+    if (value.is_signed()) {
+        _os << value.value<ulam::Integer>() << nl();
+    } else {
+        _os << value.value<ulam::Unsigned>() << nl();
+    }
     return false;
 }
 

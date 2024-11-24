@@ -107,7 +107,7 @@ public:
 
 template <typename T> class _Literal : public Expr {
 public:
-    _Literal(T&& value): _value{value} {}
+    _Literal(T&& value): _value{std::forward<T>(value)} {}
 
     const T& value() const { return _value; }
 

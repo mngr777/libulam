@@ -31,6 +31,9 @@ public:
 
     Value& value() { return _value; }
 
+    // TODO: if reference, get rvalue from references var
+    RValue* rvalue() { return _value.rvalue(); };
+
     bool is_const() const { return _flags & IsConst; }
 
     Flag flags() { return _flags; }
