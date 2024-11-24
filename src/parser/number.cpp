@@ -12,6 +12,8 @@ namespace {
 constexpr std::uint64_t MaxSigned = std::numeric_limits<std::int64_t>::max();
 constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
 
+// TODO: use "src/semantic/detail/integer.hpp"
+
 // Max unsigned number that can be safely multiplied by radix
 constexpr std::uint64_t radix_threshold(Radix radix) {
     return MaxUnsigned / radix_to_int(radix);

@@ -16,14 +16,14 @@ enum BuiltinTypeId {
     StringId
 };
 
-inline bool is_void_type_id(BuiltinTypeId id) { return id == VoidId; }
+constexpr bool is_void_type_id(BuiltinTypeId id) { return id == VoidId; }
 
-inline bool is_prim(BuiltinTypeId id) {
+constexpr bool is_prim(BuiltinTypeId id) {
     assert(id != NoBuiltinTypeId);
     return id != AtomId;
 }
 
-inline bool has_bitsize(BuiltinTypeId id) {
+constexpr bool has_bitsize(BuiltinTypeId id) {
     assert(id != NoBuiltinTypeId);
     return id != AtomId && id != VoidId && id != StringId;
 }

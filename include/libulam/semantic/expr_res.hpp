@@ -5,7 +5,13 @@
 
 namespace ulam {
 
-enum class ExprError { Ok, NoOperator };
+enum class ExprError {
+    Ok,
+    NotImplemented,
+    NoOperator,
+    CastRequired,
+    InvalidCast
+};
 
 class Type;
 
@@ -14,7 +20,8 @@ public:
     ExprRes(Ref<Type> type, Value&& value, ExprError error = ExprError::Ok):
         _type{type}, _value{std::move(value)}, _error{error} {}
 
-    ExprRes(ExprError error = ExprError::Ok): _type{Ref<Type>{}}, _error{error} {}
+    ExprRes(ExprError error = ExprError::NotImplemented):
+        _type{Ref<Type>{}}, _error{error} {}
 
     Ref<Type> type() { return _type; }
     Ref<const Type> type() const { return _type; }

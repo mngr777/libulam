@@ -1,6 +1,8 @@
 #pragma once
 #include <cassert>
+#include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/params.hpp>
+#include <libulam/ast/ptr.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
@@ -12,8 +14,6 @@
 
 namespace ulam {
 
-using bitsize_t = std::uint16_t;
-
 class Program;
 
 class PrimType : public BasicType {
@@ -22,6 +22,10 @@ public:
 
 protected:
     Ref<Program> program() { return _program; }
+    Diag& diag();
+
+    Ref<Type> prim_type(
+        ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);
 
 private:
     Ref<Program> _program;
@@ -33,9 +37,8 @@ template <
     bitsize_t Max,
     bitsize_t Default>
 class _PrimType : public PrimType {
-    static_assert(_TypeId != NoBuiltinTypeId);
-    static_assert(_TypeId != AtomId);
-    static_assert(_TypeId != StringId);
+    static_assert(is_prim(_TypeId));
+    static_assert(has_bitsize(_TypeId));
     static_assert(0 < Min);
     static_assert(Min <= Max);
     static_assert(Min <= Default && Default <= Max);
@@ -60,7 +63,8 @@ class PrimTypeTpl : public TypeTpl {
 public:
     PrimTypeTpl(Ref<Program> program);
 
-    Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override = 0;
+    Ref<Type>
+    type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override = 0;
     virtual Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
 
 protected:

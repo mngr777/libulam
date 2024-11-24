@@ -31,13 +31,13 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::NumLit> node) {
         auto type =
             program()->prim_type_tpl(IntId)->type(node, number.bitsize());
         assert(type);
-        return {type, Value{RValue{number.value<Integer>()}}};
+        return {type, RValue{number.value<Integer>()}};
     } else {
         // Unsigned(n)
         auto type =
             program()->prim_type_tpl(UnsignedId)->type(node, number.bitsize());
         assert(type);
-        return {type, Value{RValue{number.value<Unsigned>()}}};
+        return {type, RValue{number.value<Unsigned>()}};
     }
 }
 

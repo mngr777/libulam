@@ -5,8 +5,10 @@
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam::ast {
+class Node;
 class BinaryOp;
 class TypeDef;
 } // namespace ulam::ast
@@ -14,7 +16,6 @@ class TypeDef;
 namespace ulam {
 
 class Scope;
-class Value;
 
 using type_id_t = std::uint16_t;
 using bitsize_t = std::uint16_t;
@@ -37,7 +38,7 @@ public:
     virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
     virtual bitsize_t bitsize() const { return 0; }
 
-    virtual bool is_placeholder() const { return true; }
+    // virtual bool is_placeholder() const { return true; }
 
     virtual Ref<Type> prev() = 0;
     virtual Ref<const Type> prev() const = 0;
@@ -50,11 +51,21 @@ public:
 
     virtual bool is_reference() const { return false; }
 
+    virtual bool is_convertible(Ref<const Type> type) { return false; }
+
+    virtual Value cast(
+        ast::Ref<ast::Node> node,
+        Ref<const Type> type,
+        const Value& value,
+        bool is_impl = true) {
+        return {};
+    }
+
     virtual ExprRes binary_op(
         ast::Ref<ast::BinaryOp> node,
-        Value& lhs,
-        Ref<Type> rhs_type,
-        Value& rhs) {
+        Value& left,
+        Ref<const Type> right_type,
+        const Value& right) {
         return {ExprError::NoOperator};
     };
 

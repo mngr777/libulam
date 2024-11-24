@@ -10,18 +10,11 @@ class BinaryOp;
 namespace ulam {
 
 class Program;
+class Value;
 
 class StringType : public PrimType {
 public:
     StringType(Ref<Program> program): PrimType{program} {}
-
-    ExprRes binary_op(
-        ast::Ref<ast::BinaryOp> node,
-        Value& lhs,
-        Ref<Type> rhs_type,
-        Value& rhs) override {
-        return {ExprError::NoOperator};
-    }
 };
 
 } // namespace ulam

@@ -3,6 +3,7 @@
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -11,19 +12,12 @@ class BinaryOp;
 namespace ulam {
 
 class Program;
+class Value;
 
-class UnsignedType : public _PrimType<UnsignedId, 1, 64, 32> {
+class UnsignedType : public _PrimType<UnsignedId, 1, ULAM_MAX_INT_SIZE, 32> {
 public:
     UnsignedType(Ref<Program> program, bitsize_t bitsize):
         _PrimType{program, bitsize} {}
-
-    ExprRes binary_op(
-        ast::Ref<ast::BinaryOp> node,
-        Value& lhs,
-        Ref<Type> rhs_type,
-        Value& rhs) override {
-        return {ExprError::NoOperator};
-    }
 };
 
 using UnsignedTypeTpl = _PrimTypeTpl<UnsignedType>;

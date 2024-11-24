@@ -56,6 +56,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
+	src/semantic/detail/integer.hpp \
 	src/semantic/number.cpp \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \

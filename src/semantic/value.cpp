@@ -4,6 +4,10 @@
 namespace ulam {
 
 RValue* LValue::rvalue() {
+    return const_cast<RValue*>(std::as_const(*this).rvalue());
+}
+
+const RValue* LValue::rvalue() const {
     if (is_unknown())
         return nullptr;
     if (is<Ref<Var>>()) {

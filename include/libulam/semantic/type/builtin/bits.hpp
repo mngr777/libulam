@@ -11,19 +11,12 @@ class BinaryOp;
 namespace ulam {
 
 class Program;
+class Value;
 
 class BitsType : public _PrimType<BitsId, 1, 4096, 8> {
 public:
     BitsType(Ref<Program> program, bitsize_t bitsize):
         _PrimType{program, bitsize} {}
-
-    ExprRes binary_op(
-        ast::Ref<ast::BinaryOp> node,
-        Value& lhs,
-        Ref<Type> rhs_type,
-        Value& rhs) override {
-        return {ExprError::NoOperator};
-    }
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;

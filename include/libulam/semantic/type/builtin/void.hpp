@@ -9,6 +9,7 @@ class BinaryOp;
 namespace ulam {
 
 class Program;
+class Value;
 
 class VoidType : public PrimType {
 public:
