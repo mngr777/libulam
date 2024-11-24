@@ -6,7 +6,11 @@ namespace ulam::sema {
 
 ExprRes ExprVisitor::visit(ast::Ref<ast::TypeOpExpr> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::Ident> node) { return {}; }
-ExprRes ExprVisitor::visit(ast::Ref<ast::ParenExpr> node) { return {}; }
+
+ExprRes ExprVisitor::visit(ast::Ref<ast::ParenExpr> node) {
+    return node->inner()->accept(*this);
+}
+
 ExprRes ExprVisitor::visit(ast::Ref<ast::BinaryOp> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::UnaryPreOp> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::UnaryPostOp> node) { return {}; }
@@ -23,13 +27,13 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::BoolLit> node) {
 ExprRes ExprVisitor::visit(ast::Ref<ast::NumLit> node) {
     const auto& number = node->value();
     if (number.is_signed()) {
-        // Int
+        // Int(n)
         auto type =
             program()->prim_type_tpl(IntId)->type(node, number.bitsize());
         assert(type);
         return {type, Value{RValue{number.value<Integer>()}}};
     } else {
-        // Unsigned
+        // Unsigned(n)
         auto type =
             program()->prim_type_tpl(UnsignedId)->type(node, number.bitsize());
         assert(type);
