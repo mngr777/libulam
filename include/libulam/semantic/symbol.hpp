@@ -54,7 +54,7 @@ public:
     }
 
     template <typename T> Ref<T> get() {
-        return std::get<Value<T>>(_value).first;
+        return std::get<Value<T>>(_value).ref;
     }
 
     template <typename V> void visit(V&& v) { std::visit(v, _value); }

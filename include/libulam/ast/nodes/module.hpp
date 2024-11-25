@@ -95,13 +95,13 @@ class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>,
 public:
     FunDef(
         Str name,
-        Ptr<TypeName>&& ret_type,
+        Ptr<TypeName>&& ret_type_name,
         Ptr<ParamList>&& params,
         Ptr<FunDefBody>&& body):
-        Tuple{std::move(ret_type), std::move(params), std::move(body)},
+        Tuple{std::move(ret_type_name), std::move(params), std::move(body)},
         Named{name} {}
 
-    ULAM_AST_TUPLE_PROP(ret_type, 0)
+    ULAM_AST_TUPLE_PROP(ret_type_name, 0)
     ULAM_AST_TUPLE_PROP(params, 1)
     ULAM_AST_TUPLE_PROP(body, 2)
 };

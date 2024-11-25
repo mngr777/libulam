@@ -25,6 +25,7 @@ public:
     bool visit(ast::Ref<ast::VarDefList> node) override;
 
     bool do_visit(ast::Ref<ast::TypeDef> node) override;
+    bool do_visit(ast::Ref<ast::FunDef> node) override;
     bool do_visit(ast::Ref<ast::TypeName> node) override;
 
 private:

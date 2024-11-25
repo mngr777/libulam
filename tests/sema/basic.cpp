@@ -7,6 +7,11 @@
 static const char* Program = R"END(
 element A {
   typedef B.C D;
+
+  Int(10) foo() {
+    Int(5) a = 1;
+    return a;
+  }
 }
 )END";
 

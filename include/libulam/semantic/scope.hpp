@@ -7,7 +7,7 @@ namespace ulam {
 
 class Scope {
 public:
-    using SymbolTable = _SymbolTable<Type, TypeTpl, ulam::Fun, FunTpl, Var>;
+    using SymbolTable = _SymbolTable<Type, TypeTpl, ulam::Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
     using Flag = std::uint16_t;

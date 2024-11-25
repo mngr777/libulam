@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/stmts.hpp"
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
@@ -60,6 +61,7 @@ private:
     ast::Ptr<ast::If> parse_if();
     ast::Ptr<ast::For> parse_for();
     ast::Ptr<ast::While> parse_while();
+    ast::Ptr<ast::Return> parse_return();
 
     ast::Ptr<ast::Expr> parse_expr();
     ast::Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);

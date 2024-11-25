@@ -57,6 +57,7 @@ SEMANTIC_HEADER_FILES = \
 
 SEMANTIC_SOURCE_FILES = \
 	src/semantic/detail/integer.hpp \
+	src/semantic/fun.cpp \
 	src/semantic/number.cpp \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \
@@ -134,7 +135,6 @@ lib_LTLIBRARIES = libulam.la
 libulam_ladir = $(includedir)
 nobase_libulam_la_HEADERS = $(HEADER_FILES)
 libulam_la_SOURCES = $(SOURCE_FILES)
-libulam_CXXFLAGS = $(AM_CXXFLAGS) # -O3
 
 TESTS = \
 	test_memory_notepad1 \

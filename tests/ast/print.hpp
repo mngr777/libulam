@@ -97,6 +97,7 @@ public:
     bool visit(ulam::ast::Ref<ulam::ast::VarDefList> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::VarDef> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::FunDef> node) override;
+    bool visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::ParamList> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::Param> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::ArgList> node) override;
@@ -105,6 +106,7 @@ public:
     bool visit(ulam::ast::Ref<ulam::ast::If> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::For> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::While> node) override;
+    bool visit(ulam::ast::Ref<ulam::ast::Return> node) override;
     // bool visit(ulam::ast::Ref<ulam::ast::FunCall> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) override;
     bool visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) override;

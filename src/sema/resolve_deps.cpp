@@ -1,3 +1,4 @@
+#include "libulam/str_pool.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -51,7 +52,8 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
             continue;
         }
         Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
-        auto var = ulam::make<Var>(node->type_name(), def_node, Ref<Type>{}, flags);
+        auto var =
+            ulam::make<Var>(node->type_name(), def_node, Ref<Type>{}, flags);
         auto var_ref = ref(var);
         if (class_node) {
             // class/tpl variable
@@ -100,10 +102,48 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeDef> node) {
     return true;
 }
 
+bool ResolveDeps::do_visit(ast::Ref<ast::FunDef> node) {
+    auto class_node = class_def();
+    assert(class_node);
+    auto name_id = node->name().str_id();
+    Ref<Fun> fun{};
+    if (class_node->type()) {
+        auto cls = class_node->type();
+        auto sym = cls->get(name_id);
+        if (sym) {
+            if (!sym->is<Fun>()) {
+                diag().emit(
+                    diag::Error, node->name().loc_id(), str(name_id).size(),
+                    "defined and is not a function");
+                return false;
+            }
+        } else {
+            sym = cls->set(name_id, ulam::make<Fun>());
+        }
+        fun = sym->get<Fun>();
+    } else {
+        assert(class_node->type_tpl());
+        auto cls_tpl = class_node->type_tpl();
+        auto sym = cls_tpl->get(name_id);
+        if (sym) {
+            if (!sym->is<Fun>()) {
+                diag().emit(
+                    diag::Error, node->name().loc_id(), str(name_id).size(),
+                    "defined and is not a function");
+            }
+        } else {
+            sym = cls_tpl->set(name_id, ulam::make<Fun>());
+        }
+        fun = sym->get<Fun>();
+    }
+    fun->add_overload(node);
+    return true;
+}
+
 bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
     assert(node->first());
     auto spec = node->first();
-    if (!spec->is_builtin())
+    if (spec->is_builtin())
         return false;
     // add specs of unseen types to module imports
     assert(module_def()->module());

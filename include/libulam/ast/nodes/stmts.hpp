@@ -31,10 +31,7 @@ public:
 class For : public Tuple<Stmt, Stmt, Expr, Expr, Stmt> {
     ULAM_AST_NODE
 public:
-    For(Ptr<Stmt>&& init,
-        Ptr<Expr>&& cond,
-        Ptr<Expr>&& upd,
-        Ptr<Stmt>&& body):
+    For(Ptr<Stmt>&& init, Ptr<Expr>&& cond, Ptr<Expr>&& upd, Ptr<Stmt>&& body):
         Tuple{
             std::move(init), std::move(cond), std::move(upd), std::move(body)} {
     }
@@ -46,12 +43,21 @@ public:
 };
 
 class While : public Tuple<Stmt, Expr, Stmt> {
+    ULAM_AST_NODE
 public:
     While(Ptr<Expr>&& cond, Ptr<Stmt>&& body):
         Tuple{std::move(cond), std::move(body)} {}
 
-    ULAM_AST_TUPLE_PROP(cond, 0);
-    ULAM_AST_TUPLE_PROP(body, 1);
+    ULAM_AST_TUPLE_PROP(cond, 0)
+    ULAM_AST_TUPLE_PROP(body, 1)
+};
+
+class Return : public Tuple<Stmt, Expr> {
+    ULAM_AST_NODE
+public:
+    Return(Ptr<Expr>&& expr): Tuple{std::move(expr)} {}
+
+    ULAM_AST_TUPLE_PROP(expr, 0)
 };
 
 } // namespace ulam::ast

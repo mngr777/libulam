@@ -325,8 +325,11 @@ ast::Ptr<ast::Block> Parser::parse_block() {
 
 void Parser::parse_as_block(ast::Ref<ast::Block> node) {
     expect(tok::BraceL);
-    while (!_tok.in(tok::BraceR, tok::Eof))
-        node->add(parse_stmt());
+    while (!_tok.in(tok::BraceR, tok::Eof)) {
+        auto stmt = parse_stmt();
+        if (stmt)
+            node->add(std::move(stmt));
+    }
     expect(tok::BraceR);
 }
 
@@ -336,6 +339,7 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
     case tok::TypeIdent: {
         auto type = parse_type_name();
         if (_tok.is(tok::Period)) {
+            // FIXME
             return parse_type_op_rest(std::move(type));
         } else if (_tok.is(tok::Ident)) {
             auto first_name = tok_ast_str();
@@ -356,6 +360,8 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
         return parse_for();
     case tok::While:
         return parse_while();
+    case tok::Return:
+        return parse_return();
     case tok::BraceL:
         return parse_block();
     case tok::Semicol:
@@ -425,6 +431,19 @@ ast::Ptr<ast::While> Parser::parse_while() {
     // )
     expect(tok::ParenR);
     return tree<ast::While>(std::move(cond), parse_stmt());
+}
+
+ast::Ptr<ast::Return> Parser::parse_return() {
+    assert(_tok.is(tok::Return));
+    consume();
+    ast::Ptr<ast::Expr> expr{};
+    if (!_tok.is(tok::Semicol)) {
+        expr = parse_expr();
+        if (!expect(tok::Semicol))
+            panic(tok::Semicol, tok::BraceR);
+    }
+    consume_if(tok::Semicol);
+    return tree<ast::Return>(std::move(expr));
 }
 
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {
@@ -611,10 +630,9 @@ ast::Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     ast::Ptr<ast::TypeIdent> ident{};
     BuiltinTypeId builtin_type_id = NoBuiltinTypeId;
     if (_tok.is(tok::BuiltinTypeIdent)) {
-        // built-in type
         builtin_type_id = _tok.builtin_type_id();
+        consume();
     } else {
-        // user type
         ident = parse_type_ident();
     }
     ast::Ptr<ast::ArgList> args{};

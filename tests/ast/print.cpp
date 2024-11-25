@@ -8,10 +8,10 @@
 
 namespace test::ast {
 
-#define NODE(str, cls)                                                         \
-    bool PrinterBase::visit(ulam::ast::Ref<ulam::ast::cls> node) {             \
-        indent() << str << "\n";                                               \
-        return true;                                                           \
+#define NODE(str, cls)                                              \
+    bool PrinterBase::visit(ulam::ast::Ref<ulam::ast::cls> node) {  \
+        indent() << str << "\n";                                    \
+        return true;                                                \
     }
 #include "libulam/ast/nodes.inc.hpp"
 #undef NODE
@@ -92,13 +92,17 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
     indent();
     {
         auto f = no_ws();
-        accept_me(node->ret_type());
+        accept_me(node->ret_type_name());
         _os << " " << name(node);
         accept_me(node->params());
     }
     _os << nl();
     accept_me(node->body());
     return false;
+}
+
+bool Printer::visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
+    return visit(ulam::ast::Ref<ulam::ast::Block>(node));
 }
 
 bool Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
@@ -189,6 +193,16 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::While> node) {
     }
     _os << ")" << nl();
     accept_me(node->body());
+    return false;
+}
+
+bool Printer::visit(ulam::ast::Ref<ulam::ast::Return> node) {
+    indent() << "return ";
+    {
+        auto f = no_ws();
+        accept_me(node->expr());
+    }
+    _os << ";" << nl();
     return false;
 }
 
