@@ -3,6 +3,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/diag.hpp>
 
 namespace ulam::ast {
 class ArgList;
@@ -23,6 +24,7 @@ public:
 
 protected:
     Ref<Program> program() { return _program; }
+    Diag& diag();
 
 private:
     Ref<Program> _program;

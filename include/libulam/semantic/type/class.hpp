@@ -20,13 +20,15 @@ namespace ulam {
 class Scope;
 class Program;
 class Var;
+class ClassTpl;
 
 class Class : public BasicType {
 public:
     using SymbolTable = _SymbolTable<Type, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    explicit Class(type_id_t id, Ref<ast::ClassDef> node);
+    Class(type_id_t id, Ref<ClassTpl> tpl);
+    Class(type_id_t id, ast::Ref<ast::ClassDef> node);
     ~Class();
 
     Class(Class&&) = default;
@@ -36,13 +38,11 @@ public:
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
-    template <typename T>
-    Symbol* set(str_id_t name_id, Ptr<T>&& value) {
+    template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
     }
 
-    template <typename T>
-    Symbol* set(str_id_t name_id, Ref<T> value) {
+    template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
         return _members.set(name_id, value);
     }
 
@@ -50,6 +50,7 @@ public:
 
 private:
     Ref<ast::ClassDef> _node;
+    Ref<ClassTpl> _tpl;
     SymbolTable _members;
 };
 
@@ -69,19 +70,20 @@ public:
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
-    template <typename T>
-    Symbol* set(str_id_t name_id, Ptr<T>&& value) {
+    template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
     }
 
-    template <typename T>
-    Symbol* set(str_id_t name_id, Ref<T> value) {
+    template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
         return _members.set(name_id, value);
     }
 
     auto node() { return _node; }
 
 private:
+    // TMP
+    std::string param_values_str(const ValueList& values);
+
     Ref<ast::ClassDef> _node;
     SymbolTable _members;
     std::unordered_map<std::string, Ptr<Class>> _types;

@@ -24,6 +24,7 @@ public:
     Ref<PrimType> prim_type(BuiltinTypeId id);
 
     Diag& diag() { return _diag; }
+    ast::Ref<ast::Root> ast() { return _ast; }
 
     auto& modules() { return _modules; }
 

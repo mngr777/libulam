@@ -66,9 +66,6 @@ public:
     Ref<Type>
     type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override = 0;
     virtual Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
-
-protected:
-    Diag& _diag;
 };
 
 template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
@@ -83,7 +80,7 @@ public:
             size = T::DefaultSize;
         } else {
             if (args.size() > 1) {
-                _diag.emit(
+                diag().emit(
                     diag::Error, arg_list->loc_id(), 1,
                     std::string("too many arguments for ") + type_str());
                 // continue
@@ -98,7 +95,7 @@ public:
             } else if (value->is<Unsigned>()) {
                 size = value->get<Unsigned>();
             } else {
-                _diag.emit(
+                diag().emit(
                     diag::Error, arg_list->loc_id(), 1,
                     "cannot convert to bit size");
                 return {};
@@ -110,13 +107,13 @@ public:
     Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t size) {
         // check, adjust and continue on error
         if (size < T::MinSize) {
-            _diag.emit(
+            diag().emit(
                 diag::Error, node->loc_id(), 1,
                 std::string("bit size argument must be at least ") +
                     std::to_string(T::MinSize));
             size = T::MinSize;
         } else if (size > T::MaxSize) {
-            _diag.emit(
+            diag().emit(
                 diag::Error, node->loc_id(), 1,
                 std::string("bit size argument must be at most ") +
                     std::to_string(T::MaxSize));
