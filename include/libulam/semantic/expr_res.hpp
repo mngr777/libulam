@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <utility>
 
@@ -17,23 +18,32 @@ class Type;
 
 class ExprRes {
 public:
+    ExprRes(TypedValue&& tv, ExprError error = ExprError::Ok):
+        _typed_value{std::move(tv)} {}
+
     ExprRes(Ref<Type> type, Value&& value, ExprError error = ExprError::Ok):
-        _type{type}, _value{std::move(value)}, _error{error} {}
+        _typed_value{type, std::move(value)}, _error{error} {}
 
-    ExprRes(ExprError error = ExprError::NotImplemented):
-        _type{Ref<Type>{}}, _error{error} {}
+    ExprRes(ExprError error = ExprError::NotImplemented): _error{error} {}
 
-    Ref<Type> type() { return _type; }
-    Ref<const Type> type() const { return _type; }
+    ExprRes(ExprRes&&) = default;
+    ExprRes& operator=(ExprRes&&) = default;
 
-    Value& value() { return _value; }
-    const Value& value() const { return _value; }
+    Ref<Type> type() { return _typed_value.type(); }
+    Ref<const Type> type() const { return _typed_value.type(); }
+
+    const Value& value() { return _typed_value.value(); }
+
+    TypedValue move_typed_value() {
+        TypedValue tv;
+        std::swap(tv, _typed_value);
+        return tv;
+    }
 
     ExprError error() const { return _error; }
 
 private:
-    Ref<Type> _type;
-    Value _value;
+    TypedValue _typed_value;
     ExprError _error;
 };
 

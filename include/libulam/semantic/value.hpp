@@ -60,6 +60,9 @@ public:
     Value(LValue&& lvalue): _value{std::move(lvalue)} {}
     Value(RValue&& rvalue): _value{std::move(rvalue)} {}
 
+    Value(Value&&) = default;
+    Value& operator=(Value&&) = default;
+
     bool is_nil() const {
         return std::holds_alternative<std::monostate>(_value);
     }

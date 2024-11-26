@@ -1,10 +1,11 @@
+#include "libulam/ast/nodes/var_decl.hpp"
 #include "libulam/semantic/value.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/class.hpp>
-#include <libulam/semantic/program.hpp>
 #include <string>
 
 namespace ulam {
@@ -25,38 +26,50 @@ void Class::export_symbols(Scope* scope) { scope->import_symbols(_members); }
 
 void ClassTpl::export_symbols(Scope* scope) { scope->import_symbols(_members); }
 
-Ref<Type> ClassTpl::type(ast::Ref<ast::ArgList> args, ValueList& values) {
-    auto key = param_values_str(values);
-    {
-        auto it = _types.find(key);
-        if (it != _types.end())
-            return ref(it->second);
-    }
-    auto cls = make<Class>(program()->next_type_id(), this);
-    auto params = _node->params();
-    assert(params->child_num() > 0);
-    assert(args->child_num() == values.size());
-    // unsigned n = 0;
-    // for (auto& val : values) {
-    //     // arg node
-    //     auto arg = args->get(n);
-    //     // too many arguments?
-    //     if (n == params->child_num()) {
-    //         diag().emit(diag::Error, arg->loc_id(), 1, "excessive class parameters");
-    //         break;
-    //     }
-    //     // param node
-    //     auto param = params->get(n);
-    //     auto name_id = param->name().str_id();
-    //     // auto var = make<Var>();
-    // }
-    return {};
+Ref<Type>
+ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+    auto key = type_args_str(args);
+    auto it = _types.find(key);
+    if (it != _types.end())
+        return ref(it->second);
+    auto cls = inst(args_node, std::move(args));
+    auto cls_ref = ref(cls);
+    _types.emplace(key, std::move(cls));
+    return cls_ref;
 }
 
-std::string ClassTpl::param_values_str(const ValueList& values) {
+Ptr<Class>
+ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+    auto cls = ulam::make<Class>(program()->next_type_id(), this);
+    auto params_node = _node->params();
+    assert(params_node->child_num() > 0);
+    assert(args_node->child_num() == args.size());
+    unsigned n = 0;
+    for (auto& arg : args) {
+        // arg node
+        auto arg_node = args_node->get(n);
+        // too many arguments?
+        if (n == params_node->child_num()) {
+            diag().emit(
+                diag::Error, arg_node->loc_id(), 1,
+                "excessive class parameters");
+            break;
+        }
+        // param node
+        auto param_node = params_node->get(n);
+        auto name_id = param_node->name().str_id();
+        auto var = ulam::make<Var>(
+            param_node->type_name(), ast::Ref<ast::VarDecl>{}, std::move(arg),
+            Var::ClassParam);
+        cls->set(name_id, std::move(var));
+    }
+    return cls;
+}
+
+std::string ClassTpl::type_args_str(const TypedValueList& args) {
     std::string str;
-    for (const auto& val : values) {
-        auto rval = val.rvalue();
+    for (const auto& arg : args) {
+        auto rval = arg.value().rvalue();
         assert(!rval->is_unknown());
         if (!str.empty())
             str += "_";
@@ -67,7 +80,8 @@ std::string ClassTpl::param_values_str(const ValueList& values) {
         } else if (rval->is<Bool>()) {
             str += (rval->get<Bool>() ? "t" : "f");
         } else if (rval->is<String>()) {
-            str += std::to_string(program()->ast()->ctx().str_id(rval->get<String>()));
+            str += std::to_string(
+                program()->ast()->ctx().str_id(rval->get<String>()));
         } else {
             assert(false);
         }

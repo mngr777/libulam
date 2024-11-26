@@ -2,6 +2,7 @@
 #include <libulam/ast/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
+#include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 
 namespace ulam::ast {
@@ -23,6 +24,15 @@ public:
         Ref<Type> type,
         Flag flags = NoFlags):
         _type_node{type_node}, _node{node}, _type{type}, _flags{flags} {}
+
+    Var(ast::Ref<ast::TypeName> type_node,
+        ast::Ref<ast::VarDecl> node,
+        TypedValue&& tv,
+        Flag flags = NoFlags):
+        _type_node{type_node},
+        _node{node},
+        _type{tv.type()},
+        _value{tv.move_value()} {}
 
     ast::Ref<ast::TypeName> type_node() { return _type_node; }
     ast::Ref<ast::VarDecl> node() { return _node; }

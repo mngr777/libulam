@@ -1,9 +1,9 @@
 #pragma once
 #include <libulam/ast/ptr.hpp>
+#include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
-#include <libulam/diag.hpp>
 
 namespace ulam::ast {
 class ArgList;
@@ -18,7 +18,7 @@ public:
     TypeTpl(Ref<Program> program);
 
     virtual Ref<Type>
-    type(ast::Ref<ast::ArgList> arg_list, ValueList& args) = 0;
+    type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) = 0;
 
     type_id_t id() const { return _id; }
 

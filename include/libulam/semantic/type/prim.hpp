@@ -64,7 +64,7 @@ public:
     PrimTypeTpl(Ref<Program> program);
 
     Ref<Type>
-    type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override = 0;
+    type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override = 0;
     virtual Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
 };
 
@@ -74,34 +74,34 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
 public:
     _PrimTypeTpl(Ref<Program> program): PrimTypeTpl{program} {}
 
-    Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) {
+    Ref<Type> type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
         bitsize_t size = 0;
         if (args.size() == 0) {
             size = T::DefaultSize;
         } else {
             if (args.size() > 1) {
                 diag().emit(
-                    diag::Error, arg_list->loc_id(), 1,
+                    diag::Error, args_node->loc_id(), 1,
                     std::string("too many arguments for ") + type_str());
                 // continue
             }
             // get first arg
             auto& arg = args.front();
-            RValue* value = arg.rvalue();
-            assert(value);
-            if (value->is<Integer>()) {
-                auto int_val = value->get<Integer>();
+            auto rval = arg.value().rvalue();
+            assert(rval);
+            if (rval->is<Integer>()) {
+                auto int_val = rval->get<Integer>();
                 size = (int_val < 0) ? 0 : static_cast<Unsigned>(int_val);
-            } else if (value->is<Unsigned>()) {
-                size = value->get<Unsigned>();
+            } else if (rval->is<Unsigned>()) {
+                size = rval->get<Unsigned>();
             } else {
                 diag().emit(
-                    diag::Error, arg_list->loc_id(), 1,
+                    diag::Error, args_node->loc_id(), 1,
                     "cannot convert to bit size");
                 return {};
             }
         }
-        return type(arg_list, size);
+        return type(args_node, size);
     }
 
     Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t size) {
@@ -131,7 +131,7 @@ private:
         }
         auto type = make<T>(program(), size);
         auto type_ref = ref(type);
-        _types[size] = std::move(type);
+        _types.emplace(size, std::move(type));
         return type_ref;
     }
 

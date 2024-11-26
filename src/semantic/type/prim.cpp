@@ -17,6 +17,6 @@ Ref<Type> PrimType::prim_type(
 }
 
 PrimTypeTpl::PrimTypeTpl(Ref<Program> program):
-    TypeTpl{program}, _diag{program->diag()} {}
+    TypeTpl{program} {}
 
 } // namespace ulam

@@ -66,7 +66,8 @@ public:
 
     void export_symbols(Scope* scope);
 
-    Ref<Type> type(ast::Ref<ast::ArgList> arg_list, ValueList& args) override;
+    Ref<Type>
+    type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
@@ -81,8 +82,10 @@ public:
     auto node() { return _node; }
 
 private:
+    Ptr<Class> inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args);
+
     // TMP
-    std::string param_values_str(const ValueList& values);
+    std::string type_args_str(const TypedValueList& args);
 
     Ref<ast::ClassDef> _node;
     SymbolTable _members;
