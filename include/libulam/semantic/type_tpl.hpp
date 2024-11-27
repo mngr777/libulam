@@ -24,6 +24,7 @@ public:
 
 protected:
     Ref<Program> program() { return _program; }
+    Ref<const Program> program() const { return _program; }
     Diag& diag();
 
 private:

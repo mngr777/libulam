@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/str_pool.hpp>
+#include <utility>
 
 namespace ulam {
 
@@ -33,18 +34,31 @@ public:
         return get(name_id, current);
     }
 
-    Symbol* get(str_id_t name_id, Flag upto) {
+    std::pair<Symbol*, Scope*> get_with_scope(str_id_t name_id, Flag upto) {
         auto sym = _symbols.get(name_id);
         if (sym || _flags & upto)
-            return sym;
-        return _parent ? _parent->get(name_id, upto) : sym;
+            return {sym, this};
+        return _parent ? _parent->get_with_scope(name_id, upto)
+                       : std::pair{sym, this};
     }
 
-    Symbol* get(str_id_t name_id, bool current = false) {
+    std::pair<Symbol*, Scope*>
+    get_with_scope(str_id_t name_id, bool in_current = false) {
         auto sym = _symbols.get(name_id);
-        if (sym || current)
-            return sym;
-        return _parent ? _parent->get(name_id) : sym;
+        if (sym || in_current)
+            return {sym, this};
+        return _parent ? _parent->get_with_scope(name_id)
+                       : std::pair{sym, this};
+    }
+
+    Symbol* get(str_id_t name_id, Flag upto) {
+        auto [sym, _] = get_with_scope(name_id, upto);
+        return sym;
+    }
+
+    Symbol* get(str_id_t name_id, bool in_current = false) {
+        auto [sym, _] = get_with_scope(name_id, in_current);
+        return sym;
     }
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {

@@ -26,7 +26,9 @@ public:
     // TODO: Atom (built-in non-primitive)
 
     Diag& diag() { return _diag; }
+
     ast::Ref<ast::Root> ast() { return _ast; }
+    ast::Ref<const ast::Root> ast() const { return _ast; }
 
     auto& modules() { return _modules; }
 

@@ -1,5 +1,4 @@
-#include "libulam/ast/nodes/var_decl.hpp"
-#include "libulam/semantic/value.hpp"
+#include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
@@ -12,13 +11,21 @@ namespace ulam {
 
 // Class
 
-Class::Class(type_id_t id, Ref<ClassTpl> tpl):
-    BasicType(id), _node{tpl->node()}, _tpl{tpl} {}
+Class::Class(Ref<Program> program, Ref<ClassTpl> tpl):
+    BasicType(program->next_type_id()), _node{tpl->node()}, _tpl{tpl} {}
 
-Class::Class(type_id_t id, ast::Ref<ast::ClassDef> node):
-    BasicType(id), _node{node}, _tpl{} {}
+Class::Class(Ref<Program> program, ast::Ref<ast::ClassDef> node):
+    BasicType(program->next_type_id()), _node{node}, _tpl{} {}
 
 Class::~Class() {}
+
+std::string Class::name() const {
+    if (_tpl)
+        return _tpl->name(); // TODO: params
+    assert(_node);
+    auto name_id = _node->name().str_id();
+    return std::string{_program->ast()->ctx().str(name_id)};
+}
 
 Ref<Type> Class::type_member(str_id_t name_id) {
     auto sym = get(name_id);
@@ -32,6 +39,13 @@ void Class::export_symbols(Scope* scope) {
 }
 
 // ClassTpl
+
+std::string ClassTpl::name() const {
+    assert(_node);
+    // TODO: refactoring
+    auto name_id = _node->name().str_id();
+    return std::string{program()->ast()->ctx().str(name_id)};
+}
 
 void ClassTpl::export_symbols(Scope* scope) { scope->import_symbols(_members); }
 
@@ -49,7 +63,7 @@ ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
 Ptr<Class>
 ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = ulam::make<Class>(program()->next_type_id(), this);
+    auto cls = ulam::make<Class>(program(), this);
     auto params_node = _node->params();
     assert(params_node->child_num() > 0);
     assert(args_node->child_num() == args.size());

@@ -81,6 +81,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
 	include/libulam/sema/init_members.hpp \
+	include/libulam/sema/type_resolver.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
@@ -88,6 +89,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/expr_visitor.cpp \
 	src/sema/resolve_deps.cpp \
 	src/sema/init_members.cpp \
+	src/sema/type_resolver.cpp \
 	src/sema/visitor.cpp
 
 # Library

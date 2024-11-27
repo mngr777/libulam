@@ -52,6 +52,11 @@ public:
     _PrimType(Ref<Program> program, bitsize_t bitsize):
         PrimType{program}, _bitsize{bitsize} {}
 
+    std::string name() const override {
+        return std::string(builtin_type_str(TypeId)) + "(" +
+               std::to_string(_bitsize) + ")";
+    }
+
     BuiltinTypeId builtin_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
 

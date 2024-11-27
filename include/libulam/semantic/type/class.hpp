@@ -25,12 +25,14 @@ public:
     using SymbolTable = _SymbolTable<Type, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    Class(type_id_t id, Ref<ClassTpl> tpl);
-    Class(type_id_t id, ast::Ref<ast::ClassDef> node);
+    Class(Ref<Program> program, Ref<ClassTpl> tpl);
+    Class(Ref<Program> program, ast::Ref<ast::ClassDef> node);
     ~Class();
 
     Class(Class&&) = default;
     Class& operator=(Class&&) = default;
+
+    std::string name() const override;
 
     bool is_class() override { return true; }
     Ref<Type> type_member(str_id_t name_id) override;
@@ -50,6 +52,7 @@ public:
     auto node() { return _node; }
 
 private:
+    Ref<Program> _program;
     Ref<ast::ClassDef> _node;
     Ref<ClassTpl> _tpl;
     SymbolTable _members;
@@ -64,6 +67,8 @@ public:
 
     ClassTpl(ClassTpl&&) = default;
     ClassTpl& operator=(ClassTpl&&) = default;
+
+    std::string name() const;
 
     void export_symbols(Scope* scope);
 

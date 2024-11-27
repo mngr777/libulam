@@ -7,6 +7,7 @@
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/str_pool.hpp>
+#include <string>
 
 namespace ulam::ast {
 class Node;
@@ -37,6 +38,8 @@ public:
     virtual ~Type() {}
 
     type_id_t id() const { return _id; }
+
+    virtual std::string name() const { return "<no-name>"; }
 
     virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
     virtual bitsize_t bitsize() const { return 0; }

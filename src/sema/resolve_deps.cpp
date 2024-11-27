@@ -192,7 +192,7 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
         node->set_type_tpl(tpl_ref);
     } else {
         // class
-        auto cls = ulam::make<Class>(program()->next_type_id(), node);
+        auto cls = ulam::make<Class>(program(), node);
         auto cls_ref = ref(cls);
         module->set<Type>(name_id, std::move(cls));
         node->set_type(cls_ref);

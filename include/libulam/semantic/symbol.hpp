@@ -27,6 +27,7 @@ private:
     };
 
 public:
+    // TODO: remove name_id from Symbol itself?
     template <typename T>
     _Symbol(str_id_t name_id, Ptr<T>&& value):
         _name_id{name_id}, _value{std::move(value)} {}
