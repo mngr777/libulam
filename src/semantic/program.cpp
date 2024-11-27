@@ -17,6 +17,10 @@ Program::Program(Diag& diag, ast::Ref<ast::Root> ast): _diag{diag}, _ast{ast} {
     _prim_types[StringId] = make<StringType>(self);
 }
 
+str_id_t Program::self_str_id() { return _ast->ctx().str_id("Self"); }
+
+str_id_t Program::self_inst_str_id() { return _ast->ctx().str_id("self"); }
+
 Ref<PrimTypeTpl> Program::prim_type_tpl(BuiltinTypeId id) {
     assert(has_bitsize(id));
     assert(_prim_type_tpls.count(id) == 1);

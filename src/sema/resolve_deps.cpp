@@ -39,7 +39,7 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     if (!scope()->is(Scope::Module) && !scope()->is(Scope::Class))
         return false;
     // create and set module/class/tpl variables
-    assert(!scope()->is(Scope::Module) || node->is_const());
+    assert(!scope()->is(Scope::Module) || node->is_const()); // should we inst all vars?
     auto class_node = class_def();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def_node = node->def(n);

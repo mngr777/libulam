@@ -74,7 +74,9 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
 public:
     _PrimTypeTpl(Ref<Program> program): PrimTypeTpl{program} {}
 
+    // TODO: move impl to .ipp
     Ref<Type> type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+        // NOTE: args_node can be null
         bitsize_t size = 0;
         if (args.size() == 0) {
             size = T::DefaultSize;

@@ -1,3 +1,4 @@
+#include "libulam/sema/expr_visitor.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/visitor.hpp>
@@ -44,9 +45,15 @@ bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
 }
 
 bool RecVisitor::visit(ast::Ref<ast::ClassDefBody> node) {
-    assert(_class_def && _class_def->type());
     enter_scope(Scope::Class);
-    // TODO: export?
+    // set Self
+    auto self_id = program()->self_str_id();
+    if (_class_def->type()) {
+        scope()->set(self_id, _class_def->type());
+    } else {
+        assert(_class_def->type_tpl());
+        scope()->set(self_id, _class_def->type_tpl());
+    }
     if (do_visit(node))
         traverse(node);
     exit_scope();
@@ -111,9 +118,7 @@ void RecVisitor::enter_scope(Scope::Flag flags) {
     _scopes.emplace(parent, flags);
 }
 
-void RecVisitor::exit_scope() {
-    _scopes.pop();
-}
+void RecVisitor::exit_scope() { _scopes.pop(); }
 
 Scope* RecVisitor::scope() {
     assert(!_scopes.empty());

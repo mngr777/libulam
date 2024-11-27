@@ -8,6 +8,7 @@ namespace ulam {
 
 class Type;
 
+// TODO: Is it better to have type in value class itself?
 class TypedValue {
 public:
     TypedValue(): _type{}, _value{} {}

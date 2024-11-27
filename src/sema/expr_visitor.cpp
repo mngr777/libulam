@@ -15,7 +15,11 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::BinaryOp> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::UnaryPreOp> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::UnaryPostOp> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::VarRef> node) { return {}; }
-ExprRes ExprVisitor::visit(ast::Ref<ast::Cast> node) { return {}; }
+
+ExprRes ExprVisitor::visit(ast::Ref<ast::Cast> node) {
+    // auto res = node->expr()->accept(*this);
+    return {};
+}
 
 ExprRes ExprVisitor::visit(ast::Ref<ast::BoolLit> node) {
     // Bool(1)
@@ -51,5 +55,7 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::StrLit> node) {
 ExprRes ExprVisitor::visit(ast::Ref<ast::FunCall> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::MemberAccess> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::ArrayAccess> node) { return {}; }
+
+Diag& ExprVisitor::diag() { return program()->diag(); }
 
 } // namespace ulam::sema

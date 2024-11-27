@@ -3,12 +3,12 @@
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/diag.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/str_pool.hpp>
 #include <stack>
 
 namespace ulam {
-class Diag;
 class Program;
 } // namespace ulam
 

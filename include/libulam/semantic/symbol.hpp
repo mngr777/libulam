@@ -13,9 +13,6 @@ namespace ulam {
 
 template <typename... Ss> class _Symbol {
 private:
-    // TODO: do we really need placeholder symbols?
-    struct Placeholder {};
-
     template <typename T> struct Value {
         using Type = T;
 
@@ -37,17 +34,12 @@ public:
     template <typename T>
     _Symbol(str_id_t name_id, Ref<T> value): _name_id{name_id}, _value{value} {}
 
-    template <typename T> _Symbol(str_id_t name_id, Ref<T>&& value);
-
-    _Symbol(str_id_t name_id): _Symbol{name_id, Ptr<Placeholder>{}} {};
     ~_Symbol() {}
 
     _Symbol(_Symbol&& other) = default;
     _Symbol& operator=(_Symbol&& other) = default;
 
     str_id_t name_id() const { return _name_id; }
-
-    bool is_placeholder() const { return is<Placeholder>(); }
 
     template <typename T> bool is() const {
         return std::holds_alternative<Value<T>>(_value);
@@ -63,7 +55,7 @@ private:
     template <typename... Ts> using Variant = std::variant<Value<Ts>...>;
 
     str_id_t _name_id;
-    Variant<Placeholder, Ss...> _value;
+    Variant<Ss...> _value;
 };
 
 template <typename... Ss> class _SymbolTable {
@@ -78,15 +70,22 @@ public:
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
-    template <typename... Ts> void export_symbols(_SymbolTable<Ts...>& other) {
+    template <typename... Ts>
+    void
+    export_symbols(_SymbolTable<Ts...>& other, bool skip_alias_types = false) {
         for (auto& pair : _symbols) {
             auto name_id = pair.first;
-            auto& symbol = pair.second;
-            symbol.visit([&](auto&& value) {
-                // NOTE: excludes placeholders, ptrs are exported as refs
+            auto& sym = pair.second;
+            // skip alias type?
+            if (skip_alias_types && sym.template is<Type>() &&
+                sym.template get<Type>()->is_alias())
+                continue;
+            sym.visit([&](auto&& value) {
+                // (static) is import possible?
                 using T = typename std::decay_t<decltype(value)>::Type;
-                if constexpr ((std::is_same_v<T, Ts> || ...))
-                    other.set(name_id, value.ref);
+                static_assert((std::is_same_v<T, Ts> || ...));
+                // export as ref
+                other.set(name_id, value.ref);
             });
         }
     }
@@ -107,11 +106,6 @@ public:
         assert(_symbols.count(name_id) == 0);
         auto [it, _] = _symbols.emplace(name_id, Symbol{name_id, value});
         return &it->second;
-    }
-
-    void set_placeholder(str_id_t name_id) {
-        assert(_symbols.count(name_id) == 0);
-        _symbols.emplace(name_id, Symbol{name_id});
     }
 
     void unset(str_id_t name_id) {

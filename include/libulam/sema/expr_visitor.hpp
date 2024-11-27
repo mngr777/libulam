@@ -5,11 +5,11 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/ptr.hpp>
+#include <libulam/diag.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
 
 namespace ulam {
-class Diag;
 class Program;
 } // namespace ulam
 
@@ -17,8 +17,11 @@ namespace ulam::sema {
 
 class ExprVisitor : public ast::ExprVisitor {
 public:
-    ExprVisitor(Diag& diag, ast::Ref<ast::Root> ast, Scope* scope):
-        _diag{diag}, _ast{ast}, _scope{scope} {}
+    ExprVisitor(ast::Ref<ast::Root> ast, Scope* scope):
+        _ast{ast}, _scope{scope} {}
+
+    ExprVisitor(ExprVisitor&&) = default;
+    ExprVisitor& operator=(ExprVisitor&& other);
 
     virtual ExprRes visit(ast::Ref<ast::TypeOpExpr> node) override;
     virtual ExprRes visit(ast::Ref<ast::Ident> node) override;
@@ -36,17 +39,19 @@ public:
     virtual ExprRes visit(ast::Ref<ast::ArrayAccess> node) override;
 
 protected:
+    Diag& diag();
+
     Ref<Program> program() {
         assert(ast()->program());
         return ast()->program();
     }
+
     ast::Ref<ast::Root> ast() {
         assert(_ast);
         return _ast;
     }
 
 private:
-    Diag& _diag;
     ast::Ref<ast::Root> _ast;
     Scope _scope;
 };

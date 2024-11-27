@@ -15,8 +15,6 @@ class ClassDef;
 
 namespace ulam {
 
-// TODO: common base?
-
 class Scope;
 class Program;
 class Var;
@@ -33,6 +31,9 @@ public:
 
     Class(Class&&) = default;
     Class& operator=(Class&&) = default;
+
+    bool is_class() override { return true; }
+    Ref<Type> type_member(str_id_t name_id) override;
 
     void export_symbols(Scope* scope);
 

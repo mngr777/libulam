@@ -6,6 +6,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam::ast {
 class Node;
@@ -18,10 +19,12 @@ namespace ulam {
 class Scope;
 
 using type_id_t = std::uint16_t;
+constexpr type_id_t NoTypeId = 0;
+
 using bitsize_t = std::uint16_t;
+
 using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
-
 constexpr array_size_t UnknownArraySize = -1;
 
 class ArrayType;
@@ -38,7 +41,12 @@ public:
     virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
     virtual bitsize_t bitsize() const { return 0; }
 
-    // virtual bool is_placeholder() const { return true; }
+    virtual bool is_class() { return false; }
+    virtual Ref<Type> type_member(str_id_t name_id) { return {}; }
+
+    virtual bool is_alias() const { return false; }
+
+    virtual ast::Ref<ast::TypeDef> type_def_node() { return {}; }
 
     virtual Ref<Type> prev() = 0;
     virtual Ref<const Type> prev() const = 0;
@@ -52,6 +60,8 @@ public:
     virtual bool is_reference() const { return false; }
 
     virtual bool is_convertible(Ref<const Type> type) { return false; }
+
+    // TODO: move out of type?
 
     virtual Value cast(
         ast::Ref<ast::Node> node,
@@ -113,7 +123,9 @@ public:
     AliasType(type_id_t id, ast::Ref<ast::TypeDef> node, Ref<Type> prev):
         _TypeDec{id, prev}, _node(node) {}
 
-    ast::Ref<ast::TypeDef> node() { return _node; }
+    bool is_alias() const override { return true; }
+
+    ast::Ref<ast::TypeDef> type_def_node() override { return _node; }
 
 private:
     ast::Ref<ast::TypeDef> _node;

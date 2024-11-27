@@ -20,6 +20,9 @@ public:
     explicit Scope(Scope* parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}
 
+    Scope(Scope&&) = default;
+    Scope& operator=(Scope&&) = default;
+
     bool is(Flag flags) { return _flags & flags; }
 
     bool in(Flag flags) { return is(flags) || (_parent && _parent->in(flags)); }
@@ -52,12 +55,10 @@ public:
         return _symbols.set(name_id, value);
     }
 
-    template <typename... Ts> void import_symbols(_SymbolTable<Ts...>& st) {
-        st.export_symbols(_symbols);
-    }
-
-    void set_placeholder(str_id_t name_id) {
-        _symbols.set_placeholder(name_id);
+    template <typename... Ts>
+    void
+    import_symbols(_SymbolTable<Ts...>& st, bool skip_alias_types = false) {
+        st.export_symbols(_symbols, skip_alias_types);
     }
 
     Flag flags() { return _flags; }

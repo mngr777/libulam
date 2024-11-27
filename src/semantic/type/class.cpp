@@ -20,7 +20,16 @@ Class::Class(type_id_t id, ast::Ref<ast::ClassDef> node):
 
 Class::~Class() {}
 
-void Class::export_symbols(Scope* scope) { scope->import_symbols(_members); }
+Ref<Type> Class::type_member(str_id_t name_id) {
+    auto sym = get(name_id);
+    if (!sym && !sym->is<Type>())
+        return {};
+    return sym->get<Type>();
+}
+
+void Class::export_symbols(Scope* scope) {
+    scope->import_symbols(_members, true /* skip typedefs */);
+}
 
 // ClassTpl
 
@@ -67,6 +76,7 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
 }
 
 std::string ClassTpl::type_args_str(const TypedValueList& args) {
+    // this is a templorary implementation
     std::string str;
     for (const auto& arg : args) {
         auto rval = arg.value().rvalue();
