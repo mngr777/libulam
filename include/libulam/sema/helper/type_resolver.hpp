@@ -12,13 +12,13 @@ class TypeResolver : public Helper {
 public:
     explicit TypeResolver(ast::Ref<ast::Root> ast): Helper{ast} {}
 
-    Ref<Type> resolve(ast::Ref<ast::TypeName> type_name, Scope* scope);
+    Ref<Type> resolve(ast::Ref<ast::TypeName> type_name, Scope* scope, bool ignore_not_found = false);
 
 private:
     using AliasTypeList = std::list<Ref<AliasType>>;
     using AliasTypeSet = std::set<Ref<AliasType>>;
 
-    Ref<Type> resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope);
+    Ref<Type> resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope, bool ignore_not_found);
 
     Ref<Type> resolve_rest(
         ast::Ref<ast::TypeName> type_name,

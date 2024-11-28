@@ -10,13 +10,15 @@
 namespace ulam::sema {
 
 Ref<Type>
-TypeResolver::resolve(ast::Ref<ast::TypeName> type_name, Scope* scope) {
+TypeResolver::resolve(ast::Ref<ast::TypeName> type_name, Scope* scope, bool ignore_not_found) {
     assert(type_name->first());
-    auto type = resolve_first(type_name->first(), scope);
+    auto type = resolve_first(type_name->first(), scope, ignore_not_found);
     if (!type) {
-        diag().emit(
-            diag::Error, type_name->first()->loc_id(), 1,
-            "failed to resolve type");
+        if (!ignore_not_found) {
+            diag().emit(
+                diag::Error, type_name->first()->loc_id(), 1,
+                "failed to resolve type");
+        }
         return {};
     }
     // do {
@@ -42,7 +44,7 @@ TypeResolver::resolve(ast::Ref<ast::TypeName> type_name, Scope* scope) {
 }
 
 Ref<Type>
-TypeResolver::resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope) {
+TypeResolver::resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope, bool ignore_not_found) {
     auto args_node = type_spec->args();
 
     // eval arguments
@@ -76,7 +78,9 @@ TypeResolver::resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope) {
         auto name_id = ident->name().str_id();
         auto sym = scope->get(name_id);
         if (!sym) {
-            diag().emit(diag::Error, ident->loc_id(), 1, "type not found");
+            if (!ignore_not_found) {
+                diag().emit(diag::Error, ident->loc_id(), 1, "type not found");
+            }
             return {};
         }
         if (sym->is<Type>()) {

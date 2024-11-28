@@ -8,7 +8,13 @@ namespace ulam {
 Module::Module(ast::Ref<ast::ModuleDef> node): _node{node} {}
 
 void Module::export_symbols(Scope* scope) {
-    scope->import_symbols(_symbols, true /* skip typedefs */);
+    for (auto& pair : _symbols) {
+        auto& [name_id, sym] = pair;
+        if (sym.is<Type>() && sym.get<Type>()->basic()->is_class()) {
+            assert(sym.get<Type>()->is_basic());
+            scope->set(name_id, sym.get<Type>());
+        }
+    }
 }
 
 void Module::add_import(ast::Ref<ast::TypeSpec> node) {
