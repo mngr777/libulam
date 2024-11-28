@@ -20,6 +20,11 @@ class PrimType : public BasicType {
 public:
     PrimType(Ref<Program> program);
 
+    Ref<PrimType> as_prim() { return this; }
+    Ref<const PrimType> as_prim() const { return this; }
+
+    virtual bitsize_t bitsize() const { return NoBitsize; }
+
 protected:
     Ref<Program> program() { return _program; }
     Diag& diag();
@@ -37,7 +42,7 @@ template <
     bitsize_t Max,
     bitsize_t Default>
 class _PrimType : public PrimType {
-    static_assert(is_prim(_TypeId));
+    static_assert(ulam::is_prim(_TypeId));
     static_assert(has_bitsize(_TypeId));
     static_assert(0 < Min);
     static_assert(Min <= Max);
@@ -51,11 +56,6 @@ public:
 
     _PrimType(Ref<Program> program, bitsize_t bitsize):
         PrimType{program}, _bitsize{bitsize} {}
-
-    std::string name() const override {
-        return std::string(builtin_type_str(TypeId)) + "(" +
-               std::to_string(_bitsize) + ")";
-    }
 
     BuiltinTypeId builtin_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }

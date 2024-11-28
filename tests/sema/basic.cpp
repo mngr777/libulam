@@ -13,6 +13,8 @@ element A {
     return a;
   }
 }
+
+quark B {}
 )END";
 
 int main() {

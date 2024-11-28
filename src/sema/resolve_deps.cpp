@@ -12,6 +12,10 @@
 #include <set>
 #include <unordered_map>
 
+#define ULAM_DEBUG
+#define ULAM_DEBUG_PREFIX "[sema::ResolveDeps] "
+#include "src/debug.hpp"
+
 namespace ulam::sema {
 
 bool ResolveDeps::visit(ast::Ref<ast::Root> node) {
@@ -39,7 +43,9 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     if (!scope()->is(Scope::Module) && !scope()->is(Scope::Class))
         return false;
     // create and set module/class/tpl variables
-    assert(!scope()->is(Scope::Module) || node->is_const()); // should we inst all vars?
+    assert(
+        !scope()->is(Scope::Module) ||
+        node->is_const()); // should we inst all vars?
     auto class_node = class_def();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def_node = node->def(n);
@@ -77,28 +83,26 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeDef> node) {
     auto alias_id = node->name().str_id();
     // name is already in current scope?
     if (scope()->has(alias_id, true)) {
-        // NOTE: after types are resolves, complain if types don't match
+        // TODO: after types are resolves, complain if types don't match
         return false;
     }
-    // make alias type
-    auto type =
-        ulam::make<AliasType>(program()->next_type_id(), node, Ref<Type>{});
-    auto type_ref = ref(type);
-    // set node attr
-    node->set_alias_type(std::move(type));
-    // add to scope
-    scope()->set(alias_id, type_ref);
-    // if in class/tpl scope, add to class/tpl
     if (scope()->is(Scope::Class)) {
+        assert(class_def());
         auto class_node = class_def();
-        assert(class_node);
         if (class_node->type()) {
-            class_node->type()->set(alias_id, type_ref);
+            auto cls = class_node->type();
+            Ptr<Type> type{ulam::make<AliasType>(program()->next_type_id(), node, cls)};
+            cls->set(alias_id, std::move(type));
         } else {
             assert(class_node->type_tpl());
-            class_node->type_tpl()->set(alias_id, type_ref);
+            auto tpl = class_node->type_tpl();
+            Ptr<Type> type{ulam::make<AliasType>(NoTypeId, node)};
+            tpl->set(alias_id, std::move(type));
         }
+        return true;
     }
+    Ptr<Type> type{ulam::make<AliasType>(NoTypeId, node)};
+    scope()->set(alias_id, std::move(type));
     return true;
 }
 
@@ -165,6 +169,7 @@ void ResolveDeps::init_classes(
 void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     assert(!node->type());
     auto name_id = node->name().str_id();
+    debug() << "class " << str(name_id) << "\n";
     // already defined?
     auto prev = module->get(name_id);
     if (prev) {
@@ -192,7 +197,7 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
         node->set_type_tpl(tpl_ref);
     } else {
         // class
-        auto cls = ulam::make<Class>(program(), node);
+        auto cls = ulam::make<Class>(program()->next_type_id(), node);
         auto cls_ref = ref(cls);
         module->set<Type>(name_id, std::move(cls));
         node->set_type(cls_ref);

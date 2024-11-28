@@ -79,7 +79,7 @@ public:
             auto& sym = pair.second;
             // skip alias type?
             if (skip_alias_types && sym.template is<Type>() &&
-                sym.template get<Type>()->is_alias())
+                sym.template get<Type>()->basic()->is_alias())
                 continue;
             sym.visit([&](auto&& value) {
                 // (static) is import possible?

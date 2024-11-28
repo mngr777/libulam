@@ -39,23 +39,36 @@ private:
     BuiltinTypeId _builtin_type_id;
 };
 
-class TypeName : public Tuple<ListOf<Stmt, TypeIdent>, TypeSpec> {
+class TypeName : public Tuple<List<Stmt, TypeIdent>, TypeSpec> {
     ULAM_AST_NODE
 public:
     explicit TypeName(Ptr<TypeSpec>&& spec): Tuple{std::move(spec)} {}
 
     unsigned child_num() const override {
-        return Tuple::child_num() + ListOf::child_num();
+        return Tuple::child_num() + List::child_num();
     }
 
     ULAM_AST_TUPLE_PROP(first, 0)
 
+    Ref<TypeIdent> ident(unsigned n) {
+        return (n == 0) ? first()->ident() : List::get(n - 1);
+    }
+
+    Ref<const TypeIdent> ident(unsigned n) const {
+        return (n == 0) ? first()->ident() : List::get(n - 1);
+    }
+
+    Ptr<TypeIdent> replace_ident(unsigned n, Ptr<TypeIdent>&& repl) {
+        return (n == 0) ? first()->replace_ident(std::move(repl))
+                        : List::replace(n - 1, std::move(repl));
+    }
+
     Ref<Node> child(unsigned n) override {
-        return (n == 0) ? Tuple::child(0) : ListOf::child(n - 1);
+        return (n == 0) ? Tuple::child(0) : List::child(n - 1);
     }
 
     const Ref<Node> child(unsigned n) const override {
-        return (n == 0) ? Tuple::child(0) : ListOf::child(n - 1);
+        return (n == 0) ? Tuple::child(0) : List::child(n - 1);
     }
 };
 
