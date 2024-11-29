@@ -35,6 +35,8 @@ public:
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
 
+    str_id_t name_id() const;
+
     Ref<Type> type_member(str_id_t name_id);
 
     void export_symbols(Scope* scope);

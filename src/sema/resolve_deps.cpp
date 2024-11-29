@@ -1,4 +1,3 @@
-#include "libulam/str_pool.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -8,9 +7,9 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
-#include <set>
-#include <unordered_map>
+#include <libulam/str_pool.hpp>
 
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[sema::ResolveDeps] "
@@ -23,14 +22,13 @@ bool ResolveDeps::visit(ast::Ref<ast::Root> node) {
     // make program
     node->set_program(ulam::make<Program>(diag(), node));
     RecVisitor::visit(node);
-    check_module_deps();
     return false;
 }
 
 bool ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
     assert(!node->module());
     // make module
-    auto module = ulam::make<Module>(node);
+    auto module = ulam::make<Module>(program()->next_module_id(), node);
     node->set_module(ulam::ref(module));
     init_classes(ulam::ref(module), node);
     program()->add_module(std::move(module));
@@ -43,9 +41,7 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     if (!scope()->is(Scope::Module) && !scope()->is(Scope::Class))
         return false;
     // create and set module/class/tpl variables
-    assert(
-        !scope()->is(Scope::Module) ||
-        node->is_const()); // should we inst all vars?
+    assert(!scope()->is(Scope::Module) || node->is_const());
     auto class_node = class_def();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def_node = node->def(n);
@@ -61,6 +57,10 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
         auto var =
             ulam::make<Var>(node->type_name(), def_node, Ref<Type>{}, flags);
         auto var_ref = ref(var);
+        // TODO:
+        /*
+          TypeRes tr = resolve_type(node->type_name())
+         */
         if (class_node) {
             // class/tpl variable
             if (class_node->type()) {
@@ -91,7 +91,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeDef> node) {
         auto class_node = class_def();
         if (class_node->type()) {
             auto cls = class_node->type();
-            Ptr<Type> type{ulam::make<AliasType>(program()->next_type_id(), node, cls)};
+            Ptr<Type> type{
+                ulam::make<AliasType>(program()->next_type_id(), node, cls)};
             cls->set(alias_id, std::move(type));
         } else {
             assert(class_node->type_tpl());
@@ -149,11 +150,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
     auto spec = node->first();
     if (spec->is_builtin())
         return false;
-    // add specs of unseen types to module imports
-    assert(module_def()->module());
-    auto str_id = spec->ident()->name().str_id();
-    if (!scope()->has(str_id, Scope::Module))
-        module_def()->module()->add_import(spec);
+    // TODO
     return false;
 }
 
@@ -169,7 +166,6 @@ void ResolveDeps::init_classes(
 void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     assert(!node->type());
     auto name_id = node->name().str_id();
-    debug() << "class " << str(name_id) << "\n";
     // already defined?
     auto prev = module->get(name_id);
     if (prev) {
@@ -180,9 +176,10 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
     }
     // add to module, set node attr
     if (node->params()) {
+        assert(node->params()->child_num() > 0);
+        assert(node->kind() != ClassKind::Element);
         // class tpl
         auto params = node->params();
-        assert(params->child_num() > 0);
         // make class tpl
         auto tpl = ulam::make<ClassTpl>(program(), node);
         auto tpl_ref = ref(tpl);
@@ -201,49 +198,6 @@ void ResolveDeps::init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node) {
         auto cls_ref = ref(cls);
         module->set<Type>(name_id, std::move(cls));
         node->set_type(cls_ref);
-    }
-}
-
-void ResolveDeps::check_module_deps() {
-    using ModuleSet = std::set<Ref<Module>>;
-    std::unordered_map<str_id_t, ModuleSet> exporting_modules;
-    // collect all exports (with possible duplicates)
-    for (auto& module : program()->modules()) {
-        for (auto& pair : *module) {
-            auto name_id = pair.first;
-            auto it = exporting_modules.find(name_id);
-            if (it == exporting_modules.end()) {
-                exporting_modules.emplace(name_id, ModuleSet{ref(module)});
-            } else {
-                it->second.insert(ref(module));
-            }
-        }
-    }
-    // check for duplicates
-    bool has_dups = false;
-    for (auto& pair : exporting_modules) {
-        auto name_id = pair.first;
-        if (pair.second.size() > 1) {
-            has_dups = true;
-            // TODO: locations, module names
-            diag().emit(
-                diag::Error,
-                std::string(str(name_id)) + " defined in multiple modules");
-        }
-    }
-    if (has_dups)
-        diag().emit(diag::Fatal, "duplicate class definitions");
-    // check for unresolved dependencies
-    for (auto& module : program()->modules()) {
-        for (auto& pair : module->imports()) {
-            auto name_id = pair.first;
-            if (exporting_modules.find(name_id) == exporting_modules.end()) {
-                // TODO: locations, module name
-                diag().emit(
-                    diag::Error, std::string("unresolved dependency ") +
-                                     std::string(str(name_id)));
-            }
-        }
     }
 }
 

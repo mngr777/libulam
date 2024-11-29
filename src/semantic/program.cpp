@@ -1,5 +1,5 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
+#include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin.hpp>
 #include <libulam/semantic/type/prim.hpp>

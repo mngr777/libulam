@@ -1,3 +1,5 @@
+#include "libulam/semantic/module.hpp"
+#include "libulam/str_pool.hpp"
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/helper/param_eval.hpp>
@@ -10,48 +12,82 @@
 namespace ulam::sema {
 
 Ref<Type>
-TypeResolver::resolve(ast::Ref<ast::TypeName> type_name, Scope* scope, bool ignore_not_found) {
+TypeResolver::resolve(ast::Ref<ast::TypeName> type_name, SymbolIdSet* deps) {
     assert(type_name->first());
-    auto type = resolve_first(type_name->first(), scope, ignore_not_found);
-    if (!type) {
-        if (!ignore_not_found) {
-            diag().emit(
-                diag::Error, type_name->first()->loc_id(), 1,
-                "failed to resolve type");
-        }
+    auto type = resolve_first(type_name->first(), deps);
+    if (!type)
         return {};
+
+    unsigned n = 0;
+    while (true) {
+        auto ident = type_name->ident(n);
+        // alias type?
+        if (type->basic()->is_alias()) {
+            auto alias = type->basic()->as_alias();
+            if (!alias->aliased()) {
+                if (deps) {
+                    // add dependency
+                    module_id_t module_id = NoModuleId;
+                    if (n == 0) {
+                        // module-local alias
+                        module_id = _module->id();
+                    }
+                    deps->emplace(module_id, alias->name_id(), NoStrId);
+                } else {
+                    // complain
+                    diag().emit(
+                        diag::Error, ident->loc_id(), 1,
+                        "alias is not resolved");
+                }
+                return {};
+            }
+        }
+        // done?
+        if (++n == type_name->child_num())
+            return type;
+
+        // class typedef
+        if (type->basic()->is_alias()) {
+            assert(type->canon());
+            type = type->canon();
+        }
+        // is this a class?
+        if (!type->basic()->is_class()) {
+            diag().emit(
+                diag::Error, ident->loc_id(), 1, "not a class");
+            return {};
+        }
+        // get typedef member
+        ident = type_name->ident(n);
+        auto cls = type->basic()->as_class();
+        auto sym = cls->get(ident->name().str_id());
+        if (!sym) {
+            if (deps) {
+                // add dependency
+                deps->insert(cls->name_id(), ident->name().str_id());
+            } else {
+                // complain
+                diag().emit(
+                    diag::Error, ident->loc_id(), 1, "class does not have a typedef");
+            }
+            return {};
+        }
+        assert(sym->is<Type>());
+        type = sym->get<Type>();
+        // loop back to check for unresolved typedef
     }
-    // do {
-    //     AliasTypeList aliases;
-    //     AliasTypeSet alias_set;
-    //     assert(type->is_basic());
-    //     if (type->basic()->is_alias()) {
-    //         auto alias = type->basic()->as_alias();
-    //         aliases.push_back(alias);
-    //         alias_set.insert(alias);
-    //         if (!alias->aliased()) {
-    //         }
-    //     }
-    // } while (true); // !!
-
-    // for (unsigned n = 1; n < type_name->child_num(); ++n) {
-    //     auto ident = type_name->ident(n);
-    // }
-
-    // AliasTypeList aliases;
-    // return resolve_rest(type_name, 1, scope, aliases);
-    return {};
 }
 
-Ref<Type>
-TypeResolver::resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope, bool ignore_not_found) {
+Ref<Type> TypeResolver::resolve_first(
+    ast::Ref<ast::TypeSpec> type_spec, SymbolIdSet* deps) {
     auto args_node = type_spec->args();
 
     // eval arguments
+    // TODO: track dependencies in arg exprs
     TypedValueList args;
     if (args_node) {
-        ParamEval pe{ast()};
-        auto [args, pe_success] = pe.eval(args_node, scope);
+        ParamEval pe{ast(), scope()};
+        auto [args, pe_success] = pe.eval(args_node);
     }
 
     // find or make type
@@ -76,9 +112,14 @@ TypeResolver::resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope, boo
         // user type: class, alias or class tpl
         auto ident = type_spec->ident();
         auto name_id = ident->name().str_id();
-        auto sym = scope->get(name_id);
+        auto sym = scope()->get(name_id);
         if (!sym) {
-            if (!ignore_not_found) {
+            // not found
+            if (deps) {
+                // add to dependency list
+                deps->emplace(NoModuleId, name_id, NoStrId);
+            } else {
+                // complain
                 diag().emit(diag::Error, ident->loc_id(), 1, "type not found");
             }
             return {};
@@ -99,17 +140,6 @@ TypeResolver::resolve_first(ast::Ref<ast::TypeSpec> type_spec, Scope* scope, boo
         }
     }
     return type;
-}
-
-Ref<Type> TypeResolver::resolve_rest(
-    ast::Ref<ast::TypeName> type_name,
-    unsigned n,
-    Scope* scope,
-    AliasTypeList& aliases) {
-    assert(n + 1 < type_name->child_num());
-    // auto ident = type_name->get_ident(n);
-    // TODO
-    return {};
 }
 
 } // namespace ulam::sema

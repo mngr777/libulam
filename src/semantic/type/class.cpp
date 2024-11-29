@@ -19,6 +19,8 @@ Class::Class(type_id_t id, ast::Ref<ast::ClassDef> node):
 
 Class::~Class() {}
 
+str_id_t Class::name_id() const { return _node->name().str_id(); }
+
 Ref<Type> Class::type_member(str_id_t name_id) {
     auto sym = get(name_id);
     if (!sym && !sym->is<Type>())

@@ -1,10 +1,8 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/import.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
-#include <unordered_map>
 
 namespace ulam::ast {
 class ModuleDef;
@@ -13,6 +11,9 @@ class TypeSpec;
 
 namespace ulam {
 
+using module_id_t = std::uint16_t;
+constexpr module_id_t NoModuleId = 0;
+
 class Scope;
 
 class Module {
@@ -20,10 +21,12 @@ public:
     using SymbolTable = _SymbolTable<Type, TypeTpl>;
     using Symbol = SymbolTable::Symbol;
 
-    Module(ast::Ref<ast::ModuleDef> node);
+    Module(module_id_t id, ast::Ref<ast::ModuleDef> node);
 
     Module(Module&&) = default;
     Module& operator=(Module&&) = default;
+
+    module_id_t id() const { return _id; }
 
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
@@ -39,15 +42,10 @@ public:
         _symbols.set(name_id, std::move(value));
     }
 
-    auto& imports() { return _imports; }
-    const auto& imports() const { return _imports; }
-
-    void add_import(ast::Ref<ast::TypeSpec> node);
-
 private:
+    module_id_t _id;
     ast::Ref<ast::ModuleDef> _node;
     SymbolTable _symbols;
-    std::unordered_map<str_id_t, Import> _imports;
 };
 
 } // namespace ulam

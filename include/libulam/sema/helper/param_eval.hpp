@@ -15,12 +15,11 @@ public:
     static constexpr Flag NoFlags = 0;
     static constexpr Flag ReqValues = 0;
 
-    explicit ParamEval(ast::Ref<ast::Root> ast, Flag flags = NoFlags):
-        Helper{ast}, _flags{flags} {}
+    explicit ParamEval(
+        ast::Ref<ast::Root> ast, Scope* scope, Flag flags = NoFlags):
+        Helper{ast, scope}, _flags{flags} {}
 
-    std::pair<TypedValueList, bool> eval(
-        ast::Ref<ast::ArgList> args,
-        Scope* scope);
+    std::pair<TypedValueList, bool> eval(ast::Ref<ast::ArgList> args);
 
 private:
     Flag _flags;

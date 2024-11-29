@@ -50,6 +50,9 @@ public:
     virtual Ref<BasicType> basic() = 0;
     virtual Ref<const BasicType> basic() const = 0;
 
+    virtual Ref<Type> canon() { return this; }
+    virtual Ref<const Type> canon() const { return this; }
+
     bool is_array() const { return array_size() != 0; }
     virtual array_size_t array_size() const { return 0; }
 
@@ -118,7 +121,19 @@ public:
     Ref<AliasType> as_alias() override { return this; }
     Ref<const AliasType> as_alias() const override { return this; }
 
+    str_id_t name_id() const;
+
     ast::Ref<ast::TypeDef> node() { return _node; }
+
+    Ref<Type> canon() override {
+        return const_cast<Ref<Type>>(std::as_const(*this).canon());
+    }
+
+    Ref<const Type> canon() const override {
+        if (!_aliased)
+            return {};
+        return _aliased->canon();
+    }
 
     Ref<Class> owner() { return _owner; }
     Ref<const Class> owner() const { return _owner; }
@@ -133,6 +148,8 @@ private:
     Ref<Class> _owner;
     Ref<Type> _aliased;
 };
+
+// TODO: canon() for decorators
 
 class _TypeDec : public Type {
 public:

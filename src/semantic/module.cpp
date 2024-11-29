@@ -5,7 +5,7 @@
 
 namespace ulam {
 
-Module::Module(ast::Ref<ast::ModuleDef> node): _node{node} {}
+Module::Module(module_id_t id, ast::Ref<ast::ModuleDef> node): _id{id}, _node{node} {}
 
 void Module::export_symbols(Scope* scope) {
     for (auto& pair : _symbols) {
@@ -15,12 +15,6 @@ void Module::export_symbols(Scope* scope) {
             scope->set(name_id, sym.get<Type>());
         }
     }
-}
-
-void Module::add_import(ast::Ref<ast::TypeSpec> node) {
-    auto str_id = node->ident()->name().str_id();
-    auto [it, inserted] = _imports.emplace(str_id, Import{});
-    it->second.add_node(node);
 }
 
 } // namespace ulam
