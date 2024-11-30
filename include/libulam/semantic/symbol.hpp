@@ -13,24 +13,20 @@ namespace ulam {
 
 template <typename... Ss> class _Symbol {
 private:
-    template <typename T>
-    using Value = RefPtrPair<T>;
+    template <typename T> using Value = RefPtrPair<T>;
 
 public:
-    // TODO: remove name_id from Symbol itself?
     template <typename T>
-    _Symbol(str_id_t name_id, Ptr<T>&& value):
-        _name_id{name_id}, _value{std::move(value)} {}
+    _Symbol(Ptr<T>&& value):
+        _value{std::move(value)} {}
 
     template <typename T>
-    _Symbol(str_id_t name_id, Ref<T> value): _name_id{name_id}, _value{value} {}
+    _Symbol(Ref<T> value): _value{value} {}
 
     ~_Symbol() {}
 
     _Symbol(_Symbol&& other) = default;
     _Symbol& operator=(_Symbol&& other) = default;
-
-    str_id_t name_id() const { return _name_id; }
 
     template <typename T> bool is() const {
         return std::holds_alternative<Value<T>>(_value);
@@ -45,7 +41,6 @@ public:
 private:
     template <typename... Ts> using Variant = std::variant<Value<Ts>...>;
 
-    str_id_t _name_id;
     Variant<Ss...> _value;
 };
 
@@ -63,14 +58,10 @@ public:
 
     template <typename... Ts>
     void
-    export_symbols(_SymbolTable<Ts...>& other, bool skip_alias_types = false) {
+    export_symbols(_SymbolTable<Ts...>& other) {
         for (auto& pair : _symbols) {
             auto name_id = pair.first;
             auto& sym = pair.second;
-            // skip alias type?
-            if (skip_alias_types && sym.template is<Type>() &&
-                sym.template get<Type>()->basic()->is_alias())
-                continue;
             sym.visit([&](auto&& value) {
                 // (static) is import possible?
                 using T = typename std::decay_t<decltype(value)>::Type;
@@ -89,13 +80,13 @@ public:
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         assert(_symbols.count(name_id) == 0);
         auto [it, _] =
-            _symbols.emplace(name_id, Symbol{name_id, std::move(value)});
+            _symbols.emplace(name_id, Symbol{std::move(value)});
         return &it->second;
     }
 
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
         assert(_symbols.count(name_id) == 0);
-        auto [it, _] = _symbols.emplace(name_id, Symbol{name_id, value});
+        auto [it, _] = _symbols.emplace(name_id, Symbol{value});
         return &it->second;
     }
 

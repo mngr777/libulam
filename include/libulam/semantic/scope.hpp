@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/str_pool.hpp>
+#include <list>
 #include <utility>
 
 namespace ulam {
@@ -24,6 +25,23 @@ public:
 
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
+
+    Scope* copy() {
+        // only safe for persistent scopes
+        assert(is(Module) || is(ClassTpl) || is(Class));
+        // recursively copy parent
+        Ref<Scope> parent_copy{};
+        if (_parent) {
+            parent_copy = _parent->copy();
+        }
+        // make and store a copy
+        auto copy = make<Scope>(parent_copy, _flags);
+        auto copy_ref = ref(copy);
+        _copies.push_back(std::move(copy));
+        // export symbols
+        copy->import_symbols(_symbols);
+        return copy_ref;
+    }
 
     bool is(Flag flags) { return _flags & flags; }
 
@@ -72,8 +90,8 @@ public:
 
     template <typename... Ts>
     void
-    import_symbols(_SymbolTable<Ts...>& st, bool skip_alias_types = false) {
-        st.export_symbols(_symbols, skip_alias_types);
+    import_symbols(_SymbolTable<Ts...>& st) {
+        st.export_symbols(_symbols);
     }
 
     Flag flags() { return _flags; }
@@ -81,8 +99,8 @@ public:
 private:
     Scope* _parent;
     Flag _flags;
-    SymbolTable _symbols; // NOTE: scope can potentially have separate symbol
-                          // tables for types and funs/vars
+    SymbolTable _symbols;
+    std::list<Ptr<Scope>> _copies;
 };
 
 } // namespace ulam

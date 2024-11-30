@@ -13,7 +13,12 @@ namespace {
 Ptr<Scope> make_class_scope(Ref<Scope> parent) {
     assert(
         parent && (parent->is(Scope::Module) || parent->is(Scope::ClassTpl)));
-    return make<Scope>(Ref<Scope>{}, Scope::Class);
+    return make<Scope>(parent->copy(), Scope::Class);
+}
+
+Ptr<Scope> make_class_tpl_scope(Ref<Scope> parent) {
+    assert(parent && parent->is(Scope::Module));
+    return make<Scope>(parent->copy(), Scope::ClassTpl);
 }
 } // namespace
 
@@ -48,7 +53,7 @@ ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
     TypeTpl{module->program()},
     _module{module},
     _node{node},
-    _scope{make<Scope>(module->scope(), Scope::ClassTpl)} {}
+    _scope{make_class_tpl_scope(module->scope())} {}
 
 ClassTpl::~ClassTpl() {}
 
