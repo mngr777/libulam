@@ -16,7 +16,7 @@ class ClassDef;
 namespace ulam {
 
 class Scope;
-class Program;
+class Module;
 class Var;
 class ClassTpl;
 
@@ -25,8 +25,8 @@ public:
     using SymbolTable = _SymbolTable<Type, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    Class(type_id_t id, Ref<ClassTpl> tpl);
-    Class(type_id_t id, ast::Ref<ast::ClassDef> node);
+    Class(Ref<ClassTpl> tpl);
+    Class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
     ~Class();
 
     Class(Class&&) = default;
@@ -38,6 +38,8 @@ public:
     str_id_t name_id() const;
 
     Ref<Type> type_member(str_id_t name_id);
+
+    Ref<Scope> scope() { return ref(_scope); }
 
     void export_symbols(Scope* scope);
 
@@ -56,20 +58,23 @@ public:
 private:
     Ref<ast::ClassDef> _node;
     Ref<ClassTpl> _tpl;
+    Ptr<Scope> _scope;
     SymbolTable _members;
 };
 
 class ClassTpl : public TypeTpl {
+    friend Class;
 public:
     using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    ClassTpl(Ref<Program> program, Ref<ast::ClassDef> node): TypeTpl{program} {}
+    ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node);
+    ~ClassTpl();
 
     ClassTpl(ClassTpl&&) = default;
     ClassTpl& operator=(ClassTpl&&) = default;
 
-    void export_symbols(Scope* scope);
+    Ref<Scope> scope() { return ref(_scope); }
 
     Ref<Type>
     type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
@@ -92,7 +97,9 @@ private:
     // TMP
     std::string type_args_str(const TypedValueList& args);
 
+    Ref<Module> _module;
     Ref<ast::ClassDef> _node;
+    Ptr<Scope> _scope;
     SymbolTable _members;
     std::unordered_map<std::string, Ptr<Class>> _types;
 };

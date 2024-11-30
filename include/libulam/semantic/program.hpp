@@ -7,11 +7,12 @@
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/str_pool.hpp>
-#include <list>
 #include <unordered_map>
+#include <vector>
 
 namespace ulam::ast {
 class Root;
+class ModuleDef;
 }
 
 namespace ulam {
@@ -19,6 +20,7 @@ namespace ulam {
 class Program {
 public:
     Program(Diag& diag, ast::Ref<ast::Root> ast);
+    ~Program();
 
     Ref<PrimTypeTpl> prim_type_tpl(BuiltinTypeId id);
     Ref<PrimType> prim_type(BuiltinTypeId id);
@@ -31,25 +33,25 @@ public:
 
     auto& modules() { return _modules; }
 
+    Ref<Scope> scope() { return ref(_scope); }
+
     // TODO: refactoring?
     str_id_t self_str_id();
     str_id_t self_inst_str_id();
 
-    void add_module(Ptr<Module>&& module) {
-        _modules.push_back(std::move(module));
-    }
+    Ref<Module> module(module_id_t id);
+    Ref<Module> add_module(ast::Ref<ast::ModuleDef> node);
 
-    module_id_t next_module_id() { return _next_module_id++; }
     type_id_t next_type_id() { return _next_type_id++; }
 
 private:
     Diag& _diag;
     ast::Ref<ast::Root> _ast;
-    module_id_t _next_module_id{1};
     type_id_t _next_type_id{1};
     std::unordered_map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;
     std::unordered_map<BuiltinTypeId, Ptr<PrimType>> _prim_types;
-    std::list<Ptr<Module>> _modules;
+    std::vector<Ptr<Module>> _modules;
+    Ptr<Scope> _scope;
 };
 
 } // namespace ulam

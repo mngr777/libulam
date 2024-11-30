@@ -9,13 +9,27 @@
 
 namespace ulam {
 
+namespace {
+Ptr<Scope> make_class_scope(Ref<Scope> parent) {
+    assert(
+        parent && (parent->is(Scope::Module) || parent->is(Scope::ClassTpl)));
+    return make<Scope>(Ref<Scope>{}, Scope::Class);
+}
+} // namespace
+
 // Class
 
-Class::Class(type_id_t id, Ref<ClassTpl> tpl):
-    BasicType{id}, _node{tpl->node()}, _tpl{tpl} {}
+Class::Class(Ref<ClassTpl> tpl):
+    BasicType{tpl->_module->program()->next_type_id()},
+    _node{tpl->node()},
+    _tpl{tpl},
+    _scope{make_class_scope(tpl->scope())} {}
 
-Class::Class(type_id_t id, ast::Ref<ast::ClassDef> node):
-    BasicType{id}, _node{node}, _tpl{} {}
+Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
+    BasicType{module->program()->next_type_id()},
+    _node{node},
+    _tpl{},
+    _scope{make_class_scope(module->scope())} {}
 
 Class::~Class() {}
 
@@ -28,13 +42,15 @@ Ref<Type> Class::type_member(str_id_t name_id) {
     return sym->get<Type>();
 }
 
-void Class::export_symbols(Scope* scope) {
-    scope->import_symbols(_members, true /* skip typedefs */);
-}
-
 // ClassTpl
 
-void ClassTpl::export_symbols(Scope* scope) { scope->import_symbols(_members); }
+ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
+    TypeTpl{module->program()},
+    _module{module},
+    _node{node},
+    _scope{make<Scope>(module->scope(), Scope::ClassTpl)} {}
+
+ClassTpl::~ClassTpl() {}
 
 Ref<Type>
 ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
@@ -50,7 +66,7 @@ ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
 Ptr<Class>
 ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = ulam::make<Class>(program()->next_type_id(), this);
+    auto cls = ulam::make<Class>(this);
     auto params_node = _node->params();
     assert(params_node->child_num() > 0);
     assert(args_node->child_num() == args.size());

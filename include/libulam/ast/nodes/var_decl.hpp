@@ -11,7 +11,6 @@
 namespace ulam::ast {
 
 class VarDecl : public Tuple<Stmt, Expr>, public Named {
-    ULAM_AST_PTR_ATTR(Var, var)
     ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
 public:
     VarDecl(Str name, Ptr<Expr>&& value):

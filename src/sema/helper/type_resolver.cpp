@@ -64,7 +64,7 @@ TypeResolver::resolve(ast::Ref<ast::TypeName> type_name, SymbolIdSet* deps) {
         if (!sym) {
             if (deps) {
                 // add dependency
-                deps->insert(cls->name_id(), ident->name().str_id());
+                deps->emplace(NoModuleId, cls->name_id(), ident->name().str_id());
             } else {
                 // complain
                 diag().emit(

@@ -23,7 +23,7 @@ public:
     bool do_visit(ast::Ref<ast::TypeName> node) override;
 
 private:
-    void init_classes(Ref<Module> module, ast::Ref<ast::ModuleDef> node);
+    void init_classes(Ref<Module> module);
     void init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
 };
 

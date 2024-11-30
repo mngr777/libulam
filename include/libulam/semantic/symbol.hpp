@@ -13,18 +13,8 @@ namespace ulam {
 
 template <typename... Ss> class _Symbol {
 private:
-    template <typename T> struct Value {
-        using Type = T;
-
-        Value(Ptr<T>&& val): ptr{std::move(val)}, ref{ulam::ref(ptr)} {}
-        Value(Ref<T> val): ptr{}, ref{val} {}
-
-        Value(Value&&) = default;
-        Value& operator=(Value&&) = default;
-
-        Ptr<T> ptr;
-        Ref<T> ref;
-    };
+    template <typename T>
+    using Value = RefPtrPair<T>;
 
 public:
     // TODO: remove name_id from Symbol itself?

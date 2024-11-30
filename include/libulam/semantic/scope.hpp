@@ -16,7 +16,8 @@ public:
     static constexpr Flag Program = 1;
     static constexpr Flag Module = 1 << 1;
     static constexpr Flag Class = 1 << 2;
-    static constexpr Flag Fun = 1 << 3;
+    static constexpr Flag ClassTpl = 1 << 3;
+    static constexpr Flag Fun = 1 << 4;
 
     explicit Scope(Scope* parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}

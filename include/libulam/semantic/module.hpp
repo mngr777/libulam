@@ -11,6 +11,8 @@ class TypeSpec;
 
 namespace ulam {
 
+class Program;
+
 using module_id_t = std::uint16_t;
 constexpr module_id_t NoModuleId = 0;
 
@@ -21,30 +23,34 @@ public:
     using SymbolTable = _SymbolTable<Type, TypeTpl>;
     using Symbol = SymbolTable::Symbol;
 
-    Module(module_id_t id, ast::Ref<ast::ModuleDef> node);
+    Module(Ref<Program> program, module_id_t id, ast::Ref<ast::ModuleDef> node);
+    ~Module();
 
     Module(Module&&) = default;
     Module& operator=(Module&&) = default;
 
+    Ref<Program> program() { return _program; }
+
     module_id_t id() const { return _id; }
+
+    ast::Ref<ast::ModuleDef> node() { return _node; }
 
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
-    void export_symbols(Scope* scope);
+    Ref<Scope> scope() { return ref(_scope); }
 
-    Symbol* get(str_id_t name_id) {
-        return _symbols.get(name_id);
-    }
+    Symbol* get(str_id_t name_id) { return _symbols.get(name_id); }
 
-    template <typename T>
-    void set(str_id_t name_id, Ptr<T>&& value) {
+    template <typename T> void set(str_id_t name_id, Ptr<T>&& value) {
         _symbols.set(name_id, std::move(value));
     }
 
 private:
+    Ref<Program> _program;
     module_id_t _id;
     ast::Ref<ast::ModuleDef> _node;
+    Ptr<Scope> _scope;
     SymbolTable _symbols;
 };
 

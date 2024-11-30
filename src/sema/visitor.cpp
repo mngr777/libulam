@@ -13,10 +13,7 @@ void RecVisitor::analyze() { visit(_ast); }
 
 bool RecVisitor::visit(ast::Ref<ast::Root> node) {
     assert(node->program());
-    enter_scope(Scope::Program);
-    // TODO: explicitly import symbols to modules
-    for (auto& module : node->program()->modules())
-        module->export_symbols(scope());
+    enter_scope(program()->scope());
     if (do_visit(node))
         traverse(node);
     exit_scope();
@@ -29,7 +26,6 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     _module_def = node;
     assert(node->module());
     enter_scope(Scope::Module);
-    node->module()->export_symbols(scope());
     if (do_visit(node))
         traverse(node);
     exit_scope();
@@ -115,15 +111,19 @@ void RecVisitor::traverse(ast::Ref<ast::FunDef> node) {
 
 
 void RecVisitor::enter_scope(Scope::Flag flags) {
-    auto parent = _scopes.size() ? &_scopes.top() : nullptr;
-    _scopes.emplace(parent, flags);
+    auto parent = _scopes.size() ? _scopes.top().ref : Ref<Scope>{};
+    _scopes.emplace(make<Scope>(parent, flags));
+}
+
+void RecVisitor::enter_scope(Ref<Scope> scope) {
+    _scopes.emplace(scope);
 }
 
 void RecVisitor::exit_scope() { _scopes.pop(); }
 
 Scope* RecVisitor::scope() {
     assert(!_scopes.empty());
-    return &_scopes.top();
+    return _scopes.top().ref;
 }
 
 Diag& RecVisitor::diag() { return _diag; }

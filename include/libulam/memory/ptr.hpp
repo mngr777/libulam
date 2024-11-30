@@ -27,4 +27,17 @@ template <typename T, typename... Ts> auto as_ref(const Variant<Ts...>& v) {
     return std::visit([](auto&& ptr) -> const Ref<T> { return ref(ptr); }, v);
 }
 
+template <typename T> struct RefPtrPair {
+    using Type = T;
+
+    RefPtrPair(Ptr<T>&& val): ptr{std::move(val)}, ref{ulam::ref(ptr)} {}
+    RefPtrPair(Ref<T> val): ptr{}, ref{val} {}
+
+    RefPtrPair(RefPtrPair&&) = default;
+    RefPtrPair& operator=(RefPtrPair&&) = default;
+
+    Ptr<T> ptr;
+    Ref<T> ref;
+};
+
 } // namespace ulam
