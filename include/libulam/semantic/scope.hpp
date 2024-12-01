@@ -1,11 +1,14 @@
 #pragma once
 #include <cstdint>
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 #include <utility>
 
 namespace ulam {
+
+class Module;
 
 class Scope {
 public:
@@ -21,11 +24,24 @@ public:
     static constexpr Flag Fun = 1 << 4;
 
     explicit Scope(Scope* parent, Flag flags = NoFlags):
-        _parent{parent}, _flags{flags} {}
+        Scope({}, parent, flags) {}
+
+    explicit Scope(
+        Ref<class Module> module, Scope* parent, Flag flags = NoFlags):
+        _module{module}, _parent{parent}, _flags{flags} {
+        assert(!module || (flags & Module));
+    }
 
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
+    Ref<class Module> module() {
+        auto mod = _module ? _module : _parent->module();
+        assert(mod);
+        return mod;
+    }
+
+    // TODO: remove?
     Scope* copy() {
         // only safe for persistent scopes
         assert(is(Module) || is(ClassTpl) || is(Class));
@@ -90,15 +106,14 @@ public:
         return _symbols.set(name_id, value);
     }
 
-    template <typename... Ts>
-    void
-    import_symbols(_SymbolTable<Ts...>& st) {
+    template <typename... Ts> void import_symbols(_SymbolTable<Ts...>& st) {
         st.export_symbols(_symbols);
     }
 
     Flag flags() { return _flags; }
 
 private:
+    Ref<class Module> _module{};
     Scope* _parent;
     Flag _flags;
     SymbolTable _symbols;

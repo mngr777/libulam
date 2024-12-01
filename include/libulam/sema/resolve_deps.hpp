@@ -12,8 +12,7 @@ class ResolveDeps : public RecVisitor {
     using RecVisitor::visit;
 
 public:
-    ResolveDeps(Diag& diag, ast::Ref<ast::Root> ast):
-        RecVisitor{diag, ast} {}
+    ResolveDeps(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast} {}
 
     bool visit(ast::Ref<ast::Root> node) override;
     bool visit(ast::Ref<ast::ModuleDef> node) override;
@@ -30,11 +29,8 @@ protected:
     void enter_class_scope(Ref<Class> cls) override;
     void enter_tpl_scope(Ref<ClassTpl> tpl) override;
 
-    void export_classes();
-
 private:
-    // void init_classes(Ref<Module> module);
-    // void init_class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
+    void export_classes();
 };
 
 } // namespace ulam::sema

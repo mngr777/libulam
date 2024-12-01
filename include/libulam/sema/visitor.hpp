@@ -54,6 +54,7 @@ protected:
     virtual void enter_tpl_scope(Ref<ClassTpl> tpl);
 
     void enter_scope(Scope::Flag flags = Scope::NoFlags);
+    void enter_scope(Ptr<Scope>&& scope);
     void enter_scope(Ref<Scope> scope);
     void exit_scope();
 

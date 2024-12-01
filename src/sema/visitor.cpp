@@ -153,7 +153,7 @@ bool RecVisitor::do_visit(ast::Ref<ast::FunDef> node) {
 
 void RecVisitor::enter_module_scope(Ref<Module> module) {
     if (pass() == Pass::Module) {
-        enter_scope(Scope::Module);
+        enter_scope(make<Scope>(module, Ref<Scope>{}, Scope::Module));
     } else {
         enter_scope(module->scope());
     }
@@ -178,6 +178,10 @@ void RecVisitor::enter_tpl_scope(Ref<ClassTpl> tpl) {
 void RecVisitor::enter_scope(Scope::Flag flags) {
     auto parent = _scopes.size() ? _scopes.top().ref : Ref<Scope>{};
     _scopes.emplace(make<Scope>(parent, flags));
+}
+
+void RecVisitor::enter_scope(Ptr<Scope>&& scope) {
+    _scopes.emplace(std::move(scope));
 }
 
 void RecVisitor::enter_scope(Ref<Scope> scope) { _scopes.emplace(scope); }

@@ -10,7 +10,7 @@ Module::Module(
     _program{program},
     _id{id},
     _node{node},
-    _scope{make<Scope>(Ref<Scope>{}, Scope::Module)} {}
+    _scope{make<Scope>(this, Ref<Scope>{}, Scope::Module)} {}
 
 Module::~Module() {}
 
