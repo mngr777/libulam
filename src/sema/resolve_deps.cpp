@@ -74,7 +74,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
         module()->set<Type>(name_id, std::move(cls));
         node->set_type(cls_ref);
     }
-    return true;
+    return RecVisitor::do_visit(node);
 }
 
 bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {

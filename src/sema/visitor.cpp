@@ -8,6 +8,10 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/class.hpp>
 
+#define ULAM_DEBUG
+#define ULAM_DEBUG_PREFIX "[sema::RecVisitor] "
+#include "src/debug.hpp"
+
 namespace ulam::sema {
 
 void RecVisitor::analyze() { visit(_ast); }
@@ -112,6 +116,7 @@ bool RecVisitor::visit(ast::Ref<ast::Block> node) {
 }
 
 bool RecVisitor::do_visit(ast::Ref<ast::ClassDef> node) {
+    assert(scope()->is(Scope::Module));
     auto name_id = node->name().str_id();
     if (node->type()) {
         scope()->set(name_id, node->type());

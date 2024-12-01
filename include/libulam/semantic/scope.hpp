@@ -41,6 +41,8 @@ public:
         return mod;
     }
 
+    Ref<Scope> parent() { return _parent; }
+
     // TODO: remove?
     Scope* copy() {
         // only safe for persistent scopes
@@ -58,6 +60,9 @@ public:
         copy->import_symbols(_symbols);
         return copy_ref;
     }
+
+    auto begin() { return _symbols.begin(); }
+    auto end() { return _symbols.end(); }
 
     bool is(Flag flags) { return _flags & flags; }
 

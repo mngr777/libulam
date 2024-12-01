@@ -13,7 +13,7 @@ public:
     }
 
 private:
-    StrPool _str_pool;
+    UniqStrPool _str_pool;
 };
 
 } // namespace ulam::ast
