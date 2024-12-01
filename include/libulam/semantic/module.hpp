@@ -23,14 +23,19 @@ class Module;
 class Import {
 public:
     Import(Ref<Module> module, Ref<Type> type):
-        _module{module}, _type{type} {}
+        _module{module}, _type{type}, _type_tpl{} {}
+
+    Import(Ref<Module> module, Ref<TypeTpl> type_tpl):
+        _module{module}, _type{}, _type_tpl{type_tpl} {}
 
     Ref<Module> module() { return _module; }
     Ref<Type> type() { return _type; }
+    Ref<TypeTpl> type_tpl() { return _type_tpl; }
 
 private:
     Ref<Module> _module;
     Ref<Type> _type;
+    Ref<TypeTpl> _type_tpl;
 };
 
 class Scope;
@@ -69,6 +74,7 @@ public:
     // NOTE: scope is supposed to be empty at this point
     void export_imports(Ref<Scope> scope);
     void add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type);
+    void add_import(str_id_t name_id, Ref<Module> module, Ref<TypeTpl> type_tpl);
 
 private:
     Ref<Program> _program;

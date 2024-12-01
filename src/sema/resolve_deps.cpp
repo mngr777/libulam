@@ -6,8 +6,10 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
+#include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
@@ -207,13 +209,37 @@ bool ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
 }
 
 bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
-    // any name not in scope has to be imported
+    // set type/tpl TypeSpec attr
+    // NOTE: any name not in scope has to be imported and
+    // imported names can be later unambigously resolved without scope
     auto type_spec = node->first();
-    if (type_spec->is_builtin())
+    if (type_spec->is_builtin()) {
+        // builtin type/tpl
+        BuiltinTypeId id = type_spec->builtin_type_id();
+        if (has_bitsize(id)) {
+            type_spec->set_type_tpl(program()->builtin_type_tpl(id));
+        } else if (is_prim(id)) {
+            type_spec->set_type(program()->builtin_type(id));
+        }
         return false;
+    }
     auto name_id = type_spec->ident()->name().str_id();
-    if (!scope()->has(name_id))
+    if (scope()->has(name_id)) {
+        // set type/tpl
+        auto sym = scope()->get(name_id);
+        if (sym->is<Type>()) {
+            type_spec->set_type(sym->get<Type>());
+        } else {
+            assert(sym->is<TypeTpl>());
+            type_spec->set_type_tpl(sym->get<TypeTpl>());
+        }
+    } else {
+        // add external dependency
         module()->add_dep(name_id);
+        // postpone until all exports are known (module ID to avoid importing
+        // from itself)
+        _unresolved.push_back({module()->id(), node});
+    }
     return false;
 }
 
@@ -263,10 +289,41 @@ void ResolveDeps::export_classes() {
                 assert(it->second.size() == 1);
                 auto& exporter = *it->second.begin();
                 auto sym = exporter->get(name_id);
-                assert(sym && sym->is<Type>());
-                mod->add_import(name_id, exporter, sym->get<Type>());
+                assert(sym);
+                if (sym->is<Type>()) {
+                    mod->add_import(name_id, exporter, sym->get<Type>());
+                } else {
+                    assert(sym->is<TypeTpl>());
+                    mod->add_import(name_id, exporter, sym->get<TypeTpl>());
+                }
             }
         }
+    }
+    // resolve (first ident of) posponed TypeName's
+    for (auto item : _unresolved) {
+        assert(!item.node->first()->is_builtin());
+        auto type_spec = item.node->first();
+        auto name_id = type_spec->ident()->name().str_id();
+        auto it = exporting.find(name_id);
+        if (it != exporting.end()) {
+            auto& exporter = *it->second.begin();
+            auto sym = exporter->get(name_id);
+            assert(sym);
+            // set type/tpl
+            // don't use symbols from same module
+            if (exporter->id() != item.module_id) {
+                if (sym->is<Type>()) {
+                    type_spec->set_type(sym->get<Type>());
+                } else {
+                    assert(sym->is<TypeTpl>());
+                    type_spec->set_type_tpl(sym->get<TypeTpl>());
+                }
+                continue; // success
+            }
+        }
+        diag().emit(
+            diag::Error, item.node->loc_id(), str(name_id).size(),
+            "failed to resolve");
     }
 }
 

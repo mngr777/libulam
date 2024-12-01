@@ -3,6 +3,8 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/export_import.hpp>
+#include <libulam/semantic/module.hpp>
+#include <list>
 
 namespace ulam::sema {
 
@@ -30,7 +32,14 @@ protected:
     void enter_tpl_scope(Ref<ClassTpl> tpl) override;
 
 private:
+    struct ModuleTypeName {
+        module_id_t module_id;
+        ast::Ref<ast::TypeName> node;
+    };
+
     void export_classes();
+
+    std::list<ModuleTypeName> _unresolved;
 };
 
 } // namespace ulam::sema

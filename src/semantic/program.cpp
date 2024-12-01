@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/program.hpp>
@@ -47,5 +48,17 @@ Ref<PrimType> Program::prim_type(BuiltinTypeId id) {
     assert(_prim_types.count(id) == 1);
     return ref(_prim_types[id]);
 }
+
+Ref<TypeTpl> Program::builtin_type_tpl(BuiltinTypeId id) {
+    assert(has_bitsize(id));
+    return ref(_prim_type_tpls[id]);
+}
+
+Ref<Type> Program::builtin_type(BuiltinTypeId id) {
+    assert(!has_bitsize(id));
+    assert(is_prim(id) && "not implemented");
+    return ref(_prim_types[id]);
+}
+
 
 } // namespace ulam

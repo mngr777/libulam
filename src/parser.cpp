@@ -615,7 +615,9 @@ ast::Ptr<ast::TypeName> Parser::parse_type_name() {
         unexpected();
         return {};
     }
+    auto loc_id = _tok.loc_id;
     auto node = tree<ast::TypeName>(parse_type_spec());
+    node->set_loc_id(loc_id);
     while (_tok.is(tok::Period)) {
         consume();
         if (!match(tok::TypeIdent))

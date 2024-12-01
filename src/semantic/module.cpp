@@ -18,7 +18,12 @@ void Module::export_imports(Ref<Scope> scope) {
     for (auto pair : _imports) {
         auto& [name_id, import] = pair;
         assert(!scope->has(name_id));
-        scope->set(name_id, import.type());
+        if (import.type()) {
+            scope->set(name_id, import.type());
+        } else {
+            assert(import.type_tpl());
+            scope->set(name_id, import.type_tpl());
+        }
     }
 }
 
@@ -26,6 +31,13 @@ void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type) {
     assert(_imports.count(name_id) == 0);
     assert(module != this);
     _imports.emplace(name_id, Import{module, type});
+}
+
+void Module::add_import(
+    str_id_t name_id, Ref<Module> module, Ref<TypeTpl> type_tpl) {
+    assert(_imports.count(name_id) == 0);
+    assert(module != this);
+    _imports.emplace(name_id, Import{module, type_tpl});
 }
 
 } // namespace ulam

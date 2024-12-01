@@ -24,7 +24,9 @@ public:
 
     Ref<PrimTypeTpl> prim_type_tpl(BuiltinTypeId id);
     Ref<PrimType> prim_type(BuiltinTypeId id);
-    // TODO: Atom (built-in non-primitive)
+
+    Ref<TypeTpl> builtin_type_tpl(BuiltinTypeId id);
+    Ref<Type> builtin_type(BuiltinTypeId id);
 
     Diag& diag() { return _diag; }
 
