@@ -13,12 +13,12 @@ namespace {
 Ptr<Scope> make_class_scope(Ref<Scope> parent) {
     assert(
         parent && (parent->is(Scope::Module) || parent->is(Scope::ClassTpl)));
-    return make<Scope>(parent->copy(), Scope::Class);
+    return make<Scope>(parent, Scope::Class);
 }
 
 Ptr<Scope> make_class_tpl_scope(Ref<Scope> parent) {
     assert(parent && parent->is(Scope::Module));
-    return make<Scope>(parent->copy(), Scope::ClassTpl);
+    return make<Scope>(parent, Scope::ClassTpl);
 }
 } // namespace
 

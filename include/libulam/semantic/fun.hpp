@@ -32,9 +32,7 @@ class Fun {
 public:
     Fun() {}
 
-    void add_overload(ast::Ref<ast::FunDef> node) {
-        _overloads.push_back(ulam::make<FunOverload>(node));
-    }
+    Ref<FunOverload> add_overload(ast::Ref<ast::FunDef> node);
 
 private:
     std::list<Ptr<FunOverload>> _overloads;

@@ -55,7 +55,7 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
     indent() << "typedef ";
     {
         auto f = no_ws();
-        accept_me(node->type());
+        accept_me(node->type_name());
     }
     _os << " " << name(node) << ";" << nl();
     return false;

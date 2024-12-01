@@ -10,6 +10,7 @@
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
@@ -77,12 +78,12 @@ private:
 
 class TypeDef : public Tuple<Stmt, TypeName>, public Named {
     ULAM_AST_NODE
-    ULAM_AST_PTR_ATTR(AliasType, alias_type) // NODE: alias types live here
+    ULAM_AST_REF_ATTR(AliasType, alias_type)
 public:
     TypeDef(Ptr<TypeName>&& type, Str name):
         Tuple{std::move(type)}, Named{name} {}
 
-    ULAM_AST_TUPLE_PROP(type, 0)
+    ULAM_AST_TUPLE_PROP(type_name, 0)
 };
 
 class FunDefBody : public Block {
@@ -92,6 +93,7 @@ class FunDefBody : public Block {
 class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>,
                public Named {
     ULAM_AST_NODE
+    ULAM_AST_REF_ATTR(FunOverload, overload)
 public:
     FunDef(
         Str name,

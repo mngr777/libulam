@@ -80,6 +80,8 @@ public:
         return sym;
     }
 
+    // TODO: store overwritten pointers (e.g. typedef A A)
+
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _symbols.set(name_id, std::move(value));
     }

@@ -3,6 +3,8 @@
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
+#include <set>
+#include <unordered_map>
 
 namespace ulam::ast {
 class ModuleDef;
@@ -46,12 +48,21 @@ public:
         _symbols.set(name_id, std::move(value));
     }
 
+    const auto& deps() const { return _deps; }
+    void add_dep(str_id_t name_id) { _deps.insert(name_id); }
+
+    // NOTE: scope is supposed to be empty at this point
+    void export_imports(Ref<Scope> scope);
+    void add_import(str_id_t name_id, Ref<Type> type);
+
 private:
     Ref<Program> _program;
     module_id_t _id;
     ast::Ref<ast::ModuleDef> _node;
     Ptr<Scope> _scope;
     SymbolTable _symbols;
+    std::set<str_id_t> _deps;
+    std::unordered_map<str_id_t, Ref<Type>> _imports;
 };
 
 } // namespace ulam

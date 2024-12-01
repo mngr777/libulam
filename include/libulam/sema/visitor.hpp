@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/module.hpp"
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
@@ -27,20 +28,19 @@ public:
     void analyze();
 
 protected:
+    enum class Pass { Module, Classes, FunBodies };
+
     bool visit(ast::Ref<ast::Root> node) override;
     bool visit(ast::Ref<ast::ModuleDef> node) override;
+    void traverse(ast::Ref<ast::ModuleDef> node) override;
     bool visit(ast::Ref<ast::ClassDef> node) override;
-    bool visit(ast::Ref<ast::ClassDefBody> node) override;
     void traverse(ast::Ref<ast::ClassDefBody> node) override;
-    bool visit(ast::Ref<ast::FunDef> node) override { assert(false); }
-    void traverse(ast::Ref<ast::FunDef> node) override;
-    bool visit(ast::Ref<ast::FunDefBody> node) override;
-    // TODO: blocks, loops, ...
+    bool visit(ast::Ref<ast::FunDef> node) override;
+    void traverse(ast::Ref<ast::FunDefBody> node) override;
 
-    bool do_visit(ast::Ref<ast::TypeDef>) override;
-
-    void traverse_class_defs(ast::Ref<ast::ClassDefBody> node);
-    void traverse_fun_bodies(ast::Ref<ast::ClassDefBody> node);
+    virtual void enter_module_scope(Ref<Module> module);
+    virtual void enter_class_scope(Ref<Class> cls);
+    virtual void enter_tpl_scope(Ref<ClassTpl> tpl);
 
     void enter_scope(Scope::Flag flags = Scope::NoFlags);
     void enter_scope(Ref<Scope> scope);
@@ -48,6 +48,8 @@ protected:
 
     Diag& diag();
     Ref<Scope> scope();
+
+    Pass pass() { return _pass; }
 
     Ref<Program> program() {
         assert(ast()->program());
@@ -77,6 +79,8 @@ private:
     Diag& _diag;
     ast::Ref<ast::Root> _ast;
     bool _skip_fun_bodies;
+
+    Pass _pass;
 
     ast::Ref<ast::ModuleDef> _module_def{};
     ast::Ref<ast::ClassDef> _class_def{};

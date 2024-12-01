@@ -1,11 +1,12 @@
+#include "libulam/ast/visitor.hpp"
+#include "libulam/ast/node.hpp"
+#include "libulam/ast/nodes/module.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/class.hpp>
-
-// TODO: move object initialization to sema::Init
 
 namespace ulam::sema {
 
@@ -24,91 +25,107 @@ bool RecVisitor::visit(ast::Ref<ast::Root> node) {
 bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     assert(node->module());
     _module_def = node;
-    assert(node->module());
-    enter_scope(Scope::Module);
-    if (do_visit(node))
+    enter_module_scope(node->module());
+    if (do_visit(node)) {
+        _pass = Pass::Module;
         traverse(node);
+        _pass = Pass::Classes;
+        traverse(node);
+        if (!_skip_fun_bodies) {
+            _pass = Pass::FunBodies;
+            traverse(node);
+        }
+    }
+    assert(scope()->is(Scope::Module));
     exit_scope();
     _module_def = {};
     return {};
 }
 
-bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
-    _class_def = node;
-    if (do_visit(node))
-        traverse(node);
-    _class_def = {};
-    return {};
+void RecVisitor::traverse(ast::Ref<ast::ModuleDef> node) {
+    for (unsigned n = 0; n < node->child_num(); ++n) {
+        auto& child_v = node->get(n);
+        if (pass() == Pass::Module || ast::is<ast::ClassDef>(child_v))
+            ast::as_node_ref(child_v)->accept(*this);
+    }
 }
 
-bool RecVisitor::visit(ast::Ref<ast::ClassDefBody> node) {
-    enter_scope(Scope::Class);
-    // set Self
-    auto self_id = program()->self_str_id();
-    if (_class_def->type()) {
-        scope()->set(self_id, _class_def->type());
+bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
+    if (pass() == Pass::Module) {
+        do_visit(node);
     } else {
-        assert(_class_def->type_tpl());
-        scope()->set(self_id, _class_def->type_tpl());
-    }
-    if (do_visit(node))
+        _class_def = node;
         traverse(node);
-    exit_scope();
+        _class_def = {};
+    }
     return {};
 }
 
 void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
-    traverse_class_defs(node);
-    if (!_skip_fun_bodies)
-        traverse_fun_bodies(node);
+    assert(pass() == Pass::Classes || pass() == Pass::FunBodies);
+    assert(_class_def);
+    // enter scope
+    if (_class_def->type()) {
+        enter_class_scope(_class_def->type());
+    } else {
+        assert(_class_def->type_tpl());
+        enter_tpl_scope(_class_def->type_tpl());
+    }
+    // traverse
+    for (unsigned n = 0; n < node->child_num(); ++n) {
+        auto& child_v = node->get(n);
+        if (pass() == Pass::Classes || ast::is<ast::FunDef>(child_v))
+            ast::as_node_ref(child_v)->accept(*this);
+    }
+    // exit scope
+    assert(scope()->is(Scope::Class) || scope()->is(Scope::ClassTpl));
+    exit_scope();
 }
 
-bool RecVisitor::visit(ast::Ref<ast::FunDefBody> node) {
-    assert(_fun_def);
-    enter_scope(Scope::Fun);
-    // NOTE: params are not added to scope here TODO?
-    if (do_visit(node))
+bool RecVisitor::visit(ast::Ref<ast::FunDef> node) {
+    if (pass() == Pass::Classes) {
+        do_visit(node);
+    } else {
+        assert(pass() == Pass::FunBodies);
+        _fun_def = node;
         traverse(node);
-    exit_scope();
+        _fun_def = {};
+    }
     return {};
 }
 
-bool RecVisitor::do_visit(ast::Ref<ast::TypeDef>) {
-    // TODO: add alias to scope
-    return false;
-}
-
-void RecVisitor::traverse_class_defs(ast::Ref<ast::ClassDefBody> node) {
-    for (unsigned n = 0; n < node->child_num(); ++n) {
-        auto& child_v = node->get(n);
-        if (ast::is<ast::FunDef>(child_v)) {
-            // directly visit fun def
-            // TODO: store result?
-            do_visit(ast::as_ref<ast::FunDef>(child_v));
-        } else {
-            // continue as usual
-            ast::as_node_ref(child_v)->accept(*this);
-        }
-    }
-}
-
-void RecVisitor::traverse_fun_bodies(ast::Ref<ast::ClassDefBody> node) {
-    for (unsigned n = 0; n < node->child_num(); ++n) {
-        auto& child_v = node->get(n);
-        if (ast::is<ast::FunDef>(child_v))
-            traverse(ast::as_ref<ast::FunDef>(child_v));
-    }
-}
-
-void RecVisitor::traverse(ast::Ref<ast::FunDef> node) {
-    _fun_def = node;
+void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
+    assert(pass() == Pass::FunBodies);
+    assert(_fun_def);
     enter_scope(Scope::Fun);
-    // TODO: add params to scope
-    node->body()->accept(*this);
+    ast::RecVisitor::traverse(node);
+    assert(scope()->is(Scope::Fun));
     exit_scope();
-    _fun_def = {};
 }
 
+void RecVisitor::enter_module_scope(Ref<Module> module) {
+    if (pass() == Pass::Module) {
+        enter_scope(Scope::Module);
+    } else {
+        enter_scope(module->scope());
+    }
+}
+
+void RecVisitor::enter_class_scope(Ref<Class> cls) {
+    if (pass() == Pass::Classes) {
+        enter_scope(Scope::Class);
+    } else {
+        enter_scope(cls->scope());
+    }
+}
+
+void RecVisitor::enter_tpl_scope(Ref<ClassTpl> tpl) {
+    if (pass() == Pass::Classes) {
+        enter_scope(Scope::Class);
+    } else {
+        enter_scope(tpl->scope());
+    }
+}
 
 void RecVisitor::enter_scope(Scope::Flag flags) {
     auto parent = _scopes.size() ? _scopes.top().ref : Ref<Scope>{};

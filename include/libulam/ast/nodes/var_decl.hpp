@@ -12,6 +12,7 @@ namespace ulam::ast {
 
 class VarDecl : public Tuple<Stmt, Expr>, public Named {
     ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
+    ULAM_AST_REF_ATTR(Var, var)
 public:
     VarDecl(Str name, Ptr<Expr>&& value):
         Tuple{std::move(value)}, Named{name} {}
