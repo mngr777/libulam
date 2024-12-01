@@ -21,11 +21,12 @@ bool RecVisitor::visit(ast::Ref<ast::Root> node) {
     return {};
 }
 
-
 bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     assert(node->module());
+    auto mod = node->module();
     _module_def = node;
-    enter_module_scope(node->module());
+    enter_module_scope(mod);
+    mod->export_imports(scope());
     if (do_visit(node)) {
         _pass = Pass::Module;
         traverse(node);
@@ -103,6 +104,53 @@ void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
     exit_scope();
 }
 
+bool RecVisitor::visit(ast::Ref<ast::Block> node) {
+    enter_scope();
+    ast::RecVisitor::visit(node);
+    exit_scope();
+    return {};
+}
+
+bool RecVisitor::do_visit(ast::Ref<ast::ClassDef> node) {
+    auto name_id = node->name().str_id();
+    if (node->type()) {
+        scope()->set(name_id, node->type());
+    } else if (node->type_tpl()) {
+        scope()->set(name_id, node->type_tpl());
+    }
+    return true;
+}
+
+bool RecVisitor::do_visit(ast::Ref<ast::TypeDef> node) {
+    auto name_id = node->name().str_id();
+    Ref<Type> type{node->alias_type()};
+    if (type)
+        scope()->set(name_id, type);
+    return true;
+}
+
+bool RecVisitor::do_visit(ast::Ref<ast::VarDef> node) {
+    auto name_id = node->name().str_id();
+    auto var = node->var();
+    if (var)
+        scope()->set(name_id, var);
+    return true;
+}
+
+bool RecVisitor::do_visit(ast::Ref<ast::FunDef> node) {
+    auto name_id = node->name().str_id();
+    auto overload = node->overload();
+    auto sym = scope()->get(name_id);
+    if (sym) {
+        if (!sym->is<Fun>())
+            return false;
+    } else {
+        sym = scope()->set(name_id, ulam::make<Fun>());
+    }
+    sym->get<Fun>()->add_overload(overload);
+    return true;
+}
+
 void RecVisitor::enter_module_scope(Ref<Module> module) {
     if (pass() == Pass::Module) {
         enter_scope(Scope::Module);
@@ -132,9 +180,7 @@ void RecVisitor::enter_scope(Scope::Flag flags) {
     _scopes.emplace(make<Scope>(parent, flags));
 }
 
-void RecVisitor::enter_scope(Ref<Scope> scope) {
-    _scopes.emplace(scope);
-}
+void RecVisitor::enter_scope(Ref<Scope> scope) { _scopes.emplace(scope); }
 
 void RecVisitor::exit_scope() { _scopes.pop(); }
 

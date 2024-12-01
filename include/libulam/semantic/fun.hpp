@@ -32,10 +32,11 @@ class Fun {
 public:
     Fun() {}
 
+    Ref<FunOverload> add_overload(ast::Ref<FunOverload> overload);
     Ref<FunOverload> add_overload(ast::Ref<ast::FunDef> node);
 
 private:
-    std::list<Ptr<FunOverload>> _overloads;
+    std::list<RefPtrPair<FunOverload>> _overloads;
 };
 
 } // namespace ulam

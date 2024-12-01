@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
@@ -30,6 +31,7 @@ public:
 protected:
     enum class Pass { Module, Classes, FunBodies };
 
+    // Traversing in module defs / class defs / function body order
     bool visit(ast::Ref<ast::Root> node) override;
     bool visit(ast::Ref<ast::ModuleDef> node) override;
     void traverse(ast::Ref<ast::ModuleDef> node) override;
@@ -37,6 +39,15 @@ protected:
     void traverse(ast::Ref<ast::ClassDefBody> node) override;
     bool visit(ast::Ref<ast::FunDef> node) override;
     void traverse(ast::Ref<ast::FunDefBody> node) override;
+
+    // Creating transient scopes (TODO)
+    bool visit(ast::Ref<ast::Block> node) override;
+
+    // Populating current scope with objects from AST
+    bool do_visit(ast::Ref<ast::ClassDef> node) override;
+    bool do_visit(ast::Ref<ast::TypeDef> node) override;
+    bool do_visit(ast::Ref<ast::VarDef> node) override;
+    bool do_visit(ast::Ref<ast::FunDef> node) override;
 
     virtual void enter_module_scope(Ref<Module> module);
     virtual void enter_class_scope(Ref<Class> cls);
