@@ -18,6 +18,21 @@ class Program;
 using module_id_t = std::uint16_t;
 constexpr module_id_t NoModuleId = 0;
 
+class Module;
+
+class Import {
+public:
+    Import(Ref<Module> module, Ref<Type> type):
+        _module{module}, _type{type} {}
+
+    Ref<Module> module() { return _module; }
+    Ref<Type> type() { return _type; }
+
+private:
+    Ref<Module> _module;
+    Ref<Type> _type;
+};
+
 class Scope;
 
 class Module {
@@ -53,7 +68,7 @@ public:
 
     // NOTE: scope is supposed to be empty at this point
     void export_imports(Ref<Scope> scope);
-    void add_import(str_id_t name_id, Ref<Type> type);
+    void add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type);
 
 private:
     Ref<Program> _program;
@@ -62,7 +77,7 @@ private:
     Ptr<Scope> _scope;
     SymbolTable _symbols;
     std::set<str_id_t> _deps;
-    std::unordered_map<str_id_t, Ref<Type>> _imports;
+    std::unordered_map<str_id_t, Import> _imports;
 };
 
 } // namespace ulam

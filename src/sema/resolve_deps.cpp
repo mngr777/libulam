@@ -264,7 +264,7 @@ void ResolveDeps::export_classes() {
                 auto& exporter = *it->second.begin();
                 auto sym = exporter->get(name_id);
                 assert(sym && sym->is<Type>());
-                mod->add_import(name_id, sym->get<Type>());
+                mod->add_import(name_id, exporter, sym->get<Type>());
             }
         }
     }

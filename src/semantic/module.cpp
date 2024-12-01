@@ -16,15 +16,16 @@ Module::~Module() {}
 
 void Module::export_imports(Ref<Scope> scope) {
     for (auto pair : _imports) {
-        auto [name_id, type_ref] = pair;
+        auto& [name_id, import] = pair;
         assert(!scope->has(name_id));
-        scope->set(name_id, type_ref);
+        scope->set(name_id, import.type());
     }
 }
 
-void Module::add_import(str_id_t name_id, Ref<Type> type) {
+void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type) {
     assert(_imports.count(name_id) == 0);
-    _imports.emplace(name_id, type);
+    assert(module != this);
+    _imports.emplace(name_id, Import{module, type});
 }
 
 } // namespace ulam
