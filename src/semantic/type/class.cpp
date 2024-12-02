@@ -46,6 +46,7 @@ ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
     TypeTpl{module->program()},
     _module{module},
     _node{node},
+    _def_scope{module->scope()->snap()},
     _scope{make_class_tpl_scope(module->scope())} {}
 
 ClassTpl::~ClassTpl() {}

@@ -44,19 +44,15 @@ public:
 
     Ref<Scope> parent() { return _parent; }
 
-    // TODO: remove?
-    Scope* copy() {
+    Scope* snap(bool copy_parent = false) {
         // only safe for persistent scopes
-        assert(is(Module) || is(ClassTpl) || is(Class));
-        // recursively copy parent
-        Ref<Scope> parent_copy{};
-        if (_parent) {
-            parent_copy = _parent->copy();
-        }
+        assert(is(ModuleEnv) || is(Module) || is(ClassTpl) || is(Class));
         // make and store a copy
-        auto copy = make<Scope>(parent_copy, _flags);
+        auto copy = make<Scope>(
+            _module, (_parent && copy_parent) ? _parent->snap() : _parent,
+            _flags);
         auto copy_ref = ref(copy);
-        _copies.push_back(std::move(copy));
+        _snaps.push_back(std::move(copy));
         // export symbols
         copy->import_symbols(_symbols);
         return copy_ref;
@@ -123,7 +119,7 @@ private:
     Scope* _parent;
     Flag _flags;
     SymbolTable _symbols;
-    std::list<Ptr<Scope>> _copies;
+    std::list<Ptr<Scope>> _snaps;
 };
 
 } // namespace ulam

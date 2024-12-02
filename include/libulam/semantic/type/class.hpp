@@ -72,6 +72,7 @@ public:
     ClassTpl(ClassTpl&&) = default;
     ClassTpl& operator=(ClassTpl&&) = default;
 
+    Ref<Scope> def_scope() { return _def_scope; }
     Ref<Scope> scope() { return ref(_scope); }
 
     Ref<Type>
@@ -97,6 +98,7 @@ private:
 
     Ref<Module> _module;
     Ref<ast::ClassDef> _node;
+    Ref<Scope> _def_scope;
     Ptr<Scope> _scope;
     SymbolTable _members;
     std::unordered_map<std::string, Ptr<Class>> _types;
