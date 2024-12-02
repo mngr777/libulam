@@ -1,22 +1,19 @@
 #pragma once
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/sema/helper.hpp>
+#include <libulam/semantic/type.hpp>
+#include <utility>
 
-namespace ulam::ast {
-class TypeName;
-class TypeSpec;
-} // namespace ulam::ast
+namespace ulam::sema {
 
-namespace ulam {
-
-class Scope;
-class Type;
-
-class Resolver {
+class Resolver : Helper {
 public:
-    Ref<Type> resolve(ast::Ref<ast::TypeName> type_name, Ref<Scope> scope);
+    using TypeRes = std::pair<Ref<Type>, bool>;
 
-    Ref<Type> resolve(ast::Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
+    Resolver(ast::Ref<ast::Root> ast, Ref<Scope> scope, bool required):
+        Helper{ast, scope} {}
 };
 
-} // namespace ulam
+} // namespace ulam::sema

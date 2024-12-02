@@ -25,7 +25,6 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
-	include/libulam/semantic/deps/symbol_id.hpp \
 	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/number.hpp \
 	include/libulam/semantic/ops.hpp \
@@ -77,14 +76,12 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
-	include/libulam/sema/dep_track.hpp \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
 	include/libulam/sema/init_members.hpp \
 	include/libulam/sema/helper.hpp \
 	include/libulam/sema/helper/param_eval.hpp \
 	include/libulam/sema/helper/resolver.hpp \
-	include/libulam/sema/helper/type_resolver.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
@@ -94,7 +91,6 @@ SEMA_SOURCE_FILES = \
 	src/sema/init_members.cpp \
 	src/sema/helper/param_eval.cpp \
 	src/sema/helper/resolver.cpp \
-	src/sema/helper/type_resolver.cpp \
 	src/sema/visitor.cpp
 
 # Library
