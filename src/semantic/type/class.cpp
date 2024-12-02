@@ -40,13 +40,6 @@ Class::~Class() {}
 
 str_id_t Class::name_id() const { return _node->name().str_id(); }
 
-Ref<Type> Class::type_member(str_id_t name_id) {
-    auto sym = get(name_id);
-    if (!sym && !sym->is<Type>())
-        return {};
-    return sym->get<Type>();
-}
-
 // ClassTpl
 
 ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):

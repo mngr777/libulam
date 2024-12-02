@@ -30,7 +30,6 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     auto mod = node->module();
     _module_def = node;
     enter_module_scope(mod);
-    mod->export_imports(scope());
     if (do_visit(node)) {
         _pass = Pass::Module;
         traverse(node);
@@ -156,11 +155,11 @@ bool RecVisitor::do_visit(ast::Ref<ast::FunDef> node) {
     return true;
 }
 
-void RecVisitor::enter_module_scope(Ref<Module> module) {
+void RecVisitor::enter_module_scope(Ref<Module> mod) {
     if (pass() == Pass::Module) {
-        enter_scope(make<Scope>(module, Ref<Scope>{}, Scope::Module));
+        enter_scope(make<Scope>(mod->scope()->parent(), Scope::Module));
     } else {
-        enter_scope(module->scope());
+        enter_scope(mod->scope());
     }
 }
 

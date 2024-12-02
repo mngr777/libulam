@@ -10,27 +10,16 @@ Module::Module(
     _program{program},
     _id{id},
     _node{node},
-    _scope{make<Scope>(this, Ref<Scope>{}, Scope::Module)} {}
+    _env_scope{make<Scope>(this, program->scope(), Scope::ModuleEnv)},
+    _scope{make<Scope>(ref(_env_scope), Scope::Module)} {}
 
 Module::~Module() {}
-
-void Module::export_imports(Ref<Scope> scope) {
-    for (auto pair : _imports) {
-        auto& [name_id, import] = pair;
-        assert(!scope->has(name_id));
-        if (import.type()) {
-            scope->set(name_id, import.type());
-        } else {
-            assert(import.type_tpl());
-            scope->set(name_id, import.type_tpl());
-        }
-    }
-}
 
 void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type) {
     assert(_imports.count(name_id) == 0);
     assert(module != this);
     _imports.emplace(name_id, Import{module, type});
+    _env_scope->set(name_id, type);
 }
 
 void Module::add_import(
@@ -38,6 +27,7 @@ void Module::add_import(
     assert(_imports.count(name_id) == 0);
     assert(module != this);
     _imports.emplace(name_id, Import{module, type_tpl});
+    _env_scope->set(name_id, type_tpl);
 }
 
 } // namespace ulam

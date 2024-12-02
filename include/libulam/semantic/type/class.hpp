@@ -37,8 +37,6 @@ public:
 
     str_id_t name_id() const;
 
-    Ref<Type> type_member(str_id_t name_id);
-
     Ref<Scope> scope() { return ref(_scope); }
 
     void export_symbols(Scope* scope);

@@ -18,10 +18,11 @@ public:
     using Flag = std::uint16_t;
     static constexpr Flag NoFlags = 0;
     static constexpr Flag Program = 1;
-    static constexpr Flag Module = 1 << 1;
-    static constexpr Flag Class = 1 << 2;
-    static constexpr Flag ClassTpl = 1 << 3;
-    static constexpr Flag Fun = 1 << 4;
+    static constexpr Flag ModuleEnv = 1 << 1;
+    static constexpr Flag Module = 1 << 2;
+    static constexpr Flag Class = 1 << 3;
+    static constexpr Flag ClassTpl = 1 << 4;
+    static constexpr Flag Fun = 1 << 5;
 
     explicit Scope(Scope* parent, Flag flags = NoFlags):
         Scope({}, parent, flags) {}
@@ -29,7 +30,7 @@ public:
     explicit Scope(
         Ref<class Module> module, Scope* parent, Flag flags = NoFlags):
         _module{module}, _parent{parent}, _flags{flags} {
-        assert(!module || (flags & Module));
+        assert(!module || (flags & ModuleEnv));
     }
 
     Scope(Scope&&) = default;

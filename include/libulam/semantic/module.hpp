@@ -71,8 +71,6 @@ public:
     const auto& deps() const { return _deps; }
     void add_dep(str_id_t name_id) { _deps.insert(name_id); }
 
-    // NOTE: scope is supposed to be empty at this point
-    void export_imports(Ref<Scope> scope);
     void add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type);
     void add_import(str_id_t name_id, Ref<Module> module, Ref<TypeTpl> type_tpl);
 
@@ -80,6 +78,7 @@ private:
     Ref<Program> _program;
     module_id_t _id;
     ast::Ref<ast::ModuleDef> _node;
+    Ptr<Scope> _env_scope;
     Ptr<Scope> _scope;
     SymbolTable _symbols;
     std::set<str_id_t> _deps;
