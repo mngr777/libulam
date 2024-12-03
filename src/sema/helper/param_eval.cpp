@@ -4,11 +4,11 @@
 
 namespace ulam::sema {
 
-std::pair<TypedValueList, bool> ParamEval::eval(ast::Ref<ast::ArgList> args) {
+std::pair<TypedValueList, bool> ParamEval::eval(ast::Ref<ast::ArgList> args, Ref<Scope> scope) {
     TypedValueList values;
     assert(args->child_num() > 0);
     bool success = true;
-    ExprVisitor ev{ast(), scope()};
+    ExprVisitor ev{ast(), scope};
     for (unsigned n = 0; n < args->child_num(); ++n) {
         auto arg = args->get(n);
         ExprRes res = arg->accept(ev);

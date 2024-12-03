@@ -16,10 +16,10 @@ public:
     static constexpr Flag ReqValues = 0;
 
     explicit ParamEval(
-        ast::Ref<ast::Root> ast, Scope* scope, Flag flags = NoFlags):
-        Helper{ast, scope}, _flags{flags} {}
+        ast::Ref<ast::Root> ast, Flag flags = NoFlags):
+        Helper{ast}, _flags{flags} {}
 
-    std::pair<TypedValueList, bool> eval(ast::Ref<ast::ArgList> args);
+    std::pair<TypedValueList, bool> eval(ast::Ref<ast::ArgList> args, Ref<Scope> scope);
 
 private:
     Flag _flags;

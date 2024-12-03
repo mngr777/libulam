@@ -76,9 +76,9 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
+	include/libulam/sema/eval.hpp \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
-	include/libulam/sema/init_members.hpp \
 	include/libulam/sema/helper.hpp \
 	include/libulam/sema/helper/param_eval.hpp \
 	include/libulam/sema/helper/resolver.hpp \
@@ -86,9 +86,9 @@ SEMA_HEADER_FILES = \
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
+	src/sema/eval.cpp \
 	src/sema/expr_visitor.cpp \
 	src/sema/resolve_deps.cpp \
-	src/sema/init_members.cpp \
 	src/sema/helper/param_eval.cpp \
 	src/sema/helper/resolver.cpp \
 	src/sema/visitor.cpp
