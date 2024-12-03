@@ -1,6 +1,3 @@
-#include "libulam/ast/visitor.hpp"
-#include "libulam/ast/node.hpp"
-#include "libulam/ast/nodes/module.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/visitor.hpp>
@@ -31,7 +28,6 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     _module_def = node;
     enter_module_scope(mod);
     if (do_visit(node)) {
-        _pass = Pass::Module;
         traverse(node);
         _pass = Pass::Classes;
         traverse(node);
@@ -157,6 +153,7 @@ bool RecVisitor::do_visit(ast::Ref<ast::FunDef> node) {
 
 void RecVisitor::enter_module_scope(Ref<Module> mod) {
     if (pass() == Pass::Module) {
+        debug() << __FUNCTION__ << "\n";
         enter_scope(make<Scope>(mod->scope()->parent(), Scope::Module));
     } else {
         enter_scope(mod->scope());

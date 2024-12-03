@@ -88,6 +88,8 @@ SEMA_SOURCE_FILES = \
 	src/sema.cpp \
 	src/sema/eval.cpp \
 	src/sema/expr_visitor.cpp \
+	src/sema/out.hpp \
+	src/sema/out.cpp \
 	src/sema/resolve_deps.cpp \
 	src/sema/helper/param_eval.cpp \
 	src/sema/helper/resolver.cpp \

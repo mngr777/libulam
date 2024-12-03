@@ -22,14 +22,15 @@ public:
     using ast::RecVisitor::traverse;
     using ast::RecVisitor::visit;
 
+    enum class Pass { Module, Classes, FunBodies };
+
     RecVisitor(
         Diag& diag, ast::Ref<ast::Root> ast, bool skip_fun_bodies = false):
-        _diag{diag}, _ast{ast}, _skip_fun_bodies{skip_fun_bodies} {}
+        _diag{diag}, _ast{ast}, _skip_fun_bodies{skip_fun_bodies}, _pass{Pass::Module} {}
 
     void analyze();
 
 protected:
-    enum class Pass { Module, Classes, FunBodies };
 
     // Traversing in module defs / class defs / function body order
     bool visit(ast::Ref<ast::Root> node) override;

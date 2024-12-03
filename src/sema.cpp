@@ -1,7 +1,12 @@
 #include <cassert>
 #include <libulam/sema.hpp>
+#include <libulam/sema/eval.hpp>
 #include <libulam/sema/resolve_deps.hpp>
 #include <libulam/semantic/program.hpp>
+
+#define ULAM_DEBUG
+#define ULAM_DEBUG_PREFIX "[Sema] "
+#include "src/debug.hpp"
 
 namespace ulam {
 
@@ -10,8 +15,12 @@ Sema::Sema(Diag& diag): _diag{diag} {}
 Sema::~Sema() {}
 
 void Sema::analyze(ast::Ref<ast::Root> ast) {
+    debug() << "ResolveDeps\n";
     sema::ResolveDeps resolve_deps{_diag, ast};
     resolve_deps.analyze();
+    debug() << "Eval\n";
+    sema::Eval eval{_diag, ast};
+    eval.analyze();
 }
 
 } // namespace ulam

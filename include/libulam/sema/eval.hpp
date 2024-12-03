@@ -13,9 +13,13 @@ public:
 
     Eval(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast} {}
 
-    bool visit(ast::Ref<ast::TypeName> node) override;
+    bool do_visit(ast::Ref<ast::TypeDef> node) override;
+    bool do_visit(ast::Ref<ast::VarDef> node) override;
+    bool do_visit(ast::Ref<ast::FunDef> node) override;
 
-
+protected:
+    Ref<Type> resolve_type_def(ast::Ref<ast::TypeDef> node, Ref<Scope> scope);
+    Ref<Type> resolve_type_name(ast::Ref<ast::TypeName> node, Ref<Scope> scope);
 };
 
 } // namespace ulam::sema
