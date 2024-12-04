@@ -10,7 +10,7 @@
 
 namespace ulam::ast {
 
-class VarDecl : public Tuple<Stmt, Expr>, public Named {
+class VarDecl : public Tuple<Stmt, Expr>, public Named, public ScopeObject {
     ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
     ULAM_AST_REF_ATTR(Var, var)
 public:

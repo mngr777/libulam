@@ -20,6 +20,12 @@ template <typename T, typename... Ts> bool is(const Variant<Ts...>& v) {
     return std::holds_alternative<Ptr<T>>(v);
 }
 
+template <typename... Ts> using RefVariant = std::variant<Ref<Ts>...>;
+
+template <typename T, typename... Ts> bool is(const RefVariant<Ts...>& v) {
+    return std::holds_alternative<Ref<T>>(v);
+}
+
 template <typename T, typename... Ts> auto as_ref(Variant<Ts...>& v) {
     return std::visit([](auto&& ptr) -> Ref<T> { return ref(ptr); }, v);
 }
@@ -27,17 +33,21 @@ template <typename T, typename... Ts> auto as_ref(const Variant<Ts...>& v) {
     return std::visit([](auto&& ptr) -> const Ref<T> { return ref(ptr); }, v);
 }
 
-template <typename T> struct RefPtrPair {
+template <typename T> struct RefPtr {
+public:
     using Type = T;
 
-    RefPtrPair(Ptr<T>&& val): ptr{std::move(val)}, ref{ulam::ref(ptr)} {}
-    RefPtrPair(Ref<T> val): ptr{}, ref{val} {}
+    RefPtr(Ptr<T>&& val): _value{std::move(val)} {}
+    RefPtr(Ref<T> val): _value{val} {}
 
-    RefPtrPair(RefPtrPair&&) = default;
-    RefPtrPair& operator=(RefPtrPair&&) = default;
+    Ref<T> ref() {
+        return std::holds_alternative<Ptr<T>>(_value)
+                   ? ulam::ref(std::get<Ptr<T>>(_value))
+                   : std::get<Ref<T>>(_value);
+    }
 
-    Ptr<T> ptr;
-    Ref<T> ref;
+private:
+    std::variant<Ref<T>, Ptr<T>> _value;
 };
 
 } // namespace ulam

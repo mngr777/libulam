@@ -15,7 +15,7 @@ class ClassDef;
 
 namespace ulam {
 
-class Scope;
+class PersScope;
 class Module;
 class Var;
 class ClassTpl;
@@ -37,9 +37,7 @@ public:
 
     str_id_t name_id() const;
 
-    Ref<Scope> scope() { return ref(_scope); }
-
-    void export_symbols(Scope* scope);
+    Ref<PersScope> scope() { return ref(_scope); }
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
 
@@ -56,7 +54,7 @@ public:
 private:
     Ref<ast::ClassDef> _node;
     Ref<ClassTpl> _tpl;
-    Ptr<Scope> _scope;
+    Ptr<PersScope> _scope;
     SymbolTable _members;
 };
 
@@ -72,8 +70,7 @@ public:
     ClassTpl(ClassTpl&&) = default;
     ClassTpl& operator=(ClassTpl&&) = default;
 
-    Ref<Scope> def_scope() { return _def_scope; }
-    Ref<Scope> scope() { return ref(_scope); }
+    Ref<PersScope> scope() { return ref(_scope); }
 
     Ref<Type>
     type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
@@ -98,8 +95,7 @@ private:
 
     Ref<Module> _module;
     Ref<ast::ClassDef> _node;
-    Ref<Scope> _def_scope;
-    Ptr<Scope> _scope;
+    Ptr<PersScope> _scope;
     SymbolTable _members;
     std::unordered_map<std::string, Ptr<Class>> _types;
 };

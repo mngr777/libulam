@@ -10,15 +10,15 @@
 namespace ulam {
 
 namespace {
-Ptr<Scope> make_class_scope(Ref<Scope> parent) {
+Ptr<PersScope> make_class_scope(Ref<Scope> parent) {
     assert(
         parent && (parent->is(Scope::Module) || parent->is(Scope::ClassTpl)));
-    return make<Scope>(parent, Scope::Class);
+    return make<PersScope>(parent, Scope::Class);
 }
 
-Ptr<Scope> make_class_tpl_scope(Ref<Scope> parent) {
+Ptr<PersScope> make_class_tpl_scope(Ref<Scope> parent) {
     assert(parent && parent->is(Scope::Module));
-    return make<Scope>(parent, Scope::ClassTpl);
+    return make<PersScope>(parent, Scope::ClassTpl);
 }
 } // namespace
 
@@ -28,7 +28,7 @@ Class::Class(Ref<ClassTpl> tpl):
     BasicType{tpl->_module->program()->next_type_id()},
     _node{tpl->node()},
     _tpl{tpl},
-    _scope{make_class_scope(tpl->scope())} {}
+    _scope{make_class_scope(tpl->scope())} {} // ==
 
 Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
     BasicType{module->program()->next_type_id()},
@@ -46,7 +46,6 @@ ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
     TypeTpl{module->program()},
     _module{module},
     _node{node},
-    _def_scope{module->scope()->snap()},
     _scope{make_class_tpl_scope(module->scope())} {}
 
 ClassTpl::~ClassTpl() {}

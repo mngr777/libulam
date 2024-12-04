@@ -38,7 +38,7 @@ private:
     Ref<TypeTpl> _type_tpl;
 };
 
-class Scope;
+class PersScope;
 
 class Module {
 public:
@@ -60,7 +60,7 @@ public:
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
-    Ref<Scope> scope() { return ref(_scope); }
+    Ref<PersScope> scope() { return ref(_scope); }
 
     Symbol* get(str_id_t name_id) { return _symbols.get(name_id); }
 
@@ -78,8 +78,8 @@ private:
     Ref<Program> _program;
     module_id_t _id;
     ast::Ref<ast::ModuleDef> _node;
-    Ptr<Scope> _env_scope;
-    Ptr<Scope> _scope;
+    Ptr<PersScope> _env_scope;
+    Ptr<PersScope> _scope;
     SymbolTable _symbols;
     std::set<str_id_t> _deps;
     std::unordered_map<str_id_t, Import> _imports;

@@ -4,6 +4,7 @@
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/scope/version.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
 #include <tuple>
@@ -137,6 +138,12 @@ class Named {
     ULAM_AST_SIMPLE_ATTR(Str, name, Str{})
 public:
     Named(Str name): _attr_name{name} {}
+};
+
+// The node can have persistent scope version attached (when in
+// persistent scope)
+class ScopeObject {
+    ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
 };
 
 // Tuple

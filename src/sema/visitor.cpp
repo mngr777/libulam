@@ -1,3 +1,5 @@
+#include "libulam/semantic/scope.hpp"
+#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/visitor.hpp>
@@ -15,10 +17,8 @@ void RecVisitor::analyze() { visit(_ast); }
 
 bool RecVisitor::visit(ast::Ref<ast::Root> node) {
     assert(node->program());
-    enter_scope(program()->scope());
     if (do_visit(node))
         traverse(node);
-    exit_scope();
     return {};
 }
 
@@ -69,7 +69,7 @@ void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
         enter_class_scope(_class_def->type());
     } else {
         assert(_class_def->type_tpl());
-        enter_tpl_scope(_class_def->type_tpl());
+        enter_class_tpl_scope(_class_def->type_tpl());
     }
     // traverse
     for (unsigned n = 0; n < node->child_num(); ++n) {
@@ -112,86 +112,80 @@ bool RecVisitor::visit(ast::Ref<ast::Block> node) {
 
 bool RecVisitor::do_visit(ast::Ref<ast::ClassDef> node) {
     assert(scope()->is(Scope::Module));
-    auto name_id = node->name().str_id();
-    if (node->type()) {
-        scope()->set(name_id, node->type());
-    } else if (node->type_tpl()) {
-        scope()->set(name_id, node->type_tpl());
-    }
+    assert(node->scope_version() != NoScopeVersion);
+    _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
     return true;
 }
 
 bool RecVisitor::do_visit(ast::Ref<ast::TypeDef> node) {
-    auto name_id = node->name().str_id();
-    Ref<Type> type{node->alias_type()};
-    if (type)
-        scope()->set(name_id, type);
+    if (_scopes.top_is<PersScopeProxy>()) {
+        assert(node->scope_version() != NoScopeVersion);
+        _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
+    } else {
+        // TODO: transient typedef
+    }
     return true;
 }
 
 bool RecVisitor::do_visit(ast::Ref<ast::VarDef> node) {
-    auto name_id = node->name().str_id();
-    auto var = node->var();
-    if (var)
-        scope()->set(name_id, var);
+    if (_scopes.top_is<PersScopeProxy>()) {
+        assert(node->scope_version() != NoScopeVersion);
+        _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
+    } else {
+        // TODO: transient var decl
+    }
     return true;
 }
 
 bool RecVisitor::do_visit(ast::Ref<ast::FunDef> node) {
-    auto name_id = node->name().str_id();
-    auto overload = node->overload();
-    auto sym = scope()->get(name_id);
-    if (sym) {
-        if (!sym->is<Fun>())
-            return false;
-    } else {
-        sym = scope()->set(name_id, ulam::make<Fun>());
-    }
-    sym->get<Fun>()->add_overload(overload);
+    // auto name_id = node->name().str_id();
+    // auto overload = node->overload();
+    // auto sym = scope()->get(name_id);
+    // if (sym) {
+    //     if (!sym->is<Fun>())
+    //         return false;
+    // } else {
+    //     sym = scope()->set(name_id, ulam::make<Fun>());
+    // }
+    // sym->get<Fun>()->add_overload(overload);
     return true;
 }
 
 void RecVisitor::enter_module_scope(Ref<Module> mod) {
-    if (pass() == Pass::Module) {
-        debug() << __FUNCTION__ << "\n";
-        enter_scope(make<Scope>(mod->scope()->parent(), Scope::Module));
-    } else {
-        enter_scope(mod->scope());
-    }
+    assert(pass() == Pass::Module);
+    auto scope = mod->scope()->proxy();
+    scope.reset();
+    enter_scope(std::move(scope));
 }
 
 void RecVisitor::enter_class_scope(Ref<Class> cls) {
-    if (pass() == Pass::Classes) {
-        enter_scope(Scope::Class);
-    } else {
-        enter_scope(cls->scope());
-    }
+    auto scope = cls->scope()->proxy();
+    if (pass() == Pass::Classes)
+        scope.reset();
+    enter_scope(std::move(scope));
 }
 
-void RecVisitor::enter_tpl_scope(Ref<ClassTpl> tpl) {
-    if (pass() == Pass::Classes) {
-        enter_scope(Scope::Class);
-    } else {
-        enter_scope(tpl->scope());
-    }
+void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
+    auto scope = tpl->scope()->proxy();
+    if (pass() == Pass::Classes)
+        scope.reset();
+    enter_scope(std::move(scope));
 }
 
 void RecVisitor::enter_scope(Scope::Flag flags) {
-    auto parent = _scopes.size() ? _scopes.top().ref : Ref<Scope>{};
-    _scopes.emplace(make<Scope>(parent, flags));
+    auto parent = !_scopes.empty() ? _scopes.top<Scope>() : Ref<Scope>{};
+    _scopes.push(make<TransScope>(parent, flags));
 }
 
-void RecVisitor::enter_scope(Ptr<Scope>&& scope) {
-    _scopes.emplace(std::move(scope));
+void RecVisitor::enter_scope(PersScopeProxy&& scope) {
+    _scopes.push(std::move(scope));
 }
-
-void RecVisitor::enter_scope(Ref<Scope> scope) { _scopes.emplace(scope); }
 
 void RecVisitor::exit_scope() { _scopes.pop(); }
 
 Scope* RecVisitor::scope() {
     assert(!_scopes.empty());
-    return _scopes.top().ref;
+    return _scopes.top<Scope>();
 }
 
 Diag& RecVisitor::diag() { return _diag; }

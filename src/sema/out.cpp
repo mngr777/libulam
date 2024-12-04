@@ -5,6 +5,7 @@
 namespace ulam::sema {
 
 void Out::print(Ref<Scope> scope) {
+    assert(false);
     if (scope->flags() == Scope::NoFlags) {
         _os << "<no flags>";
     } else {
@@ -20,12 +21,11 @@ void Out::print(Ref<Scope> scope) {
             _os << "[class]";
     }
     _os << "\n";
-    for (auto& pair : *scope) {
-        auto& [name_id, sym] = pair;
+    scope->for_each([&](str_id_t name_id, Scope::Symbol& sym) {
         _os << str(name_id) << ": ";
         print(&sym);
         _os << "\n";
-    }
+    });
     if (scope->parent()) {
         _os << "----------\n";
         print(scope->parent());

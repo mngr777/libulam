@@ -25,12 +25,6 @@ public:
 
     bool do_visit(ast::Ref<ast::TypeName> node) override;
 
-protected:
-    // start with corresponding object scope instead of a clean one
-    void enter_module_scope(Ref<Module> module) override;
-    void enter_class_scope(Ref<Class> cls) override;
-    void enter_tpl_scope(Ref<ClassTpl> tpl) override;
-
 private:
     struct ModuleTypeName {
         module_id_t module_id;

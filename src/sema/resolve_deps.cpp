@@ -49,7 +49,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
             "already defined"); // TODO: say where
         return false;
     }
-    // add to module, set node attr
+    // add to module, set node attrs
     if (node->params()) {
         assert(node->params()->child_num() > 0);
         assert(node->kind() != ClassKind::Element);
@@ -61,20 +61,40 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
         // add params
         for (unsigned n = 0; n < params->child_num(); ++n) {
             auto param = params->get(n);
+            auto param_name_id = param->name().str_id();
+            // make var
             auto var = ulam::make<Var>(
                 param->type_name(), param, Ref<Type>{}, Var::ClassParam);
-            tpl->set(param->name().str_id(), std::move(var));
+            auto var_ref = ref(var);
+            // set class tpl var
+            tpl->set(param_name_id, std::move(var));
+            // add to class tpl scope
+            tpl->scope()->set(param_name_id, var_ref);
+            // set node scope version attr
+            param->set_scope_version(tpl->scope()->version());
         }
+        // add to module
         module()->set<TypeTpl>(name_id, std::move(tpl));
+        // add to module scope
+        module()->scope()->set(name_id, tpl_ref);
+        // set node scope version attr
+        node->set_scope_version(module()->scope()->version());
+        // set node type tpl
         node->set_type_tpl(tpl_ref);
     } else {
         // class
         auto cls = ulam::make<Class>(module(), node);
         auto cls_ref = ref(cls);
+        // add to module
         module()->set<Type>(name_id, std::move(cls));
+        // add to module scope
+        module()->scope()->set(name_id, cls_ref);
+        // set node scope version attr
+        node->set_scope_version(module()->scope()->version());
+        // set node type
         node->set_type(cls_ref);
     }
-    return RecVisitor::do_visit(node);
+    return true;
 }
 
 bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
@@ -88,51 +108,72 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
         return false;
     }
     auto class_node = class_def();
-    Ref<Type> type_ref{};
-    if (class_node) {
-        // class typedef
-        if (class_node->type()) {
-            // set class member
-            auto cls = class_node->type();
-            Ptr<Type> type{
-                ulam::make<AliasType>(program()->next_type_id(), node, cls)};
+    if (scope()->is(Scope::Persistent)) {
+        // persistent typedef (module-local or class/class tpl)
+        Ref<Type> type_ref{};
+        auto scope_proxy = scopes().top<PersScopeProxy>();
+        if (scope_proxy->is(Scope::Module)) {
+            // module typedef (is not a module member)
+            Ptr<Type> type = ulam::make<AliasType>(NoTypeId, node);
             type_ref = ref(type);
+            scope_proxy->set(alias_id, std::move(type));
+        } else if (scope_proxy->is(Scope::Class)) {
+            // class member
+            assert(class_node->type());
+            auto cls = class_node->type();
+            // make
+            Ptr<Type> type =
+                ulam::make<AliasType>(program()->next_type_id(), node, cls);
+            type_ref = ref(type);
+            // add to class
             cls->set(alias_id, std::move(type));
-        } else {
-            // set tpl member
+            // add to scope
+            scope_proxy->set(alias_id, type_ref);
+        } else if (scope_proxy->is(Scope::ClassTpl)) {
+            // class tpl member
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
-            Ptr<Type> type{ulam::make<AliasType>(NoTypeId, node)};
+            // make
+            Ptr<Type> type = ulam::make<AliasType>(NoTypeId, node);
             type_ref = ref(type);
+            // add to class tpl
             tpl->set(alias_id, std::move(type));
+            // add to scope
+            scope_proxy->set(alias_id, type_ref);
+        } else {
+            assert(false);
         }
-        scope()->set(alias_id, type_ref);
+        // set node scope version
+        node->set_scope_version(scope_proxy->version());
+        node->set_alias_type(type_ref->basic()->as_alias());
     } else {
-        // module typedef (is not a module member)
-        Ptr<Type> type{ulam::make<AliasType>(NoTypeId, node)};
-        type_ref = ref(type);
+        // transient typedef (in function body)
+        assert(scope()->in(Scope::Fun));
+        Ptr<Type> type = ulam::make<AliasType>(NoTypeId, node);
         scope()->set(alias_id, std::move(type));
     }
-    // set node attr
-    node->set_alias_type(type_ref->basic()->as_alias());
     return {};
 }
 
 bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     // don't skip the type name
     visit(node->type_name());
+    if (!scope()->is(Scope::Persistent))
+        return {};
     // create and set module/class/tpl variables
     auto class_node = class_def();
+    auto scope_proxy = scopes().top<PersScopeProxy>();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
         auto name_id = def->name().str_id();
         // name is already in current scope?
-        if (scope()->has(name_id, true)) {
+        if (scope_proxy->has(name_id, true)) {
             // TODO: where?
             diag().emit(
                 diag::Error, def->loc_id(), 1, "variable already defined");
             continue;
         }
+        // make
         Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
         auto var = ulam::make<Var>(node->type_name(), def, Ref<Type>{}, flags);
         auto var_ref = ref(var);
@@ -145,10 +186,14 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
                 class_node->type_tpl()->set(name_id, std::move(var));
             }
             // add to scope
-            scope()->set(name_id, var_ref);
+            scope_proxy->set(name_id, var_ref);
+            // set node scope version
+            def->set_scope_version(scope_proxy->version());
         } else {
             // module constant
-            scope()->set(name_id, std::move(var));
+            scope_proxy->set(name_id, std::move(var));
+            // set node scope version
+            def->set_scope_version(scope_proxy->version());
         }
         // set node attr
         def->set_var(var_ref);
@@ -159,53 +204,55 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
 bool ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
     // don't skip ret type...
     visit(node->ret_type_name());
-    // and params
-    visit(node->params());
-    // create and set fun
-    auto class_node = class_def();
-    assert(class_node);
-    auto name_id = node->name().str_id();
-    Ref<Fun> fun{};
-    if (class_node->type()) {
-        // class fun
-        auto cls = class_node->type();
-        auto sym = cls->get(name_id);
-        if (sym) {
-            if (!sym->is<Fun>()) {
-                diag().emit(
-                    diag::Error, node->name().loc_id(), str(name_id).size(),
-                    "defined and is not a function");
-                return false;
-            }
-        } else {
-            sym = cls->set(name_id, ulam::make<Fun>());
-        }
-        fun = sym->get<Fun>();
-    } else {
-        // class tpl fun
-        assert(class_node->type_tpl());
-        auto cls_tpl = class_node->type_tpl();
-        auto sym = cls_tpl->get(name_id);
-        if (sym) {
-            if (!sym->is<Fun>()) {
-                diag().emit(
-                    diag::Error, node->name().loc_id(), str(name_id).size(),
-                    "defined and is not a function");
-            }
-        } else {
-            sym = cls_tpl->set(name_id, ulam::make<Fun>());
-        }
-        fun = sym->get<Fun>();
-    }
-    // create overload
-    auto overload = fun->add_overload(node);
-    // set node attr
-    node->set_overload(overload);
-    // add to scope
-    if (!scope()->has(name_id)) {
-        scope()->set(name_id, fun);
-    }
+    // TODO
     return {};
+    // // and params
+    // visit(node->params());
+    // // create and set fun
+    // auto class_node = class_def();
+    // assert(class_node);
+    // auto name_id = node->name().str_id();
+    // Ref<Fun> fun{};
+    // if (class_node->type()) {
+    //     // class fun
+    //     auto cls = class_node->type();
+    //     auto sym = cls->get(name_id);
+    //     if (sym) {
+    //         if (!sym->is<Fun>()) {
+    //             diag().emit(
+    //                 diag::Error, node->name().loc_id(), str(name_id).size(),
+    //                 "defined and is not a function");
+    //             return false;
+    //         }
+    //     } else {
+    //         sym = cls->set(name_id, ulam::make<Fun>());
+    //     }
+    //     fun = sym->get<Fun>();
+    // } else {
+    //     // class tpl fun
+    //     assert(class_node->type_tpl());
+    //     auto cls_tpl = class_node->type_tpl();
+    //     auto sym = cls_tpl->get(name_id);
+    //     if (sym) {
+    //         if (!sym->is<Fun>()) {
+    //             diag().emit(
+    //                 diag::Error, node->name().loc_id(), str(name_id).size(),
+    //                 "defined and is not a function");
+    //         }
+    //     } else {
+    //         sym = cls_tpl->set(name_id, ulam::make<Fun>());
+    //     }
+    //     fun = sym->get<Fun>();
+    // }
+    // // create overload
+    // auto overload = fun->add_overload(node);
+    // // set node attr
+    // node->set_overload(overload);
+    // // add to scope
+    // if (!scope()->has(name_id)) {
+    //     scope()->set(name_id, fun);
+    // }
+    // return {};
 }
 
 bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
@@ -241,18 +288,6 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
         _unresolved.push_back({module()->id(), node});
     }
     return false;
-}
-
-void ResolveDeps::enter_module_scope(Ref<Module> module) {
-    enter_scope(module->scope());
-}
-
-void ResolveDeps::enter_class_scope(Ref<Class> cls) {
-    enter_scope(cls->scope());
-}
-
-void ResolveDeps::enter_tpl_scope(Ref<ClassTpl> tpl) {
-    enter_scope(tpl->scope());
 }
 
 void ResolveDeps::export_classes() {

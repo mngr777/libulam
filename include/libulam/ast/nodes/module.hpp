@@ -57,7 +57,9 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
     ULAM_AST_NODE
 };
 
-class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>, public Named {
+class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>,
+                 public Named,
+                 public ScopeObject {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
     ULAM_AST_REF_ATTR(ClassTpl, type_tpl)
@@ -76,7 +78,7 @@ private:
     ClassKind _kind;
 };
 
-class TypeDef : public Tuple<Stmt, TypeName>, public Named {
+class TypeDef : public Tuple<Stmt, TypeName>, public Named, public ScopeObject {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(AliasType, alias_type)
 public:
@@ -91,7 +93,8 @@ class FunDefBody : public Block {
 };
 
 class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>,
-               public Named {
+               public Named,
+               public ScopeObject {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(FunOverload, overload)
 public:

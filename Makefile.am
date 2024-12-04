@@ -32,6 +32,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/params.hpp \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
+	include/libulam/semantic/scope/stack.hpp \
+	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/symbol.hpp \
 	include/libulam/semantic/type/builtin.hpp \
 	include/libulam/semantic/type/builtin/bits.hpp \
@@ -64,6 +66,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
 	src/semantic/program.cpp \
+	src/semantic/scope.cpp \
 	src/semantic/type.cpp \
 	src/semantic/type/builtin/bits.cpp \
 	src/semantic/type/builtin/bool.cpp \

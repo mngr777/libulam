@@ -36,7 +36,7 @@ public:
     Ref<FunOverload> add_overload(ast::Ref<ast::FunDef> node);
 
 private:
-    std::list<RefPtrPair<FunOverload>> _overloads;
+    std::list<RefPtr<FunOverload>> _overloads;
 };
 
 } // namespace ulam

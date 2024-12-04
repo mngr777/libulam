@@ -9,7 +9,7 @@
 namespace ulam {
 
 Program::Program(Diag& diag, ast::Ref<ast::Root> ast):
-    _diag{diag}, _ast{ast}, _scope{make<Scope>(Ref<Scope>{}, Scope::Program)} {
+    _diag{diag}, _ast{ast} {
     Ref<Program> self{this};
     _prim_type_tpls[IntId] = make<IntTypeTpl>(self);
     _prim_type_tpls[UnsignedId] = make<UnsignedTypeTpl>(self);

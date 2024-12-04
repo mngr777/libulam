@@ -10,8 +10,8 @@ Module::Module(
     _program{program},
     _id{id},
     _node{node},
-    _env_scope{make<Scope>(this, program->scope(), Scope::ModuleEnv)},
-    _scope{make<Scope>(ref(_env_scope), Scope::Module)} {}
+    _env_scope{make<PersScope>(Ref<Scope>{}, Scope::ModuleEnv)},
+    _scope{make<PersScope>(ref(_env_scope), Scope::Module)} {}
 
 Module::~Module() {}
 

@@ -35,8 +35,6 @@ public:
 
     auto& modules() { return _modules; }
 
-    Ref<Scope> scope() { return ref(_scope); }
-
     // TODO: refactoring?
     str_id_t self_str_id();
     str_id_t self_inst_str_id();
@@ -53,7 +51,6 @@ private:
     std::unordered_map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;
     std::unordered_map<BuiltinTypeId, Ptr<PrimType>> _prim_types;
     std::vector<Ptr<Module>> _modules;
-    Ptr<Scope> _scope;
 };
 
 } // namespace ulam

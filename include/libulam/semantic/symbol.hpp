@@ -13,15 +13,12 @@ namespace ulam {
 
 template <typename... Ss> class _Symbol {
 private:
-    template <typename T> using Value = RefPtrPair<T>;
+    template <typename T> using Value = RefPtr<T>;
 
 public:
-    template <typename T>
-    _Symbol(Ptr<T>&& value):
-        _value{std::move(value)} {}
+    template <typename T> _Symbol(Ptr<T>&& value): _value{std::move(value)} {}
 
-    template <typename T>
-    _Symbol(Ref<T> value): _value{value} {}
+    template <typename T> _Symbol(Ref<T> value): _value{value} {}
 
     ~_Symbol() {}
 
@@ -33,10 +30,10 @@ public:
     }
 
     template <typename T> Ref<T> get() {
-        return std::get<Value<T>>(_value).ref;
+        return std::get<Value<T>>(_value).ref();
     }
 
-    template <typename V> void visit(V&& v) { std::visit(v, _value); }
+    template <typename V> void visit(V&& v) { std::visit(v, _value); } // ??
 
 private:
     template <typename... Ts> using Variant = std::variant<Value<Ts>...>;
@@ -48,6 +45,12 @@ template <typename... Ss> class _SymbolTable {
 public:
     using Symbol = _Symbol<Ss...>;
 
+private:
+    using Map = std::unordered_map<str_id_t, Symbol>;
+
+public:
+    using iterator = typename Map::iterator;
+
     _SymbolTable() {}
 
     _SymbolTable(_SymbolTable&&) = default;
@@ -56,9 +59,7 @@ public:
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
-    template <typename... Ts>
-    void
-    export_symbols(_SymbolTable<Ts...>& other) {
+    template <typename... Ts> void export_symbols(_SymbolTable<Ts...>& other) {
         for (auto& pair : _symbols) {
             auto name_id = pair.first;
             auto& sym = pair.second;
@@ -77,15 +78,17 @@ public:
         return (it != _symbols.end()) ? &it->second : nullptr;
     }
 
+    Symbol* set(str_id_t name_id, Symbol&& sym) {
+        auto [it, _] = _symbols.emplace(name_id, std::move(sym));
+        return &it->second;
+    }
+
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
-        assert(_symbols.count(name_id) == 0);
-        auto [it, _] =
-            _symbols.emplace(name_id, Symbol{std::move(value)});
+        auto [it, _] = _symbols.emplace(name_id, Symbol{std::move(value)});
         return &it->second;
     }
 
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
-        assert(_symbols.count(name_id) == 0);
         auto [it, _] = _symbols.emplace(name_id, Symbol{value});
         return &it->second;
     }
@@ -96,7 +99,7 @@ public:
     }
 
 private:
-    std::unordered_map<str_id_t, Symbol> _symbols;
+    Map _symbols;
 };
 
 } // namespace ulam

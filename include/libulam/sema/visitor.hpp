@@ -1,12 +1,11 @@
 #pragma once
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/stack.hpp>
 #include <libulam/str_pool.hpp>
 #include <stack>
 
@@ -50,16 +49,17 @@ protected:
     bool do_visit(ast::Ref<ast::VarDef> node) override;
     bool do_visit(ast::Ref<ast::FunDef> node) override;
 
-    virtual void enter_module_scope(Ref<Module> module);
-    virtual void enter_class_scope(Ref<Class> cls);
-    virtual void enter_tpl_scope(Ref<ClassTpl> tpl);
+    // Handling persistent scopes
+    void enter_module_scope(Ref<Module> module);
+    void enter_class_scope(Ref<Class> cls);
+    void enter_class_tpl_scope(Ref<ClassTpl> tpl);
 
+    void enter_scope(PersScopeProxy&& scope);
     void enter_scope(Scope::Flag flags = Scope::NoFlags);
-    void enter_scope(Ptr<Scope>&& scope);
-    void enter_scope(Ref<Scope> scope);
     void exit_scope();
 
     Diag& diag();
+    ScopeStack& scopes() { return _scopes; }
     Ref<Scope> scope();
 
     Pass pass() { return _pass; }
@@ -99,7 +99,7 @@ private:
     ast::Ref<ast::ClassDef> _class_def{};
     ast::Ref<ast::FunDef> _fun_def{};
 
-    std::stack<RefPtrPair<Scope>> _scopes;
+    ScopeStack _scopes;
 };
 
 } // namespace ulam::sema
