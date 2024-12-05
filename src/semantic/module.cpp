@@ -15,7 +15,7 @@ Module::Module(
 
 Module::~Module() {}
 
-void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type) {
+void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type) {
     assert(_imports.count(name_id) == 0);
     assert(module != this);
     _imports.emplace(name_id, Import{module, type});
@@ -23,7 +23,7 @@ void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type) {
 }
 
 void Module::add_import(
-    str_id_t name_id, Ref<Module> module, Ref<TypeTpl> type_tpl) {
+    str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl) {
     assert(_imports.count(name_id) == 0);
     assert(module != this);
     _imports.emplace(name_id, Import{module, type_tpl});

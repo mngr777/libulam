@@ -22,27 +22,27 @@ class Module;
 
 class Import {
 public:
-    Import(Ref<Module> module, Ref<Type> type):
+    Import(Ref<Module> module, Ref<Class> type):
         _module{module}, _type{type}, _type_tpl{} {}
 
-    Import(Ref<Module> module, Ref<TypeTpl> type_tpl):
+    Import(Ref<Module> module, Ref<ClassTpl> type_tpl):
         _module{module}, _type{}, _type_tpl{type_tpl} {}
 
     Ref<Module> module() { return _module; }
-    Ref<Type> type() { return _type; }
-    Ref<TypeTpl> type_tpl() { return _type_tpl; }
+    Ref<Class> type() { return _type; }
+    Ref<ClassTpl> type_tpl() { return _type_tpl; }
 
 private:
     Ref<Module> _module;
-    Ref<Type> _type;
-    Ref<TypeTpl> _type_tpl;
+    Ref<Class> _type;
+    Ref<ClassTpl> _type_tpl;
 };
 
 class PersScope;
 
 class Module {
 public:
-    using SymbolTable = _SymbolTable<Type, TypeTpl>;
+    using SymbolTable = _SymbolTable<Class, ClassTpl>;
     using Symbol = SymbolTable::Symbol;
 
     Module(Ref<Program> program, module_id_t id, ast::Ref<ast::ModuleDef> node);
@@ -71,8 +71,8 @@ public:
     const auto& deps() const { return _deps; }
     void add_dep(str_id_t name_id) { _deps.insert(name_id); }
 
-    void add_import(str_id_t name_id, Ref<Module> module, Ref<Type> type);
-    void add_import(str_id_t name_id, Ref<Module> module, Ref<TypeTpl> type_tpl);
+    void add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type);
+    void add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
 
 private:
     Ref<Program> _program;

@@ -21,7 +21,7 @@ class Module;
 
 class Scope {
 protected:
-    using SymbolTable = _SymbolTable<Type, TypeTpl, ulam::Fun, Var>;
+    using SymbolTable = _SymbolTable<Type, ulam::ClassTpl, ulam::Fun, Var>;
 
 public:
     using Symbol = SymbolTable::Symbol;

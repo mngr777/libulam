@@ -56,7 +56,7 @@ void Out::print(Scope::Symbol* sym) {
         } else if (type->basic()->is_class()) {
             _os << "(class)";
         }
-    } else if (sym->is<TypeTpl>()) {
+    } else if (sym->is<ClassTpl>()) {
         _os << "tpl";
     } else if (sym->is<Var>()) {
         _os << "var";

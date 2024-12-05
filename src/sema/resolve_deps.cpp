@@ -75,7 +75,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
             param->set_scope_proxy(*scope_proxy);
         }
         // add to module
-        module()->set<TypeTpl>(name_id, std::move(tpl));
+        module()->set<ClassTpl>(name_id, std::move(tpl));
         // add to module scope
         scope_proxy->set(name_id, tpl_ref);
         // set node scope proxy attr
@@ -87,7 +87,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
         auto cls = ulam::make<Class>(module(), node);
         auto cls_ref = ref(cls);
         // add to module
-        module()->set<Type>(name_id, std::move(cls));
+        module()->set<Class>(name_id, std::move(cls));
         // add to module scope
         scope_proxy->set(name_id, cls_ref);
         // set node scope proxy attr
@@ -278,8 +278,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
         if (sym->is<Type>()) {
             type_spec->set_type(sym->get<Type>());
         } else {
-            assert(sym->is<TypeTpl>());
-            type_spec->set_type_tpl(sym->get<TypeTpl>());
+            assert(sym->is<ClassTpl>());
+            type_spec->set_type_tpl(sym->get<ClassTpl>());
         }
     } else {
         // add external dependency
@@ -300,7 +300,7 @@ void ResolveDeps::export_classes() {
         for (auto& pair : *mod) {
             auto& [name_id, sym] = pair;
             auto [it, inserted] = exporting.emplace(name_id, ModuleSet{});
-            assert(sym.is<Type>());
+            assert(sym.is<Class>());
             it->second.insert(ref(mod));
         }
     }
@@ -326,11 +326,11 @@ void ResolveDeps::export_classes() {
                 auto& exporter = *it->second.begin();
                 auto sym = exporter->get(name_id);
                 assert(sym);
-                if (sym->is<Type>()) {
-                    mod->add_import(name_id, exporter, sym->get<Type>());
+                if (sym->is<Class>()) {
+                    mod->add_import(name_id, exporter, sym->get<Class>());
                 } else {
-                    assert(sym->is<TypeTpl>());
-                    mod->add_import(name_id, exporter, sym->get<TypeTpl>());
+                    assert(sym->is<ClassTpl>());
+                    mod->add_import(name_id, exporter, sym->get<ClassTpl>());
                 }
             }
         }
@@ -348,11 +348,11 @@ void ResolveDeps::export_classes() {
             // set type/tpl
             // don't use symbols from same module
             if (exporter->id() != item.module_id) {
-                if (sym->is<Type>()) {
-                    type_spec->set_type(sym->get<Type>());
+                if (sym->is<Class>()) {
+                    type_spec->set_type(sym->get<Class>());
                 } else {
-                    assert(sym->is<TypeTpl>());
-                    type_spec->set_type_tpl(sym->get<TypeTpl>());
+                    assert(sym->is<ClassTpl>());
+                    type_spec->set_type_tpl(sym->get<ClassTpl>());
                 }
                 continue; // success
             }
