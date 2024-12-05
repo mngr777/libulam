@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/state.hpp"
 #include "libulam/str_pool.hpp"
 #include <libulam/semantic/scope.hpp>
 
@@ -90,13 +91,14 @@ str_id_t PersScope::last_change(Version version) const {
 }
 
 Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
-    // auto st = state();
+//     auto st = state();
     auto [it, _] = _symbols.emplace(name_id, SymbolVersionList{});
     SymbolVersionList& vsyms = it->second;
     assert(vsyms.size() == 0 || vsyms.front().version <= _version);
     vsyms.emplace_front(_version++, std::move(symbol));
     _changes.push_back(name_id);
     auto sym = &vsyms.front().symbol;
+//    set_scope_state(*sym, st);
     // sym->as_scope_object()->set_pers_scope_state(st);
     return sym;
 }

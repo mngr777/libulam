@@ -48,9 +48,9 @@ void Out::print(RecVisitor::Pass pass) {
 }
 
 void Out::print(Scope::Symbol* sym) {
-    if (sym->is<Type>()) {
+    if (sym->is<UserType>()) {
         _os << "type ";
-        auto type = sym->get<Type>();
+        auto type = sym->get<UserType>();
         if (type->basic()->is_alias()) {
             _os << "(alias)";
         } else if (type->basic()->is_class()) {

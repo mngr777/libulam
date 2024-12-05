@@ -114,10 +114,15 @@ public:
     virtual Ref<const AliasType> as_alias() const { return {}; }
 };
 
-class AliasType : public BasicType, public ScopeObject {
+class UserType : public BasicType, public ScopeObject {
+public:
+    UserType(type_id_t id): BasicType{id} {}
+};
+
+class AliasType : public UserType {
 public:
     AliasType(type_id_t id, ast::Ref<ast::TypeDef> node, Ref<Class> owner = {}):
-        BasicType{id}, _node(node) {}
+        UserType{id}, _node(node) {}
 
     Ref<AliasType> as_alias() override { return this; }
     Ref<const AliasType> as_alias() const override { return this; }

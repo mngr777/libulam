@@ -21,9 +21,9 @@ class Module;
 class Var;
 class ClassTpl;
 
-class Class : public BasicType, public ScopeObject {
+class Class : public UserType {
 public:
-    using SymbolTable = _SymbolTable<Type, Fun, Var>;
+    using SymbolTable = _SymbolTable<UserType, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
     Class(Ref<ClassTpl> tpl);
@@ -63,7 +63,7 @@ class ClassTpl : public TypeTpl, public ScopeObject {
     friend Class;
 
 public:
-    using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, Var>;
+    using SymbolTable = _SymbolTable<UserType, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
     ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node);

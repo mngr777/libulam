@@ -26,13 +26,13 @@ Ptr<PersScope> make_class_tpl_scope(Ref<Scope> parent) {
 // Class
 
 Class::Class(Ref<ClassTpl> tpl):
-    BasicType{tpl->_module->program()->next_type_id()},
+    UserType{tpl->_module->program()->next_type_id()},
     _node{tpl->node()},
     _tpl{tpl},
     _scope{make_class_scope(tpl->_module->scope())} {}
 
 Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
-    BasicType{module->program()->next_type_id()},
+    UserType{module->program()->next_type_id()},
     _node{node},
     _tpl{},
     _scope{make_class_scope(module->scope())} {}
@@ -72,12 +72,12 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
     for (str_id_t name_id = scope_proxy.advance(); name_id != NoStrId;
          name_id = scope_proxy.advance()) {
         auto sym = scope_proxy.get(name_id);
-        if (sym->is<Type>()) {
-            auto type = sym->get<Type>();
+        if (sym->is<UserType>()) {
+            auto type = sym->get<UserType>();
             assert(type->basic()->is_alias());
             auto alias = type->basic()->as_alias();
             // make copy
-            Ptr<Type> copy = ulam::make<AliasType>(
+            Ptr<UserType> copy = ulam::make<AliasType>(
                 program()->next_type_id(), alias->node(), ref(cls));
             // add to class scope
             cls->scope()->set(name_id, ref(copy));

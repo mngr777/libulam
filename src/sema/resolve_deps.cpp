@@ -111,11 +111,11 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     auto class_node = class_def();
     if (scope()->is(Scope::Persistent)) {
         // persistent typedef (module-local or class/class tpl)
-        Ref<Type> type_ref{};
+        Ref<UserType> type_ref{};
         auto scope_proxy = scopes().top<PersScopeProxy>();
         if (scope_proxy->is(Scope::Module)) {
             // module typedef (is not a module member)
-            Ptr<Type> type = ulam::make<AliasType>(NoTypeId, node);
+            Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
             type_ref = ref(type);
             scope_proxy->set(alias_id, std::move(type));
         } else if (scope_proxy->is(Scope::Class)) {
@@ -123,7 +123,7 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             assert(class_node->type());
             auto cls = class_node->type();
             // make
-            Ptr<Type> type =
+            Ptr<UserType> type =
                 ulam::make<AliasType>(program()->next_type_id(), node, cls);
             type_ref = ref(type);
             // add to class
@@ -135,7 +135,7 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
             // make
-            Ptr<Type> type = ulam::make<AliasType>(NoTypeId, node);
+            Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
             type_ref = ref(type);
             // add to class tpl
             tpl->set(alias_id, std::move(type));
@@ -150,7 +150,7 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     } else {
         // transient typedef (in function body)
         assert(scope()->in(Scope::Fun));
-        Ptr<Type> type = ulam::make<AliasType>(NoTypeId, node);
+        Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
         scope()->set(alias_id, std::move(type));
     }
     return {};
@@ -275,8 +275,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
     if (scope()->has(name_id)) {
         // set type/tpl
         auto sym = scope()->get(name_id);
-        if (sym->is<Type>()) {
-            type_spec->set_type(sym->get<Type>());
+        if (sym->is<UserType>()) {
+            type_spec->set_type(sym->get<UserType>());
         } else {
             assert(sym->is<ClassTpl>());
             type_spec->set_type_tpl(sym->get<ClassTpl>());

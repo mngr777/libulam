@@ -34,6 +34,12 @@ public:
         return std::get<Value<T>>(_value).ref();
     }
 
+    Ref<ScopeObject> as_scope_obj() {
+        return std::visit(_value, [](auto&& value) -> Ref<ScopeObject> {
+            return value.ref();
+        });
+    }
+
     template <typename V> void visit(V&& v) { std::visit(v, _value); } // ??
 
 private:
