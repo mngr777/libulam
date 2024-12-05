@@ -204,7 +204,8 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
                 if (fun)
                     node->body()->add(std::move(fun));
             } else {
-                auto vars = parse_var_def_list_rest(std::move(type), name, false);
+                auto vars =
+                    parse_var_def_list_rest(std::move(type), name, false);
                 if (vars)
                     node->body()->add(std::move(vars));
             }
@@ -459,10 +460,14 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
         prev = ast::ref(param);
         if (!param)
             return {};
-        if (requires_value && !param->value()) {
-            // unset previous default value
-            prev->replace_value({});
-            requires_value = false;
+        if (requires_value) {
+            if (!param->has_value()) {
+                // pretend we didn't see previous value
+                prev->replace_value({});
+                requires_value = false;
+            }
+        } else {
+            requires_value = param->has_value();
         }
         // ,
         if (_tok.is(tok::Comma)) {
@@ -498,11 +503,12 @@ ast::Ptr<ast::Param> Parser::parse_param(bool requires_value) {
     if (_tok.is(tok::Equal)) {
         consume();
         default_value = parse_expr();
-    } else {
+    } else if (requires_value) {
         // TODO: name location
         diag("missing default value");
     }
-    auto node = tree<ast::Param>(name, std::move(type), std::move(default_value));
+    auto node =
+        tree<ast::Param>(name, std::move(type), std::move(default_value));
     node->set_is_const(is_const);
     return node;
 }

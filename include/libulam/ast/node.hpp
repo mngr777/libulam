@@ -19,6 +19,7 @@ public:                                                                        \
 private:
 
 #define ULAM_AST_TUPLE_PROP(name, index)                                       \
+    bool has_##name() const { return (bool)std::get<index>(_items); }          \
     auto name() { return ref(std::get<index>(_items)); }                       \
     const auto name() const { return ref(std::get<index>(_items)); }           \
     auto replace_##name(ElementT<index>&& repl) {                              \
@@ -143,7 +144,7 @@ public:
 // The node can have persistent scope and version attached (when in
 // persistent scope)
 class ScopeObjectNode {
-    ULAM_AST_SIMPLE_ATTR(PersScopeProxy, scope_proxy,)
+    ULAM_AST_SIMPLE_ATTR(PersScopeProxy, scope_proxy, )
 };
 
 // Tuple
