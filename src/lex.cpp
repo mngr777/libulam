@@ -105,7 +105,7 @@ void Lex::lex(Token& token) {
         }
         break;
     case '/':
-        if (at('/') || at('*')) {
+        if (at('/')) {
             lex_comment();
         } else if (at('=')) {
             advance();
@@ -113,6 +113,7 @@ void Lex::lex(Token& token) {
         } else {
             complete(tok::Slash);
         }
+        break;
     case ':':
         complete(tok::Colon);
         break;
@@ -177,6 +178,7 @@ void Lex::lex(Token& token) {
         break;
     case ']':
         complete(tok::BracketR);
+        break;
     case '^':
         if (at('=')) {
             advance();
@@ -331,9 +333,11 @@ void Lex::lex_comment() {
         case '\r':
             if (_cur[1] == '\n' && !esc)
                 newline(2);
+            complete(tok::Comment);
             return;
         case '\n':
             newline(1);
+            complete(tok::Comment);
             return;
         case '\\':
             advance();

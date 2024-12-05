@@ -100,6 +100,7 @@ TOK(".", Period)
 TOK(",", Comma)
 TOK("...", Ellipsis)
 
+TOK(nullptr, Comment)
 TOK(nullptr, TypeIdent)
 TOK(nullptr, BuiltinTypeIdent)
 TOK(nullptr, Ident)

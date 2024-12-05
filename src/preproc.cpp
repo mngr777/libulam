@@ -36,6 +36,9 @@ Preproc& Preproc::operator>>(Token& token) {
                 return *this;
             }
             break;
+        case tok::Comment:
+            // ignore comments
+            break;
         case tok::Eof:
             _stack.pop();
             if (_stack.empty())
