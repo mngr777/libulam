@@ -35,9 +35,9 @@ public:
     }
 
     Ref<ScopeObject> as_scope_obj() {
-        return std::visit(_value, [](auto&& value) -> Ref<ScopeObject> {
-            return value.ref();
-        });
+        return std::visit(
+            [](auto&& value) -> Ref<ScopeObject> { return value.ref(); },
+            _value);
     }
 
     template <typename V> void visit(V&& v) { std::visit(v, _value); } // ??
