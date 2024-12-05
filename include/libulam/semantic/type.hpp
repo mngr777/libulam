@@ -4,6 +4,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/str_pool.hpp>
@@ -113,7 +114,7 @@ public:
     virtual Ref<const AliasType> as_alias() const { return {}; }
 };
 
-class AliasType : public BasicType {
+class AliasType : public BasicType, public ScopeObject {
 public:
     AliasType(type_id_t id, ast::Ref<ast::TypeDef> node, Ref<Class> owner = {}):
         BasicType{id}, _node(node) {}
@@ -135,6 +136,7 @@ public:
         return _aliased->canon();
     }
 
+    // ??
     Ref<Class> owner() { return _owner; }
     Ref<const Class> owner() const { return _owner; }
 

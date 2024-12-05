@@ -11,7 +11,7 @@ class Eval : public RecVisitor {
 public:
     using RecVisitor::visit;
 
-    Eval(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast} {}
+    Eval(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast, true} {}
 
     bool do_visit(ast::Ref<ast::TypeDef> node) override;
     bool do_visit(ast::Ref<ast::VarDef> node) override;

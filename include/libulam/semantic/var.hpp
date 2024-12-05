@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/ast/ptr.hpp>
+#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
@@ -12,7 +13,7 @@ class VarDecl;
 
 namespace ulam {
 
-class Var {
+class Var : public ScopeObject {
 public:
     using Flag = std::uint8_t;
     static constexpr Flag NoFlags = 0;
@@ -33,6 +34,8 @@ public:
         _node{node},
         _type{tv.type()},
         _value{tv.move_value()} {}
+
+    bool is(Flag flag) const { return _flags & flag; }
 
     ast::Ref<ast::TypeName> type_node() { return _type_node; }
     ast::Ref<ast::VarDecl> node() { return _node; }

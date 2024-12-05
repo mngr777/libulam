@@ -3,10 +3,11 @@
 #include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/scope/state.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/type_tpl.hpp>
+#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
@@ -39,9 +40,6 @@ public:
     explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}
     virtual ~Scope() {}
-
-    Scope(Scope&&) = default;
-    Scope& operator=(Scope&&) = default;
 
     // TODO: const version
     virtual void for_each(ItemCb cb) = 0;
@@ -97,6 +95,9 @@ public:
         assert((flags & Persistent) == 0);
     }
 
+    TransScope(TransScope&&) = default;
+    TransScope& operator=(TransScope&&) = default;
+
     void for_each(ItemCb cb) override;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
@@ -111,18 +112,58 @@ private:
 
 // Persistent
 
+/*
+ Motivation:
+ Inter-class dependencies cannot be simply resolved in a single pass, consider
+ ```
+ quark A {
+   typedef B.U R;
+   typedef Int S;
+ }
+ quark B {
+   typedef A.S T;
+   typedef Int U;
+ }
+ ```
+ Resolving A.R must be posponed until B.U is resolved. Additionally,
+ we cannot incrementally resolve class members by alterating between
+ classes without skipping members.
+
+ Here a scope version is associated (in form of `PersScopeState`) with each
+ scope member (`ScopeObject`), so a scope state at the point of definition can
+ be later restored from any point, which allows to resolve dependencies
+ recursively.
+
+ `PersScopeProxy` is also stored in corresponding AST nodes
+ (`ast::ScopeObjectNode`) to allow sema::RecVisitor to synchronize current
+ persistent scope. (should it be just version value??)
+
+ Another solution would be to do multiple passes until no progress can be made,
+ then do another pass to detect unresolved symbols.
+*/
+
 class PersScope;
 
 class PersScopeProxy : public Scope {
 public:
-    explicit PersScopeProxy(Ref<PersScope> scope, ScopeVersion version);
+    PersScopeProxy(Ref<PersScope> scope, ScopeVersion version);
+    PersScopeProxy(PersScopeState state):
+        PersScopeProxy{state.scope(), state.version()} {}
+    PersScopeProxy(): Scope{{}}, _scope{} {}
 
     void reset() { set_version(0); }
     void sync();
+    str_id_t advance();
+
+    operator bool() const { return _scope; }
 
     void for_each(ItemCb cb) override;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
+
+    str_id_t last_change() const;
+
+    Ref<PersScope> scope() { return _scope; }
 
     ScopeVersion version() const { return _version; }
 
@@ -135,8 +176,11 @@ private:
     ScopeVersion _version;
 };
 
+class PersScopeProxy;
+
 class PersScope : public Scope {
-    friend PersScopeProxy; // for do_set
+    friend PersScopeProxy;
+
 public:
     using Version = std::uint32_t;
     static constexpr Version NoVersion = -1;
@@ -155,7 +199,11 @@ public:
     explicit PersScope(Ref<Scope> parent, Flag flags = NoFlags):
         Scope{parent, (Flag)(flags | Persistent)}, _version{0} {}
 
-    auto proxy() { return PersScopeProxy{this, version()}; }
+    PersScope(PersScope&&) = default;
+    PersScope& operator=(PersScope&&) = default;
+
+    PersScopeProxy proxy() { return {this, version()}; }
+    PersScopeState state() { return {this, version()}; }
 
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);
@@ -167,6 +215,9 @@ public:
     Symbol* get(str_id_t name_id, bool current = false) override;
     Symbol* get(str_id_t name_id, Version version, bool current = false);
 
+    str_id_t last_change(Version version) const;
+    str_id_t last_change() const { return last_change(_version); }
+
     ScopeVersion version() const { return _version; }
 
 private:
@@ -174,6 +225,7 @@ private:
 
     Version _version;
     std::unordered_map<str_id_t, SymbolVersionList> _symbols;
+    std::vector<str_id_t> _changes;
 };
 
 } // namespace ulam

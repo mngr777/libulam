@@ -4,7 +4,7 @@
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/scope/version.hpp>
+#include <libulam/semantic/scope.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
 #include <tuple>
@@ -140,10 +140,10 @@ public:
     Named(Str name): _attr_name{name} {}
 };
 
-// The node can have persistent scope version attached (when in
+// The node can have persistent scope and version attached (when in
 // persistent scope)
-class ScopeObject {
-    ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
+class ScopeObjectNode {
+    ULAM_AST_SIMPLE_ATTR(PersScopeProxy, scope_proxy,)
 };
 
 // Tuple

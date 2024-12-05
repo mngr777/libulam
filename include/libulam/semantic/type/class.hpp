@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
@@ -20,7 +21,7 @@ class Module;
 class Var;
 class ClassTpl;
 
-class Class : public BasicType {
+class Class : public BasicType, public ScopeObject {
 public:
     using SymbolTable = _SymbolTable<Type, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
@@ -58,8 +59,9 @@ private:
     SymbolTable _members;
 };
 
-class ClassTpl : public TypeTpl {
+class ClassTpl : public TypeTpl, public ScopeObject {
     friend Class;
+
 public:
     using SymbolTable = _SymbolTable<Type, TypeTpl, Fun, Var>;
     using Symbol = SymbolTable::Symbol;

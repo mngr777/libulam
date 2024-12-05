@@ -5,16 +5,21 @@
 #include <libulam/sema.hpp>
 
 static const char* Program = R"END(
+typedef Int(8) E;
+
 element A {
   typedef B.C D;
+  typedef E F;
 
-  Int(10) foo() {
+  Int(8) foo() {
     Int(5) a = 1;
     return a;
   }
 }
 
-quark B {}
+quark B {
+  typedef Int(8) C;
+}
 )END";
 
 int main() {

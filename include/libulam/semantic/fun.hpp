@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/scope/object.hpp>
 #include <list>
 
 namespace ulam::ast {
@@ -12,9 +13,11 @@ class TypeName;
 
 namespace ulam {
 
+// TODO: how should functions be stored in scope/class/class tpl?
+
 class Type;
 
-class FunOverload {
+class FunOverload : public ScopeObject {
 public:
     FunOverload(ast::Ref<ast::FunDef> node) {}
 
@@ -28,7 +31,7 @@ private:
     Ref<Type> _ret_type;
 };
 
-class Fun {
+class Fun : public ScopeObject {
 public:
     Fun() {}
 

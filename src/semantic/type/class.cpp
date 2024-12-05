@@ -1,3 +1,5 @@
+#include "libulam/semantic/type.hpp"
+#include "libulam/semantic/type_tpl.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -11,8 +13,7 @@ namespace ulam {
 
 namespace {
 Ptr<PersScope> make_class_scope(Ref<Scope> parent) {
-    assert(
-        parent && (parent->is(Scope::Module) || parent->is(Scope::ClassTpl)));
+    assert(parent && parent->is(Scope::Module));
     return make<PersScope>(parent, Scope::Class);
 }
 
@@ -28,7 +29,7 @@ Class::Class(Ref<ClassTpl> tpl):
     BasicType{tpl->_module->program()->next_type_id()},
     _node{tpl->node()},
     _tpl{tpl},
-    _scope{make_class_scope(tpl->scope())} {} // ==
+    _scope{make_class_scope(tpl->_module->scope())} {}
 
 Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
     BasicType{module->program()->next_type_id()},
@@ -65,28 +66,56 @@ ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
 Ptr<Class>
 ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls = ulam::make<Class>(this);
-    auto params_node = _node->params();
-    assert(params_node->child_num() > 0);
-    assert(args_node->child_num() == args.size());
-    unsigned n = 0;
-    for (auto& arg : args) {
-        // arg node
-        auto arg_node = args_node->get(n);
-        // too many arguments?
-        if (n == params_node->child_num()) {
-            diag().emit(
-                diag::Error, arg_node->loc_id(), 1,
-                "excessive class parameters");
-            break;
+    // copy members/scope objects
+    auto scope_proxy = _scope->proxy();
+    scope_proxy.reset();
+    for (str_id_t name_id = scope_proxy.advance(); name_id != NoStrId;
+         name_id = scope_proxy.advance()) {
+        auto sym = scope_proxy.get(name_id);
+        if (sym->is<Type>()) {
+            auto type = sym->get<Type>();
+            assert(type->basic()->is_alias());
+            auto alias = type->basic()->as_alias();
+            // make copy
+            Ptr<Type> copy = ulam::make<AliasType>(
+                program()->next_type_id(), alias->node(), ref(cls));
+            // add to class scope
+            cls->scope()->set(name_id, ref(copy));
+            // add class typedef
+            cls->set(name_id, std::move(copy));
+
+        } else if (sym->is<Var>()) {
+            auto var = sym->get<Var>();
+            // make copy
+            Ptr<Var> copy{};
+            if (var->is(Var::ClassParam)) {
+                // class param
+                assert(args.size() > 0);
+                TypedValue value;
+                std::swap(value, args.front());
+                args.pop_front();
+                copy = ulam::make<Var>(
+                    var->type_node(), var->node(), std::move(value),
+                    var->flags());
+            } else {
+                // class var
+                copy = ulam::make<Var>(
+                    var->type_node(), var->node(), Ref<Type>{}, var->flags());
+            }
+            // add to class scope
+            cls->scope()->set(name_id, ref(copy));
+            // add class var
+            cls->set(name_id, std::move(copy));
+
+        } else if (sym->is<Fun>()) {
+            // TODO
+
+        } else {
+            assert(false);
         }
-        // param node
-        auto param_node = params_node->get(n);
-        auto name_id = param_node->name().str_id();
-        auto var = ulam::make<Var>(
-            param_node->type_name(), ast::Ref<ast::VarDecl>{}, std::move(arg),
-            Var::ClassParam);
-        cls->set(name_id, std::move(var));
+        assert(cls->scope()->version() == scope_proxy.version()); // in sync?
     }
+    assert(args.size() == 0); // all args consumed?
     return cls;
 }
 

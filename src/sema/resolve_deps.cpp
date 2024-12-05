@@ -50,6 +50,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
         return false;
     }
     // add to module, set node attrs
+    auto scope_proxy = scopes().top<PersScopeProxy>();
     if (node->params()) {
         assert(node->params()->child_num() > 0);
         assert(node->kind() != ClassKind::Element);
@@ -69,16 +70,16 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
             // set class tpl var
             tpl->set(param_name_id, std::move(var));
             // add to class tpl scope
-            tpl->scope()->set(param_name_id, var_ref);
-            // set node scope version attr
-            param->set_scope_version(tpl->scope()->version());
+            scope_proxy->set(param_name_id, var_ref);
+            // set node scope proxy attr
+            param->set_scope_proxy(*scope_proxy);
         }
         // add to module
         module()->set<TypeTpl>(name_id, std::move(tpl));
         // add to module scope
-        module()->scope()->set(name_id, tpl_ref);
-        // set node scope version attr
-        node->set_scope_version(module()->scope()->version());
+        scope_proxy->set(name_id, tpl_ref);
+        // set node scope proxy attr
+        node->set_scope_proxy(*scope_proxy);
         // set node type tpl
         node->set_type_tpl(tpl_ref);
     } else {
@@ -88,9 +89,9 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
         // add to module
         module()->set<Type>(name_id, std::move(cls));
         // add to module scope
-        module()->scope()->set(name_id, cls_ref);
-        // set node scope version attr
-        node->set_scope_version(module()->scope()->version());
+        scope_proxy->set(name_id, cls_ref);
+        // set node scope proxy attr
+        node->set_scope_proxy(*scope_proxy);
         // set node type
         node->set_type(cls_ref);
     }
@@ -143,8 +144,8 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
         } else {
             assert(false);
         }
-        // set node scope version
-        node->set_scope_version(scope_proxy->version());
+        // set node scope proxy
+        node->set_scope_proxy(*scope_proxy);
         node->set_alias_type(type_ref->basic()->as_alias());
     } else {
         // transient typedef (in function body)
@@ -187,13 +188,13 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
             }
             // add to scope
             scope_proxy->set(name_id, var_ref);
-            // set node scope version
-            def->set_scope_version(scope_proxy->version());
+            // set node scope proxy
+            def->set_scope_proxy(*scope_proxy);
         } else {
             // module constant
             scope_proxy->set(name_id, std::move(var));
-            // set node scope version
-            def->set_scope_version(scope_proxy->version());
+            // set node scope proxy
+            def->set_scope_proxy(*scope_proxy);
         }
         // set node attr
         def->set_var(var_ref);

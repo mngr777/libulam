@@ -33,6 +33,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
 	include/libulam/semantic/scope/stack.hpp \
+	include/libulam/semantic/scope/state.hpp \
+	include/libulam/semantic/scope/object.hpp \
 	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/symbol.hpp \
 	include/libulam/semantic/type/builtin.hpp \

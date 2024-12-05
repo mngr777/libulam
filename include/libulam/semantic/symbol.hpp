@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>
