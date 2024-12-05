@@ -1,6 +1,7 @@
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/module.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/type/class_kind.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -84,6 +85,10 @@ void Parser::diag(const Token& token, std::string text) {
     _ctx.diag().emit(diag::Error, token.loc_id, token.size, std::move(text));
 }
 
+void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
+    _ctx.diag().emit(diag::Error, loc_id, size, text);
+}
+
 bool Parser::eof() { return _tok.is(tok::Eof); }
 
 ast::Ptr<ast::ModuleDef> Parser::parse_module() {
@@ -163,8 +168,13 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     consume();
     // params
     ast::Ptr<ast::ParamList> params{};
-    if (_tok.is(tok::ParenL))
+    if (_tok.is(tok::ParenL)) {
         params = parse_param_list();
+        if (params && kind == ClassKind::Element) {
+            diag(params->loc_id(), 1, "element can not be a template");
+            params = {};
+        }
+    }
     // TODO: ancestors
     auto node = tree<ast::ClassDef>(kind, name, std::move(params));
     node->set_loc_id(loc_id);
@@ -450,8 +460,9 @@ ast::Ptr<ast::Return> Parser::parse_return() {
 ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     assert(_tok.is(tok::ParenL));
     // (
-    consume();
     auto node = tree<ast::ParamList>();
+    node->set_loc_id(_tok.loc_id);
+    consume();
     bool requires_value = false;
     ast::Ref<ast::Param> prev{};
     while (!_tok.in(tok::ParenR, tok::Eof)) {

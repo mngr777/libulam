@@ -36,6 +36,7 @@ private:
     void unexpected();
     void diag(std::string text);
     void diag(const Token& token, std::string text);
+    void diag(loc_id_t loc_id, std::size_t size, std::string text);
     template <typename... Ts> void panic(Ts... stop);
 
     ast::Ptr<ast::ModuleDef> parse_module();
