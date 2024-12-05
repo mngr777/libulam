@@ -5,6 +5,7 @@
 #include <libulam/sema/helper.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/typed_value.hpp>
+#include <libulam/semantic/scope.hpp>
 #include <utility>
 
 namespace ulam::sema {
@@ -19,7 +20,7 @@ public:
         ast::Ref<ast::Root> ast, Flag flags = NoFlags):
         Helper{ast}, _flags{flags} {}
 
-    std::pair<TypedValueList, bool> eval(ast::Ref<ast::ArgList> args, Ref<Scope> scope);
+    std::pair<TypedValueList, bool> eval(ast::Ref<ast::ArgList> args, ScopeProxy scope);
 
 private:
     Flag _flags;

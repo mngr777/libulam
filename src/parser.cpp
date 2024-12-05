@@ -693,6 +693,7 @@ Parser::parse_member_access(ast::Ptr<ast::Expr>&& obj) {
 ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     assert(_tok.is(tok::TypeIdent));
     auto node = tree<ast::TypeIdent>(tok_ast_str());
+    node->set_loc_id(_tok.loc_id);
     consume();
     return node;
 }
@@ -700,6 +701,7 @@ ast::Ptr<ast::TypeIdent> Parser::parse_type_ident() {
 ast::Ptr<ast::Ident> Parser::parse_ident() {
     assert(_tok.is(tok::Ident));
     auto node = tree<ast::Ident>(tok_ast_str());
+    node->set_loc_id(_tok.loc_id);
     consume();
     return node;
 }
@@ -707,6 +709,7 @@ ast::Ptr<ast::Ident> Parser::parse_ident() {
 ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {
     assert(_tok.in(tok::True, tok::False));
     auto node = tree<ast::BoolLit>(_tok.is(tok::True));
+    node->set_loc_id(_tok.loc_id);
     consume();
     return node;
 }

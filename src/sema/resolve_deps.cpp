@@ -191,7 +191,7 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
             // set node scope proxy
             def->set_scope_proxy(*scope_proxy);
         } else {
-            // module constant
+            // module constant (is not a module member)
             scope_proxy->set(name_id, std::move(var));
             // set node scope proxy
             def->set_scope_proxy(*scope_proxy);
@@ -279,7 +279,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
             type_spec->set_type(sym->get<UserType>());
         } else {
             assert(sym->is<ClassTpl>());
-            type_spec->set_type_tpl(sym->get<ClassTpl>());
+            type_spec->set_cls_tpl(sym->get<ClassTpl>());
         }
     } else {
         // add external dependency

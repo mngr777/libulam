@@ -84,6 +84,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval.hpp \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
+	include/libulam/sema/resolver.hpp \
 	include/libulam/sema/helper.hpp \
 	include/libulam/sema/helper/param_eval.hpp \
 	include/libulam/sema/helper/resolver.hpp \
@@ -96,6 +97,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/out.hpp \
 	src/sema/out.cpp \
 	src/sema/resolve_deps.cpp \
+	src/sema/resolver.cpp \
 	src/sema/helper/param_eval.cpp \
 	src/sema/helper/resolver.cpp \
 	src/sema/visitor.cpp

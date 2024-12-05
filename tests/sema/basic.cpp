@@ -19,6 +19,7 @@ element A {
 
 quark B {
   typedef Int(8) C;
+  typedef A.F G;
 }
 )END";
 

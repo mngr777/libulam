@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type.hpp>
@@ -41,6 +42,11 @@ public:
     ast::Ref<ast::VarDecl> node() { return _node; }
 
     Ref<Type> type() { return _type; }
+
+    void set_type(Ref<Type> type) {
+        assert(!_type);
+        _type = type;
+    }
 
     Value& value() { return _value; }
 

@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/node.hpp"
+#include "libulam/semantic/type/prim.hpp"
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
@@ -21,6 +23,7 @@ class ArgList;
 class TypeSpec : public Tuple<Stmt, TypeIdent, ArgList> {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(TypeTpl, type_tpl)
+    ULAM_AST_REF_ATTR(ClassTpl, cls_tpl)
     ULAM_AST_REF_ATTR(Type, type)
 public:
     TypeSpec(Ptr<TypeIdent>&& ident, Ptr<ArgList>&& args):

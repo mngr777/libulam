@@ -1,10 +1,9 @@
-#include "libulam/diag.hpp"
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/helper/param_eval.hpp>
 
 namespace ulam::sema {
 
-std::pair<TypedValueList, bool> ParamEval::eval(ast::Ref<ast::ArgList> args, Ref<Scope> scope) {
+std::pair<TypedValueList, bool> ParamEval::eval(ast::Ref<ast::ArgList> args, ScopeProxy scope) {
     TypedValueList values;
     assert(args->child_num() > 0);
     bool success = true;

@@ -1,6 +1,9 @@
-#include "libulam/semantic/scope/state.hpp"
-#include "libulam/str_pool.hpp"
 #include <libulam/semantic/scope.hpp>
+#include <variant>
+
+#define ULAM_DEBUG
+#define ULAM_DEBUG_PREFIX "[Scope] "
+#include "src/debug.hpp"
 
 namespace ulam {
 
@@ -19,14 +22,14 @@ void TransScope::for_each(ItemCb cb) {
 // PersScopeProxy
 
 PersScopeProxy::PersScopeProxy(Ref<PersScope> scope, ScopeVersion version):
-    Scope{{}, scope->flags()}, _scope{scope} {}
+    Scope{{}, scope->flags()}, _scope{scope}, _version{version} {}
 
 void PersScopeProxy::sync() { set_version(_scope->version()); }
 
 str_id_t PersScopeProxy::advance() {
-    assert(_version <= _scope->version());
     if (_version == _scope->version())
         return NoStrId;
+    assert(_version < _scope->version());
     ++_version;
     return last_change();
 }
@@ -100,6 +103,28 @@ Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
     auto sym = &vsyms.front().symbol;
     sym->as_scope_obj()->set_pers_scope_state(state_);
     return sym;
+}
+
+// ScopeProxy
+
+void ScopeProxy::for_each(ItemCb cb) {
+    if (std::holds_alternative<Ref<Scope>>(_proxied))
+        return std::get<Ref<Scope>>(_proxied)->for_each(cb);
+    return std::get<PersScopeProxy>(_proxied).for_each(cb);
+}
+
+Scope::Symbol* ScopeProxy::get(str_id_t name_id, bool current) {
+    if (std::holds_alternative<Ref<Scope>>(_proxied))
+        return std::get<Ref<Scope>>(_proxied)->get(name_id, current);
+    return std::get<PersScopeProxy>(_proxied).get(name_id, current);
+}
+
+Scope::Symbol* ScopeProxy::do_set(str_id_t name_id, Symbol&& symbol) {
+    if (std::holds_alternative<Ref<Scope>>(_proxied))
+        return std::get<Ref<Scope>>(_proxied)->do_set(
+            name_id, std::move(symbol));
+    return std::get<PersScopeProxy>(_proxied).do_set(
+        name_id, std::move(symbol));
 }
 
 } // namespace ulam

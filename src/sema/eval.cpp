@@ -36,10 +36,10 @@ Eval::resolve_type_name(ast::Ref<ast::TypeName> node, Ref<Scope> scope) {
     auto type_spec = node->first();
     if (type_spec->type()) {
         type = type_spec->type();
-    } else if (type_spec->type_tpl()) {
-        auto tpl = type_spec->type_tpl();
+    } else if (type_spec->cls_tpl()) {
+        auto tpl = type_spec->cls_tpl();
         // TODO: resolve tpl params
-        ParamEval pe{ast()}; // TODO: default param values, def scope
+        ParamEval pe{ast()}; // TODO: default param values
         auto [args, success] = pe.eval(type_spec->args(), scope);
         type = tpl->type(type_spec->args(), std::move(args));
         type_spec->set_type(type);

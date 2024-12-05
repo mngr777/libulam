@@ -40,7 +40,10 @@ public:
 
     Ref<PersScope> scope() { return ref(_scope); }
 
+    bool has(str_id_t name_id) const { return _members.has(name_id); }
+
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
+    const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));

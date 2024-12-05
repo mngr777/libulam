@@ -12,6 +12,7 @@
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 
 namespace ulam {
 
@@ -19,7 +20,14 @@ class Module;
 
 // Scope base
 
+// TODO: refactoring, proxies do not need parent/module/flags, also make flags()
+// virtual instead of setting to proxy
+
+class ScopeProxy;
+
 class Scope {
+    friend ScopeProxy;
+
 protected:
     using SymbolTable = _SymbolTable<UserType, ulam::ClassTpl, ulam::Fun, Var>;
 
@@ -39,7 +47,10 @@ public:
 
     explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
         _parent{parent}, _flags{flags} {}
-    virtual ~Scope() {}
+
+    Scope(): Scope{{}} {}
+
+    virtual ~Scope(){};
 
     // TODO: const version
     virtual void for_each(ItemCb cb) = 0;
@@ -102,11 +113,12 @@ public:
 
     Symbol* get(str_id_t name_id, bool current = false) override;
 
-private:
+protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override {
         return _symbols.set(name_id, std::move(symbol));
     }
 
+private:
     SymbolTable _symbols;
 };
 
@@ -145,11 +157,13 @@ private:
 class PersScope;
 
 class PersScopeProxy : public Scope {
+    friend ScopeProxy;
+
 public:
     PersScopeProxy(Ref<PersScope> scope, ScopeVersion version);
     PersScopeProxy(PersScopeState state):
         PersScopeProxy{state.scope(), state.version()} {}
-    PersScopeProxy(): Scope{{}}, _scope{} {}
+    PersScopeProxy(): Scope{}, _scope{}, _version{NoScopeVersion} {}
 
     void reset() { set_version(0); }
     void sync();
@@ -169,14 +183,13 @@ public:
 
     void set_version(ScopeVersion version);
 
-private:
+protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
+private:
     Ref<PersScope> _scope;
     ScopeVersion _version;
 };
-
-class PersScopeProxy;
 
 class PersScope : public Scope {
     friend PersScopeProxy;
@@ -220,12 +233,37 @@ public:
 
     ScopeVersion version() const { return _version; }
 
-private:
+protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
+private:
     Version _version;
     std::unordered_map<str_id_t, SymbolVersionList> _symbols;
     std::vector<str_id_t> _changes;
+};
+
+class ScopeProxy : public Scope {
+public:
+    ScopeProxy(Ref<Scope> scope): Scope{{}, scope->flags()}, _proxied{scope} {
+        assert(scope);
+    }
+    ScopeProxy(PersScopeProxy pers_proxy):
+        Scope{{}, pers_proxy.flags()}, _proxied{pers_proxy} {
+        assert(pers_proxy);
+    }
+    ScopeProxy(): Scope{} {}
+
+    operator bool() {
+        return !std::holds_alternative<std::monostate>(_proxied);
+    }
+
+    void for_each(ItemCb cb) override;
+
+    Symbol* get(str_id_t name_id, bool current = false) override;
+
+protected:
+    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
+    std::variant<std::monostate, Ref<Scope>, PersScopeProxy> _proxied;
 };
 
 } // namespace ulam
