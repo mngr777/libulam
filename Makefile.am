@@ -162,8 +162,8 @@ test_lex_basic_SOURCES = tests/lex/basic.cpp
 test_lex_basic_LDADD = $(TEST_LIBS)
 
 TEST_AST_SOURCE_FILES = \
-	tests/ast/print1.hpp \
-	tests/ast/print1.cpp
+	tests/ast/print.hpp \
+	tests/ast/print.cpp
 
 test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_AST_SOURCE_FILES)
 test_parser_expr_LDADD = $(TEST_LIBS)

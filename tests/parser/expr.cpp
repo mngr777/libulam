@@ -1,4 +1,4 @@
-#include "tests/ast/print1.hpp"
+#include "tests/ast/print.hpp"
 #include <iostream>
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
