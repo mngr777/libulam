@@ -4,7 +4,7 @@
 #include <libulam/parser.hpp>
 
 static const char* Program = R"END(
-quark Q(B.C param1 = 1) {
+quark Q(B.C param1 = 0xff) {
   Int bar() {
     Int a = 1;
     --a;

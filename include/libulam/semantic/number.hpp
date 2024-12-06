@@ -25,6 +25,14 @@ public:
         return std::holds_alternative<std::int64_t>(_value);
     }
 
+    Unsigned as_unsigned() const {
+        if (is_signed()) {
+            assert(value<Integer>() >= 0);
+            return (Unsigned)value<Integer>();
+        }
+        return value<Unsigned>();
+    }
+
     std::uint8_t bitsize() const;
 
     template <typename T> T value() const {

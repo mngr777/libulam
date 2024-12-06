@@ -356,19 +356,30 @@ void Lex::lex_comment() {
 void Lex::lex_number() {
     assert(_tok_start);
     assert(detail::is_digit(_tok_start[0]));
-    bool hex = false;
+
+    auto is_digit = &detail::is_digit;
     if (_tok_start[0] == '0') {
-        // Scroll over `0x' or `0b' prefix if there's a digit after
-        hex = at('x');
-        if ((hex || at('b')) && detail::is_digit(_cur[1]))
+        // scroll over `0x' or `0b' prefix if there's a digit after
+        if (at('x')) {
+            is_digit = &detail::is_xdigit;
+            if (is_digit(_cur[1]))
+                advance();
+        } else if (at('b') && is_digit(_cur[1])) {
             advance();
+        }
     }
-    while (hex ? detail::is_xdigit(_cur[0]) : detail::is_digit(_cur[0]))
+
+    // skip digits
+    auto digits_start = _cur;
+    while (is_digit(_cur[0]))
         advance();
-    // Allow `u' suffix if there were some digits before it
-    if ((at('u') || at('U')) && detail::is_digit(_cur[-1]))
+
+    // allow `u' suffix if there were some digits before it
+    if (digits_start < _cur && (at('u') || at('U'))) {
         advance();
-    // Check if separated from next token if required
+    }
+
+    // check if separated from next token if required
     if (detail::is_word(_cur[0]) || detail::is_digit(_cur[0]))
         _pp.diag(loc_id(), "Number not separated");
     complete(tok::Number);
