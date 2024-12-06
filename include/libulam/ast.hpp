@@ -4,5 +4,4 @@
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/ast/str.hpp>
-#include <libulam/ast/traversal.hpp>
 #include <libulam/ast/visitor.hpp>

@@ -1,5 +1,4 @@
-#include "libulam/ast/node.hpp"
-#include "libulam/ast/traversal.hpp"
+#include <libulam/ast/node.hpp>
 
 namespace ulam::ast {
 

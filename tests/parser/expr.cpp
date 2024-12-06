@@ -1,11 +1,15 @@
-#include "tests/ast/print.hpp"
+#include "tests/ast/print1.hpp"
 #include <iostream>
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
 
 static const char* Program = R"END(
 quark Q(B.C param1 = 1) {
-test
+  Int bar() {
+    Int a = 1;
+    --a;
+    return a;
+  }
 }
 
 element A {
@@ -14,8 +18,12 @@ element A {
   B.C.D a = 1, b, c = 2;
   C.D.E d = 3;
 
-  C(2).D.E foo(F.G c = 1,  ) {
+  C(2).D.E foo(F.G c = 1) {
     H(2) a = 1;
+    if (a > 0)
+      ++a;
+    else
+      --c;
     for (; a < 5; a++) {}
   }
 }
@@ -30,6 +38,6 @@ int main() {
     auto ast = parser.move_ast();
 
     std::cout << text << "\n";
-    test::ast::Printer p{std::cout};
-    p.print(ulam::ast::ref(ast));
+    test::ast::Printer p{std::cout, ulam::ast::ref(ast)};
+    p.print();
 }

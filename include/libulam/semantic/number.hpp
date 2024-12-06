@@ -1,8 +1,14 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
-#include <variant>
 #include <libulam/semantic/value.hpp>
+#include <ostream>
+#include <variant>
+
+namespace ulam {
+class Number;
+}
+std::ostream& operator<<(std::ostream& os, const ulam::Number& number);
 
 namespace ulam {
 
@@ -25,6 +31,8 @@ public:
         assert(std::holds_alternative<T>(_value));
         return std::get<T>(_value);
     }
+
+    void write_value(std::ostream& os) const;
 
 private:
     Radix _radix;

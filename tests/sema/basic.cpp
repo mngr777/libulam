@@ -1,4 +1,4 @@
-#include "tests/ast/print.hpp"
+#include "tests/ast/print1.hpp"
 #include <iostream>
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
@@ -32,8 +32,8 @@ int main() {
     auto ast = parser.move_ast();
 
     std::cout << text << "\n";
-    test::ast::Printer p{std::cout};
-    p.print(ulam::ast::ref(ast));
+    test::ast::Printer p{std::cout, ulam::ast::ref(ast)};
+    p.print();
 
     ulam::Sema sema{ctx.diag()};
     sema.analyze(ulam::ast::ref(ast));

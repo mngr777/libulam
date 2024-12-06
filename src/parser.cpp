@@ -169,9 +169,10 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     // params
     ast::Ptr<ast::ParamList> params{};
     if (_tok.is(tok::ParenL)) {
+        auto paren_loc_id = _tok.loc_id;
         params = parse_param_list();
-        if (params && kind == ClassKind::Element) {
-            diag(params->loc_id(), 1, "element can not be a template");
+        if (kind == ClassKind::Element) {
+            diag(paren_loc_id, 1, "element can not be a template");
             params = {};
         }
     }
@@ -468,18 +469,20 @@ ast::Ptr<ast::ParamList> Parser::parse_param_list() {
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         // param
         auto param = parse_param(requires_value);
-        prev = ast::ref(param);
         if (!param)
             return {};
         if (requires_value) {
             if (!param->has_value()) {
                 // pretend we didn't see previous value
+                assert(prev);
                 prev->replace_value({});
                 requires_value = false;
             }
         } else {
             requires_value = param->has_value();
         }
+        prev = ast::ref(param);
+        node->add(std::move(param));
         // ,
         if (_tok.is(tok::Comma)) {
             auto comma = _tok;

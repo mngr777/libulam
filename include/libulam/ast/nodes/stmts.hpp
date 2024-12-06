@@ -23,9 +23,9 @@ public:
     If(Ptr<Expr>&& cond, Ptr<Stmt>&& if_branch, Ptr<Stmt>&& else_branch):
         Tuple{std::move(cond), std::move(if_branch), std::move(else_branch)} {}
 
-    ULAM_AST_TUPLE_PROP(cond, 0);
-    ULAM_AST_TUPLE_PROP(if_branch, 1);
-    ULAM_AST_TUPLE_PROP(else_branch, 1);
+    ULAM_AST_TUPLE_PROP(cond, 0)
+    ULAM_AST_TUPLE_PROP(if_branch, 1)
+    ULAM_AST_TUPLE_PROP(else_branch, 2)
 };
 
 class For : public Tuple<Stmt, Stmt, Expr, Expr, Stmt> {

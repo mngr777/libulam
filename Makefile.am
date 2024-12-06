@@ -15,13 +15,11 @@ AST_HEADER_FILES = \
 	include/libulam/ast/nodes/stmts.hpp \
 	include/libulam/ast/nodes/type.hpp \
 	include/libulam/ast/nodes/var_decl.hpp \
-	include/libulam/ast/nodes.inc.hpp \
-	include/libulam/ast/traversal.hpp
+	include/libulam/ast/nodes.inc.hpp
 
 AST_SOURCE_FILES = \
 	src/ast/node.cpp \
 	src/ast/nodes/module.cpp \
-	src/ast/traversal.cpp \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
@@ -164,8 +162,8 @@ test_lex_basic_SOURCES = tests/lex/basic.cpp
 test_lex_basic_LDADD = $(TEST_LIBS)
 
 TEST_AST_SOURCE_FILES = \
-	tests/ast/print.hpp \
-	tests/ast/print.cpp
+	tests/ast/print1.hpp \
+	tests/ast/print1.cpp
 
 test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_AST_SOURCE_FILES)
 test_parser_expr_LDADD = $(TEST_LIBS)
