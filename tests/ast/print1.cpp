@@ -16,52 +16,48 @@ PrinterBase::~PrinterBase() { assert(_lvl == 0); }
 
 void PrinterBase::print() { visit(_ast); }
 
-bool PrinterBase::visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
+void PrinterBase::visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
         dec_lvl();
     }
-    return {};
 }
 
 void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
     traverse_with_indent(node);
 }
 
-bool PrinterBase::visit(ulam::ast::Ref<ulam::ast::ClassDefBody> node) {
+void PrinterBase::visit(ulam::ast::Ref<ulam::ast::ClassDefBody> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
         dec_lvl();
     }
-    return {};
 }
 
 void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::ClassDefBody> node) {
     traverse_with_indent(node);
 }
 
-bool PrinterBase::visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
+void PrinterBase::visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
         dec_lvl();
     }
-    return {};
 }
 
 void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
     traverse_with_indent(node);
 }
 
-bool PrinterBase::visit(ulam::ast::Ref<ulam::ast::Block> node) {
+void PrinterBase::visit(ulam::ast::Ref<ulam::ast::Block> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
         dec_lvl();
     }
-    return {};
 }
 
 void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::Block> node) {
@@ -143,7 +139,7 @@ bool PrinterBase::set_no_newline(bool val) {
 
 // Printer
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
     // name
     _os << class_kind_str(node->kind()) << " " << name(node);
     // params
@@ -158,15 +154,13 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
     _os << " {" << nl();
     visit(node->body());
     indent() << "}" << nl();
-    return true;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::VarDef> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::VarDef> node) {
     print_var_decl(node);
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
     // ret type
     accept_me(node->ret_type_name());
     // name
@@ -181,10 +175,9 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
         _os << nl();
         indent() << "}";
     }
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
     if (node->is_builtin()) {
         _os << ulam::builtin_type_str(node->builtin_type_id());
     } else {
@@ -192,34 +185,30 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
     }
     if (node->has_args())
         visit(node->args());
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
     _os << "(";
     if (do_visit(node))
         traverse(node);
     _os << ")";
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
     assert(node->has_type_name());
     visit(node->type_name());
     _os << " ";
     print_var_decl(node);
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::ArgList> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::ArgList> node) {
     _os << "(";
     if (do_visit(node))
         traverse(node);
     _os << ")";
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::Block> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::Block> node) {
     if (do_visit(node)) {
         _os << "{" << nl();
         inc_lvl();
@@ -227,15 +216,13 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::Block> node) {
         dec_lvl();
         indent() << "}";
     }
-    return {};
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::EmptyStmt> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::EmptyStmt> node) {
     _os << ";";
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::If> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::If> node) {
     _os << "if (";
     accept_me(node->cond());
     _os << ")";
@@ -250,10 +237,9 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::If> node) {
         indent() << "else ";
         accept_me(node->else_branch());
     }
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::For> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::For> node) {
     _os << "for (";
     accept_me(node->init());
     _os << " ";
@@ -267,48 +253,41 @@ bool Printer::visit(ulam::ast::Ref<ulam::ast::For> node) {
     } else {
         _os << ";";
     }
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::Return> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::Return> node) {
     _os << "return ";
     if (node->has_expr())
         accept_me(node->expr());
     _os << ";";
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) {
     _os << "(";
     accept_me(node->inner());
     _os << ")";
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::BinaryOp> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::BinaryOp> node) {
     accept_me(node->lhs());
     _os << " " << ulam::ops::str(node->op()) << " ";
     accept_me(node->rhs());
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPreOp> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPreOp> node) {
     _os << ulam::ops::str(node->op());
     accept_me(node->arg());
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPostOp> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPostOp> node) {
     accept_me(node->arg());
     _os << ulam::ops::str(node->op());
-    return false;
 }
 
-bool Printer::visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) {
     accept_me(node->obj());
     _os << ".";
     accept_me(node->ident());
-    return false;
 }
 
 bool Printer::do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {

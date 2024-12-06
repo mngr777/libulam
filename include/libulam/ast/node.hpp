@@ -14,7 +14,7 @@
 
 #define ULAM_AST_NODE                                                          \
 public:                                                                        \
-    virtual bool accept(Visitor& v) override { return v.visit(this); }         \
+    virtual void accept(Visitor& v) override { v.visit(this); }                \
                                                                                \
 private:
 
@@ -126,7 +126,7 @@ class Node {
 public:
     virtual ~Node();
 
-    virtual bool accept(Visitor& visitor);
+    virtual void accept(Visitor& visitor);
 
     virtual unsigned child_num() const { return 0; }
 

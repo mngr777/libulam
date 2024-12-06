@@ -32,16 +32,16 @@ public:
 protected:
 
     // Traversing in module defs / class defs / function body order
-    bool visit(ast::Ref<ast::Root> node) override;
-    bool visit(ast::Ref<ast::ModuleDef> node) override;
+    void visit(ast::Ref<ast::Root> node) override;
+    void visit(ast::Ref<ast::ModuleDef> node) override;
     void traverse(ast::Ref<ast::ModuleDef> node) override;
-    bool visit(ast::Ref<ast::ClassDef> node) override;
+    void visit(ast::Ref<ast::ClassDef> node) override;
     void traverse(ast::Ref<ast::ClassDefBody> node) override;
-    bool visit(ast::Ref<ast::FunDef> node) override;
+    void visit(ast::Ref<ast::FunDef> node) override;
     void traverse(ast::Ref<ast::FunDefBody> node) override;
 
     // Creating transient scopes (TODO)
-    bool visit(ast::Ref<ast::Block> node) override;
+    void visit(ast::Ref<ast::Block> node) override;
 
     // Populating current scope with objects from AST
     bool do_visit(ast::Ref<ast::ClassDef> node) override;

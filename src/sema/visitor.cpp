@@ -13,14 +13,13 @@ namespace ulam::sema {
 
 void RecVisitor::analyze() { visit(_ast); }
 
-bool RecVisitor::visit(ast::Ref<ast::Root> node) {
+void RecVisitor::visit(ast::Ref<ast::Root> node) {
     assert(node->program());
     if (do_visit(node))
         traverse(node);
-    return {};
 }
 
-bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
+void RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     assert(node->module());
     auto mod = node->module();
     _module_def = node;
@@ -37,7 +36,6 @@ bool RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     assert(scope()->is(Scope::Module));
     exit_scope();
     _module_def = {};
-    return {};
 }
 
 void RecVisitor::traverse(ast::Ref<ast::ModuleDef> node) {
@@ -48,7 +46,7 @@ void RecVisitor::traverse(ast::Ref<ast::ModuleDef> node) {
     }
 }
 
-bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
+void RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
     if (pass() == Pass::Module) {
         do_visit(node);
     } else {
@@ -56,7 +54,6 @@ bool RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
         traverse(node);
         _class_def = {};
     }
-    return {};
 }
 
 void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
@@ -80,7 +77,7 @@ void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
     exit_scope();
 }
 
-bool RecVisitor::visit(ast::Ref<ast::FunDef> node) {
+void RecVisitor::visit(ast::Ref<ast::FunDef> node) {
     if (pass() == Pass::Classes) {
         do_visit(node);
     } else {
@@ -89,7 +86,6 @@ bool RecVisitor::visit(ast::Ref<ast::FunDef> node) {
         traverse(node);
         _fun_def = {};
     }
-    return {};
 }
 
 void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
@@ -101,11 +97,10 @@ void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
     exit_scope();
 }
 
-bool RecVisitor::visit(ast::Ref<ast::Block> node) {
+void RecVisitor::visit(ast::Ref<ast::Block> node) {
     enter_scope();
     ast::RecVisitor::visit(node);
     exit_scope();
-    return {};
 }
 
 bool RecVisitor::do_visit(ast::Ref<ast::ClassDef> node) {

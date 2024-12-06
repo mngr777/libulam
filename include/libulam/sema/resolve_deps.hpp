@@ -15,12 +15,12 @@ class ResolveDeps : public RecVisitor {
 public:
     ResolveDeps(Diag& diag, ast::Ref<ast::Root> ast): RecVisitor{diag, ast} {}
 
-    bool visit(ast::Ref<ast::Root> node) override;
-    bool visit(ast::Ref<ast::ModuleDef> node) override;
+    void visit(ast::Ref<ast::Root> node) override;
+    void visit(ast::Ref<ast::ModuleDef> node) override;
     bool do_visit(ast::Ref<ast::ClassDef> node) override;
-    bool visit(ast::Ref<ast::TypeDef> node) override;
-    bool visit(ast::Ref<ast::VarDefList> node) override;
-    bool visit(ast::Ref<ast::FunDef> node) override;
+    void visit(ast::Ref<ast::TypeDef> node) override;
+    void visit(ast::Ref<ast::VarDefList> node) override;
+    void visit(ast::Ref<ast::FunDef> node) override;
 
     bool do_visit(ast::Ref<ast::TypeName> node) override;
 

@@ -4,6 +4,6 @@ namespace ulam::ast {
 
 Node::~Node() {}
 
-bool Node::accept(Visitor& v) { return v.visit(this); }
+void Node::accept(Visitor& v) { v.visit(this); }
 
 } // namespace ulam::ast

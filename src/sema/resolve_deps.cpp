@@ -21,20 +21,19 @@
 
 namespace ulam::sema {
 
-bool ResolveDeps::visit(ast::Ref<ast::Root> node) {
+void ResolveDeps::visit(ast::Ref<ast::Root> node) {
     assert(!node->program());
     // make program
     node->set_program(ulam::make<Program>(diag(), node));
     RecVisitor::visit(node);
     export_classes();
-    return false;
 }
 
-bool ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
+void ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
     assert(!node->module());
     auto module = program()->add_module(node);
     node->set_module(module);
-    return RecVisitor::visit(node);
+    RecVisitor::visit(node);
 }
 
 bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
@@ -90,7 +89,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
     return true;
 }
 
-bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
+void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     // don't skip the type name
     visit(node->type_name());
 
@@ -98,7 +97,7 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     // name is already in current scope?
     if (scope()->has(alias_id, true)) {
         // TODO: after types are resolves, complain if types don't match
-        return false;
+        return;
     }
 
     auto class_node = class_def();
@@ -142,15 +141,14 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
         Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
         scope()->set(alias_id, std::move(type));
     }
-    return {};
 }
 
-bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
+void ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     // don't skip the type name
     visit(node->type_name());
 
     if (!scope()->is(Scope::Persistent))
-        return {};
+        return;
 
     // create and set module/class/tpl variables
     auto class_node = class_def();
@@ -187,10 +185,10 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
         }
         def->set_var(var_ref); // set node attr
     }
-    return {};
+    return;
 }
 
-bool ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
+void ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
     // don't skip ret type and params
     visit(node->ret_type_name());
     visit(node->params());
@@ -214,7 +212,7 @@ bool ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
             diag().emit(
                 diag::Error, node->loc_id(), str(name_id).size(),
                 "defined and is not a function");
-            return {};
+            return;
         }
     } else {
         sym = cls_base->set(name_id, ulam::make<Fun>());  // add to class/tpl
@@ -225,7 +223,7 @@ bool ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
     // create overload
     auto overload = fun_ref->add_overload(node);
     node->set_overload(overload);
-    return {};
+    return;
 }
 
 bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
