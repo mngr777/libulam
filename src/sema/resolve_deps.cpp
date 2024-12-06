@@ -161,23 +161,23 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     visit(node->type_name());
     if (!scope()->is(Scope::Persistent))
         return {};
+
     // create and set module/class/tpl variables
     auto class_node = class_def();
     auto scope_proxy = scopes().top<PersScopeProxy>();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
         auto name_id = def->name().str_id();
-        // name is already in current scope?
+        // already in current scope?
         if (scope_proxy->has(name_id, true)) {
-            // TODO: where?
-            diag().emit(
-                diag::Error, def->loc_id(), 1, "variable already defined");
+            diag().emit(diag::Error, def->loc_id(), 1, "already defined");
             continue;
         }
         // make
         Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
         auto var = ulam::make<Var>(node->type_name(), def, Ref<Type>{}, flags);
         auto var_ref = ref(var);
+        // install
         if (class_node) {
             // class/tpl variable
             if (class_node->type()) {
@@ -186,74 +186,54 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
                 assert(class_node->type_tpl());
                 class_node->type_tpl()->set(name_id, std::move(var));
             }
-            // add to scope
-            scope_proxy->set(name_id, var_ref);
-            // set node scope proxy
-            def->set_scope_proxy(*scope_proxy);
+            scope_proxy->set(name_id, var_ref); // add to scope
+            def->set_scope_proxy(*scope_proxy); // set node scope proxy
         } else {
             // module constant (is not a module member)
             scope_proxy->set(name_id, std::move(var));
-            // set node scope proxy
-            def->set_scope_proxy(*scope_proxy);
+            def->set_scope_proxy(*scope_proxy); // set node scope proxy
         }
-        // set node attr
-        def->set_var(var_ref);
+        def->set_var(var_ref); // set node attr
     }
     return {};
 }
 
 bool ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
-    // don't skip ret type...
+    // don't skip ret type and params
     visit(node->ret_type_name());
-    // TODO
+    visit(node->params());
+
+    // get class/tpl
+    auto class_node = class_def();
+    Ref<ClassBase> cls_base{};
+    if (class_node->type()) {
+        cls_base = class_node->type();
+    } else {
+        cls_base = class_node->type_tpl();
+    }
+    assert(cls_base);
+
+    // find or create fun
+    auto name_id = cls_base->name_id();
+    auto sym = cls_base->get(name_id);
+    Ref<Fun> fun_ref{};
+    if (sym) {
+        if (!sym->is<Fun>()) {
+            diag().emit(
+                diag::Error, node->loc_id(), str(name_id).size(),
+                "defined and is not a function");
+            return {};
+        }
+    } else {
+        sym = cls_base->set(name_id, ulam::make<Fun>());  // add to class/tpl
+        cls_base->scope()->set(name_id, sym->get<Fun>()); // add to scope
+    }
+    fun_ref = sym->get<Fun>();
+
+    // create overload
+    auto overload = fun_ref->add_overload(node);
+    node->set_overload(overload);
     return {};
-    // // and params
-    // visit(node->params());
-    // // create and set fun
-    // auto class_node = class_def();
-    // assert(class_node);
-    // auto name_id = node->name().str_id();
-    // Ref<Fun> fun{};
-    // if (class_node->type()) {
-    //     // class fun
-    //     auto cls = class_node->type();
-    //     auto sym = cls->get(name_id);
-    //     if (sym) {
-    //         if (!sym->is<Fun>()) {
-    //             diag().emit(
-    //                 diag::Error, node->name().loc_id(), str(name_id).size(),
-    //                 "defined and is not a function");
-    //             return false;
-    //         }
-    //     } else {
-    //         sym = cls->set(name_id, ulam::make<Fun>());
-    //     }
-    //     fun = sym->get<Fun>();
-    // } else {
-    //     // class tpl fun
-    //     assert(class_node->type_tpl());
-    //     auto cls_tpl = class_node->type_tpl();
-    //     auto sym = cls_tpl->get(name_id);
-    //     if (sym) {
-    //         if (!sym->is<Fun>()) {
-    //             diag().emit(
-    //                 diag::Error, node->name().loc_id(), str(name_id).size(),
-    //                 "defined and is not a function");
-    //         }
-    //     } else {
-    //         sym = cls_tpl->set(name_id, ulam::make<Fun>());
-    //     }
-    //     fun = sym->get<Fun>();
-    // }
-    // // create overload
-    // auto overload = fun->add_overload(node);
-    // // set node attr
-    // node->set_overload(overload);
-    // // add to scope
-    // if (!scope()->has(name_id)) {
-    //     scope()->set(name_id, fun);
-    // }
-    // return {};
 }
 
 bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
@@ -284,8 +264,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
     } else {
         // add external dependency
         module()->add_dep(name_id);
-        // postpone until all exports are known (module ID to avoid importing
-        // from itself)
+        // postpone until all exports are known (store module ID to avoid
+        // importing from itself)
         _unresolved.push_back({module()->id(), node});
     }
     return false;
@@ -321,17 +301,17 @@ void ResolveDeps::export_classes() {
     for (auto& mod : program()->modules()) {
         for (auto name_id : mod->deps()) {
             auto it = exporting.find(name_id);
-            if (it != exporting.end()) {
-                assert(it->second.size() == 1);
-                auto& exporter = *it->second.begin();
-                auto sym = exporter->get(name_id);
-                assert(sym);
-                if (sym->is<Class>()) {
-                    mod->add_import(name_id, exporter, sym->get<Class>());
-                } else {
-                    assert(sym->is<ClassTpl>());
-                    mod->add_import(name_id, exporter, sym->get<ClassTpl>());
-                }
+            if (it == exporting.end())
+                continue;
+            assert(it->second.size() == 1);
+            auto& exporter = *it->second.begin();
+            auto sym = exporter->get(name_id);
+            assert(sym);
+            if (sym->is<Class>()) {
+                mod->add_import(name_id, exporter, sym->get<Class>());
+            } else {
+                assert(sym->is<ClassTpl>());
+                mod->add_import(name_id, exporter, sym->get<ClassTpl>());
             }
         }
     }

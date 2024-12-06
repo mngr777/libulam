@@ -23,31 +23,33 @@ Ptr<PersScope> make_class_tpl_scope(Ref<Scope> parent) {
 }
 } // namespace
 
+// ClassBase
+
+ClassBase::ClassBase(ast::Ref<ast::ClassDef> node, Ptr<PersScope>&& scope):
+    _node{node}, _scope{std::move(scope)} {}
+
+str_id_t ClassBase::name_id() const { return _node->name().str_id(); }
+
 // Class
 
 Class::Class(Ref<ClassTpl> tpl):
     UserType{tpl->_module->program()->next_type_id()},
-    _node{tpl->node()},
-    _tpl{tpl},
-    _scope{make_class_scope(tpl->_module->scope())} {}
+    ClassBase{tpl->node(), make_class_scope(tpl->_module->scope())},
+    _tpl{tpl} {}
 
 Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
     UserType{module->program()->next_type_id()},
-    _node{node},
-    _tpl{},
-    _scope{make_class_scope(module->scope())} {}
+    ClassBase{node, make_class_scope(module->scope())},
+    _tpl{} {}
 
 Class::~Class() {}
-
-str_id_t Class::name_id() const { return _node->name().str_id(); }
 
 // ClassTpl
 
 ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
     TypeTpl{module->program()},
-    _module{module},
-    _node{node},
-    _scope{make_class_tpl_scope(module->scope())} {}
+    ClassBase{node, make_class_tpl_scope(module->scope())},
+    _module{module} {}
 
 ClassTpl::~ClassTpl() {}
 
@@ -67,26 +69,22 @@ Ptr<Class>
 ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls = ulam::make<Class>(this);
     // copy members/scope objects
-    auto scope_proxy = _scope->proxy();
+    auto scope_proxy = scope()->proxy();
     scope_proxy.reset();
     for (str_id_t name_id = scope_proxy.advance(); name_id != NoStrId;
          name_id = scope_proxy.advance()) {
         auto sym = scope_proxy.get(name_id);
         if (sym->is<UserType>()) {
             auto type = sym->get<UserType>();
-            assert(type->basic()->is_alias());
             auto alias = type->basic()->as_alias();
-            // make copy
+            assert(alias);
             Ptr<UserType> copy = ulam::make<AliasType>(
                 program()->next_type_id(), alias->node(), ref(cls));
-            // add to class scope
-            cls->scope()->set(name_id, ref(copy));
-            // add class typedef
-            cls->set(name_id, std::move(copy));
+            cls->scope()->set(name_id, ref(copy)); // add to class scope
+            cls->set(name_id, std::move(copy));    // add class typedef
 
         } else if (sym->is<Var>()) {
             auto var = sym->get<Var>();
-            // make copy
             Ptr<Var> copy{};
             if (var->is(Var::ClassParam)) {
                 // class param
@@ -102,13 +100,16 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 copy = ulam::make<Var>(
                     var->type_node(), var->node(), Ref<Type>{}, var->flags());
             }
-            // add to class scope
-            cls->scope()->set(name_id, ref(copy));
-            // add class var
-            cls->set(name_id, std::move(copy));
+            cls->scope()->set(name_id, ref(copy)); // add to class scope
+            cls->set(name_id, std::move(copy));    // add class var
 
         } else if (sym->is<Fun>()) {
-            // TODO
+            auto fun = sym->get<Fun>();
+            auto copy = ulam::make<Fun>();
+            for (auto& overload : fun->overloads())
+                copy->add_overload(overload->node());
+            cls->scope()->set(name_id, ref(copy)); // add to class scope
+            cls->set(name_id, std::move(copy));    // add class fun
 
         } else {
             assert(false);
@@ -120,7 +121,7 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
 }
 
 std::string ClassTpl::type_args_str(const TypedValueList& args) {
-    // this is a templorary implementation
+    // !! this is a temporary implementation
     std::string str;
     for (const auto& arg : args) {
         auto rval = arg.value().rvalue();

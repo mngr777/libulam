@@ -21,20 +21,18 @@ class Module;
 class Var;
 class ClassTpl;
 
-class Class : public UserType {
+class ClassBase {
 public:
     using SymbolTable = _SymbolTable<UserType, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    Class(Ref<ClassTpl> tpl);
-    Class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
-    ~Class();
+    ClassBase(ast::Ref<ast::ClassDef> node, Ptr<PersScope>&& scope);
 
-    Class(Class&&) = default;
-    Class& operator=(Class&&) = default;
+    ClassBase(ClassBase&&) = default;
+    ClassBase& operator=(ClassBase&&) = default;
 
-    Ref<Class> as_class() override { return this; }
-    Ref<const Class> as_class() const override { return this; }
+public:
+    Ref<ClassBase> as_class_base() { return this; }
 
     str_id_t name_id() const;
 
@@ -57,40 +55,35 @@ public:
 
 private:
     Ref<ast::ClassDef> _node;
-    Ref<ClassTpl> _tpl;
     Ptr<PersScope> _scope;
     SymbolTable _members;
 };
 
-class ClassTpl : public TypeTpl, public ScopeObject {
+class Class : public UserType, public ClassBase {
+public:
+    Class(Ref<ClassTpl> tpl);
+    Class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
+    ~Class();
+
+    Class(Class&&) = default;
+    Class& operator=(Class&&) = default;
+
+    Ref<Class> as_class() override { return this; }
+    Ref<const Class> as_class() const override { return this; }
+
+private:
+    Ref<ClassTpl> _tpl;
+};
+
+class ClassTpl : public TypeTpl, public ClassBase, public ScopeObject {
     friend Class;
 
 public:
-    using SymbolTable = _SymbolTable<UserType, Fun, Var>;
-    using Symbol = SymbolTable::Symbol;
-
     ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node);
     ~ClassTpl();
 
-    ClassTpl(ClassTpl&&) = default;
-    ClassTpl& operator=(ClassTpl&&) = default;
-
-    Ref<PersScope> scope() { return ref(_scope); }
-
     Ref<Type>
     type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
-
-    Symbol* get(str_id_t name_id) { return _members.get(name_id); }
-
-    template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
-        return _members.set(name_id, std::move(value));
-    }
-
-    template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
-        return _members.set(name_id, value);
-    }
-
-    auto node() { return _node; }
 
 private:
     Ptr<Class> inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args);
@@ -100,8 +93,6 @@ private:
 
     Ref<Module> _module;
     Ref<ast::ClassDef> _node;
-    Ptr<PersScope> _scope;
-    SymbolTable _members;
     std::unordered_map<std::string, Ptr<Class>> _types;
 };
 

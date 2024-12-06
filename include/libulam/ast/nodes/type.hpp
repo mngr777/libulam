@@ -1,6 +1,4 @@
 #pragma once
-#include "libulam/ast/node.hpp"
-#include "libulam/semantic/type/prim.hpp"
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
