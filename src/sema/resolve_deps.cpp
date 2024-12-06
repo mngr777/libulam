@@ -49,16 +49,18 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
             "already defined"); // TODO: say where
         return false;
     }
+
     // add to module, set node attrs
     auto scope_proxy = scopes().top<PersScopeProxy>();
     if (node->params()) {
         assert(node->params()->child_num() > 0);
         assert(node->kind() != ClassKind::Element);
+
         // class tpl
         auto params = node->params();
-        // make class tpl
         auto tpl = ulam::make<ClassTpl>(module(), node);
         auto tpl_ref = ref(tpl);
+
         // add params
         for (unsigned n = 0; n < params->child_num(); ++n) {
             auto param = params->get(n);
@@ -67,33 +69,23 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
             auto var = ulam::make<Var>(
                 param->type_name(), param, Ref<Type>{}, Var::ClassParam);
             auto var_ref = ref(var);
-            // set class tpl var
-            tpl->set(param_name_id, std::move(var));
-            // add to class tpl scope
-            scope_proxy->set(param_name_id, var_ref);
-            // set node scope proxy attr
-            param->set_scope_proxy(*scope_proxy);
+            tpl->set(param_name_id, std::move(var));  // set class tpl var
+            scope_proxy->set(param_name_id, var_ref); // add to scope
+            param->set_scope_proxy(*scope_proxy);     // set node scope attr
         }
-        // add to module
-        module()->set<ClassTpl>(name_id, std::move(tpl));
-        // add to module scope
-        scope_proxy->set(name_id, tpl_ref);
-        // set node scope proxy attr
-        node->set_scope_proxy(*scope_proxy);
-        // set node type tpl
-        node->set_type_tpl(tpl_ref);
+        module()->set<ClassTpl>(name_id, std::move(tpl)); // add to module
+        scope_proxy->set(name_id, tpl_ref);               // add to scope
+        node->set_scope_proxy(*scope_proxy);              // set node scope attr
+        node->set_type_tpl(tpl_ref);                      // set node attr
+
     } else {
         // class
         auto cls = ulam::make<Class>(module(), node);
         auto cls_ref = ref(cls);
-        // add to module
-        module()->set<Class>(name_id, std::move(cls));
-        // add to module scope
-        scope_proxy->set(name_id, cls_ref);
-        // set node scope proxy attr
-        node->set_scope_proxy(*scope_proxy);
-        // set node type
-        node->set_type(cls_ref);
+        module()->set<Class>(name_id, std::move(cls)); // add to module
+        scope_proxy->set(name_id, cls_ref);            // add to scope
+        node->set_scope_proxy(*scope_proxy);           // set node scope attr
+        node->set_type(cls_ref);                       // set node attr
     }
     return true;
 }
@@ -101,13 +93,14 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
 bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     // don't skip the type name
     visit(node->type_name());
-    // create alias type
+
     auto alias_id = node->name().str_id();
     // name is already in current scope?
     if (scope()->has(alias_id, true)) {
         // TODO: after types are resolves, complain if types don't match
         return false;
     }
+
     auto class_node = class_def();
     if (scope()->is(Scope::Persistent)) {
         // persistent typedef (module-local or class/class tpl)
@@ -117,36 +110,32 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             // module typedef (is not a module member)
             Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
             type_ref = ref(type);
-            scope_proxy->set(alias_id, std::move(type));
+            scope_proxy->set(alias_id, std::move(type)); // add to scope
+
         } else if (scope_proxy->is(Scope::Class)) {
             // class member
             assert(class_node->type());
             auto cls = class_node->type();
-            // make
             Ptr<UserType> type =
                 ulam::make<AliasType>(program()->next_type_id(), node, cls);
             type_ref = ref(type);
-            // add to class
-            cls->set(alias_id, std::move(type));
-            // add to scope
-            scope_proxy->set(alias_id, type_ref);
+            cls->set(alias_id, std::move(type));  // add to class
+            scope_proxy->set(alias_id, type_ref); // add to scope
+
         } else if (scope_proxy->is(Scope::ClassTpl)) {
             // class tpl member
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
-            // make
             Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
             type_ref = ref(type);
-            // add to class tpl
-            tpl->set(alias_id, std::move(type));
-            // add to scope
-            scope_proxy->set(alias_id, type_ref);
+            tpl->set(alias_id, std::move(type));  // add to class tpl
+            scope_proxy->set(alias_id, type_ref); // add to scope
         } else {
             assert(false);
         }
-        // set node scope proxy
-        node->set_scope_proxy(*scope_proxy);
+        node->set_scope_proxy(*scope_proxy); // set node scope proxy
         node->set_alias_type(type_ref->basic()->as_alias());
+
     } else {
         // transient typedef (in function body)
         assert(scope()->in(Scope::Fun));
@@ -159,6 +148,7 @@ bool ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
 bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     // don't skip the type name
     visit(node->type_name());
+
     if (!scope()->is(Scope::Persistent))
         return {};
 
@@ -168,11 +158,13 @@ bool ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
         auto name_id = def->name().str_id();
+
         // already in current scope?
         if (scope_proxy->has(name_id, true)) {
             diag().emit(diag::Error, def->loc_id(), 1, "already defined");
             continue;
         }
+
         // make
         Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
         auto var = ulam::make<Var>(node->type_name(), def, Ref<Type>{}, flags);
