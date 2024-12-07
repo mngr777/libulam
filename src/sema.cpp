@@ -15,10 +15,8 @@ Sema::Sema(Diag& diag): _diag{diag} {}
 Sema::~Sema() {}
 
 void Sema::analyze(ast::Ref<ast::Root> ast) {
-    debug() << "ResolveDeps\n";
     sema::ResolveDeps resolve_deps{_diag, ast};
     resolve_deps.analyze();
-    debug() << "Resolve\n";
     assert(ast->program());
     sema::Resolver resolver{ast->program()};
     resolver.resolve();

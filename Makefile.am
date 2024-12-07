@@ -150,7 +150,8 @@ TESTS = \
 	test_memory_notepad1 \
 	test_lex_basic \
 	test_parser_expr \
-	test_sema_basic
+	test_sema_basic \
+	test_sema_color
 check_PROGRAMS = $(TESTS)
 
 TEST_LIBS = libulam.la
@@ -170,3 +171,6 @@ test_parser_expr_LDADD = $(TEST_LIBS)
 
 test_sema_basic_SOURCES = tests/sema/basic.cpp $(TEST_AST_SOURCE_FILES)
 test_sema_basic_LDADD = $(TEST_LIBS)
+
+test_sema_color_SOURCES = tests/sema/color.cpp $(TEST_AST_SOURCE_FILES)
+test_sema_color_LDADD = $(TEST_LIBS)

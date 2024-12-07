@@ -239,7 +239,6 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
 }
 
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
-    // typedef
     assert(_tok.is(tok::Typedef));
     consume();
     // type
@@ -248,13 +247,17 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
         return {};
     // alias
     if (!match(tok::TypeIdent)) {
-        panic(tok::Semicol, tok::BraceL, tok::BraceR);
+        panic(tok::Semicol, tok::BraceR);
+        consume_if(tok::Semicol);
         return {};
     }
     auto name = tok_ast_str();
     consume();
     // ;
-    expect(tok::Semicol);
+    if (!expect(tok::Semicol)) {
+        panic(tok::Semicol, tok::BraceR);
+        consume_if(tok::Semicol);
+    }
     return tree<ast::TypeDef>(std::move(type), name);
 }
 
