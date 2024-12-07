@@ -8,7 +8,7 @@ const std::string_view builtin_type_str(BuiltinTypeId id) {
     case IntId:
         return "Int";
     case UnsignedId:
-        return "Unisgned";
+        return "Unsigned";
     case BoolId:
         return "Bool";
     case UnaryId:

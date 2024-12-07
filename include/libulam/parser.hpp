@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/module.hpp"
 #include "libulam/ast/nodes/stmts.hpp"
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
@@ -71,6 +73,8 @@ private:
     ast::Ptr<ast::TypeOpExpr> parse_type_op();
     ast::Ptr<ast::TypeOpExpr>
     parse_type_op_rest(ast::Ptr<ast::TypeName>&& type);
+    ast::Ptr<ast::TypeExpr> parse_type_expr();
+    ast::Ptr<ast::ExprList> parse_array_dims();
     ast::Ptr<ast::TypeName> parse_type_name();
     ast::Ptr<ast::TypeSpec> parse_type_spec();
     ast::Ptr<ast::FunCall> parse_funcall(ast::Ptr<ast::Expr>&& obj);

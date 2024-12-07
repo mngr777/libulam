@@ -8,8 +8,6 @@
 namespace ulam::sema {
 
 bool Eval::do_visit(ast::Ref<ast::TypeDef> node) {
-    debug() << __FUNCTION__ << "\n";
-    debug() << str(node->name().str_id()) << "\n";
     resolve_type_def(node, scope());
     return RecVisitor::do_visit(node);
 }
@@ -60,7 +58,7 @@ Eval::resolve_type_name(ast::Ref<ast::TypeName> node, Ref<Scope> scope) {
             return type;
 
         // in A(x).B.C, A(x) and A(x).B must resolve to classes
-        if (!canon->basic()->is_class()) {
+        if (!canon->is_class()) {
             diag().emit(
                 diag::Error, ident->loc_id(),
                 str(ident->name().str_id()).size(), "not a class");

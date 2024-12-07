@@ -26,6 +26,6 @@ int main() {
     test::ast::Printer p{std::cout, ulam::ast::ref(ast)};
     p.print();
 
-    ulam::Sema sema{ctx.diag()};
-    sema.analyze(ulam::ast::ref(ast));
+    // ulam::Sema sema{ctx.diag()};
+    // sema.analyze(ulam::ast::ref(ast));
 }

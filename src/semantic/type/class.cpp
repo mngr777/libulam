@@ -28,8 +28,6 @@ Ptr<PersScope> make_class_tpl_scope(Ref<Scope> parent) {
 ClassBase::ClassBase(ast::Ref<ast::ClassDef> node, Ptr<PersScope>&& scope):
     _node{node}, _scope{std::move(scope)} {}
 
-str_id_t ClassBase::name_id() const { return _node->name().str_id(); }
-
 // Class
 
 Class::Class(Ref<ClassTpl> tpl):
@@ -44,6 +42,8 @@ Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
 
 Class::~Class() {}
 
+str_id_t Class::name_id() const { return node()->name().str_id(); }
+
 // ClassTpl
 
 ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
@@ -52,6 +52,8 @@ ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
     _module{module} {}
 
 ClassTpl::~ClassTpl() {}
+
+str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 
 Ref<Type>
 ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
@@ -76,7 +78,7 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
         auto sym = scope_proxy.get(name_id);
         if (sym->is<UserType>()) {
             auto type = sym->get<UserType>();
-            auto alias = type->basic()->as_alias();
+            auto alias = type->as_alias();
             assert(alias);
             Ptr<UserType> copy = ulam::make<AliasType>(
                 program()->next_type_id(), alias->node(), ref(cls));

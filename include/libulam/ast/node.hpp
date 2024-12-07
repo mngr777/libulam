@@ -28,7 +28,6 @@ private:
 
 #define ULAM_AST_SIMPLE_ATTR(type, name, init)                                 \
 public:                                                                        \
-    type name() { return _attr_##name; }                                       \
     type name() const { return _attr_##name; }                                 \
     void set_##name(type value) { _attr_##name = value; }                      \
                                                                                \

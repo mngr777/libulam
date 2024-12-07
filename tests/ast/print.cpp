@@ -294,11 +294,26 @@ bool Printer::do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
     return true;
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
+void Printer::visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
     _os << "typedef ";
     accept_me(node->type_name());
-    _os << " " << name(node) << ";";
-    return false;
+    _os << " ";
+    accept_me(node->type_expr());
+    _os << ";";
+}
+
+void Printer::visit(ulam::ast::Ref<ulam::ast::TypeExpr> node) {
+    if (node->is_ref())
+        _os << "&";
+    accept_me(node->ident());
+    if (!node->has_array_dims())
+        return;
+    auto array_dims = node->array_dims();
+    for (unsigned n = 0; n < array_dims->child_num(); ++n) {
+        _os << "[";
+        accept_me(array_dims->child(n));
+        _os << "]";
+    }
 }
 
 void Printer::traverse(ulam::ast::Ref<ulam::ast::VarDefList> node) {

@@ -16,7 +16,7 @@ namespace ulam {
 
 class Program;
 
-class PrimType : public BasicType {
+class PrimType : public Type {
 public:
     PrimType(Ref<Program> program);
 

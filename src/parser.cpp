@@ -242,23 +242,19 @@ ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     assert(_tok.is(tok::Typedef));
     consume();
     // type
-    auto type = parse_type_name();
-    if (!type)
+    auto type_name = parse_type_name();
+    if (!type_name)
         return {};
-    // alias
-    if (!match(tok::TypeIdent)) {
-        panic(tok::Semicol, tok::BraceR);
-        consume_if(tok::Semicol);
+    // alias expr
+    auto type_expr = parse_type_expr();
+    if (!type_expr)
         return {};
-    }
-    auto name = tok_ast_str();
-    consume();
     // ;
     if (!expect(tok::Semicol)) {
         panic(tok::Semicol, tok::BraceR);
         consume_if(tok::Semicol);
     }
-    return tree<ast::TypeDef>(std::move(type), name);
+    return tree<ast::TypeDef>(std::move(type_name), std::move(type_expr));
 }
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
@@ -631,6 +627,45 @@ Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
         return {};
     }
     return tree<ast::TypeOpExpr>(std::move(type), type_op);
+}
+
+ast::Ptr<ast::TypeExpr> Parser::parse_type_expr() {
+    // &
+    bool is_ref = false;
+    if (_tok.is(tok::Amp)) {
+        is_ref = true;
+        consume();
+    }
+    // ident
+    auto ident = parse_type_ident();
+    if (!ident)
+        return {};
+    // array dimensions
+    ast::Ptr<ast::ExprList> array_dims{};
+    if (_tok.is(tok::BracketL)) {
+        array_dims = parse_array_dims();
+        if (!array_dims)
+            return {};
+    }
+    auto node = tree<ast::TypeExpr>(std::move(ident), std::move(array_dims));
+    node->set_is_ref(is_ref);
+    return node;
+}
+
+ast::Ptr<ast::ExprList> Parser::parse_array_dims() {
+    assert(_tok.is(tok::BracketL));
+    consume();
+    auto node = tree<ast::ExprList>();
+    while (!_tok.is(tok::Eof)) {
+        auto expr = parse_expr();
+        if (!expect(tok::BracketR) || !expr)
+            return {};
+        node->add(std::move(expr));
+        if (!_tok.is(tok::BracketL))
+            return node;
+        consume();
+    }
+    return {};
 }
 
 ast::Ptr<ast::TypeName> Parser::parse_type_name() {

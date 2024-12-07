@@ -93,7 +93,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     // don't skip the type name
     visit(node->type_name());
 
-    auto alias_id = node->name().str_id();
+    auto alias_id = node->alias_id();
     // name is already in current scope?
     if (scope()->has(alias_id, true)) {
         // TODO: after types are resolves, complain if types don't match
@@ -133,7 +133,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             assert(false);
         }
         node->set_scope_proxy(*scope_proxy); // set node scope proxy
-        node->set_alias_type(type_ref->basic()->as_alias());
+        node->set_alias_type(type_ref->as_alias());
 
     } else {
         // transient typedef (in function body)
@@ -193,18 +193,21 @@ void ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
     visit(node->ret_type_name());
     visit(node->params());
 
-    // get class/tpl
+    // get class/tpl, name
     auto class_node = class_def();
+    auto name_id = NoStrId;
     Ref<ClassBase> cls_base{};
     if (class_node->type()) {
         cls_base = class_node->type();
+        name_id = class_node->type()->name_id();
     } else {
         cls_base = class_node->type_tpl();
+        name_id = class_node->type_tpl()->name_id();
     }
     assert(cls_base);
+    assert(name_id != NoStrId);
 
     // find or create fun
-    auto name_id = cls_base->name_id();
     auto sym = cls_base->get(name_id);
     Ref<Fun> fun_ref{};
     if (sym) {

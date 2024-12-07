@@ -78,16 +78,36 @@ private:
     ClassKind _kind;
 };
 
-class TypeDef : public Tuple<Stmt, TypeName>,
-                public Named,
-                public ScopeObjectNode {
+class TypeExpr : public Tuple<Stmt, TypeIdent, ExprList> {
+    ULAM_AST_NODE
+    ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
+public:
+    TypeExpr(Ptr<TypeIdent>&& ident, Ptr<ExprList>&& array_dims):
+        Tuple{std::move(ident), std::move(array_dims)} {}
+
+    ULAM_AST_TUPLE_PROP(ident, 0)
+    ULAM_AST_TUPLE_PROP(array_dims, 1)
+
+    bool is_array() const { return has_array_dims(); }
+};
+
+class TypeDef : public Tuple<Stmt, TypeName, TypeExpr>, public ScopeObjectNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(AliasType, alias_type)
 public:
-    TypeDef(Ptr<TypeName>&& type, Str name):
-        Tuple{std::move(type)}, Named{name} {}
+    TypeDef(Ptr<TypeName>&& type_name, Ptr<TypeExpr>&& type_expr):
+        Tuple{std::move(type_name), std::move(type_expr)} {}
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
+    ULAM_AST_TUPLE_PROP(type_expr, 1)
+
+    Str alias() {
+        assert(has_type_expr());
+        assert(type_expr()->has_ident());
+        return type_expr()->ident()->name();
+    }
+
+    str_id_t alias_id() { return alias().str_id(); }
 };
 
 class FunDefBody : public Block {

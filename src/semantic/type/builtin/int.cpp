@@ -8,11 +8,8 @@
 namespace ulam {
 
 bool IntType::is_convertible(Ref<const Type> type) {
-    // is basic type?
-    if (!type->is_basic())
-        return false;
     // is primitive?
-    auto prim = type->basic()->as_prim();
+    auto prim = type->as_prim();
     if (!prim)
         return false;
     switch (prim->builtin_type_id()) {

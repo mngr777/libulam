@@ -29,7 +29,6 @@ using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
 constexpr array_size_t UnknownArraySize = -1;
 
-class BasicType;
 class PrimType;
 class Class;
 class AliasType;
@@ -43,21 +42,31 @@ public:
 
     type_id_t id() const { return _id; }
 
-    virtual Ref<Type> prev() = 0;
-    virtual Ref<const Type> prev() const = 0;
-
-    bool is_basic() const;
-
-    virtual Ref<BasicType> basic() = 0;
-    virtual Ref<const BasicType> basic() const = 0;
-
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
 
-    bool is_array() const { return array_size() != 0; }
-    virtual array_size_t array_size() const { return 0; }
+    virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
 
-    virtual bool is_reference() const { return false; }
+    bool is_prim() const { return as_prim(); }
+    bool is_class() const { return as_prim(); }
+    bool is_alias() const { return as_alias(); }
+    bool is_array() const { return as_array(); }
+    bool is_ref() const { return as_ref(); }
+
+    virtual Ref<PrimType> as_prim() { return {}; }
+    virtual Ref<const PrimType> as_prim() const { return {}; }
+
+    virtual Ref<Class> as_class() { return {}; }
+    virtual Ref<const Class> as_class() const { return {}; }
+
+    virtual Ref<AliasType> as_alias() { return {}; }
+    virtual Ref<const AliasType> as_alias() const { return {}; }
+
+    virtual Ref<ArrayType> as_array() { return {}; }
+    virtual Ref<const ArrayType> as_array() const { return {}; }
+
+    virtual Ref<RefType> as_ref() { return {}; }
+    virtual Ref<const RefType> as_ref() const { return {}; }
 
     virtual bool is_convertible(Ref<const Type> type) { return false; }
 
@@ -86,37 +95,11 @@ private:
     type_id_t _id{};
 };
 
-class BasicType : public Type {
+class UserType : public Type, public ScopeObject {
 public:
-    explicit BasicType(type_id_t id): Type{id} {}
+    explicit UserType(type_id_t id): Type{id} {}
 
-    void add_op();
-
-    Ref<Type> prev() override { return this; }
-    Ref<const Type> prev() const override { return this; }
-
-    Ref<BasicType> basic() override { return this; }
-    Ref<const BasicType> basic() const override { return this; }
-
-    virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
-
-    bool is_class() const { return as_class(); }
-    bool is_prim() const { return as_prim(); }
-    bool is_alias() const { return as_alias(); }
-
-    virtual Ref<Class> as_class() { return {}; }
-    virtual Ref<const Class> as_class() const { return {}; }
-
-    virtual Ref<PrimType> as_prim() { return {}; }
-    virtual Ref<const PrimType> as_prim() const { return {}; }
-
-    virtual Ref<AliasType> as_alias() { return {}; }
-    virtual Ref<const AliasType> as_alias() const { return {}; }
-};
-
-class UserType : public BasicType, public ScopeObject {
-public:
-    UserType(type_id_t id): BasicType{id} {}
+    virtual str_id_t name_id() const = 0;
 };
 
 class AliasType : public UserType {
@@ -127,7 +110,7 @@ public:
     Ref<AliasType> as_alias() override { return this; }
     Ref<const AliasType> as_alias() const override { return this; }
 
-    str_id_t name_id() const;
+    str_id_t name_id() const override;
 
     ast::Ref<ast::TypeDef> node() { return _node; }
 
@@ -141,10 +124,6 @@ public:
         return _aliased->canon();
     }
 
-    // ??
-    Ref<Class> owner() { return _owner; }
-    Ref<const Class> owner() const { return _owner; }
-
     Ref<Type> aliased() { return _aliased; }
     Ref<const Type> aliased() const { return _aliased; }
 
@@ -152,53 +131,39 @@ public:
 
 private:
     ast::Ref<ast::TypeDef> _node;
-    Ref<Class> _owner;
     Ref<Type> _aliased;
 };
 
-// TODO: canon() for decorators
-
-class _TypeDec : public Type {
+class ArrayType : public Type {
 public:
-    _TypeDec(type_id_t id, Ref<Type> prev): Type{id}, _prev{prev} {}
-    virtual ~_TypeDec() = 0;
+    ArrayType(type_id_t id, Ref<Type> item_type, array_size_t array_size):
+        Type{id}, _item_type{item_type}, _array_size{array_size} {}
 
-    Ref<Type> prev() override { return _prev; }
-    Ref<const Type> prev() const override { return _prev; }
+    Ref<ArrayType> as_array() override { return this; }
+    Ref<const ArrayType> as_array() const override { return this; }
 
-    Ref<BasicType> basic() override { return _prev->basic(); }
-    Ref<const BasicType> basic() const override { return _prev->basic(); }
+    Ref<Type> item_type() { return _item_type; }
+    Ref<const Type> item_type() const { return _item_type; }
 
-    array_size_t array_size() const override { return _prev->array_size(); }
-
-    bool is_reference() const override { return _prev->is_reference(); }
+    array_size_t array_size() const { return _array_size; }
 
 private:
-    Ref<Type> _prev;
-};
-
-class CompType : public _TypeDec {
-public:
-    CompType(type_id_t id, Ref<Type> prev): _TypeDec{id, prev} {}
-    ~CompType() = 0;
-};
-
-class ArrayType : public CompType {
-public:
-    ArrayType(type_id_t id, Ref<Type> prev, array_size_t array_size):
-        CompType{id, prev}, _array_size{array_size} {}
-
-    array_size_t array_size() const override { return _array_size; }
-
-private:
+    Ref<Type> _item_type;
     array_size_t _array_size;
 };
 
-class RefType : public CompType {
+class RefType : public Type {
 public:
-    RefType(type_id_t id, Ref<Type> prev): CompType{id, prev} {}
+    RefType(type_id_t id, Ref<Type> refd): Type{id}, _refd{refd} {}
 
-    bool is_reference() const override { return true; }
+    Ref<RefType> as_ref() override { return this; }
+    Ref<const RefType> as_ref() const override { return this; }
+
+    Ref<Type> refd() { return _refd; }
+    Ref<const Type> refd() const { return _refd; }
+
+private:
+    Ref<Type> _refd;
 };
 
 } // namespace ulam

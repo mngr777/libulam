@@ -51,9 +51,9 @@ void Out::print(Scope::Symbol* sym) {
     if (sym->is<UserType>()) {
         _os << "type ";
         auto type = sym->get<UserType>();
-        if (type->basic()->is_alias()) {
+        if (type->is_alias()) {
             _os << "(alias)";
-        } else if (type->basic()->is_class()) {
+        } else if (type->is_class()) {
             _os << "(class)";
         }
     } else if (sym->is<ClassTpl>()) {

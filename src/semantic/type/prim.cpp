@@ -4,7 +4,7 @@
 namespace ulam {
 
 PrimType::PrimType(Ref<Program> program):
-    BasicType{program->next_type_id()}, _program{program} {}
+    Type{program->next_type_id()}, _program{program} {}
 
 Diag& PrimType::diag() {
     return program()->diag();

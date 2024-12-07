@@ -66,8 +66,8 @@ bool Resolver::resolve(Ref<Class> cls) {
         if (sym->is<UserType>()) {
             // alias
             auto type = sym->get<UserType>();
-            assert(type->basic()->is_alias());
-            res = resolve(type->basic()->as_alias(), {});
+            assert(type->is_alias());
+            res = resolve(type->as_alias(), {});
         } else if (sym->is<Var>()) {
             // var
             res = resolve(sym->get<Var>(), {});
@@ -157,8 +157,8 @@ Ref<Type> Resolver::resolve_type_name(
         auto ident = type_name->ident(n);
         auto name_id = ident->name().str_id();
         // recursively resolve aliases
-        if (type->basic()->is_alias()) {
-            if (!resolve(type->basic()->as_alias(), {})) {
+        if (type->is_alias()) {
+            if (!resolve(type->as_alias(), {})) {
                 diag().emit(
                     diag::Error, ident->loc_id(), str(name_id).size(),
                     "cannot resolve");
@@ -172,13 +172,13 @@ Ref<Type> Resolver::resolve_type_name(
         // in A(x).B.C, A(x) and A(x).B must resolve to classes
         assert(type->canon());
         auto canon = type->canon();
-        if (!canon->basic()->is_class()) {
+        if (!canon->is_class()) {
             diag().emit(
                 diag::Error, ident->loc_id(), str(name_id).size(),
                 "not a class");
             return {};
         }
-        auto cls = canon->basic()->as_class();
+        auto cls = canon->as_class();
 
         // move to class member
         // can it be same class? e.g.

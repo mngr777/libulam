@@ -26,6 +26,10 @@ public:
     virtual ExprRes accept(ExprVisitor& v) { return {}; };
 };
 
+class ExprList : public List<Node, Expr> {
+    ULAM_AST_NODE
+};
+
 class TypeOpExpr : public Tuple<Expr, TypeName> {
     ULAM_AST_EXPR
 public:

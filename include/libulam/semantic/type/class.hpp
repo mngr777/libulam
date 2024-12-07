@@ -34,8 +34,6 @@ public:
 public:
     Ref<ClassBase> as_class_base() { return this; }
 
-    str_id_t name_id() const;
-
     Ref<PersScope> scope() { return ref(_scope); }
 
     bool has(str_id_t name_id) const { return _members.has(name_id); }
@@ -52,6 +50,7 @@ public:
     }
 
     auto node() { return _node; }
+    const auto node() const { return _node; }
 
 private:
     Ref<ast::ClassDef> _node;
@@ -68,6 +67,8 @@ public:
     Class(Class&&) = default;
     Class& operator=(Class&&) = default;
 
+    str_id_t name_id() const override;
+
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
 
@@ -81,6 +82,8 @@ class ClassTpl : public TypeTpl, public ClassBase, public ScopeObject {
 public:
     ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node);
     ~ClassTpl();
+
+    str_id_t name_id() const;
 
     Ref<Type>
     type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;

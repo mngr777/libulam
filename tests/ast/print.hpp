@@ -83,10 +83,12 @@ protected:
     using PrinterBase::visit;
 
     void visit(ulam::ast::Ref<ulam::ast::ClassDef> node) override;
+    void visit(ulam::ast::Ref<ulam::ast::TypeDef> node) override;
     void visit(ulam::ast::Ref<ulam::ast::VarDef> node) override;
     void visit(ulam::ast::Ref<ulam::ast::FunDef> node) override;
 
     void visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) override;
+    void visit(ulam::ast::Ref<ulam::ast::TypeExpr> node) override;
     void visit(ulam::ast::Ref<ulam::ast::ParamList> node) override;
     void visit(ulam::ast::Ref<ulam::ast::Param> node) override;
     void visit(ulam::ast::Ref<ulam::ast::ArgList> node) override;
@@ -104,7 +106,6 @@ protected:
     void visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) override;
 
     bool do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) override;
-    bool do_visit(ulam::ast::Ref<ulam::ast::TypeDef> node) override;
     void traverse(ulam::ast::Ref<ulam::ast::VarDefList> node) override;
     void traverse(ulam::ast::Ref<ulam::ast::TypeName> node) override;
     bool do_visit(ulam::ast::Ref<ulam::ast::Ident> node) override;
