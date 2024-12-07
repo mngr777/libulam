@@ -1,3 +1,4 @@
+#pragma once
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
@@ -14,7 +15,7 @@ class Value;
 
 class StringType : public PrimType {
 public:
-    StringType(Ref<Program> program): PrimType{program} {}
+    StringType(TypeIdGen& id_gen): PrimType{id_gen} {}
 };
 
 } // namespace ulam

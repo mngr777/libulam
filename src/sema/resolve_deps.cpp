@@ -57,7 +57,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
 
         // class tpl
         auto params = node->params();
-        auto tpl = ulam::make<ClassTpl>(module(), node);
+        auto tpl = ulam::make<ClassTpl>(
+            program()->type_id_gen(), node, module()->scope());
         auto tpl_ref = ref(tpl);
 
         // add params
@@ -68,9 +69,10 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
             auto var = ulam::make<Var>(
                 param->type_name(), param, Ref<Type>{}, Var::ClassParam);
             auto var_ref = ref(var);
-            tpl->set(param_name_id, std::move(var));  // set class tpl var
-            scope_proxy->set(param_name_id, var_ref); // add to scope
-            param->set_scope_proxy(*scope_proxy);     // set node scope attr
+            tpl->set(param_name_id, std::move(var));   // set class tpl var
+            tpl->scope()->set(param_name_id, var_ref); // add to tpl scope
+            param->set_scope_proxy(
+                tpl->scope()->proxy()); // set node scope attr
         }
         module()->set<ClassTpl>(name_id, std::move(tpl)); // add to module
         scope_proxy->set(name_id, tpl_ref);               // add to scope
@@ -79,7 +81,8 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
 
     } else {
         // class
-        auto cls = ulam::make<Class>(module(), node);
+        auto cls = ulam::make<Class>(
+            program()->type_id_gen(), node, module()->scope());
         auto cls_ref = ref(cls);
         module()->set<Class>(name_id, std::move(cls)); // add to module
         scope_proxy->set(name_id, cls_ref);            // add to scope
@@ -107,7 +110,8 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
         auto scope_proxy = scopes().top<PersScopeProxy>();
         if (scope_proxy->is(Scope::Module)) {
             // module typedef (is not a module member)
-            Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
+            Ptr<UserType> type =
+                ulam::make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             scope_proxy->set(alias_id, std::move(type)); // add to scope
 
@@ -116,7 +120,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             assert(class_node->type());
             auto cls = class_node->type();
             Ptr<UserType> type =
-                ulam::make<AliasType>(program()->next_type_id(), node, cls);
+                ulam::make<AliasType>(program()->type_id_gen(), node, cls);
             type_ref = ref(type);
             cls->set(alias_id, std::move(type));  // add to class
             scope_proxy->set(alias_id, type_ref); // add to scope
@@ -125,7 +129,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             // class tpl member
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
-            Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
+            Ptr<UserType> type = ulam::make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             tpl->set(alias_id, std::move(type));  // add to class tpl
             scope_proxy->set(alias_id, type_ref); // add to scope
@@ -138,7 +142,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     } else {
         // transient typedef (in function body)
         assert(scope()->in(Scope::Fun));
-        Ptr<UserType> type = ulam::make<AliasType>(NoTypeId, node);
+        Ptr<UserType> type = ulam::make<AliasType>(program()->type_id_gen(), node);
         scope()->set(alias_id, std::move(type));
     }
 }
@@ -238,9 +242,9 @@ bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
         // builtin type/tpl
         BuiltinTypeId id = type_spec->builtin_type_id();
         if (has_bitsize(id)) {
-            type_spec->set_type_tpl(program()->builtin_type_tpl(id));
+            type_spec->set_type_tpl(program()->builtins().prim_type_tpl(id));
         } else if (is_prim(id)) {
-            type_spec->set_type(program()->builtin_type(id));
+            type_spec->set_type(program()->builtins().prim_type(id));
         }
         return false;
     }

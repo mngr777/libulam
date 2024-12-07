@@ -1,5 +1,4 @@
 #include "src/semantic/detail/integer.hpp"
-#include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/semantic/ops.hpp>

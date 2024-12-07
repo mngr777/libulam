@@ -3,7 +3,6 @@
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
-#include <libulam/diag.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -30,15 +29,13 @@ ClassBase::ClassBase(ast::Ref<ast::ClassDef> node, Ptr<PersScope>&& scope):
 
 // Class
 
-Class::Class(Ref<ClassTpl> tpl):
-    UserType{tpl->_module->program()->next_type_id()},
-    ClassBase{tpl->node(), make_class_scope(tpl->_module->scope())},
+Class::Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl):
+    UserType{id_gen},
+    ClassBase{tpl->node(), make_class_scope(tpl->scope()->parent())},
     _tpl{tpl} {}
 
-Class::Class(Ref<Module> module, ast::Ref<ast::ClassDef> node):
-    UserType{module->program()->next_type_id()},
-    ClassBase{node, make_class_scope(module->scope())},
-    _tpl{} {}
+Class::Class(TypeIdGen& id_gen, ast::Ref<ast::ClassDef> node, Ref<Scope> scope):
+    UserType{id_gen}, ClassBase{node, make_class_scope(scope)}, _tpl{} {}
 
 Class::~Class() {}
 
@@ -46,10 +43,9 @@ str_id_t Class::name_id() const { return node()->name().str_id(); }
 
 // ClassTpl
 
-ClassTpl::ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node):
-    TypeTpl{module->program()},
-    ClassBase{node, make_class_tpl_scope(module->scope())},
-    _module{module} {}
+ClassTpl::ClassTpl(
+    TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope):
+    TypeTpl{id_gen}, ClassBase{node, make_class_tpl_scope(scope)} {}
 
 ClassTpl::~ClassTpl() {}
 
@@ -69,7 +65,7 @@ ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
 Ptr<Class>
 ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = ulam::make<Class>(this);
+    auto cls = ulam::make<Class>(id_gen(), this);
     // copy members/scope objects
     auto scope_proxy = scope()->proxy();
     scope_proxy.reset();
@@ -80,8 +76,8 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
             auto type = sym->get<UserType>();
             auto alias = type->as_alias();
             assert(alias);
-            Ptr<UserType> copy = ulam::make<AliasType>(
-                program()->next_type_id(), alias->node(), ref(cls));
+            Ptr<UserType> copy =
+                ulam::make<AliasType>(id_gen(), alias->node(), ref(cls));
             cls->scope()->set(name_id, ref(copy)); // add to class scope
             cls->set(name_id, std::move(copy));    // add class typedef
 
@@ -137,8 +133,9 @@ std::string ClassTpl::type_args_str(const TypedValueList& args) {
         } else if (rval->is<Bool>()) {
             str += (rval->get<Bool>() ? "t" : "f");
         } else if (rval->is<String>()) {
-            str += std::to_string(
-                program()->ast()->ctx().str_id(rval->get<String>()));
+            // str += std::to_string(
+            //     program()->ast()->ctx().str_id(rval->get<String>()));
+            return rval->get<String>();
         } else {
             assert(false);
         }

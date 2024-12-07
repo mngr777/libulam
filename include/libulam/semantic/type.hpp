@@ -13,6 +13,8 @@ namespace ulam::ast {
 class Node;
 class BinaryOp;
 class TypeDef;
+class TypeName;
+class TypeExpr;
 } // namespace ulam::ast
 
 namespace ulam {
@@ -29,6 +31,19 @@ using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
 constexpr array_size_t UnknownArraySize = -1;
 
+class TypeIdGen {
+public:
+    TypeIdGen(): _next{1} {}
+
+    TypeIdGen(TypeIdGen&&) = default;
+    TypeIdGen& operator=(TypeIdGen&&) = default;
+
+    type_id_t next() { return _next++; }
+
+private:
+    type_id_t _next;
+};
+
 class PrimType;
 class Class;
 class AliasType;
@@ -37,8 +52,8 @@ class RefType;
 
 class Type {
 public:
-    explicit Type(type_id_t id): _id{id} {}
-    virtual ~Type() {}
+    explicit Type(TypeIdGen& id_gen): _id_gen{id_gen}, _id{id_gen.next()} {}
+    virtual ~Type();
 
     type_id_t id() const { return _id; }
 
@@ -48,7 +63,7 @@ public:
     virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
 
     bool is_prim() const { return as_prim(); }
-    bool is_class() const { return as_prim(); }
+    bool is_class() const { return as_class(); }
     bool is_alias() const { return as_alias(); }
     bool is_array() const { return as_array(); }
     bool is_ref() const { return as_ref(); }
@@ -88,24 +103,30 @@ public:
         return {ExprError::NoOperator};
     };
 
-    virtual Ref<ArrayType> array(array_size_t size) { return {}; };
+    virtual Ref<ArrayType> array(array_size_t size);
     virtual Ref<RefType> reference() { return {}; }
 
+protected:
+    TypeIdGen& id_gen() { return _id_gen; }
+
 private:
-    type_id_t _id{};
+    TypeIdGen& _id_gen;
+    type_id_t _id;
+    std::unordered_map<array_size_t, Ptr<ArrayType>> _array_types;
 };
 
 class UserType : public Type, public ScopeObject {
 public:
-    explicit UserType(type_id_t id): Type{id} {}
+    explicit UserType(TypeIdGen& id_gen): Type{id_gen} {}
 
     virtual str_id_t name_id() const = 0;
 };
 
 class AliasType : public UserType {
 public:
-    AliasType(type_id_t id, ast::Ref<ast::TypeDef> node, Ref<Class> owner = {}):
-        UserType{id}, _node(node) {}
+    AliasType(
+        TypeIdGen& id_gen, ast::Ref<ast::TypeDef> node, Ref<Class> owner = {}):
+        UserType{id_gen}, _node(node) {}
 
     Ref<AliasType> as_alias() override { return this; }
     Ref<const AliasType> as_alias() const override { return this; }
@@ -113,6 +134,8 @@ public:
     str_id_t name_id() const override;
 
     ast::Ref<ast::TypeDef> node() { return _node; }
+    ast::Ref<ast::TypeName> type_name();
+    ast::Ref<ast::TypeExpr> type_expr();
 
     Ref<Type> canon() override {
         return const_cast<Ref<Type>>(std::as_const(*this).canon());
@@ -136,8 +159,8 @@ private:
 
 class ArrayType : public Type {
 public:
-    ArrayType(type_id_t id, Ref<Type> item_type, array_size_t array_size):
-        Type{id}, _item_type{item_type}, _array_size{array_size} {}
+    ArrayType(TypeIdGen& id_gen, Ref<Type> item_type, array_size_t array_size):
+        Type{id_gen}, _item_type{item_type}, _array_size{array_size} {}
 
     Ref<ArrayType> as_array() override { return this; }
     Ref<const ArrayType> as_array() const override { return this; }
@@ -154,7 +177,7 @@ private:
 
 class RefType : public Type {
 public:
-    RefType(type_id_t id, Ref<Type> refd): Type{id}, _refd{refd} {}
+    RefType(TypeIdGen& id_gen, Ref<Type> refd): Type{id_gen}, _refd{refd} {}
 
     Ref<RefType> as_ref() override { return this; }
     Ref<const RefType> as_ref() const override { return this; }

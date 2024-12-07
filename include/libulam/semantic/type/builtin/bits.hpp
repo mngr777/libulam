@@ -1,3 +1,4 @@
+#pragma once
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
@@ -10,13 +11,10 @@ class BinaryOp;
 
 namespace ulam {
 
-class Program;
-class Value;
-
 class BitsType : public _PrimType<BitsId, 1, 4096, 8> {
 public:
-    BitsType(Ref<Program> program, bitsize_t bitsize):
-        _PrimType{program, bitsize} {}
+    BitsType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
+        _PrimType{id_gen, tpl, bitsize} {}
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;

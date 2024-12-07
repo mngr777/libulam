@@ -35,7 +35,6 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/scope/object.hpp \
 	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/symbol.hpp \
-	include/libulam/semantic/type/builtin.hpp \
 	include/libulam/semantic/type/builtin/bits.hpp \
 	include/libulam/semantic/type/builtin/bool.hpp \
 	include/libulam/semantic/type/builtin/int.hpp \
@@ -44,6 +43,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/builtin/unsigned.hpp \
 	include/libulam/semantic/type/builtin/void.hpp \
 	include/libulam/semantic/type/builtin_type_id.hpp \
+	include/libulam/semantic/type/builtins.hpp \
 	include/libulam/semantic/type/class.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/prim.hpp \
@@ -74,6 +74,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtin/string.cpp \
 	src/semantic/type/builtin/unary.cpp \
 	src/semantic/type/builtin/unsigned.cpp \
+	src/semantic/type/builtins.cpp \
 	src/semantic/type_tpl.cpp \
 	src/semantic/value.cpp
 

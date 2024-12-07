@@ -1,0 +1,22 @@
+#pragma once
+#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
+#include <unordered_map>
+
+namespace ulam {
+
+class Builtins {
+public:
+    Builtins(TypeIdGen& id_gen);
+
+    Ref<PrimTypeTpl> prim_type_tpl(BuiltinTypeId id);
+    Ref<PrimType> prim_type(BuiltinTypeId id);
+    Ref<Type> type(BuiltinTypeId id);
+
+private:
+    std::unordered_map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;
+    std::unordered_map<BuiltinTypeId, Ptr<PrimType>> _prim_types;
+};
+
+} // namespace ulam

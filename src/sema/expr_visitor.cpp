@@ -23,7 +23,7 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::Cast> node) {
 
 ExprRes ExprVisitor::visit(ast::Ref<ast::BoolLit> node) {
     // Bool(1)
-    auto type = program()->prim_type_tpl(BoolId)->type(node, 1);
+    auto type = program()->builtins().prim_type_tpl(BoolId)->type(node, 1);
     assert(type);
     return {type, Value{RValue{(Unsigned)node->value()}}};
 }
@@ -33,13 +33,13 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::NumLit> node) {
     if (number.is_signed()) {
         // Int(n)
         auto type =
-            program()->prim_type_tpl(IntId)->type(node, number.bitsize());
+            program()->builtins().prim_type_tpl(IntId)->type(node, number.bitsize());
         assert(type);
         return {type, RValue{number.value<Integer>()}};
     } else {
         // Unsigned(n)
         auto type =
-            program()->prim_type_tpl(UnsignedId)->type(node, number.bitsize());
+            program()->builtins().prim_type_tpl(UnsignedId)->type(node, number.bitsize());
         assert(type);
         return {type, RValue{number.value<Unsigned>()}};
     }
@@ -47,7 +47,7 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::NumLit> node) {
 
 ExprRes ExprVisitor::visit(ast::Ref<ast::StrLit> node) {
     // String
-    auto type = program()->prim_type(StringId);
+    auto type = program()->builtins().prim_type(StringId);
     assert(type);
     return {type, Value{RValue{node->value()}}};
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -5,13 +6,12 @@
 
 namespace ulam {
 
-class Program;
 class Value;
 
 class IntType : public _PrimType<IntId, 2, ULAM_MAX_INT_SIZE, 32> {
 public:
-    IntType(Ref<Program> program, bitsize_t bitsize):
-        _PrimType{program, bitsize} {}
+    IntType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
+        _PrimType{id_gen, tpl, bitsize} {}
 
     bool is_convertible(Ref<const Type> type) override;
 

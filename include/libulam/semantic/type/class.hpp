@@ -60,12 +60,9 @@ private:
 
 class Class : public UserType, public ClassBase {
 public:
-    Class(Ref<ClassTpl> tpl);
-    Class(Ref<Module> module, ast::Ref<ast::ClassDef> node);
+    Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl);
+    Class(TypeIdGen& id_gen, ast::Ref<ast::ClassDef> node, Ref<Scope> scope);
     ~Class();
-
-    Class(Class&&) = default;
-    Class& operator=(Class&&) = default;
 
     str_id_t name_id() const override;
 
@@ -80,7 +77,7 @@ class ClassTpl : public TypeTpl, public ClassBase, public ScopeObject {
     friend Class;
 
 public:
-    ClassTpl(Ref<Module> module, Ref<ast::ClassDef> node);
+    ClassTpl(TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope);
     ~ClassTpl();
 
     str_id_t name_id() const;
@@ -94,7 +91,6 @@ private:
     // TMP
     std::string type_args_str(const TypedValueList& args);
 
-    Ref<Module> _module;
     Ref<ast::ClassDef> _node;
     std::unordered_map<std::string, Ptr<Class>> _types;
 };

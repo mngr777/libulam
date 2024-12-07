@@ -14,11 +14,11 @@
 
 namespace ulam {
 
-class Program;
+class Builtins;
 
 class PrimType : public Type {
 public:
-    PrimType(Ref<Program> program);
+    PrimType(TypeIdGen& id_gen);
 
     Ref<PrimType> as_prim() { return this; }
     Ref<const PrimType> as_prim() const { return this; }
@@ -26,15 +26,11 @@ public:
     virtual bitsize_t bitsize() const { return NoBitsize; }
 
 protected:
-    Ref<Program> program() { return _program; }
-    Diag& diag();
-
-    Ref<Type> prim_type(
-        ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);
-
-private:
-    Ref<Program> _program;
+    // Ref<Type> prim_type(
+    //     ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);
 };
+
+class PrimTypeTpl;
 
 template <
     BuiltinTypeId _TypeId,
@@ -54,19 +50,20 @@ public:
     static constexpr bitsize_t MaxSize = Max;
     static constexpr bitsize_t DefaultSize = Default;
 
-    _PrimType(Ref<Program> program, bitsize_t bitsize):
-        PrimType{program}, _bitsize{bitsize} {}
+    _PrimType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
+        PrimType{id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
 
     BuiltinTypeId builtin_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
 
 private:
+    Ref<PrimTypeTpl> _tpl;
     bitsize_t _bitsize;
 };
 
 class PrimTypeTpl : public TypeTpl {
 public:
-    PrimTypeTpl(Ref<Program> program);
+    PrimTypeTpl(TypeIdGen& id_gen);
 
     Ref<Type>
     type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override = 0;
@@ -77,7 +74,7 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
     static_assert(T::MaxSize > 0);
 
 public:
-    _PrimTypeTpl(Ref<Program> program): PrimTypeTpl{program} {}
+    _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
 
     // TODO: move impl to .ipp
     Ref<Type> type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
@@ -87,10 +84,10 @@ public:
             size = T::DefaultSize;
         } else {
             if (args.size() > 1) {
-                diag().emit(
-                    diag::Error, args_node->loc_id(), 1,
-                    std::string("too many arguments for ") + type_str());
-                // continue
+                // diag().emit(
+                //     diag::Error, args_node->loc_id(), 1,
+                //     std::string("too many arguments for ") + type_str());
+                // // continue
             }
             // get first arg
             auto& arg = args.front();
@@ -102,10 +99,10 @@ public:
             } else if (rval->is<Unsigned>()) {
                 size = rval->get<Unsigned>();
             } else {
-                diag().emit(
-                    diag::Error, args_node->loc_id(), 1,
-                    "cannot convert to bit size");
-                return {};
+                // diag().emit(
+                //     diag::Error, args_node->loc_id(), 1,
+                //     "cannot convert to bit size");
+                // return {};
             }
         }
         return type(args_node, size);
@@ -114,16 +111,16 @@ public:
     Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t size) {
         // check, adjust and continue on error
         if (size < T::MinSize) {
-            diag().emit(
-                diag::Error, node->loc_id(), 1,
-                std::string("bit size argument must be at least ") +
-                    std::to_string(T::MinSize));
+            // diag().emit(
+            //     diag::Error, node->loc_id(), 1,
+            //     std::string("bit size argument must be at least ") +
+            //         std::to_string(T::MinSize));
             size = T::MinSize;
         } else if (size > T::MaxSize) {
-            diag().emit(
-                diag::Error, node->loc_id(), 1,
-                std::string("bit size argument must be at most ") +
-                    std::to_string(T::MaxSize));
+            // diag().emit(
+            //     diag::Error, node->loc_id(), 1,
+            //     std::string("bit size argument must be at most ") +
+            //         std::to_string(T::MaxSize));
             size = T::MaxSize;
         }
         return get(size);
@@ -136,7 +133,7 @@ private:
             if (it != _types.end())
                 return ref(it->second);
         }
-        auto type = make<T>(program(), size);
+        auto type = make<T>(id_gen(), this, size);
         auto type_ref = ref(type);
         _types.emplace(size, std::move(type));
         return type_ref;

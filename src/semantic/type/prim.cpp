@@ -3,20 +3,16 @@
 
 namespace ulam {
 
-PrimType::PrimType(Ref<Program> program):
-    Type{program->next_type_id()}, _program{program} {}
+PrimType::PrimType(TypeIdGen& id_gen):
+    Type{id_gen} {}
 
-Diag& PrimType::diag() {
-    return program()->diag();
-}
+// Ref<Type> PrimType::prim_type(
+//     ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize) {
+//     return (bitsize == 0) ? program()->prim_type(id)
+//                           : program()->prim_type_tpl(id)->type(node, bitsize);
+// }
 
-Ref<Type> PrimType::prim_type(
-    ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize) {
-    return (bitsize == 0) ? program()->prim_type(id)
-                          : program()->prim_type_tpl(id)->type(node, bitsize);
-}
-
-PrimTypeTpl::PrimTypeTpl(Ref<Program> program):
-    TypeTpl{program} {}
+PrimTypeTpl::PrimTypeTpl(TypeIdGen& id_gen):
+    TypeTpl{id_gen} {}
 
 } // namespace ulam
