@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <cstdint>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -103,8 +104,8 @@ public:
         return {ExprError::NoOperator};
     };
 
-    virtual Ref<ArrayType> array(array_size_t size);
-    virtual Ref<RefType> reference() { return {}; }
+    virtual Ref<ArrayType> array_type(array_size_t size);
+    virtual Ref<RefType> ref_type();
 
 protected:
     TypeIdGen& id_gen() { return _id_gen; }
@@ -113,6 +114,7 @@ private:
     TypeIdGen& _id_gen;
     type_id_t _id;
     std::unordered_map<array_size_t, Ptr<ArrayType>> _array_types;
+    Ptr<RefType> _ref_type;
 };
 
 class UserType : public Type, public ScopeObject {
@@ -184,6 +186,8 @@ public:
 
     Ref<Type> refd() { return _refd; }
     Ref<const Type> refd() const { return _refd; }
+
+    Ref<RefType> ref_type() override { assert(false); }
 
 private:
     Ref<Type> _refd;

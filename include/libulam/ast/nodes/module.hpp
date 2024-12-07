@@ -81,6 +81,7 @@ private:
 class TypeExpr : public Tuple<Stmt, TypeIdent, ExprList> {
     ULAM_AST_NODE
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, amp_loc_id, NoLocId)
 public:
     TypeExpr(Ptr<TypeIdent>&& ident, Ptr<ExprList>&& array_dims):
         Tuple{std::move(ident), std::move(array_dims)} {}

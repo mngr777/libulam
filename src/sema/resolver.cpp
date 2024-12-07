@@ -1,5 +1,7 @@
-#include "libulam/diag.hpp"
+#include "libulam/semantic/type.hpp"
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/diag.hpp>
+#include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/helper/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
 
@@ -8,11 +10,17 @@
 #include "src/debug.hpp"
 
 #define CHECK_STATE(obj)                                                       \
-    {                                                                          \
+    do {                                                                       \
         auto is_resolved = check_state(obj);                                   \
         if (is_resolved.has_value())                                           \
             return is_resolved.value();                                        \
-    }
+    } while (false)
+
+#define RET_UPD_STATE(obj, is_resolved)                                        \
+    do {                                                                       \
+        update_state((obj), (is_resolved));                                    \
+        return (is_resolved);                                                  \
+    } while (false)
 
 namespace ulam::sema {
 namespace {
@@ -50,8 +58,7 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
         auto res = resolve(var, {});
         is_resolved = is_resolved && res;
     }
-    update_state(cls_tpl, is_resolved);
-    return is_resolved;
+    RET_UPD_STATE(cls_tpl, is_resolved);
 }
 
 bool Resolver::resolve(Ref<Class> cls) {
@@ -78,18 +85,50 @@ bool Resolver::resolve(Ref<Class> cls) {
         }
         is_resolved = is_resolved && res;
     }
-    update_state(cls, is_resolved);
-    return is_resolved;
+    RET_UPD_STATE(cls, is_resolved);
 }
 
 bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
     CHECK_STATE(alias);
-    auto type = resolve_type_name(
-        alias->node()->type_name(), select_scope(alias, scope));
-    if (type)
-        alias->set_aliased(type);
-    update_state(alias, (bool)type);
-    return type;
+
+    auto type_name = alias->node()->type_name();
+    auto type_expr = alias->node()->type_expr();
+
+    auto type = resolve_type_name(type_name, select_scope(alias, scope));
+    if (!type)
+        RET_UPD_STATE(alias, false);
+
+    // &
+    if (type_expr->is_ref() && !type->canon()->is_ref())
+        type = type->ref_type();
+
+    // []
+    auto array_dims = type_expr->array_dims();
+    if (array_dims) {
+        assert(array_dims->child_num() > 0);
+        // TODO: refactoring
+        ExprVisitor ev{ast(), scope};
+        for (unsigned n = 0; n < array_dims->child_num(); ++n) {
+            auto dim = array_dims->get(n);
+            ExprRes res = dim->accept(ev);
+            auto rval = res.value().rvalue();
+            // TMP
+            array_size_t size{0};
+            if (rval->is_unknown()) {
+                diag().emit(diag::Error, dim->loc_id(), 1, "cannot calculate");
+                RET_UPD_STATE(alias, false);
+            } else if (rval->is<Unsigned>()) {
+                size = rval->get<Unsigned>();
+            } else if (rval->is<Integer>()) {
+                size = rval->get<Integer>();
+            } else {
+                diag().emit(diag::Error, dim->loc_id(), 1, "non-numeric");
+            }
+            type = type->array_type(size);
+        }
+    }
+    alias->set_aliased(type);
+    RET_UPD_STATE(alias, true);
 }
 
 bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {

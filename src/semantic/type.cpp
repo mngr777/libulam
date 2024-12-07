@@ -8,12 +8,20 @@ namespace ulam {
 
 Type::~Type() {}
 
-Ref<ArrayType> Type::array(array_size_t size) {
-    // auto it = _array_types.find(size);
-    // if (it != _array_types.end())
-    //     return ref(it->second);
-    // auto array_type = make<ArrayType>();
-    return {};
+Ref<ArrayType> Type::array_type(array_size_t size) {
+    auto it = _array_types.find(size);
+    if (it != _array_types.end())
+        return ref(it->second);
+    auto type = make<ArrayType>(_id_gen, this, size);
+    auto type_ref = ref(type);
+    _array_types[size] = std::move(type);
+    return type_ref;
+}
+
+Ref<RefType> Type::ref_type() {
+    if (!_ref_type)
+        _ref_type = make<RefType>(_id_gen, this);
+    return ref(_ref_type);
 }
 
 // AliasType

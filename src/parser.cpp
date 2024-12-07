@@ -569,6 +569,7 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
 }
 
 ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
+    ast::Ptr<ast::Expr> expr{};
     switch (_tok.type) {
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
@@ -631,9 +632,11 @@ Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
 
 ast::Ptr<ast::TypeExpr> Parser::parse_type_expr() {
     // &
-    bool is_ref = false;
+    bool is_ref{false};
+    loc_id_t amp_loc_id{NoLocId};
     if (_tok.is(tok::Amp)) {
         is_ref = true;
+        amp_loc_id = _tok.loc_id;
         consume();
     }
     // ident
@@ -649,13 +652,15 @@ ast::Ptr<ast::TypeExpr> Parser::parse_type_expr() {
     }
     auto node = tree<ast::TypeExpr>(std::move(ident), std::move(array_dims));
     node->set_is_ref(is_ref);
+    node->set_amp_loc_id(amp_loc_id);
     return node;
 }
 
 ast::Ptr<ast::ExprList> Parser::parse_array_dims() {
     assert(_tok.is(tok::BracketL));
-    consume();
     auto node = tree<ast::ExprList>();
+    node->set_loc_id(_tok.loc_id);
+    consume();
     while (!_tok.is(tok::Eof)) {
         auto expr = parse_expr();
         if (!expect(tok::BracketR) || !expr)
