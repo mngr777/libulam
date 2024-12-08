@@ -158,12 +158,13 @@ Ref<Type> Resolver::resolve_type_name(
     if (type_spec->type()) {
         // already has type
         type = type_spec->type();
-    } else if (type_spec->type_tpl() || type_spec->cls_tpl()) {
+    } else if (type_spec->type_tpl()) {
         // non-class tpl
         // TODO: pass resolver
         ParamEval pe{_program->ast()};
         auto [args, success] = pe.eval(type_spec->args(), scope);
-        type = type_spec->type_tpl()->type(type_spec->args(), std::move(args));
+        type = type_spec->type_tpl()->type(
+            diag(), type_spec->args(), std::move(args));
     } else if (type_spec->cls_tpl()) {
         // class tpl
         if (!resolve(type_spec->cls_tpl()))
@@ -171,7 +172,8 @@ Ref<Type> Resolver::resolve_type_name(
         // TODO: pass resolver
         ParamEval pe{_program->ast()};
         auto [args, success] = pe.eval(type_spec->args(), scope);
-        type = type_spec->cls_tpl()->type(type_spec->args(), std::move(args));
+        type = type_spec->cls_tpl()->type(
+            diag(), type_spec->args(), std::move(args));
     }
     if (!type)
         return {};

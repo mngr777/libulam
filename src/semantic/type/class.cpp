@@ -52,7 +52,7 @@ ClassTpl::~ClassTpl() {}
 str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 
 Ref<Type>
-ClassTpl::type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+ClassTpl::type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _types.find(key);
     if (it != _types.end())

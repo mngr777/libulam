@@ -16,9 +16,10 @@ class ClassDef;
 
 namespace ulam {
 
+class Diag;
 class PersScope;
-class Module;
 class Var;
+
 class ClassTpl;
 
 class ClassBase {
@@ -83,7 +84,7 @@ public:
     str_id_t name_id() const;
 
     Ref<Type>
-    type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
+    type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
 
 private:
     Ptr<Class> inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args);

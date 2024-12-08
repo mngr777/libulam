@@ -1,6 +1,7 @@
-#include "libulam/semantic/value.hpp"
+#include <cassert>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam::sema {
 
@@ -23,7 +24,7 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::Cast> node) {
 
 ExprRes ExprVisitor::visit(ast::Ref<ast::BoolLit> node) {
     // Bool(1)
-    auto type = program()->builtins().prim_type_tpl(BoolId)->type(node, 1);
+    auto type = builtins().prim_type_tpl(BoolId)->type(diag(), node, 1);
     assert(type);
     return {type, Value{RValue{(Unsigned)node->value()}}};
 }
@@ -32,14 +33,14 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::NumLit> node) {
     const auto& number = node->value();
     if (number.is_signed()) {
         // Int(n)
-        auto type =
-            program()->builtins().prim_type_tpl(IntId)->type(node, number.bitsize());
+        auto tpl = builtins().prim_type_tpl(IntId);
+        auto type = tpl->type(diag(), node, number.bitsize());
         assert(type);
         return {type, RValue{number.value<Integer>()}};
     } else {
         // Unsigned(n)
-        auto type =
-            program()->builtins().prim_type_tpl(UnsignedId)->type(node, number.bitsize());
+        auto tpl = builtins().prim_type_tpl(UnsignedId);
+        auto type = tpl->type(diag(), node, number.bitsize());
         assert(type);
         return {type, RValue{number.value<Unsigned>()}};
     }
@@ -47,7 +48,7 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::NumLit> node) {
 
 ExprRes ExprVisitor::visit(ast::Ref<ast::StrLit> node) {
     // String
-    auto type = program()->builtins().prim_type(StringId);
+    auto type = builtins().prim_type(StringId);
     assert(type);
     return {type, Value{RValue{node->value()}}};
 }
@@ -56,6 +57,18 @@ ExprRes ExprVisitor::visit(ast::Ref<ast::FunCall> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::MemberAccess> node) { return {}; }
 ExprRes ExprVisitor::visit(ast::Ref<ast::ArrayAccess> node) { return {}; }
 
+Ref<Program> ExprVisitor::program() {
+    assert(ast()->program());
+    return ast()->program();
+}
+
+ast::Ref<ast::Root> ExprVisitor::ast() {
+    assert(_ast);
+    return _ast;
+}
+
 Diag& ExprVisitor::diag() { return program()->diag(); }
+
+Builtins& ExprVisitor::builtins() { return program()->builtins(); }
 
 } // namespace ulam::sema

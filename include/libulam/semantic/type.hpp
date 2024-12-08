@@ -20,6 +20,7 @@ class TypeExpr;
 
 namespace ulam {
 
+class Diag;
 class Scope;
 
 using type_id_t = std::uint16_t;
@@ -89,6 +90,7 @@ public:
     // TODO: move out of type?
 
     virtual Value cast(
+        Diag& diag,
         ast::Ref<ast::Node> node,
         Ref<const Type> type,
         const Value& value,
@@ -97,6 +99,7 @@ public:
     }
 
     virtual ExprRes binary_op(
+        Diag& diag,
         ast::Ref<ast::BinaryOp> node,
         Value& left,
         Ref<const Type> right_type,

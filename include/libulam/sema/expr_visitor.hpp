@@ -1,5 +1,4 @@
 #pragma once
-#include <cassert>
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
@@ -8,6 +7,7 @@
 #include <libulam/diag.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/type/builtins.hpp>
 
 namespace ulam {
 class Program;
@@ -39,17 +39,10 @@ public:
     virtual ExprRes visit(ast::Ref<ast::ArrayAccess> node) override;
 
 protected:
+    Ref<Program> program();
+    ast::Ref<ast::Root> ast();
     Diag& diag();
-
-    Ref<Program> program() {
-        assert(ast()->program());
-        return ast()->program();
-    }
-
-    ast::Ref<ast::Root> ast() {
-        assert(_ast);
-        return _ast;
-    }
+    Builtins& builtins();
 
 private:
     ast::Ref<ast::Root> _ast;

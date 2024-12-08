@@ -65,9 +65,13 @@ class PrimTypeTpl : public TypeTpl {
 public:
     PrimTypeTpl(TypeIdGen& id_gen);
 
-    Ref<Type>
-    type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override = 0;
-    virtual Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
+    Ref<Type> type(
+        Diag& diag,
+        ast::Ref<ast::ArgList> args_node,
+        TypedValueList&& args) override = 0;
+
+    virtual Ref<Type>
+    type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
 };
 
 template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
@@ -76,18 +80,18 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
 public:
     _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
 
-    // TODO: move impl to .ipp
-    Ref<Type> type(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+    Ref<Type>
+    type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
         // NOTE: args_node can be null
         bitsize_t size = 0;
         if (args.size() == 0) {
             size = T::DefaultSize;
         } else {
             if (args.size() > 1) {
-                // diag().emit(
-                //     diag::Error, args_node->loc_id(), 1,
-                //     std::string("too many arguments for ") + type_str());
-                // // continue
+                diag.emit(
+                    diag::Error, args_node->loc_id(), 1,
+                    std::string("too many arguments for ") + type_str());
+                // continue
             }
             // get first arg
             auto& arg = args.front();
@@ -99,28 +103,28 @@ public:
             } else if (rval->is<Unsigned>()) {
                 size = rval->get<Unsigned>();
             } else {
-                // diag().emit(
-                //     diag::Error, args_node->loc_id(), 1,
-                //     "cannot convert to bit size");
-                // return {};
+                diag.emit(
+                    diag::Error, args_node->loc_id(), 1,
+                    "cannot convert to bit size");
+                return {};
             }
         }
-        return type(args_node, size);
+        return type(diag, args_node, size);
     }
 
-    Ref<Type> type(ast::Ref<ast::Node> node, bitsize_t size) {
+    Ref<Type> type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t size) {
         // check, adjust and continue on error
         if (size < T::MinSize) {
-            // diag().emit(
-            //     diag::Error, node->loc_id(), 1,
-            //     std::string("bit size argument must be at least ") +
-            //         std::to_string(T::MinSize));
+            diag.emit(
+                diag::Error, node->loc_id(), 1,
+                std::string("bit size argument must be at least ") +
+                    std::to_string(T::MinSize));
             size = T::MinSize;
         } else if (size > T::MaxSize) {
-            // diag().emit(
-            //     diag::Error, node->loc_id(), 1,
-            //     std::string("bit size argument must be at most ") +
-            //         std::to_string(T::MaxSize));
+            diag.emit(
+                diag::Error, node->loc_id(), 1,
+                std::string("bit size argument must be at most ") +
+                    std::to_string(T::MaxSize));
             size = T::MaxSize;
         }
         return get(size);
