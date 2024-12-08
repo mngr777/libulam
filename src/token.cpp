@@ -120,6 +120,8 @@ TypeOp type_op(Type type) {
 
 Op bin_op(Type type) {
     switch (type) {
+    case ParenL:
+        return Op::FunCall;
     case Period:
         return Op::MemberAccess;
     case Plus:

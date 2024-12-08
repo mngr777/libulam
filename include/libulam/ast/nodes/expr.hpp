@@ -102,10 +102,10 @@ class VarRef : public Expr {}; // ??
 class Cast : public Tuple<Expr, TypeName, Expr> {
     ULAM_AST_EXPR
 public:
-    Cast(Ptr<TypeName>&& type, Ptr<Expr>&& expr):
-        Tuple{std::move(type), std::move(expr)} {}
+    Cast(Ptr<TypeName>&& type_name, Ptr<Expr>&& expr):
+        Tuple{std::move(type_name), std::move(expr)} {}
 
-    ULAM_AST_TUPLE_PROP(type, 0)
+    ULAM_AST_TUPLE_PROP(type_name, 0)
     ULAM_AST_TUPLE_PROP(expr, 1)
 };
 

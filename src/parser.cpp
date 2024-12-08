@@ -535,8 +535,10 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
     auto lhs = (op != Op::None) ? consume(),
          tree<ast::UnaryPreOp>(op, parse_expr_climb(ops::prec(op)))
         : parse_expr_lhs();
-    if (!lhs)
+    if (!lhs) {
+        panic(tok::Semicol);
         return lhs;
+    }
     // binary or suffix
     while (true) {
         // binary?
@@ -601,7 +603,10 @@ ast::Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
         if (_tok.is(tok::ParenR)) {
             // cast
             consume();
-            return tree<ast::Cast>(std::move(type_name), parse_expr());
+            auto expr = parse_expr();
+            if (!expr)
+                return {};
+            return tree<ast::Cast>(std::move(type_name), std::move(expr));
         }
         // type op
         inner = parse_type_op_rest(std::move(type_name));

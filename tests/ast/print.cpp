@@ -262,9 +262,19 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Return> node) {
 }
 
 void Printer::visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) {
+    assert(node->has_inner());
     _os << "(";
     accept_me(node->inner());
     _os << ")";
+}
+
+void Printer::visit(ulam::ast::Ref<ulam::ast::Cast> node) {
+    assert(node->has_type_name());
+    assert(node->expr());
+    _os << "(";
+    accept_me(node->type_name());
+    _os << ")";
+    accept_me(node->expr());
 }
 
 void Printer::visit(ulam::ast::Ref<ulam::ast::BinaryOp> node) {
