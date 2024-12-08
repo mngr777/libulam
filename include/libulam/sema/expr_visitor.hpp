@@ -11,7 +11,7 @@
 
 namespace ulam {
 class Program;
-} // namespace ulam
+}
 
 namespace ulam::sema {
 

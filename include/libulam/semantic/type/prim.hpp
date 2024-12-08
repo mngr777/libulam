@@ -56,6 +56,9 @@ public:
     BuiltinTypeId builtin_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
 
+protected:
+    Ref<PrimTypeTpl> tpl() { return _tpl; }
+
 private:
     Ref<PrimTypeTpl> _tpl;
     bitsize_t _bitsize;
@@ -70,7 +73,7 @@ public:
         ast::Ref<ast::ArgList> args_node,
         TypedValueList&& args) override = 0;
 
-    virtual Ref<Type>
+    virtual Ref<PrimType>
     type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
 };
 
@@ -81,7 +84,7 @@ public:
     _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
 
     Ref<Type>
-    type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+    type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override {
         // NOTE: args_node can be null
         bitsize_t size = 0;
         if (args.size() == 0) {
@@ -112,7 +115,7 @@ public:
         return type(diag, args_node, size);
     }
 
-    Ref<Type> type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t size) {
+    Ref<PrimType> type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t size) override {
         // check, adjust and continue on error
         if (size < T::MinSize) {
             diag.emit(
@@ -131,7 +134,7 @@ public:
     }
 
 private:
-    Ref<Type> get(bitsize_t size) {
+    Ref<PrimType> get(bitsize_t size) {
         {
             auto it = _types.find(size);
             if (it != _types.end())
