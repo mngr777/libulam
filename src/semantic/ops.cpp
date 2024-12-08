@@ -20,23 +20,41 @@ Prec prec(Op op) {
     case Op::MemberAccess:
     case Op::PreInc:
     case Op::PreDec:
-        return 5;
+        return 13;
     case Op::UnaryMinus:
     case Op::UnaryPlus:
     case Op::PostInc:
     case Op::PostDec:
-        return 4;
+        return 12;
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:
-        return 3;
+        return 11;
     case Op::Sum:
     case Op::Diff:
-        return 2;
+        return 10;
+    case Op::ShiftLeft:
+    case Op::ShiftRight:
+        return 9;
     case Op::Less:
     case Op::LessOrEq:
     case Op::Greater:
     case Op::GreaterOrEq:
+        return 8;
+    case Op::Equal:
+    case Op::NotEqual:
+        return 7;
+    case Op::BwAnd:
+        return 6;
+    case Op::BwXor:
+        return 5;
+    case Op::BwOr:
+        return 4;
+    case Op::And:
+        return 3;
+    case Op::Or:
+        return 2;
+    case Op::Assign:
         return 1;
     default:
         return -1;
@@ -55,10 +73,19 @@ Assoc assoc(Op op) {
     case Op::Rem:
     case Op::Sum:
     case Op::Diff:
+    case Op::ShiftLeft:
+    case Op::ShiftRight:
     case Op::Less:
     case Op::LessOrEq:
     case Op::Greater:
     case Op::GreaterOrEq:
+    case Op::Equal:
+    case Op::NotEqual:
+    case Op::BwAnd:
+    case Op::BwXor:
+    case Op::BwOr:
+    case Op::And:
+    case Op::Or:
     case Op::PostInc:
     case Op::PostDec:
         return Assoc::Left;
@@ -66,6 +93,7 @@ Assoc assoc(Op op) {
     case Op::UnaryPlus:
     case Op::PreInc:
     case Op::PreDec:
+    case Op::Assign:
         return Assoc::Right;
     default:
         assert(false);

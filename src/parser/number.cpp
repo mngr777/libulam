@@ -12,8 +12,6 @@ namespace {
 constexpr std::uint64_t MaxSigned = std::numeric_limits<std::int64_t>::max();
 constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
 
-// TODO: use "src/semantic/detail/integer.hpp"
-
 // Max unsigned number that can be safely multiplied by radix
 constexpr std::uint64_t radix_threshold(Radix radix) {
     return MaxUnsigned / radix_to_int(radix);
@@ -31,7 +29,6 @@ constexpr std::uint64_t radix_threshold_rem(Radix radix) {
 Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     assert(str.size() > 0);
     assert(is_digit(str[0])); // guaranteed by lexer
-    // Number number{};
 
     std::size_t cur = 0;
     std::uint64_t value = 0; // abs value

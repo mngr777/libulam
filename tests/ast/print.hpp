@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/nodes/access.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -98,12 +100,14 @@ protected:
     void visit(ulam::ast::Ref<ulam::ast::If> node) override;
     void visit(ulam::ast::Ref<ulam::ast::For> node) override;
     void visit(ulam::ast::Ref<ulam::ast::Return> node) override;
+    void visit(ulam::ast::Ref<ulam::ast::ExprStmt> node) override;
 
     void visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) override;
     void visit(ulam::ast::Ref<ulam::ast::Cast> node) override;
     void visit(ulam::ast::Ref<ulam::ast::BinaryOp> node) override;
     void visit(ulam::ast::Ref<ulam::ast::UnaryPreOp> node) override;
     void visit(ulam::ast::Ref<ulam::ast::UnaryPostOp> node) override;
+    void visit(ulam::ast::Ref<ulam::ast::ArrayAccess> node) override;
     void visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) override;
 
     bool do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) override;
@@ -115,6 +119,8 @@ protected:
     bool do_visit(ulam::ast::Ref<ulam::ast::BoolLit> node) override;
     bool do_visit(ulam::ast::Ref<ulam::ast::NumLit> node) override;
     bool do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) override;
+
+    void traverse_comma_separated(ulam::ast::Ref<ulam::ast::Node> node);
 };
 
 } // namespace test::ast

@@ -30,6 +30,8 @@ void Number::write_value(std::ostream& os) const {
         break;
     case Radix::Decimal:
         write(os << std::dec);
+        if (!is_signed())
+            os << "u";
         break;
     case Radix::Hexadecimal:
         write(os << "0x" << std::hex);

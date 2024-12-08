@@ -68,7 +68,7 @@ void Lex::lex(Token& token) {
             advance();
             complete(tok::AstEqual);
         } else {
-            complete(tok::Amp);
+            complete(tok::Ast);
         }
         break;
     case '+':
@@ -358,23 +358,26 @@ void Lex::lex_number() {
     assert(detail::is_digit(_tok_start[0]));
 
     auto is_digit = &detail::is_digit;
+    auto digits_start = _cur - 1;
     if (_tok_start[0] == '0') {
         // scroll over `0x' or `0b' prefix if there's a digit after
         if (at('x')) {
             is_digit = &detail::is_xdigit;
-            if (is_digit(_cur[1]))
+            if (is_digit(_cur[1])) {
                 advance();
+                digits_start = _cur;
+            }
         } else if (at('b') && is_digit(_cur[1])) {
             advance();
+            digits_start = _cur;
         }
     }
 
     // skip digits
-    auto digits_start = _cur;
     while (is_digit(_cur[0]))
         advance();
 
-    // allow `u' suffix if there were some digits before it
+    // allow `u' suffix if there were some digits before it, excl. prefix
     if (digits_start < _cur && (at('u') || at('U'))) {
         advance();
     }

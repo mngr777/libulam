@@ -1,9 +1,10 @@
 #include "./print.hpp"
+#include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
-#include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/module.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <cassert>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 
 namespace test::ast {
 
@@ -88,9 +89,7 @@ void PrinterBase::accept_me(ulam::ast::Ref<ulam::ast::Node> node) {
     }
 }
 
-void PrinterBase::on_empty() {
-    _os << "<empty>";
-}
+void PrinterBase::on_empty() { _os << "<empty>"; }
 
 std::ostream& PrinterBase::indent() {
     for (unsigned i = 0; i < _lvl * options.ident; ++i)
@@ -189,7 +188,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
 void Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
     _os << "(";
     if (do_visit(node))
-        traverse(node);
+        traverse_comma_separated(node);
     _os << ")";
 }
 
@@ -203,7 +202,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
 void Printer::visit(ulam::ast::Ref<ulam::ast::ArgList> node) {
     _os << "(";
     if (do_visit(node))
-        traverse(node);
+        traverse_comma_separated(node);
     _os << ")";
 }
 
@@ -217,9 +216,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Block> node) {
     }
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::EmptyStmt> node) {
-    _os << ";";
-}
+void Printer::visit(ulam::ast::Ref<ulam::ast::EmptyStmt> node) { _os << ";"; }
 
 void Printer::visit(ulam::ast::Ref<ulam::ast::If> node) {
     _os << "if (";
@@ -273,7 +270,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Cast> node) {
     assert(node->expr());
     _os << "(";
     accept_me(node->type_name());
-    _os << ")";
+    _os << ") ";
     accept_me(node->expr());
 }
 
@@ -293,15 +290,32 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPostOp> node) {
     _os << ulam::ops::str(node->op());
 }
 
+void Printer::visit(ulam::ast::Ref<ulam::ast::ArrayAccess> node) {
+    assert(node->has_array());
+    assert(node->has_index());
+    accept_me(node->array());
+    _os << "[";
+    accept_me(node->index());
+    _os << "]";
+}
+
 void Printer::visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) {
+    assert(node->has_obj());
+    assert(node->has_ident());
     accept_me(node->obj());
     _os << ".";
     accept_me(node->ident());
 }
 
 bool Printer::do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
-    _os << "module\n";
+    _os << "/* module */\n";
     return true;
+}
+
+void Printer::visit(ulam::ast::Ref<ulam::ast::ExprStmt> node) {
+    assert(node->has_expr());
+    accept_me(node->expr());
+    _os << ";";
 }
 
 void Printer::visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
@@ -369,6 +383,14 @@ bool Printer::do_visit(ulam::ast::Ref<ulam::ast::NumLit> node) {
 bool Printer::do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) {
     _os << '"' << node->value() << '"';
     return false;
+}
+
+void Printer::traverse_comma_separated(ulam::ast::Ref<ulam::ast::Node> node) {
+    for (unsigned n = 0; n < node->child_num(); ++n) {
+        if (n > 0)
+            _os << ", ";
+        accept_me(node->child(n));
+    }
 }
 
 } // namespace test::ast

@@ -122,6 +122,8 @@ Op bin_op(Type type) {
     switch (type) {
     case ParenL:
         return Op::FunCall;
+    case BracketL:
+        return Op::ArrayAccess;
     case Period:
         return Op::MemberAccess;
     case Plus:
@@ -132,6 +134,10 @@ Op bin_op(Type type) {
         return Op::Prod;
     case Slash:
         return Op::Quot;
+    case LessLess:
+        return Op::ShiftLeft;
+    case GreaterGreater:
+        return Op::ShiftRight;
     case Less:
         return Op::Less;
     case LessEqual:
@@ -140,6 +146,22 @@ Op bin_op(Type type) {
         return Op::Greater;
     case GreaterEqual:
         return Op::GreaterOrEq;
+    case EqualEqual:
+        return Op::Equal;
+    case ExclEqual:
+        return Op::NotEqual;
+    case Amp:
+        return Op::BwAnd;
+    case Caret:
+        return Op::BwXor;
+    case Pipe:
+        return Op::BwOr;
+    case AmpAmp:
+        return Op::And;
+    case PipePipe:
+        return Op::Or;
+    case Equal:
+        return Op::Assign;
     default:
         return Op::None;
     }

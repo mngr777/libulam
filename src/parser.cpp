@@ -1,5 +1,6 @@
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
 #include "libulam/semantic/type/class_kind.hpp"
 #include <cassert>
@@ -350,7 +351,7 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
     case tok::TypeIdent: {
         auto type = parse_type_name();
         if (_tok.is(tok::Period)) {
-            // FIXME
+            // FIXME: there are also e.g. class var access
             return parse_type_op_rest(std::move(type));
         } else if (_tok.is(tok::Ident)) {
             auto first_name = tok_ast_str();
@@ -383,8 +384,8 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
         if (!expect(tok::Semicol))
             panic(tok::Semicol, tok::BraceL, tok::BraceR);
         if (!expr)
-            return tree<ast::EmptyStmt>();
-        return expr;
+            return {};
+        return tree<ast::ExprStmt>(std::move(expr));
     }
 }
 
@@ -558,6 +559,7 @@ ast::Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
             break;
         case Op::ArrayAccess:
             lhs = parse_array_access(std::move(lhs));
+            break;
         case Op::MemberAccess:
             lhs = parse_member_access(std::move(lhs));
             break;
@@ -742,6 +744,8 @@ Parser::parse_array_access(ast::Ptr<ast::Expr>&& array) {
     assert(_tok.is(tok::BracketL));
     consume();
     auto index = parse_expr();
+    if (!index)
+        return {};
     expect(tok::BracketR);
     return tree<ast::ArrayAccess>(std::move(array), std::move(index));
 }

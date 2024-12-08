@@ -32,7 +32,7 @@ public:
         Tuple{std::move(array), std::move(index)} {}
 
     ULAM_AST_TUPLE_PROP(array, 0)
-    ULAM_AST_TUPLE_PROP(index, 0)
+    ULAM_AST_TUPLE_PROP(index, 1)
 };
 
 } // namespace ulam::ast
