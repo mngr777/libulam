@@ -147,7 +147,12 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
         _os << " ";
         visit(node->params());
     }
-    // TODO: ancestors
+    // ancestors
+    if (node->has_ancestors()) {
+        assert(node->ancestors()->child_num() > 0);
+        _os << " : ";
+        traverse_list(node->ancestors(), " + ");
+    }
     // body
     assert(node->has_body());
     _os << " {" << nl();
@@ -188,7 +193,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
 void Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
     _os << "(";
     if (do_visit(node))
-        traverse_comma_separated(node);
+        traverse_list(node);
     _os << ")";
 }
 
@@ -202,7 +207,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
 void Printer::visit(ulam::ast::Ref<ulam::ast::ArgList> node) {
     _os << "(";
     if (do_visit(node))
-        traverse_comma_separated(node);
+        traverse_list(node);
     _os << ")";
 }
 
@@ -385,10 +390,10 @@ bool Printer::do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) {
     return false;
 }
 
-void Printer::traverse_comma_separated(ulam::ast::Ref<ulam::ast::Node> node) {
+void Printer::traverse_list(ulam::ast::Ref<ulam::ast::Node> node, std::string sep) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         if (n > 0)
-            _os << ", ";
+            _os << sep;
         accept_me(node->child(n));
     }
 }

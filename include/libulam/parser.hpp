@@ -31,7 +31,6 @@ private:
 
     void consume();
     void consume_if(tok::Type type);
-    bool eof();
 
     bool match(tok::Type type);
     bool expect(tok::Type type);
@@ -46,6 +45,7 @@ private:
     ast::Ptr<ast::TypeDef> parse_module_type_def(bool is_marked_local);
     ast::Ptr<ast::ClassDef> parse_class_def();
     ast::Ptr<ast::ClassDef> parse_class_def_head();
+    ast::Ptr<ast::TypeNameList> parse_class_ancestor_list();
     void parse_class_def_body(ast::Ref<ast::ClassDef> node);
     ast::Ptr<ast::TypeDef> parse_type_def();
     ast::Ptr<ast::VarDefList> parse_var_def_list(bool is_const);

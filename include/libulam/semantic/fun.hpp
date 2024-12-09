@@ -36,14 +36,17 @@ class Fun : public ScopeObject {
 public:
     Fun() {}
 
+    void merge(Ref<Fun> other);
+
     // TMP
     auto& overloads() { return _overloads; }
     const auto& overloads() const { return _overloads; }
 
     Ref<FunOverload> add_overload(ast::Ref<ast::FunDef> node);
+    Ref<FunOverload> add_overload(Ref<FunOverload> overload);
 
 private:
-    std::list<Ptr<FunOverload>> _overloads;
+    std::list<RefPtr<FunOverload>> _overloads;
 };
 
 } // namespace ulam

@@ -1,8 +1,4 @@
-#include "tests/ast/print.hpp"
-#include <iostream>
-#include <libulam/context.hpp>
-#include <libulam/parser.hpp>
-#include <libulam/sema.hpp>
+#include "tests/sema/common.hpp"
 
 static const char* Program = R"END(
 ulam 1;
@@ -75,16 +71,5 @@ quark ColorUtils {
 )END";
 
 int main() {
-    ulam::Context ctx;
-    ulam::Parser parser{ctx};
-
-    std::string text{Program};
-    parser.parse_string(text);
-    auto ast = parser.move_ast();
-
-    ulam::Sema sema{ctx.diag()};
-    sema.analyze(ulam::ast::ref(ast));
-
-    test::ast::Printer p{std::cout, ulam::ast::ref(ast)};
-    p.print();
+    analyze_and_print(Program);
 }

@@ -152,7 +152,8 @@ TESTS = \
 	test_lex_basic \
 	test_parser_expr \
 	test_sema_basic \
-	test_sema_color_utils
+	test_sema_color_utils \
+	test_sema_simple_inheritance
 check_PROGRAMS = $(TESTS)
 
 TEST_LIBS = libulam.la
@@ -167,11 +168,19 @@ TEST_AST_SOURCE_FILES = \
 	tests/ast/print.hpp \
 	tests/ast/print.cpp
 
+TEST_SEMA_SOURCE_FILES = \
+	$(TEST_AST_SOURCE_FILES) \
+	tests/sema/common.hpp \
+	tests/sema/common.cpp
+
 test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_AST_SOURCE_FILES)
 test_parser_expr_LDADD = $(TEST_LIBS)
 
-test_sema_basic_SOURCES = tests/sema/basic.cpp $(TEST_AST_SOURCE_FILES)
+test_sema_basic_SOURCES = tests/sema/basic.cpp $(TEST_SEMA_SOURCE_FILES)
 test_sema_basic_LDADD = $(TEST_LIBS)
 
-test_sema_color_utils_SOURCES = tests/sema/color_utils.cpp $(TEST_AST_SOURCE_FILES)
+test_sema_color_utils_SOURCES = tests/sema/color_utils.cpp $(TEST_SEMA_SOURCE_FILES)
 test_sema_color_utils_LDADD = $(TEST_LIBS)
+
+test_sema_simple_inheritance_SOURCES = tests/sema/simple_inheritance.cpp $(TEST_SEMA_SOURCE_FILES)
+test_sema_simple_inheritance_LDADD = $(TEST_LIBS)

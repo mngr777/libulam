@@ -57,20 +57,25 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
     ULAM_AST_NODE
 };
 
-class ClassDef : public Tuple<Stmt, ParamList, ClassDefBody>,
+class ClassDef : public Tuple<Stmt, ParamList, TypeNameList, ClassDefBody>,
                  public Named,
                  public ScopeObjectNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, type)
     ULAM_AST_REF_ATTR(ClassTpl, type_tpl)
 public:
-    ClassDef(ClassKind kind, ast::Str name, Ptr<ParamList>&& params):
-        Tuple{std::move(params), make<ClassDefBody>()},
+    ClassDef(
+        ClassKind kind,
+        ast::Str name,
+        Ptr<ParamList>&& params,
+        Ptr<TypeNameList>&& ancestors):
+        Tuple{std::move(params), std::move(ancestors), make<ClassDefBody>()},
         Named{name},
         _kind{kind} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
-    ULAM_AST_TUPLE_PROP(body, 1)
+    ULAM_AST_TUPLE_PROP(ancestors, 1)
+    ULAM_AST_TUPLE_PROP(body, 2)
 
     ClassKind kind() const { return _kind; }
 

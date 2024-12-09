@@ -69,7 +69,7 @@ bool Parser::expect(tok::Type type) {
 }
 
 template <typename... Ts> void Parser::panic(Ts... stop) {
-    while (!_tok.in(stop...) && !eof())
+    while (!_tok.in(tok::Eof, stop...))
         consume();
 }
 
@@ -89,8 +89,6 @@ void Parser::diag(const Token& token, std::string text) {
 void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
     _ctx.diag().emit(diag::Error, loc_id, size, text);
 }
-
-bool Parser::eof() { return _tok.is(tok::Eof); }
 
 ast::Ptr<ast::ModuleDef> Parser::parse_module() {
     auto node = tree<ast::ModuleDef>();
@@ -162,11 +160,13 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     auto kind = _tok.class_kind();
     auto loc_id = _tok.loc_id;
     consume();
+
     // name
     ast::Str name;
     if (match(tok::TypeIdent))
         name = tok_ast_str();
     consume();
+
     // params
     ast::Ptr<ast::ParamList> params{};
     if (_tok.is(tok::ParenL)) {
@@ -177,9 +177,43 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
             params = {};
         }
     }
-    // TODO: ancestors
-    auto node = tree<ast::ClassDef>(kind, name, std::move(params));
+
+    // ancestors
+    ast::Ptr<ast::TypeNameList> ancestors{};
+    if (_tok.in(tok::Plus, tok::Colon))
+        ancestors = parse_class_ancestor_list();
+
+    auto node = tree<ast::ClassDef>(
+        kind, name, std::move(params), std::move(ancestors));
     node->set_loc_id(loc_id);
+    return node;
+}
+
+ast::Ptr<ast::TypeNameList> Parser::parse_class_ancestor_list() {
+    assert(_tok.in(tok::Plus, tok::Colon));
+    auto loc_id = _tok.loc_id;
+    consume();
+    auto node = ast::make<ast::TypeNameList>();
+    while (!_tok.in(tok::BraceL, tok::Eof)) {
+        // type
+        auto type_name = parse_type_name();
+        if (!type_name) {
+            panic(tok::TypeIdent, tok::BraceL);
+            continue;
+        }
+        node->add(std::move(type_name));
+        // +
+        if (_tok.is(tok::Plus)) {
+            auto plus = _tok;
+            consume();
+            if (_tok.is(tok::BraceL))
+                diag(plus, "trailing plus in ancestor list");
+        }
+    }
+    if (node->child_num() == 0) {
+        diag(loc_id, 1, "ancestor list is empty");
+        return {};
+    }
     return node;
 }
 
@@ -359,6 +393,7 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
             return parse_var_def_list_rest(std::move(type), first_name, false);
         } else {
             unexpected();
+            panic(tok::Semicol);
         }
         expect(tok::Semicol);
         return tree<ast::EmptyStmt>();
@@ -591,6 +626,7 @@ ast::Ptr<ast::Expr> Parser::parse_expr_lhs() {
         return parse_paren_expr_or_cast();
     default:
         unexpected();
+        panic(tok::Semicol);
         return {};
     }
 }
@@ -632,6 +668,7 @@ Parser::parse_type_op_rest(ast::Ptr<ast::TypeName>&& type) {
     auto type_op = _tok.type_op();
     if (type_op == TypeOp::None) {
         unexpected();
+        panic(tok::Semicol);
         return {};
     }
     return tree<ast::TypeOpExpr>(std::move(type), type_op);

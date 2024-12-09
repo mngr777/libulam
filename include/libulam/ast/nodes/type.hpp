@@ -73,4 +73,8 @@ public:
     }
 };
 
+class TypeNameList : public List<Node, TypeName> {
+    ULAM_AST_NODE
+};
+
 } // namespace ulam::ast

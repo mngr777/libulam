@@ -120,7 +120,7 @@ protected:
     bool do_visit(ulam::ast::Ref<ulam::ast::NumLit> node) override;
     bool do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) override;
 
-    void traverse_comma_separated(ulam::ast::Ref<ulam::ast::Node> node);
+    void traverse_list(ulam::ast::Ref<ulam::ast::Node> node, std::string sep = ", ");
 };
 
 } // namespace test::ast

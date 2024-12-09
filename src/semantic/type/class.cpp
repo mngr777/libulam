@@ -105,7 +105,7 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
             auto fun = sym->get<Fun>();
             auto copy = ulam::make<Fun>();
             for (auto& overload : fun->overloads())
-                copy->add_overload(overload->node());
+                copy->add_overload(overload.ref()->node());
             cls->scope()->set(name_id, ref(copy)); // add to class scope
             cls->set(name_id, std::move(copy));    // add class fun
 
