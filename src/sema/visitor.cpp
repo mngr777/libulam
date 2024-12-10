@@ -33,7 +33,7 @@ void RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
             traverse(node);
         }
     }
-    assert(scope()->is(Scope::Module));
+    assert(scope()->is(scp::Module));
     exit_scope();
     _module_def = {};
 }
@@ -73,7 +73,7 @@ void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
             ast::as_node_ref(child_v)->accept(*this);
     }
     // exit scope
-    assert(scope()->is(Scope::Class) || scope()->is(Scope::ClassTpl));
+    assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
     exit_scope();
 }
 
@@ -91,9 +91,9 @@ void RecVisitor::visit(ast::Ref<ast::FunDef> node) {
 void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
     assert(pass() == Pass::FunBodies);
     assert(_fun_def);
-    enter_scope(Scope::Fun);
+    enter_scope(scp::Fun);
     ast::RecVisitor::traverse(node);
-    assert(scope()->is(Scope::Fun));
+    assert(scope()->is(scp::Fun));
     exit_scope();
 }
 
@@ -104,7 +104,7 @@ void RecVisitor::visit(ast::Ref<ast::Block> node) {
 }
 
 bool RecVisitor::do_visit(ast::Ref<ast::ClassDef> node) {
-    assert(scope()->is(Scope::Module));
+    assert(scope()->is(scp::Module));
     assert(node->scope_proxy());
     _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
     return true;
@@ -166,7 +166,7 @@ void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
     enter_scope(std::move(scope));
 }
 
-void RecVisitor::enter_scope(Scope::Flag flags) {
+void RecVisitor::enter_scope(ScopeFlags flags) {
     auto parent = !_scopes.empty() ? _scopes.top<Scope>() : Ref<Scope>{};
     _scopes.push(make<BasicScope>(parent, flags));
 }

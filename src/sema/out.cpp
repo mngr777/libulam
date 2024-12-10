@@ -6,18 +6,18 @@ namespace ulam::sema {
 
 void Out::print(Ref<Scope> scope) {
     assert(false);
-    if (scope->flags() == Scope::NoFlags) {
+    if (scope->flags() == scp::NoFlags) {
         _os << "<no flags>";
     } else {
-        if (scope->flags() & Scope::Program)
+        if (scope->flags() & scp::Program)
             _os << "[program]";
-        if (scope->flags() & Scope::ModuleEnv)
+        if (scope->flags() & scp::ModuleEnv)
             _os << "[module-env]";
-        if (scope->flags() & Scope::Module)
+        if (scope->flags() & scp::Module)
             _os << "[module]";
-        if (scope->flags() & Scope::ClassTpl)
+        if (scope->flags() & scp::ClassTpl)
             _os << "[class-tpl]";
-        if (scope->flags() & Scope::Class)
+        if (scope->flags() & scp::Class)
             _os << "[class]";
     }
     _os << "\n";

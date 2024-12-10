@@ -66,9 +66,10 @@ bool Resolver::resolve(Ref<Class> cls) {
     bool is_resolved = true;
     PersScopeProxy scope_proxy = cls->scope()->proxy();
     scope_proxy.reset();
-    for (auto name_id = scope_proxy.advance(); name_id != NoStrId;
-         name_id = scope_proxy.advance()) {
-        auto sym = scope_proxy.get(name_id);
+    while (true) {
+        auto [name_id, sym] = scope_proxy.advance();
+        if (!sym)
+            break;
         bool res{};
         if (sym->is<UserType>()) {
             // alias

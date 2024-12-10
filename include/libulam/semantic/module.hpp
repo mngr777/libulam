@@ -51,6 +51,9 @@ public:
     Module(Module&&) = default;
     Module& operator=(Module&&) = default;
 
+    bool operator==(const Module& other) const { return id() == other.id(); }
+    bool operator!=(const Module& other) const { return !operator==(other); }
+
     Ref<Program> program() { return _program; }
 
     module_id_t id() const { return _id; }
@@ -72,7 +75,8 @@ public:
     void add_dep(str_id_t name_id) { _deps.insert(name_id); }
 
     void add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type);
-    void add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
+    void
+    add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
 
 private:
     Ref<Program> _program;

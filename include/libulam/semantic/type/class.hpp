@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
@@ -27,15 +28,13 @@ public:
     using SymbolTable = _SymbolTable<UserType, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    ClassBase(ast::Ref<ast::ClassDef> node, Ptr<PersScope>&& scope);
+    ClassBase(ast::Ref<ast::ClassDef> node, ScopeFlags scope_flags);
 
     ClassBase(ClassBase&&) = default;
     ClassBase& operator=(ClassBase&&) = default;
 
 public:
     Ref<ClassBase> as_class_base() { return this; }
-
-    Ref<PersScope> scope() { return ref(_scope); }
 
     bool has(str_id_t name_id) const { return _members.has(name_id); }
 
@@ -53,8 +52,14 @@ public:
     auto node() { return _node; }
     const auto node() const { return _node; }
 
+    Ref<PersScope> param_scope() { return ref(_param_scope); }
+    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
+    Ref<PersScope> scope() { return ref(_scope); }
+
 private:
     Ref<ast::ClassDef> _node;
+    Ptr<PersScope> _param_scope;
+    Ptr<PersScope> _inh_scope;
     Ptr<PersScope> _scope;
     SymbolTable _members;
 };
@@ -83,8 +88,10 @@ public:
 
     str_id_t name_id() const;
 
-    Ref<Type>
-    type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override;
+    Ref<Type> type(
+        Diag& diag,
+        ast::Ref<ast::ArgList> args_node,
+        TypedValueList&& args) override;
 
 private:
     Ptr<Class> inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args);

@@ -55,7 +55,7 @@ protected:
     void enter_class_tpl_scope(Ref<ClassTpl> tpl);
 
     void enter_scope(PersScopeProxy&& scope);
-    void enter_scope(Scope::Flag flags = Scope::NoFlags);
+    void enter_scope(ScopeFlags flags = scp::NoFlags);
     void exit_scope();
 
     Diag& diag();

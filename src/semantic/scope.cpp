@@ -26,12 +26,14 @@ PersScopeProxy::PersScopeProxy(Ref<PersScope> scope, ScopeVersion version):
 
 void PersScopeProxy::sync() { set_version(_scope->version()); }
 
-str_id_t PersScopeProxy::advance() {
+std::pair<str_id_t, Scope::Symbol*> PersScopeProxy::advance() {
     if (_version == _scope->version())
-        return NoStrId;
+        return {NoStrId, nullptr};
     assert(_version < _scope->version());
     ++_version;
-    return last_change();
+    auto name_id = last_change();
+    assert(name_id != NoStrId && get(name_id));
+    return {name_id, get(name_id)};
 }
 
 void PersScopeProxy::for_each(ItemCb cb) { _scope->for_each(cb, _version); }

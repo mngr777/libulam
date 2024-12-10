@@ -104,28 +104,28 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     }
 
     auto class_node = class_def();
-    if (scope()->is(Scope::Persistent)) {
+    if (scope()->is(scp::Persistent)) {
         // persistent typedef (module-local or class/class tpl)
         Ref<UserType> type_ref{};
         auto scope_proxy = scopes().top<PersScopeProxy>();
-        if (scope_proxy->is(Scope::Module)) {
+        if (scope_proxy->is(scp::Module)) {
             // module typedef (is not a module member)
             Ptr<UserType> type =
                 ulam::make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             scope_proxy->set(alias_id, std::move(type)); // add to scope
 
-        } else if (scope_proxy->is(Scope::Class)) {
+        } else if (scope_proxy->is(scp::Class)) {
             // class member
             assert(class_node->type());
             auto cls = class_node->type();
             Ptr<UserType> type =
-                ulam::make<AliasType>(program()->type_id_gen(), node, cls);
+                ulam::make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             cls->set(alias_id, std::move(type));  // add to class
             scope_proxy->set(alias_id, type_ref); // add to scope
 
-        } else if (scope_proxy->is(Scope::ClassTpl)) {
+        } else if (scope_proxy->is(scp::ClassTpl)) {
             // class tpl member
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
@@ -141,7 +141,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
 
     } else {
         // transient typedef (in function body)
-        assert(scope()->in(Scope::Fun));
+        assert(scope()->in(scp::Fun));
         Ptr<UserType> type = ulam::make<AliasType>(program()->type_id_gen(), node);
         scope()->set(alias_id, std::move(type));
     }
@@ -151,7 +151,7 @@ void ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     // don't skip the type name
     visit(node->type_name());
 
-    if (!scope()->is(Scope::Persistent))
+    if (!scope()->is(scp::Persistent))
         return;
 
     // create and set module/class/tpl variables
@@ -302,13 +302,15 @@ void ResolveDeps::export_classes() {
                 continue;
             assert(it->second.size() == 1);
             auto& exporter = *it->second.begin();
-            auto sym = exporter->get(name_id);
-            assert(sym);
-            if (sym->is<Class>()) {
-                mod->add_import(name_id, exporter, sym->get<Class>());
-            } else {
-                assert(sym->is<ClassTpl>());
-                mod->add_import(name_id, exporter, sym->get<ClassTpl>());
+            if (*exporter != *mod) {
+                auto sym = exporter->get(name_id);
+                assert(sym);
+                if (sym->is<Class>()) {
+                    mod->add_import(name_id, exporter, sym->get<Class>());
+                } else {
+                    assert(sym->is<ClassTpl>());
+                    mod->add_import(name_id, exporter, sym->get<ClassTpl>());
+                }
             }
         }
     }

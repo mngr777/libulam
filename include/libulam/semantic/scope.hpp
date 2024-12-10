@@ -10,6 +10,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -35,17 +36,7 @@ public:
     using Symbol = SymbolTable::Symbol;
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
-    using Flag = std::uint16_t;
-    static constexpr Flag NoFlags = 0;
-    static constexpr Flag Persistent = 1;
-    static constexpr Flag Program = 1 << 1;
-    static constexpr Flag ModuleEnv = 1 << 2;
-    static constexpr Flag Module = 1 << 3;
-    static constexpr Flag Class = 1 << 4;
-    static constexpr Flag ClassTpl = 1 << 5;
-    static constexpr Flag Fun = 1 << 6;
-
-    explicit Scope(Ref<Scope> parent, Flag flags = NoFlags):
+    explicit Scope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
         _parent{parent}, _flags{flags} {}
 
     Scope(): Scope{{}} {}
@@ -55,11 +46,11 @@ public:
     // TODO: const version
     virtual void for_each(ItemCb cb) = 0;
 
-    Flag flags() const { return _flags; }
+    ScopeFlags flags() const { return _flags; }
 
-    bool is(Flag flags) { return _flags & flags; }
+    bool is(ScopeFlags flags) { return _flags & flags; }
 
-    bool in(Flag flags) { return is(flags) || (_parent && _parent->in(flags)); }
+    bool in(ScopeFlags flags) { return is(flags) || (_parent && _parent->in(flags)); }
 
     bool has(str_id_t name_id, bool current = false) {
         return get(name_id, current);
@@ -93,7 +84,7 @@ protected:
 
 private:
     Ref<Scope> _parent;
-    Flag _flags;
+    ScopeFlags _flags;
     Ref<class Module> _module;
 };
 
@@ -101,9 +92,9 @@ private:
 
 class BasicScope : public Scope {
 public:
-    explicit BasicScope(Ref<Scope> parent, Flag flags = NoFlags):
+    explicit BasicScope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
         Scope{parent, flags} {
-        assert((flags & Persistent) == 0);
+        assert((flags & scp::Persistent) == 0);
     }
 
     BasicScope(BasicScope&&) = default;
@@ -167,7 +158,7 @@ public:
 
     void reset() { set_version(0); }
     void sync();
-    str_id_t advance();
+    std::pair<str_id_t, Symbol*> advance();
 
     operator bool() const { return _scope; }
 
@@ -209,8 +200,8 @@ private:
     using Map = std::unordered_map<str_id_t, SymbolVersionList>;
 
 public:
-    explicit PersScope(Ref<Scope> parent, Flag flags = NoFlags):
-        Scope{parent, (Flag)(flags | Persistent)}, _version{0} {}
+    explicit PersScope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
+        Scope{parent, (ScopeFlags)(flags | scp::Persistent)}, _version{0} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;

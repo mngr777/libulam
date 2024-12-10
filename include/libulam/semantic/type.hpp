@@ -130,7 +130,7 @@ public:
 class AliasType : public UserType {
 public:
     AliasType(
-        TypeIdGen& id_gen, ast::Ref<ast::TypeDef> node, Ref<Class> owner = {}):
+        TypeIdGen& id_gen, ast::Ref<ast::TypeDef> node):
         UserType{id_gen}, _node(node) {}
 
     Ref<AliasType> as_alias() override { return this; }
