@@ -14,8 +14,8 @@ public:
 
     template <typename T>
     bool top_is() {
-        if constexpr (std::is_same_v<T, TransScope>) {
-            return std::holds_alternative<Ptr<TransScope>>(_stack.top());
+        if constexpr (std::is_same_v<T, BasicScope>) {
+            return std::holds_alternative<Ptr<BasicScope>>(_stack.top());
         } else if constexpr (std::is_same_v<T, PersScopeProxy>) {
             return std::holds_alternative<PersScopeProxy>(_stack.top());
         } else {
@@ -25,25 +25,25 @@ public:
 
     template <typename T>
     Ref<T> top() {
-        if constexpr (std::is_same_v<T, TransScope>) {
-            return ref(std::get<Ptr<TransScope>>(_stack.top()));
+        if constexpr (std::is_same_v<T, BasicScope>) {
+            return ref(std::get<Ptr<BasicScope>>(_stack.top()));
         } else if constexpr (std::is_same_v<T, PersScopeProxy>) {
             return &std::get<PersScopeProxy>(_stack.top());
         } if constexpr (std::is_same_v<T, Scope>) {
-            if (top_is<TransScope>())
-                return top<TransScope>();
+            if (top_is<BasicScope>())
+                return top<BasicScope>();
             return top<PersScopeProxy>();
         } else {
             assert(false);
         }
     }
 
-    void push(Ptr<TransScope>&& scope) { _stack.push(std::move(scope)); }
+    void push(Ptr<BasicScope>&& scope) { _stack.push(std::move(scope)); }
     void push(PersScopeProxy&& scope) { _stack.push(std::move(scope)); }
     void pop() { _stack.pop(); }
 
 private:
-    using TransPtr = Ptr<TransScope>;
+    using TransPtr = Ptr<BasicScope>;
     using Variant = std::variant<TransPtr, PersScopeProxy>;
 
     std::stack<Variant> _stack;

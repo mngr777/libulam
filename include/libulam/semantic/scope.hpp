@@ -99,15 +99,15 @@ private:
 
 // Transient
 
-class TransScope : public Scope {
+class BasicScope : public Scope {
 public:
-    explicit TransScope(Ref<Scope> parent, Flag flags = NoFlags):
+    explicit BasicScope(Ref<Scope> parent, Flag flags = NoFlags):
         Scope{parent, flags} {
         assert((flags & Persistent) == 0);
     }
 
-    TransScope(TransScope&&) = default;
-    TransScope& operator=(TransScope&&) = default;
+    BasicScope(BasicScope&&) = default;
+    BasicScope& operator=(BasicScope&&) = default;
 
     void for_each(ItemCb cb) override;
 

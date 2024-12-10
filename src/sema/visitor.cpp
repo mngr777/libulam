@@ -168,7 +168,7 @@ void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
 
 void RecVisitor::enter_scope(Scope::Flag flags) {
     auto parent = !_scopes.empty() ? _scopes.top<Scope>() : Ref<Scope>{};
-    _scopes.push(make<TransScope>(parent, flags));
+    _scopes.push(make<BasicScope>(parent, flags));
 }
 
 void RecVisitor::enter_scope(PersScopeProxy&& scope) {

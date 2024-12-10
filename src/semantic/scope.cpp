@@ -7,14 +7,14 @@
 
 namespace ulam {
 
-// TransScope
+// BasicScope
 
-Scope::Symbol* TransScope::get(str_id_t name_id, bool current) {
+Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
     auto sym = _symbols.get(name_id);
     return (sym || current || !parent()) ? sym : parent()->get(name_id);
 }
 
-void TransScope::for_each(ItemCb cb) {
+void BasicScope::for_each(ItemCb cb) {
     for (auto& pair : _symbols)
         cb(pair.first, pair.second);
 }
