@@ -6,6 +6,7 @@
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam::ast {
 class TypeName;
@@ -37,6 +38,8 @@ public:
         _value{tv.move_value()},
         _flags{flags} {}
 
+    str_id_t name_id() const;
+
     bool is(Flag flag) const { return _flags & flag; }
 
     ast::Ref<ast::TypeName> type_node() { return _type_node; }
@@ -61,7 +64,7 @@ public:
 private:
     ast::Ref<ast::TypeName> _type_node;
     ast::Ref<ast::VarDecl> _node;
-    Ref<Type> _type;
+    Ref<Type> _type{};
     Value _value;
     Flag _flags;
 };

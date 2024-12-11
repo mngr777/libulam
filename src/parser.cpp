@@ -172,6 +172,8 @@ ast::Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     if (_tok.is(tok::ParenL)) {
         auto paren_loc_id = _tok.loc_id;
         params = parse_param_list();
+        if (!params)
+            panic(tok::Colon, tok::Plus, tok::BraceL);
         if (kind == ClassKind::Element) {
             diag(paren_loc_id, 1, "element can not be a template");
             params = {};
@@ -202,6 +204,7 @@ ast::Ptr<ast::TypeNameList> Parser::parse_class_ancestor_list() {
             continue;
         }
         node->add(std::move(type_name));
+
         // +
         if (_tok.is(tok::Plus)) {
             auto plus = _tok;
@@ -227,6 +230,7 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
             if (type_def)
                 node->body()->add(std::move(type_def));
         } break;
+
         case tok::BuiltinTypeIdent:
         case tok::TypeIdent: {
             // fun or var def
@@ -237,7 +241,9 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
                 consume_if(tok::Semicol);
                 break;
             }
-            // name
+
+            // [&] name
+            bool is_ref = parse_is_ref();
             if (!match(tok::Ident)) {
                 panic(tok::Semicol, tok::BraceL, tok::BraceR);
                 consume_if(tok::Semicol);
@@ -245,23 +251,26 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
             }
             auto name = tok_ast_str();
             consume();
+
             if (_tok.is(tok::ParenL)) {
-                auto fun = parse_fun_def_rest(std::move(type), name);
+                auto fun = parse_fun_def_rest(std::move(type), is_ref, name);
                 if (fun)
                     node->body()->add(std::move(fun));
             } else {
-                auto vars =
-                    parse_var_def_list_rest(std::move(type), name, false);
+                auto vars = parse_var_def_list_rest(
+                    std::move(type), false, name, is_ref);
                 if (vars)
                     node->body()->add(std::move(vars));
             }
         } break;
+
         case tok::Constant: {
             consume();
             auto vars = parse_var_def_list(true);
             if (vars)
                 node->body()->add(std::move(vars));
         } break;
+
         default:
             unexpected();
             panic(tok::Semicol, tok::BraceL, tok::BraceR);
@@ -276,14 +285,17 @@ void Parser::parse_class_def_body(ast::Ref<ast::ClassDef> node) {
 ast::Ptr<ast::TypeDef> Parser::parse_type_def() {
     assert(_tok.is(tok::Typedef));
     consume();
+
     // type
     auto type_name = parse_type_name();
     if (!type_name)
         return {};
+
     // alias expr
     auto type_expr = parse_type_expr();
     if (!type_expr)
         return {};
+
     // ;
     if (!expect(tok::Semicol)) {
         panic(tok::Semicol, tok::BraceR);
@@ -300,57 +312,100 @@ ast::Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
         consume_if(tok::Semicol);
         return {};
     }
-    // name
+
+    // [&] first name
+    bool first_is_ref = parse_is_ref();
     if (!match(tok::Ident)) {
         panic(tok::Semicol, tok::BraceL, tok::BraceR);
         return {};
     }
     auto first_name = tok_ast_str();
     consume();
-    return parse_var_def_list_rest(std::move(type), first_name, is_const);
+    return parse_var_def_list_rest(
+        std::move(type), is_const, first_name, first_is_ref);
 }
 
 ast::Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
-    ast::Ptr<ast::TypeName>&& type, ast::Str first_name, bool is_const) {
+    ast::Ptr<ast::TypeName>&& type,
+    bool is_const,
+    ast::Str first_name,
+    bool first_is_ref) {
     auto node = tree<ast::VarDefList>(std::move(type));
     node->set_is_const(is_const);
-    // first ident
-    auto name = first_name;
-    while (true) {
-        // value
-        ast::Ptr<ast::Expr> expr;
-        if (_tok.is(tok::Equal)) {
-            consume();
-            expr = parse_expr();
-        }
-        // add var
-        node->add(tree<ast::VarDef>(name, std::move(expr)));
-        // end of list?
-        if (_tok.in(tok::Semicol, tok::Eof))
-            break;
+
+    // first var
+    auto first = parse_var_def_rest(first_name, first_is_ref);
+    if (!first) {
+        panic(tok::Semicol);
+        consume_if(tok::Semicol);
+        return {};
+    }
+    node->add(std::move(first));
+
+    // rest of vars
+    while (!_tok.in(tok::Semicol, tok::Eof)) {
         // ,
-        // if next is ident, pretend there is a comma
-        if (!expect(tok::Comma) && !_tok.is(tok::Ident)) {
+        if (_tok.is(tok::Comma)) {
+            auto comma = _tok;
+            consume();
+            if (is_const) {
+                diag(comma, "constant lists are not allowed");
+            } else if (_tok.is(tok::Semicol)) {
+                diag(comma, "trailing comma in variable definition list");
+                break;
+            }
+        } else {
+            unexpected();
+        }
+
+        // var
+        auto var_def = parse_var_def();
+        if (!var_def) {
             panic(tok::Semicol);
-            consume_if(tok::Semicol);
             break;
         }
-        // next ident
-        if (!match(tok::Ident)) {
-            panic(tok::Semicol);
-            consume_if(tok::Semicol);
-            break;
-        }
-        name = tok_ast_str();
-        consume();
+        node->add(std::move(var_def));
     }
     // ;
     expect(tok::Semicol);
     return node;
 }
 
-ast::Ptr<ast::FunDef>
-Parser::parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name) {
+ast::Ptr<ast::VarDef> Parser::parse_var_def() {
+    // [&] name
+    bool is_ref = parse_is_ref();
+    if (!match(tok::Ident))
+        return {};
+    auto name = tok_ast_str();
+    consume();
+
+    return parse_var_def_rest(name, is_ref);
+}
+
+ast::Ptr<ast::VarDef> Parser::parse_var_def_rest(ast::Str name, bool is_ref) {
+    // []
+    ast::Ptr<ast::ExprList> array_dims{};
+    if (_tok.is(tok::BracketL)) {
+        array_dims = parse_array_dims();
+        if (!array_dims)
+            return {};
+    }
+
+    // value
+    ast::Ptr<ast::Expr> expr;
+    if (_tok.is(tok::Equal)) {
+        consume();
+        expr = parse_expr();
+    }
+
+    auto node = tree<ast::VarDef>(name, std::move(array_dims), std::move(expr));
+    node->set_is_ref(is_ref);
+    return node;
+}
+
+ast::Ptr<ast::FunDef> Parser::parse_fun_def_rest(
+    ast::Ptr<ast::TypeName>&& ret_type, bool is_ref, ast::Str name) {
+    assert(ret_type);
     assert(_tok.type == tok::ParenL);
     // params
     auto params = parse_param_list();
@@ -359,8 +414,10 @@ Parser::parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name) {
     // body
     auto body = ast::make<ast::FunDefBody>();
     parse_as_block(ast::ref(body));
-    return tree<ast::FunDef>(
+    auto node = tree<ast::FunDef>(
         name, std::move(ret_type), std::move(params), std::move(body));
+    node->set_is_ref_ret_type(is_ref);
+    return node;
 }
 
 ast::Ptr<ast::Block> Parser::parse_block() {
@@ -387,10 +444,13 @@ ast::Ptr<ast::Stmt> Parser::parse_stmt() {
         if (_tok.is(tok::Period)) {
             // FIXME: there are also e.g. class var access
             return parse_type_op_rest(std::move(type));
-        } else if (_tok.is(tok::Ident)) {
+        } else if (_tok.in(tok::Ident, tok::Amp)) {
+            // [&] first name
+            bool first_is_ref = parse_is_ref();
             auto first_name = tok_ast_str();
             consume();
-            return parse_var_def_list_rest(std::move(type), first_name, false);
+            return parse_var_def_list_rest(
+                std::move(type), false, first_name, first_is_ref);
         } else {
             unexpected();
             panic(tok::Semicol);
@@ -537,16 +597,27 @@ ast::Ptr<ast::Param> Parser::parse_param(bool requires_value) {
         is_const = true;
         consume();
     }
+
     // type
     auto type = parse_type_name();
-    if (!match(tok::Ident)) {
-        panic(tok::Ident, tok::Comma, tok::ParenR);
-        if (!_tok.is(tok::Ident))
-            return {};
-    }
-    // name
+    if (!type)
+        return {};
+
+    // [&] name
+    bool is_ref = parse_is_ref();
+    if (!match(tok::Ident))
+        return {};
     auto name = tok_ast_str();
     consume();
+
+    // array dimensions
+    ast::Ptr<ast::ExprList> array_dims{};
+    if (_tok.is(tok::BracketL)) {
+        array_dims = parse_array_dims();
+        if (!array_dims)
+            return {};
+    }
+
     // value
     ast::Ptr<ast::Expr> default_value{};
     if (_tok.is(tok::Equal)) {
@@ -556,9 +627,11 @@ ast::Ptr<ast::Param> Parser::parse_param(bool requires_value) {
         // TODO: name location
         diag("missing default value");
     }
-    auto node =
-        tree<ast::Param>(name, std::move(type), std::move(default_value));
+
+    auto node = tree<ast::Param>(
+        name, std::move(type), std::move(array_dims), std::move(default_value));
     node->set_is_const(is_const);
+    node->set_is_ref(is_ref);
     return node;
 }
 
@@ -683,10 +756,12 @@ ast::Ptr<ast::TypeExpr> Parser::parse_type_expr() {
         amp_loc_id = _tok.loc_id;
         consume();
     }
+
     // ident
     auto ident = parse_type_ident();
     if (!ident)
         return {};
+
     // array dimensions
     ast::Ptr<ast::ExprList> array_dims{};
     if (_tok.is(tok::BracketL)) {
@@ -694,6 +769,7 @@ ast::Ptr<ast::TypeExpr> Parser::parse_type_expr() {
         if (!array_dims)
             return {};
     }
+
     auto node = tree<ast::TypeExpr>(std::move(ident), std::move(array_dims));
     node->set_is_ref(is_ref);
     node->set_amp_loc_id(amp_loc_id);
@@ -813,6 +889,13 @@ ast::Ptr<ast::Ident> Parser::parse_ident() {
     node->set_loc_id(_tok.loc_id);
     consume();
     return node;
+}
+
+bool Parser::parse_is_ref() {
+    bool is_ref = _tok.is(tok::Amp);
+    if (is_ref)
+        consume();
+    return is_ref;
 }
 
 ast::Ptr<ast::BoolLit> Parser::parse_bool_lit() {

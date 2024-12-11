@@ -51,10 +51,13 @@ private:
     ast::Ptr<ast::VarDefList> parse_var_def_list(bool is_const);
     ast::Ptr<ast::VarDefList> parse_var_def_list_rest(
         ast::Ptr<ast::TypeName>&& base_type,
+        bool is_const,
         ast::Str first_name,
-        bool is_const);
+        bool first_is_ref);
+    ast::Ptr<ast::VarDef> parse_var_def();
+    ast::Ptr<ast::VarDef> parse_var_def_rest(ast::Str name, bool is_ref);
     ast::Ptr<ast::FunDef>
-    parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, ast::Str name);
+    parse_fun_def_rest(ast::Ptr<ast::TypeName>&& ret_type, bool is_ref, ast::Str name);
     ast::Ptr<ast::ParamList> parse_param_list();
     ast::Ptr<ast::Param> parse_param(bool requires_value);
 
@@ -83,6 +86,7 @@ private:
     ast::Ptr<ast::MemberAccess> parse_member_access(ast::Ptr<ast::Expr>&& obj);
     ast::Ptr<ast::TypeIdent> parse_type_ident();
     ast::Ptr<ast::Ident> parse_ident();
+    bool parse_is_ref();
     ast::Ptr<ast::BoolLit> parse_bool_lit();
     ast::Ptr<ast::NumLit> parse_num_lit();
     ast::Ptr<ast::StrLit> parse_str_lit();

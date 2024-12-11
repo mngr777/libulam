@@ -1,8 +1,10 @@
 #pragma once
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
+#include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/object.hpp>
@@ -26,9 +28,18 @@ private:
     bool resolve(Ref<AliasType> alias, ScopeProxy scope);
     bool resolve(Ref<Var> var, ScopeProxy scope);
     bool resolve(Ref<Fun> fun);
+    bool resolve(Ref<FunOverload> overload);
+
+    Ref<Type> resolve_var_decl_type(
+        ast::Ref<ast::TypeName> type_name,
+        ast::Ref<ast::VarDecl> node,
+        ScopeProxy scope);
 
     Ref<Type>
     resolve_type_name(ast::Ref<ast::TypeName> type_name, ScopeProxy scope);
+
+    Ref<Type> apply_array_dims(
+        Ref<Type> type, ast::Ref<ast::ExprList> dims, ScopeProxy scope);
 
     std::optional<bool> check_state(Ref<ScopeObject> obj);
     void update_state(Ref<ScopeObject> obj, bool is_resolved);

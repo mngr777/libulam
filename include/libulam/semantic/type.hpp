@@ -107,10 +107,13 @@ public:
         return {ExprError::NoOperator};
     };
 
-    virtual Ref<ArrayType> array_type(array_size_t size);
+    Ref<ArrayType> array_type(array_size_t size);
     virtual Ref<RefType> ref_type();
 
 protected:
+    virtual Ptr<ArrayType> make_array_type(array_size_t size);
+    virtual Ptr<RefType> make_ref_type();
+
     TypeIdGen& id_gen() { return _id_gen; }
 
 private:
@@ -129,8 +132,7 @@ public:
 
 class AliasType : public UserType {
 public:
-    AliasType(
-        TypeIdGen& id_gen, ast::Ref<ast::TypeDef> node):
+    AliasType(TypeIdGen& id_gen, ast::Ref<ast::TypeDef> node):
         UserType{id_gen}, _node(node) {}
 
     Ref<AliasType> as_alias() override { return this; }
@@ -142,33 +144,43 @@ public:
     ast::Ref<ast::TypeName> type_name();
     ast::Ref<ast::TypeExpr> type_expr();
 
-    Ref<Type> canon() override {
-        return const_cast<Ref<Type>>(std::as_const(*this).canon());
-    }
-
-    Ref<const Type> canon() const override {
-        if (!_aliased)
-            return {};
-        return _aliased->canon();
-    }
+    Ref<Type> canon() override { return _canon; }
+    Ref<const Type> canon() const override { return _canon; }
 
     Ref<Type> aliased() { return _aliased; }
     Ref<const Type> aliased() const { return _aliased; }
 
-    void set_aliased(Ref<Type> type) { _aliased = type; }
+    void set_aliased(Ref<Type> type);
+
+protected:
+    Ptr<ArrayType> make_array_type(array_size_t size) override;
+    Ptr<RefType> make_ref_type() override;
 
 private:
     ast::Ref<ast::TypeDef> _node;
-    Ref<Type> _aliased;
+    Ref<Type> _aliased{};
+    Ref<Type> _canon{};
 };
 
 class ArrayType : public Type {
+    friend AliasType;
+
 public:
-    ArrayType(TypeIdGen& id_gen, Ref<Type> item_type, array_size_t array_size):
-        Type{id_gen}, _item_type{item_type}, _array_size{array_size} {}
+    ArrayType(
+        TypeIdGen& id_gen,
+        Ref<Type> item_type,
+        array_size_t array_size,
+        Ref<ArrayType> canon = {}):
+        Type{id_gen},
+        _item_type{item_type},
+        _array_size{array_size},
+        _canon{this} {}
 
     Ref<ArrayType> as_array() override { return this; }
     Ref<const ArrayType> as_array() const override { return this; }
+
+    Ref<Type> canon() override { return _canon; }
+    Ref<const Type> canon() const override { return _canon; }
 
     Ref<Type> item_type() { return _item_type; }
     Ref<const Type> item_type() const { return _item_type; }
@@ -176,24 +188,36 @@ public:
     array_size_t array_size() const { return _array_size; }
 
 private:
+    void set_canon(Ref<ArrayType> canon);
+
     Ref<Type> _item_type;
     array_size_t _array_size;
+    Ref<ArrayType> _canon{};
 };
 
 class RefType : public Type {
+    friend AliasType;
+
 public:
-    RefType(TypeIdGen& id_gen, Ref<Type> refd): Type{id_gen}, _refd{refd} {}
+    RefType(TypeIdGen& id_gen, Ref<Type> refd):
+        Type{id_gen}, _refd{refd}, _canon{this} {}
 
     Ref<RefType> as_ref() override { return this; }
     Ref<const RefType> as_ref() const override { return this; }
 
+    Ref<Type> canon() override { return _canon; }
+    Ref<const Type> canon() const override { return _canon; }
+
     Ref<Type> refd() { return _refd; }
     Ref<const Type> refd() const { return _refd; }
 
-    Ref<RefType> ref_type() override { assert(false); }
+    Ref<RefType> ref_type() override { return this; }
 
 private:
-    Ref<Type> _refd;
+    void set_canon(Ref<RefType> canon);
+
+    Ref<Type> _refd{};
+    Ref<RefType> _canon{};
 };
 
 } // namespace ulam

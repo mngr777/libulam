@@ -125,6 +125,7 @@ class FunDef : public Tuple<Stmt, TypeName, ParamList, FunDefBody>,
                public ScopeObjectNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(FunOverload, overload)
+    ULAM_AST_SIMPLE_ATTR(bool, is_ref_ret_type, false)
 public:
     FunDef(
         Str name,
@@ -142,7 +143,8 @@ public:
 class VarDef : public VarDecl {
     ULAM_AST_NODE
 public:
-    VarDef(Str name, Ptr<Expr>&& expr): VarDecl{name, std::move(expr)} {}
+    VarDef(Str name, Ptr<ExprList>&& array_dims, Ptr<Expr>&& expr):
+        VarDecl{name, std::move(array_dims), std::move(expr)} {}
 };
 
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {

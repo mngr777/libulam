@@ -5,9 +5,9 @@
 
 static const char* Program = R"END(
 quark Q(B.C param1 = 0xff) {
-  Int bar() {
-    Int a = 1;
-    --a;
+  Int a = 1;
+
+  Int& bar(constant Int &b[1], Unsigned c = 1) {
     return a;
   }
 }
@@ -16,7 +16,7 @@ element A {
   typedef B.C D;
 
   B.C.D a = 1, b, c = 2;
-  C.D.E d = 3;
+  constant C.D.E d = 3;
 
   C(2).D.E foo(F.G c = 1) {
     H(2) a = 1;

@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/state.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/semantic/fun.hpp>
@@ -6,7 +7,8 @@ namespace ulam {
 
 // FunOverload
 
-ast::Ref<ast::TypeName> FunOverload::ret_type_node() {
+ast::Ref<ast::TypeName> FunOverload::ret_type_name() {
+    assert(_node->has_ret_type_name());
     return _node->ret_type_name();
 }
 
@@ -27,8 +29,11 @@ void Fun::merge(Ref<Fun> other) {
         add_overload(item.ref());
 }
 
-Ref<FunOverload> Fun::add_overload(ast::Ref<ast::FunDef> node) {
+Ref<FunOverload> Fun::add_overload(ast::Ref<ast::FunDef> node, PersScopeState scope_state) {
+    assert(node);
+    assert(scope_state);
     auto overload = ulam::make<FunOverload>(node);
+    overload->set_pers_scope_state(scope_state);
     auto overload_ref = ref(overload);
     _overloads.push_back(std::move(overload));
     return overload_ref;

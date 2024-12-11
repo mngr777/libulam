@@ -65,6 +65,21 @@ void Out::print(Scope::Symbol* sym) {
     }
 }
 
+void Out::print(Ref<Type> type, bool canon) {
+    // std::list<array_size_t> array_sizes;
+    
+}
+
+void Out::print(Ref<Var> var) {
+    if (var->type()) {
+        print(var->type());
+    } else {
+        _os << "<no type>";
+    }
+    _os << " " << str(var->name_id());
+    _os << "\n";
+}
+
 std::string_view Out::str(str_id_t str_id) {
     return _program->ast()->ctx().str(str_id);
 }

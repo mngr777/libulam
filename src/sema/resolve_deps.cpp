@@ -231,7 +231,7 @@ void ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
     fun_ref = sym->get<Fun>();
 
     // create overload
-    auto overload = fun_ref->add_overload(node);
+    auto overload = fun_ref->add_overload(node, cls_base->scope()->state());
     node->set_overload(overload);
     return;
 }

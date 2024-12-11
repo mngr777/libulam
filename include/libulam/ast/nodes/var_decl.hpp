@@ -10,14 +10,17 @@
 
 namespace ulam::ast {
 
-class VarDecl : public Tuple<Stmt, Expr>, public Named, public ScopeObjectNode {
-    ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
+class VarDecl : public Tuple<Stmt, ExprList, Expr>,
+                public Named,
+                public ScopeObjectNode {
+    ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
     ULAM_AST_REF_ATTR(Var, var)
 public:
-    VarDecl(Str name, Ptr<Expr>&& value):
-        Tuple{std::move(value)}, Named{name} {}
+    VarDecl(Str name, Ptr<ExprList>&& array_dims, Ptr<Expr>&& value):
+        Tuple{std::move(array_dims), std::move(value)}, Named{name} {}
 
-    ULAM_AST_TUPLE_PROP(value, 0);
+    ULAM_AST_TUPLE_PROP(array_dims, 0)
+    ULAM_AST_TUPLE_PROP(value, 1)
 };
 
 } // namespace ulam::ast

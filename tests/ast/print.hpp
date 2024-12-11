@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/access.hpp"
+#include "libulam/ast/nodes/expr.hpp"
 #include "libulam/ast/nodes/stmts.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
@@ -39,6 +40,7 @@ protected:
     void traverse(ulam::ast::Ref<ulam::ast::Block> node) override;
 
     void print_var_decl(ulam::ast::Ref<ulam::ast::VarDecl> node);
+    void print_array_dims(ulam::ast::Ref<ulam::ast::ExprList> exprs);
     void traverse_with_indent(ulam::ast::Ref<ulam::ast::Node> node);
 
     void accept_me(ulam::ast::Ref<ulam::ast::Node> node);

@@ -66,10 +66,27 @@ void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::Block> node) {
 }
 
 void PrinterBase::print_var_decl(ulam::ast::Ref<ulam::ast::VarDecl> node) {
+    // &
+    if (node->is_ref())
+        _os << "&";
+    // name
     _os << name(node);
+    // []
+    if (node->has_array_dims())
+        print_array_dims(node->array_dims());
+    // = value
     if (node->has_value()) {
         _os << " = ";
         accept_me(node->value());
+    }
+}
+
+void PrinterBase::print_array_dims(ulam::ast::Ref<ulam::ast::ExprList> exprs) {
+    assert(exprs->child_num() > 0);
+    for (unsigned n = 0; n < exprs->child_num(); ++n) {
+        _os << "[";
+        accept_me(exprs->get(n));
+        _os << "]";
     }
 }
 
@@ -335,14 +352,8 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::TypeExpr> node) {
     if (node->is_ref())
         _os << "&";
     accept_me(node->ident());
-    if (!node->has_array_dims())
-        return;
-    auto array_dims = node->array_dims();
-    for (unsigned n = 0; n < array_dims->child_num(); ++n) {
-        _os << "[";
-        accept_me(array_dims->child(n));
-        _os << "]";
-    }
+    if (node->has_array_dims())
+        print_array_dims(node->array_dims());
 }
 
 void Printer::traverse(ulam::ast::Ref<ulam::ast::VarDefList> node) {
@@ -390,7 +401,8 @@ bool Printer::do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) {
     return false;
 }
 
-void Printer::traverse_list(ulam::ast::Ref<ulam::ast::Node> node, std::string sep) {
+void Printer::traverse_list(
+    ulam::ast::Ref<ulam::ast::Node> node, std::string sep) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         if (n > 0)
             _os << sep;

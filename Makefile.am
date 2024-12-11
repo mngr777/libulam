@@ -76,7 +76,8 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtin/unsigned.cpp \
 	src/semantic/type/builtins.cpp \
 	src/semantic/type_tpl.cpp \
-	src/semantic/value.cpp
+	src/semantic/value.cpp \
+	src/semantic/var.cpp
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \

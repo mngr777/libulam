@@ -165,34 +165,21 @@ bool Resolver::resolve(Ref<Class> cls) {
 
 bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
     CHECK_STATE(alias);
-
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
+    // type
     auto type = resolve_type_name(type_name, select_scope(alias, scope));
     if (!type)
         RET_UPD_STATE(alias, false);
 
     // &
-    if (type_expr->is_ref() && !type->canon()->is_ref())
+    if (type_expr->is_ref())
         type = type->ref_type();
 
     // []
-    auto array_dims = type_expr->array_dims();
-    if (array_dims) {
-        assert(array_dims->child_num() > 0);
-        // TODO: refactoring
-        ArrayDimEval array_dim_eval{ast(), scope};
-        for (unsigned n = 0; n < array_dims->child_num(); ++n) {
-            auto dim_expr = array_dims->get(n);
-            auto [size, success] = array_dim_eval.eval(dim_expr);
-            if (success) {
-                type = type->array_type(size);
-            } else {
-                type = {};
-            }
-        }
-    }
+    if (type_expr->has_array_dims())
+        type = apply_array_dims(type, type_expr->array_dims(), scope);
     if (!type)
         RET_UPD_STATE(alias, false);
 
@@ -202,25 +189,77 @@ bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
 
 bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
     CHECK_STATE(var);
-    auto type = var->type();
-    if (type)
-        RET_UPD_STATE(var, true);
+    bool is_resolved = true;
 
-    auto base_type =
-        resolve_type_name(var->type_node(), select_scope(var, scope));
-    if (!base_type)
-        RET_UPD_STATE(var, false);
+    // type
+    if (!var->type()) {
+        auto type = resolve_var_decl_type(var->type_node(), var->node(), scope);
+        if (type)
+            var->set_type(type);
+        is_resolved = type && is_resolved;
+    }
 
-    // TODO: arrays, refs
-    type = base_type;
+    // TODO: value
 
-    RET_UPD_STATE(var, true);
+    RET_UPD_STATE(var, is_resolved);
 }
 
 bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
-    //
-    return true;
+    bool is_resolved = true;
+
+    for (auto& overload : fun->overloads())
+        is_resolved = resolve(overload.ref()) && is_resolved;
+
+    RET_UPD_STATE(fun, is_resolved);
+}
+
+bool Resolver::resolve(Ref<FunOverload> overload) {
+    CHECK_STATE(overload);
+    bool is_resolved = true;
+    ScopeProxy scope_proxy{overload->pers_scope_state()};
+
+    // return type
+    auto ret_type = resolve_type_name(overload->ret_type_name(), scope_proxy);
+    if (ret_type) {
+        if (overload->node()->is_ref_ret_type())
+            ret_type = ret_type->ref_type();
+    } else {
+        is_resolved = false;
+    }
+
+    // param types
+    // TODO: param object, values
+    auto params_node = overload->params_node();
+    for (unsigned n = 0; n < params_node->child_num(); ++n) {
+        auto param_node = params_node->get(n);
+        auto param_type = resolve_var_decl_type(
+            param_node->type_name(), param_node, scope_proxy);
+        overload->add_param_type(param_type);
+        is_resolved = param_type && is_resolved;
+    }
+
+    RET_UPD_STATE(overload, is_resolved);
+}
+
+Ref<Type> Resolver::resolve_var_decl_type(
+    ast::Ref<ast::TypeName> type_name,
+    ast::Ref<ast::VarDecl> node,
+    ScopeProxy scope) {
+    // base type
+    auto type = resolve_type_name(type_name, scope);
+    if (!type)
+        return {};
+
+    // &
+    if (node->is_ref())
+        type = type->ref_type();
+
+    // []
+    if (node->has_array_dims())
+        type = apply_array_dims(type, node->array_dims(), scope);
+
+    return type;
 }
 
 Ref<Type> Resolver::resolve_type_name(
@@ -317,6 +356,21 @@ Ref<Type> Resolver::resolve_type_name(
         type = sym->get<UserType>();
         // ok so far, loop back to alias resolution
     }
+}
+
+Ref<Type> Resolver::apply_array_dims(
+    Ref<Type> type, ast::Ref<ast::ExprList> dims, ScopeProxy scope) {
+    assert(type);
+    assert(dims && dims->child_num() > 0);
+    ArrayDimEval eval{ast(), scope};
+    for (unsigned n = 0; n < dims->child_num(); ++n) {
+        auto expr = dims->get(n);
+        auto [size, success] = eval.eval(expr);
+        if (!success)
+            return {};
+        type = type->array_type(size);
+    }
+    return type;
 }
 
 std::optional<bool> Resolver::check_state(Ref<ScopeObject> obj) {
