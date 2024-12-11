@@ -6,23 +6,35 @@
 #include <libulam/semantic/type/class.hpp>
 #include <string>
 
+#define ULAM_DEBUG
+#define ULAM_DEBUG_PREFIX "[Class] "
+#include "src/debug.hpp"
+
 namespace ulam {
 
 // ClassBase
 
-ClassBase::ClassBase(ast::Ref<ast::ClassDef> node, ScopeFlags scope_flags):
+ClassBase::ClassBase(
+    ast::Ref<ast::ClassDef> node,
+    Ref<Scope> module_scope,
+    ScopeFlags scope_flags):
     _node{node},
-    _param_scope{},
+    _param_scope{make<PersScope>(module_scope)},
     _inh_scope{make<PersScope>(ref(_param_scope))},
-    _scope{make<PersScope>(ref(_inh_scope), scope_flags)} {}
+    _scope{make<PersScope>(ref(_inh_scope), scope_flags)} {
+    assert(module_scope);
+    assert(module_scope->is(scp::Module));
+}
 
 // Class
 
 Class::Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl):
-    UserType{id_gen}, ClassBase{tpl->node(), scp::Class}, _tpl{tpl} {}
+    UserType{id_gen},
+    ClassBase{tpl->node(), tpl->param_scope()->parent(), scp::Class},
+    _tpl{tpl} {}
 
 Class::Class(TypeIdGen& id_gen, ast::Ref<ast::ClassDef> node, Ref<Scope> scope):
-    UserType{id_gen}, ClassBase{node, scp::Class}, _tpl{} {}
+    UserType{id_gen}, ClassBase{node, scope, scp::Class}, _tpl{} {}
 
 Class::~Class() {}
 
@@ -32,7 +44,7 @@ str_id_t Class::name_id() const { return node()->name().str_id(); }
 
 ClassTpl::ClassTpl(
     TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope):
-    TypeTpl{id_gen}, ClassBase{node, scp::ClassTpl} {}
+    TypeTpl{id_gen}, ClassBase{node, scope, scp::ClassTpl} {}
 
 ClassTpl::~ClassTpl() {}
 
@@ -62,9 +74,9 @@ ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
             auto [name_id, sym] = scope_proxy.advance();
             if (!sym)
                 break;
+            assert(sym->is<Var>());
             auto var = sym->get<Var>();
-            assert(var);
-            assert(var->flags() & Var::ClassParam);
+            assert(var->is_const() && var->is(Var::ClassParam));
             TypedValue value;
             std::swap(value, args.front());
             args.pop_front();

@@ -63,16 +63,17 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
 
         // add params
         for (unsigned n = 0; n < params->child_num(); ++n) {
-            auto param = params->get(n);
-            auto param_name_id = param->name().str_id();
+            auto param_node = params->get(n);
+            auto param_name_id = param_node->name().str_id();
             // make var
             auto var = ulam::make<Var>(
-                param->type_name(), param, Ref<Type>{}, Var::ClassParam);
+                param_node->type_name(), param_node, Ref<Type>{},
+                Var::ClassParam | Var::IsConst);
             auto var_ref = ref(var);
-            tpl->set(param_name_id, std::move(var));   // set class tpl var
-            tpl->scope()->set(param_name_id, var_ref); // add to tpl scope
-            param->set_scope_proxy(
-                tpl->scope()->proxy()); // set node scope attr
+            tpl->set(param_name_id, std::move(var)); // set class tpl var
+            tpl->param_scope()->set(param_name_id, var_ref); // add to tpl scope
+            param_node->set_scope_proxy(
+                tpl->param_scope()->proxy()); // set node scope attr
         }
         module()->set<ClassTpl>(name_id, std::move(tpl)); // add to module
         scope_proxy->set(name_id, tpl_ref);               // add to scope
@@ -129,7 +130,8 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
             // class tpl member
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
-            Ptr<UserType> type = ulam::make<AliasType>(program()->type_id_gen(), node);
+            Ptr<UserType> type =
+                ulam::make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             tpl->set(alias_id, std::move(type));  // add to class tpl
             scope_proxy->set(alias_id, type_ref); // add to scope
@@ -142,7 +144,8 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     } else {
         // transient typedef (in function body)
         assert(scope()->in(scp::Fun));
-        Ptr<UserType> type = ulam::make<AliasType>(program()->type_id_gen(), node);
+        Ptr<UserType> type =
+            ulam::make<AliasType>(program()->type_id_gen(), node);
         scope()->set(alias_id, std::move(type));
     }
 }
@@ -277,7 +280,7 @@ void ResolveDeps::export_classes() {
         for (auto& pair : *mod) {
             auto& [name_id, sym] = pair;
             auto [it, inserted] = exporting.emplace(name_id, ModuleSet{});
-            assert(sym.is<Class>());
+            assert(sym.is<Class>() || sym.is<ClassTpl>());
             it->second.insert(ref(mod));
         }
     }

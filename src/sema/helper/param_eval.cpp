@@ -3,9 +3,12 @@
 
 namespace ulam::sema {
 
-std::pair<TypedValueList, bool> ParamEval::eval(ast::Ref<ast::ArgList> args, ScopeProxy scope) {
+std::pair<TypedValueList, bool>
+ParamEval::eval(ast::Ref<ast::ArgList> args, ScopeProxy scope) {
+    if (!args || args->child_num() == 0)
+        return {TypedValueList{}, true};
+
     TypedValueList values;
-    assert(args->child_num() > 0);
     bool success = true;
     ExprVisitor ev{ast(), scope};
     for (unsigned n = 0; n < args->child_num(); ++n) {

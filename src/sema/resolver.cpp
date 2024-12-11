@@ -1,4 +1,3 @@
-#include "libulam/semantic/type.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -36,56 +35,130 @@ ScopeProxy select_scope(Ref<ScopeObject> obj, ScopeProxy scope) {
 void Resolver::resolve() {
     for (auto& module : _program->modules())
         resolve(ref(module));
+    for (auto cls : _classes)
+        resolve(cls);
+    _classes = {};
 }
 
 void Resolver::resolve(Ref<Module> module) {
     for (auto& pair : *module) {
         auto& [name_id, sym] = pair;
-        sym.visit([&](auto&& ref_ptr) { resolve(ref_ptr.ref()); });
+        if (sym.is<Class>()) {
+            init(sym.get<Class>());
+        } else {
+            assert(sym.is<ClassTpl>());
+            resolve(sym.get<ClassTpl>());
+        }
     }
 }
 
 bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
     CHECK_STATE(cls_tpl);
     bool is_resolved = true;
+
     auto params_node = cls_tpl->node()->params();
     for (unsigned n = 0; n < params_node->child_num(); ++n) {
         auto param_node = params_node->get(n);
         auto name_id = param_node->name().str_id();
-        auto sym = cls_tpl->get(name_id);
+        auto sym = cls_tpl->get(name_id); // TODO: don't use just symbol table
         assert(sym && sym->is<Var>());
         auto var = sym->get<Var>();
         auto res = resolve(var, {});
         is_resolved = is_resolved && res;
     }
+
     RET_UPD_STATE(cls_tpl, is_resolved);
+}
+
+bool Resolver::init(Ref<Class> cls) {
+    bool success = true;
+
+    // params
+    {
+        auto scope_proxy = cls->param_scope()->proxy();
+        scope_proxy.reset();
+        while (true) {
+            auto [name_id, sym] = scope_proxy.advance();
+            if (!sym)
+                break;
+            assert(sym->is<Var>());
+            auto var = sym->get<Var>();
+            assert(var->is_const() && var->is(Var::ClassParam));
+            success = resolve(var, scope_proxy) && success;
+        }
+    }
+
+    // init inherited members
+    {
+        if (cls->node()->has_ancestors()) {
+            auto ancestors = cls->node()->ancestors();
+            auto scope = cls->inh_scope();
+            for (unsigned n = 0; n < ancestors->child_num(); ++n) {
+                // resolve ancestor type
+                auto type_name = ancestors->get(n);
+                auto type = resolve_type_name(type_name, scope);
+                if (!type->is_class()) {
+                    diag().emit(
+                        diag::Error, type_name->loc_id(), 1, "not a class");
+                    success = false;
+                    continue;
+                }
+                auto anc_cls = type->as_class();
+                // add ancestor class
+                cls->add_ancestor(anc_cls, type_name);
+                // import symbols
+                anc_cls->members().export_symbols(
+                    cls->members(), false /* do not overwrite*/);
+            }
+        }
+    }
+
+    if (!success)
+        RET_UPD_STATE(cls, false);
+
+    _classes.push_back(cls);
+    return true;
 }
 
 bool Resolver::resolve(Ref<Class> cls) {
     CHECK_STATE(cls);
     bool is_resolved = true;
-    PersScopeProxy scope_proxy = cls->scope()->proxy();
-    scope_proxy.reset();
-    while (true) {
-        auto [name_id, sym] = scope_proxy.advance();
-        if (!sym)
-            break;
-        bool res{};
-        if (sym->is<UserType>()) {
-            // alias
-            auto type = sym->get<UserType>();
-            assert(type->is_alias());
-            res = resolve(type->as_alias(), {});
-        } else if (sym->is<Var>()) {
-            // var
-            res = resolve(sym->get<Var>(), {});
-        } else {
-            // fun
-            assert(sym->is<Fun>());
-            res = resolve(sym->get<Fun>());
+
+    // resolve ancestors
+    for (auto anc : cls->ancestors()) {
+        if (!resolve(anc.cls())) {
+            diag().emit(
+                diag::Error, anc.node()->loc_id(), 1, "failed to resolve");
+            is_resolved = false;
         }
-        is_resolved = is_resolved && res;
     }
+
+    // members
+    {
+        auto scope_proxy = cls->scope()->proxy();
+        scope_proxy.reset();
+        while (true) {
+            auto [name_id, sym] = scope_proxy.advance();
+            if (!sym)
+                break;
+            bool res{};
+            if (sym->is<UserType>()) {
+                // alias
+                auto type = sym->get<UserType>();
+                assert(type->is_alias());
+                res = resolve(type->as_alias(), {});
+            } else if (sym->is<Var>()) {
+                // var
+                res = resolve(sym->get<Var>(), {});
+            } else {
+                // fun
+                assert(sym->is<Fun>());
+                res = resolve(sym->get<Fun>());
+            }
+            is_resolved = is_resolved && res;
+        }
+    }
+
     RET_UPD_STATE(cls, is_resolved);
 }
 
@@ -134,19 +207,23 @@ bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
 
 bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
     CHECK_STATE(var);
-    // TODO: resolve references
-    auto basic_type =
-        resolve_type_name(var->type_node(), select_scope(var, scope));
-    if (basic_type) {
-        var->set_type(basic_type);
-    }
-    update_state(var, (bool)basic_type);
-    return basic_type;
+    auto type = var->type();
+    if (type)
+        RET_UPD_STATE(var, true);
+
+    auto base_type = resolve_type_name(var->type_node(), select_scope(var, scope));
+    if (!base_type)
+        RET_UPD_STATE(var, false);
+
+    // TODO: arrays, refs
+    type = base_type;
+
+    RET_UPD_STATE(var, true);
 }
 
 bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
-    // TODO
+    // 
     return true;
 }
 
@@ -159,6 +236,7 @@ Ref<Type> Resolver::resolve_type_name(
     if (type_spec->type()) {
         // already has type
         type = type_spec->type();
+
     } else if (type_spec->type_tpl()) {
         // non-class tpl
         // TODO: pass resolver
@@ -166,6 +244,7 @@ Ref<Type> Resolver::resolve_type_name(
         auto [args, success] = pe.eval(type_spec->args(), scope);
         type = type_spec->type_tpl()->type(
             diag(), type_spec->args(), std::move(args));
+
     } else if (type_spec->cls_tpl()) {
         // class tpl
         if (!resolve(type_spec->cls_tpl()))
@@ -175,6 +254,10 @@ Ref<Type> Resolver::resolve_type_name(
         auto [args, success] = pe.eval(type_spec->args(), scope);
         type = type_spec->cls_tpl()->type(
             diag(), type_spec->args(), std::move(args));
+        if (type) {
+            assert(type->is_class());
+            init(type->as_class());
+        }
     }
     if (!type)
         return {};

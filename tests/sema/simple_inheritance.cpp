@@ -1,13 +1,8 @@
 #include "tests/sema/common.hpp"
 
 static const char* Program = R"END(
-quark A {}
-
-quark B {}
-
-quark C : A {}
-
-quark D : A + B {}
+quark B(Int cP) {}
+quark A : B(1) {}
 )END";
 
 int main() {

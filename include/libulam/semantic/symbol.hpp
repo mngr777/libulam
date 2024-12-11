@@ -66,7 +66,8 @@ public:
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
-    template <typename... Ts> void export_symbols(_SymbolTable<Ts...>& other) {
+    template <typename... Ts>
+    void export_symbols(_SymbolTable<Ts...>& other, bool overwrite = false) {
         for (auto& pair : _symbols) {
             auto name_id = pair.first;
             auto& sym = pair.second;
@@ -75,14 +76,13 @@ public:
                 using T = typename std::decay_t<decltype(value)>::Type;
                 static_assert((std::is_same_v<T, Ts> || ...));
                 // export as ref
-                other.set(name_id, value.ref);
+                if (overwrite || !other.has(name_id))
+                    other.set(name_id, value.ref());
             });
         }
     }
 
-    bool has(str_id_t name_id) const {
-        return (_symbols.count(name_id) == 0);
-    }
+    bool has(str_id_t name_id) const { return (_symbols.count(name_id) == 0); }
 
     Symbol* get(str_id_t name_id) {
         auto it = _symbols.find(name_id);

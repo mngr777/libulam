@@ -19,7 +19,7 @@ public:
     using Flag = std::uint8_t;
     static constexpr Flag NoFlags = 0;
     static constexpr Flag IsConst = 1;
-    static constexpr Flag ClassParam = 1 << 1 | IsConst;
+    static constexpr Flag ClassParam = 1 << 1;
 
     Var(ast::Ref<ast::TypeName> type_node,
         ast::Ref<ast::VarDecl> node,
@@ -34,7 +34,8 @@ public:
         _type_node{type_node},
         _node{node},
         _type{tv.type()},
-        _value{tv.move_value()} {}
+        _value{tv.move_value()},
+        _flags{flags} {}
 
     bool is(Flag flag) const { return _flags & flag; }
 

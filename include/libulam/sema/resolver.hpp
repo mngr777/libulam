@@ -20,8 +20,9 @@ public:
 
 private:
     void resolve(Ref<Module> module);
-    bool resolve(Ref<ClassTpl> cls_tpl); // only resolve params
-    bool resolve(Ref<Class> cls);        // resolve all members
+    bool resolve(Ref<ClassTpl> cls_tpl);
+    bool init(Ref<Class> cls);
+    bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias, ScopeProxy scope);
     bool resolve(Ref<Var> var, ScopeProxy scope);
     bool resolve(Ref<Fun> fun);
@@ -37,6 +38,7 @@ private:
     std::string_view str(str_id_t str_id) const;
 
     Ref<Program> _program;
+    std::list<Ref<Class>> _classes;
 };
 
 } // namespace ulam::sema

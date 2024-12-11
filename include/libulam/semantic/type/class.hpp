@@ -13,6 +13,7 @@
 namespace ulam::ast {
 class ArgList;
 class ClassDef;
+class TypeName;
 } // namespace ulam::ast
 
 namespace ulam {
@@ -28,7 +29,10 @@ public:
     using SymbolTable = _SymbolTable<UserType, Fun, Var>;
     using Symbol = SymbolTable::Symbol;
 
-    ClassBase(ast::Ref<ast::ClassDef> node, ScopeFlags scope_flags);
+    ClassBase(
+        ast::Ref<ast::ClassDef> node,
+        Ref<Scope> module_scope,
+        ScopeFlags scope_flags);
 
     ClassBase(ClassBase&&) = default;
     ClassBase& operator=(ClassBase&&) = default;
@@ -40,6 +44,9 @@ public:
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
+
+    auto& members() { return _members; }
+    const auto& members() const { return _members; }
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
@@ -53,6 +60,7 @@ public:
     const auto node() const { return _node; }
 
     Ref<PersScope> param_scope() { return ref(_param_scope); }
+    // TODO: templates don't need inheritance scope
     Ref<PersScope> inh_scope() { return ref(_inh_scope); }
     Ref<PersScope> scope() { return ref(_scope); }
 
@@ -66,17 +74,42 @@ private:
 
 class Class : public UserType, public ClassBase {
 public:
+    class Ancestor {
+    public:
+        Ancestor(Ref<Class> cls, ast::Ref<ast::TypeName> node):
+            _cls{cls}, _node{node} {}
+
+        Ref<Class> cls() { return _cls; }
+        Ref<const Class> cls() const { return _cls; }
+
+        ast::Ref<ast::TypeName> node() { return _node; }
+        ast::Ref<const ast::TypeName> node() const { return _node; }
+
+    private:
+        Ref<Class> _cls;
+        ast::Ref<ast::TypeName> _node;
+    };
+
     Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl);
     Class(TypeIdGen& id_gen, ast::Ref<ast::ClassDef> node, Ref<Scope> scope);
     ~Class();
 
     str_id_t name_id() const override;
 
+    // TMP
+    auto& ancestors() { return _ancestors; }
+    const auto& ancestors() const { return _ancestors; }
+
+    void add_ancestor(Ref<Class> anc, ast::Ref<ast::TypeName> node) {
+        _ancestors.emplace_back(anc, node);
+    }
+
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
 
 private:
     Ref<ClassTpl> _tpl;
+    std::list<Ancestor> _ancestors;
 };
 
 class ClassTpl : public TypeTpl, public ClassBase, public ScopeObject {
