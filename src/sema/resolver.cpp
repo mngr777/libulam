@@ -1,6 +1,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
+#include <libulam/sema/helper/array_dim_eval.hpp>
 #include <libulam/sema/helper/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
 
@@ -181,26 +182,20 @@ bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
     if (array_dims) {
         assert(array_dims->child_num() > 0);
         // TODO: refactoring
-        ExprVisitor ev{ast(), scope};
+        ArrayDimEval array_dim_eval{ast(), scope};
         for (unsigned n = 0; n < array_dims->child_num(); ++n) {
-            auto dim = array_dims->get(n);
-            ExprRes res = dim->accept(ev);
-            auto rval = res.value().rvalue();
-            // TMP
-            array_size_t size{0};
-            if (rval->is_unknown()) {
-                diag().emit(diag::Error, dim->loc_id(), 1, "cannot calculate");
-                RET_UPD_STATE(alias, false);
-            } else if (rval->is<Unsigned>()) {
-                size = rval->get<Unsigned>();
-            } else if (rval->is<Integer>()) {
-                size = rval->get<Integer>();
+            auto dim_expr = array_dims->get(n);
+            auto [size, success] = array_dim_eval.eval(dim_expr);
+            if (success) {
+                type = type->array_type(size);
             } else {
-                diag().emit(diag::Error, dim->loc_id(), 1, "non-numeric");
+                type = {};
             }
-            type = type->array_type(size);
         }
     }
+    if (!type)
+        RET_UPD_STATE(alias, false);
+
     alias->set_aliased(type);
     RET_UPD_STATE(alias, true);
 }
@@ -211,7 +206,8 @@ bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
     if (type)
         RET_UPD_STATE(var, true);
 
-    auto base_type = resolve_type_name(var->type_node(), select_scope(var, scope));
+    auto base_type =
+        resolve_type_name(var->type_node(), select_scope(var, scope));
     if (!base_type)
         RET_UPD_STATE(var, false);
 
@@ -223,7 +219,7 @@ bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
 
 bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
-    // 
+    //
     return true;
 }
 
