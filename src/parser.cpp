@@ -319,7 +319,8 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
         // fun def
         if (!ret_type) {
             assert(type);
-            ret_type = make<ast::FunRetType>(std::move(type), std::move(array_dims));
+            ret_type =
+                make<ast::FunRetType>(std::move(type), std::move(array_dims));
         }
         ret_type->set_is_ref(is_ref);
         auto fun = parse_fun_def_rest(std::move(ret_type), name);
@@ -676,18 +677,30 @@ Ptr<ast::Param> Parser::parse_param(bool requires_value) {
 Ptr<ast::Expr> Parser::parse_expr() { return parse_expr_climb(0); }
 
 Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
-    Op op = Op::None;
-    // unary prefix
-    op = tok::unary_pre_op(_tok.type);
-    auto lhs = (op != Op::None) ? consume(),
-         tree<ast::UnaryPreOp>(op, parse_expr_climb(ops::prec(op)))
-        : parse_expr_lhs();
+    auto loc_id = _tok.loc_id;
+    Ptr<ast::Expr> lhs;
+
+    // unary prefix?
+    Op op = tok::unary_pre_op(_tok.type);
+    if (op != Op::None) {
+        consume();
+        Ptr<ast::OpExpr> lhs_op = tree<ast::UnaryPreOp>(op, parse_expr_climb(ops::prec(op)));
+        lhs_op->set_op_loc_id(loc_id);
+        lhs = std::move(lhs_op);
+    } else {
+        lhs = parse_expr_lhs();
+    }
     if (!lhs) {
         panic(tok::Semicol);
         return lhs;
     }
+    lhs->set_loc_id(loc_id);
+
     // binary or suffix
     while (true) {
+        Ptr<ast::OpExpr> lhs_op;
+        auto op_loc_id = _tok.loc_id;
+
         // binary?
         op = _tok.bin_op();
         if (op == Op::None || ops::prec(op) < min_prec) {
@@ -696,24 +709,28 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
             if (op == Op::None || ops::prec(op) < min_prec)
                 break;
             consume();
-            lhs = tree<ast::UnaryPostOp>(op, std::move(lhs));
+            lhs_op = tree<ast::UnaryPostOp>(op, std::move(lhs));
+            lhs_op->set_op_loc_id(op_loc_id);
             continue;
         }
         switch (op) {
         case Op::FunCall:
-            lhs = parse_funcall(std::move(lhs));
+            lhs_op = parse_funcall(std::move(lhs));
             break;
         case Op::ArrayAccess:
-            lhs = parse_array_access(std::move(lhs));
+            lhs_op = parse_array_access(std::move(lhs));
             break;
         case Op::MemberAccess:
-            lhs = parse_member_access(std::move(lhs));
+            lhs_op = parse_member_access(std::move(lhs));
             break;
         default:
             consume();
-            lhs = tree<ast::BinaryOp>(
+            lhs_op = tree<ast::BinaryOp>(
                 op, std::move(lhs), parse_expr_climb(ops::right_prec(op)));
         }
+        lhs_op->set_loc_id(loc_id);
+        lhs_op->set_op_loc_id(op_loc_id);
+        lhs = std::move(lhs_op);
     }
     return lhs;
 }

@@ -58,9 +58,10 @@ public:
     ULAM_AST_TUPLE_PROP(inner, 0)
 };
 
-class _OpExpr : public Expr {
+class OpExpr : public Expr {
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, op_loc_id, NoLocId)
 public:
-    explicit _OpExpr(Op op): _op{op} { assert(op != Op::None); }
+    explicit OpExpr(Op op): _op{op} { assert(op != Op::None); }
 
     Op op() const { return _op; }
 
@@ -68,7 +69,7 @@ protected:
     Op _op;
 };
 
-class BinaryOp : public Tuple<_OpExpr, Expr, Expr> {
+class BinaryOp : public Tuple<OpExpr, Expr, Expr> {
     ULAM_AST_EXPR
 public:
     BinaryOp(Op op, Ptr<Expr>&& lhs, Ptr<Expr>&& rhs):
@@ -78,7 +79,7 @@ public:
     ULAM_AST_TUPLE_PROP(rhs, 1)
 };
 
-class _UnaryOp : public Tuple<_OpExpr, Expr> {
+class _UnaryOp : public Tuple<OpExpr, Expr> {
 public:
     _UnaryOp(Op op, Ptr<Expr>&& arg): Tuple{std::move(arg), op} {}
 
