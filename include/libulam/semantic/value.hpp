@@ -45,7 +45,7 @@ public:
     RValue(): _Value{} {}
 };
 
-class LValue : public _Value<Ref<Var>> { // TODO: array access
+class LValue : public _Value<Ref<Var>> { // TODO: array/member access
 public:
     template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
     LValue(): _Value{} {}

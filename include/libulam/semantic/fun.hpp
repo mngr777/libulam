@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/scope/object.hpp>
+#include <libulam/semantic/params.hpp>
 #include <list>
 
 namespace ulam::ast {
@@ -24,10 +25,10 @@ public:
     void set_ret_type(Ref<Type> ret_type) { _ret_type = ret_type; }
 
     // TMP
-    auto& param_types() { return _param_types; }
-    const auto& param_types() const { return _param_types; }
+    auto& params() { return _params; }
+    const auto& param() const { return _params; }
 
-    void add_param_type(Ref<Type> type);
+    void add_param(Ref<Type> type, Value&& default_value);
 
     Ref<ast::FunDef> node() { return _node; }
     Ref<ast::TypeName> ret_type_name();
@@ -37,7 +38,7 @@ public:
 private:
     Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
-    std::list<Ref<Type>> _param_types;
+    ParamList _params;
 };
 
 class Fun : public ScopeObject {

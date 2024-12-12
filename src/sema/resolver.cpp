@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -228,14 +229,24 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
         is_resolved = false;
     }
 
-    // param types
-    // TODO: param object, values
+    // params
+    auto scope = make<BasicScope>(&scope_proxy); // tmp scope
+    ExprVisitor ev{ast(), ref(scope)};
     auto params_node = overload->params_node();
     for (unsigned n = 0; n < params_node->child_num(); ++n) {
         auto param_node = params_node->get(n);
         auto param_type = resolve_var_decl_type(
             param_node->type_name(), param_node, scope_proxy);
-        overload->add_param_type(param_type);
+        Value default_value{};
+        if (param_type) {
+            if (param_node->has_default_value()) {
+                ExprRes res = param_node->default_value()->accept(ev);
+                auto tv = res.move_typed_value();
+                // TODO: conversion/type error
+                default_value = tv.move_value();
+            }
+        }
+        overload->add_param(param_type, std::move(default_value));
         is_resolved = param_type && is_resolved;
     }
 

@@ -15,11 +15,11 @@ class VarDecl : public Tuple<Stmt, ExprList, Expr>,
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
     ULAM_AST_REF_ATTR(Var, var)
 public:
-    VarDecl(Str name, Ptr<ExprList>&& array_dims, Ptr<Expr>&& value):
-        Tuple{std::move(array_dims), std::move(value)}, Named{name} {}
+    VarDecl(Str name, Ptr<ExprList>&& array_dims, Ptr<Expr>&& default_value):
+        Tuple{std::move(array_dims), std::move(default_value)}, Named{name} {}
 
     ULAM_AST_TUPLE_PROP(array_dims, 0)
-    ULAM_AST_TUPLE_PROP(value, 1)
+    ULAM_AST_TUPLE_PROP(default_value, 1)
 };
 
 } // namespace ulam::ast

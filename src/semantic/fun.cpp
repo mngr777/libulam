@@ -12,10 +12,10 @@ Ref<ast::TypeName> FunOverload::ret_type_name() {
     return _node->ret_type_name();
 }
 
-void FunOverload::add_param_type(Ref<Type> type) {
+void FunOverload::add_param(Ref<Type> type, Value&& value) {
     assert(params_node());
-    assert(_param_types.size() < params_node()->child_num());
-    _param_types.push_back(type);
+    assert(_params.size() < params_node()->child_num());
+    _params.push_back(type);
 }
 
 Ref<ast::ParamList> FunOverload::params_node() { return _node->params(); }
@@ -29,7 +29,8 @@ void Fun::merge(Ref<Fun> other) {
         add_overload(item.ref());
 }
 
-Ref<FunOverload> Fun::add_overload(Ref<ast::FunDef> node, PersScopeState scope_state) {
+Ref<FunOverload>
+Fun::add_overload(Ref<ast::FunDef> node, PersScopeState scope_state) {
     assert(node);
     assert(scope_state);
     auto overload = make<FunOverload>(node);

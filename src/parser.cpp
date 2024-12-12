@@ -442,7 +442,7 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
     case tok::TypeIdent: {
         auto type = parse_type_name();
         if (_tok.is(tok::Period)) {
-            // FIXME: there are also e.g. class var access
+            // FIXME: there is also e.g. class var access
             return parse_type_op_rest(std::move(type));
         } else if (_tok.in(tok::Ident, tok::Amp)) {
             // [&] first name
@@ -567,14 +567,14 @@ Ptr<ast::ParamList> Parser::parse_param_list() {
         if (!param)
             return {};
         if (requires_value) {
-            if (!param->has_value()) {
+            if (!param->has_default_value()) {
                 // pretend we didn't see previous value
                 assert(prev);
-                prev->replace_value({});
+                prev->replace_default_value({});
                 requires_value = false;
             }
         } else {
-            requires_value = param->has_value();
+            requires_value = param->has_default_value();
         }
         prev = ref(param);
         node->add(std::move(param));

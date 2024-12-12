@@ -19,7 +19,7 @@ class Type;
 class ExprRes {
 public:
     ExprRes(TypedValue&& tv, ExprError error = ExprError::Ok):
-        _typed_value{std::move(tv)} {}
+        _typed_value{std::move(tv)}, _error{error} {}
 
     ExprRes(Ref<Type> type, Value&& value, ExprError error = ExprError::Ok):
         _typed_value{type, std::move(value)}, _error{error} {}
@@ -28,6 +28,8 @@ public:
 
     ExprRes(ExprRes&&) = default;
     ExprRes& operator=(ExprRes&&) = default;
+
+    bool ok() const { return _error == ExprError::Ok; }
 
     Ref<Type> type() { return _typed_value.type(); }
     Ref<const Type> type() const { return _typed_value.type(); }
