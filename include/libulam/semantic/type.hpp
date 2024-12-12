@@ -1,7 +1,5 @@
 #pragma once
-#include <cassert>
 #include <cstdint>
-#include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -91,7 +89,7 @@ public:
 
     virtual Value cast(
         Diag& diag,
-        ast::Ref<ast::Node> node,
+        Ref<ast::Node> node,
         Ref<const Type> type,
         const Value& value,
         bool is_impl = true) {
@@ -100,7 +98,7 @@ public:
 
     virtual ExprRes binary_op(
         Diag& diag,
-        ast::Ref<ast::BinaryOp> node,
+        Ref<ast::BinaryOp> node,
         Value& left,
         Ref<const Type> right_type,
         const Value& right) {
@@ -132,7 +130,7 @@ public:
 
 class AliasType : public UserType {
 public:
-    AliasType(TypeIdGen& id_gen, ast::Ref<ast::TypeDef> node):
+    AliasType(TypeIdGen& id_gen, Ref<ast::TypeDef> node):
         UserType{id_gen}, _node(node) {}
 
     Ref<AliasType> as_alias() override { return this; }
@@ -140,9 +138,9 @@ public:
 
     str_id_t name_id() const override;
 
-    ast::Ref<ast::TypeDef> node() { return _node; }
-    ast::Ref<ast::TypeName> type_name();
-    ast::Ref<ast::TypeExpr> type_expr();
+    Ref<ast::TypeDef> node() { return _node; }
+    Ref<ast::TypeName> type_name();
+    Ref<ast::TypeExpr> type_expr();
 
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
@@ -157,7 +155,7 @@ protected:
     Ptr<RefType> make_ref_type() override;
 
 private:
-    ast::Ref<ast::TypeDef> _node;
+    Ref<ast::TypeDef> _node;
     Ref<Type> _aliased{};
     Ref<Type> _canon{};
 };

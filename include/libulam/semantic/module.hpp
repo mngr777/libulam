@@ -45,7 +45,7 @@ public:
     using SymbolTable = _SymbolTable<Class, ClassTpl>;
     using Symbol = SymbolTable::Symbol;
 
-    Module(Ref<Program> program, module_id_t id, ast::Ref<ast::ModuleDef> node);
+    Module(Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node);
     ~Module();
 
     Module(Module&&) = default;
@@ -58,7 +58,7 @@ public:
 
     module_id_t id() const { return _id; }
 
-    ast::Ref<ast::ModuleDef> node() { return _node; }
+    Ref<ast::ModuleDef> node() { return _node; }
 
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
@@ -81,7 +81,7 @@ public:
 private:
     Ref<Program> _program;
     module_id_t _id;
-    ast::Ref<ast::ModuleDef> _node;
+    Ref<ast::ModuleDef> _node;
     Ptr<PersScope> _env_scope;
     Ptr<PersScope> _scope;
     SymbolTable _symbols;

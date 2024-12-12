@@ -15,7 +15,7 @@ namespace ulam {
 // ClassBase
 
 ClassBase::ClassBase(
-    ast::Ref<ast::ClassDef> node,
+    Ref<ast::ClassDef> node,
     Ref<Scope> module_scope,
     ScopeFlags scope_flags):
     _node{node},
@@ -33,7 +33,7 @@ Class::Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl):
     ClassBase{tpl->node(), tpl->param_scope()->parent(), scp::Class},
     _tpl{tpl} {}
 
-Class::Class(TypeIdGen& id_gen, ast::Ref<ast::ClassDef> node, Ref<Scope> scope):
+Class::Class(TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope):
     UserType{id_gen}, ClassBase{node, scope, scp::Class}, _tpl{} {}
 
 Class::~Class() {}
@@ -51,7 +51,7 @@ ClassTpl::~ClassTpl() {}
 str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 
 Ref<Type> ClassTpl::type(
-    Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+    Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _types.find(key);
     if (it != _types.end())
@@ -63,7 +63,7 @@ Ref<Type> ClassTpl::type(
 }
 
 Ptr<Class>
-ClassTpl::inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args) {
+ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls = ulam::make<Class>(id_gen(), this);
 
     // copy params

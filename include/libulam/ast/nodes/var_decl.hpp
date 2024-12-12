@@ -2,7 +2,6 @@
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
-#include <libulam/ast/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>

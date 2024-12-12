@@ -1,5 +1,4 @@
 #pragma once
-#include <libulam/ast/ptr.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/module.hpp>
@@ -17,13 +16,13 @@ namespace ulam {
 
 class Program {
 public:
-    Program(Diag& diag, ast::Ref<ast::Root> ast);
+    Program(Diag& diag, Ref<ast::Root> ast);
     ~Program();
 
     Diag& diag() { return _diag; }
 
-    ast::Ref<ast::Root> ast() { return _ast; }
-    ast::Ref<const ast::Root> ast() const { return _ast; }
+    Ref<ast::Root> ast() { return _ast; }
+    Ref<const ast::Root> ast() const { return _ast; }
 
     auto& modules() { return _modules; }
 
@@ -34,13 +33,13 @@ public:
     str_id_t self_inst_str_id();
 
     Ref<Module> module(module_id_t id);
-    Ref<Module> add_module(ast::Ref<ast::ModuleDef> node);
+    Ref<Module> add_module(Ref<ast::ModuleDef> node);
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
 
 private:
     Diag& _diag;
-    ast::Ref<ast::Root> _ast;
+    Ref<ast::Root> _ast;
     std::vector<Ptr<Module>> _modules;
     TypeIdGen _type_id_gen;
     Builtins _builtins;

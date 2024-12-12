@@ -1,6 +1,6 @@
 #pragma once
 #include <cassert>
-#include <libulam/ast/ptr.hpp>
+#include <libulam/memory/ptr.hpp>
 
 namespace ulam::ast {
 

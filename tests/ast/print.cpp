@@ -10,14 +10,14 @@ namespace test::ast {
 
 // PrinterBase
 
-PrinterBase::PrinterBase(std::ostream& os, ulam::ast::Ref<ulam::ast::Root> ast):
+PrinterBase::PrinterBase(std::ostream& os, ulam::Ref<ulam::ast::Root> ast):
     _os{os}, _ast{ast} {}
 
 PrinterBase::~PrinterBase() { assert(_lvl == 0); }
 
 void PrinterBase::print() { visit(_ast); }
 
-void PrinterBase::visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
+void PrinterBase::visit(ulam::Ref<ulam::ast::ModuleDef> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
@@ -25,11 +25,11 @@ void PrinterBase::visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
     }
 }
 
-void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
+void PrinterBase::traverse(ulam::Ref<ulam::ast::ModuleDef> node) {
     traverse_with_indent(node);
 }
 
-void PrinterBase::visit(ulam::ast::Ref<ulam::ast::ClassDefBody> node) {
+void PrinterBase::visit(ulam::Ref<ulam::ast::ClassDefBody> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
@@ -37,11 +37,11 @@ void PrinterBase::visit(ulam::ast::Ref<ulam::ast::ClassDefBody> node) {
     }
 }
 
-void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::ClassDefBody> node) {
+void PrinterBase::traverse(ulam::Ref<ulam::ast::ClassDefBody> node) {
     traverse_with_indent(node);
 }
 
-void PrinterBase::visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
+void PrinterBase::visit(ulam::Ref<ulam::ast::FunDefBody> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
@@ -49,11 +49,11 @@ void PrinterBase::visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
     }
 }
 
-void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::FunDefBody> node) {
+void PrinterBase::traverse(ulam::Ref<ulam::ast::FunDefBody> node) {
     traverse_with_indent(node);
 }
 
-void PrinterBase::visit(ulam::ast::Ref<ulam::ast::Block> node) {
+void PrinterBase::visit(ulam::Ref<ulam::ast::Block> node) {
     if (do_visit(node)) {
         inc_lvl();
         traverse(node);
@@ -61,11 +61,11 @@ void PrinterBase::visit(ulam::ast::Ref<ulam::ast::Block> node) {
     }
 }
 
-void PrinterBase::traverse(ulam::ast::Ref<ulam::ast::Block> node) {
+void PrinterBase::traverse(ulam::Ref<ulam::ast::Block> node) {
     traverse_with_indent(node);
 }
 
-void PrinterBase::print_var_decl(ulam::ast::Ref<ulam::ast::VarDecl> node) {
+void PrinterBase::print_var_decl(ulam::Ref<ulam::ast::VarDecl> node) {
     // &
     if (node->is_ref())
         _os << "&";
@@ -81,7 +81,7 @@ void PrinterBase::print_var_decl(ulam::ast::Ref<ulam::ast::VarDecl> node) {
     }
 }
 
-void PrinterBase::print_array_dims(ulam::ast::Ref<ulam::ast::ExprList> exprs) {
+void PrinterBase::print_array_dims(ulam::Ref<ulam::ast::ExprList> exprs) {
     assert(exprs->child_num() > 0);
     for (unsigned n = 0; n < exprs->child_num(); ++n) {
         _os << "[";
@@ -90,7 +90,7 @@ void PrinterBase::print_array_dims(ulam::ast::Ref<ulam::ast::ExprList> exprs) {
     }
 }
 
-void PrinterBase::traverse_with_indent(ulam::ast::Ref<ulam::ast::Node> node) {
+void PrinterBase::traverse_with_indent(ulam::Ref<ulam::ast::Node> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         indent();
         accept_me(node->child(n));
@@ -98,7 +98,7 @@ void PrinterBase::traverse_with_indent(ulam::ast::Ref<ulam::ast::Node> node) {
     }
 }
 
-void PrinterBase::accept_me(ulam::ast::Ref<ulam::ast::Node> node) {
+void PrinterBase::accept_me(ulam::Ref<ulam::ast::Node> node) {
     if (node) {
         node->accept(*this);
     } else {
@@ -121,7 +121,7 @@ const char* PrinterBase::paren_r() { return options.expl_parens ? "(" : ""; }
 const char* PrinterBase::nl() { return _no_newline ? "" : "\n"; }
 
 const std::string_view
-PrinterBase::name(ulam::ast::Ref<ulam::ast::Named> node) {
+PrinterBase::name(ulam::Ref<ulam::ast::Named> node) {
     return str(node->name().str_id());
 }
 
@@ -129,7 +129,7 @@ const std::string_view PrinterBase::str(ulam::str_id_t str_id) {
     return ast()->ctx().str(str_id);
 }
 
-ulam::ast::Ref<ulam::ast::Root> PrinterBase::ast() {
+ulam::Ref<ulam::ast::Root> PrinterBase::ast() {
     assert(_ast);
     return _ast;
 }
@@ -155,7 +155,7 @@ bool PrinterBase::set_no_newline(bool val) {
 
 // Printer
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
+void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
     // name
     _os << class_kind_str(node->kind()) << " " << name(node);
     // params
@@ -177,11 +177,11 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::ClassDef> node) {
     indent() << "}" << nl();
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::VarDef> node) {
+void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) {
     print_var_decl(node);
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
+void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
     // ret type
     accept_me(node->ret_type_name());
     // name
@@ -197,7 +197,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::FunDef> node) {
     }
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
+void Printer::visit(ulam::Ref<ulam::ast::TypeSpec> node) {
     if (node->is_builtin()) {
         _os << ulam::builtin_type_str(node->builtin_type_id());
     } else {
@@ -207,28 +207,28 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) {
         visit(node->args());
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::ParamList> node) {
+void Printer::visit(ulam::Ref<ulam::ast::ParamList> node) {
     _os << "(";
     if (do_visit(node))
         traverse_list(node);
     _os << ")";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::Param> node) {
+void Printer::visit(ulam::Ref<ulam::ast::Param> node) {
     assert(node->has_type_name());
     visit(node->type_name());
     _os << " ";
     print_var_decl(node);
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::ArgList> node) {
+void Printer::visit(ulam::Ref<ulam::ast::ArgList> node) {
     _os << "(";
     if (do_visit(node))
         traverse_list(node);
     _os << ")";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::Block> node) {
+void Printer::visit(ulam::Ref<ulam::ast::Block> node) {
     if (do_visit(node)) {
         _os << "{" << nl();
         inc_lvl();
@@ -238,9 +238,9 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Block> node) {
     }
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::EmptyStmt> node) { _os << ";"; }
+void Printer::visit(ulam::Ref<ulam::ast::EmptyStmt> node) { _os << ";"; }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::If> node) {
+void Printer::visit(ulam::Ref<ulam::ast::If> node) {
     _os << "if (";
     accept_me(node->cond());
     _os << ")";
@@ -257,7 +257,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::If> node) {
     }
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::For> node) {
+void Printer::visit(ulam::Ref<ulam::ast::For> node) {
     _os << "for (";
     accept_me(node->init());
     _os << " ";
@@ -273,21 +273,21 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::For> node) {
     }
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::Return> node) {
+void Printer::visit(ulam::Ref<ulam::ast::Return> node) {
     _os << "return ";
     if (node->has_expr())
         accept_me(node->expr());
     _os << ";";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) {
+void Printer::visit(ulam::Ref<ulam::ast::ParenExpr> node) {
     assert(node->has_inner());
     _os << "(";
     accept_me(node->inner());
     _os << ")";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::Cast> node) {
+void Printer::visit(ulam::Ref<ulam::ast::Cast> node) {
     assert(node->has_type_name());
     assert(node->expr());
     _os << "(";
@@ -296,23 +296,23 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::Cast> node) {
     accept_me(node->expr());
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::BinaryOp> node) {
+void Printer::visit(ulam::Ref<ulam::ast::BinaryOp> node) {
     accept_me(node->lhs());
     _os << " " << ulam::ops::str(node->op()) << " ";
     accept_me(node->rhs());
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPreOp> node) {
+void Printer::visit(ulam::Ref<ulam::ast::UnaryPreOp> node) {
     _os << ulam::ops::str(node->op());
     accept_me(node->arg());
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::UnaryPostOp> node) {
+void Printer::visit(ulam::Ref<ulam::ast::UnaryPostOp> node) {
     accept_me(node->arg());
     _os << ulam::ops::str(node->op());
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::ArrayAccess> node) {
+void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {
     assert(node->has_array());
     assert(node->has_index());
     accept_me(node->array());
@@ -321,7 +321,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::ArrayAccess> node) {
     _os << "]";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) {
+void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
     assert(node->has_obj());
     assert(node->has_ident());
     accept_me(node->obj());
@@ -329,18 +329,18 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) {
     accept_me(node->ident());
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) {
+bool Printer::do_visit(ulam::Ref<ulam::ast::ModuleDef> node) {
     _os << "/* module */\n";
     return true;
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::ExprStmt> node) {
+void Printer::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
     assert(node->has_expr());
     accept_me(node->expr());
     _os << ";";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
+void Printer::visit(ulam::Ref<ulam::ast::TypeDef> node) {
     _os << "typedef ";
     accept_me(node->type_name());
     _os << " ";
@@ -348,7 +348,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::TypeDef> node) {
     _os << ";";
 }
 
-void Printer::visit(ulam::ast::Ref<ulam::ast::TypeExpr> node) {
+void Printer::visit(ulam::Ref<ulam::ast::TypeExpr> node) {
     if (node->is_ref())
         _os << "&";
     accept_me(node->ident());
@@ -356,7 +356,7 @@ void Printer::visit(ulam::ast::Ref<ulam::ast::TypeExpr> node) {
         print_array_dims(node->array_dims());
 }
 
-void Printer::traverse(ulam::ast::Ref<ulam::ast::VarDefList> node) {
+void Printer::traverse(ulam::Ref<ulam::ast::VarDefList> node) {
     accept_me(node->type_name());
     _os << " ";
     assert(node->def_num() > 0);
@@ -368,7 +368,7 @@ void Printer::traverse(ulam::ast::Ref<ulam::ast::VarDefList> node) {
     _os << ";";
 }
 
-void Printer::traverse(ulam::ast::Ref<ulam::ast::TypeName> node) {
+void Printer::traverse(ulam::Ref<ulam::ast::TypeName> node) {
     accept_me(node->first());
     for (unsigned n = 1; n < node->child_num(); ++n) {
         _os << ".";
@@ -376,33 +376,33 @@ void Printer::traverse(ulam::ast::Ref<ulam::ast::TypeName> node) {
     }
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::Ident> node) {
+bool Printer::do_visit(ulam::Ref<ulam::ast::Ident> node) {
     _os << name(node);
     return false;
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::TypeIdent> node) {
+bool Printer::do_visit(ulam::Ref<ulam::ast::TypeIdent> node) {
     _os << name(node);
     return false;
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::BoolLit> node) {
+bool Printer::do_visit(ulam::Ref<ulam::ast::BoolLit> node) {
     _os << (node->value() ? "true" : "false");
     return false;
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::NumLit> node) {
+bool Printer::do_visit(ulam::Ref<ulam::ast::NumLit> node) {
     node->value().write_value(_os);
     return false;
 }
 
-bool Printer::do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) {
+bool Printer::do_visit(ulam::Ref<ulam::ast::StrLit> node) {
     _os << '"' << node->value() << '"';
     return false;
 }
 
 void Printer::traverse_list(
-    ulam::ast::Ref<ulam::ast::Node> node, std::string sep) {
+    ulam::Ref<ulam::ast::Node> node, std::string sep) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         if (n > 0)
             _os << sep;

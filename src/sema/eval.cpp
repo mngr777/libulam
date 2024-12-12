@@ -7,17 +7,17 @@
 
 namespace ulam::sema {
 
-bool Eval::do_visit(ast::Ref<ast::TypeDef> node) {
+bool Eval::do_visit(Ref<ast::TypeDef> node) {
     resolve_type_def(node, scope());
     return RecVisitor::do_visit(node);
 }
 
-bool Eval::do_visit(ast::Ref<ast::VarDef> node) { return {}; }
+bool Eval::do_visit(Ref<ast::VarDef> node) { return {}; }
 
-bool Eval::do_visit(ast::Ref<ast::FunDef> node) { return {}; }
+bool Eval::do_visit(Ref<ast::FunDef> node) { return {}; }
 
 Ref<Type>
-Eval::resolve_type_def(ast::Ref<ast::TypeDef> node, Ref<Scope> scope) {
+Eval::resolve_type_def(Ref<ast::TypeDef> node, Ref<Scope> scope) {
     auto alias = node->alias_type();
     if (!alias->aliased()) {
         auto type = resolve_type_name(node->type_name(), scope);
@@ -29,7 +29,7 @@ Eval::resolve_type_def(ast::Ref<ast::TypeDef> node, Ref<Scope> scope) {
 }
 
 Ref<Type>
-Eval::resolve_type_name(ast::Ref<ast::TypeName> node, Ref<Scope> scope) {
+Eval::resolve_type_name(Ref<ast::TypeName> node, Ref<Scope> scope) {
     Ref<Type> type{};
     auto type_spec = node->first();
     if (type_spec->type()) {

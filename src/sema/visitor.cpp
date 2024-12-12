@@ -13,13 +13,13 @@ namespace ulam::sema {
 
 void RecVisitor::analyze() { visit(_ast); }
 
-void RecVisitor::visit(ast::Ref<ast::Root> node) {
+void RecVisitor::visit(Ref<ast::Root> node) {
     assert(node->program());
     if (do_visit(node))
         traverse(node);
 }
 
-void RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
+void RecVisitor::visit(Ref<ast::ModuleDef> node) {
     assert(node->module());
     auto mod = node->module();
     _module_def = node;
@@ -38,7 +38,7 @@ void RecVisitor::visit(ast::Ref<ast::ModuleDef> node) {
     _module_def = {};
 }
 
-void RecVisitor::traverse(ast::Ref<ast::ModuleDef> node) {
+void RecVisitor::traverse(Ref<ast::ModuleDef> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (pass() == Pass::Module || ast::is<ast::ClassDef>(child_v))
@@ -46,7 +46,7 @@ void RecVisitor::traverse(ast::Ref<ast::ModuleDef> node) {
     }
 }
 
-void RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
+void RecVisitor::visit(Ref<ast::ClassDef> node) {
     if (pass() == Pass::Module) {
         do_visit(node);
     } else {
@@ -56,7 +56,7 @@ void RecVisitor::visit(ast::Ref<ast::ClassDef> node) {
     }
 }
 
-void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
+void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
     assert(pass() == Pass::Classes || pass() == Pass::FunBodies);
     assert(_class_def);
     // enter scope
@@ -77,7 +77,7 @@ void RecVisitor::traverse(ast::Ref<ast::ClassDefBody> node) {
     exit_scope();
 }
 
-void RecVisitor::visit(ast::Ref<ast::FunDef> node) {
+void RecVisitor::visit(Ref<ast::FunDef> node) {
     if (pass() == Pass::Classes) {
         do_visit(node);
     } else {
@@ -88,7 +88,7 @@ void RecVisitor::visit(ast::Ref<ast::FunDef> node) {
     }
 }
 
-void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
+void RecVisitor::traverse(Ref<ast::FunDefBody> node) {
     assert(pass() == Pass::FunBodies);
     assert(_fun_def);
     enter_scope(scp::Fun);
@@ -97,20 +97,20 @@ void RecVisitor::traverse(ast::Ref<ast::FunDefBody> node) {
     exit_scope();
 }
 
-void RecVisitor::visit(ast::Ref<ast::Block> node) {
+void RecVisitor::visit(Ref<ast::Block> node) {
     enter_scope();
     ast::RecVisitor::visit(node);
     exit_scope();
 }
 
-bool RecVisitor::do_visit(ast::Ref<ast::ClassDef> node) {
+bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
     assert(scope()->is(scp::Module));
     assert(node->scope_proxy());
     _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
     return true;
 }
 
-bool RecVisitor::do_visit(ast::Ref<ast::TypeDef> node) {
+bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (_scopes.top_is<PersScopeProxy>()) {
         assert(node->scope_proxy());
         _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
@@ -120,7 +120,7 @@ bool RecVisitor::do_visit(ast::Ref<ast::TypeDef> node) {
     return true;
 }
 
-bool RecVisitor::do_visit(ast::Ref<ast::VarDef> node) {
+bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
     if (_scopes.top_is<PersScopeProxy>()) {
         assert(node->scope_proxy());
         _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
@@ -130,7 +130,7 @@ bool RecVisitor::do_visit(ast::Ref<ast::VarDef> node) {
     return true;
 }
 
-bool RecVisitor::do_visit(ast::Ref<ast::FunDef> node) {
+bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
     // TODO
     // auto name_id = node->name().str_id();
     // auto overload = node->overload();

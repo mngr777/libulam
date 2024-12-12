@@ -7,7 +7,7 @@ PrimType::PrimType(TypeIdGen& id_gen):
     Type{id_gen} {}
 
 // Ref<Type> PrimType::prim_type(
-//     ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize) {
+//     Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize) {
 //     return (bitsize == 0) ? program()->prim_type(id)
 //                           : program()->prim_type_tpl(id)->type(node, bitsize);
 // }

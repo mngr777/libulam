@@ -21,7 +21,7 @@
 
 namespace ulam::sema {
 
-void ResolveDeps::visit(ast::Ref<ast::Root> node) {
+void ResolveDeps::visit(Ref<ast::Root> node) {
     assert(!node->program());
     // make program
     node->set_program(ulam::make<Program>(diag(), node));
@@ -29,14 +29,14 @@ void ResolveDeps::visit(ast::Ref<ast::Root> node) {
     export_classes();
 }
 
-void ResolveDeps::visit(ast::Ref<ast::ModuleDef> node) {
+void ResolveDeps::visit(Ref<ast::ModuleDef> node) {
     assert(!node->module());
     auto module = program()->add_module(node);
     node->set_module(module);
     RecVisitor::visit(node);
 }
 
-bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
+bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     assert(pass() == Pass::Module);
     assert(!node->type() && !node->type_tpl());
     auto name_id = node->name().str_id();
@@ -93,7 +93,7 @@ bool ResolveDeps::do_visit(ast::Ref<ast::ClassDef> node) {
     return true;
 }
 
-void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
+void ResolveDeps::visit(Ref<ast::TypeDef> node) {
     // don't skip the type name
     visit(node->type_name());
 
@@ -150,7 +150,7 @@ void ResolveDeps::visit(ast::Ref<ast::TypeDef> node) {
     }
 }
 
-void ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
+void ResolveDeps::visit(Ref<ast::VarDefList> node) {
     // don't skip the type name
     visit(node->type_name());
 
@@ -195,7 +195,7 @@ void ResolveDeps::visit(ast::Ref<ast::VarDefList> node) {
     return;
 }
 
-void ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
+void ResolveDeps::visit(Ref<ast::FunDef> node) {
     // don't skip ret type and params
     visit(node->ret_type_name());
     visit(node->params());
@@ -236,7 +236,7 @@ void ResolveDeps::visit(ast::Ref<ast::FunDef> node) {
     return;
 }
 
-bool ResolveDeps::do_visit(ast::Ref<ast::TypeName> node) {
+bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {
     // set type/tpl TypeSpec attr
     // NOTE: any name not in scope has to be imported and
     // imported names can be later unambigously resolved without scope

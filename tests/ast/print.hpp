@@ -15,7 +15,7 @@ namespace test::ast {
 
 class PrinterBase : public ulam::ast::RecVisitor {
 public:
-    PrinterBase(std::ostream& os, ulam::ast::Ref<ulam::ast::Root> ast);
+    PrinterBase(std::ostream& os, ulam::Ref<ulam::ast::Root> ast);
     virtual ~PrinterBase();
 
     void print();
@@ -30,20 +30,20 @@ protected:
     using RecVisitor::visit;
 
     // traversing containers
-    void visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) override;
-    void traverse(ulam::ast::Ref<ulam::ast::ModuleDef> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::ClassDefBody> node) override;
-    void traverse(ulam::ast::Ref<ulam::ast::ClassDefBody> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::FunDefBody> node) override;
-    void traverse(ulam::ast::Ref<ulam::ast::FunDefBody> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::Block> node) override;
-    void traverse(ulam::ast::Ref<ulam::ast::Block> node) override;
+    void visit(ulam::Ref<ulam::ast::ModuleDef> node) override;
+    void traverse(ulam::Ref<ulam::ast::ModuleDef> node) override;
+    void visit(ulam::Ref<ulam::ast::ClassDefBody> node) override;
+    void traverse(ulam::Ref<ulam::ast::ClassDefBody> node) override;
+    void visit(ulam::Ref<ulam::ast::FunDefBody> node) override;
+    void traverse(ulam::Ref<ulam::ast::FunDefBody> node) override;
+    void visit(ulam::Ref<ulam::ast::Block> node) override;
+    void traverse(ulam::Ref<ulam::ast::Block> node) override;
 
-    void print_var_decl(ulam::ast::Ref<ulam::ast::VarDecl> node);
-    void print_array_dims(ulam::ast::Ref<ulam::ast::ExprList> exprs);
-    void traverse_with_indent(ulam::ast::Ref<ulam::ast::Node> node);
+    void print_var_decl(ulam::Ref<ulam::ast::VarDecl> node);
+    void print_array_dims(ulam::Ref<ulam::ast::ExprList> exprs);
+    void traverse_with_indent(ulam::Ref<ulam::ast::Node> node);
 
-    void accept_me(ulam::ast::Ref<ulam::ast::Node> node);
+    void accept_me(ulam::Ref<ulam::ast::Node> node);
     void on_empty();
 
     std::ostream& indent();
@@ -52,10 +52,10 @@ protected:
     const char* paren_r();
     const char* nl();
 
-    const std::string_view name(ulam::ast::Ref<ulam::ast::Named> node);
+    const std::string_view name(ulam::Ref<ulam::ast::Named> node);
     const std::string_view str(ulam::str_id_t str_id);
 
-    ulam::ast::Ref<ulam::ast::Root> ast();
+    ulam::Ref<ulam::ast::Root> ast();
 
     void inc_lvl();
     void dec_lvl();
@@ -69,7 +69,7 @@ protected:
     std::ostream& _os;
 
 private:
-    ulam::ast::Ref<ulam::ast::Root> _ast;
+    ulam::Ref<ulam::ast::Root> _ast;
 
     unsigned _lvl{0};
     bool _no_newline{false};
@@ -78,7 +78,7 @@ private:
 
 class Printer : public PrinterBase {
 public:
-    Printer(std::ostream& os, ulam::ast::Ref<ulam::ast::Root> ast):
+    Printer(std::ostream& os, ulam::Ref<ulam::ast::Root> ast):
         PrinterBase{os, ast} {}
 
 protected:
@@ -86,43 +86,43 @@ protected:
     using PrinterBase::traverse;
     using PrinterBase::visit;
 
-    void visit(ulam::ast::Ref<ulam::ast::ClassDef> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::TypeDef> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::VarDef> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::FunDef> node) override;
+    void visit(ulam::Ref<ulam::ast::ClassDef> node) override;
+    void visit(ulam::Ref<ulam::ast::TypeDef> node) override;
+    void visit(ulam::Ref<ulam::ast::VarDef> node) override;
+    void visit(ulam::Ref<ulam::ast::FunDef> node) override;
 
-    void visit(ulam::ast::Ref<ulam::ast::TypeSpec> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::TypeExpr> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::ParamList> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::Param> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::ArgList> node) override;
+    void visit(ulam::Ref<ulam::ast::TypeSpec> node) override;
+    void visit(ulam::Ref<ulam::ast::TypeExpr> node) override;
+    void visit(ulam::Ref<ulam::ast::ParamList> node) override;
+    void visit(ulam::Ref<ulam::ast::Param> node) override;
+    void visit(ulam::Ref<ulam::ast::ArgList> node) override;
 
-    void visit(ulam::ast::Ref<ulam::ast::Block> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::EmptyStmt> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::If> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::For> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::Return> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::ExprStmt> node) override;
+    void visit(ulam::Ref<ulam::ast::Block> node) override;
+    void visit(ulam::Ref<ulam::ast::EmptyStmt> node) override;
+    void visit(ulam::Ref<ulam::ast::If> node) override;
+    void visit(ulam::Ref<ulam::ast::For> node) override;
+    void visit(ulam::Ref<ulam::ast::Return> node) override;
+    void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
 
-    void visit(ulam::ast::Ref<ulam::ast::ParenExpr> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::Cast> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::BinaryOp> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::UnaryPreOp> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::UnaryPostOp> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::ArrayAccess> node) override;
-    void visit(ulam::ast::Ref<ulam::ast::MemberAccess> node) override;
+    void visit(ulam::Ref<ulam::ast::ParenExpr> node) override;
+    void visit(ulam::Ref<ulam::ast::Cast> node) override;
+    void visit(ulam::Ref<ulam::ast::BinaryOp> node) override;
+    void visit(ulam::Ref<ulam::ast::UnaryPreOp> node) override;
+    void visit(ulam::Ref<ulam::ast::UnaryPostOp> node) override;
+    void visit(ulam::Ref<ulam::ast::ArrayAccess> node) override;
+    void visit(ulam::Ref<ulam::ast::MemberAccess> node) override;
 
-    bool do_visit(ulam::ast::Ref<ulam::ast::ModuleDef> node) override;
-    void traverse(ulam::ast::Ref<ulam::ast::VarDefList> node) override;
-    void traverse(ulam::ast::Ref<ulam::ast::TypeName> node) override;
-    bool do_visit(ulam::ast::Ref<ulam::ast::Ident> node) override;
-    bool do_visit(ulam::ast::Ref<ulam::ast::TypeIdent> node) override;
+    bool do_visit(ulam::Ref<ulam::ast::ModuleDef> node) override;
+    void traverse(ulam::Ref<ulam::ast::VarDefList> node) override;
+    void traverse(ulam::Ref<ulam::ast::TypeName> node) override;
+    bool do_visit(ulam::Ref<ulam::ast::Ident> node) override;
+    bool do_visit(ulam::Ref<ulam::ast::TypeIdent> node) override;
 
-    bool do_visit(ulam::ast::Ref<ulam::ast::BoolLit> node) override;
-    bool do_visit(ulam::ast::Ref<ulam::ast::NumLit> node) override;
-    bool do_visit(ulam::ast::Ref<ulam::ast::StrLit> node) override;
+    bool do_visit(ulam::Ref<ulam::ast::BoolLit> node) override;
+    bool do_visit(ulam::Ref<ulam::ast::NumLit> node) override;
+    bool do_visit(ulam::Ref<ulam::ast::StrLit> node) override;
 
-    void traverse_list(ulam::ast::Ref<ulam::ast::Node> node, std::string sep = ", ");
+    void traverse_list(ulam::Ref<ulam::ast::Node> node, std::string sep = ", ");
 };
 
 } // namespace test::ast

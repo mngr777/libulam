@@ -7,7 +7,7 @@ namespace ulam {
 
 // FunOverload
 
-ast::Ref<ast::TypeName> FunOverload::ret_type_name() {
+Ref<ast::TypeName> FunOverload::ret_type_name() {
     assert(_node->has_ret_type_name());
     return _node->ret_type_name();
 }
@@ -18,9 +18,9 @@ void FunOverload::add_param_type(Ref<Type> type) {
     _param_types.push_back(type);
 }
 
-ast::Ref<ast::ParamList> FunOverload::params_node() { return _node->params(); }
+Ref<ast::ParamList> FunOverload::params_node() { return _node->params(); }
 
-ast::Ref<ast::FunDefBody> FunOverload::body_node() { return _node->body(); }
+Ref<ast::FunDefBody> FunOverload::body_node() { return _node->body(); }
 
 // Fun
 
@@ -29,7 +29,7 @@ void Fun::merge(Ref<Fun> other) {
         add_overload(item.ref());
 }
 
-Ref<FunOverload> Fun::add_overload(ast::Ref<ast::FunDef> node, PersScopeState scope_state) {
+Ref<FunOverload> Fun::add_overload(Ref<ast::FunDef> node, PersScopeState scope_state) {
     assert(node);
     assert(scope_state);
     auto overload = ulam::make<FunOverload>(node);

@@ -1,5 +1,4 @@
 #pragma once
-#include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/object.hpp>
@@ -30,7 +29,7 @@ public:
     using Symbol = SymbolTable::Symbol;
 
     ClassBase(
-        ast::Ref<ast::ClassDef> node,
+        Ref<ast::ClassDef> node,
         Ref<Scope> module_scope,
         ScopeFlags scope_flags);
 
@@ -76,22 +75,22 @@ class Class : public UserType, public ClassBase {
 public:
     class Ancestor {
     public:
-        Ancestor(Ref<Class> cls, ast::Ref<ast::TypeName> node):
+        Ancestor(Ref<Class> cls, Ref<ast::TypeName> node):
             _cls{cls}, _node{node} {}
 
         Ref<Class> cls() { return _cls; }
         Ref<const Class> cls() const { return _cls; }
 
-        ast::Ref<ast::TypeName> node() { return _node; }
-        ast::Ref<const ast::TypeName> node() const { return _node; }
+        Ref<ast::TypeName> node() { return _node; }
+        Ref<const ast::TypeName> node() const { return _node; }
 
     private:
         Ref<Class> _cls;
-        ast::Ref<ast::TypeName> _node;
+        Ref<ast::TypeName> _node;
     };
 
     Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl);
-    Class(TypeIdGen& id_gen, ast::Ref<ast::ClassDef> node, Ref<Scope> scope);
+    Class(TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope);
     ~Class();
 
     str_id_t name_id() const override;
@@ -100,7 +99,7 @@ public:
     auto& ancestors() { return _ancestors; }
     const auto& ancestors() const { return _ancestors; }
 
-    void add_ancestor(Ref<Class> anc, ast::Ref<ast::TypeName> node) {
+    void add_ancestor(Ref<Class> anc, Ref<ast::TypeName> node) {
         _ancestors.emplace_back(anc, node);
     }
 
@@ -123,11 +122,11 @@ public:
 
     Ref<Type> type(
         Diag& diag,
-        ast::Ref<ast::ArgList> args_node,
+        Ref<ast::ArgList> args_node,
         TypedValueList&& args) override;
 
 private:
-    Ptr<Class> inst(ast::Ref<ast::ArgList> args_node, TypedValueList&& args);
+    Ptr<Class> inst(Ref<ast::ArgList> args_node, TypedValueList&& args);
 
     // TMP
     std::string type_args_str(const TypedValueList& args);

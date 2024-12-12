@@ -38,6 +38,6 @@ int main() {
     auto ast = parser.move_ast();
 
     std::cout << text << "\n";
-    test::ast::Printer p{std::cout, ulam::ast::ref(ast)};
+    test::ast::Printer p{std::cout, ulam::ref(ast)};
     p.print();
 }

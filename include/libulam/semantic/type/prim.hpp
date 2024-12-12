@@ -2,7 +2,6 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/params.hpp>
-#include <libulam/ast/ptr.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
@@ -27,7 +26,7 @@ public:
 
 protected:
     // Ref<Type> prim_type(
-    //     ast::Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);
+    //     Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);
 };
 
 class PrimTypeTpl;
@@ -70,11 +69,11 @@ public:
 
     Ref<Type> type(
         Diag& diag,
-        ast::Ref<ast::ArgList> args_node,
+        Ref<ast::ArgList> args_node,
         TypedValueList&& args) override = 0;
 
     virtual Ref<PrimType>
-    type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t bitsize) = 0;
+    type(Diag& diag, Ref<ast::Node> node, bitsize_t bitsize) = 0;
 };
 
 template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
@@ -84,7 +83,7 @@ public:
     _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
 
     Ref<Type>
-    type(Diag& diag, ast::Ref<ast::ArgList> args_node, TypedValueList&& args) override {
+    type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) override {
         // NOTE: args_node can be null
         bitsize_t size = 0;
         if (args.size() == 0) {
@@ -115,7 +114,7 @@ public:
         return type(diag, args_node, size);
     }
 
-    Ref<PrimType> type(Diag& diag, ast::Ref<ast::Node> node, bitsize_t size) override {
+    Ref<PrimType> type(Diag& diag, Ref<ast::Node> node, bitsize_t size) override {
         // check, adjust and continue on error
         if (size < T::MinSize) {
             diag.emit(

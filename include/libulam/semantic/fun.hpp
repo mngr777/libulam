@@ -1,5 +1,4 @@
 #pragma once
-#include <libulam/ast/ptr.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/scope/object.hpp>
 #include <list>
@@ -17,7 +16,7 @@ class Type;
 
 class FunOverload : public ScopeObject {
 public:
-    FunOverload(ast::Ref<ast::FunDef> node): _node{node} {}
+    FunOverload(Ref<ast::FunDef> node): _node{node} {}
 
     Ref<Type> ret_type() { return _ret_type; }
     Ref<const Type> ret_type() const { return _ret_type; }
@@ -30,13 +29,13 @@ public:
 
     void add_param_type(Ref<Type> type);
 
-    ast::Ref<ast::FunDef> node() { return _node; }
-    ast::Ref<ast::TypeName> ret_type_name();
-    ast::Ref<ast::ParamList> params_node();
-    ast::Ref<ast::FunDefBody> body_node();
+    Ref<ast::FunDef> node() { return _node; }
+    Ref<ast::TypeName> ret_type_name();
+    Ref<ast::ParamList> params_node();
+    Ref<ast::FunDefBody> body_node();
 
 private:
-    ast::Ref<ast::FunDef> _node;
+    Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
     std::list<Ref<Type>> _param_types;
 };
@@ -51,7 +50,7 @@ public:
     auto& overloads() { return _overloads; }
     const auto& overloads() const { return _overloads; }
 
-    Ref<FunOverload> add_overload(ast::Ref<ast::FunDef> node, PersScopeState scope_state);
+    Ref<FunOverload> add_overload(Ref<ast::FunDef> node, PersScopeState scope_state);
     Ref<FunOverload> add_overload(Ref<FunOverload> overload);
 
 private:

@@ -28,7 +28,7 @@ bool IntType::is_convertible(Ref<const Type> type) {
 
 Value IntType::cast(
     Diag& diag,
-    ast::Ref<ast::Node> node,
+    Ref<ast::Node> node,
     Ref<const Type> type,
     const Value& value,
     bool is_impl) {
@@ -105,7 +105,7 @@ Value IntType::cast(
 
 ExprRes IntType::binary_op(
     Diag& diag,
-    ast::Ref<ast::BinaryOp> node,
+    Ref<ast::BinaryOp> node,
     Value& left,
     Ref<const Type> right_type,
     const Value& right) {
@@ -159,7 +159,7 @@ ExprRes IntType::binary_op(
 
 ExprRes IntType::binary_op_int(
     Diag& diag,
-    ast::Ref<ast::BinaryOp> node,
+    Ref<ast::BinaryOp> node,
     Value& left,
     Ref<const PrimType> right_type,
     const Value& right) {

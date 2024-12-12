@@ -1,6 +1,5 @@
 #pragma once
 #include <cassert>
-#include <libulam/ast/ptr.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -78,7 +77,6 @@ private:
 };
 
 // TODO:
-// - pass AST context to `make`
 // - type constraints
 // - child iterators
 

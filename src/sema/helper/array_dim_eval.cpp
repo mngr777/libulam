@@ -5,7 +5,7 @@
 
 namespace ulam::sema {
 
-std::pair<array_size_t, bool> ArrayDimEval::eval(ast::Ref<ast::Expr> expr) {
+std::pair<array_size_t, bool> ArrayDimEval::eval(Ref<ast::Expr> expr) {
     ExprVisitor ev{ast(), _scope};
     ExprRes res = expr->accept(ev);
     auto rval = res.value().rvalue();

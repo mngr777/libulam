@@ -1,3 +1,4 @@
+#include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
@@ -28,20 +29,18 @@ Ptr<ArrayType> Type::make_array_type(array_size_t size) {
     return make<ArrayType>(_id_gen, this, size);
 }
 
-Ptr<RefType> Type::make_ref_type() {
-    return make<RefType>(_id_gen, this);
-}
+Ptr<RefType> Type::make_ref_type() { return make<RefType>(_id_gen, this); }
 
 // AliasType
 
 str_id_t AliasType::name_id() const { return _node->alias_id(); }
 
-ast::Ref<ast::TypeName> AliasType::type_name() {
+Ref<ast::TypeName> AliasType::type_name() {
     assert(_node->type_name());
     return _node->type_name();
 }
 
-ast::Ref<ast::TypeExpr> AliasType::type_expr() {
+Ref<ast::TypeExpr> AliasType::type_expr() {
     assert(_node->type_expr());
     return _node->type_expr();
 }

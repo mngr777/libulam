@@ -243,8 +243,8 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
 }
 
 Ref<Type> Resolver::resolve_var_decl_type(
-    ast::Ref<ast::TypeName> type_name,
-    ast::Ref<ast::VarDecl> node,
+    Ref<ast::TypeName> type_name,
+    Ref<ast::VarDecl> node,
     ScopeProxy scope) {
     // base type
     auto type = resolve_type_name(type_name, scope);
@@ -263,7 +263,7 @@ Ref<Type> Resolver::resolve_var_decl_type(
 }
 
 Ref<Type> Resolver::resolve_type_name(
-    ast::Ref<ast::TypeName> type_name, ScopeProxy scope) {
+    Ref<ast::TypeName> type_name, ScopeProxy scope) {
 
     // ast::TypeSpec to type
     auto type_spec = type_name->first();
@@ -359,7 +359,7 @@ Ref<Type> Resolver::resolve_type_name(
 }
 
 Ref<Type> Resolver::apply_array_dims(
-    Ref<Type> type, ast::Ref<ast::ExprList> dims, ScopeProxy scope) {
+    Ref<Type> type, Ref<ast::ExprList> dims, ScopeProxy scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
     ArrayDimEval eval{ast(), scope};

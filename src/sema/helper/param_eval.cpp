@@ -4,7 +4,7 @@
 namespace ulam::sema {
 
 std::pair<TypedValueList, bool>
-ParamEval::eval(ast::Ref<ast::ArgList> args, ScopeProxy scope) {
+ParamEval::eval(Ref<ast::ArgList> args, ScopeProxy scope) {
     if (!args || args->child_num() == 0)
         return {TypedValueList{}, true};
 

@@ -6,7 +6,7 @@
 namespace ulam {
 
 Module::Module(
-    Ref<Program> program, module_id_t id, ast::Ref<ast::ModuleDef> node):
+    Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node):
     _program{program},
     _id{id},
     _node{node},

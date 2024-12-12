@@ -18,7 +18,7 @@ public:
     explicit Sema(Diag& diag);
     ~Sema();
 
-    void analyze(ast::Ref<ast::Root> ast);
+    void analyze(Ref<ast::Root> ast);
 
 private:
     Diag& _diag;

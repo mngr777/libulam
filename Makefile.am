@@ -88,7 +88,6 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/helper.hpp \
 	include/libulam/sema/helper/array_dim_eval.hpp \
 	include/libulam/sema/helper/param_eval.hpp \
-	include/libulam/sema/helper/resolver.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
@@ -101,7 +100,6 @@ SEMA_SOURCE_FILES = \
 	src/sema/resolver.cpp \
 	src/sema/helper/array_dim_eval.cpp \
 	src/sema/helper/param_eval.cpp \
-	src/sema/helper/resolver.cpp \
 	src/sema/visitor.cpp
 
 # Library

@@ -1,13 +1,11 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
-#include <libulam/ast/ptr.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 #include <libulam/str_pool.hpp>
-#include <stack>
 
 namespace ulam {
 class Program;
@@ -24,7 +22,7 @@ public:
     enum class Pass { Module, Classes, FunBodies };
 
     RecVisitor(
-        Diag& diag, ast::Ref<ast::Root> ast, bool skip_fun_bodies = false):
+        Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies = false):
         _diag{diag}, _ast{ast}, _skip_fun_bodies{skip_fun_bodies}, _pass{Pass::Module} {}
 
     void analyze();
@@ -32,22 +30,22 @@ public:
 protected:
 
     // Traversing in module defs / class defs / function body order
-    void visit(ast::Ref<ast::Root> node) override;
-    void visit(ast::Ref<ast::ModuleDef> node) override;
-    void traverse(ast::Ref<ast::ModuleDef> node) override;
-    void visit(ast::Ref<ast::ClassDef> node) override;
-    void traverse(ast::Ref<ast::ClassDefBody> node) override;
-    void visit(ast::Ref<ast::FunDef> node) override;
-    void traverse(ast::Ref<ast::FunDefBody> node) override;
+    void visit(Ref<ast::Root> node) override;
+    void visit(Ref<ast::ModuleDef> node) override;
+    void traverse(Ref<ast::ModuleDef> node) override;
+    void visit(Ref<ast::ClassDef> node) override;
+    void traverse(Ref<ast::ClassDefBody> node) override;
+    void visit(Ref<ast::FunDef> node) override;
+    void traverse(Ref<ast::FunDefBody> node) override;
 
     // Creating transient scopes (TODO)
-    void visit(ast::Ref<ast::Block> node) override;
+    void visit(Ref<ast::Block> node) override;
 
     // Populating current scope with objects from AST
-    bool do_visit(ast::Ref<ast::ClassDef> node) override;
-    bool do_visit(ast::Ref<ast::TypeDef> node) override;
-    bool do_visit(ast::Ref<ast::VarDef> node) override;
-    bool do_visit(ast::Ref<ast::FunDef> node) override;
+    bool do_visit(Ref<ast::ClassDef> node) override;
+    bool do_visit(Ref<ast::TypeDef> node) override;
+    bool do_visit(Ref<ast::VarDef> node) override;
+    bool do_visit(Ref<ast::FunDef> node) override;
 
     // Handling persistent scopes
     void enter_module_scope(Ref<Module> module);
@@ -69,7 +67,7 @@ protected:
         return ast()->program();
     }
 
-    ast::Ref<ast::Root> ast() {
+    Ref<ast::Root> ast() {
         assert(_ast);
         return _ast;
     }
@@ -80,9 +78,9 @@ protected:
         return module_def()->module();
     }
 
-    ast::Ref<ast::ModuleDef> module_def() { return _module_def; }
-    ast::Ref<ast::ClassDef> class_def() { return _class_def; }
-    ast::Ref<ast::FunDef> fun_def() { return _fun_def; }
+    Ref<ast::ModuleDef> module_def() { return _module_def; }
+    Ref<ast::ClassDef> class_def() { return _class_def; }
+    Ref<ast::FunDef> fun_def() { return _fun_def; }
 
     const std::string_view str(str_id_t str_id) {
         return _ast->ctx().str(str_id);
@@ -90,14 +88,14 @@ protected:
 
 private:
     Diag& _diag;
-    ast::Ref<ast::Root> _ast;
+    Ref<ast::Root> _ast;
     bool _skip_fun_bodies;
 
     Pass _pass;
 
-    ast::Ref<ast::ModuleDef> _module_def{};
-    ast::Ref<ast::ClassDef> _class_def{};
-    ast::Ref<ast::FunDef> _fun_def{};
+    Ref<ast::ModuleDef> _module_def{};
+    Ref<ast::ClassDef> _class_def{};
+    Ref<ast::FunDef> _fun_def{};
 
     ScopeStack _scopes;
 };

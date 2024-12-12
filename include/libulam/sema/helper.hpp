@@ -11,13 +11,13 @@ namespace ulam::sema {
 
 class Helper {
 public:
-    Helper(ast::Ref<ast::Root> ast): _ast{ast} {
+    Helper(Ref<ast::Root> ast): _ast{ast} {
         assert(ast);
     }
     virtual ~Helper(){};
 
 protected:
-    ast::Ref<ast::Root> ast() { return _ast; }
+    Ref<ast::Root> ast() { return _ast; }
 
     Ref<Program> program() {
         assert(_ast->program());
@@ -31,7 +31,7 @@ protected:
     }
 
 private:
-    ast::Ref<ast::Root> _ast;
+    Ref<ast::Root> _ast;
 };
 
 } // namespace ulam::sema
