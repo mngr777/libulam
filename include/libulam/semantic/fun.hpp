@@ -7,8 +7,8 @@
 namespace ulam::ast {
 class FunDef;
 class FunDefBody;
+class FunRetType;
 class ParamList;
-class TypeName;
 } // namespace ulam::ast
 
 namespace ulam {
@@ -31,7 +31,7 @@ public:
     void add_param(Ref<Type> type, Value&& default_value);
 
     Ref<ast::FunDef> node() { return _node; }
-    Ref<ast::TypeName> ret_type_name();
+    Ref<ast::FunRetType> ret_type_node();
     Ref<ast::ParamList> params_node();
     Ref<ast::FunDefBody> body_node();
 

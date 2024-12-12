@@ -132,23 +132,21 @@ public:
     ULAM_AST_TUPLE_PROP(array_dims, 1)
 };
 
-class FunDef : public Tuple<Stmt, /* FunRetType*/ TypeName, ParamList, FunDefBody>,
+class FunDef : public Tuple<Stmt, FunRetType, ParamList, FunDefBody>,
                public Named,
                public ScopeObjectNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(FunOverload, overload)
-    ULAM_AST_SIMPLE_ATTR(bool, is_ref_ret_type, false)
 public:
     FunDef(
         Str name,
-        // Ptr<FunRetType>&& ret_type, // TODO
-        Ptr<TypeName>&& ret_type,
+        Ptr<FunRetType>&& ret_type,
         Ptr<ParamList>&& params,
         Ptr<FunDefBody>&& body):
         Tuple{std::move(ret_type), std::move(params), std::move(body)},
         Named{name} {}
 
-    ULAM_AST_TUPLE_PROP(ret_type_name, 0)
+    ULAM_AST_TUPLE_PROP(ret_type, 0)
     ULAM_AST_TUPLE_PROP(params, 1)
     ULAM_AST_TUPLE_PROP(body, 2)
 };

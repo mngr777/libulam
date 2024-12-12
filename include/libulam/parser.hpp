@@ -47,6 +47,7 @@ private:
     Ptr<ast::TypeNameList> parse_class_ancestor_list();
     void parse_class_def_body(Ref<ast::ClassDef> node);
     Ptr<ast::TypeDef> parse_type_def();
+    bool parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node);
     Ptr<ast::VarDefList> parse_var_def_list(bool is_const);
     Ptr<ast::VarDefList> parse_var_def_list_rest(
         Ptr<ast::TypeName>&& base_type,
@@ -56,7 +57,7 @@ private:
     Ptr<ast::VarDef> parse_var_def();
     Ptr<ast::VarDef> parse_var_def_rest(ast::Str name, bool is_ref);
     Ptr<ast::FunDef> parse_fun_def_rest(
-        Ptr<ast::TypeName>&& ret_type, bool is_ref, ast::Str name);
+        Ptr<ast::FunRetType>&& ret_type, ast::Str name);
     Ptr<ast::ParamList> parse_param_list();
     Ptr<ast::Param> parse_param(bool requires_value);
 

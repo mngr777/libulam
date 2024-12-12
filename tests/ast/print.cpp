@@ -41,6 +41,14 @@ void PrinterBase::traverse(ulam::Ref<ulam::ast::ClassDefBody> node) {
     traverse_with_indent(node);
 }
 
+void PrinterBase::visit(ulam::Ref<ulam::ast::FunRetType> node) {
+    visit(node->type_name());
+    if (node->has_array_dims())
+        print_array_dims(node->array_dims());
+    if (node->is_ref())
+        _os << "&";
+}
+
 void PrinterBase::visit(ulam::Ref<ulam::ast::FunDefBody> node) {
     if (do_visit(node)) {
         inc_lvl();
@@ -183,12 +191,13 @@ void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) {
 
 void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
     // ret type
-    accept_me(node->ret_type_name());
+    assert(node->has_ret_type());
+    visit(node->ret_type());
     // name
     _os << " " << name(node);
     // params
     assert(node->has_params());
-    accept_me(node->params());
+    visit(node->params());
     // body
     if (node->has_body()) {
         _os << " {" << nl();

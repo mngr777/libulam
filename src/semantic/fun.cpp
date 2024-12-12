@@ -7,9 +7,9 @@ namespace ulam {
 
 // FunOverload
 
-Ref<ast::TypeName> FunOverload::ret_type_name() {
-    assert(_node->has_ret_type_name());
-    return _node->ret_type_name();
+Ref<ast::FunRetType> FunOverload::ret_type_node() {
+    assert(_node->has_ret_type());
+    return _node->ret_type();
 }
 
 void FunOverload::add_param(Ref<Type> type, Value&& value) {

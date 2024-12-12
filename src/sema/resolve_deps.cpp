@@ -196,7 +196,7 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
 
 void ResolveDeps::visit(Ref<ast::FunDef> node) {
     // don't skip ret type and params
-    visit(node->ret_type_name());
+    visit(node->ret_type());
     visit(node->params());
 
     // get class/tpl, name

@@ -25,6 +25,7 @@
 
 namespace ulam::sema {
 namespace {
+// TODO: is this really useful?
 ScopeProxy select_scope(Ref<ScopeObject> obj, ScopeProxy scope) {
     if (scope)
         return scope;
@@ -166,11 +167,12 @@ bool Resolver::resolve(Ref<Class> cls) {
 
 bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
     CHECK_STATE(alias);
+    scope = select_scope(alias, scope);
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
     // type
-    auto type = resolve_type_name(type_name, select_scope(alias, scope));
+    auto type = resolve_type_name(type_name, scope);
     if (!type)
         RET_UPD_STATE(alias, false);
 
@@ -191,16 +193,41 @@ bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
 bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
     CHECK_STATE(var);
     bool is_resolved = true;
+    scope = select_scope(var, scope);
+    auto node = var->node();
+    auto type_name = var->type_node();
 
     // type
     if (!var->type()) {
-        auto type = resolve_var_decl_type(var->type_node(), var->node(), scope);
+        auto type = resolve_var_decl_type(type_name, node, scope);
         if (type)
             var->set_type(type);
         is_resolved = type && is_resolved;
     }
 
-    // TODO: value
+    // value
+    if (var->is_const()) {
+        if (node->has_default_value()) {
+            ExprVisitor ev{ast(), scope};
+            ExprRes res = node->default_value()->accept(ev);
+            auto tv = res.move_typed_value();
+            // TODO: conversion/type error, check if const
+            var->value() = tv.move_value();
+            if (var->value().is_nil()) {
+                auto name = node->name();
+                diag().emit(
+                    diag::Error, name.loc_id(), str(name.str_id()).size(),
+                    "cannot calculate constant value");
+                is_resolved = false;
+            }
+        } else if (!var->is(Var::ClassParam)) {
+            auto name = node->name();
+            diag().emit(
+                diag::Error, name.loc_id(), str(name.str_id()).size(),
+                "constant value required");
+            is_resolved = false;
+        }
+    }
 
     RET_UPD_STATE(var, is_resolved);
 }
@@ -221,13 +248,9 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
     ScopeProxy scope_proxy{overload->pers_scope_state()};
 
     // return type
-    auto ret_type = resolve_type_name(overload->ret_type_name(), scope_proxy);
-    if (ret_type) {
-        if (overload->node()->is_ref_ret_type())
-            ret_type = ret_type->ref_type();
-    } else {
-        is_resolved = false;
-    }
+    auto ret_type =
+        resolve_fun_ret_type(overload->ret_type_node(), scope_proxy);
+    is_resolved = (bool)ret_type;
 
     // params
     auto scope = make<BasicScope>(&scope_proxy); // tmp scope
@@ -254,9 +277,7 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
 }
 
 Ref<Type> Resolver::resolve_var_decl_type(
-    Ref<ast::TypeName> type_name,
-    Ref<ast::VarDecl> node,
-    ScopeProxy scope) {
+    Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, ScopeProxy scope) {
     // base type
     auto type = resolve_type_name(type_name, scope);
     if (!type)
@@ -273,8 +294,26 @@ Ref<Type> Resolver::resolve_var_decl_type(
     return type;
 }
 
-Ref<Type> Resolver::resolve_type_name(
-    Ref<ast::TypeName> type_name, ScopeProxy scope) {
+Ref<Type>
+Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, ScopeProxy scope) {
+    // base type
+    auto type = resolve_type_name(node->type_name(), scope);
+    if (!type)
+        return {};
+
+    // &
+    if (node->is_ref())
+        type = type->ref_type();
+
+    // []
+    if (node->has_array_dims())
+        type = apply_array_dims(type, node->array_dims(), scope);
+
+    return type;
+}
+
+Ref<Type>
+Resolver::resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope) {
 
     // ast::TypeSpec to type
     auto type_spec = type_name->first();

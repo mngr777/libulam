@@ -30,15 +30,14 @@ private:
     bool resolve(Ref<FunOverload> overload);
 
     Ref<Type> resolve_var_decl_type(
-        Ref<ast::TypeName> type_name,
-        Ref<ast::VarDecl> node,
-        ScopeProxy scope);
+        Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, ScopeProxy scope);
+
+    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, ScopeProxy scope);
+
+    Ref<Type> resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope);
 
     Ref<Type>
-    resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope);
-
-    Ref<Type> apply_array_dims(
-        Ref<Type> type, Ref<ast::ExprList> dims, ScopeProxy scope);
+    apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, ScopeProxy scope);
 
     std::optional<bool> check_state(Ref<ScopeObject> obj);
     void update_state(Ref<ScopeObject> obj, bool is_resolved);

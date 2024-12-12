@@ -34,6 +34,7 @@ protected:
     void traverse(ulam::Ref<ulam::ast::ModuleDef> node) override;
     void visit(ulam::Ref<ulam::ast::ClassDefBody> node) override;
     void traverse(ulam::Ref<ulam::ast::ClassDefBody> node) override;
+    void visit(ulam::Ref<ulam::ast::FunRetType> node) override;
     void visit(ulam::Ref<ulam::ast::FunDefBody> node) override;
     void traverse(ulam::Ref<ulam::ast::FunDefBody> node) override;
     void visit(ulam::Ref<ulam::ast::Block> node) override;

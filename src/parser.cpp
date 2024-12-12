@@ -224,60 +224,42 @@ void Parser::parse_class_def_body(Ref<ast::ClassDef> node) {
     // body
     expect(tok::BraceL);
     while (!_tok.in(tok::BraceR, tok::Eof)) {
+        bool ok = false;
         switch (_tok.type) {
         case tok::Typedef: {
             auto type_def = parse_type_def();
-            if (type_def)
+            if (type_def) {
                 node->body()->add(std::move(type_def));
+                ok = true;
+            }
         } break;
 
         case tok::BuiltinTypeIdent:
         case tok::TypeIdent: {
-            // fun or var def
-            // type
-            auto type = parse_type_name();
-            if (!type) {
-                panic(tok::Semicol, tok::BraceL, tok::BraceR);
-                consume_if(tok::Semicol);
-                break;
-            }
-
-            // [&] name
-            bool is_ref = parse_is_ref();
-            if (!match(tok::Ident)) {
-                panic(tok::Semicol, tok::BraceL, tok::BraceR);
-                consume_if(tok::Semicol);
-                break;
-            }
-            auto name = tok_ast_str();
-            consume();
-
-            if (_tok.is(tok::ParenL)) {
-                auto fun = parse_fun_def_rest(std::move(type), is_ref, name);
-                if (fun)
-                    node->body()->add(std::move(fun));
-            } else {
-                auto vars = parse_var_def_list_rest(
-                    std::move(type), false, name, is_ref);
-                if (vars)
-                    node->body()->add(std::move(vars));
-            }
+            ok = parse_class_var_or_fun_def(node->body());
         } break;
 
         case tok::Constant: {
             consume();
             auto vars = parse_var_def_list(true);
-            if (vars)
+            if (vars) {
                 node->body()->add(std::move(vars));
+                ok = true;
+            }
         } break;
 
         default:
             unexpected();
-            panic(tok::Semicol, tok::BraceL, tok::BraceR);
+        }
+
+        if (!ok) {
+            panic(tok::Semicol, tok::BraceR);
+            consume_if(tok::Semicol);
         }
     }
+
     if (!expect(tok::BraceR)) {
-        panic(tok::BraceL, tok::BraceR);
+        panic(tok::BraceR);
         consume_if(tok::BraceR);
     }
 }
@@ -302,6 +284,64 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
         consume_if(tok::Semicol);
     }
     return tree<ast::TypeDef>(std::move(type_name), std::move(type_expr));
+}
+
+bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
+    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
+
+    // type
+    Ptr<ast::FunRetType> ret_type{}; // maybe return type
+    auto type = parse_type_name();
+    if (!type)
+        return false;
+
+    // [] (return type only)
+    Ptr<ast::ExprList> array_dims{};
+    auto brace_loc_id = NoLocId; // to complain if not a fun
+    if (_tok.is(tok::BracketL)) {
+        brace_loc_id = _tok.loc_id;
+        array_dims = parse_array_dims();
+        if (!array_dims)
+            return false;
+        ret_type =
+            make<ast::FunRetType>(std::move(type), std::move(array_dims));
+        type = {};
+    }
+
+    // [&] name
+    bool is_ref = parse_is_ref();
+    if (!match(tok::Ident))
+        return false;
+    auto name = tok_ast_str();
+    consume();
+
+    if (_tok.is(tok::ParenL)) {
+        // fun def
+        if (!ret_type) {
+            assert(type);
+            ret_type = make<ast::FunRetType>(std::move(type), std::move(array_dims));
+        }
+        ret_type->set_is_ref(is_ref);
+        auto fun = parse_fun_def_rest(std::move(ret_type), name);
+        if (!fun)
+            return false;
+        node->add(std::move(fun));
+
+    } else {
+        // var def list
+        if (!type) {
+            // `Type[..]` used instead of maybe `Type var[..]`
+            assert(ret_type);
+            diag(brace_loc_id, 1, "invalid variable definition syntax");
+            return false;
+        }
+        auto vars =
+            parse_var_def_list_rest(std::move(type), false, name, is_ref);
+        if (!vars)
+            return false;
+        node->add(std::move(vars));
+    }
+    return true;
 }
 
 Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
@@ -378,7 +418,6 @@ Ptr<ast::VarDef> Parser::parse_var_def() {
         return {};
     auto name = tok_ast_str();
     consume();
-
     return parse_var_def_rest(name, is_ref);
 }
 
@@ -403,10 +442,10 @@ Ptr<ast::VarDef> Parser::parse_var_def_rest(ast::Str name, bool is_ref) {
     return node;
 }
 
-Ptr<ast::FunDef> Parser::parse_fun_def_rest(
-    Ptr<ast::TypeName>&& ret_type, bool is_ref, ast::Str name) {
-    assert(ret_type);
+Ptr<ast::FunDef>
+Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
     assert(_tok.type == tok::ParenL);
+    assert(ret_type);
     // params
     auto params = parse_param_list();
     if (!params)
@@ -416,7 +455,6 @@ Ptr<ast::FunDef> Parser::parse_fun_def_rest(
     parse_as_block(ref(body));
     auto node = tree<ast::FunDef>(
         name, std::move(ret_type), std::move(params), std::move(body));
-    node->set_is_ref_ret_type(is_ref);
     return node;
 }
 
