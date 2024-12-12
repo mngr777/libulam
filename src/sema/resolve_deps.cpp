@@ -24,7 +24,7 @@ namespace ulam::sema {
 void ResolveDeps::visit(Ref<ast::Root> node) {
     assert(!node->program());
     // make program
-    node->set_program(ulam::make<Program>(diag(), node));
+    node->set_program(make<Program>(diag(), node));
     RecVisitor::visit(node);
     export_classes();
 }
@@ -57,8 +57,8 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
 
         // class tpl
         auto params = node->params();
-        auto tpl = ulam::make<ClassTpl>(
-            program()->type_id_gen(), node, module()->scope());
+        auto tpl =
+            make<ClassTpl>(program()->type_id_gen(), node, module()->scope());
         auto tpl_ref = ref(tpl);
 
         // add params
@@ -66,7 +66,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
             auto param_node = params->get(n);
             auto param_name_id = param_node->name().str_id();
             // make var
-            auto var = ulam::make<Var>(
+            auto var = make<Var>(
                 param_node->type_name(), param_node, Ref<Type>{},
                 Var::ClassParam | Var::IsConst);
             auto var_ref = ref(var);
@@ -82,8 +82,8 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
 
     } else {
         // class
-        auto cls = ulam::make<Class>(
-            program()->type_id_gen(), node, module()->scope());
+        auto cls =
+            make<Class>(program()->type_id_gen(), node, module()->scope());
         auto cls_ref = ref(cls);
         module()->set<Class>(name_id, std::move(cls)); // add to module
         scope_proxy->set(name_id, cls_ref);            // add to scope
@@ -112,7 +112,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
         if (scope_proxy->is(scp::Module)) {
             // module typedef (is not a module member)
             Ptr<UserType> type =
-                ulam::make<AliasType>(program()->type_id_gen(), node);
+                make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             scope_proxy->set(alias_id, std::move(type)); // add to scope
 
@@ -121,7 +121,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
             assert(class_node->type());
             auto cls = class_node->type();
             Ptr<UserType> type =
-                ulam::make<AliasType>(program()->type_id_gen(), node);
+                make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             cls->set(alias_id, std::move(type));  // add to class
             scope_proxy->set(alias_id, type_ref); // add to scope
@@ -131,7 +131,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
             Ptr<UserType> type =
-                ulam::make<AliasType>(program()->type_id_gen(), node);
+                make<AliasType>(program()->type_id_gen(), node);
             type_ref = ref(type);
             tpl->set(alias_id, std::move(type));  // add to class tpl
             scope_proxy->set(alias_id, type_ref); // add to scope
@@ -144,8 +144,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
     } else {
         // transient typedef (in function body)
         assert(scope()->in(scp::Fun));
-        Ptr<UserType> type =
-            ulam::make<AliasType>(program()->type_id_gen(), node);
+        Ptr<UserType> type = make<AliasType>(program()->type_id_gen(), node);
         scope()->set(alias_id, std::move(type));
     }
 }
@@ -172,7 +171,7 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
 
         // make
         Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
-        auto var = ulam::make<Var>(node->type_name(), def, Ref<Type>{}, flags);
+        auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
         auto var_ref = ref(var);
         // install
         if (class_node) {
@@ -225,7 +224,7 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
             return;
         }
     } else {
-        sym = cls_base->set(name_id, ulam::make<Fun>());  // add to class/tpl
+        sym = cls_base->set(name_id, make<Fun>());        // add to class/tpl
         cls_base->scope()->set(name_id, sym->get<Fun>()); // add to scope
     }
     fun_ref = sym->get<Fun>();

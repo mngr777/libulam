@@ -64,7 +64,7 @@ Ref<Type> ClassTpl::type(
 
 Ptr<Class>
 ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = ulam::make<Class>(id_gen(), this);
+    auto cls = make<Class>(id_gen(), this);
 
     // copy params
     {
@@ -80,7 +80,7 @@ ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             TypedValue value;
             std::swap(value, args.front());
             args.pop_front();
-            auto copy = ulam::make<Var>(
+            auto copy = make<Var>(
                 var->type_node(), var->node(), std::move(value), var->flags());
             cls->param_scope()->set(name_id, ref(copy));
             cls->set(name_id, std::move(copy));
@@ -102,13 +102,13 @@ ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 auto alias = sym->get<UserType>()->as_alias();
                 assert(alias);
                 Ptr<UserType> copy =
-                    ulam::make<AliasType>(id_gen(), alias->node());
+                    make<AliasType>(id_gen(), alias->node());
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
 
             } else if (sym->is<Var>()) {
                 auto var = sym->get<Var>();
-                auto copy = ulam::make<Var>(
+                auto copy = make<Var>(
                     var->type_node(), var->node(), Ref<Type>{}, var->flags());
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
@@ -116,7 +116,7 @@ ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             } else {
                 assert(sym->is<Fun>());
                 auto fun = sym->get<Fun>();
-                auto copy = ulam::make<Fun>();
+                auto copy = make<Fun>();
                 for (auto& overload : fun->overloads()) {
                     copy->add_overload(
                         overload.ref()->node(), cls->scope()->state());

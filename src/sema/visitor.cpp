@@ -139,7 +139,7 @@ bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
     //     if (!sym->is<Fun>())
     //         return false;
     // } else {
-    //     sym = scope()->set(name_id, ulam::make<Fun>());
+    //     sym = scope()->set(name_id, make<Fun>());
     // }
     // sym->get<Fun>()->add_overload(overload);
     return true;

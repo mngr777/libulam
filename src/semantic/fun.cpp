@@ -32,7 +32,7 @@ void Fun::merge(Ref<Fun> other) {
 Ref<FunOverload> Fun::add_overload(Ref<ast::FunDef> node, PersScopeState scope_state) {
     assert(node);
     assert(scope_state);
-    auto overload = ulam::make<FunOverload>(node);
+    auto overload = make<FunOverload>(node);
     overload->set_pers_scope_state(scope_state);
     auto overload_ref = ref(overload);
     _overloads.push_back(std::move(overload));

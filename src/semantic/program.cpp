@@ -22,7 +22,7 @@ Ref<Module> Program::module(module_id_t id) {
 
 Ref<Module> Program::add_module(Ref<ast::ModuleDef> node) {
     module_id_t id = _modules.size();
-    _modules.push_back(ulam::make<Module>(this, id, node));
+    _modules.push_back(make<Module>(this, id, node));
     return ref(_modules[id]);
 }
 
