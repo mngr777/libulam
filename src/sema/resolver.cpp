@@ -176,15 +176,15 @@ bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
     if (!type)
         RET_UPD_STATE(alias, false);
 
-    // &
-    if (type_expr->is_ref())
-        type = type->ref_type();
-
     // []
     if (type_expr->has_array_dims())
         type = apply_array_dims(type, type_expr->array_dims(), scope);
     if (!type)
         RET_UPD_STATE(alias, false);
+
+    // &
+    if (type_expr->is_ref())
+        type = type->ref_type();
 
     alias->set_aliased(type);
     RET_UPD_STATE(alias, true);
@@ -206,7 +206,7 @@ bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
     }
 
     // value
-    if (var->is_const()) {
+    if (var->is_const() && !var->value()) {
         if (node->has_default_value()) {
             ExprVisitor ev{ast(), scope};
             ExprRes res = node->default_value()->accept(ev);
@@ -220,7 +220,7 @@ bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
                     "cannot calculate constant value");
                 is_resolved = false;
             }
-        } else if (!var->is(Var::ClassParam)) {
+        } else if (var->requires_value()) {
             auto name = node->name();
             diag().emit(
                 diag::Error, name.loc_id(), str(name.str_id()).size(),
@@ -283,13 +283,13 @@ Ref<Type> Resolver::resolve_var_decl_type(
     if (!type)
         return {};
 
-    // &
-    if (node->is_ref())
-        type = type->ref_type();
-
     // []
     if (node->has_array_dims())
         type = apply_array_dims(type, node->array_dims(), scope);
+
+    // &
+    if (node->is_ref())
+        type = type->ref_type();
 
     return type;
 }
@@ -301,13 +301,13 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, ScopeProxy scope) {
     if (!type)
         return {};
 
-    // &
-    if (node->is_ref())
-        type = type->ref_type();
-
     // []
     if (node->has_array_dims())
         type = apply_array_dims(type, node->array_dims(), scope);
+
+    // &
+    if (node->is_ref())
+        type = type->ref_type();
 
     return type;
 }

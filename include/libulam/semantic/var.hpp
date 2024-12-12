@@ -17,8 +17,10 @@ class Var : public ScopeObject {
 public:
     using Flag = std::uint8_t;
     static constexpr Flag NoFlags = 0;
-    static constexpr Flag IsConst = 1;
+    static constexpr Flag Const = 1;
     static constexpr Flag ClassParam = 1 << 1;
+    static constexpr Flag FunParam = 1 << 2;
+    static constexpr Flag Tpl = 1 << 3;
 
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
@@ -38,7 +40,11 @@ public:
 
     str_id_t name_id() const;
 
-    bool is(Flag flag) const { return _flags & flag; }
+    bool is(Flag flags) const { return (_flags & flags) == flags; }
+
+    bool requires_value() const {
+        return is_const() && !(is(Tpl) && is(ClassParam)) && !is(FunParam);
+    }
 
     Ref<ast::TypeName> type_node() { return _type_node; }
     Ref<ast::VarDecl> node() { return _node; }
@@ -52,7 +58,7 @@ public:
     // TODO: if reference, get rvalue from references var
     RValue* rvalue() { return _value.rvalue(); };
 
-    bool is_const() const { return _flags & IsConst; }
+    bool is_const() const { return _flags & Const; }
 
     Flag flags() { return _flags; }
 

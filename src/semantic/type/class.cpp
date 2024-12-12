@@ -15,9 +15,7 @@ namespace ulam {
 // ClassBase
 
 ClassBase::ClassBase(
-    Ref<ast::ClassDef> node,
-    Ref<Scope> module_scope,
-    ScopeFlags scope_flags):
+    Ref<ast::ClassDef> node, Ref<Scope> module_scope, ScopeFlags scope_flags):
     _node{node},
     _param_scope{make<PersScope>(module_scope)},
     _inh_scope{make<PersScope>(ref(_param_scope))},
@@ -50,8 +48,8 @@ ClassTpl::~ClassTpl() {}
 
 str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 
-Ref<Type> ClassTpl::type(
-    Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
+Ref<Type>
+ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _types.find(key);
     if (it != _types.end())
@@ -62,8 +60,7 @@ Ref<Type> ClassTpl::type(
     return cls_ref;
 }
 
-Ptr<Class>
-ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
+Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls = make<Class>(id_gen(), this);
 
     // copy params
@@ -76,12 +73,13 @@ ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 break;
             assert(sym->is<Var>());
             auto var = sym->get<Var>();
-            assert(var->is_const() && var->is(Var::ClassParam));
+            assert(var->is_const() && var->is(Var::ClassParam & Var::Tpl));
             TypedValue value;
             std::swap(value, args.front());
             args.pop_front();
             auto copy = make<Var>(
-                var->type_node(), var->node(), std::move(value), var->flags());
+                var->type_node(), var->node(), std::move(value),
+                var->flags() & ~Var::Tpl);
             cls->param_scope()->set(name_id, ref(copy));
             cls->set(name_id, std::move(copy));
         }
@@ -101,15 +99,15 @@ ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             if (sym->is<UserType>()) {
                 auto alias = sym->get<UserType>()->as_alias();
                 assert(alias);
-                Ptr<UserType> copy =
-                    make<AliasType>(id_gen(), alias->node());
+                Ptr<UserType> copy = make<AliasType>(id_gen(), alias->node());
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
 
             } else if (sym->is<Var>()) {
                 auto var = sym->get<Var>();
                 auto copy = make<Var>(
-                    var->type_node(), var->node(), Ref<Type>{}, var->flags());
+                    var->type_node(), var->node(), Ref<Type>{},
+                    var->flags() & ~Var::Tpl);
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
 

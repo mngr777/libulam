@@ -63,6 +63,8 @@ public:
     Value(Value&&) = default;
     Value& operator=(Value&&) = default;
 
+    operator bool() { return !is_nil(); }
+
     bool is_nil() const {
         return std::holds_alternative<std::monostate>(_value);
     }

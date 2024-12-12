@@ -68,7 +68,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
             // make var
             auto var = make<Var>(
                 param_node->type_name(), param_node, Ref<Type>{},
-                Var::ClassParam | Var::IsConst);
+                Var::Tpl | Var::ClassParam | Var::Const);
             auto var_ref = ref(var);
             tpl->set(param_name_id, std::move(var)); // set class tpl var
             tpl->param_scope()->set(param_name_id, var_ref); // add to tpl scope
@@ -170,7 +170,11 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
         }
 
         // make
-        Var::Flag flags = node->is_const() ? Var::IsConst : Var::NoFlags;
+        Var::Flag flags = Var::NoFlags;
+        if (node->is_const())
+            flags |= Var::Const;
+        if (class_node->type_tpl())
+            flags |= Var::Tpl;
         auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
         auto var_ref = ref(var);
         // install
