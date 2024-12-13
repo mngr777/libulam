@@ -110,7 +110,7 @@ bool Resolver::init(Ref<Class> cls) {
                 cls->add_ancestor(anc_cls, type_name);
                 // import symbols
                 anc_cls->members().export_symbols(
-                    cls->members(), false /* do not overwrite*/);
+                    cls->members(), false /* do not overwrite */);
             }
         }
     }
@@ -349,7 +349,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope) {
     // builtin?
     if (type_spec->is_builtin()) {
         // builtins don't have members (??)
-        // TODO: catch this in parser?
+        // TODO: write a sensible error message, also catch this in parser?
         if (type_name->child_num() > 1) {
             auto ident = type_name->ident(1);
             auto name_id = ident->name().str_id();
@@ -360,7 +360,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope) {
         return type;
     }
 
-    // resolve rest, resolve aliases along the way
+    // follow rest of type idents, resolve aliases along the way
     unsigned n = 0;
     while (true) {
         auto ident = type_name->ident(n);
@@ -375,8 +375,18 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope) {
             }
         }
         // done?
-        if (++n == type_name->child_num())
+        if (++n == type_name->child_num()) {
+            if (type->canon()->is_class()) {
+                // class type itself is required, resolve it now
+                if (!resolve(type->canon()->as_class())) {
+                    diag().emit(
+                        diag::Error, ident->loc_id(), str(name_id).size(),
+                        "cannot resolve");
+                    return {};
+                }
+            }
             return type;
+        }
 
         // in A(x).B.C, A(x) and A(x).B must resolve to classes
         assert(type->canon());
@@ -429,6 +439,7 @@ std::optional<bool> Resolver::check_state(Ref<ScopeObject> obj) {
         obj->set_res_state(ScopeObject::Unresolvable);
     if (obj->res_state() == ScopeObject::Unresolvable)
         return false;
+    obj->set_res_state(ScopeObject::Resolving);
     return {};
 }
 
