@@ -130,7 +130,8 @@ bool Resolver::resolve(Ref<Class> cls) {
     for (auto anc : cls->ancestors()) {
         if (!resolve(anc.cls())) {
             diag().emit(
-                diag::Error, anc.node()->loc_id(), 1, "failed to resolve");
+                diag::Error, anc.node()->loc_id(), 1,
+                "cannot resolve ancestor type");
             is_resolved = false;
         }
     }
@@ -247,9 +248,14 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
     ScopeProxy scope_proxy{overload->pers_scope_state()};
 
     // return type
-    auto ret_type =
-        resolve_fun_ret_type(overload->ret_type_node(), scope_proxy);
-    is_resolved = (bool)ret_type;
+    auto ret_type_node = overload->ret_type_node();
+    auto ret_type = resolve_fun_ret_type(ret_type_node, scope_proxy);
+    if (!ret_type) {
+        diag().emit(
+            diag::Error, ret_type_node->loc_id(), 1,
+            "cannot resolve return type");
+        is_resolved = false;
+    }
 
     // params
     auto scope = make<BasicScope>(&scope_proxy); // tmp scope
