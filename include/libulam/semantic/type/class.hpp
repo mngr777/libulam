@@ -103,6 +103,8 @@ public:
         _ancestors.emplace_back(anc, node);
     }
 
+    bitsize_t bitsize() const override;
+
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
 
@@ -115,7 +117,11 @@ class ClassTpl : public TypeTpl, public ClassBase, public ScopeObject {
     friend Class;
 
 public:
-    ClassTpl(TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope);
+    ClassTpl(
+        TypeIdGen& id_gen,
+        UniqStrPool& str_pool,
+        Ref<ast::ClassDef> node,
+        Ref<Scope> scope);
     ~ClassTpl();
 
     str_id_t name_id() const;
@@ -131,8 +137,9 @@ private:
     // TMP
     std::string type_args_str(const TypedValueList& args);
 
+    UniqStrPool& _str_pool;
     Ref<ast::ClassDef> _node;
-    std::unordered_map<std::string, Ptr<Class>> _types;
+    std::unordered_map<std::string, Ptr<Class>> _classes;
 };
 
 } // namespace ulam

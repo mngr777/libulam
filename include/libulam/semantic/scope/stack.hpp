@@ -6,6 +6,7 @@
 
 namespace ulam {
 
+// TODO: use ScopeProxy instead of variant
 class ScopeStack {
 public:
     bool empty() {
@@ -43,8 +44,8 @@ public:
     void pop() { _stack.pop(); }
 
 private:
-    using TransPtr = Ptr<BasicScope>;
-    using Variant = std::variant<TransPtr, PersScopeProxy>;
+    using BasicPtr = Ptr<BasicScope>;
+    using Variant = std::variant<BasicPtr, PersScopeProxy>;
 
     std::stack<Variant> _stack;
 };

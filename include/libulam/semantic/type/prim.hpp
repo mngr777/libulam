@@ -22,8 +22,6 @@ public:
     Ref<PrimType> as_prim() { return this; }
     Ref<const PrimType> as_prim() const { return this; }
 
-    virtual bitsize_t bitsize() const { return NoBitsize; }
-
 protected:
     // Ref<Type> prim_type(
     //     Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);

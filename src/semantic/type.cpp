@@ -35,6 +35,11 @@ Ptr<RefType> Type::make_ref_type() { return make<RefType>(_id_gen, this); }
 
 str_id_t AliasType::name_id() const { return _node->alias_id(); }
 
+bitsize_t AliasType::bitsize() const {
+    assert(_canon);
+    return _canon->bitsize();
+}
+
 Ref<ast::TypeName> AliasType::type_name() {
     assert(_node->type_name());
     return _node->type_name();
@@ -68,6 +73,11 @@ Ptr<RefType> AliasType::make_ref_type() {
 
 // ArrayType
 
+bitsize_t ArrayType::bitsize() const {
+    assert(_item_type);
+    return _array_size * _item_type->bitsize();
+}
+
 void ArrayType::set_canon(Ref<ArrayType> canon) {
     assert(canon);
     assert(canon->item_type() == item_type()->canon());
@@ -76,6 +86,11 @@ void ArrayType::set_canon(Ref<ArrayType> canon) {
 }
 
 // RefType
+
+bitsize_t RefType::bitsize() const {
+    assert(_refd);
+    return _refd->bitsize();
+}
 
 void RefType::set_canon(Ref<RefType> canon) {
     assert(canon);

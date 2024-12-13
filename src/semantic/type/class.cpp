@@ -38,11 +38,18 @@ Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
+bitsize_t Class::bitsize() const { assert(false); /* not implemented */ }
+
 // ClassTpl
 
 ClassTpl::ClassTpl(
-    TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope):
-    TypeTpl{id_gen}, ClassBase{node, scope, scp::ClassTpl} {}
+    TypeIdGen& id_gen,
+    UniqStrPool& str_pool,
+    Ref<ast::ClassDef> node,
+    Ref<Scope> scope):
+    TypeTpl{id_gen},
+    ClassBase{node, scope, scp::ClassTpl},
+    _str_pool{str_pool} {}
 
 ClassTpl::~ClassTpl() {}
 
@@ -51,12 +58,12 @@ str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 Ref<Type>
 ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto key = type_args_str(args);
-    auto it = _types.find(key);
-    if (it != _types.end())
+    auto it = _classes.find(key);
+    if (it != _classes.end())
         return ref(it->second);
     auto cls = inst(args_node, std::move(args));
     auto cls_ref = ref(cls);
-    _types.emplace(key, std::move(cls));
+    _classes.emplace(key, std::move(cls));
     return cls_ref;
 }
 

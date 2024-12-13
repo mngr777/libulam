@@ -57,6 +57,8 @@ public:
 
     type_id_t id() const { return _id; }
 
+    virtual bitsize_t bitsize() const = 0;
+
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
 
@@ -133,10 +135,12 @@ public:
     AliasType(TypeIdGen& id_gen, Ref<ast::TypeDef> node):
         UserType{id_gen}, _node(node) {}
 
+    str_id_t name_id() const override;
+
+    bitsize_t bitsize() const override;
+
     Ref<AliasType> as_alias() override { return this; }
     Ref<const AliasType> as_alias() const override { return this; }
-
-    str_id_t name_id() const override;
 
     Ref<ast::TypeDef> node() { return _node; }
     Ref<ast::TypeName> type_name();
@@ -174,6 +178,8 @@ public:
         _array_size{array_size},
         _canon{this} {}
 
+    bitsize_t bitsize() const override;
+
     Ref<ArrayType> as_array() override { return this; }
     Ref<const ArrayType> as_array() const override { return this; }
 
@@ -199,6 +205,8 @@ class RefType : public Type {
 public:
     RefType(TypeIdGen& id_gen, Ref<Type> refd):
         Type{id_gen}, _refd{refd}, _canon{this} {}
+
+    bitsize_t bitsize() const override;
 
     Ref<RefType> as_ref() override { return this; }
     Ref<const RefType> as_ref() const override { return this; }

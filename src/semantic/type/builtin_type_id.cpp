@@ -26,4 +26,27 @@ const std::string_view builtin_type_str(BuiltinTypeId id) {
     }
 }
 
+const char builtin_type_code(BuiltinTypeId id) {
+    switch (id) {
+    case IntId:
+        return 'i';
+    case UnsignedId:
+        return 'u';
+    case BoolId:
+        return 'b';
+    case UnaryId:
+        return 'y';
+    case BitsId:
+        return 't';
+    case AtomId:
+        return 'a';
+    case VoidId:
+        return 'v';
+    case StringId:
+        return 's';
+    default:
+        assert(false);
+    }
+}
+
 } // namespace ulam

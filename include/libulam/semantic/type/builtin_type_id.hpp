@@ -30,4 +30,6 @@ constexpr bool has_bitsize(BuiltinTypeId id) {
 
 const std::string_view builtin_type_str(BuiltinTypeId id);
 
+const char builtin_type_code(BuiltinTypeId id);
+
 } // namespace ulam

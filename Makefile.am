@@ -57,6 +57,8 @@ SEMANTIC_HEADER_FILES = \
 
 SEMANTIC_SOURCE_FILES = \
 	src/semantic/detail/integer.hpp \
+	src/semantic/detail/leximited.hpp \
+	src/semantic/detail/leximited.cpp \
 	src/semantic/fun.cpp \
 	src/semantic/number.cpp \
 	src/semantic/type/builtin_type_id.cpp \

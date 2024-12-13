@@ -57,8 +57,9 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
 
         // class tpl
         auto params = node->params();
-        auto tpl =
-            make<ClassTpl>(program()->type_id_gen(), node, module()->scope());
+        auto tpl = make<ClassTpl>(
+            program()->type_id_gen(), ast()->ctx().str_pool(), node,
+            module()->scope());
         auto tpl_ref = ref(tpl);
 
         // add params

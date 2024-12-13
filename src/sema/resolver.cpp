@@ -25,7 +25,6 @@
 
 namespace ulam::sema {
 namespace {
-// TODO: is this really useful?
 ScopeProxy select_scope(Ref<ScopeObject> obj, ScopeProxy scope) {
     if (scope)
         return scope;
