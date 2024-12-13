@@ -1,20 +1,12 @@
 #pragma once
-#include <cstdint>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <list>
-#include <string>
 #include <utility>
 #include <variant>
 
-#define ULAM_MAX_INT_SIZE (sizeof(Integer) * 8)
-
 namespace ulam {
-
-using Integer = std::int64_t;
-using Unsigned = std::uint64_t;
-using Bool = bool;
-using String = std::string;
 
 class Var;
 

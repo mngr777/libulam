@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <limits>
 
 namespace ulam::detail {

@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
-#include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <ostream>
 #include <variant>
 

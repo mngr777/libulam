@@ -7,6 +7,11 @@ namespace ulam {
 
 str_id_t Var::name_id() const { return _node->name().str_id(); }
 
+bitsize_t Var::bitsize() const {
+    assert(_type);
+    return _type->bitsize();
+}
+
 void Var::set_type(Ref<Type> type) {
     assert(!_type);
     _type = type;

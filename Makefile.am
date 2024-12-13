@@ -45,14 +45,17 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/builtin_type_id.hpp \
 	include/libulam/semantic/type/builtins.hpp \
 	include/libulam/semantic/type/class.hpp \
+	include/libulam/semantic/type/class/layout.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/prim.hpp \
 	include/libulam/semantic/type.hpp \
 	include/libulam/semantic/type_ops.hpp \
 	include/libulam/semantic/type_tpl.hpp \
 	include/libulam/semantic/value.hpp \
+	include/libulam/semantic/value/bit_vector.hpp \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/object.hpp \
+	include/libulam/semantic/value/types.hpp \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
@@ -63,6 +66,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/number.cpp \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \
+	src/semantic/type/class/layout.cpp \
 	src/semantic/type/class_kind.cpp \
 	src/semantic/type/prim.cpp \
 	src/semantic/module.cpp \
@@ -79,6 +83,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtins.cpp \
 	src/semantic/type_tpl.cpp \
 	src/semantic/value.cpp \
+	src/semantic/value/bit_vector.cpp \
 	src/semantic/var.cpp
 
 SEMA_HEADER_FILES = \

@@ -1,16 +1,16 @@
 #include "src/parser/number.hpp"
 #include "src/detail/string.hpp"
 #include <cassert>
-#include <cstddef>
 #include <libulam/diag.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <limits>
 #include <string>
 
 namespace ulam::detail {
 namespace {
 
-constexpr std::uint64_t MaxSigned = std::numeric_limits<std::int64_t>::max();
-constexpr std::uint64_t MaxUnsigned = std::numeric_limits<std::uint64_t>::max();
+constexpr Unsigned MaxSigned = std::numeric_limits<Integer>::max();
+constexpr Unsigned MaxUnsigned = std::numeric_limits<Unsigned>::max();
 
 // Max unsigned number that can be safely multiplied by radix
 constexpr std::uint64_t radix_threshold(Radix radix) {
@@ -31,7 +31,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     assert(is_digit(str[0])); // guaranteed by lexer
 
     std::size_t cur = 0;
-    std::uint64_t value = 0; // abs value
+    Unsigned value = 0; // abs value
 
     Radix radix = Radix::Decimal;
     bool overflow = false;
@@ -49,7 +49,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
                 diag.emit(
                     diag::Error, loc_id, str.size(),
                     "incomplete binary number");
-                return {radix, (std::int64_t)0};
+                return {radix, (Integer)0};
             }
             break;
         case 'X':
@@ -61,7 +61,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
                 diag.emit(
                     diag::Error, loc_id, str.size(),
                     "incomplete hexadecimal number");
-                return {radix, (std::int64_t)0};
+                return {radix, (Integer)0};
             }
             break;
         default:
@@ -91,7 +91,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
                 diag::Error, loc_id, cur, 1,
                 std::string("invalid digit in ") + radix_to_str(radix) +
                     " number");
-            return {radix, (std::int64_t)0};
+            return {radix, (Integer)0};
         }
         // already overflown?
         if (overflow)
@@ -128,8 +128,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     }
 
     // Done
-    return is_signed ? Number{radix, (std::int64_t)value}
-                     : Number{radix, value};
+    return is_signed ? Number{radix, (Integer)value} : Number{radix, value};
 }
 
 } // namespace ulam::detail

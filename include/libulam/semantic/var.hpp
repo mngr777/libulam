@@ -40,6 +40,8 @@ public:
 
     str_id_t name_id() const;
 
+    bitsize_t bitsize() const;
+
     bool is(Flag flags) const { return (_flags & flags) == flags; }
 
     bool requires_value() const {
