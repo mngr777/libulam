@@ -52,7 +52,8 @@ class RefType;
 
 class Type {
 public:
-    explicit Type(TypeIdGen& id_gen): _id_gen{id_gen}, _id{id_gen.next()} {}
+    explicit Type(TypeIdGen* id_gen):
+        _id_gen{id_gen}, _id{id_gen ? id_gen->next() : NoTypeId} {}
     virtual ~Type();
 
     type_id_t id() const { return _id; }
@@ -114,10 +115,10 @@ protected:
     virtual Ptr<ArrayType> make_array_type(array_size_t size);
     virtual Ptr<RefType> make_ref_type();
 
-    TypeIdGen& id_gen() { return _id_gen; }
+    TypeIdGen* id_gen() { return _id_gen; }
 
 private:
-    TypeIdGen& _id_gen;
+    TypeIdGen* _id_gen;
     type_id_t _id;
     std::unordered_map<array_size_t, Ptr<ArrayType>> _array_types;
     Ptr<RefType> _ref_type;
@@ -125,14 +126,14 @@ private:
 
 class UserType : public Type, public ScopeObject {
 public:
-    explicit UserType(TypeIdGen& id_gen): Type{id_gen} {}
+    explicit UserType(TypeIdGen* id_gen): Type{id_gen} {}
 
     virtual str_id_t name_id() const = 0;
 };
 
 class AliasType : public UserType {
 public:
-    AliasType(TypeIdGen& id_gen, Ref<ast::TypeDef> node):
+    AliasType(TypeIdGen* id_gen, Ref<ast::TypeDef> node):
         UserType{id_gen}, _node(node) {}
 
     str_id_t name_id() const override;
@@ -169,7 +170,7 @@ class ArrayType : public Type {
 
 public:
     ArrayType(
-        TypeIdGen& id_gen,
+        TypeIdGen* id_gen,
         Ref<Type> item_type,
         array_size_t array_size,
         Ref<ArrayType> canon = {}):
@@ -203,7 +204,7 @@ class RefType : public Type {
     friend AliasType;
 
 public:
-    RefType(TypeIdGen& id_gen, Ref<Type> refd):
+    RefType(TypeIdGen* id_gen, Ref<Type> refd):
         Type{id_gen}, _refd{refd}, _canon{this} {}
 
     bitsize_t bitsize() const override;

@@ -14,7 +14,7 @@ class Value;
 
 class VoidType : public PrimType {
 public:
-    VoidType(TypeIdGen& id_gen): PrimType{id_gen} {}
+    VoidType(TypeIdGen* id_gen): PrimType{id_gen} {}
 
     bitsize_t bitsize() const override { assert(false); }
 };

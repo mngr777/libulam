@@ -15,8 +15,8 @@ Builtins::Builtins(TypeIdGen& id_gen) {
     _prim_type_tpls[BoolId] = make<BoolTypeTpl>(id_gen);
     _prim_type_tpls[UnaryId] = make<UnaryTypeTpl>(id_gen);
     _prim_type_tpls[BitsId] = make<BitsTypeTpl>(id_gen);
-    _prim_types[VoidId] = make<VoidType>(id_gen);
-    _prim_types[StringId] = make<StringType>(id_gen);
+    _prim_types[VoidId] = make<VoidType>(&id_gen);
+    _prim_types[StringId] = make<StringType>(&id_gen);
 }
 
 Ref<PrimTypeTpl> Builtins::prim_type_tpl(BuiltinTypeId id) {

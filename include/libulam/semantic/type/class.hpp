@@ -89,8 +89,8 @@ public:
         Ref<ast::TypeName> _node;
     };
 
-    Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl);
-    Class(TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope);
+    Class(TypeIdGen* id_gen, Ref<ClassTpl> tpl);
+    Class(TypeIdGen* id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope);
     ~Class();
 
     str_id_t name_id() const override;

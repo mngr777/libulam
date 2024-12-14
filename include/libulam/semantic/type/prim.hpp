@@ -17,7 +17,7 @@ class Builtins;
 
 class PrimType : public Type {
 public:
-    PrimType(TypeIdGen& id_gen);
+    PrimType(TypeIdGen* id_gen);
 
     Ref<PrimType> as_prim() { return this; }
     Ref<const PrimType> as_prim() const { return this; }
@@ -48,7 +48,7 @@ public:
     static constexpr bitsize_t DefaultSize = Default;
 
     _PrimType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        PrimType{id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
+        PrimType{&id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
 
     BuiltinTypeId builtin_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
@@ -80,8 +80,10 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
 public:
     _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
 
-    Ref<Type>
-    type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) override {
+    Ref<Type> type(
+        Diag& diag,
+        Ref<ast::ArgList> args_node,
+        TypedValueList&& args) override {
         // NOTE: args_node can be null
         bitsize_t size = 0;
         if (args.size() == 0) {
@@ -112,7 +114,8 @@ public:
         return type(diag, args_node, size);
     }
 
-    Ref<PrimType> type(Diag& diag, Ref<ast::Node> node, bitsize_t size) override {
+    Ref<PrimType>
+    type(Diag& diag, Ref<ast::Node> node, bitsize_t size) override {
         // check, adjust and continue on error
         if (size < T::MinSize) {
             diag.emit(

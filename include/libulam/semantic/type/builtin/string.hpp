@@ -14,7 +14,7 @@ class Value;
 
 class StringType : public PrimType {
 public:
-    StringType(TypeIdGen& id_gen): PrimType{id_gen} {}
+    StringType(TypeIdGen* id_gen): PrimType{id_gen} {}
 
     bitsize_t bitsize() const override { return 8; /* placeholder */ }
 };

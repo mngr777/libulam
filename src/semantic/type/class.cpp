@@ -26,13 +26,17 @@ ClassBase::ClassBase(
 
 // Class
 
-Class::Class(TypeIdGen& id_gen, Ref<ClassTpl> tpl):
+Class::Class(TypeIdGen* id_gen, Ref<ClassTpl> tpl):
     UserType{id_gen},
     ClassBase{tpl->node(), tpl->param_scope()->parent(), scp::Class},
-    _tpl{tpl} {}
+    _tpl{tpl} {
+    assert(id_gen);
+}
 
-Class::Class(TypeIdGen& id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope):
-    UserType{id_gen}, ClassBase{node, scope, scp::Class}, _tpl{} {}
+Class::Class(TypeIdGen* id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope):
+    UserType{id_gen}, ClassBase{node, scope, scp::Class}, _tpl{} {
+    assert(id_gen);
+}
 
 Class::~Class() {}
 
@@ -68,7 +72,7 @@ ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
 }
 
 Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = make<Class>(id_gen(), this);
+    auto cls = make<Class>(&id_gen(), this);
 
     // copy params
     {
@@ -106,7 +110,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             if (sym->is<UserType>()) {
                 auto alias = sym->get<UserType>()->as_alias();
                 assert(alias);
-                Ptr<UserType> copy = make<AliasType>(id_gen(), alias->node());
+                Ptr<UserType> copy = make<AliasType>(&id_gen(), alias->node());
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
 

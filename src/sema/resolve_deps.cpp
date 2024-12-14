@@ -85,7 +85,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     } else {
         // class
         auto cls =
-            make<Class>(program()->type_id_gen(), node, module()->scope());
+            make<Class>(&program()->type_id_gen(), node, module()->scope());
         auto cls_ref = ref(cls);
         // set module class symbol, add to scope, store scope version
         module()->set<Class>(name_id, std::move(cls));
@@ -107,36 +107,30 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
         return;
     }
 
+    // make alias
+    Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
+    Ref<UserType> type_ref = ref(type);
+
     auto class_node = class_def();
     if (scope()->is(scp::Persistent)) {
-        // persistent typedef (module-local or class/class tpl)
-        Ref<UserType> type_ref{};
+        // persistent typedef (module-local or class/tpl)
         auto scope_proxy = scopes().top<PersScopeProxy>();
         if (scope_proxy->is(scp::Module)) {
             // module typedef (is not a module member)
-            Ptr<UserType> type =
-                make<AliasType>(program()->type_id_gen(), node);
-            type_ref = ref(type);
-            scope_proxy->set(alias_id, std::move(type)); // add to scope
+            scope_proxy->set(alias_id, std::move(type));
 
         } else if (scope_proxy->is(scp::Class)) {
             // class member
             assert(class_node->type());
             auto cls = class_node->type();
-            Ptr<UserType> type =
-                make<AliasType>(program()->type_id_gen(), node);
-            type_ref = ref(type);
             // add to class, add to scope
             cls->set(alias_id, std::move(type));
             scope_proxy->set(alias_id, type_ref);
 
         } else if (scope_proxy->is(scp::ClassTpl)) {
-            // class tpl member
+            // tpl member
             assert(class_node->type_tpl());
             auto tpl = class_node->type_tpl();
-            Ptr<UserType> type =
-                make<AliasType>(program()->type_id_gen(), node);
-            type_ref = ref(type);
             // add to class tpl, add to scope
             tpl->set(alias_id, std::move(type));
             scope_proxy->set(alias_id, type_ref);
@@ -150,7 +144,6 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
     } else {
         // transient typedef (in function body)
         assert(scope()->in(scp::Fun));
-        Ptr<UserType> type = make<AliasType>(program()->type_id_gen(), node);
         scope()->set(alias_id, std::move(type));
     }
 }
@@ -247,7 +240,6 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     auto overload = fun_ref->add_overload(node, cls_base->scope()->version());
     node->set_overload(overload);
     node->set_scope_version(cls_base->scope()->version());
-    return;
 }
 
 bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {
@@ -298,6 +290,7 @@ void ResolveDeps::export_classes() {
             it->second.insert(ref(mod));
         }
     }
+
     // remove names defined in multiple modules
     for (auto it = exporting.begin(); it != exporting.end();) {
         auto name_id = it->first;
@@ -311,6 +304,7 @@ void ResolveDeps::export_classes() {
             ++it;
         }
     }
+
     // import dependencies
     for (auto& mod : program()->modules()) {
         for (auto name_id : mod->deps()) {
