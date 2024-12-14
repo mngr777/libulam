@@ -1,4 +1,4 @@
-#include "libulam/semantic/scope/state.hpp"
+#include <libulam/semantic/scope/version.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/semantic/fun.hpp>
@@ -30,11 +30,10 @@ void Fun::merge(Ref<Fun> other) {
 }
 
 Ref<FunOverload>
-Fun::add_overload(Ref<ast::FunDef> node, PersScopeState scope_state) {
+Fun::add_overload(Ref<ast::FunDef> node, ScopeVersion scope_version) {
     assert(node);
-    assert(scope_state);
     auto overload = make<FunOverload>(node);
-    overload->set_pers_scope_state(scope_state);
+    overload->set_scope_version(scope_version);
     auto overload_ref = ref(overload);
     _overloads.push_back(std::move(overload));
     return overload_ref;

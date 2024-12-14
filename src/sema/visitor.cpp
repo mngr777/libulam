@@ -1,3 +1,5 @@
+#include "libulam/semantic/scope.hpp"
+#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/visitor.hpp>
@@ -105,15 +107,13 @@ void RecVisitor::visit(Ref<ast::Block> node) {
 
 bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
     assert(scope()->is(scp::Module));
-    assert(node->scope_proxy());
-    _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
+    _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
     return true;
 }
 
 bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (_scopes.top_is<PersScopeProxy>()) {
-        assert(node->scope_proxy());
-        _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
+        _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
     } else {
         // TODO: transient typedef
     }
@@ -122,8 +122,7 @@ bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
 
 bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
     if (_scopes.top_is<PersScopeProxy>()) {
-        assert(node->scope_proxy());
-        _scopes.top<PersScopeProxy>()->set_version(node->scope_proxy().version());
+        _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
     } else {
         // TODO: transient var decl
     }
@@ -131,17 +130,7 @@ bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
 }
 
 bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
-    // TODO
-    // auto name_id = node->name().str_id();
-    // auto overload = node->overload();
-    // auto sym = scope()->get(name_id);
-    // if (sym) {
-    //     if (!sym->is<Fun>())
-    //         return false;
-    // } else {
-    //     sym = scope()->set(name_id, make<Fun>());
-    // }
-    // sym->get<Fun>()->add_overload(overload);
+    _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
     return true;
 }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -141,7 +142,7 @@ public:
 // The node can have persistent scope and version attached (when in
 // persistent scope)
 class ScopeObjectNode {
-    ULAM_AST_SIMPLE_ATTR(PersScopeProxy, scope_proxy, )
+    ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
 };
 
 // Tuple

@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/scope/state.hpp>
+#include <libulam/semantic/scope/version.hpp>
 
 namespace ulam {
 
@@ -15,19 +15,19 @@ public:
 
     void set_res_state(ResState state) { _res_state = state; }
 
-    PersScopeState pers_scope_state() const {
-        assert(_pers_scope_state);
-        return _pers_scope_state;
+    ScopeVersion scope_version() const {
+        assert(_scope_version != NoScopeVersion);
+        return _scope_version;
     }
 
-    void set_pers_scope_state(PersScopeState state) {
-        assert(!_pers_scope_state);
-        _pers_scope_state = state;
+    void set_scope_version(ScopeVersion version) {
+        assert(version != NoScopeVersion);
+        _scope_version = version;
     }
 
 private:
     ResState _res_state{NotResolved};
-    PersScopeState _pers_scope_state;
+    ScopeVersion _scope_version{NoScopeVersion};
 };
 
 } // namespace ulam

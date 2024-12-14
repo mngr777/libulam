@@ -51,7 +51,7 @@ public:
     auto& overloads() { return _overloads; }
     const auto& overloads() const { return _overloads; }
 
-    Ref<FunOverload> add_overload(Ref<ast::FunDef> node, PersScopeState scope_state);
+    Ref<FunOverload> add_overload(Ref<ast::FunDef> node, ScopeVersion scope_version);
     Ref<FunOverload> add_overload(Ref<FunOverload> overload);
 
 private:

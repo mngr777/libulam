@@ -20,7 +20,7 @@ public:
         Ref<ast::Root> ast, Flag flags = NoFlags):
         Helper{ast}, _flags{flags} {}
 
-    std::pair<TypedValueList, bool> eval(Ref<ast::ArgList> args, ScopeProxy scope);
+    std::pair<TypedValueList, bool> eval(Ref<ast::ArgList> args, Ref<Scope> scope);
 
 private:
     Flag _flags;

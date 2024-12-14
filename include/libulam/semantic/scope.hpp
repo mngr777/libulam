@@ -3,6 +3,7 @@
 #include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/state.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/symbol.hpp>
@@ -10,10 +11,8 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
-#include <libulam/semantic/scope/flags.hpp>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 
 namespace ulam {
 
@@ -24,11 +23,7 @@ class Module;
 // TODO: refactoring, proxies do not need parent/module/flags, also make flags()
 // virtual instead of setting to proxy
 
-class ScopeProxy;
-
 class Scope {
-    friend ScopeProxy;
-
 protected:
     using SymbolTable = _SymbolTable<UserType, ulam::ClassTpl, ulam::Fun, Var>;
 
@@ -50,7 +45,9 @@ public:
 
     bool is(ScopeFlags flags) { return _flags & flags; }
 
-    bool in(ScopeFlags flags) { return is(flags) || (_parent && _parent->in(flags)); }
+    bool in(ScopeFlags flags) {
+        return is(flags) || (_parent && _parent->in(flags));
+    }
 
     bool has(str_id_t name_id, bool current = false) {
         return get(name_id, current);
@@ -148,8 +145,6 @@ private:
 class PersScope;
 
 class PersScopeProxy : public Scope {
-    friend ScopeProxy;
-
 public:
     PersScopeProxy(Ref<PersScope> scope, ScopeVersion version);
     PersScopeProxy(PersScopeState state):
@@ -206,8 +201,8 @@ public:
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
 
+    PersScopeProxy proxy(ScopeVersion version) { return {this, version}; }
     PersScopeProxy proxy() { return {this, version()}; }
-    PersScopeState state() { return {this, version()}; }
 
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);
@@ -231,30 +226,6 @@ private:
     Version _version;
     std::unordered_map<str_id_t, SymbolVersionList> _symbols;
     std::vector<str_id_t> _changes;
-};
-
-class ScopeProxy : public Scope {
-public:
-    ScopeProxy(Ref<Scope> scope): Scope{{}, scope->flags()}, _proxied{scope} {
-        assert(scope);
-    }
-    ScopeProxy(PersScopeProxy pers_proxy):
-        Scope{{}, pers_proxy.flags()}, _proxied{pers_proxy} {
-        assert(pers_proxy);
-    }
-    ScopeProxy(): Scope{} {}
-
-    operator bool() {
-        return !std::holds_alternative<std::monostate>(_proxied);
-    }
-
-    void for_each(ItemCb cb) override;
-
-    Symbol* get(str_id_t name_id, bool current = false) override;
-
-protected:
-    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
-    std::variant<std::monostate, Ref<Scope>, PersScopeProxy> _proxied;
 };
 
 } // namespace ulam

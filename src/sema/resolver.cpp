@@ -24,15 +24,6 @@
     } while (false)
 
 namespace ulam::sema {
-namespace {
-ScopeProxy select_scope(Ref<ScopeObject> obj, ScopeProxy scope) {
-    if (scope)
-        return scope;
-    PersScopeProxy proxy{obj->pers_scope_state()};
-    assert(proxy);
-    return proxy;
-}
-} // namespace
 
 void Resolver::resolve() {
     for (auto& module : _program->modules())
@@ -58,15 +49,18 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
     CHECK_STATE(cls_tpl);
     bool is_resolved = true;
 
-    auto params_node = cls_tpl->node()->params();
-    for (unsigned n = 0; n < params_node->child_num(); ++n) {
-        auto param_node = params_node->get(n);
-        auto name_id = param_node->name().str_id();
-        auto sym = cls_tpl->get(name_id); // TODO: don't use just symbol table
-        assert(sym && sym->is<Var>());
-        auto var = sym->get<Var>();
-        auto res = resolve(var, {});
-        is_resolved = is_resolved && res;
+    // params
+    {
+        auto scope_proxy = cls_tpl->param_scope()->proxy(0);
+        while (true) {
+            auto [name_id, sym] = scope_proxy.advance();
+            if (name_id == NoStrId)
+                break;
+            assert(sym && sym->is<Var>());
+            auto var = sym->get<Var>();
+            assert(var->is(Var::Const | Var::ClassParam | Var::Tpl));
+            is_resolved = resolve(var, &scope_proxy) && is_resolved;
+        }
     }
 
     RET_UPD_STATE(cls_tpl, is_resolved);
@@ -77,16 +71,15 @@ bool Resolver::init(Ref<Class> cls) {
 
     // params
     {
-        auto scope_proxy = cls->param_scope()->proxy();
-        scope_proxy.reset();
+        auto scope_proxy = cls->param_scope()->proxy(0);
         while (true) {
             auto [name_id, sym] = scope_proxy.advance();
             if (!sym)
                 break;
             assert(sym->is<Var>());
             auto var = sym->get<Var>();
-            assert(var->is_const() && var->is(Var::ClassParam));
-            success = resolve(var, scope_proxy) && success;
+            assert(var->is(Var::Const | Var::ClassParam));
+            success = resolve(var, &scope_proxy) && success;
         }
     }
 
@@ -149,14 +142,14 @@ bool Resolver::resolve(Ref<Class> cls) {
                 // alias
                 auto type = sym->get<UserType>();
                 assert(type->is_alias());
-                res = resolve(type->as_alias(), {});
+                res = resolve(type->as_alias(), &scope_proxy);
             } else if (sym->is<Var>()) {
                 // var
-                res = resolve(sym->get<Var>(), {});
+                res = resolve(sym->get<Var>(), &scope_proxy);
             } else {
                 // fun
                 assert(sym->is<Fun>());
-                res = resolve(sym->get<Fun>());
+                res = resolve(cls, sym->get<Fun>());
             }
             is_resolved = is_resolved && res;
         }
@@ -165,9 +158,8 @@ bool Resolver::resolve(Ref<Class> cls) {
     RET_UPD_STATE(cls, is_resolved);
 }
 
-bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
+bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
     CHECK_STATE(alias);
-    scope = select_scope(alias, scope);
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
@@ -190,10 +182,9 @@ bool Resolver::resolve(Ref<AliasType> alias, ScopeProxy scope) {
     RET_UPD_STATE(alias, true);
 }
 
-bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
+bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     CHECK_STATE(var);
     bool is_resolved = true;
-    scope = select_scope(var, scope);
     auto node = var->node();
     auto type_name = var->type_node();
 
@@ -232,24 +223,27 @@ bool Resolver::resolve(Ref<Var> var, ScopeProxy scope) {
     RET_UPD_STATE(var, is_resolved);
 }
 
-bool Resolver::resolve(Ref<Fun> fun) {
+bool Resolver::resolve(Ref<Class> cls, Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
-    for (auto& overload : fun->overloads())
-        is_resolved = resolve(overload.ref()) && is_resolved;
+    auto scope = cls->scope();
+    for (auto& overload : fun->overloads()) {
+        auto overload_ref = overload.ref();
+        auto scope_proxy = scope->proxy(overload_ref->scope_version());
+        is_resolved = resolve(overload_ref, &scope_proxy) && is_resolved;
+    }
 
     RET_UPD_STATE(fun, is_resolved);
 }
 
-bool Resolver::resolve(Ref<FunOverload> overload) {
+bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
     CHECK_STATE(overload);
     bool is_resolved = true;
-    ScopeProxy scope_proxy{overload->pers_scope_state()};
 
     // return type
     auto ret_type_node = overload->ret_type_node();
-    auto ret_type = resolve_fun_ret_type(ret_type_node, scope_proxy);
+    auto ret_type = resolve_fun_ret_type(ret_type_node, scope);
     if (!ret_type) {
         diag().emit(
             diag::Error, ret_type_node->loc_id(), 1,
@@ -258,13 +252,13 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
     }
 
     // params
-    auto scope = make<BasicScope>(&scope_proxy); // tmp scope
-    ExprVisitor ev{ast(), ref(scope)};
+    BasicScope param_scope{scope}; // tmp scope
+    ExprVisitor ev{ast(), &param_scope};
     auto params_node = overload->params_node();
     for (unsigned n = 0; n < params_node->child_num(); ++n) {
         auto param_node = params_node->get(n);
         auto param_type = resolve_var_decl_type(
-            param_node->type_name(), param_node, scope_proxy);
+            param_node->type_name(), param_node, &param_scope);
         Value default_value{};
         if (param_type) {
             if (param_node->has_default_value()) {
@@ -282,7 +276,7 @@ bool Resolver::resolve(Ref<FunOverload> overload) {
 }
 
 Ref<Type> Resolver::resolve_var_decl_type(
-    Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, ScopeProxy scope) {
+    Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, Ref<Scope> scope) {
     // base type
     auto type = resolve_type_name(type_name, scope);
     if (!type)
@@ -300,7 +294,7 @@ Ref<Type> Resolver::resolve_var_decl_type(
 }
 
 Ref<Type>
-Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, ScopeProxy scope) {
+Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
     // base type
     auto type = resolve_type_name(node->type_name(), scope);
     if (!type)
@@ -318,7 +312,7 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, ScopeProxy scope) {
 }
 
 Ref<Type>
-Resolver::resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope) {
+Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
 
     // ast::TypeSpec to type
     auto type_spec = type_name->first();
@@ -424,7 +418,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope) {
 }
 
 Ref<Type> Resolver::apply_array_dims(
-    Ref<Type> type, Ref<ast::ExprList> dims, ScopeProxy scope) {
+    Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
     ArrayDimEval eval{ast(), scope};

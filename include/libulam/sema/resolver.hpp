@@ -24,20 +24,20 @@ private:
     bool resolve(Ref<ClassTpl> cls_tpl);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
-    bool resolve(Ref<AliasType> alias, ScopeProxy scope);
-    bool resolve(Ref<Var> var, ScopeProxy scope);
-    bool resolve(Ref<Fun> fun);
-    bool resolve(Ref<FunOverload> overload);
+    bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
+    bool resolve(Ref<Var> var, Ref<Scope> scope);
+    bool resolve(Ref<Class> cls, Ref<Fun> fun);
+    bool resolve(Ref<FunOverload> overload, Ref<Scope> scope);
 
     Ref<Type> resolve_var_decl_type(
-        Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, ScopeProxy scope);
+        Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, Ref<Scope> scope);
 
-    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, ScopeProxy scope);
+    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
 
-    Ref<Type> resolve_type_name(Ref<ast::TypeName> type_name, ScopeProxy scope);
+    Ref<Type> resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope);
 
     Ref<Type>
-    apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, ScopeProxy scope);
+    apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope);
 
     std::optional<bool> check_state(Ref<ScopeObject> obj);
     void update_state(Ref<ScopeObject> obj, bool is_resolved);

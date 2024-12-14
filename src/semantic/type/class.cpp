@@ -124,7 +124,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 auto copy = make<Fun>();
                 for (auto& overload : fun->overloads()) {
                     copy->add_overload(
-                        overload.ref()->node(), cls->scope()->state());
+                        overload.ref()->node(), cls->scope()->version());
                 }
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(fun));

@@ -16,7 +16,7 @@ namespace ulam::sema {
 
 class ExprVisitor : public ast::ExprVisitor {
 public:
-    ExprVisitor(Ref<ast::Root> ast, ScopeProxy scope):
+    ExprVisitor(Ref<ast::Root> ast, Ref<Scope> scope):
         _ast{ast}, _scope{scope} {}
 
     ExprVisitor(ExprVisitor&&) = default;
@@ -45,7 +45,7 @@ protected:
 
 private:
     Ref<ast::Root> _ast;
-    ScopeProxy _scope;
+    Ref<Scope> _scope;
 };
 
 } // namespace ulam::sema
