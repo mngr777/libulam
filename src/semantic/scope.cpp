@@ -52,6 +52,11 @@ void PersScopeProxy::set_version(ScopeVersion version) {
     _version = version;
 }
 
+void PersScopeProxy::set_version_after(ScopeVersion version) {
+    assert(version != NoScopeVersion);
+    set_version(version + 1);
+}
+
 Scope::Symbol* PersScopeProxy::do_set(str_id_t name_id, Symbol&& symbol) {
     assert(_version == _scope->version());
     auto sym = _scope->do_set(name_id, std::move(symbol));

@@ -168,6 +168,7 @@ public:
     ScopeVersion version() const { return _version; }
 
     void set_version(ScopeVersion version);
+    void set_version_after(ScopeVersion version);
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;

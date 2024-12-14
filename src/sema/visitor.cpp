@@ -107,13 +107,13 @@ void RecVisitor::visit(Ref<ast::Block> node) {
 
 bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
     assert(scope()->is(scp::Module));
-    _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
+    _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
     return true;
 }
 
 bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (_scopes.top_is<PersScopeProxy>()) {
-        _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
+        _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
     } else {
         // TODO: transient typedef
     }
@@ -122,7 +122,7 @@ bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
 
 bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
     if (_scopes.top_is<PersScopeProxy>()) {
-        _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
+        _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
     } else {
         // TODO: transient var decl
     }
@@ -130,7 +130,7 @@ bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
 }
 
 bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
-    _scopes.top<PersScopeProxy>()->set_version(node->scope_version());
+    _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
     return true;
 }
 
