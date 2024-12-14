@@ -51,15 +51,15 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
 
     // params
     {
-        auto scope_proxy = cls_tpl->param_scope()->proxy(0);
+        auto scope_view = cls_tpl->param_scope()->view(0);
         while (true) {
-            auto [name_id, sym] = scope_proxy.advance();
+            auto [name_id, sym] = scope_view.advance();
             if (name_id == NoStrId)
                 break;
             assert(sym && sym->is<Var>());
             auto var = sym->get<Var>();
             assert(var->is(Var::Const | Var::ClassParam | Var::Tpl));
-            is_resolved = resolve(var, &scope_proxy) && is_resolved;
+            is_resolved = resolve(var, &scope_view) && is_resolved;
         }
     }
 
@@ -71,15 +71,15 @@ bool Resolver::init(Ref<Class> cls) {
 
     // params
     {
-        auto scope_proxy = cls->param_scope()->proxy(0);
+        auto scope_view = cls->param_scope()->view(0);
         while (true) {
-            auto [name_id, sym] = scope_proxy.advance();
+            auto [name_id, sym] = scope_view.advance();
             if (!sym)
                 break;
             assert(sym->is<Var>());
             auto var = sym->get<Var>();
             assert(var->is(Var::Const | Var::ClassParam));
-            success = resolve(var, &scope_proxy) && success;
+            success = resolve(var, &scope_view) && success;
         }
     }
 
@@ -131,10 +131,10 @@ bool Resolver::resolve(Ref<Class> cls) {
 
     // members
     {
-        auto scope_proxy = cls->scope()->proxy();
-        scope_proxy.reset();
+        auto scope_view = cls->scope()->view();
+        scope_view.reset();
         while (true) {
-            auto [name_id, sym] = scope_proxy.advance();
+            auto [name_id, sym] = scope_view.advance();
             if (!sym)
                 break;
             bool res{};
@@ -142,10 +142,10 @@ bool Resolver::resolve(Ref<Class> cls) {
                 // alias
                 auto type = sym->get<UserType>();
                 assert(type->is_alias());
-                res = resolve(type->as_alias(), &scope_proxy);
+                res = resolve(type->as_alias(), &scope_view);
             } else if (sym->is<Var>()) {
                 // var
-                res = resolve(sym->get<Var>(), &scope_proxy);
+                res = resolve(sym->get<Var>(), &scope_view);
             } else {
                 // fun
                 assert(sym->is<Fun>());
@@ -230,8 +230,8 @@ bool Resolver::resolve(Ref<Class> cls, Ref<Fun> fun) {
     auto scope = cls->scope();
     for (auto& overload : fun->overloads()) {
         auto overload_ref = overload.ref();
-        auto scope_proxy = scope->proxy(overload_ref->scope_version());
-        is_resolved = resolve(overload_ref, &scope_proxy) && is_resolved;
+        auto scope_view = scope->view(overload_ref->scope_version());
+        is_resolved = resolve(overload_ref, &scope_view) && is_resolved;
     }
 
     RET_UPD_STATE(fun, is_resolved);

@@ -19,14 +19,14 @@ void BasicScope::for_each(ItemCb cb) {
         cb(pair.first, pair.second);
 }
 
-// PersScopeProxy
+// PersScopeView
 
-PersScopeProxy::PersScopeProxy(Ref<PersScope> scope, ScopeVersion version):
+PersScopeView::PersScopeView(Ref<PersScope> scope, ScopeVersion version):
     Scope{{}, scope->flags()}, _scope{scope}, _version{version} {}
 
-void PersScopeProxy::sync() { set_version(_scope->version()); }
+void PersScopeView::sync() { set_version(_scope->version()); }
 
-std::pair<str_id_t, Scope::Symbol*> PersScopeProxy::advance() {
+std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     if (_version == _scope->version())
         return {NoStrId, nullptr};
     assert(_version < _scope->version());
@@ -36,28 +36,28 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeProxy::advance() {
     return {name_id, get(name_id)};
 }
 
-void PersScopeProxy::for_each(ItemCb cb) { _scope->for_each(cb, _version); }
+void PersScopeView::for_each(ItemCb cb) { _scope->for_each(cb, _version); }
 
-Scope::Symbol* PersScopeProxy::get(str_id_t name_id, bool current) {
+Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
     return _scope->get(name_id, _version, current);
 }
 
-str_id_t PersScopeProxy::last_change() const {
+str_id_t PersScopeView::last_change() const {
     return _scope->last_change(_version);
 }
 
-void PersScopeProxy::set_version(ScopeVersion version) {
+void PersScopeView::set_version(ScopeVersion version) {
     assert(version != NoScopeVersion);
     assert(version <= _scope->version());
     _version = version;
 }
 
-void PersScopeProxy::set_version_after(ScopeVersion version) {
+void PersScopeView::set_version_after(ScopeVersion version) {
     assert(version != NoScopeVersion);
     set_version(version + 1);
 }
 
-Scope::Symbol* PersScopeProxy::do_set(str_id_t name_id, Symbol&& symbol) {
+Scope::Symbol* PersScopeView::do_set(str_id_t name_id, Symbol&& symbol) {
     assert(_version == _scope->version());
     auto sym = _scope->do_set(name_id, std::move(symbol));
     sync();

@@ -6,7 +6,6 @@
 
 namespace ulam {
 
-// TODO: use ScopeProxy instead of variant
 class ScopeStack {
 public:
     bool empty() {
@@ -17,8 +16,8 @@ public:
     bool top_is() {
         if constexpr (std::is_same_v<T, BasicScope>) {
             return std::holds_alternative<Ptr<BasicScope>>(_stack.top());
-        } else if constexpr (std::is_same_v<T, PersScopeProxy>) {
-            return std::holds_alternative<PersScopeProxy>(_stack.top());
+        } else if constexpr (std::is_same_v<T, PersScopeView>) {
+            return std::holds_alternative<PersScopeView>(_stack.top());
         } else {
             assert(false);
         }
@@ -28,24 +27,24 @@ public:
     Ref<T> top() {
         if constexpr (std::is_same_v<T, BasicScope>) {
             return ref(std::get<Ptr<BasicScope>>(_stack.top()));
-        } else if constexpr (std::is_same_v<T, PersScopeProxy>) {
-            return &std::get<PersScopeProxy>(_stack.top());
+        } else if constexpr (std::is_same_v<T, PersScopeView>) {
+            return &std::get<PersScopeView>(_stack.top());
         } if constexpr (std::is_same_v<T, Scope>) {
             if (top_is<BasicScope>())
                 return top<BasicScope>();
-            return top<PersScopeProxy>();
+            return top<PersScopeView>();
         } else {
             assert(false);
         }
     }
 
     void push(Ptr<BasicScope>&& scope) { _stack.push(std::move(scope)); }
-    void push(PersScopeProxy&& scope) { _stack.push(std::move(scope)); }
+    void push(PersScopeView&& scope) { _stack.push(std::move(scope)); }
     void pop() { _stack.pop(); }
 
 private:
     using BasicPtr = Ptr<BasicScope>;
-    using Variant = std::variant<BasicPtr, PersScopeProxy>;
+    using Variant = std::variant<BasicPtr, PersScopeView>;
 
     std::stack<Variant> _stack;
 };

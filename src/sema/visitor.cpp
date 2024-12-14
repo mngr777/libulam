@@ -107,13 +107,13 @@ void RecVisitor::visit(Ref<ast::Block> node) {
 
 bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
     assert(scope()->is(scp::Module));
-    _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
+    _scopes.top<PersScopeView>()->set_version_after(node->scope_version());
     return true;
 }
 
 bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
-    if (_scopes.top_is<PersScopeProxy>()) {
-        _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
+    if (_scopes.top_is<PersScopeView>()) {
+        _scopes.top<PersScopeView>()->set_version_after(node->scope_version());
     } else {
         // TODO: transient typedef
     }
@@ -121,8 +121,8 @@ bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
 }
 
 bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
-    if (_scopes.top_is<PersScopeProxy>()) {
-        _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
+    if (_scopes.top_is<PersScopeView>()) {
+        _scopes.top<PersScopeView>()->set_version_after(node->scope_version());
     } else {
         // TODO: transient var decl
     }
@@ -130,37 +130,39 @@ bool RecVisitor::do_visit(Ref<ast::VarDef> node) {
 }
 
 bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
-    _scopes.top<PersScopeProxy>()->set_version_after(node->scope_version());
+    _scopes.top<PersScopeView>()->set_version_after(node->scope_version());
     return true;
 }
 
 void RecVisitor::enter_module_scope(Ref<Module> mod) {
     assert(pass() == Pass::Module);
-    auto scope = mod->scope()->proxy();
-    scope.reset();
-    enter_scope(std::move(scope));
+    enter_scope(mod->scope()->view(0));
 }
 
 void RecVisitor::enter_class_scope(Ref<Class> cls) {
-    auto scope = cls->scope()->proxy();
+    auto scope = cls->scope()->view();
     if (pass() == Pass::Classes)
         scope.reset();
     enter_scope(std::move(scope));
 }
 
 void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
-    auto scope = tpl->scope()->proxy();
+    auto scope = tpl->scope()->view();
     if (pass() == Pass::Classes)
         scope.reset();
     enter_scope(std::move(scope));
 }
+
+// bool RecVisitor::sync_scope(Ref<ast::ScopeObjectNode> node) {
+
+// }
 
 void RecVisitor::enter_scope(ScopeFlags flags) {
     auto parent = !_scopes.empty() ? _scopes.top<Scope>() : Ref<Scope>{};
     _scopes.push(make<BasicScope>(parent, flags));
 }
 
-void RecVisitor::enter_scope(PersScopeProxy&& scope) {
+void RecVisitor::enter_scope(PersScopeView&& scope) {
     _scopes.push(std::move(scope));
 }
 

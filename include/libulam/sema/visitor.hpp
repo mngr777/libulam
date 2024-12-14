@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/node.hpp"
+#include "libulam/semantic/scope/object.hpp"
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -52,7 +54,9 @@ protected:
     void enter_class_scope(Ref<Class> cls);
     void enter_class_tpl_scope(Ref<ClassTpl> tpl);
 
-    void enter_scope(PersScopeProxy&& scope);
+    // bool sync_scope(Ref<ast::ScopeObjectNode> node);
+
+    void enter_scope(PersScopeView&& scope);
     void enter_scope(ScopeFlags flags = scp::NoFlags);
     void exit_scope();
 

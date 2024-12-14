@@ -20,9 +20,6 @@ class Module;
 
 // Scope base
 
-// TODO: refactoring, proxies do not need parent/module/flags, also make flags()
-// virtual instead of setting to proxy
-
 class Scope {
 protected:
     using SymbolTable = _SymbolTable<UserType, ulam::ClassTpl, ulam::Fun, Var>;
@@ -136,12 +133,12 @@ point, which allows to resolve dependencies recursively.
 
 class PersScope;
 
-class PersScopeProxy : public Scope {
+class PersScopeView : public Scope {
 public:
-    PersScopeProxy(Ref<PersScope> scope, ScopeVersion version);
-    PersScopeProxy(PersScopeState state):
-        PersScopeProxy{state.scope(), state.version()} {}
-    PersScopeProxy(): Scope{}, _scope{}, _version{NoScopeVersion} {}
+    PersScopeView(Ref<PersScope> scope, ScopeVersion version);
+    PersScopeView(PersScopeState state):
+        PersScopeView{state.scope(), state.version()} {}
+    PersScopeView(): Scope{}, _scope{}, _version{NoScopeVersion} {}
 
     void reset() { set_version(0); }
     void sync();
@@ -171,7 +168,7 @@ private:
 };
 
 class PersScope : public Scope {
-    friend PersScopeProxy;
+    friend PersScopeView;
 
 public:
     using Version = std::uint32_t;
@@ -194,8 +191,8 @@ public:
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
 
-    PersScopeProxy proxy(ScopeVersion version) { return {this, version}; }
-    PersScopeProxy proxy() { return {this, version()}; }
+    PersScopeView view(ScopeVersion version) { return {this, version}; }
+    PersScopeView view() { return {this, version()}; }
 
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);

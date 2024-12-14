@@ -76,10 +76,10 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
     // copy params
     {
-        auto scope_proxy = param_scope()->proxy();
-        scope_proxy.reset();
+        auto scope_view = param_scope()->view();
+        scope_view.reset();
         while (true) {
-            auto [name_id, sym] = scope_proxy.advance();
+            auto [name_id, sym] = scope_view.advance();
             if (!sym)
                 break;
             assert(sym->is<Var>());
@@ -94,16 +94,16 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             cls->param_scope()->set(name_id, ref(copy));
             cls->set(name_id, std::move(copy));
         }
-        assert(param_scope()->version() == scope_proxy.version()); // in sync?
+        assert(param_scope()->version() == scope_view.version()); // in sync?
         assert(args.size() == 0); // all args consumed?
     }
 
     // copy members
     {
-        auto scope_proxy = scope()->proxy();
-        scope_proxy.reset();
+        auto scope_view = scope()->view();
+        scope_view.reset();
         while (true) {
-            auto [name_id, sym] = scope_proxy.advance();
+            auto [name_id, sym] = scope_view.advance();
             if (!sym)
                 break;
 
@@ -134,7 +134,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 cls->set(name_id, std::move(fun));
             }
         }
-        assert(scope_proxy.version() == scope()->version()); // in sync?
+        assert(scope_view.version() == scope()->version()); // in sync?
     }
     return cls;
 }
