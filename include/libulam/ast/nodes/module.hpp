@@ -61,8 +61,8 @@ class ClassDef : public Tuple<Stmt, ParamList, TypeNameList, ClassDefBody>,
                  public Named,
                  public ScopeObjectNode {
     ULAM_AST_NODE
-    ULAM_AST_REF_ATTR(Class, type)
-    ULAM_AST_REF_ATTR(ClassTpl, type_tpl)
+    ULAM_AST_REF_ATTR(Class, cls)
+    ULAM_AST_REF_ATTR(ClassTpl, cls_tpl)
 public:
     ClassDef(
         ClassKind kind,
@@ -120,7 +120,6 @@ class FunDefBody : public Block {
     ULAM_AST_NODE
 };
 
-// TODO: add to nodes.inc.hpp
 class FunRetType : public Tuple<Stmt, TypeName, ExprList> {
     ULAM_AST_NODE
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)

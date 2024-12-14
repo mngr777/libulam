@@ -62,11 +62,11 @@ void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
     assert(pass() == Pass::Classes || pass() == Pass::FunBodies);
     assert(_class_def);
     // enter scope
-    if (_class_def->type()) {
-        enter_class_scope(_class_def->type());
+    if (_class_def->cls()) {
+        enter_class_scope(_class_def->cls());
     } else {
-        assert(_class_def->type_tpl());
-        enter_class_tpl_scope(_class_def->type_tpl());
+        assert(_class_def->cls_tpl());
+        enter_class_tpl_scope(_class_def->cls_tpl());
     }
     // traverse
     for (unsigned n = 0; n < node->child_num(); ++n) {

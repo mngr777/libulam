@@ -38,7 +38,7 @@ void ResolveDeps::visit(Ref<ast::ModuleDef> node) {
 
 bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     assert(pass() == Pass::Module);
-    assert(!node->type() && !node->type_tpl());
+    assert(!node->cls() && !node->cls_tpl());
     auto name_id = node->name().str_id();
     // already defined?
     auto prev = module()->get(name_id);
@@ -80,7 +80,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
         module()->set<ClassTpl>(name_id, std::move(tpl));
         scope_proxy->set(name_id, tpl_ref);
         node->set_scope_version(scope_proxy->version());
-        node->set_type_tpl(tpl_ref); // link to node
+        node->set_cls_tpl(tpl_ref); // link to node
 
     } else {
         // class
@@ -91,7 +91,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
         module()->set<Class>(name_id, std::move(cls));
         scope_proxy->set(name_id, cls_ref);
         node->set_scope_version(scope_proxy->version());
-        node->set_type(cls_ref); // link to node
+        node->set_cls(cls_ref); // link to node
     }
     return true;
 }
@@ -121,16 +121,16 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
 
         } else if (scope_proxy->is(scp::Class)) {
             // class member
-            assert(class_node->type());
-            auto cls = class_node->type();
+            assert(class_node->cls());
+            auto cls = class_node->cls();
             // add to class, add to scope
             cls->set(alias_id, std::move(type));
             scope_proxy->set(alias_id, type_ref);
 
         } else if (scope_proxy->is(scp::ClassTpl)) {
             // tpl member
-            assert(class_node->type_tpl());
-            auto tpl = class_node->type_tpl();
+            assert(class_node->cls_tpl());
+            auto tpl = class_node->cls_tpl();
             // add to class tpl, add to scope
             tpl->set(alias_id, std::move(type));
             scope_proxy->set(alias_id, type_ref);
@@ -172,7 +172,7 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
         Var::Flag flags = Var::NoFlags;
         if (node->is_const())
             flags |= Var::Const;
-        if (class_node->type_tpl())
+        if (class_node->cls_tpl())
             flags |= Var::Tpl;
         auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
         auto var_ref = ref(var);
@@ -180,11 +180,11 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
         // install
         if (class_node) {
             // class/tpl variable
-            if (class_node->type()) {
-                class_node->type()->set(name_id, std::move(var));
+            if (class_node->cls()) {
+                class_node->cls()->set(name_id, std::move(var));
             } else {
-                assert(class_node->type_tpl());
-                class_node->type_tpl()->set(name_id, std::move(var));
+                assert(class_node->cls_tpl());
+                class_node->cls_tpl()->set(name_id, std::move(var));
             }
             // add to scope, store scope version
             scope_proxy->set(name_id, var_ref);
@@ -209,12 +209,12 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     auto class_node = class_def();
     auto name_id = NoStrId;
     Ref<ClassBase> cls_base{};
-    if (class_node->type()) {
-        cls_base = class_node->type();
-        name_id = class_node->type()->name_id();
+    if (class_node->cls()) {
+        cls_base = class_node->cls();
+        name_id = class_node->cls()->name_id();
     } else {
-        cls_base = class_node->type_tpl();
-        name_id = class_node->type_tpl()->name_id();
+        cls_base = class_node->cls_tpl();
+        name_id = class_node->cls_tpl()->name_id();
     }
     assert(cls_base);
     assert(name_id != NoStrId);
