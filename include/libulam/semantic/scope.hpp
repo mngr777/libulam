@@ -129,17 +129,9 @@ private:
  we cannot incrementally resolve class members by alterating between
  classes without skipping members.
 
- Here a scope version is associated (in form of `PersScopeState`) with each
- scope member (`ScopeObject`), so a scope state at the point of definition can
- be later restored from any point, which allows to resolve dependencies
- recursively.
-
- `PersScopeProxy` is also stored in corresponding AST nodes
- (`ast::ScopeObjectNode`) to allow sema::RecVisitor to synchronize current
- persistent scope. (should it be just version value??)
-
- Another solution would be to do multiple passes until no progress can be made,
- then do another pass to detect unresolved symbols.
+Here a scope version is associated with each  scope object (`ScopeObject`),
+so a scope state at the point of definition can  be later restored from any
+point, which allows to resolve dependencies recursively.
 */
 
 class PersScope;
