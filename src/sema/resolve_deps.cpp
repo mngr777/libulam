@@ -73,13 +73,13 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
             auto var_ref = ref(var);
             // set tpl var symbol, add to scope, store scope version
             tpl->set(param_name_id, std::move(var));
-            tpl->param_scope()->set(param_name_id, var_ref);
             param_node->set_scope_version(tpl->param_scope()->version());
+            tpl->param_scope()->set(param_name_id, var_ref);
         }
         // set module tpl symbol, add to scope, store scope version
         module()->set<ClassTpl>(name_id, std::move(tpl));
-        scope_view->set(name_id, tpl_ref);
         node->set_scope_version(scope_view->version());
+        scope_view->set(name_id, tpl_ref);
         node->set_cls_tpl(tpl_ref); // link to node
 
     } else {
@@ -89,8 +89,8 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
         auto cls_ref = ref(cls);
         // set module class symbol, add to scope, store scope version
         module()->set<Class>(name_id, std::move(cls));
-        scope_view->set(name_id, cls_ref);
         node->set_scope_version(scope_view->version());
+        scope_view->set(name_id, cls_ref);
         node->set_cls(cls_ref); // link to node
     }
     return true;
@@ -143,7 +143,6 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
 
     } else {
         // transient typedef (in function body)
-        assert(scope()->in(scp::Fun));
         scope()->set(alias_id, std::move(type));
     }
 }

@@ -153,10 +153,6 @@ void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
     enter_scope(std::move(scope));
 }
 
-// bool RecVisitor::sync_scope(Ref<ast::ScopeObjectNode> node) {
-
-// }
-
 void RecVisitor::enter_scope(ScopeFlags flags) {
     auto parent = !_scopes.empty() ? _scopes.top<Scope>() : Ref<Scope>{};
     _scopes.push(make<BasicScope>(parent, flags));

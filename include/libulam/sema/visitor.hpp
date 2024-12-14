@@ -54,8 +54,6 @@ protected:
     void enter_class_scope(Ref<Class> cls);
     void enter_class_tpl_scope(Ref<ClassTpl> tpl);
 
-    // bool sync_scope(Ref<ast::ScopeObjectNode> node);
-
     void enter_scope(PersScopeView&& scope);
     void enter_scope(ScopeFlags flags = scp::NoFlags);
     void exit_scope();

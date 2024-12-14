@@ -28,23 +28,18 @@ public:
     using Symbol = SymbolTable::Symbol;
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
-    explicit Scope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
-        _parent{parent}, _flags{flags} {}
-
-    Scope(): Scope{{}} {}
-
+    Scope() {}
     virtual ~Scope(){};
 
     // TODO: const version
     virtual void for_each(ItemCb cb) = 0;
 
-    ScopeFlags flags() const { return _flags; }
+    virtual Ref<Scope> parent() = 0;
+    virtual Ref<const Scope> parent() const = 0;
 
-    bool is(ScopeFlags flags) { return _flags & flags; }
+    virtual ScopeFlags flags() const = 0;
 
-    bool in(ScopeFlags flags) {
-        return is(flags) || (_parent && _parent->in(flags));
-    }
+    bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
 
     bool has(str_id_t name_id, bool current = false) {
         return get(name_id, current);
@@ -60,34 +55,31 @@ public:
         return do_set(name_id, Symbol{value});
     }
 
-    Ref<Scope> parent() { return _parent; }
-    Ref<const Scope> parent() const { return _parent; }
-
-    Ref<class Module> module() {
-        assert(_module);
-        return _module;
-    }
-    Ref<const class Module> module() const {
-        assert(_module);
-        return _module;
-    }
-    void set_module(Ref<class Module> module) { _module = module; }
-
 protected:
     virtual Symbol* do_set(str_id_t name_id, Symbol&& symbol) = 0;
+};
+
+class ScopeBase : public Scope {
+public:
+    ScopeBase(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
+        Scope{}, _parent{parent}, _flags{flags} {}
+
+    ScopeFlags flags() const override { return _flags; }
+
+    Ref<Scope> parent() override { return _parent; }
+    Ref<const Scope> parent() const override { return _parent; }
 
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
-    Ref<class Module> _module;
 };
 
 // Transient
 
-class BasicScope : public Scope {
+class BasicScope : public ScopeBase {
 public:
     explicit BasicScope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
-        Scope{parent, flags} {
+        ScopeBase{parent, flags} {
         assert((flags & scp::Persistent) == 0);
     }
 
@@ -144,15 +136,18 @@ public:
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
+    Ref<Scope> parent() override;
+    Ref<const Scope> parent() const override;
+
     operator bool() const { return _scope; }
 
     void for_each(ItemCb cb) override;
 
+    ScopeFlags flags() const override;
+
     Symbol* get(str_id_t name_id, bool current = false) override;
 
     str_id_t last_change() const;
-
-    Ref<PersScope> scope() { return _scope; }
 
     ScopeVersion version() const { return _version; }
 
@@ -163,11 +158,14 @@ protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
 private:
+    Ref<PersScope> scope();
+    Ref<const PersScope> scope() const;
+
     Ref<PersScope> _scope;
     ScopeVersion _version;
 };
 
-class PersScope : public Scope {
+class PersScope : public ScopeBase {
     friend PersScopeView;
 
 public:
@@ -186,7 +184,7 @@ private:
 
 public:
     explicit PersScope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
-        Scope{parent, (ScopeFlags)(flags | scp::Persistent)}, _version{0} {}
+        ScopeBase{parent, (ScopeFlags)(flags | scp::Persistent)}, _version{0} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
