@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/flags.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -39,7 +40,10 @@ void ResolveDeps::visit(Ref<ast::ModuleDef> node) {
 bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     assert(pass() == Pass::Module);
     assert(!node->cls() && !node->cls_tpl());
+    assert(scope()->is(scp::Module));
+
     auto name_id = node->name().str_id();
+
     // already defined?
     auto prev = module()->get(name_id);
     if (prev) {
@@ -50,7 +54,6 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     }
 
     // add to module, set node attrs
-    auto scope_view = scopes().top<PersScopeView>();
     if (node->params()) {
         assert(node->params()->child_num() > 0);
         assert(node->kind() != ClassKind::Element);
@@ -58,8 +61,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
         // class tpl
         auto params = node->params();
         auto tpl = make<ClassTpl>(
-            program()->type_id_gen(), ast()->ctx().str_pool(), node,
-            module()->scope());
+            program()->type_id_gen(), ast()->ctx().str_pool(), node, module()->scope());
         auto tpl_ref = ref(tpl);
 
         // add tpl params
@@ -78,19 +80,18 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
         }
         // set module tpl symbol, add to scope, store scope version
         module()->set<ClassTpl>(name_id, std::move(tpl));
-        node->set_scope_version(scope_view->version());
-        scope_view->set(name_id, tpl_ref);
+        scope()->set(name_id, tpl_ref);
+        node->set_scope_version(scope()->version());
         node->set_cls_tpl(tpl_ref); // link to node
 
     } else {
         // class
-        auto cls =
-            make<Class>(&program()->type_id_gen(), node, module()->scope());
+        auto cls = make<Class>(&program()->type_id_gen(), node, module()->scope());
         auto cls_ref = ref(cls);
         // set module class symbol, add to scope, store scope version
+        node->set_scope_version(scope()->version());
         module()->set<Class>(name_id, std::move(cls));
-        node->set_scope_version(scope_view->version());
-        scope_view->set(name_id, cls_ref);
+        scope()->set(name_id, cls_ref);
         node->set_cls(cls_ref); // link to node
     }
     return true;
@@ -113,32 +114,32 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
 
     auto class_node = class_def();
     if (scope()->is(scp::Persistent)) {
+        auto scope_version = scope()->version();
         // persistent typedef (module-local or class/tpl)
-        auto scope_view = scopes().top<PersScopeView>();
-        if (scope_view->is(scp::Module)) {
+        if (scope()->is(scp::Module)) {
             // module typedef (is not a module member)
-            scope_view->set(alias_id, std::move(type));
+            scope()->set(alias_id, std::move(type));
 
-        } else if (scope_view->is(scp::Class)) {
+        } else if (scope()->is(scp::Class)) {
             // class member
             assert(class_node->cls());
             auto cls = class_node->cls();
             // add to class, add to scope
             cls->set(alias_id, std::move(type));
-            scope_view->set(alias_id, type_ref);
+            scope()->set(alias_id, type_ref);
 
-        } else if (scope_view->is(scp::ClassTpl)) {
+        } else if (scope()->is(scp::ClassTpl)) {
             // tpl member
             assert(class_node->cls_tpl());
             auto tpl = class_node->cls_tpl();
             // add to class tpl, add to scope
             tpl->set(alias_id, std::move(type));
-            scope_view->set(alias_id, type_ref);
+            scope()->set(alias_id, type_ref);
         } else {
             assert(false);
         }
         // store scope version and alias type
-        node->set_scope_version(scope_view->version());
+        node->set_scope_version(scope_version);
         node->set_alias_type(type_ref->as_alias());
 
     } else {
@@ -156,13 +157,12 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
 
     // create and set module/class/tpl variables
     auto class_node = class_def();
-    auto scope_view = scopes().top<PersScopeView>();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
         auto name_id = def->name().str_id();
 
         // already in current scope?
-        if (scope_view->has(name_id, true)) {
+        if (scope()->has(name_id, true)) {
             diag().emit(diag::Error, def->loc_id(), 1, "already defined");
             continue;
         }
@@ -177,6 +177,7 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
         auto var_ref = ref(var);
 
         // install
+        auto scope_version = scope()->version();
         if (class_node) {
             // class/tpl variable
             if (class_node->cls()) {
@@ -185,21 +186,21 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
                 assert(class_node->cls_tpl());
                 class_node->cls_tpl()->set(name_id, std::move(var));
             }
-            // add to scope, store scope version
-            scope_view->set(name_id, var_ref);
-            def->set_scope_version(scope_view->version());
+            // add to scope
+            scope()->set(name_id, var_ref);
         } else {
             // module constant (is not a module member)
-            scope_view->set(name_id, std::move(var));
-            def->set_scope_version(
-                scope_view->version()); // set node scope view
+            scope()->set(name_id, std::move(var));
         }
-        def->set_var(var_ref); // set node attr
+        def->set_scope_version(scope_version); // store scope version
+        def->set_var(var_ref);                 // set node attr
     }
     return;
 }
 
 void ResolveDeps::visit(Ref<ast::FunDef> node) {
+    assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
+
     // don't skip ret type and params
     visit(node->ret_type());
     visit(node->params());
@@ -219,6 +220,7 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     assert(name_id != NoStrId);
 
     // find or create fun
+    auto scope_version = scope()->version();
     auto sym = cls_base->get(name_id);
     Ref<Fun> fun_ref{};
     if (sym) {
@@ -231,14 +233,14 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     } else {
         // add to class/tpl, add to scope
         sym = cls_base->set(name_id, make<Fun>());
-        cls_base->scope()->set(name_id, sym->get<Fun>());
+        scope()->set(name_id, sym->get<Fun>());
     }
     fun_ref = sym->get<Fun>();
 
     // create overload
-    auto overload = fun_ref->add_overload(node, cls_base->scope()->version());
+    auto overload = fun_ref->add_overload(node, scope_version);
     node->set_overload(overload);
-    node->set_scope_version(cls_base->scope()->version());
+    node->set_scope_version(scope_version);
 }
 
 bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {

@@ -4,7 +4,6 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/scope/flags.hpp>
-#include <libulam/semantic/scope/state.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
@@ -29,13 +28,21 @@ public:
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
     Scope() {}
-    virtual ~Scope(){};
+    virtual ~Scope() {};
+
+    Scope(Scope&&) = default;
+    Scope& operator=(Scope&&) = default;
 
     // TODO: const version
     virtual void for_each(ItemCb cb) = 0;
 
     virtual Ref<Scope> parent() = 0;
     virtual Ref<const Scope> parent() const = 0;
+
+    bool has_version() const { return version() != NoScopeVersion; }
+    virtual ScopeVersion version() const { return NoScopeVersion; }
+    virtual void set_version(ScopeVersion version) { assert(false); }
+    virtual void set_version_after(ScopeVersion version) { assert(false); }
 
     virtual ScopeFlags flags() const = 0;
 
@@ -123,47 +130,7 @@ so a scope state at the point of definition can  be later restored from any
 point, which allows to resolve dependencies recursively.
 */
 
-class PersScope;
-
-class PersScopeView : public Scope {
-public:
-    PersScopeView(Ref<PersScope> scope, ScopeVersion version);
-    PersScopeView(PersScopeState state):
-        PersScopeView{state.scope(), state.version()} {}
-    PersScopeView(): Scope{}, _scope{}, _version{NoScopeVersion} {}
-
-    void reset() { set_version(0); }
-    void sync();
-    std::pair<str_id_t, Symbol*> advance();
-
-    Ref<Scope> parent() override;
-    Ref<const Scope> parent() const override;
-
-    operator bool() const { return _scope; }
-
-    void for_each(ItemCb cb) override;
-
-    ScopeFlags flags() const override;
-
-    Symbol* get(str_id_t name_id, bool current = false) override;
-
-    str_id_t last_change() const;
-
-    ScopeVersion version() const { return _version; }
-
-    void set_version(ScopeVersion version);
-    void set_version_after(ScopeVersion version);
-
-protected:
-    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
-
-private:
-    Ref<PersScope> scope();
-    Ref<const PersScope> scope() const;
-
-    Ref<PersScope> _scope;
-    ScopeVersion _version;
-};
+class PersScopeView;
 
 class PersScope : public ScopeBase {
     friend PersScopeView;
@@ -189,8 +156,8 @@ public:
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
 
-    PersScopeView view(ScopeVersion version) { return {this, version}; }
-    PersScopeView view() { return {this, version()}; }
+    Ptr<PersScopeView> view(ScopeVersion version);
+    Ptr<PersScopeView> view();
 
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);
@@ -205,7 +172,7 @@ public:
     str_id_t last_change(Version version) const;
     str_id_t last_change() const { return last_change(_version); }
 
-    ScopeVersion version() const { return _version; }
+    ScopeVersion version() const override { return _version; }
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;

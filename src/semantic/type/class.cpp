@@ -3,6 +3,7 @@
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <string>
 
@@ -77,9 +78,9 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
     // copy params
     {
         auto scope_view = param_scope()->view();
-        scope_view.reset();
+        scope_view->reset();
         while (true) {
-            auto [name_id, sym] = scope_view.advance();
+            auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
             assert(sym->is<Var>());
@@ -94,16 +95,16 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             cls->param_scope()->set(name_id, ref(copy));
             cls->set(name_id, std::move(copy));
         }
-        assert(param_scope()->version() == scope_view.version()); // in sync?
+        assert(param_scope()->version() == scope_view->version()); // in sync?
         assert(args.size() == 0); // all args consumed?
     }
 
     // copy members
     {
         auto scope_view = scope()->view();
-        scope_view.reset();
+        scope_view->reset();
         while (true) {
-            auto [name_id, sym] = scope_view.advance();
+            auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
 
@@ -134,7 +135,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 cls->set(name_id, std::move(fun));
             }
         }
-        assert(scope_view.version() == scope()->version()); // in sync?
+        assert(scope_view->version() == scope()->version()); // in sync?
     }
     return cls;
 }

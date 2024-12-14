@@ -5,6 +5,7 @@
 #include <libulam/sema/helper/array_dim_eval.hpp>
 #include <libulam/sema/helper/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/scope/view.hpp>
 
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[sema::Resolver] "
@@ -53,13 +54,13 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
     {
         auto scope_view = cls_tpl->param_scope()->view(0);
         while (true) {
-            auto [name_id, sym] = scope_view.advance();
+            auto [name_id, sym] = scope_view->advance();
             if (name_id == NoStrId)
                 break;
             assert(sym && sym->is<Var>());
             auto var = sym->get<Var>();
             assert(var->is(Var::Const | Var::ClassParam | Var::Tpl));
-            is_resolved = resolve(var, &scope_view) && is_resolved;
+            is_resolved = resolve(var, ref(scope_view)) && is_resolved;
         }
     }
 
@@ -73,13 +74,13 @@ bool Resolver::init(Ref<Class> cls) {
     {
         auto scope_view = cls->param_scope()->view(0);
         while (true) {
-            auto [name_id, sym] = scope_view.advance();
+            auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
             assert(sym->is<Var>());
             auto var = sym->get<Var>();
             assert(var->is(Var::Const | Var::ClassParam));
-            success = resolve(var, &scope_view) && success;
+            success = resolve(var, ref(scope_view)) && success;
         }
     }
 
@@ -132,9 +133,9 @@ bool Resolver::resolve(Ref<Class> cls) {
     // members
     {
         auto scope_view = cls->scope()->view();
-        scope_view.reset();
+        scope_view->reset();
         while (true) {
-            auto [name_id, sym] = scope_view.advance();
+            auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
             bool res{};
@@ -142,10 +143,10 @@ bool Resolver::resolve(Ref<Class> cls) {
                 // alias
                 auto type = sym->get<UserType>();
                 assert(type->is_alias());
-                res = resolve(type->as_alias(), &scope_view);
+                res = resolve(type->as_alias(), ref(scope_view));
             } else if (sym->is<Var>()) {
                 // var
-                res = resolve(sym->get<Var>(), &scope_view);
+                res = resolve(sym->get<Var>(), ref(scope_view));
             } else {
                 // fun
                 assert(sym->is<Fun>());
@@ -231,7 +232,7 @@ bool Resolver::resolve(Ref<Class> cls, Ref<Fun> fun) {
     for (auto& overload : fun->overloads()) {
         auto overload_ref = overload.ref();
         auto scope_view = scope->view(overload_ref->scope_version());
-        is_resolved = resolve(overload_ref, &scope_view) && is_resolved;
+        is_resolved = resolve(overload_ref, ref(scope_view)) && is_resolved;
     }
 
     RET_UPD_STATE(fun, is_resolved);

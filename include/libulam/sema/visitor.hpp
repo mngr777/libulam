@@ -1,6 +1,4 @@
 #pragma once
-#include "libulam/ast/node.hpp"
-#include "libulam/semantic/scope/object.hpp"
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -23,14 +21,15 @@ public:
 
     enum class Pass { Module, Classes, FunBodies };
 
-    RecVisitor(
-        Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies = false):
-        _diag{diag}, _ast{ast}, _skip_fun_bodies{skip_fun_bodies}, _pass{Pass::Module} {}
+    RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies = false):
+        _diag{diag},
+        _ast{ast},
+        _skip_fun_bodies{skip_fun_bodies},
+        _pass{Pass::Module} {}
 
     void analyze();
 
 protected:
-
     // Traversing in module defs / class defs / function body order
     void visit(Ref<ast::Root> node) override;
     void visit(Ref<ast::ModuleDef> node) override;
@@ -49,12 +48,14 @@ protected:
     bool do_visit(Ref<ast::VarDef> node) override;
     bool do_visit(Ref<ast::FunDef> node) override;
 
+    bool sync_scope(Ref<ast::ScopeObjectNode> node);
+
     // Handling persistent scopes
     void enter_module_scope(Ref<Module> module);
     void enter_class_scope(Ref<Class> cls);
     void enter_class_tpl_scope(Ref<ClassTpl> tpl);
 
-    void enter_scope(PersScopeView&& scope);
+    void enter_scope(Ptr<Scope>&& scope);
     void enter_scope(ScopeFlags flags = scp::NoFlags);
     void exit_scope();
 
