@@ -1,4 +1,5 @@
 #include "libulam/semantic/scope.hpp"
+#include "libulam/semantic/type.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -68,6 +69,9 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
 }
 
 bool Resolver::init(Ref<Class> cls) {
+    if (cls->res_state() != ScopeObject::NotResolved)
+        return cls->res_state() == ScopeObject::Resolved;
+
     bool success = true;
 
     // params
@@ -160,6 +164,7 @@ bool Resolver::resolve(Ref<Class> cls) {
 }
 
 bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
+    assert(scope);
     CHECK_STATE(alias);
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
@@ -184,6 +189,7 @@ bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
 }
 
 bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
+    assert(scope);
     CHECK_STATE(var);
     bool is_resolved = true;
     auto node = var->node();
@@ -239,6 +245,7 @@ bool Resolver::resolve(Ref<Class> cls, Ref<Fun> fun) {
 }
 
 bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
+    assert(scope);
     CHECK_STATE(overload);
     bool is_resolved = true;
 
@@ -278,6 +285,8 @@ bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
 
 Ref<Type> Resolver::resolve_var_decl_type(
     Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, Ref<Scope> scope) {
+    assert(scope);
+
     // base type
     auto type = resolve_type_name(type_name, scope);
     if (!type)
@@ -296,6 +305,8 @@ Ref<Type> Resolver::resolve_var_decl_type(
 
 Ref<Type>
 Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
+    assert(scope);
+
     // base type
     auto type = resolve_type_name(node->type_name(), scope);
     if (!type)
@@ -314,36 +325,10 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
 
 Ref<Type>
 Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
+    assert(scope);
 
-    // ast::TypeSpec to type
     auto type_spec = type_name->first();
-    Ref<Type> type{};
-    if (type_spec->type()) {
-        // already has type
-        type = type_spec->type();
-
-    } else if (type_spec->type_tpl()) {
-        // non-class tpl
-        // TODO: pass resolver
-        ParamEval pe{_program->ast()};
-        auto [args, success] = pe.eval(type_spec->args(), scope);
-        type = type_spec->type_tpl()->type(
-            diag(), type_spec->args(), std::move(args));
-
-    } else if (type_spec->cls_tpl()) {
-        // class tpl
-        if (!resolve(type_spec->cls_tpl()))
-            return {};
-        // TODO: pass resolver
-        ParamEval pe{_program->ast()};
-        auto [args, success] = pe.eval(type_spec->args(), scope);
-        type = type_spec->cls_tpl()->type(
-            diag(), type_spec->args(), std::move(args));
-        if (type) {
-            assert(type->is_class());
-            init(type->as_class());
-        }
-    }
+    auto type = resolve_type_spec(type_spec, scope);
     if (!type)
         return {};
 
@@ -368,7 +353,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
         auto name_id = ident->name().str_id();
         // recursively resolve aliases
         if (type->is_alias()) {
-            if (!resolve(type->as_alias(), {})) {
+            if (!resolve(type->as_alias(), scope)) {
                 diag().emit(
                     diag::Error, ident->loc_id(), str(name_id).size(),
                     "cannot resolve");
@@ -416,6 +401,53 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
         type = sym->get<UserType>();
         // ok so far, loop back to alias resolution
     }
+}
+
+Ref<Type>
+Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
+    if (type_spec->type())
+        return type_spec->type();
+
+    // builtin type tpl?
+    if (type_spec->type_tpl()) {
+        // non-class tpl
+        ParamEval pe{_program->ast()};
+        auto [args, success] = pe.eval(type_spec->args(), scope);
+        auto type = type_spec->type_tpl()->type(
+            diag(), type_spec->args(), std::move(args));
+        type_spec->set_type(type);
+        return type;
+    }
+
+    // class tpl?
+    if (type_spec->cls_tpl()) {
+        // class tpl
+        if (!resolve(type_spec->cls_tpl()))
+            return {};
+        ParamEval pe{_program->ast()};
+        auto [args, success] = pe.eval(type_spec->args(), scope);
+        auto type = type_spec->cls_tpl()->type(
+            diag(), type_spec->args(), std::move(args));
+        if (!type)
+            return {};
+        assert(type->is_class());
+        if (!init(type->as_class()))
+            return {};
+        return type;
+    }
+
+    // try searching for local alias
+    if (scope->in(scp::Fun)) {
+        auto name_id = type_spec->ident()->name().str_id();
+        auto sym = scope->get(name_id);
+        if (!sym)
+            return {};
+        auto type = sym->get<UserType>();
+        assert(type->is_alias());
+        return type;
+    }
+
+    return {};
 }
 
 Ref<Type> Resolver::apply_array_dims(

@@ -108,14 +108,12 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
         return;
     }
 
-    // make alias
-    Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
-    Ref<UserType> type_ref = ref(type);
-
     auto class_node = class_def();
     if (scope()->is(scp::Persistent)) {
-        auto scope_version = scope()->version();
         // persistent typedef (module-local or class/tpl)
+        Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
+        auto type_ref = ref(type);
+        auto scope_version = scope()->version();
         if (scope()->is(scp::Module)) {
             // module typedef (is not a module member)
             scope()->set(alias_id, std::move(type));
@@ -144,6 +142,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
 
     } else {
         // transient typedef (in function body)
+        Ptr<UserType> type = make<AliasType>(nullptr, node);
         scope()->set(alias_id, std::move(type));
     }
 }
@@ -243,6 +242,7 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     node->set_scope_version(scope_version);
 }
 
+// TODO: do not set type/tpl, do it in resolver
 bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {
     // set type/tpl TypeSpec attr
     // NOTE: any name not in scope has to be imported and
@@ -263,7 +263,9 @@ bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {
         // set type/tpl
         auto sym = scope()->get(name_id);
         if (sym->is<UserType>()) {
-            type_spec->set_type(sym->get<UserType>());
+            auto type = sym->get<UserType>();
+            if (type->has_id()) // avoid setting fun-local aliases
+                type_spec->set_type(type);
         } else {
             assert(sym->is<ClassTpl>());
             type_spec->set_cls_tpl(sym->get<ClassTpl>());

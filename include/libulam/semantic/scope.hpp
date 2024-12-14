@@ -28,7 +28,7 @@ public:
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
     Scope() {}
-    virtual ~Scope() {};
+    virtual ~Scope(){};
 
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
@@ -47,6 +47,9 @@ public:
     virtual ScopeFlags flags() const = 0;
 
     bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
+    bool in(ScopeFlags flags_) {
+        return is(flags_) || (parent() && parent()->is(flags_));
+    }
 
     bool has(str_id_t name_id, bool current = false) {
         return get(name_id, current);

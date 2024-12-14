@@ -56,6 +56,7 @@ public:
         _id_gen{id_gen}, _id{id_gen ? id_gen->next() : NoTypeId} {}
     virtual ~Type();
 
+    bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
 
     virtual bitsize_t bitsize() const = 0;

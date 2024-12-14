@@ -41,11 +41,13 @@ protected:
 
     // Creating transient scopes (TODO)
     void visit(Ref<ast::Block> node) override;
+    void visit(Ref<ast::For> node) override;
+    void visit(Ref<ast::While> node) override;
 
     // Populating current scope with objects from AST
     bool do_visit(Ref<ast::ClassDef> node) override;
     bool do_visit(Ref<ast::TypeDef> node) override;
-    bool do_visit(Ref<ast::VarDef> node) override;
+    void visit(Ref<ast::VarDefList> node) override;
     bool do_visit(Ref<ast::FunDef> node) override;
 
     bool sync_scope(Ref<ast::ScopeObjectNode> node);

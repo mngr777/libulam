@@ -19,7 +19,6 @@ public:
 
     void resolve();
 
-private:
     void resolve(Ref<Module> module);
     bool resolve(Ref<ClassTpl> cls_tpl);
     bool init(Ref<Class> cls);
@@ -31,11 +30,11 @@ private:
 
     Ref<Type> resolve_var_decl_type(
         Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, Ref<Scope> scope);
-
     Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
-
     Ref<Type> resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope);
+    Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
 
+private:
     Ref<Type>
     apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope);
 
