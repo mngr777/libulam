@@ -171,7 +171,7 @@ bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
     return true;
 }
 
-bool RecVisitor::sync_scope(Ref<ast::ScopeObjectNode> node) {
+bool RecVisitor::sync_scope(Ref<ast::DefNode> node) {
     auto scope = _scopes.top();
     assert(scope->has_version() == (node->scope_version() != NoScopeVersion));
     if (scope->has_version()) {

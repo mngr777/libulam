@@ -50,7 +50,7 @@ protected:
     void visit(Ref<ast::VarDefList> node) override;
     bool do_visit(Ref<ast::FunDef> node) override;
 
-    bool sync_scope(Ref<ast::ScopeObjectNode> node);
+    bool sync_scope(Ref<ast::DefNode> node);
 
     // Handling persistent scopes
     void enter_module_scope(Ref<Module> module);

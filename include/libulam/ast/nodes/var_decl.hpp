@@ -11,7 +11,7 @@ namespace ulam::ast {
 
 class VarDecl : public Tuple<Stmt, ExprList, Expr>,
                 public Named,
-                public ScopeObjectNode {
+                public DefNode {
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
     ULAM_AST_REF_ATTR(Var, var)
 public:

@@ -59,7 +59,7 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
 
 class ClassDef : public Tuple<Stmt, ParamList, TypeNameList, ClassDefBody>,
                  public Named,
-                 public ScopeObjectNode {
+                 public DefNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, cls)
     ULAM_AST_REF_ATTR(ClassTpl, cls_tpl)
@@ -97,7 +97,7 @@ public:
     bool is_array() const { return has_array_dims(); }
 };
 
-class TypeDef : public Tuple<Stmt, TypeName, TypeExpr>, public ScopeObjectNode {
+class TypeDef : public Tuple<Stmt, TypeName, TypeExpr>, public DefNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(AliasType, alias_type)
 public:
@@ -135,7 +135,7 @@ public:
 
 class FunDef : public Tuple<Stmt, FunRetType, ParamList, FunDefBody>,
                public Named,
-               public ScopeObjectNode {
+               public DefNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(FunOverload, overload)
 public:

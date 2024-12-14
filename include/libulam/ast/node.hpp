@@ -141,7 +141,7 @@ public:
 
 // The node can have persistent scope and version attached (when in
 // persistent scope)
-class ScopeObjectNode {
+class DefNode {
     ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
 };
 

@@ -1,4 +1,3 @@
-#include "libulam/semantic/scope/flags.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -61,7 +60,8 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
         // class tpl
         auto params = node->params();
         auto tpl = make<ClassTpl>(
-            program()->type_id_gen(), ast()->ctx().str_pool(), node, module()->scope());
+            program()->type_id_gen(), ast()->ctx().str_pool(), node,
+            module()->scope());
         auto tpl_ref = ref(tpl);
 
         // add tpl params
@@ -86,7 +86,8 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
 
     } else {
         // class
-        auto cls = make<Class>(&program()->type_id_gen(), node, module()->scope());
+        auto cls =
+            make<Class>(&program()->type_id_gen(), node, module()->scope());
         auto cls_ref = ref(cls);
         // set module class symbol, add to scope, store scope version
         node->set_scope_version(scope()->version());
