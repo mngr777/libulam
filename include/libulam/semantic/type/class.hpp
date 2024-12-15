@@ -40,8 +40,7 @@ public:
 
     str_id_t name_id() const override;
 
-    // TMP
-    auto& ancestors() { return _ancestors; }
+    auto& ancestors() { return _ancestors; } // TMP
     const auto& ancestors() const { return _ancestors; }
 
     void add_ancestor(Ref<Class> anc, Ref<ast::TypeName> node) {
@@ -54,8 +53,12 @@ public:
     Ref<const Class> as_class() const override { return this; }
 
 private:
+    Ref<cls::Layout> layout();
+    void init_layout();
+
     Ref<ClassTpl> _tpl;
     std::list<Ancestor> _ancestors;
+    Ptr<cls::Layout> _layout;
 };
 
 } // namespace ulam

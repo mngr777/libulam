@@ -40,10 +40,11 @@ public:
     RefPtr(Ptr<T>&& val): _value{std::move(val)} {}
     RefPtr(Ref<T> val): _value{val} {}
 
+    bool owns() const { return std::holds_alternative<Ptr<T>>(_value); }
+
     Ref<T> ref() {
-        return std::holds_alternative<Ptr<T>>(_value)
-                   ? ulam::ref(std::get<Ptr<T>>(_value))
-                   : std::get<Ref<T>>(_value);
+        return owns() ? ulam::ref(std::get<Ptr<T>>(_value))
+                      : std::get<Ref<T>>(_value);
     }
 
 private:

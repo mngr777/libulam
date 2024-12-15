@@ -28,8 +28,6 @@ public:
     ClassBase& operator=(ClassBase&&) = default;
 
 public:
-    Ref<ClassBase> as_class_base() { return this; }
-
     bool has(str_id_t name_id) const { return _members.has(name_id); }
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }

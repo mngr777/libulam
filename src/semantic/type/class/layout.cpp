@@ -19,6 +19,10 @@ bitsize_t Layout::bitsize() const {
     return size;
 }
 
-void Layout::add(Ref<Var> var) { _items.emplace_back(var); }
+void Layout::add(Ref<Var> var) {
+    auto off = _items.size();
+    _items.emplace_back(var);
+    var->set_layout_off(off);
+}
 
 } // namespace ulam::cls

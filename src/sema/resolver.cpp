@@ -196,7 +196,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     auto type_name = var->type_node();
 
     // type
-    if (!var->type()) {
+    if (!var->has_type()) {
         auto type = resolve_var_decl_type(type_name, node, scope);
         if (type)
             var->set_type(type);

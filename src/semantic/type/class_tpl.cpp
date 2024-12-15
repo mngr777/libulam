@@ -35,7 +35,7 @@ ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
 Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls = make<Class>(&id_gen(), this);
 
-    // copy params
+    // create params
     {
         auto scope_view = param_scope()->view();
         scope_view->reset();
@@ -59,7 +59,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
         assert(args.size() == 0); // all args consumed?
     }
 
-    // copy members
+    // create members
     {
         auto scope_view = scope()->view();
         scope_view->reset();

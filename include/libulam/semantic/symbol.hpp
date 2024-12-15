@@ -26,6 +26,11 @@ public:
     _Symbol(_Symbol&& other) = default;
     _Symbol& operator=(_Symbol&& other) = default;
 
+    bool owns() const {
+        return std::visit(
+            [](auto&& value) -> bool { return value.owns(); }, _value);
+    }
+
     template <typename T> bool is() const {
         return std::holds_alternative<Value<T>>(_value);
     }
@@ -40,7 +45,7 @@ public:
             _value);
     }
 
-    template <typename V> void visit(V&& v) { std::visit(v, _value); } // ??
+    template <typename V> void visit(V&& v) { return std::visit(v, _value); }
 
 private:
     template <typename... Ts> using Variant = std::variant<Value<Ts>...>;

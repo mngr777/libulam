@@ -28,4 +28,26 @@ str_id_t Class::name_id() const { return node()->name().str_id(); }
 
 bitsize_t Class::bitsize() const { assert(false); /* not implemented */ }
 
+Ref<cls::Layout> Class::layout() {
+    if (_layout)
+        init_layout();
+    return ref(_layout);
+}
+
+void Class::init_layout() {
+    auto layout = make<cls::Layout>();
+    for (auto& pair : members()) {
+        auto& [name_id, sym] = pair;
+        if (!sym.owns() || !sym.is<Var>())
+            continue;
+        auto var = sym.get<Var>();
+        layout->add(var);
+    }
+    // for (auto& anc : _ancestors) {
+    //     // layout->add()
+    //     // TODO
+    // }
+    _layout.swap(layout);
+}
+
 } // namespace ulam

@@ -1,6 +1,6 @@
 #pragma once
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bits.hpp>
-#include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
 #include <utility>

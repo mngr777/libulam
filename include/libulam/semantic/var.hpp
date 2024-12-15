@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
@@ -43,6 +44,7 @@ public:
     bitsize_t bitsize() const;
 
     bool is(Flag flags) const { return (_flags & flags) == flags; }
+    bool is_const() const { return is(Const); }
 
     bool requires_value() const {
         return is_const() && !(is(Tpl) && is(ClassParam)) && !is(FunParam);
@@ -51,18 +53,23 @@ public:
     Ref<ast::TypeName> type_node() { return _type_node; }
     Ref<ast::VarDecl> node() { return _node; }
 
-    Ref<Type> type() { return _type; }
-    Ref<const Type> type() const { return _type; }
+    bool has_type() const { return _type; }
+    Ref<Type> type();
+    Ref<const Type> type() const;
     void set_type(Ref<Type> type);
 
-    Value& value() { return _value; }
+    Value& value() { return _value; } // TMP
+    const Value& value() const { return _value; }
+    void set_value(Value&& value);
 
-    // TODO: if reference, get rvalue from references var
+    // TODO: if reference, get rvalue from refd var
     RValue* rvalue() { return _value.rvalue(); };
 
-    bool is_const() const { return _flags & Const; }
-
     Flag flags() { return _flags; }
+
+    bool has_layout_off() const { return _layout_off != cls::NoLayoutOff; }
+    cls::layout_off_t layout_off() const { return _layout_off; }
+    void set_layout_off(cls::layout_off_t off) { _layout_off = off; }
 
 private:
     Ref<ast::TypeName> _type_node;
@@ -70,6 +77,7 @@ private:
     Ref<Type> _type{};
     Value _value;
     Flag _flags;
+    cls::layout_off_t _layout_off{cls::NoLayoutOff};
 };
 
 } // namespace ulam
