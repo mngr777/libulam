@@ -45,6 +45,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/builtin_type_id.hpp \
 	include/libulam/semantic/type/builtins.hpp \
 	include/libulam/semantic/type/class.hpp \
+	include/libulam/semantic/type/class_tpl.hpp \
+	include/libulam/semantic/type/class/base.hpp \
 	include/libulam/semantic/type/class/layout.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/prim.hpp \
@@ -66,6 +68,8 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/number.cpp \
 	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/class.cpp \
+	src/semantic/type/class_tpl.cpp \
+	src/semantic/type/class/base.cpp \
 	src/semantic/type/class/layout.cpp \
 	src/semantic/type/class_kind.cpp \
 	src/semantic/type/prim.cpp \

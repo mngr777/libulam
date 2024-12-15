@@ -8,6 +8,7 @@
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>

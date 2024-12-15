@@ -27,7 +27,7 @@ class Var;
 
 namespace ulam::ast {
 
-class Context;
+class Context; // TODO: remove either the header or this forward def
 class ModuleDef;
 class TypeDef;
 class ClassDef;
@@ -68,10 +68,7 @@ public:
         ClassKind kind,
         ast::Str name,
         Ptr<ParamList>&& params,
-        Ptr<TypeNameList>&& ancestors):
-        Tuple{std::move(params), std::move(ancestors), make<ClassDefBody>()},
-        Named{name},
-        _kind{kind} {}
+        Ptr<TypeNameList>&& ancestors);
 
     ULAM_AST_TUPLE_PROP(params, 0)
     ULAM_AST_TUPLE_PROP(ancestors, 1)

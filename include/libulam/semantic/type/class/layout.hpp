@@ -21,7 +21,7 @@ public:
     bitsize_t bitsize() const;
 
 private:
-    using Variant = std::variant<Layout*, Ref<Var>>;
+    using Variant = std::variant<Ref<Layout>, Ref<Var>>;
 
     bool has_offset() const { return _offset != NoBitsize; }
     bitsize_t offset() const { return _offset; }
