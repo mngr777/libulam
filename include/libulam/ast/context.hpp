@@ -14,6 +14,7 @@ public:
     }
 
     UniqStrPool& str_pool() { return _str_pool; }
+    const UniqStrPool& str_pool() const { return _str_pool; }
 
 private:
     UniqStrPool _str_pool;

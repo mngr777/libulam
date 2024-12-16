@@ -5,11 +5,12 @@
 #include <libulam/parser.hpp>
 #include <libulam/sema.hpp>
 
-ulam::Ptr<ulam::ast::Root> analyze(std::string text) {
+ulam::Ptr<ulam::ast::Root>
+analyze(const std::string& text, const std::string& module_name) {
     ulam::Context ctx;
     ulam::Parser parser{ctx};
 
-    parser.parse_string(text);
+    parser.parse_string(text, module_name);
     auto ast = parser.move_ast();
 
     ulam::Sema sema{ctx.diag()};
@@ -18,8 +19,9 @@ ulam::Ptr<ulam::ast::Root> analyze(std::string text) {
     return ast;
 }
 
-ulam::Ptr<ulam::ast::Root> analyze_and_print(std::string text) {
-    auto ast = analyze(text);
+ulam::Ptr<ulam::ast::Root>
+analyze_and_print(const std::string& text, const std::string& module_name) {
+    auto ast = analyze(text, module_name);
     test::ast::Printer printer{std::cout, ulam::ref(ast)};
     printer.print();
     return ast;

@@ -20,13 +20,14 @@ public:
     explicit Parser(Context& ctx):
         _ctx{ctx}, _pp{ctx}, _ast{make<ast::Root>()} {}
 
-    void parse_file(const std::filesystem::path& path);
-    void parse_string(const std::string& text);
+    // void parse_file(const std::filesystem::path& path);
+    void parse_string(std::string text, std::string name);
 
+    Ref<ast::Root> ast();
     Ptr<ast::Root> move_ast();
 
 private:
-    void parse();
+    void parse(const std::string& name);
 
     void consume();
     void consume_if(tok::Type type);
@@ -39,7 +40,7 @@ private:
     void diag(loc_id_t loc_id, std::size_t size, std::string text);
     template <typename... Ts> void panic(Ts... stop);
 
-    Ptr<ast::ModuleDef> parse_module();
+    Ptr<ast::ModuleDef> parse_module(str_id_t name_id);
     void parse_module_var_or_type_def(Ref<ast::ModuleDef> node);
     Ptr<ast::TypeDef> parse_module_type_def(bool is_marked_local);
     Ptr<ast::ClassDef> parse_class_def();
@@ -56,8 +57,8 @@ private:
         bool first_is_ref);
     Ptr<ast::VarDef> parse_var_def();
     Ptr<ast::VarDef> parse_var_def_rest(ast::Str name, bool is_ref);
-    Ptr<ast::FunDef> parse_fun_def_rest(
-        Ptr<ast::FunRetType>&& ret_type, ast::Str name);
+    Ptr<ast::FunDef>
+    parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name);
     Ptr<ast::ParamList> parse_param_list();
     Ptr<ast::Param> parse_param(bool requires_value);
 
@@ -71,18 +72,23 @@ private:
 
     Ptr<ast::Expr> parse_expr();
     Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
+    Ptr<ast::Expr> parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec);
     Ptr<ast::Expr> parse_expr_lhs();
     Ptr<ast::Expr> parse_paren_expr_or_cast();
     Ptr<ast::TypeOpExpr> parse_type_op();
-    Ptr<ast::TypeOpExpr> parse_type_op_rest(Ptr<ast::TypeName>&& type);
+    Ptr<ast::TypeOpExpr>
+    parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr);
     Ptr<ast::TypeExpr> parse_type_expr();
     Ptr<ast::ExprList> parse_array_dims();
-    Ptr<ast::TypeName> parse_type_name();
+    Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeSpec> parse_type_spec();
     Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& obj);
     Ptr<ast::ArgList> parse_arg_list();
     Ptr<ast::ArrayAccess> parse_array_access(Ptr<ast::Expr>&& array);
-    Ptr<ast::MemberAccess> parse_member_access(Ptr<ast::Expr>&& obj);
+    Ptr<ast::Expr> parse_member_access_or_type_op(Ptr<ast::Expr>&& obj);
+    Ptr<ast::MemberAccess>
+    parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
+    Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
     Ptr<ast::TypeIdent> parse_type_ident();
     Ptr<ast::Ident> parse_ident();
     bool parse_is_ref();
@@ -91,6 +97,7 @@ private:
     Ptr<ast::StrLit> parse_str_lit();
 
     template <typename N, typename... Args> Ptr<N> tree(Args&&... args);
+    template <typename N, typename... Args> Ptr<N> tree_loc(loc_id_t loc_id, Args&&... args);
 
     std::string_view tok_str();
     ast::Str tok_ast_str();

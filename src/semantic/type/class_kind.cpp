@@ -11,6 +11,8 @@ const std::string_view class_kind_str(ClassKind kind) {
         return "quark";
     case ClassKind::Transient:
         return "transient";
+    case ClassKind::Union:
+        return "union";
     default:
         assert(false);
     }

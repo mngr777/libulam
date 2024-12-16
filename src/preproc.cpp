@@ -12,9 +12,9 @@ void Preproc::main_file(std::filesystem::path path) {
     push(src);
 }
 
-void Preproc::main_string(std::string text) {
+void Preproc::main_string(std::string text, std::string name) {
     assert(_stack.empty());
-    auto src = _ctx.sm().string(std::move(text));
+    auto src = _ctx.sm().string(std::move(text), std::move(name));
     push(src);
 }
 
@@ -37,6 +37,7 @@ Preproc& Preproc::operator>>(Token& token) {
             }
             break;
         case tok::Comment:
+        case tok::MlComment:
             // ignore comments
             break;
         case tok::Eof:
@@ -53,7 +54,7 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::VoidT:
         case tok::StringT:
             token.type = tok::BuiltinTypeIdent;
-            // fallthru
+            return *this;
         default:
             return *this;
         }

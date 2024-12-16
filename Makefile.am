@@ -168,7 +168,8 @@ TESTS = \
 	test_sema_basic \
 	test_sema_color_utils \
 	test_sema_simple_inheritance \
-	test_sema_class_member
+	test_sema_class_member \
+	test_ulam
 check_PROGRAMS = $(TESTS)
 
 TEST_LIBS = libulam.la
@@ -202,3 +203,11 @@ test_sema_simple_inheritance_LDADD = $(TEST_LIBS)
 
 test_sema_class_member_SOURCES = tests/sema/class_member.cpp $(TEST_SEMA_SOURCE_FILES)
 test_sema_class_member_LDADD = $(TEST_LIBS)
+
+test_ulam_SOURCES = \
+	tests/ULAM/compiler.hpp \
+	tests/ULAM/compiler.cpp \
+	tests/ULAM/driver.cpp \
+	tests/ULAM/test_case.hpp \
+	tests/ULAM/test_case.cpp
+test_ulam_LDADD = $(TEST_LIBS)

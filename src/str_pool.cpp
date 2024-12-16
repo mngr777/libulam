@@ -15,6 +15,15 @@ StrPoolBase::PairT StrPoolBase::store(const std::string_view str, bool copy) {
     return {id, copied};
 }
 
+bool UniqStrPool::has(const std::string_view str) const {
+    return _map.count(str) == 1;
+}
+
+str_id_t UniqStrPool::id(const std::string_view str) const {
+    auto it = _map.find(str);
+    return (it != _map.end()) ? it->second : NoStrId;
+}
+
 str_id_t UniqStrPool::put(const std::string_view str, bool copy) {
     auto it = _map.find(str);
     if (it != _map.end())

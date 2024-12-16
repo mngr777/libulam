@@ -12,7 +12,9 @@ namespace ulam::ast {
 class TypeIdent : public Stmt, public Named {
     ULAM_AST_NODE
 public:
-    explicit TypeIdent(Str name): Named{name} {}
+    explicit TypeIdent(Str name): Named{name} {
+        set_loc_id(name.loc_id());
+    }
 };
 
 class ArgList;

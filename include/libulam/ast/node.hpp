@@ -8,6 +8,7 @@
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -143,6 +144,29 @@ public:
 // persistent scope)
 class DefNode {
     ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
+};
+
+template <typename N> class NameIdMap {
+public:
+    bool has(str_id_t name_id) const { return _map.count(name_id) == 1; }
+
+    void add(str_id_t name_id, Ref<N> node) {
+        assert(!has(name_id));
+        _map[name_id] = node;
+    }
+
+    Ref<N> get(str_id_t name_id) {
+        auto it = _map.find(name_id);
+        return (it != _map.end()) ? it->second : Ref<N>{};
+    }
+
+    Ref<const N> get(str_id_t name_id) const {
+        auto it = _map.find(name_id);
+        return (it != _map.end()) ? it->second : Ref<N>{};
+    }
+
+private:
+    std::unordered_map<str_id_t, Ref<N>> _map;
 };
 
 // Tuple

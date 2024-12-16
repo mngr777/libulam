@@ -35,7 +35,8 @@ private:
     void complete(tok::Type type);
 
     void lex_str(char closing);
-    void lex_comment(); // TODO: ml comment, structured comment
+    void lex_comment(); // TODO: structured comments
+    void lex_ml_comment();
     void lex_number();
     void lex_word();
 

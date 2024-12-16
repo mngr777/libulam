@@ -15,6 +15,7 @@
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
+#include <string_view>
 #include <utility>
 
 namespace ulam {
@@ -27,7 +28,6 @@ class Var;
 
 namespace ulam::ast {
 
-class Context; // TODO: remove either the header or this forward def
 class ModuleDef;
 class TypeDef;
 class ClassDef;
@@ -41,16 +41,34 @@ public:
     Root();
     ~Root();
 
+    bool has(std::string_view name) const {
+        auto name_id = _ctx.str_pool().id(name);
+        return (name_id != NoStrId) ? has(name_id) : false;
+    }
+
+    bool has(str_id_t name_id) const { return _name_id_map.has(name_id); }
+
+    Ref<ModuleDef> get(str_id_t name_id) { return _name_id_map.get(name_id); }
+    Ref<const ModuleDef> get(str_id_t name_id) const {
+        return _name_id_map.get(name_id);
+    }
+
+    void add(Ptr<ModuleDef>&& module);
+
     Context& ctx() { return _ctx; }
     const Context& ctx() const { return _ctx; }
 
 private:
     Context _ctx;
+    NameIdMap<ModuleDef> _name_id_map;
 };
 
-class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
+class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef>,
+                  public Named {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Module, module)
+public:
+    ModuleDef(ast::Str name): Named{name} {}
 };
 
 class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
@@ -147,6 +165,9 @@ public:
     ULAM_AST_TUPLE_PROP(ret_type, 0)
     ULAM_AST_TUPLE_PROP(params, 1)
     ULAM_AST_TUPLE_PROP(body, 2)
+
+    // NOTE: using [not] having a body as ground truth for being native
+    bool is_native() const { return !body(); }
 };
 
 class VarDef : public VarDecl {

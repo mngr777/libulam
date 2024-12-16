@@ -30,6 +30,9 @@ protected:
 
 class UniqStrPool : public StrPoolBase {
 public:
+    bool has(const std::string_view str) const;
+    str_id_t id(const std::string_view str) const;
+
     str_id_t put(const std::string_view str, bool copy = true);
 
 private:

@@ -65,6 +65,8 @@ ClassKind class_kind(Type type) {
         return ClassKind::Quark;
     case Transient:
         return ClassKind::Transient;
+    case Union:
+        return ClassKind::Union;
     default:
         assert(false);
     }
@@ -120,6 +122,10 @@ TypeOp type_op(Type type) {
 
 Op bin_op(Type type) {
     switch (type) {
+    case Is:
+        return Op::Is;
+    case As:
+        return Op::As;
     case ParenL:
         return Op::FunCall;
     case BracketL:
@@ -134,6 +140,8 @@ Op bin_op(Type type) {
         return Op::Prod;
     case Slash:
         return Op::Quot;
+    case Percent:
+        return Op::Rem;
     case LessLess:
         return Op::ShiftLeft;
     case GreaterGreater:
@@ -162,6 +170,26 @@ Op bin_op(Type type) {
         return Op::Or;
     case Equal:
         return Op::Assign;
+    case PlusEqual:
+        return Op::AssignSum;
+    case MinusEqual:
+        return Op::AssignDiff;
+    case AstEqual:
+        return Op::AssignProd;
+    case SlashEqual:
+        return Op::AssignQuot;
+    case PercentEqual:
+        return Op::AssignRem;
+    case LessLessEqual:
+        return Op::AssignShiftLeft;
+    case GreaterGreaterEqual:
+        return Op::AssignShiftRight;
+    case AmpEqual:
+        return Op::AssignBwAnd;
+    case CaretEqual:
+        return Op::AssignBwXor;
+    case PipeEqual:
+        return Op::AssignBwOr;
     default:
         return Op::None;
     }
@@ -177,6 +205,10 @@ Op unary_pre_op(Type type) {
         return Op::PreInc;
     case MinusMinus:
         return Op::PreDec;
+    case Excl:
+        return Op::Negate;
+    case Tilde:
+        return Op::BwNot;
     default:
         return Op::None;
     }

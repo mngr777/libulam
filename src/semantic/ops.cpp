@@ -15,11 +15,15 @@ const char* str(Op op) {
 
 Prec prec(Op op) {
     switch (op) {
+    case Op::Is:
+    case Op::As:
     case Op::FunCall:
     case Op::ArrayAccess:
     case Op::MemberAccess:
     case Op::PreInc:
     case Op::PreDec:
+    case Op::Negate:
+    case Op::BwNot:
         return 13;
     case Op::UnaryMinus:
     case Op::UnaryPlus:
@@ -55,7 +59,19 @@ Prec prec(Op op) {
     case Op::Or:
         return 2;
     case Op::Assign:
+    case Op::AssignSum:
+    case Op::AssignDiff:
+    case Op::AssignProd:
+    case Op::AssignQuot:
+    case Op::AssignRem:
+    case Op::AssignShiftLeft:
+    case Op::AssignShiftRight:
+    case Op::AssignBwAnd:
+    case Op::AssignBwXor:
+    case Op::AssignBwOr:
         return 1;
+    case Op::Comma:
+        return 0;
     default:
         return -1;
     }
@@ -67,6 +83,8 @@ Prec right_prec(Op op) {
 
 Assoc assoc(Op op) {
     switch (op) {
+    case Op::Is:
+    case Op::As:
     case Op::MemberAccess:
     case Op::Prod:
     case Op::Quot:
@@ -88,12 +106,23 @@ Assoc assoc(Op op) {
     case Op::Or:
     case Op::PostInc:
     case Op::PostDec:
+    case Op::Comma:
         return Assoc::Left;
     case Op::UnaryMinus:
     case Op::UnaryPlus:
     case Op::PreInc:
     case Op::PreDec:
     case Op::Assign:
+    case Op::AssignSum:
+    case Op::AssignDiff:
+    case Op::AssignProd:
+    case Op::AssignQuot:
+    case Op::AssignRem:
+    case Op::AssignShiftLeft:
+    case Op::AssignShiftRight:
+    case Op::AssignBwAnd:
+    case Op::AssignBwXor:
+    case Op::AssignBwOr:
         return Assoc::Right;
     default:
         assert(false);

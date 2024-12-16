@@ -41,7 +41,7 @@ int main() {
     ulam::Context ctx;
     ulam::Preproc pp{ctx};
     std::string text{Program};
-    auto src = ctx.sm().string(text);
+    auto src = ctx.sm().string(text, "A");
     ulam::Lex lex{pp, ctx.sm(), src->id(), src->content()};
     ulam::Token token;
     do {

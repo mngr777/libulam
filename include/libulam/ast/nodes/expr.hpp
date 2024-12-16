@@ -30,13 +30,22 @@ class ExprList : public List<Node, Expr> {
     ULAM_AST_NODE
 };
 
-class TypeOpExpr : public Tuple<Expr, TypeName> {
+// NOTE: type operators can work on both expressions and types, e.g.
+// `T a; assert(T.maxof == a.maxof)
+class TypeOpExpr : public Tuple<Expr, TypeName, Expr> {
     ULAM_AST_EXPR
 public:
-    TypeOpExpr(Ptr<TypeName>&& type, TypeOp op):
-        Tuple{std::move(type)}, _op(op) {
+    TypeOpExpr(TypeOp op, Ptr<TypeName>&& type, Ptr<Expr>&& expr):
+        Tuple{std::move(type), std::move(expr)}, _op{op} {
         assert(op != TypeOp::None);
     }
+    TypeOpExpr(TypeOp op, Ptr<TypeName>&& type):
+        TypeOpExpr{op, std::move(type), {}} {}
+    TypeOpExpr(TypeOp op, Ptr<Expr>&& expr):
+        TypeOpExpr{op, {}, std::move(expr)} {}
+
+    ULAM_AST_TUPLE_PROP(type_name, 0)
+    ULAM_AST_TUPLE_PROP(expr, 1)
 
     TypeOp op() const { return _op; }
 
@@ -59,7 +68,6 @@ public:
 };
 
 class OpExpr : public Expr {
-    ULAM_AST_SIMPLE_ATTR(loc_id_t, op_loc_id, NoLocId)
 public:
     explicit OpExpr(Op op): _op{op} { assert(op != Op::None); }
 

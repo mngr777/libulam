@@ -44,8 +44,8 @@ private:
 
 class StrSrc : public Src {
 public:
-    StrSrc(src_id_t id, std::string text):
-        Src{id, "<anonymous>"}, _text{std::move(text)} {}
+    StrSrc(src_id_t id, std::string text, std::string name):
+        Src{id, std::move(name)}, _text{std::move(text)} {}
 
     const mem::BufRef content() override {
         return {_text.c_str(), _text.size() + 1};

@@ -34,7 +34,7 @@ int main() {
     ulam::Parser parser{ctx};
 
     std::string text{Program};
-    parser.parse_string(text);
+    parser.parse_string(text, "A");
     auto ast = parser.move_ast();
 
     std::cout << text << "\n";

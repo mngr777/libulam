@@ -21,7 +21,7 @@ public:
     Preproc& operator=(Preproc) = delete;
 
     void main_file(std::filesystem::path path);
-    void main_string(std::string text);
+    void main_string(std::string text, std::string name);
 
     Preproc& operator>>(Token& token);
 

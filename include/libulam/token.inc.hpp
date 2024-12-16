@@ -15,8 +15,8 @@ TOK("return", Return)
 
 TOK("element", Element)
 TOK("quark", Quark)
-TOK("union", Union)
 TOK("transient", Transient)
+TOK("union", Union)
 
 TOK("typedef", Typedef)
 TOK("operator", Operator)
@@ -63,6 +63,9 @@ TOK("positionof", PositionOf)
 TOK("atomof", AtomOf)
 TOK("InstanceOf", InstanceOf)
 
+TOK("is", Is)
+TOK("as", As)
+
 TOK("+", Plus)
 TOK("-", Minus)
 TOK("*", Ast)
@@ -101,6 +104,7 @@ TOK(",", Comma)
 TOK("...", Ellipsis)
 
 TOK(nullptr, Comment)
+TOK(nullptr, MlComment)
 TOK(nullptr, TypeIdent)
 TOK(nullptr, BuiltinTypeIdent)
 TOK(nullptr, Ident)

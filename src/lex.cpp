@@ -107,6 +107,8 @@ void Lex::lex(Token& token) {
     case '/':
         if (at('/')) {
             lex_comment();
+        } else if (at('*')) {
+            lex_ml_comment();
         } else if (at('=')) {
             advance();
             complete(tok::SlashEqual);
@@ -131,6 +133,9 @@ void Lex::lex(Token& token) {
             } else {
                 complete(tok::LessLess);
             }
+        } else if (at('=')) {
+            advance();
+            complete(tok::LessEqual);
         } else {
             complete(tok::Less);
         }
@@ -152,6 +157,9 @@ void Lex::lex(Token& token) {
             } else {
                 complete(tok::GreaterGreater);
             }
+        } else if (at('=')) {
+            advance();
+            complete(tok::GreaterEqual);
         } else {
             complete(tok::Greater);
         }
@@ -331,14 +339,20 @@ void Lex::lex_comment() {
         case '\0':
             return;
         case '\r':
-            if (_cur[1] == '\n' && !esc)
+            if (_cur[1] == '\n')
                 newline(2);
-            complete(tok::Comment);
-            return;
+            if (!esc) {
+                complete(tok::Comment);
+                return;
+            }
+            break;
         case '\n':
             newline(1);
-            complete(tok::Comment);
-            return;
+            if (!esc) {
+                complete(tok::Comment);
+                return;
+            }
+            break;
         case '\\':
             advance();
             if (!esc) {
@@ -350,6 +364,36 @@ void Lex::lex_comment() {
             advance();
         }
         esc = false;
+    }
+}
+
+void Lex::lex_ml_comment() {
+    while (true) {
+        switch (_cur[0]) {
+        case '\0':
+            return;
+        case '\r':
+            if (_cur[1] == '\n') {
+                newline(2);
+            } else {
+                advance();
+            }
+            break;
+        case '\n':
+            newline(1);
+            break;
+        case '*':
+            if (_cur[1] == '/') {
+                advance(2);
+                complete(tok::Comment);
+                return;
+            } else {
+                advance();
+            }
+            break;
+        default:
+            advance();
+        }
     }
 }
 

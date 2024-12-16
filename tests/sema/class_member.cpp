@@ -12,5 +12,5 @@ quark B {
 )END";
 
 int main() {
-    analyze_and_print(Program);
+    analyze_and_print(Program, "A");
 }

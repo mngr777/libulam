@@ -15,7 +15,7 @@ public:
     SrcMngr(const SrcMngr&) = delete;
     SrcMngr& operator=(const SrcMngr&) = delete;
 
-    Src* string(std::string text);
+    Src* string(std::string text, std::string name);
     Src* file(std::filesystem::path path);
 
     Src* src(src_id_t src_id);

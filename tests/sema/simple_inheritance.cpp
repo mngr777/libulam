@@ -6,6 +6,4 @@ quark B(Int cP) {}
 quark A : B(1) {}
 )END";
 
-int main() {
-    analyze_and_print(Program);
-}
+int main() { analyze_and_print(Program, "A"); }
