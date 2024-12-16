@@ -1,25 +1,29 @@
 #pragma once
 #include <cassert>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/value.hpp>
-#include <vector>
 
 namespace ulam {
 
 class Class;
+class Value;
 
 class Object {
 public:
-    Object(Ref<Class> cls): _cls{cls} {}
+    Object(Ref<Class> cls);
+    ~Object();
 
     Ref<Class> cls() { return _cls; }
     Ref<const Class> cls() const { return _cls; }
 
-    // TODO: data
+    Value& get(unsigned idx);
+    const Value& get(unsigned idx) const;
+    void set(unsigned idx, Value&& value);
 
 private:
+    class Data;
+
     Ref<Class> _cls;
-    std::vector<RValue> _values;
+    Ptr<Data> _data;
 };
 
 } // namespace ulam

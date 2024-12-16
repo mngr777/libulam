@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bits.hpp>
+#include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
 #include <utility>
@@ -31,7 +32,7 @@ private:
 };
 
 class RValue
-    : public _Value<Integer, Unsigned /* or Unary */, Bool, Bits, String> {
+    : public _Value<Integer, Unsigned /* or Unary */, Bool, Bits, String, Ptr<Object>> {
 public:
     template <typename T> RValue(T&& value): _Value{std::forward<T>(value)} {}
     RValue(): _Value{} {}

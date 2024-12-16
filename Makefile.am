@@ -89,6 +89,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type_tpl.cpp \
 	src/semantic/value.cpp \
 	src/semantic/value/bit_vector.cpp \
+	src/semantic/value/object.cpp \
 	src/semantic/var.cpp
 
 SEMA_HEADER_FILES = \
