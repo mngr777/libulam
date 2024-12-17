@@ -24,7 +24,7 @@ namespace ulam::sema {
 void ResolveDeps::visit(Ref<ast::Root> node) {
     assert(!node->program());
     // make program
-    node->set_program(make<Program>(diag(), node));
+    node->set_program(make<Program>(diag(), node->ctx().str_pool()));
     RecVisitor::visit(node);
     export_classes();
 }

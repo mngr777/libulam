@@ -1,10 +1,8 @@
-#include "libulam/semantic/scope.hpp"
-#include "libulam/semantic/type.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
-#include <libulam/sema/helper/array_dim_eval.hpp>
-#include <libulam/sema/helper/param_eval.hpp>
+#include <libulam/sema/array_dim_eval.hpp>
+#include <libulam/sema/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
@@ -206,7 +204,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     // value
     if (var->is_const() && !var->value()) {
         if (node->has_default_value()) {
-            ExprVisitor ev{ast(), scope};
+            ExprVisitor ev{_program, scope};
             ExprRes res = node->default_value()->accept(ev);
             auto tv = res.move_typed_value();
             // TODO: conversion/type error, check if const
@@ -261,7 +259,7 @@ bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
 
     // params
     BasicScope param_scope{scope}; // tmp scope
-    ExprVisitor ev{ast(), &param_scope};
+    ExprVisitor ev{_program, &param_scope};
     auto params_node = overload->params_node();
     for (unsigned n = 0; n < params_node->child_num(); ++n) {
         auto param_node = params_node->get(n);
@@ -411,7 +409,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     // builtin type tpl?
     if (type_spec->type_tpl()) {
         // non-class tpl
-        ParamEval pe{_program->ast()};
+        ParamEval pe{_program};
         auto [args, success] = pe.eval(type_spec->args(), scope);
         auto type = type_spec->type_tpl()->type(
             diag(), type_spec->args(), std::move(args));
@@ -424,7 +422,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         // class tpl
         if (!resolve(type_spec->cls_tpl()))
             return {};
-        ParamEval pe{_program->ast()};
+        ParamEval pe{_program};
         auto [args, success] = pe.eval(type_spec->args(), scope);
         auto type = type_spec->cls_tpl()->type(
             diag(), type_spec->args(), std::move(args));
@@ -454,7 +452,7 @@ Ref<Type> Resolver::apply_array_dims(
     Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
-    ArrayDimEval eval{ast(), scope};
+    ArrayDimEval eval{_program, scope};
     for (unsigned n = 0; n < dims->child_num(); ++n) {
         auto expr = dims->get(n);
         auto [size, success] = eval.eval(expr);
@@ -482,7 +480,7 @@ void Resolver::update_state(Ref<ScopeObject> obj, bool is_resolved) {
 }
 
 std::string_view Resolver::str(str_id_t str_id) const {
-    return _program->ast()->ctx().str(str_id);
+    return _program->str_pool().get(str_id);
 }
 
 } // namespace ulam::sema

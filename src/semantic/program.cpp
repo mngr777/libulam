@@ -1,3 +1,4 @@
+#include "libulam/str_pool.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/root.hpp>
 #include <libulam/semantic/program.hpp>
@@ -6,8 +7,8 @@
 
 namespace ulam {
 
-Program::Program(Diag& diag, Ref<ast::Root> ast):
-    _diag{diag}, _ast{ast}, _builtins{_type_id_gen} {}
+Program::Program(Diag& diag, UniqStrPool& str_pool):
+    _diag{diag}, _str_pool{str_pool}, _builtins{_type_id_gen} {}
 
 Program::~Program() {}
 

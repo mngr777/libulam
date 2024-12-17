@@ -57,18 +57,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) { return {}; }
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) { return {}; }
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) { return {}; }
 
-Ref<Program> ExprVisitor::program() {
-    assert(ast()->program());
-    return ast()->program();
-}
-
-Ref<ast::Root> ExprVisitor::ast() {
-    assert(_ast);
-    return _ast;
-}
-
-Diag& ExprVisitor::diag() { return program()->diag(); }
-
-Builtins& ExprVisitor::builtins() { return program()->builtins(); }
+Diag& ExprVisitor::diag() { return _program->diag(); }
+Builtins& ExprVisitor::builtins() { return _program->builtins(); }
 
 } // namespace ulam::sema

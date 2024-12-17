@@ -67,7 +67,6 @@ void Out::print(Scope::Symbol* sym) {
 
 void Out::print(Ref<Type> type, bool canon) {
     // std::list<array_size_t> array_sizes;
-    
 }
 
 void Out::print(Ref<Var> var) {
@@ -81,7 +80,7 @@ void Out::print(Ref<Var> var) {
 }
 
 std::string_view Out::str(str_id_t str_id) {
-    return _program->ast()->ctx().str(str_id);
+    return _program->str_pool().get(str_id);
 }
 
 } // namespace ulam::sema

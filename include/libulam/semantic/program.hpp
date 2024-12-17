@@ -16,18 +16,14 @@ namespace ulam {
 
 class Program {
 public:
-    Program(Diag& diag, Ref<ast::Root> ast);
+    Program(Diag& diag, UniqStrPool& str_pool);
     ~Program();
 
     Diag& diag() { return _diag; }
-
-    Ref<ast::Root> ast() { return _ast; }
-    Ref<const ast::Root> ast() const { return _ast; }
-
-    auto& modules() { return _modules; }
-
+    UniqStrPool& str_pool() { return _str_pool; }
     auto& builtins() { return _builtins; }
 
+    auto& modules() { return _modules; }
     Ref<Module> module(module_id_t id);
     Ref<Module> add_module(Ref<ast::ModuleDef> node);
 
@@ -35,10 +31,10 @@ public:
 
 private:
     Diag& _diag;
-    Ref<ast::Root> _ast;
-    std::vector<Ptr<Module>> _modules;
-    TypeIdGen _type_id_gen;
+    UniqStrPool& _str_pool;
     Builtins _builtins;
+    TypeIdGen _type_id_gen;
+    std::vector<Ptr<Module>> _modules;
 };
 
 } // namespace ulam

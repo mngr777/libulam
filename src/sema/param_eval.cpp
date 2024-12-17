@@ -1,5 +1,6 @@
 #include <libulam/sema/expr_visitor.hpp>
-#include <libulam/sema/helper/param_eval.hpp>
+#include <libulam/sema/param_eval.hpp>
+#include <libulam/semantic/program.hpp>
 
 namespace ulam::sema {
 
@@ -10,7 +11,7 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
 
     TypedValueList values;
     bool success = true;
-    ExprVisitor ev{ast(), scope};
+    ExprVisitor ev{_program, scope};
     for (unsigned n = 0; n < args->child_num(); ++n) {
         auto arg = args->get(n);
         ExprRes res = arg->accept(ev);
@@ -21,7 +22,7 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
         // has actual value?
         if (_flags & ReqValues && value.rvalue()->is_unknown()) {
             success = false;
-            diag().emit(
+            _program->diag().emit(
                 Diag::Error, arg->loc_id(), 1, "failed to evaluate argument");
         }
         values.push_back(res.move_typed_value());

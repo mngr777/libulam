@@ -152,7 +152,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
             if (resolver.resolve(ref(var), scope())) {
                 if (def->has_default_value()) {
-                    ExprVisitor ev{ast(), scope()};
+                    ExprVisitor ev{program(), scope()};
                     ExprRes res = def->default_value()->accept(ev);
                     if (res.ok()) {
                         // TODO: conversion/type error

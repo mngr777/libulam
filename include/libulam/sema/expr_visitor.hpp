@@ -14,8 +14,8 @@ namespace ulam::sema {
 
 class ExprVisitor : public ast::ExprVisitor {
 public:
-    ExprVisitor(Ref<ast::Root> ast, Ref<Scope> scope):
-        _ast{ast}, _scope{scope} {}
+    ExprVisitor(Ref<Program> program, Ref<Scope> scope):
+        _program{program}, _scope{scope} {}
 
     ExprVisitor(ExprVisitor&&) = default;
     ExprVisitor& operator=(ExprVisitor&& other);
@@ -36,13 +36,11 @@ public:
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
 protected:
-    Ref<Program> program();
-    Ref<ast::Root> ast();
     Diag& diag();
     Builtins& builtins();
 
 private:
-    Ref<ast::Root> _ast;
+    Ref<Program> _program;
     Ref<Scope> _scope;
 };
 

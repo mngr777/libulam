@@ -1,18 +1,26 @@
 #pragma once
-#include <libulam/sema/helper.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 
+namespace ulam {
+class Program;
+}
+
+namespace ulam::ast {
+class Expr;
+}
+
 namespace ulam::sema {
 
-class ArrayDimEval : public Helper {
+class ArrayDimEval {
 public:
-    explicit ArrayDimEval(Ref<ast::Root> ast, Ref<Scope> scope):
-        Helper{ast}, _scope{scope} {}
+    explicit ArrayDimEval(Ref<Program> program, Ref<Scope> scope):
+        _program{program}, _scope{scope} {}
 
     std::pair<array_size_t, bool> eval(Ref<ast::Expr> expr);
 
 private:
+    Ref<Program> _program;
     Ref<Scope> _scope;
 };
 

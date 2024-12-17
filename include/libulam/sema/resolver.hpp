@@ -42,7 +42,6 @@ private:
     void update_state(Ref<ScopeObject> obj, bool is_resolved);
 
     Diag& diag() { return _program->diag(); }
-    Ref<ast::Root> ast() { return _program->ast(); }
     std::string_view str(str_id_t str_id) const;
 
     Ref<Program> _program;
