@@ -28,6 +28,7 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
     _module_def = node;
     enter_module_scope(mod);
     if (do_visit(node)) {
+        _pass = Pass::Module;
         traverse(node);
         _pass = Pass::Classes;
         traverse(node);
@@ -182,7 +183,6 @@ bool RecVisitor::sync_scope(Ref<ast::DefNode> node) {
 }
 
 void RecVisitor::enter_module_scope(Ref<Module> mod) {
-    assert(pass() == Pass::Module);
     enter_scope(mod->scope()->view(0));
 }
 
