@@ -3,6 +3,8 @@
 
 namespace ulam {
 
+// StrPoolBase
+
 const std::string_view StrPoolBase::get(str_id_t id) const {
     assert(id < _index.size());
     return _index[id];
@@ -14,6 +16,8 @@ StrPoolBase::PairT StrPoolBase::store(const std::string_view str, bool copy) {
     _index.push_back(copied);
     return {id, copied};
 }
+
+// UniqStrPool
 
 bool UniqStrPool::has(const std::string_view str) const {
     return _map.count(str) == 1;
@@ -32,6 +36,8 @@ str_id_t UniqStrPool::put(const std::string_view str, bool copy) {
     _map[stored.second] = stored.first;
     return stored.first;
 }
+
+// StrPool
 
 str_id_t StrPool::put(const std::string_view str, bool copy) {
     return store(str, copy).first;

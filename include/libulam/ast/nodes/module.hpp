@@ -197,7 +197,7 @@ public:
     Ref<Node> child(unsigned n) override {
         return (n == 0) ? Tuple::child(0) : List::child(n - 1);
     }
-    const Ref<Node> child(unsigned n) const override {
+    Ref<const Node> child(unsigned n) const override {
         return (n == 0) ? Tuple::child(0) : List::child(n - 1);
     }
 };

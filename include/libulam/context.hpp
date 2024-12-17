@@ -16,4 +16,4 @@ private:
     Diag _diag;
 };
 
-}
+} // namespace ulam

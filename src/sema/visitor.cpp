@@ -45,8 +45,8 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
 void RecVisitor::traverse(Ref<ast::ModuleDef> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
-        if (pass() == Pass::Module || ast::is<ast::ClassDef>(child_v))
-            ast::as_node_ref(child_v)->accept(*this);
+        if (pass() == Pass::Module || is<ast::ClassDef>(child_v))
+            std::visit([&](auto&& ptr) { ptr->accept(*this); }, child_v);
     }
 }
 
@@ -73,8 +73,8 @@ void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
     // traverse
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
-        if (pass() == Pass::Classes || ast::is<ast::FunDef>(child_v))
-            ast::as_node_ref(child_v)->accept(*this);
+        if (pass() == Pass::Classes || is<ast::FunDef>(child_v))
+            std::visit([&](auto&& ptr) { ptr->accept(*this); }, child_v);
     }
     // exit scope
     assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));

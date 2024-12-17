@@ -18,6 +18,7 @@ void Sema::analyze(Ref<ast::Root> ast) {
     sema::ResolveDeps resolve_deps{_diag, ast};
     resolve_deps.analyze();
     assert(ast->program());
+
     sema::Resolver resolver{ast->program()};
     resolver.resolve();
 }

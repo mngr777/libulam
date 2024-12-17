@@ -1,5 +1,4 @@
 #pragma once
-#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -55,68 +54,10 @@ public:                                                                        \
 private:                                                                       \
     Ptr<type> _attr_##name{};
 
-#define ULAM_AST_LINK_ATTR(type, name)                                         \
-public:                                                                        \
-    Link<type>* name##_link() { return &_attr_##name; }                        \
-    const Link<type>* name##_link() const { return &_attr_##name; }            \
-    ulam::Ref<type> name() { return _attr_##name.get(); }                      \
-    ulam::Ref<const type> name() const { return _attr_##name.get(); }          \
-    void set_##name(ulam::Ref<type> value) { _attr_##name.set(value); }        \
-                                                                               \
-private:                                                                       \
-    Link<type> _attr_##name;
-
 namespace ulam::ast {
 
-template <typename T> class Link {
-public:
-    ulam::Ref<T> get() { return _value; }
-    ulam::Ref<const T> get() const { return _value; }
-    void set(ulam::Ref<T> value) { _value = value; }
-
-private:
-    ulam::Ref<T> _value;
-};
-
 // TODO:
-// - type constraints
 // - child iterators
-
-// Variant
-
-template <typename... Ns> using Variant = std::variant<Ptr<Ns>...>;
-
-template <typename N, typename... Ns> bool is(const Variant<Ns...>& v) {
-    return std::holds_alternative<Ptr<N>>(v);
-}
-
-// ref to node
-template <typename N, typename... Ns> auto as_ref(Variant<Ns...>& v) {
-    assert(std::holds_alternative<Ptr<N>>(v));
-    return ref(std::get<Ptr<N>>(v));
-}
-template <typename N, typename... Ns> auto as_ref(const Variant<Ns...>& v) {
-    assert(std::holds_alternative<Ptr<N>>(v));
-    return ref(std::get<Ptr<N>>(v));
-}
-
-// move node ptr
-template <typename N, typename... Ns> auto move_as(Variant<Ns...>&& v) {
-    return std::visit([](auto&& ptr) -> Ptr<N> { return ptr; }, std::move(v));
-}
-template <typename N, typename... Ns> auto move_as(const Variant<Ns...>&& v) {
-    return std::visit([](auto&& ptr) -> Ptr<N> { return ptr; }, std::move(v));
-}
-
-class Node;
-
-// ref to node base
-template <typename... Ns> auto as_node_ref(Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
-}
-template <typename... Ns> auto as_node_ref(const Variant<Ns...>& v) {
-    return std::visit([](auto&& ptr) -> Ref<Node> { return ref(ptr); }, v);
-}
 
 // Node base
 
@@ -130,7 +71,7 @@ public:
     virtual unsigned child_num() const { return 0; }
 
     virtual Ref<Node> child(unsigned n) { return nullptr; }
-    virtual const Ref<Node> child(unsigned n) const { return nullptr; }
+    virtual Ref<const Node> child(unsigned n) const { return nullptr; }
 };
 
 // Named node trait
@@ -140,8 +81,7 @@ public:
     Named(Str name): _attr_name{name} {}
 };
 
-// The node can have persistent scope and version attached (when in
-// persistent scope)
+// Version number of persistent scope before definition
 class DefNode {
     ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
 };
@@ -192,7 +132,7 @@ public:
             getters(std::make_index_sequence<sizeof...(Ns)>())[n](*this);
         return const_cast<Node*>(node);
     }
-    const Ref<Node> child(unsigned n) const override {
+    Ref<const Node> child(unsigned n) const override {
         return getters(std::make_index_sequence<sizeof...(Ns)>())[n](*this);
     }
 
@@ -250,7 +190,7 @@ public:
     unsigned child_num() const override { return _items.size(); }
 
     Ref<Node> child(unsigned n) override { return ref(_items[n]); }
-    const Ref<Node> child(unsigned n) const override { return ref(_items[n]); }
+    Ref<const Node> child(unsigned n) const override { return ref(_items[n]); }
 
 private:
     std::vector<ItemT> _items; // TODO: list?
@@ -286,9 +226,13 @@ public:
 
     unsigned child_num() const override { return _items.size(); }
 
-    Ref<Node> child(unsigned n) override { return as_node_ref(_items[n]); }
-    const Ref<Node> child(unsigned n) const override {
-        return as_node_ref(_items[n]);
+    Ref<Node> child(unsigned n) override {
+        return const_cast<Ref<Node>>(std::as_const(*this).child(n));
+    }
+
+    Ref<const Node> child(unsigned n) const override {
+        return std::visit(
+            [](auto&& ptr) -> Ref<const Node> { return ref(ptr); }, _items[n]);
     }
 
 private:

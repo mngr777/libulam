@@ -1,7 +1,7 @@
 #pragma once
-#include <libulam/semantic/type/class_kind.hpp>
-#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>
 #include <string_view>
@@ -53,7 +53,9 @@ struct Token {
 
     ClassKind class_kind() const { return tok::class_kind(type); }
 
-    BuiltinTypeId builtin_type_id() const { return tok::builtin_type_id(orig_type); }
+    BuiltinTypeId builtin_type_id() const {
+        return tok::builtin_type_id(orig_type);
+    }
 
     TypeOp type_op() const { return tok::type_op(type); }
 

@@ -16,7 +16,7 @@ public:
         _src_id{src_id}, _ptr{ptr}, _linum{linum}, _chr{chr} {}
 
     src_id_t src_id() const { return _src_id; }
-    const char* ptr() const { return _ptr; }
+    const char* ptr() const { return _ptr; } // TMP
     linum_t linum() const { return _linum; }
     chr_t chr() const { return _chr; }
 
