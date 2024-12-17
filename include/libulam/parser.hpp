@@ -1,7 +1,4 @@
 #pragma once
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/preproc.hpp>
@@ -17,18 +14,13 @@ class Preproc;
 
 class Parser {
 public:
-    explicit Parser(Context& ctx):
-        _ctx{ctx}, _pp{ctx}, _ast{make<ast::Root>()} {}
+    explicit Parser(Context& ctx, UniqStrPool& str_pool):
+        _ctx{ctx}, _str_pool{str_pool}, _pp{ctx}  {}
 
-    // void parse_file(const std::filesystem::path& path);
-    void parse_string(std::string text, std::string name);
-
-    Ref<ast::Root> ast();
-    Ptr<ast::Root> move_ast();
+    Ptr<ast::ModuleDef> parse_module_file(const std::filesystem::path& path);
+    Ptr<ast::ModuleDef> parse_module_str(std::string text, std::string name);
 
 private:
-    void parse(const std::string& name);
-
     void consume();
     void consume_if(tok::Type type);
 
@@ -40,7 +32,7 @@ private:
     void diag(loc_id_t loc_id, std::size_t size, std::string text);
     template <typename... Ts> void panic(Ts... stop);
 
-    Ptr<ast::ModuleDef> parse_module(str_id_t name_id);
+    Ptr<ast::ModuleDef> parse_module();
     void parse_module_var_or_type_def(Ref<ast::ModuleDef> node);
     Ptr<ast::TypeDef> parse_module_type_def(bool is_marked_local);
     Ptr<ast::ClassDef> parse_class_def();
@@ -72,7 +64,8 @@ private:
 
     Ptr<ast::Expr> parse_expr();
     Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
-    Ptr<ast::Expr> parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec);
+    Ptr<ast::Expr>
+    parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec);
     Ptr<ast::Expr> parse_expr_lhs();
     Ptr<ast::Expr> parse_paren_expr_or_cast();
     Ptr<ast::TypeOpExpr> parse_type_op();
@@ -97,16 +90,16 @@ private:
     Ptr<ast::StrLit> parse_str_lit();
 
     template <typename N, typename... Args> Ptr<N> tree(Args&&... args);
-    template <typename N, typename... Args> Ptr<N> tree_loc(loc_id_t loc_id, Args&&... args);
+    template <typename N, typename... Args>
+    Ptr<N> tree_loc(loc_id_t loc_id, Args&&... args);
 
     std::string_view tok_str();
     ast::Str tok_ast_str();
     str_id_t tok_str_id();
 
     Context& _ctx;
+    UniqStrPool& _str_pool;
     Preproc _pp;
-
-    Ptr<ast::Root> _ast;
 
     Token _tok;
 };

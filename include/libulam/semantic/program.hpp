@@ -5,7 +5,6 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/str_pool.hpp>
-#include <unordered_map>
 #include <vector>
 
 namespace ulam::ast {
@@ -29,12 +28,11 @@ public:
 
     auto& builtins() { return _builtins; }
 
-    // TODO: refactoring?
+    // TODO: remove this
     str_id_t self_str_id();
     str_id_t self_inst_str_id();
 
     Ref<Module> module(module_id_t id);
-    Ref<Module> module(const std::string& name);
     Ref<Module> add_module(Ref<ast::ModuleDef> node);
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
@@ -43,7 +41,6 @@ private:
     Diag& _diag;
     Ref<ast::Root> _ast;
     std::vector<Ptr<Module>> _modules;
-    std::unordered_map<str_id_t, Ref<Module>> _modules_by_name_id;
     TypeIdGen _type_id_gen;
     Builtins _builtins;
 };

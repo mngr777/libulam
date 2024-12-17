@@ -1,6 +1,7 @@
 #include "tests/sema/common.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream>
+#include <libulam/ast.hpp>
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/sema.hpp>
@@ -8,10 +9,12 @@
 ulam::Ptr<ulam::ast::Root>
 analyze(const std::string& text, const std::string& module_name) {
     ulam::Context ctx;
-    ulam::Parser parser{ctx};
+    auto ast = ulam::make<ulam::ast::Root>();
 
-    parser.parse_string(text, module_name);
-    auto ast = parser.move_ast();
+    ulam::Parser parser{ctx, ast->ctx().str_pool()};
+    auto module = parser.parse_module_str(text, module_name);
+    if (module)
+        ast->add(std::move(module));
 
     ulam::Sema sema{ctx.diag()};
     sema.analyze(ulam::ref(ast));

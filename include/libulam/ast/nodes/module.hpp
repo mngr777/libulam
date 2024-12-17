@@ -41,20 +41,6 @@ public:
     Root();
     ~Root();
 
-    bool has(std::string_view name) const {
-        auto name_id = _ctx.str_pool().id(name);
-        return (name_id != NoStrId) ? has(name_id) : false;
-    }
-
-    bool has(str_id_t name_id) const { return _name_id_map.has(name_id); }
-
-    Ref<ModuleDef> get(str_id_t name_id) { return _name_id_map.get(name_id); }
-    Ref<const ModuleDef> get(str_id_t name_id) const {
-        return _name_id_map.get(name_id);
-    }
-
-    void add(Ptr<ModuleDef>&& module);
-
     Context& ctx() { return _ctx; }
     const Context& ctx() const { return _ctx; }
 
@@ -63,12 +49,9 @@ private:
     NameIdMap<ModuleDef> _name_id_map;
 };
 
-class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef>,
-                  public Named {
+class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Module, module)
-public:
-    ModuleDef(ast::Str name): Named{name} {}
 };
 
 class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
@@ -86,7 +69,10 @@ public:
         ClassKind kind,
         ast::Str name,
         Ptr<ParamList>&& params,
-        Ptr<TypeNameList>&& ancestors);
+        Ptr<TypeNameList>&& ancestors):
+        Tuple{std::move(params), std::move(ancestors), make<ClassDefBody>()},
+        Named{name},
+        _kind{kind} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
     ULAM_AST_TUPLE_PROP(ancestors, 1)

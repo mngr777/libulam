@@ -2,6 +2,7 @@
 #include <iostream>
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
+#include <libulam/ast.hpp>
 
 static const char* Program = R"END(
 quark Q(B.C param1 = 0xff) {
@@ -31,11 +32,11 @@ element A {
 
 int main() {
     ulam::Context ctx;
-    ulam::Parser parser{ctx};
+    auto ast = ulam::make<ulam::ast::Root>();
+    ulam::Parser parser{ctx, ast->ctx().str_pool()};
 
     std::string text{Program};
-    parser.parse_string(text, "A");
-    auto ast = parser.move_ast();
+    ast->add(parser.parse_module_str(text, "A"));
 
     std::cout << text << "\n";
     test::ast::Printer p{std::cout, ulam::ref(ast)};

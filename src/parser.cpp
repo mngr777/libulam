@@ -1,8 +1,3 @@
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
-#include "libulam/semantic/type/builtin_type_id.hpp"
-#include "libulam/semantic/type/class_kind.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -23,30 +18,16 @@
 
 namespace ulam {
 
-// void Parser::parse_file(const std::filesystem::path& path) {
-//     _pp.main_file(path);
-//     parse();
-// }
+Ptr<ast::ModuleDef> Parser::parse_module_file(const std::filesystem::path& path) {
+    _pp.main_file(path);
+    consume();
+    return parse_module();
+}
 
-void Parser::parse_string(std::string text, std::string name) {
-    assert(!_ast->has(name));
+Ptr<ast::ModuleDef> Parser::parse_module_str(std::string text, std::string name) {
     _pp.main_string(text, name);
-    parse(name);
-}
-
-Ref<ast::Root> Parser::ast() { return ref(_ast); }
-
-Ptr<ast::Root> Parser::move_ast() {
-    Ptr<ast::Root> ast;
-    std::swap(ast, _ast);
-    return ast;
-}
-
-void Parser::parse(const std::string& name) {
-    _pp >> _tok;
-    auto name_id = _ast->ctx().str_id(name);
-    auto node = parse_module(name_id);
-    _ast->add(std::move(node));
+    consume();
+    return parse_module();
 }
 
 void Parser::consume() { _pp >> _tok; }
@@ -95,9 +76,8 @@ void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
     _ctx.diag().emit(Diag::Error, loc_id, size, text);
 }
 
-Ptr<ast::ModuleDef> Parser::parse_module(str_id_t name_id) {
-    ast::Str name{name_id, _tok.loc_id}; // 1st token location
-    auto node = tree_loc<ast::ModuleDef>(_tok.loc_id, name);
+Ptr<ast::ModuleDef> Parser::parse_module() {
+    auto node = tree_loc<ast::ModuleDef>(_tok.loc_id);
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
         case tok::Local:
@@ -132,7 +112,7 @@ void Parser::parse_module_var_or_type_def(Ref<ast::ModuleDef> node) {
         diag("module typedefs must be marked as local");
     } else {
         assert(_tok.in(tok::Constant, tok::TypeIdent));
-        diag("module variables must be marked as local");
+        diag("module constants must be marked as local");
     }
 
     if (_tok.is(tok::Typedef)) {
@@ -163,7 +143,8 @@ Ptr<ast::ClassDef> Parser::parse_class_def() {
 
 Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     assert(_tok.in(tok::Element, tok::Quark, tok::Transient, tok::Union));
-    // element/quark/transient TODO: union
+
+    // element/quark/transient/union
     auto kind = _tok.class_kind();
     auto loc_id = _tok.loc_id;
     consume();
@@ -195,6 +176,8 @@ Ptr<ast::TypeNameList> Parser::parse_class_ancestor_list() {
     assert(_tok.in(tok::Plus, tok::Colon));
     auto loc_id = _tok.loc_id;
     consume();
+
+    // class Foo : <anc_1> + <anc_2>
     auto node = make<ast::TypeNameList>();
     while (!_tok.in(tok::BraceL, tok::Eof)) {
         // type
@@ -274,10 +257,7 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
         return {};
 
     // ;
-    if (!expect(tok::Semicol)) {
-        panic(tok::Semicol, tok::BraceR);
-        consume_if(tok::Semicol);
-    }
+    expect(tok::Semicol);
     return tree<ast::TypeDef>(std::move(type_name), std::move(type_expr));
 }
 
@@ -311,8 +291,9 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
     consume();
 
     if (_tok.is(tok::ParenL)) {
-        // fun def
+        // fun def (param list)
         if (!ret_type) {
+            // the type is a ret type after all
             assert(type);
             ret_type =
                 make<ast::FunRetType>(std::move(type), std::move(array_dims));
@@ -1036,7 +1017,7 @@ ast::Str Parser::tok_ast_str() {
 
 str_id_t Parser::tok_str_id() {
     assert(_tok.in(tok::Ident, tok::TypeIdent));
-    return _ast->ctx().str_id(tok_str());
+    return _str_pool.put(tok_str());
 }
 
 } // namespace ulam

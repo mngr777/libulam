@@ -339,7 +339,7 @@ void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
 }
 
 bool Printer::do_visit(ulam::Ref<ulam::ast::ModuleDef> node) {
-    _os << "/* module */\n";
+    // _os << "/* module */\n";
     return true;
 }
 

@@ -3,8 +3,8 @@
 #include <cassert>
 #include <fstream>
 #include <ios>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 TestCase::TestCase(const std::filesystem::path& path) {
     load(path);
@@ -17,13 +17,12 @@ void TestCase::run() {
     Compiler compiler;
     for (auto pair : _srcs) {
         auto [name, text] = pair;
-        compiler.parse_string(std::string{text}, std::string{name});
+        compiler.parse_module_str(std::string{text}, std::string{name});
     }
     // analyze
     auto program = compiler.analyze();
     if (!program)
         throw std::invalid_argument("failed to analyze program");
-    std::string name{_srcs[0].first};
     compiler.compile(out);
 }
 

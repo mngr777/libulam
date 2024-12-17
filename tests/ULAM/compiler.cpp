@@ -1,15 +1,18 @@
 #include "tests/ULAM/compiler.hpp"
 #include <libulam/sema.hpp>
+#include <utility>
 
-void Compiler::parse_string(const std::string& text, const std::string& name) {
-    _parser.parse_string(text, name);
+void Compiler::parse_module_str(
+    const std::string& text, const std::string& name) {
+    auto module = _parser.parse_module_str(text, name);
+    if (module)
+        _ast->add(std::move(module));
 }
 
 ulam::Ref<ulam::Program> Compiler::analyze() {
-    auto ast = _parser.ast();
     ulam::Sema sema{_ctx.diag()};
-    sema.analyze(ast);
-    return ast->program();
+    sema.analyze(ulam::ref(_ast));
+    return _ast->program();
 }
 
 void Compiler::compile(std::ostream& out) {
