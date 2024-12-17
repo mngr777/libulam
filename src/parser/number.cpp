@@ -47,7 +47,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             // are there any digits after prefix?
             if (cur == str.size() || !is_digit(str[cur])) {
                 diag.emit(
-                    diag::Error, loc_id, str.size(),
+                    Diag::Error, loc_id, str.size(),
                     "incomplete binary number");
                 return {radix, (Integer)0};
             }
@@ -59,7 +59,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             // are there any hex digits after prefix?
             if (cur == str.size() || !is_xdigit(str[cur])) {
                 diag.emit(
-                    diag::Error, loc_id, str.size(),
+                    Diag::Error, loc_id, str.size(),
                     "incomplete hexadecimal number");
                 return {radix, (Integer)0};
             }
@@ -88,7 +88,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
         // is valid for radix?
         if (dv + 1 > radix_to_int(radix)) {
             diag.emit(
-                diag::Error, loc_id, cur, 1,
+                Diag::Error, loc_id, cur, 1,
                 std::string("invalid digit in ") + radix_to_str(radix) +
                     " number");
             return {radix, (Integer)0};
@@ -114,7 +114,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
         }
         if (cur < str.size()) {
             diag.emit(
-                diag::Error, loc_id, cur, str.size() - cur,
+                Diag::Error, loc_id, cur, str.size() - cur,
                 "invalid number suffix");
         }
     }
@@ -122,7 +122,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     // Overflow?
     overflow = overflow || (is_signed && value > MaxSigned);
     if (overflow) {
-        diag.emit(diag::Error, loc_id, str.size(), "number overflow");
+        diag.emit(Diag::Error, loc_id, str.size(), "number overflow");
         if (is_signed)
             value = MaxSigned;
     }

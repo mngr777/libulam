@@ -22,7 +22,7 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
         if (_flags & ReqValues && value.rvalue()->is_unknown()) {
             success = false;
             diag().emit(
-                diag::Error, arg->loc_id(), 1, "failed to evaluate argument");
+                Diag::Error, arg->loc_id(), 1, "failed to evaluate argument");
         }
         values.push_back(res.move_typed_value());
     }

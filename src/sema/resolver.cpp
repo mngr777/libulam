@@ -99,7 +99,7 @@ bool Resolver::init(Ref<Class> cls) {
                 auto type = resolve_type_name(type_name, scope);
                 if (!type->is_class()) {
                     diag().emit(
-                        diag::Error, type_name->loc_id(), 1, "not a class");
+                        Diag::Error, type_name->loc_id(), 1, "not a class");
                     success = false;
                     continue;
                 }
@@ -128,7 +128,7 @@ bool Resolver::resolve(Ref<Class> cls) {
     for (auto anc : cls->ancestors()) {
         if (!resolve(anc.cls())) {
             diag().emit(
-                diag::Error, anc.node()->loc_id(), 1,
+                Diag::Error, anc.node()->loc_id(), 1,
                 "cannot resolve ancestor type");
             is_resolved = false;
         }
@@ -214,14 +214,14 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             if (var->value().is_nil()) {
                 auto name = node->name();
                 diag().emit(
-                    diag::Error, name.loc_id(), str(name.str_id()).size(),
+                    Diag::Error, name.loc_id(), str(name.str_id()).size(),
                     "cannot calculate constant value");
                 is_resolved = false;
             }
         } else if (var->requires_value()) {
             auto name = node->name();
             diag().emit(
-                diag::Error, name.loc_id(), str(name.str_id()).size(),
+                Diag::Error, name.loc_id(), str(name.str_id()).size(),
                 "constant value required");
             is_resolved = false;
         }
@@ -254,7 +254,7 @@ bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
     auto ret_type = resolve_fun_ret_type(ret_type_node, scope);
     if (!ret_type) {
         diag().emit(
-            diag::Error, ret_type_node->loc_id(), 1,
+            Diag::Error, ret_type_node->loc_id(), 1,
             "cannot resolve return type");
         is_resolved = false;
     }
@@ -340,7 +340,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
             auto ident = type_name->ident(1);
             auto name_id = ident->name().str_id();
             diag().emit(
-                diag::Error, ident->loc_id(), str(name_id).size(),
+                Diag::Error, ident->loc_id(), str(name_id).size(),
                 "built-ins don't have member types");
         }
         return type;
@@ -355,7 +355,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
         if (type->is_alias()) {
             if (!resolve(type->as_alias(), scope)) {
                 diag().emit(
-                    diag::Error, ident->loc_id(), str(name_id).size(),
+                    Diag::Error, ident->loc_id(), str(name_id).size(),
                     "cannot resolve");
                 return {};
             }
@@ -366,7 +366,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
                 // class type itself is required, resolve it now
                 if (!resolve(type->canon()->as_class())) {
                     diag().emit(
-                        diag::Error, ident->loc_id(), str(name_id).size(),
+                        Diag::Error, ident->loc_id(), str(name_id).size(),
                         "cannot resolve");
                     return {};
                 }
@@ -379,7 +379,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
         auto canon = type->canon();
         if (!canon->is_class()) {
             diag().emit(
-                diag::Error, ident->loc_id(), str(name_id).size(),
+                Diag::Error, ident->loc_id(), str(name_id).size(),
                 "not a class");
             return {};
         }
@@ -392,7 +392,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
         name_id = ident->name().str_id();
         if (!cls->get(name_id)) {
             diag().emit(
-                diag::Error, ident->loc_id(), str(name_id).size(),
+                Diag::Error, ident->loc_id(), str(name_id).size(),
                 "name not found in class");
             return {};
         }

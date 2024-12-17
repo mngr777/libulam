@@ -12,7 +12,7 @@ std::pair<array_size_t, bool> ArrayDimEval::eval(Ref<ast::Expr> expr) {
 
     array_size_t size{0}; // TODO: what is max array size?
     if (rval->is_unknown()) {
-        diag().emit(diag::Error, expr->loc_id(), 1, "cannot calculate");
+        diag().emit(Diag::Error, expr->loc_id(), 1, "cannot calculate");
         return {UnknownArraySize, false};
 
     } else if (rval->is<Unsigned>()) {
@@ -20,13 +20,13 @@ std::pair<array_size_t, bool> ArrayDimEval::eval(Ref<ast::Expr> expr) {
 
     } else if (rval->is<Integer>()) {
         if (rval->get<Integer>() < 0) {
-            diag().emit(diag::Error, expr->loc_id(), 1, "negative value");
+            diag().emit(Diag::Error, expr->loc_id(), 1, "negative value");
             return {UnknownArraySize, false};
         }
         size = (Unsigned)rval->get<Integer>();
 
     } else {
-        diag().emit(diag::Error, expr->loc_id(), 1, "non-numeric value");
+        diag().emit(Diag::Error, expr->loc_id(), 1, "non-numeric value");
         return {UnknownArraySize, false};
     }
 

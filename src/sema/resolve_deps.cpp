@@ -47,7 +47,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     auto prev = module()->get(name_id);
     if (prev) {
         diag().emit(
-            diag::Error, node->name().loc_id(), str(name_id).size(),
+            Diag::Error, node->name().loc_id(), str(name_id).size(),
             "already defined"); // TODO: say where
         return false;
     }
@@ -163,7 +163,7 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
 
         // already in current scope?
         if (scope()->has(name_id, true)) {
-            diag().emit(diag::Error, def->loc_id(), 1, "already defined");
+            diag().emit(Diag::Error, def->loc_id(), 1, "already defined");
             continue;
         }
 
@@ -226,7 +226,7 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     if (sym) {
         if (!sym->is<Fun>()) {
             diag().emit(
-                diag::Error, node->loc_id(), str(name_id).size(),
+                Diag::Error, node->loc_id(), str(name_id).size(),
                 "defined and is not a function");
             return;
         }
@@ -300,9 +300,20 @@ void ResolveDeps::export_classes() {
         auto name_id = it->first;
         auto& mods = it->second;
         if (mods.size() > 1) {
-            diag().emit(
-                diag::Error, std::string{"multiple modules define"} +
-                                 std::string{str(name_id)} + ", ignoring");
+            for (auto& mod : mods) {
+                auto sym = mod->get(name_id);
+                assert(sym);
+                Ref<ClassBase> cls_base{};
+                if (sym->is<Class>()) {
+                    cls_base = sym->get<Class>();
+                } else {
+                    assert(sym->is<ClassTpl>());
+                    cls_base = sym->get<ClassTpl>();
+                }
+                diag().emit(
+                    Diag::Error, cls_base->node()->loc_id(),
+                    str(name_id).size(), "defined in multiple modules");
+            }
             it = exporting.erase(it);
         } else {
             ++it;
@@ -352,7 +363,7 @@ void ResolveDeps::export_classes() {
             }
         }
         diag().emit(
-            diag::Error, item.node->loc_id(), str(name_id).size(),
+            Diag::Error, item.node->loc_id(), str(name_id).size(),
             "failed to resolve");
     }
 }

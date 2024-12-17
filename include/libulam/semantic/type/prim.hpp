@@ -91,7 +91,7 @@ public:
         } else {
             if (args.size() > 1) {
                 diag.emit(
-                    diag::Error, args_node->loc_id(), 1,
+                    Diag::Error, args_node->loc_id(), 1,
                     std::string("too many arguments for ") + type_str());
                 // continue
             }
@@ -106,7 +106,7 @@ public:
                 size = rval->get<Unsigned>();
             } else {
                 diag.emit(
-                    diag::Error, args_node->loc_id(), 1,
+                    Diag::Error, args_node->loc_id(), 1,
                     "cannot convert to bit size");
                 return {};
             }
@@ -119,13 +119,13 @@ public:
         // check, adjust and continue on error
         if (size < T::MinSize) {
             diag.emit(
-                diag::Error, node->loc_id(), 1,
+                Diag::Error, node->loc_id(), 1,
                 std::string("bit size argument must be at least ") +
                     std::to_string(T::MinSize));
             size = T::MinSize;
         } else if (size > T::MaxSize) {
             diag.emit(
-                diag::Error, node->loc_id(), 1,
+                Diag::Error, node->loc_id(), 1,
                 std::string("bit size argument must be at most ") +
                     std::to_string(T::MaxSize));
             size = T::MaxSize;

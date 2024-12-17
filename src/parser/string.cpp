@@ -29,7 +29,7 @@ String parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     }
     assert(cur == str.size());
     if (!is_terminated)
-        diag.emit(diag::Error, loc_id, cur, 0, "untermitated string");
+        diag.emit(Diag::Error, loc_id, cur, 0, "untermitated string");
     parsed.shrink_to_fit();
     return parsed;
 }

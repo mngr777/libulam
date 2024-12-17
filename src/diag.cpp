@@ -13,15 +13,15 @@ constexpr char ErrorPrefix[] = "Error ";
 constexpr char WarnPrefix[] = "Warning ";
 constexpr char NoticePrefix[] = "Notice ";
 
-const char* level_prefix(diag::Level lvl) {
+const char* level_prefix(Diag::Level lvl) {
     switch (lvl) {
-    case diag::Fatal:
+    case Diag::Fatal:
         return FatalPrefix;
-    case diag::Error:
+    case Diag::Error:
         return ErrorPrefix;
-    case diag::Warn:
+    case Diag::Warn:
         return WarnPrefix;
-    case diag::Notice:
+    case Diag::Notice:
         return NoticePrefix;
     default:
         assert(false);
@@ -30,17 +30,8 @@ const char* level_prefix(diag::Level lvl) {
 
 } // namespace
 
-// TMP: output to stderr
-void Diag::emit(diag::Level lvl, const std::string& text) {
-    std::cerr << text;
-    if (lvl < diag::Warn)
-        ++_err_num;
-    if (lvl == diag::Fatal || _err_num == MaxErrorNum)
-        std::exit(-1);
-}
-
 void Diag::emit(
-    diag::Level lvl,
+    Diag::Level lvl,
     loc_id_t loc_id,
     std::size_t len,
     const std::string& text) {
@@ -49,7 +40,7 @@ void Diag::emit(
 
 // TMP: output to stderr
 void Diag::emit(
-    diag::Level lvl,
+    Diag::Level lvl,
     loc_id_t loc_id,
     int off,
     std::size_t len,
@@ -61,9 +52,9 @@ void Diag::emit(
     std::cerr << _sm.line_at(loc);
     std::cerr << std::string(loc.chr() - 1, ' ') << "^\n";
     std::cerr << std::string(loc.chr() - 1, ' ') << text << "\n";
-    if (lvl < diag::Warn)
+    if (lvl < Diag::Warn)
         ++_err_num;
-    if (lvl == diag::Fatal || _err_num == MaxErrorNum)
+    if (lvl == Diag::Fatal || _err_num == MaxErrorNum)
         std::exit(-1);
 }
 

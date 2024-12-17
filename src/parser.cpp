@@ -60,7 +60,7 @@ bool Parser::match(tok::Type type) {
     if (!_tok.is(type)) {
         auto text = std::string("unexpected ") + _tok.type_name() +
                     ", expecting " + tok::type_name(type);
-        _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, text);
+        _ctx.diag().emit(Diag::Error, _tok.loc_id, _tok.size, text);
         return false;
     }
     return true;
@@ -80,19 +80,19 @@ template <typename... Ts> void Parser::panic(Ts... stop) {
 
 void Parser::unexpected() {
     auto text = std::string("unexpected ") + _tok.type_name();
-    _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, text);
+    _ctx.diag().emit(Diag::Error, _tok.loc_id, _tok.size, text);
 }
 
 void Parser::diag(std::string text) {
-    _ctx.diag().emit(diag::Error, _tok.loc_id, _tok.size, std::move(text));
+    _ctx.diag().emit(Diag::Error, _tok.loc_id, _tok.size, std::move(text));
 }
 
 void Parser::diag(const Token& token, std::string text) {
-    _ctx.diag().emit(diag::Error, token.loc_id, token.size, std::move(text));
+    _ctx.diag().emit(Diag::Error, token.loc_id, token.size, std::move(text));
 }
 
 void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
-    _ctx.diag().emit(diag::Error, loc_id, size, text);
+    _ctx.diag().emit(Diag::Error, loc_id, size, text);
 }
 
 Ptr<ast::ModuleDef> Parser::parse_module(str_id_t name_id) {

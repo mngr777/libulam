@@ -39,7 +39,7 @@ Value IntType::cast(
     case IntId: {
         // implicitly convertible?
         if (is_impl && !is_convertible(type)) {
-            diag.emit(diag::Error, node->loc_id(), 1, "invalid implicit cast");
+            diag.emit(Diag::Error, node->loc_id(), 1, "invalid implicit cast");
         }
         // is value known?
         auto rval = value.rvalue();
@@ -50,13 +50,13 @@ Value IntType::cast(
         auto val = rval->get<Integer>();
         auto truncated = detail::truncate(val, bitsize());
         if (truncated != val)
-            diag.emit(diag::Error, node->loc_id(), 1, "value truncated");
+            diag.emit(Diag::Error, node->loc_id(), 1, "value truncated");
         return RValue{truncated};
     }
     case UnsignedId: {
         // implicitly convertible?
         if (is_impl && !is_convertible(type)) {
-            diag.emit(diag::Error, node->loc_id(), 1, "invalid implicit cast");
+            diag.emit(Diag::Error, node->loc_id(), 1, "invalid implicit cast");
         }
         // is value known?
         auto rval = value.rvalue();
@@ -67,12 +67,12 @@ Value IntType::cast(
         auto val = rval->get<Unsigned>();
         auto truncated = detail::truncate(val, bitsize() - 1);
         if (truncated != val)
-            diag.emit(diag::Error, node->loc_id(), 1, "value truncated");
+            diag.emit(Diag::Error, node->loc_id(), 1, "value truncated");
         return RValue{truncated};
     }
     case BoolId: {
         if (is_impl) {
-            diag.emit(diag::Error, node->loc_id(), 1, "invalid implicit cast");
+            diag.emit(Diag::Error, node->loc_id(), 1, "invalid implicit cast");
         }
         auto rval = value.rvalue();
         return rval->is_unknown() ? RValue{}
@@ -81,7 +81,7 @@ Value IntType::cast(
     case UnaryId: {
         // implicitly convertible?
         if (is_impl && !is_convertible(type)) {
-            diag.emit(diag::Error, node->loc_id(), 1, "invalid implicit cast");
+            diag.emit(Diag::Error, node->loc_id(), 1, "invalid implicit cast");
         }
         // is value known?
         auto rval = value.rvalue();
@@ -92,7 +92,7 @@ Value IntType::cast(
         Unsigned val = rval->get<Unsigned>();
         Unsigned truncated = detail::truncate(val, bitsize());
         if (truncated != val)
-            diag.emit(diag::Error, node->loc_id(), 1, "value truncated");
+            diag.emit(Diag::Error, node->loc_id(), 1, "value truncated");
         return RValue{truncated};
     }
         // TODO: BitsId
@@ -182,7 +182,7 @@ ExprRes IntType::binary_op_int(
             left_rval->get<Integer>(), right_rval->get<Integer>());
         // truncated?
         if (is_truncated)
-            diag.emit(diag::Warn, node->loc_id(), 1, "result is truncated");
+            diag.emit(Diag::Warn, node->loc_id(), 1, "result is truncated");
         return {type, RValue{val}};
     }
 
@@ -195,7 +195,7 @@ ExprRes IntType::binary_op_int(
             return {type, RValue{}};
         auto right_val = right_rval->get<Integer>();
         if (right_val == 0)
-            diag.emit(diag::Error, node->loc_id(), 1, "division by zero");
+            diag.emit(Diag::Error, node->loc_id(), 1, "division by zero");
         auto val = detail::safe_quot(left_rval->get<Integer>(), right_val);
         return {type, RValue{val}};
     }
@@ -206,7 +206,7 @@ ExprRes IntType::binary_op_int(
             return {this, RValue{}};
         auto right_val = right_rval->get<Integer>();
         if (right_val == 0)
-            diag.emit(diag::Error, node->loc_id(), 1, "division by zero");
+            diag.emit(Diag::Error, node->loc_id(), 1, "division by zero");
         auto val = detail::safe_rem(left_rval->get<Integer>(), right_val);
         return {this, RValue{val}};
     }
@@ -223,7 +223,7 @@ ExprRes IntType::binary_op_int(
             left_rval->get<Integer>(), right_rval->get<Integer>());
         // truncated?
         if (rest != 0)
-            diag.emit(diag::Warn, node->loc_id(), 1, "result is truncated");
+            diag.emit(Diag::Warn, node->loc_id(), 1, "result is truncated");
         return {type, RValue{val}};
     }
 
@@ -239,7 +239,7 @@ ExprRes IntType::binary_op_int(
             left_rval->get<Integer>(), right_rval->get<Integer>());
         // truncated?
         if (rest != 0)
-            diag.emit(diag::Warn, node->loc_id(), 1, "result is truncated");
+            diag.emit(Diag::Warn, node->loc_id(), 1, "result is truncated");
         return {type, RValue{val}};
     }
 
