@@ -12,12 +12,18 @@ TestCase::TestCase(const std::filesystem::path& path) {
 }
 
 void TestCase::run() {
+    assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
     for (auto pair : _srcs) {
         auto [name, text] = pair;
         compiler.parse_string(std::string{text}, std::string{name});
     }
+    // analyze
+    auto program = compiler.analyze();
+    if (!program)
+        throw std::invalid_argument("failed to analyze program");
+    std::string name{_srcs[0].first};
     compiler.compile(out);
 }
 

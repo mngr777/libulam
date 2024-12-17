@@ -1,12 +1,12 @@
 #include <cassert>
+#include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 
 namespace ulam {
 
-Module::Module(
-    Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node):
+Module::Module(Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node):
     _program{program},
     _id{id},
     _node{node},

@@ -4,6 +4,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
 #include <set>
+#include <string>
 #include <unordered_map>
 
 namespace ulam::ast {
