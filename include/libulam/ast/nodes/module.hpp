@@ -1,6 +1,5 @@
 #pragma once
 #include <cassert>
-#include <libulam/ast/context.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -15,11 +14,9 @@
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
-#include <string_view>
 #include <utility>
 
 namespace ulam {
-class Program;
 class Module;
 class Class;
 class ClassTpl;
@@ -33,21 +30,6 @@ class TypeDef;
 class ClassDef;
 class FunDef;
 class VarDefList;
-
-class Root : public List<Node, ModuleDef> {
-    ULAM_AST_NODE
-    ULAM_AST_PTR_ATTR(Program, program)
-public:
-    Root();
-    ~Root();
-
-    Context& ctx() { return _ctx; }
-    const Context& ctx() const { return _ctx; }
-
-private:
-    Context _ctx;
-    NameIdMap<ModuleDef> _name_id_map;
-};
 
 class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE

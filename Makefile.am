@@ -11,6 +11,7 @@ AST_HEADER_FILES = \
 	include/libulam/ast/nodes/access.hpp \
 	include/libulam/ast/nodes/expr.hpp \
 	include/libulam/ast/nodes/params.hpp \
+	include/libulam/ast/nodes/root.hpp \
 	include/libulam/ast/nodes/stmt.hpp \
 	include/libulam/ast/nodes/stmts.hpp \
 	include/libulam/ast/nodes/type.hpp \
@@ -19,7 +20,7 @@ AST_HEADER_FILES = \
 
 AST_SOURCE_FILES = \
 	src/ast/node.cpp \
-	src/ast/nodes/module.cpp \
+	src/ast/nodes/root.cpp \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \

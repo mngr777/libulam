@@ -1,5 +1,5 @@
 #include <cassert>
-#include <libulam/ast/nodes/module.hpp>
+#include <libulam/ast/nodes/root.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/prim.hpp>

@@ -1,8 +1,6 @@
 #pragma once
 #include <libulam/ast/expr_visitor.hpp>
-#include <libulam/ast/nodes/expr.hpp>
-#include <libulam/ast/nodes/module.hpp>
-#include <libulam/ast/nodes/params.hpp>
+#include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
