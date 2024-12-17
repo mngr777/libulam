@@ -28,10 +28,6 @@ public:
 
     auto& builtins() { return _builtins; }
 
-    // TODO: remove this
-    str_id_t self_str_id();
-    str_id_t self_inst_str_id();
-
     Ref<Module> module(module_id_t id);
     Ref<Module> add_module(Ref<ast::ModuleDef> node);
 

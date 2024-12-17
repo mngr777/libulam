@@ -11,10 +11,6 @@ Program::Program(Diag& diag, Ref<ast::Root> ast):
 
 Program::~Program() {}
 
-str_id_t Program::self_str_id() { return _ast->ctx().str_id("Self"); }
-
-str_id_t Program::self_inst_str_id() { return _ast->ctx().str_id("self"); }
-
 Ref<Module> Program::module(module_id_t id) {
     assert(id < _modules.size());
     return ref(_modules[id]);
