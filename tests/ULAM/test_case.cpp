@@ -4,6 +4,7 @@
 #include <fstream>
 #include <ios>
 #include <stdexcept>
+#include <sstream>
 
 TestCase::TestCase(const std::filesystem::path& path) {
     load(path);
@@ -11,11 +12,13 @@ TestCase::TestCase(const std::filesystem::path& path) {
 }
 
 void TestCase::run() {
+    std::stringstream out;
     Compiler compiler;
     for (auto pair : _srcs) {
         auto [name, text] = pair;
         compiler.parse_string(std::string{text}, std::string{name});
     }
+    compiler.compile(out);
 }
 
 void TestCase::load(const std::filesystem::path& path) {
