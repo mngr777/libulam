@@ -64,6 +64,8 @@ public:
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
+    void export_symbols(Ref<Scope> scope);
+
     Ref<PersScope> scope() { return ref(_scope); }
 
     Symbol* get(str_id_t name_id) { return _symbols.get(name_id); }

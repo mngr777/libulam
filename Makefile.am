@@ -78,6 +78,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/ops.cpp \
 	src/semantic/program.cpp \
 	src/semantic/scope.cpp \
+	src/semantic/scope/stack.cpp \
 	src/semantic/scope/view.cpp \
 	src/semantic/type.cpp \
 	src/semantic/type/builtin/bits.cpp \
@@ -96,6 +97,7 @@ SEMANTIC_SOURCE_FILES = \
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
 	include/libulam/sema/eval.hpp \
+	include/libulam/sema/eval/visitor.hpp \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
 	include/libulam/sema/resolver.hpp \
@@ -106,6 +108,7 @@ SEMA_HEADER_FILES = \
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
 	src/sema/eval.cpp \
+	src/sema/eval/visitor.cpp \
 	src/sema/expr_visitor.cpp \
 	src/sema/out.hpp \
 	src/sema/out.cpp \

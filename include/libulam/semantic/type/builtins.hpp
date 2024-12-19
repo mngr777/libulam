@@ -14,6 +14,8 @@ public:
     Ref<PrimType> prim_type(BuiltinTypeId id);
     Ref<Type> type(BuiltinTypeId id);
 
+    Ref<Type> boolean();
+
 private:
     std::unordered_map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;
     std::unordered_map<BuiltinTypeId, Ptr<PrimType>> _prim_types;

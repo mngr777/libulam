@@ -8,24 +8,39 @@ namespace ulam {
 
 class ScopeStack {
 public:
+    class Raii {
+        friend ScopeStack;
+
+    public:
+        ~Raii();
+
+        Raii(Raii&& other) = default;
+        Raii& operator=(Raii&& other) = delete;
+
+    private:
+        Raii(ScopeStack& stack, Ptr<Scope>&& scope);
+        Raii(ScopeStack& stack, ScopeFlags flags);
+
+        ScopeStack& _stack;
+        Ref<Scope> _scope;
+    };
+
+    ScopeStack() {}
+
+    ScopeStack(ScopeStack&& other) = default;
+    ScopeStack& operator=(ScopeStack&& other) = default;
+
     bool empty() { return _stack.empty(); }
 
-    Ref<Scope> top() {
-        assert(!empty());
-        return ref(_stack.top());
-    }
+    Ref<Scope> top();
 
-    void push(Ptr<Scope>&& scope) { _stack.push(std::move(scope)); }
+    Raii raii(Ptr<Scope>&& scope);
+    Raii raii(ScopeFlags flags);
 
-    void push(ScopeFlags flags) {
-        auto parent = !empty() ? top() : Ref<Scope>{};
-        push(make<BasicScope>(parent, flags));
-    }
+    void push(Ptr<Scope>&& scope);
+    void push(ScopeFlags flags);
 
-    void pop() {
-        assert(!empty());
-        _stack.pop();
-    }
+    void pop();
 
 private:
     std::stack<Ptr<Scope>> _stack;

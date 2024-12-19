@@ -18,19 +18,31 @@
 
 namespace ulam {
 
-Ptr<ast::ModuleDef> Parser::parse_module_file(const std::filesystem::path& path) {
+Ptr<ast::ModuleDef>
+Parser::parse_module_file(const std::filesystem::path& path) {
     _pp.main_file(path);
     consume();
     return parse_module();
 }
 
-Ptr<ast::ModuleDef> Parser::parse_module_str(std::string text, std::string name) {
+Ptr<ast::ModuleDef>
+Parser::parse_module_str(std::string text, std::string name) {
     _pp.main_string(text, name);
     consume();
     return parse_module();
 }
 
-void Parser::consume() { _pp >> _tok; }
+Ptr<ast::Block> Parser::parse_stmts(std::string text) {
+    _pp.main_string(text, "eval"); // TODO: stream source
+    consume();
+    auto block = tree<ast::Block>();
+    parse_as_block(ref(block), true /* implicit braces */);
+    return block;
+}
+
+void Parser::consume() {
+    _pp >> _tok;
+}
 
 void Parser::consume_if(tok::Type type) {
     if (_tok.is(type))
@@ -471,14 +483,19 @@ Ptr<ast::Block> Parser::parse_block() {
     return node;
 }
 
-void Parser::parse_as_block(Ref<ast::Block> node) {
-    expect(tok::BraceL);
+void Parser::parse_as_block(Ref<ast::Block> node, bool implicit_braces) {
+    // {
+    if (!implicit_braces)
+        expect(tok::BraceL);
+    // stmts
     while (!_tok.in(tok::BraceR, tok::Eof)) {
         auto stmt = parse_stmt();
         if (stmt)
             node->add(std::move(stmt));
     }
-    expect(tok::BraceR);
+    // }
+    if (!implicit_braces)
+        expect(tok::BraceR);
 }
 
 Ptr<ast::Stmt> Parser::parse_stmt() {
@@ -694,8 +711,8 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
     if (op != Op::None) {
         auto loc_id = _tok.loc_id;
         consume();
-        lhs =
-            tree_loc<ast::UnaryPreOp>(loc_id, op, parse_expr_climb(ops::prec(op)));
+        lhs = tree_loc<ast::UnaryPreOp>(
+            loc_id, op, parse_expr_climb(ops::prec(op)));
     } else {
         lhs = parse_expr_lhs();
     }
@@ -704,7 +721,8 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
     return parse_expr_climb_rest(std::move(lhs), min_prec);
 }
 
-Ptr<ast::Expr> Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
+Ptr<ast::Expr>
+Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
     // binary or suffix
     while (true) {
         // binary?
@@ -928,7 +946,8 @@ Ptr<ast::ArrayAccess> Parser::parse_array_access(Ptr<ast::Expr>&& array) {
     if (!index)
         return {};
     expect(tok::BracketR);
-    return tree_loc<ast::ArrayAccess>(loc_id, std::move(array), std::move(index));
+    return tree_loc<ast::ArrayAccess>(
+        loc_id, std::move(array), std::move(index));
 }
 
 Ptr<ast::Expr> Parser::parse_member_access_or_type_op(Ptr<ast::Expr>&& obj) {
@@ -947,7 +966,8 @@ Ptr<ast::Expr> Parser::parse_member_access_or_type_op(Ptr<ast::Expr>&& obj) {
 Ptr<ast::MemberAccess>
 Parser::parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
     assert(_tok.is(tok::Ident));
-    return tree_loc<ast::MemberAccess>(op_loc_id, std::move(obj), parse_ident());
+    return tree_loc<ast::MemberAccess>(
+        op_loc_id, std::move(obj), parse_ident());
 }
 
 Ptr<ast::TypeIdent> Parser::parse_type_ident() {
@@ -955,7 +975,6 @@ Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     auto str = tok_ast_str();
     consume();
     return tree<ast::TypeIdent>(str);
-
 }
 
 Ptr<ast::Ident> Parser::parse_ident() {

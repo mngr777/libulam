@@ -72,6 +72,8 @@ public:
 
     virtual Ref<PrimType>
     type(Diag& diag, Ref<ast::Node> node, bitsize_t bitsize) = 0;
+
+    virtual Ref<PrimType> type(bitsize_t bitsize) = 0;
 };
 
 template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
@@ -133,8 +135,13 @@ public:
         return get(size);
     }
 
+    Ref<PrimType> type(bitsize_t size) override {
+        return get(size);
+    }
+
 private:
     Ref<PrimType> get(bitsize_t size) {
+        assert(T::MinSize <= size && size <= T::MaxSize);
         {
             auto it = _types.find(size);
             if (it != _types.end())

@@ -1,21 +1,24 @@
 #pragma once
+#include <libulam/ast/nodes/root.hpp>
+#include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam::sema {
 
-class Eval : public RecVisitor {
+class Eval {
 public:
-    using RecVisitor::visit;
+    Eval(Context& ctx, Ref<ast::Root> ast);
 
-    Eval(Diag& diag, Ref<ast::Root> ast): RecVisitor{diag, ast, true} {}
+    void eval(std::string& text);
 
-
-protected:
-    Ref<Type> resolve_type_def(Ref<ast::TypeDef> node, Ref<Scope> scope);
-    Ref<Type> resolve_type_name(Ref<ast::TypeName> node, Ref<Scope> scope);
+private:
+    Context& _ctx;
+    Ref<ast::Root> _ast;
+    EvalVisitor _ev;
 };
 
 } // namespace ulam::sema

@@ -20,6 +20,8 @@ public:
     Ptr<ast::ModuleDef> parse_module_file(const std::filesystem::path& path);
     Ptr<ast::ModuleDef> parse_module_str(std::string text, std::string name);
 
+    Ptr<ast::Block> parse_stmts(std::string text);
+
 private:
     void consume();
     void consume_if(tok::Type type);
@@ -55,7 +57,7 @@ private:
     Ptr<ast::Param> parse_param(bool requires_value);
 
     Ptr<ast::Block> parse_block();
-    void parse_as_block(Ref<ast::Block> node);
+    void parse_as_block(Ref<ast::Block> node, bool implicit_braces = false);
     Ptr<ast::Stmt> parse_stmt();
     Ptr<ast::If> parse_if();
     Ptr<ast::For> parse_for();

@@ -15,6 +15,18 @@ Module::Module(Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node):
 
 Module::~Module() {}
 
+void Module::export_symbols(Ref<Scope> scope) {
+    for (auto& pair : _symbols) {
+        auto& [name_id, sym] = pair;
+        if (sym.is<Class>()) {
+            scope->set<UserType>(name_id, sym.get<Class>());
+        } else {
+            assert(sym.is<ClassTpl>());
+            scope->set<ClassTpl>(name_id, sym.get<ClassTpl>());
+        }
+    }
+}
+
 void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type) {
     assert(_imports.count(name_id) == 0);
     assert(module != this);
