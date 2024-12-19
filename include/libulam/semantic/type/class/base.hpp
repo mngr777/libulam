@@ -16,7 +16,7 @@ class PersScope;
 
 class ClassBase {
 public:
-    using SymbolTable = _SymbolTable<UserType, Fun, Var>;
+    using SymbolTable = _SymbolTable<UserType, FunSet, Var>;
     using Symbol = SymbolTable::Symbol;
 
     ClassBase(

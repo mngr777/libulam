@@ -151,8 +151,8 @@ bool Resolver::resolve(Ref<Class> cls) {
                 res = resolve(sym->get<Var>(), ref(scope_view));
             } else {
                 // fun
-                assert(sym->is<Fun>());
-                res = resolve(cls, sym->get<Fun>());
+                assert(sym->is<FunSet>());
+                res = resolve(cls, sym->get<FunSet>());
             }
             is_resolved = is_resolved && res;
         }
@@ -228,7 +228,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     RET_UPD_STATE(var, is_resolved);
 }
 
-bool Resolver::resolve(Ref<Class> cls, Ref<Fun> fun) {
+bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 

@@ -41,11 +41,11 @@ private:
     ParamList _params;
 };
 
-class Fun : public ScopeObject {
+class FunSet : public ScopeObject {
 public:
-    Fun() {}
+    FunSet() {}
 
-    void merge(Ref<Fun> other);
+    void merge(Ref<FunSet> other);
 
     // TMP
     auto& overloads() { return _overloads; }

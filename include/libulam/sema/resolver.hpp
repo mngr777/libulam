@@ -25,7 +25,7 @@ public:
     bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
     bool resolve(Ref<Var> var, Ref<Scope> scope);
-    bool resolve(Ref<Class> cls, Ref<Fun> fun);
+    bool resolve(Ref<Class> cls, Ref<FunSet> fun);
     bool resolve(Ref<FunOverload> overload, Ref<Scope> scope);
 
     Ref<Type> resolve_var_decl_type(

@@ -24,13 +24,13 @@ Ref<ast::FunDefBody> FunOverload::body_node() { return _node->body(); }
 
 // Fun
 
-void Fun::merge(Ref<Fun> other) {
+void FunSet::merge(Ref<FunSet> other) {
     for (auto& item : other->_overloads)
         add_overload(item.ref());
 }
 
 Ref<FunOverload>
-Fun::add_overload(Ref<ast::FunDef> node, ScopeVersion scope_version) {
+FunSet::add_overload(Ref<ast::FunDef> node, ScopeVersion scope_version) {
     assert(node);
     auto overload = make<FunOverload>(node);
     overload->set_scope_version(scope_version);
@@ -39,7 +39,7 @@ Fun::add_overload(Ref<ast::FunDef> node, ScopeVersion scope_version) {
     return overload_ref;
 }
 
-Ref<FunOverload> Fun::add_overload(Ref<FunOverload> overload) {
+Ref<FunOverload> FunSet::add_overload(Ref<FunOverload> overload) {
     _overloads.push_back(overload);
     return overload;
 }

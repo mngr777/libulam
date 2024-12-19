@@ -60,7 +60,7 @@ void Out::print(Scope::Symbol* sym) {
         _os << "tpl";
     } else if (sym->is<Var>()) {
         _os << "var";
-    } else if (sym->is<Fun>()) {
+    } else if (sym->is<FunSet>()) {
         _os << "fun";
     }
 }

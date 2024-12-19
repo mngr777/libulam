@@ -222,9 +222,9 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
     // find or create fun
     auto scope_version = scope()->version();
     auto sym = cls_base->get(name_id);
-    Ref<Fun> fun_ref{};
+    Ref<FunSet> fun_ref{};
     if (sym) {
-        if (!sym->is<Fun>()) {
+        if (!sym->is<FunSet>()) {
             diag().emit(
                 Diag::Error, node->loc_id(), str(name_id).size(),
                 "defined and is not a function");
@@ -232,10 +232,10 @@ void ResolveDeps::visit(Ref<ast::FunDef> node) {
         }
     } else {
         // add to class/tpl, add to scope
-        sym = cls_base->set(name_id, make<Fun>());
-        scope()->set(name_id, sym->get<Fun>());
+        sym = cls_base->set(name_id, make<FunSet>());
+        scope()->set(name_id, sym->get<FunSet>());
     }
-    fun_ref = sym->get<Fun>();
+    fun_ref = sym->get<FunSet>();
 
     // create overload
     auto overload = fun_ref->add_overload(node, scope_version);

@@ -22,7 +22,7 @@ class Module;
 
 class Scope {
 protected:
-    using SymbolTable = _SymbolTable<UserType, ulam::ClassTpl, ulam::Fun, Var>;
+    using SymbolTable = _SymbolTable<UserType, ulam::ClassTpl, FunSet, Var>;
 
 public:
     using Symbol = SymbolTable::Symbol;
