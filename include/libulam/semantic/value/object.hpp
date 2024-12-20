@@ -16,6 +16,8 @@ public:
     Ref<Class> cls() { return _cls; }
     Ref<const Class> cls() const { return _cls; }
 
+    const BitVector& bits() { return _bits; }
+
 private:
     class Data;
 

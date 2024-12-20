@@ -1,18 +1,16 @@
 #pragma once
-#include <cstdint>
-#include <libulam/memory/buf.hpp>
-#include <variant>
+#include <libulam/semantic/value/bit_vector.hpp>
 
 namespace ulam {
 
 class Bits {
 public:
-    Bits(std::uint64_t data): _value{data} {}
+    Bits(BitVector::size_t size): _bits(size) {}
 
-    // TODO: buffer
+    const BitVector& bits() { return _bits; }
 
 private:
-    std::variant<std::uint64_t, mem::Buf> _value;
+    BitVector _bits;
 };
 
 } // namespace ulam

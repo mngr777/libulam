@@ -52,7 +52,7 @@ public:
         return is(flags_) || (parent() && parent()->is(flags_));
     }
 
-    bool has(str_id_t name_id, bool current = false) {
+    virtual bool has(str_id_t name_id, bool current = false) {
         return get(name_id, current);
     }
 
@@ -165,6 +165,10 @@ public:
 
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);
+
+    bool has(str_id_t name_id, bool current = false) override {
+        return has(name_id, version(), current);
+    }
 
     bool has(str_id_t name_id, Version version, bool current = false) {
         return get(name_id, version, current);

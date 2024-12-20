@@ -12,6 +12,7 @@ constexpr char FatalPrefix[] = "Fatal error ";
 constexpr char ErrorPrefix[] = "Error ";
 constexpr char WarnPrefix[] = "Warning ";
 constexpr char NoticePrefix[] = "Notice ";
+constexpr char DebugPrefix[] = "Debug ";
 
 const char* level_prefix(Diag::Level lvl) {
     switch (lvl) {
@@ -23,6 +24,8 @@ const char* level_prefix(Diag::Level lvl) {
         return WarnPrefix;
     case Diag::Notice:
         return NoticePrefix;
+    case Diag::Debug:
+        return DebugPrefix;
     default:
         assert(false);
     }

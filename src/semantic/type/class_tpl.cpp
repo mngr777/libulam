@@ -1,8 +1,8 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
-#include <libulam/semantic/scope/view.hpp>
 #include <utility>
 
 namespace ulam {
@@ -33,7 +33,7 @@ ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
 }
 
 Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = make<Class>(&id_gen(), this);
+    auto cls = make<Class>(&id_gen(), _str_pool.get(name_id()), this);
 
     // create params
     {
@@ -52,8 +52,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             auto copy = make<Var>(
                 var->type_node(), var->node(), std::move(value),
                 var->flags() & ~Var::Tpl);
-            cls->param_scope()->set(name_id, ref(copy));
-            cls->set(name_id, std::move(copy));
+            cls->add_param_var(std::move(copy));
         }
         assert(param_scope()->version() == scope_view->version()); // in sync?
         assert(args.size() == 0); // all args consumed?
@@ -85,14 +84,10 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
             } else {
                 assert(sym->is<FunSet>());
-                auto fun = sym->get<FunSet>();
-                auto copy = make<FunSet>();
-                for (auto& overload : fun->overloads()) {
-                    copy->add_overload(
-                        overload.ref()->node(), cls->scope()->version());
-                }
+                auto fset = sym->get<FunSet>();
+                auto copy = make<FunSet>(*fset);
                 cls->scope()->set(name_id, ref(copy));
-                cls->set(name_id, std::move(fun));
+                cls->set(name_id, std::move(fset));
             }
         }
         assert(scope_view->version() == scope()->version()); // in sync?

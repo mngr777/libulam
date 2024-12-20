@@ -24,6 +24,7 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
+	include/libulam/semantic/mangler.hpp \
 	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/number.hpp \
 	include/libulam/semantic/ops.hpp \
@@ -74,6 +75,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/class/layout.cpp \
 	src/semantic/type/class_kind.cpp \
 	src/semantic/type/prim.cpp \
+	src/semantic/mangler.cpp \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
 	src/semantic/program.cpp \

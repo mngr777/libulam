@@ -14,6 +14,7 @@ public:
     Ref<Type> type() { return _type; }
     Ref<const Type> type() const { return _type; }
 
+    bool has_default_value() const { return !_default_value.is_nil(); }
     Value& default_value() { return _default_value; }
     const Value& default_value() const { return _default_value; }
 

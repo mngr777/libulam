@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <libulam/semantic/mangler.hpp>
@@ -12,7 +13,14 @@ std::string Mangler::mangled(const TypedValueList& values) {
     std::stringstream ss;
     for (const auto& tv : values)
         write_mangled(ss, tv);
-    return {ss.str(), true};
+    return ss.str();
+}
+
+std::string Mangler::mangled(const ParamList& params) {
+    std::stringstream ss;
+    for (const auto& param : params)
+        write_mangled(ss, param.type());
+    return ss.str();
 }
 
 void Mangler::write_mangled(std::ostream& os, const TypedValue& tv) {
@@ -27,12 +35,14 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
 
     type = type->canon();
 
+    // &
     if (type->is_ref()) {
         os << "r";
         type = type->as_ref()->refd()->canon();
         assert(type);
     }
 
+    // []
     while (type->is_array()) {
         auto array = type->canon()->as_array();
         assert(array);
@@ -45,25 +55,39 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         type = array->item_type()->canon();
     }
 
-    if (type->bitsize() == 0) {
-        os << "10";
-    } else {
-        detail::write_leximited(os, (Unsigned)type->bitsize());
-    }
+    // bitsize
+    detail::write_leximited(os, (Unsigned)type->bitsize());
 
+    // type name/code
     if (type->is_class()) {
         auto cls = type->as_class();
-        detail::write_leximited(os, _str_pool.get(cls->name_id()));
-        // NOTE: param types and values are not included
+        detail::write_leximited(os, cls->name());
+        for (auto var : cls->param_vars()) {
+            write_mangled(os, var->type());
+            write_mangled(os, var->value());
+        }
     } else {
         assert(type->is_prim());
         detail::write_leximited(os, builtin_type_code(type->builtin_type_id()));
+        if (has_bitsize(type->builtin_type_id()))
+            detail::write_leximited(os, (Unsigned)type->bitsize());
     }
 }
 
-void Mangler::write_mangled(std::ostream& os, const Value& type) {
-    // TODO: implement
-    assert(false);
+void Mangler::write_mangled(std::ostream& os, const Value& value) {
+    assert(value.is_nil());
+    auto rval = value.rvalue();
+    if (rval->is<Unsigned>()) {
+        detail::write_leximited(os, rval->get<Unsigned>());
+    } else if (rval->is<Integer>()){
+        detail::write_leximited(os, rval->get<Integer>());
+    } else if (rval->is<Bool>()){
+        detail::write_leximited(os, rval->get<Bool>());
+    } else if (rval->is<String>()) {
+        detail::write_leximited(os, rval->get<String>());
+    } else {
+        assert(false); // TODO
+    }
 }
 
 } // namespace ulam

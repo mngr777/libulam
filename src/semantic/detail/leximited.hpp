@@ -10,5 +10,6 @@ void write_leximited(std::ostream& os, Unsigned value);
 void write_leximited(std::ostream& os, String& value);
 void write_leximited(std::ostream& os, std::string_view value);
 void write_leximited(std::ostream& os, char value);
+void write_leximited(std::ostream& os, bool value);
 
 } // namespace ulam::detail

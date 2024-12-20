@@ -56,6 +56,9 @@ public:
         _id_gen{id_gen}, _id{id_gen ? id_gen->next() : NoTypeId} {}
     virtual ~Type();
 
+    bool operator==(const Type& other) const { return this == &other; }
+    bool operator!=(const Type& other) const { return !operator==(other); }
+
     bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
 

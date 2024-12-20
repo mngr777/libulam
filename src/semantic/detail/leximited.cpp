@@ -62,4 +62,8 @@ void write_leximited(std::ostream& os, char value) {
     os << value;
 }
 
+void write_leximited(std::ostream& os, bool value) {
+    write_leximited(os, (Unsigned)(value ? 1 : 0));
+}
+
 } // namespace ulam::detail

@@ -40,9 +40,7 @@ Ptr<ast::Block> Parser::parse_stmts(std::string text) {
     return block;
 }
 
-void Parser::consume() {
-    _pp >> _tok;
-}
+void Parser::consume() { _pp >> _tok; }
 
 void Parser::consume_if(tok::Type type) {
     if (_tok.is(type))
@@ -899,6 +897,7 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
     Ptr<ast::TypeIdent> ident{};
     BuiltinTypeId builtin_type_id = NoBuiltinTypeId;
+    auto loc_id = _tok.loc_id;
     if (_tok.is(tok::BuiltinTypeIdent)) {
         builtin_type_id = _tok.builtin_type_id();
         consume();
@@ -908,9 +907,11 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     Ptr<ast::ArgList> args{};
     if (_tok.is(tok::ParenL))
         args = parse_arg_list();
-    return (builtin_type_id == NoBuiltinTypeId)
-               ? tree<ast::TypeSpec>(std::move(ident), std::move(args))
-               : tree<ast::TypeSpec>(builtin_type_id, std::move(args));
+    auto node = (builtin_type_id == NoBuiltinTypeId)
+                    ? tree<ast::TypeSpec>(std::move(ident), std::move(args))
+                    : tree<ast::TypeSpec>(builtin_type_id, std::move(args));
+    node->set_loc_id(loc_id);
+    return node;
 }
 
 Ptr<ast::FunCall> Parser::parse_funcall(Ptr<ast::Expr>&& obj) {

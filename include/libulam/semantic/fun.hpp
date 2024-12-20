@@ -1,8 +1,14 @@
 #pragma once
+#include "libulam/semantic/typed_value.hpp"
+#include "libulam/str_pool.hpp"
+#include <functional>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/params.hpp>
+#include <libulam/semantic/scope/object.hpp>
 #include <list>
+#include <optional>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace ulam::ast {
 class FunDef;
@@ -13,11 +19,14 @@ class ParamList;
 
 namespace ulam {
 
+class Diag;
 class Type;
 
-class FunOverload : public ScopeObject {
+class Fun : public ScopeObject {
 public:
-    FunOverload(Ref<ast::FunDef> node): _node{node} {}
+    enum Match { NoMatch, IsMatch, ExactMatch };
+
+    Fun(Ref<ast::FunDef> node): _node{node} {}
 
     Ref<Type> ret_type() { return _ret_type; }
     Ref<const Type> ret_type() const { return _ret_type; }
@@ -27,8 +36,12 @@ public:
     // TMP
     auto& params() { return _params; }
     const auto& param() const { return _params; }
-
     void add_param(Ref<Type> type, Value&& default_value);
+
+    unsigned min_param_num() const;
+    unsigned param_num() const { return _params.size(); }
+
+    Match match(const TypedValueList& args);
 
     Ref<ast::FunDef> node() { return _node; }
     Ref<ast::FunRetType> ret_type_node();
@@ -43,19 +56,27 @@ private:
 
 class FunSet : public ScopeObject {
 public:
+    using Cb = std::function<void(Ref<Fun>)>;
+    using MatchRes = std::unordered_set<Ref<Fun>>;
+
     FunSet() {}
+    FunSet(FunSet& other);
+
+    MatchRes find_match(const TypedValueList& args);
+
+    void for_each(Cb cb);
+
+    Ref<Fun> add(Ref<ast::FunDef> node, ScopeVersion scope_version);
+
+    void init_map(Diag& diag, UniqStrPool& str_pool);
 
     void merge(Ref<FunSet> other);
 
-    // TMP
-    auto& overloads() { return _overloads; }
-    const auto& overloads() const { return _overloads; }
-
-    Ref<FunOverload> add_overload(Ref<ast::FunDef> node, ScopeVersion scope_version);
-    Ref<FunOverload> add_overload(Ref<FunOverload> overload);
-
 private:
-    std::list<RefPtr<FunOverload>> _overloads;
+    using ParamTypeMap = std::unordered_map<std::string, Ref<Fun>>;
+
+    std::list<RefPtr<Fun>> _funs;
+    std::optional<ParamTypeMap> _map;
 };
 
 } // namespace ulam

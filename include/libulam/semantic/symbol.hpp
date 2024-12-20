@@ -87,7 +87,7 @@ public:
         }
     }
 
-    bool has(str_id_t name_id) const { return (_symbols.count(name_id) == 0); }
+    bool has(str_id_t name_id) const { return (_symbols.count(name_id) == 1); }
 
     Symbol* get(str_id_t name_id) {
         auto it = _symbols.find(name_id);

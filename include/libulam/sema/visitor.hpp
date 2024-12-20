@@ -37,7 +37,7 @@ protected:
     void visit(Ref<ast::ClassDef> node) override;
     void traverse(Ref<ast::ClassDefBody> node) override;
     void visit(Ref<ast::FunDef> node) override;
-    void traverse(Ref<ast::FunDefBody> node) override;
+    void visit(Ref<ast::FunDefBody> node) override;
 
     // Creating transient scopes (TODO)
     void visit(Ref<ast::Block> node) override;

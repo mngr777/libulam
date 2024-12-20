@@ -120,7 +120,7 @@ class FunDef : public Tuple<Stmt, FunRetType, ParamList, FunDefBody>,
                public Named,
                public DefNode {
     ULAM_AST_NODE
-    ULAM_AST_REF_ATTR(FunOverload, overload)
+    ULAM_AST_REF_ATTR(Fun, fun)
 public:
     FunDef(
         Str name,

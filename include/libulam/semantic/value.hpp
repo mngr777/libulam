@@ -27,6 +27,10 @@ public:
 
     template <typename T> void set(T&& value) { _value = value; }
 
+    template <typename V> void accept(V&& visitor) {
+        std::visit(visitor, _value);
+    }
+
 private:
     std::variant<std::monostate, Ts...> _value;
 };

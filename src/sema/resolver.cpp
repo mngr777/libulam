@@ -1,7 +1,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
-#include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/array_dim_eval.hpp>
+#include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
@@ -158,6 +158,36 @@ bool Resolver::resolve(Ref<Class> cls) {
         }
     }
 
+    // add funs from ancestors
+    for (auto anc : cls->ancestors()) {
+        for (auto& pair : anc.cls()->members()) {
+            auto& [name_id, sym] = pair;
+            if (!sym.is<FunSet>())
+                continue;
+
+            if (cls->has(name_id)) {
+                // symbol found in class
+                auto cls_sym = cls->get(name_id);
+                // is it a var?
+                if (cls_sym->is<Var>()) {
+                    auto var = cls_sym->get<Var>();
+                    diag().emit(
+                        Diag::Notice, var->node()->loc_id(),
+                        str(var->name_id()).size(),
+                        "variable shadows inherited function");
+                    continue;
+                }
+                //  must be a fun set, merge
+                assert(cls_sym->is<FunSet>());
+                cls_sym->get<FunSet>()->merge(sym.get<FunSet>());
+
+            } else {
+                // add parent fun set
+                cls->set(name_id, sym.get<FunSet>());
+            }
+        }
+    }
+
     RET_UPD_STATE(cls, is_resolved);
 }
 
@@ -228,27 +258,27 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     RET_UPD_STATE(var, is_resolved);
 }
 
-bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fun) {
-    CHECK_STATE(fun);
+bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
+    CHECK_STATE(fset);
     bool is_resolved = true;
 
     auto scope = cls->scope();
-    for (auto& overload : fun->overloads()) {
-        auto overload_ref = overload.ref();
-        auto scope_view = scope->view(overload_ref->scope_version());
-        is_resolved = resolve(overload_ref, ref(scope_view)) && is_resolved;
-    }
+    fset->for_each([&](Ref<Fun> fun) {
+        auto scope_view = scope->view(fun->scope_version());
+        is_resolved = resolve(fun, ref(scope_view)) && is_resolved;
+    });
+    fset->init_map(diag(), _program->str_pool());
 
-    RET_UPD_STATE(fun, is_resolved);
+    RET_UPD_STATE(fset, is_resolved);
 }
 
-bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
+bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
     assert(scope);
-    CHECK_STATE(overload);
+    CHECK_STATE(fun);
     bool is_resolved = true;
 
     // return type
-    auto ret_type_node = overload->ret_type_node();
+    auto ret_type_node = fun->ret_type_node();
     auto ret_type = resolve_fun_ret_type(ret_type_node, scope);
     if (!ret_type) {
         diag().emit(
@@ -260,7 +290,7 @@ bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
     // params
     BasicScope param_scope{scope}; // tmp scope
     ExprVisitor ev{_program, &param_scope};
-    auto params_node = overload->params_node();
+    auto params_node = fun->params_node();
     for (unsigned n = 0; n < params_node->child_num(); ++n) {
         auto param_node = params_node->get(n);
         auto param_type = resolve_var_decl_type(
@@ -274,11 +304,11 @@ bool Resolver::resolve(Ref<FunOverload> overload, Ref<Scope> scope) {
                 default_value = tv.move_value();
             }
         }
-        overload->add_param(param_type, std::move(default_value));
+        fun->add_param(param_type, std::move(default_value));
         is_resolved = param_type && is_resolved;
     }
 
-    RET_UPD_STATE(overload, is_resolved);
+    RET_UPD_STATE(fun, is_resolved);
 }
 
 Ref<Type> Resolver::resolve_var_decl_type(

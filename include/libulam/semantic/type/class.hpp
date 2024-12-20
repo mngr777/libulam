@@ -4,6 +4,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/class/layout.hpp>
+#include <string_view>
 
 namespace ulam::ast {
 class ArgList;
@@ -17,6 +18,8 @@ class Diag;
 class ClassTpl;
 
 class Class : public UserType, public ClassBase {
+    friend ClassTpl;
+
 public:
     class Ancestor {
     public:
@@ -34,11 +37,16 @@ public:
         Ref<ast::TypeName> _node;
     };
 
-    Class(TypeIdGen* id_gen, Ref<ClassTpl> tpl);
-    Class(TypeIdGen* id_gen, Ref<ast::ClassDef> node, Ref<Scope> scope);
+    using ParamVarList = std::list<Ref<Var>>;
+
+    Class(TypeIdGen* id_gen, std::string_view name, Ref<ClassTpl> tpl);
+    Class(TypeIdGen* id_gen, std::string_view name, Ref<ast::ClassDef> node, Ref<Scope> scope);
     ~Class();
 
+    const std::string_view name() const { return _name; }
     str_id_t name_id() const override;
+
+    const ParamVarList& param_vars() const { return _param_vars; }
 
     auto& ancestors() { return _ancestors; } // TMP
     const auto& ancestors() const { return _ancestors; }
@@ -53,10 +61,14 @@ public:
     Ref<const Class> as_class() const override { return this; }
 
 private:
+    void add_param_var(Ptr<Var>&& var);
+
     Ref<cls::Layout> layout();
     void init_layout();
 
+    std::string_view _name;
     Ref<ClassTpl> _tpl;
+    std::list<Ref<Var>> _param_vars;
     std::list<Ancestor> _ancestors;
     Ptr<cls::Layout> _layout;
 };

@@ -92,7 +92,7 @@ void RecVisitor::visit(Ref<ast::FunDef> node) {
     }
 }
 
-void RecVisitor::traverse(Ref<ast::FunDefBody> node) {
+void RecVisitor::visit(Ref<ast::FunDefBody> node) {
     assert(pass() == Pass::FunBodies);
     assert(_fun_def);
     enter_scope(scp::Fun);

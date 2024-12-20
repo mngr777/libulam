@@ -86,8 +86,9 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
 
     } else {
         // class
-        auto cls =
-            make<Class>(&program()->type_id_gen(), node, module()->scope());
+        auto name = program()->str_pool().get(name_id);
+        auto cls = make<Class>(
+            &program()->type_id_gen(), name, node, module()->scope());
         auto cls_ref = ref(cls);
         // set module class symbol, add to scope, store scope version
         node->set_scope_version(scope()->version());
@@ -99,8 +100,9 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
 }
 
 void ResolveDeps::visit(Ref<ast::TypeDef> node) {
-    // don't skip the type name
-    visit(node->type_name());
+    // visit TypeName
+    assert(node->has_type_name());
+    node->type_name()->accept(*this);
 
     auto alias_id = node->alias_id();
     // name is already in current scope?
@@ -149,8 +151,9 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
 }
 
 void ResolveDeps::visit(Ref<ast::VarDefList> node) {
-    // don't skip the type name
-    visit(node->type_name());
+    // visit TypeName
+    assert(node->has_type_name());
+    node->type_name()->accept(*this);
 
     if (!scope()->is(scp::Persistent))
         return;
@@ -195,52 +198,45 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
         def->set_scope_version(scope_version); // store scope version
         def->set_var(var_ref);                 // set node attr
     }
-    return;
 }
 
-void ResolveDeps::visit(Ref<ast::FunDef> node) {
+bool ResolveDeps::do_visit(Ref<ast::FunDef> node) {
     assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
-
-    // don't skip ret type and params
-    visit(node->ret_type());
-    visit(node->params());
 
     // get class/tpl, name
     auto class_node = class_def();
-    auto name_id = NoStrId;
     Ref<ClassBase> cls_base{};
     if (class_node->cls()) {
         cls_base = class_node->cls();
-        name_id = class_node->cls()->name_id();
     } else {
         cls_base = class_node->cls_tpl();
-        name_id = class_node->cls_tpl()->name_id();
     }
     assert(cls_base);
-    assert(name_id != NoStrId);
 
-    // find or create fun
+    // find or create fun set
+    auto name_id = node->name().str_id();
     auto scope_version = scope()->version();
     auto sym = cls_base->get(name_id);
-    Ref<FunSet> fun_ref{};
+    Ref<FunSet> fset{};
     if (sym) {
         if (!sym->is<FunSet>()) {
             diag().emit(
                 Diag::Error, node->loc_id(), str(name_id).size(),
                 "defined and is not a function");
-            return;
+            return false;
         }
     } else {
         // add to class/tpl, add to scope
         sym = cls_base->set(name_id, make<FunSet>());
         scope()->set(name_id, sym->get<FunSet>());
     }
-    fun_ref = sym->get<FunSet>();
+    fset = sym->get<FunSet>();
 
     // create overload
-    auto overload = fun_ref->add_overload(node, scope_version);
-    node->set_overload(overload);
+    auto fun = fset->add(node, scope_version);
+    node->set_fun(fun);
     node->set_scope_version(scope_version);
+    return true;
 }
 
 // TODO: do not set type/tpl, do it in resolver
@@ -351,8 +347,8 @@ void ResolveDeps::export_classes() {
             auto sym = exporter->get(name_id);
             assert(sym);
             // set type/tpl
-            // don't use symbols from same module
-            if (exporter->id() != item.module_id) {
+            // don't use symbols from same module (disabled)
+            if (true || exporter->id() != item.module_id) {
                 if (sym->is<Class>()) {
                     type_spec->set_type(sym->get<Class>());
                 } else {
