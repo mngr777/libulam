@@ -39,6 +39,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/symbol.hpp \
 	include/libulam/semantic/type/builtin/bits.hpp \
 	include/libulam/semantic/type/builtin/bool.hpp \
+	include/libulam/semantic/type/builtin/fun.hpp \
 	include/libulam/semantic/type/builtin/int.hpp \
 	include/libulam/semantic/type/builtin/string.hpp \
 	include/libulam/semantic/type/builtin/unary.hpp \
@@ -52,6 +53,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/class/layout.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/prim.hpp \
+	include/libulam/semantic/type/prim/ops.hpp \
+	include/libulam/semantic/type/prim/typed_value.hpp \
 	include/libulam/semantic/type.hpp \
 	include/libulam/semantic/type_ops.hpp \
 	include/libulam/semantic/type_tpl.hpp \
@@ -75,6 +78,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/class/layout.cpp \
 	src/semantic/type/class_kind.cpp \
 	src/semantic/type/prim.cpp \
+	src/semantic/type/prim/ops.cpp \
 	src/semantic/mangler.cpp \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
@@ -99,6 +103,7 @@ SEMANTIC_SOURCE_FILES = \
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
 	include/libulam/sema/eval.hpp \
+	include/libulam/sema/eval/except.hpp \
 	include/libulam/sema/eval/visitor.hpp \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/resolve_deps.hpp \
@@ -110,6 +115,7 @@ SEMA_HEADER_FILES = \
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
 	src/sema/eval.cpp \
+	src/sema/eval/except.cpp \
 	src/sema/eval/visitor.cpp \
 	src/sema/expr_visitor.cpp \
 	src/sema/out.hpp \

@@ -21,6 +21,8 @@ const std::string_view builtin_type_str(BuiltinTypeId id) {
         return "Void";
     case StringId:
         return "String";
+    case FunId:
+        return "FunId";
     default:
         assert(false);
     }
@@ -44,6 +46,8 @@ const char builtin_type_code(BuiltinTypeId id) {
         return 'v';
     case StringId:
         return 's';
+    case FunId:
+        // fallthru
     default:
         assert(false);
     }

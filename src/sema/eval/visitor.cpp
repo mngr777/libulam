@@ -1,4 +1,5 @@
 #include <exception>
+#include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/expr_res.hpp>
@@ -6,7 +7,6 @@
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/var.hpp>
-#include <stdexcept>
 #include <utility>
 
 namespace ulam::sema {
@@ -21,12 +21,24 @@ EvalVisitor::EvalVisitor(Ref<Program> program):
 
 ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
     try {
-        for (unsigned n = 0; n < block->child_num(); ++n)
+        auto num = block->child_num();
+        for (unsigned n = 0; n < num; ++n) {
+            auto stmt = block->get(n);
+            if (n + 1 == num) {
+                // if last stmt is an expr, return its result
+                auto expr_stmt = dynamic_cast<Ref<ast::ExprStmt>>(stmt);
+                if (expr_stmt) {
+                    return expr_stmt->has_expr() ? eval_expr(expr_stmt->expr())
+                                                 : ExprRes{};
+                }
+            }
             block->get(n)->accept(*this);
-    } catch (std::exception&) {
-        return {ExprError::NotImplemented};
+        }
+    } catch (EvalExcept& e) {
+        assert(e.code() != EvalExcept::Return);
+        return e.move_res();
     }
-    return {ExprError::NotImplemented}; // TODO
+    return {ExprError::Ok};
 }
 
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
@@ -70,7 +82,6 @@ void EvalVisitor::visit(Ref<ast::For> node) {
         node->init()->accept(*this);
 
     unsigned loop_count = 0;
-    ExprVisitor ev(_program, scope());
     while (!node->has_cond() || eval_cond(node->cond())) {
         if (loop_count++ == 1000) // TODO: max loops option
             throw std::exception();
@@ -80,6 +91,16 @@ void EvalVisitor::visit(Ref<ast::For> node) {
         if (node->has_upd())
             node->upd()->accept(*this);
     }
+}
+
+void EvalVisitor::visit(Ref<ast::Return> node) {
+    auto res = node->has_expr() ? eval_expr(node->expr()) : ExprRes{};
+    throw EvalExcept{EvalExcept::Return, std::move(res)};
+}
+
+void EvalVisitor::visit(Ref<ast::ExprStmt> node) {
+    if (node->has_expr())
+        eval_expr(node->expr());
 }
 
 void EvalVisitor::visit(Ref<ast::While> node) {
@@ -92,6 +113,26 @@ void EvalVisitor::visit(Ref<ast::While> node) {
         if (node->has_body())
             node->body()->accept(*this);
     }
+}
+
+void EvalVisitor::visit(Ref<ast::FunCall> node) {
+    eval_expr(node);
+}
+
+void EvalVisitor::visit(Ref<ast::ArrayAccess> node) {
+    eval_expr(node);
+}
+
+void EvalVisitor::visit(Ref<ast::MemberAccess> node) {
+    eval_expr(node);
+}
+
+void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) {
+    eval_expr(node);
+}
+
+void EvalVisitor::visit(Ref<ast::Ident> node) {
+    eval_expr(node);
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {

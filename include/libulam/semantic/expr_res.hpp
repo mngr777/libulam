@@ -8,8 +8,11 @@ namespace ulam {
 
 enum class ExprError {
     Ok,
+    Error,
+    SymbolNotFound,
     NotImplemented,
     NoOperator,
+    InvalidOperandType,
     CastRequired,
     InvalidCast
 };
@@ -30,6 +33,7 @@ public:
     ExprRes& operator=(ExprRes&&) = default;
 
     bool ok() const { return _error == ExprError::Ok; }
+    operator bool() { return ok(); }
 
     Ref<Type> type() { return _typed_value.type(); }
     Ref<const Type> type() const { return _typed_value.type(); }
@@ -40,6 +44,10 @@ public:
         TypedValue tv;
         std::swap(tv, _typed_value);
         return tv;
+    }
+
+    Value move_value() {
+        return _typed_value.move_value();
     }
 
     ExprError error() const { return _error; }

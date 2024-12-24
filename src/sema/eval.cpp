@@ -11,7 +11,8 @@
 
 namespace ulam::sema {
 
-Eval::Eval(Context& ctx, Ref<ast::Root> ast): _ctx{ctx}, _ast{ast}, _ev{_ast->program()} {
+Eval::Eval(Context& ctx, Ref<ast::Root> ast):
+    _ctx{ctx}, _ast{ast}, _ev{_ast->program()} {
     assert(_ast->program());
 }
 

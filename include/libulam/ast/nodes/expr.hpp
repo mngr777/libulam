@@ -106,8 +106,6 @@ public:
     UnaryPostOp(Op op, Ptr<Expr>&& arg): _UnaryOp{op, std::move(arg)} {}
 };
 
-class VarRef : public Expr {}; // ??
-
 class Cast : public Tuple<Expr, TypeName, Expr> {
     ULAM_AST_EXPR
 public:

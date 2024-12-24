@@ -1,5 +1,6 @@
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtin/fun.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
@@ -17,6 +18,7 @@ Builtins::Builtins(TypeIdGen& id_gen) {
     _prim_type_tpls[BitsId] = make<BitsTypeTpl>(id_gen);
     _prim_types[VoidId] = make<VoidType>(&id_gen);
     _prim_types[StringId] = make<StringType>(&id_gen);
+    _other_types[FunId] = make<FunType>(&id_gen);
 }
 
 Ref<PrimTypeTpl> Builtins::prim_type_tpl(BuiltinTypeId id) {
@@ -33,12 +35,16 @@ Ref<PrimType> Builtins::prim_type(BuiltinTypeId id) {
 
 Ref<Type> Builtins::type(BuiltinTypeId id) {
     assert(!has_bitsize(id));
-    assert(is_prim(id) && "not implemented");
-    return ref(_prim_types[id]);
+    Ref<Type> type{};
+    if (is_prim(id)) {
+        type = ref(_prim_types[id]);
+    } else {
+        type = ref(_other_types[id]);
+    }
+    assert(type);
+    return type;
 }
 
-Ref<Type> Builtins::boolean() {
-    return prim_type_tpl(BoolId)->type(1);
-}
+Ref<Type> Builtins::boolean() { return prim_type_tpl(BoolId)->type(1); }
 
 } // namespace ulam

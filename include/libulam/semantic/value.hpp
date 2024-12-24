@@ -9,6 +9,7 @@
 
 namespace ulam {
 
+class FunSet;
 class Var;
 
 template <typename... Ts> class _Value {
@@ -42,7 +43,7 @@ public:
     RValue(): _Value{} {}
 };
 
-class LValue : public _Value<Ref<Var>> { // TODO: array/member access
+class LValue : public _Value<Ref<Var>, Ref<FunSet>> { // TODO: array/member access
 public:
     template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
     LValue(): _Value{} {}

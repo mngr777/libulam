@@ -2,7 +2,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
-#include <unordered_map>
+#include <map>
 
 namespace ulam {
 
@@ -17,8 +17,9 @@ public:
     Ref<Type> boolean();
 
 private:
-    std::unordered_map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;
-    std::unordered_map<BuiltinTypeId, Ptr<PrimType>> _prim_types;
+    std::map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;
+    std::map<BuiltinTypeId, Ptr<PrimType>> _prim_types;
+    std::map<BuiltinTypeId, Ptr<Type>> _other_types;
 };
 
 } // namespace ulam

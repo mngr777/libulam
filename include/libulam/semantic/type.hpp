@@ -90,29 +90,23 @@ public:
     virtual Ref<RefType> as_ref() { return {}; }
     virtual Ref<const RefType> as_ref() const { return {}; }
 
-    virtual bool is_convertible(Ref<const Type> type) { return false; }
+    virtual bool is_convertible(Ref<const Type> type, bool expl = false) const { return false; }
+
+    virtual Ref<Type> deref() { return this; }
+    virtual Ref<const Type> deref() const { return this; }
 
     // TODO: move out of type?
 
-    virtual Value cast(
-        Diag& diag,
-        Ref<ast::Node> node,
-        Ref<const Type> type,
-        const Value& value,
-        bool is_impl = true) {
-        return {};
-    }
+    // virtual Value cast(
+    //     Diag& diag,
+    //     Ref<ast::Node> node,
+    //     Ref<const Type> type,
+    //     const Value& value,
+    //     bool is_impl = true) {
+    //     return {};
+    // }
 
-    virtual ExprRes binary_op(
-        Diag& diag,
-        Ref<ast::BinaryOp> node,
-        Value& left,
-        Ref<const Type> right_type,
-        const Value& right) {
-        return {ExprError::NoOperator};
-    };
-
-    Ref<ArrayType> array_type(array_size_t size);
+    virtual Ref<ArrayType> array_type(array_size_t size);
     virtual Ref<RefType> ref_type();
 
 protected:
@@ -221,6 +215,9 @@ public:
 
     Ref<Type> refd() { return _refd; }
     Ref<const Type> refd() const { return _refd; }
+
+    Ref<Type> deref() override { return refd(); }
+    Ref<const Type> deref() const override { return refd(); }
 
     Ref<RefType> ref_type() override { return this; }
 

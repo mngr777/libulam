@@ -13,19 +13,18 @@ enum BuiltinTypeId {
     BitsId,
     AtomId,
     VoidId,
-    StringId
+    StringId,
+    FunId
 };
-
-constexpr bool is_void_type_id(BuiltinTypeId id) { return id == VoidId; }
 
 constexpr bool is_prim(BuiltinTypeId id) {
     assert(id != NoBuiltinTypeId);
-    return id != AtomId;
+    return id != AtomId && id != FunId;
 }
 
 constexpr bool has_bitsize(BuiltinTypeId id) {
     assert(id != NoBuiltinTypeId);
-    return id != AtomId && id != VoidId && id != StringId;
+    return id != AtomId && id != VoidId && id != StringId && id != FunId;
 }
 
 const std::string_view builtin_type_str(BuiltinTypeId id);

@@ -22,6 +22,13 @@ public:
     void visit(Ref<ast::If> node) override;
     void visit(Ref<ast::For> node) override;
     void visit(Ref<ast::While> node) override;
+    void visit(Ref<ast::Return> node) override;
+    void visit(Ref<ast::ExprStmt> node) override;
+    void visit(Ref<ast::FunCall> node) override;
+    void visit(Ref<ast::ArrayAccess> node) override;
+    void visit(Ref<ast::MemberAccess> node) override;
+    void visit(Ref<ast::TypeOpExpr> node) override;
+    void visit(Ref<ast::Ident> node) override;
 
 private:
     ExprRes eval_expr(Ref<ast::Expr> expr);
@@ -33,6 +40,7 @@ private:
     Resolver _resolver;
     Cast _cast;
     ScopeStack _scope_stack;
+    Value _ret_value;
 };
 
 } // namespace ulam::sema

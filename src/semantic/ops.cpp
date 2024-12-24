@@ -4,13 +4,77 @@
 namespace ulam::ops {
 
 const char* str(Op op) {
-#define OP(str, op) case Op::op: return str;
+#define OP(str, op)                                                            \
+    case Op::op:                                                               \
+        return str;
     switch (op) {
 #include <libulam/semantic/ops.inc.hpp>
     default:
         assert(false);
     }
 #undef OP
+}
+
+Kind kind(Op op) {
+    switch (op) {
+    case Op::Prod:
+    case Op::Quot:
+    case Op::Rem:
+    case Op::Sum:
+    case Op::Diff:
+    case Op::PreInc:
+    case Op::PreDec:
+    case Op::PostInc:
+    case Op::PostDec:
+    case Op::AssignProd:
+    case Op::AssignQuot:
+    case Op::AssignRem:
+    case Op::AssignSum:
+    case Op::AssignDiff:
+        return Kind::Numeric;
+    case Op::Negate:
+    case Op::And:
+    case Op::Or:
+        return Kind::Logical;
+    case Op::ShiftLeft:
+    case Op::ShiftRight:
+    case Op::BwNot:
+    case Op::BwAnd:
+    case Op::BwOr:
+    case Op::AssignShiftLeft:
+    case Op::AssignShiftRight:
+    case Op::AssignBwAnd:
+    case Op::AssignBwXor:
+    case Op::AssignBwOr:
+        return Kind::Bitwise;
+    default:
+        assert(false);
+    }
+}
+
+bool is_numeric(Op op) { return kind(op) == Kind::Numeric; }
+
+bool is_logical(Op op) { return kind(op) == Kind::Logical; }
+
+bool is_bitwise(Op op) { return kind(op) == Kind::Bitwise; }
+
+bool is_assign(Op op) {
+    switch (op) {
+    case Op::Assign:
+    case Op::AssignProd:
+    case Op::AssignQuot:
+    case Op::AssignRem:
+    case Op::AssignSum:
+    case Op::AssignDiff:
+    case Op::AssignShiftLeft:
+    case Op::AssignShiftRight:
+    case Op::AssignBwAnd:
+    case Op::AssignBwXor:
+    case Op::AssignBwOr:
+        return true;
+    default:
+        return false;
+    }
 }
 
 Prec prec(Op op) {
@@ -129,4 +193,4 @@ Assoc assoc(Op op) {
     }
 }
 
-} // namespace ulam::op
+} // namespace ulam::ops

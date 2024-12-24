@@ -4,9 +4,12 @@
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type/prim/typed_value.hpp>
 #include <libulam/semantic/type_tpl.hpp>
+#include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <string>
 #include <unordered_map>
@@ -19,12 +22,25 @@ class PrimType : public Type {
 public:
     PrimType(TypeIdGen* id_gen);
 
+    bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
+
     Ref<PrimType> as_prim() { return this; }
     Ref<const PrimType> as_prim() const { return this; }
 
-protected:
-    // Ref<Type> prim_type(
-    //     Ref<ast::Node> node, BuiltinTypeId id, bitsize_t bitsize = 0);
+    // TODO: make this pure virtual, implement for bulitins
+    virtual PrimTypedValue cast(BuiltinTypeId id) const { return {}; }
+
+    // TODO: make this pure virtual, implement for bulitins
+    virtual bool is_castable(BuiltinTypeId id) const { return false; }
+
+    // TODO: make this pure virtual, implement for builtins
+    virtual TypedValue binary_op(
+        Op op,
+        const Value& left_val,
+        Ref<const PrimType> right_type,
+        const Value& right_val) {
+        assert(false);
+    };
 };
 
 class PrimTypeTpl;
@@ -82,6 +98,7 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
 public:
     _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
 
+    // TODO: this should probably be implemented at higher level ??
     Ref<Type> type(
         Diag& diag,
         Ref<ast::ArgList> args_node,
@@ -135,9 +152,7 @@ public:
         return get(size);
     }
 
-    Ref<PrimType> type(bitsize_t size) override {
-        return get(size);
-    }
+    Ref<PrimType> type(bitsize_t size) override { return get(size); }
 
 private:
     Ref<PrimType> get(bitsize_t size) {

@@ -6,21 +6,19 @@
 
 namespace ulam {
 
-class Type;
-
-// TODO: Is it better to have type in value class itself?
-class TypedValue {
+template <typename T>
+class _TypedValue {
 public:
-    TypedValue(): _type{}, _value{} {}
+    _TypedValue(): _type{}, _value{} {}
 
-    TypedValue(Ref<Type> type, Value&& value):
+    _TypedValue(Ref<T> type, Value&& value):
         _type{type}, _value{std::move(value)} {}
 
-    TypedValue(TypedValue&&) = default;
-    TypedValue& operator=(TypedValue&&) = default;
+    _TypedValue(_TypedValue&&) = default;
+    _TypedValue& operator=(_TypedValue&&) = default;
 
-    Ref<Type> type() { return _type; }
-    Ref<const Type> type() const { return _type; }
+    Ref<T> type() { return _type; }
+    Ref<const T> type() const { return _type; }
 
     const Value& value() const { return _value; }
 
@@ -31,10 +29,13 @@ public:
     }
 
 private:
-    Ref<Type> _type;
+    Ref<T> _type;
     Value _value;
 };
 
+class Type;
+
+using TypedValue = _TypedValue<Type>;
 using TypedValueList = std::list<TypedValue>;
 
 } // namespace ulam
