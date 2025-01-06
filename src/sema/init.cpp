@@ -1,7 +1,7 @@
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/sema/resolve_deps.hpp>
+#include <libulam/sema/init.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -16,12 +16,12 @@
 #include <unordered_set>
 
 #define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[sema::ResolveDeps] "
+#define ULAM_DEBUG_PREFIX "[sema::Init] "
 #include "src/debug.hpp"
 
 namespace ulam::sema {
 
-void ResolveDeps::visit(Ref<ast::Root> node) {
+void Init::visit(Ref<ast::Root> node) {
     assert(!node->program());
     // make program
     node->set_program(make<Program>(diag(), node->ctx().str_pool()));
@@ -29,14 +29,14 @@ void ResolveDeps::visit(Ref<ast::Root> node) {
     export_classes();
 }
 
-void ResolveDeps::visit(Ref<ast::ModuleDef> node) {
+void Init::visit(Ref<ast::ModuleDef> node) {
     assert(!node->module());
     auto module = program()->add_module(node);
     node->set_module(module);
     RecVisitor::visit(node);
 }
 
-bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
+bool Init::do_visit(Ref<ast::ClassDef> node) {
     assert(pass() == Pass::Module);
     assert(!node->cls() && !node->cls_tpl());
     assert(scope()->is(scp::Module));
@@ -99,7 +99,7 @@ bool ResolveDeps::do_visit(Ref<ast::ClassDef> node) {
     return true;
 }
 
-void ResolveDeps::visit(Ref<ast::TypeDef> node) {
+void Init::visit(Ref<ast::TypeDef> node) {
     // visit TypeName
     assert(node->has_type_name());
     node->type_name()->accept(*this);
@@ -151,7 +151,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
     }
 }
 
-void ResolveDeps::visit(Ref<ast::VarDefList> node) {
+void Init::visit(Ref<ast::VarDefList> node) {
     // visit TypeName
     assert(node->has_type_name());
     node->type_name()->accept(*this);
@@ -203,7 +203,7 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
     }
 }
 
-bool ResolveDeps::do_visit(Ref<ast::FunDef> node) {
+bool Init::do_visit(Ref<ast::FunDef> node) {
     assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
 
     // get class/tpl, name
@@ -245,7 +245,7 @@ bool ResolveDeps::do_visit(Ref<ast::FunDef> node) {
 }
 
 // TODO: do not set type/tpl, do it in resolver
-bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {
+bool Init::do_visit(Ref<ast::TypeName> node) {
     // set type/tpl TypeSpec attr
     // NOTE: any name not in scope has to be imported and
     // imported names can be later unambigously resolved without scope
@@ -282,7 +282,7 @@ bool ResolveDeps::do_visit(Ref<ast::TypeName> node) {
     return false;
 }
 
-void ResolveDeps::export_classes() {
+void Init::export_classes() {
     // collect set of exporting modules for each exported symbol
     // (must be 1 per symbol)
     using ModuleSet = std::unordered_set<Ref<Module>>;

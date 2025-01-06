@@ -1,6 +1,6 @@
 #include <cassert>
 #include <libulam/sema.hpp>
-#include <libulam/sema/resolve_deps.hpp>
+#include <libulam/sema/init.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 
@@ -15,7 +15,7 @@ Sema::Sema(Diag& diag): _diag{diag} {}
 Sema::~Sema() {}
 
 void Sema::analyze(Ref<ast::Root> ast) {
-    sema::ResolveDeps resolve_deps{_diag, ast};
+    sema::Init resolve_deps{_diag, ast};
     resolve_deps.analyze();
     assert(ast->program());
 

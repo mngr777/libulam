@@ -7,13 +7,13 @@
 
 namespace ulam::sema {
 
-class ResolveDeps : public RecVisitor {
+class Init : public RecVisitor {
     using RecVisitor::do_visit;
     using RecVisitor::enter_scope;
     using RecVisitor::visit;
 
 public:
-    ResolveDeps(Diag& diag, Ref<ast::Root> ast): RecVisitor{diag, ast} {}
+    Init(Diag& diag, Ref<ast::Root> ast): RecVisitor{diag, ast} {}
 
     void visit(Ref<ast::Root> node) override;
     void visit(Ref<ast::ModuleDef> node) override;
