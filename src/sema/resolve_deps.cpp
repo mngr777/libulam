@@ -126,6 +126,7 @@ void ResolveDeps::visit(Ref<ast::TypeDef> node) {
             assert(class_node->cls());
             auto cls = class_node->cls();
             // add to class, add to scope
+            type->set_cls(cls);
             cls->set(alias_id, std::move(type));
             scope()->set(alias_id, type_ref);
 
@@ -184,7 +185,9 @@ void ResolveDeps::visit(Ref<ast::VarDefList> node) {
         if (class_node) {
             // class/tpl variable
             if (class_node->cls()) {
-                class_node->cls()->set(name_id, std::move(var));
+                auto cls = class_node->cls();
+                var->set_cls(cls);
+                cls->set(name_id, std::move(var));
             } else {
                 assert(class_node->cls_tpl());
                 class_node->cls_tpl()->set(name_id, std::move(var));
@@ -234,6 +237,8 @@ bool ResolveDeps::do_visit(Ref<ast::FunDef> node) {
 
     // create overload
     auto fun = fset->add(node, scope_version);
+    if (class_node->cls())
+        fun->set_cls(class_node->cls());
     node->set_fun(fun);
     node->set_scope_version(scope_version);
     return true;

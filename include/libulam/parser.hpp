@@ -77,7 +77,7 @@ private:
     Ptr<ast::ExprList> parse_array_dims();
     Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeSpec> parse_type_spec();
-    Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& obj);
+    Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& callable);
     Ptr<ast::ArgList> parse_arg_list();
     Ptr<ast::ArrayAccess> parse_array_access(Ptr<ast::Expr>&& array);
     Ptr<ast::Expr> parse_member_access_or_type_op(Ptr<ast::Expr>&& obj);

@@ -914,11 +914,11 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     return node;
 }
 
-Ptr<ast::FunCall> Parser::parse_funcall(Ptr<ast::Expr>&& obj) {
+Ptr<ast::FunCall> Parser::parse_funcall(Ptr<ast::Expr>&& callable) {
     assert(_tok.is(tok::ParenL));
     auto args = parse_arg_list();
     auto loc_id = args->loc_id();
-    return tree_loc<ast::FunCall>(loc_id, std::move(obj), std::move(args));
+    return tree_loc<ast::FunCall>(loc_id, std::move(callable), std::move(args));
 }
 
 Ptr<ast::ArgList> Parser::parse_arg_list() {

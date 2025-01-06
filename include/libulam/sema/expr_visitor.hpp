@@ -7,6 +7,7 @@
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/type/prim/ops.hpp>
 #include <libulam/semantic/type/prim/typed_value.hpp>
+#include <libulam/semantic/typed_value.hpp>
 #include <libulam/str_pool.hpp>
 #include <string_view>
 
@@ -38,19 +39,17 @@ public:
     virtual ExprRes visit(Ref<ast::MemberAccess> node) override;
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
-    virtual ExprRes
-    cast(ExprRes&& res, Ref<ast::Node> node, Ref<Type> type, bool is_impl);
-
 protected:
     virtual PrimTypedValue
-    prim_cast(Ref<PrimType> type, const Value& value, BuiltinTypeId type_id);
+    prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id);
 
-    virtual PrimBinaryOpRes prim_binary_op(
-        Op op,
-        Ref<PrimType> left_type,
-        const Value& left_val,
-        Ref<PrimType> right_type,
-        const Value& right_val);
+    virtual ExprRes
+    prim_binary_op(Op op, PrimTypedValue&& left, PrimTypedValue&& right);
+
+    // TODO: return type, refactoring
+    virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
+
+    virtual ExprRes funcall(Ref<Fun> fun, TypedValueList&& args);
 
     Diag& diag();
     Builtins& builtins();

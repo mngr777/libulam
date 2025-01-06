@@ -46,7 +46,7 @@ Fun::Match Fun::match(const TypedValueList& args) {
         auto param_type = param_it->type();
         if (*arg_type == *param_type)
             continue;
-        if (!param_type->is_convertible(arg_type))
+        if (!param_type->is_impl_castable(arg_type))
             return NoMatch;
         is_exact = false;
     }

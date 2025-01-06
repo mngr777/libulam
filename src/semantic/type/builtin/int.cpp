@@ -1,5 +1,3 @@
-#include "libulam/semantic/expr_res.hpp"
-#include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/diag.hpp>
@@ -8,23 +6,23 @@
 
 namespace ulam {
 
-bool IntType::is_convertible(Ref<const Type> type) {
-    // is primitive?
-    auto prim = type->as_prim();
-    if (!prim)
-        return false;
-    switch (prim->builtin_type_id()) {
-    case IntId:
-        return prim->bitsize() <= bitsize();
-    case UnsignedId:
-        return prim->bitsize() < bitsize() ||
-               prim->bitsize() == ULAM_MAX_INT_SIZE;
-    case UnaryId:
-        return detail::bitsize((Unsigned)prim->bitsize()) < bitsize();
-    default:
-        return false;
-    }
-}
+// bool IntType::is_convertible(Ref<const Type> type) {
+//     // is primitive?
+//     auto prim = type->as_prim();
+//     if (!prim)
+//         return false;
+//     switch (prim->builtin_type_id()) {
+//     case IntId:
+//         return prim->bitsize() <= bitsize();
+//     case UnsignedId:
+//         return prim->bitsize() < bitsize() ||
+//                prim->bitsize() == ULAM_MAX_INT_SIZE;
+//     case UnaryId:
+//         return detail::bitsize((Unsigned)prim->bitsize()) < bitsize();
+//     default:
+//         return false;
+//     }
+// }
 
 // Value IntType::cast(
 //     Diag& diag,

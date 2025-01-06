@@ -90,7 +90,15 @@ public:
     virtual Ref<RefType> as_ref() { return {}; }
     virtual Ref<const RefType> as_ref() const { return {}; }
 
-    virtual bool is_convertible(Ref<const Type> type, bool expl = false) const { return false; }
+    bool is_expl_castable(Ref<const Type> type) {
+        return is_castable(type, true);
+    }
+    bool is_impl_castable(Ref<const Type> type) {
+        return is_castable(type, false);
+    }
+    virtual bool is_castable(Ref<const Type> type, bool expl = true) const {
+        return false;
+    }
 
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }

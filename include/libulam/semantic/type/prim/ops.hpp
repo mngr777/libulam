@@ -1,55 +1,30 @@
 #pragma once
-#include <array>
 #include <cassert>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
-#include <libulam/semantic/typed_value.hpp>
+#include <list>
 #include <utility>
-
-// TODO: this needs refactoring
 
 namespace ulam {
 
-struct PrimOpTypeError {
-    enum Error { Ok = 0, CastSuggested, Incompatible };
-
-    bool ok() const { return error == Ok; }
-
-    BuiltinTypeId suggested_type_id{VoidId};
-    Error error{Ok};
-};
-
-class PrimOpResBase {
+struct PrimTypeError {
 public:
-    template <typename... Args>
-    PrimOpResBase(Args&&... args): _res{std::forward(args)...} {}
+    enum Status { Ok, ImplCastRequired, ExplCastRequired, Incompatible };
 
-    bool ok() const { return _res.ok(); }
+    bool ok() const { return status == Ok; }
+    bool requires_impl_cast() const { return status == ImplCastRequired; }
+    bool requires_expl_cast() const { return status == ExplCastRequired; };
+    bool incompatible() const { return status == Incompatible; }
 
-    ExprRes& res() { return _res; }
-    const ExprRes& res() const { return _res; }
-
-    ExprRes move_res();
-
-private:
-    ExprRes _res;
+    Status status{Ok};
+    BuiltinTypeId suggested_type{VoidId};
 };
 
-class PrimBinaryOpRes : public PrimOpResBase {
-public:
-    PrimBinaryOpRes(PrimOpTypeError left_error, PrimOpTypeError right_error);
+using PrimTypeErrorPair = std::pair<PrimTypeError, PrimTypeError>;
+using PrimTypeErrorList = std::list<PrimTypeError>;
 
-    template <typename... Args>
-    PrimBinaryOpRes(Args&&... args): PrimOpResBase{std::forward(args)...} {}
-
-    std::array<PrimOpTypeError, 2> errors;
-};
-
-PrimBinaryOpRes binary_op(
-    Op op,
-    Ref<PrimType> left_type,
-    const Value& left_val,
-    Ref<PrimType> right_type,
-    const Value& right_val);
+PrimTypeErrorPair prim_binary_op_type_check(
+    Op op, Ref<PrimType> left_type, Ref<PrimType> right_type);
 
 } // namespace ulam

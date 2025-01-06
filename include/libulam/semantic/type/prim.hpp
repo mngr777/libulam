@@ -20,25 +20,32 @@ class Builtins;
 
 class PrimType : public Type {
 public:
+    using Type::is_castable;
+
     PrimType(TypeIdGen* id_gen);
 
     bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
 
-    Ref<PrimType> as_prim() { return this; }
-    Ref<const PrimType> as_prim() const { return this; }
+    Ref<PrimType> as_prim() override { return this; }
+    Ref<const PrimType> as_prim() const override { return this; }
+
+    bool is_impl_castable(BuiltinTypeId id) const { return is_castable(id, false); }
+    bool is_expl_castable(BuiltinTypeId id) const { return is_castable(id, true); }
 
     // TODO: make this pure virtual, implement for bulitins
     virtual PrimTypedValue cast(BuiltinTypeId id) const { return {}; }
 
     // TODO: make this pure virtual, implement for bulitins
-    virtual bool is_castable(BuiltinTypeId id) const { return false; }
+    virtual bool is_castable(BuiltinTypeId id, bool expl = true) const {
+        return false;
+    }
 
     // TODO: make this pure virtual, implement for builtins
     virtual TypedValue binary_op(
         Op op,
         const Value& left_val,
         Ref<const PrimType> right_type,
-        const Value& right_val) {
+        const Value& right_val) const {
         assert(false);
     };
 };

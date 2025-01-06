@@ -13,7 +13,7 @@ public:
     IntType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
         _PrimType{id_gen, tpl, bitsize} {}
 
-    bool is_convertible(Ref<const Type> type) override;
+    // bool is_convertible(Ref<const Type> type) override;
 
     // Value cast(
     //     Diag& diag,

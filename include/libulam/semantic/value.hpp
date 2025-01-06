@@ -36,14 +36,21 @@ private:
     std::variant<std::monostate, Ts...> _value;
 };
 
-class RValue
-    : public _Value<Integer, Unsigned /* or Unary */, Bool, Bits, String, Ptr<Object>> {
+class RValue : public _Value<
+                   Integer,
+                   Unsigned /* or Unary */,
+                   Bool,
+                   Bits,
+                   String,
+                   Ref<FunSet>,
+                   Ptr<Object>> {
 public:
     template <typename T> RValue(T&& value): _Value{std::forward<T>(value)} {}
     RValue(): _Value{} {}
 };
 
-class LValue : public _Value<Ref<Var>, Ref<FunSet>> { // TODO: array/member access
+class LValue
+    : public _Value<Ref<Var>, Ref<FunSet>> { // TODO: array/member access
 public:
     template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
     LValue(): _Value{} {}

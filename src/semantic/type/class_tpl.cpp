@@ -45,6 +45,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 break;
             assert(sym->is<Var>());
             auto var = sym->get<Var>();
+            var->set_cls(ref(cls));
             assert(var->is_const() && var->is(Var::ClassParam & Var::Tpl));
             TypedValue value;
             std::swap(value, args.front());
@@ -69,6 +70,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
             if (sym->is<UserType>()) {
                 auto alias = sym->get<UserType>()->as_alias();
+                alias->set_cls(ref(cls));
                 assert(alias);
                 Ptr<UserType> copy = make<AliasType>(&id_gen(), alias->node());
                 cls->scope()->set(name_id, ref(copy));
@@ -76,6 +78,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
             } else if (sym->is<Var>()) {
                 auto var = sym->get<Var>();
+                var->set_cls(ref(cls));
                 auto copy = make<Var>(
                     var->type_node(), var->node(), Ref<Type>{},
                     var->flags() & ~Var::Tpl);
@@ -86,6 +89,9 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 assert(sym->is<FunSet>());
                 auto fset = sym->get<FunSet>();
                 auto copy = make<FunSet>(*fset);
+                copy->for_each([&](Ref<Fun> fun) {
+                    fun->set_cls(ref(cls));
+                });
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(fset));
             }

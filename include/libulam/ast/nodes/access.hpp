@@ -8,11 +8,11 @@ namespace ulam::ast {
 class FunCall : public Tuple<OpExpr, Expr, ArgList> {
     ULAM_AST_EXPR
 public:
-    FunCall(Ptr<Expr>&& obj, Ptr<ArgList>&& args):
-        Tuple{std::move(obj), std::move(args), Op::FunCall} {}
+    FunCall(Ptr<Expr>&& callable, Ptr<ArgList>&& args):
+        Tuple{std::move(callable), std::move(args), Op::FunCall} {}
 
-    ULAM_AST_TUPLE_PROP(obj, 0)
-    ULAM_AST_TUPLE_PROP(args, 0)
+    ULAM_AST_TUPLE_PROP(callable, 0)
+    ULAM_AST_TUPLE_PROP(args, 1)
 };
 
 class MemberAccess : public Tuple<OpExpr, Expr, Ident> {
