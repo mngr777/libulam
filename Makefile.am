@@ -24,6 +24,7 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
+	include/libulam/semantic/decl.hpp \
 	include/libulam/semantic/mangler.hpp \
 	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/number.hpp \
@@ -33,7 +34,6 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
 	include/libulam/semantic/scope/stack.hpp \
-	include/libulam/semantic/scope/object.hpp \
 	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/scope/view.hpp \
 	include/libulam/semantic/symbol.hpp \
@@ -66,6 +66,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/var.hpp
 
 SEMANTIC_SOURCE_FILES = \
+	src/semantic/decl.cpp \
 	src/semantic/detail/integer.hpp \
 	src/semantic/detail/leximited.hpp \
 	src/semantic/detail/leximited.cpp \

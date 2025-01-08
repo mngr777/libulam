@@ -1,8 +1,8 @@
 #pragma once
 #include <functional>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/params.hpp>
-#include <libulam/semantic/scope/object.hpp>
 #include <list>
 #include <optional>
 #include <unordered_map>
@@ -20,7 +20,7 @@ namespace ulam {
 class Diag;
 class Type;
 
-class Fun : public ScopeObject {
+class Fun : public Decl {
 public:
     enum Match { NoMatch, IsMatch, ExactMatch };
 
@@ -52,7 +52,7 @@ private:
     ParamList _params;
 };
 
-class FunSet : public ScopeObject {
+class FunSet : public Decl {
 public:
     using Cb = std::function<void(Ref<Fun>)>;
     using MatchRes = std::unordered_set<Ref<Fun>>;

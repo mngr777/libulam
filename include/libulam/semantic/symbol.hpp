@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
-#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>
@@ -39,10 +39,9 @@ public:
         return std::get<Value<T>>(_value).ref();
     }
 
-    Ref<ScopeObject> as_scope_obj() {
+    Ref<Decl> as_decl() {
         return std::visit(
-            [](auto&& value) -> Ref<ScopeObject> { return value.ref(); },
-            _value);
+            [](auto&& value) -> Ref<Decl> { return value.ref(); }, _value);
     }
 
     template <typename V> void visit(V&& v) { return std::visit(v, _value); }

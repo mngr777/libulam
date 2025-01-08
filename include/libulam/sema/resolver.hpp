@@ -3,10 +3,10 @@
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
 #include <optional>
@@ -38,8 +38,8 @@ private:
     Ref<Type>
     apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope);
 
-    std::optional<bool> check_state(Ref<ScopeObject> obj);
-    void update_state(Ref<ScopeObject> obj, bool is_resolved);
+    std::optional<bool> check_state(Ref<Decl> obj);
+    void update_state(Ref<Decl> obj, bool is_resolved);
 
     Diag& diag() { return _program->diag(); }
     std::string_view str(str_id_t str_id) const;

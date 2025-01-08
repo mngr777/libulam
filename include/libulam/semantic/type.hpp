@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/scope/object.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/str_pool.hpp>
@@ -130,7 +130,7 @@ private:
     Ptr<RefType> _ref_type;
 };
 
-class UserType : public Type, public ScopeObject {
+class UserType : public Type, public Decl {
 public:
     explicit UserType(TypeIdGen* id_gen): Type{id_gen} {}
 

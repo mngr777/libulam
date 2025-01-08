@@ -67,8 +67,8 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
 }
 
 bool Resolver::init(Ref<Class> cls) {
-    if (cls->res_state() != ScopeObject::NotResolved)
-        return cls->res_state() == ScopeObject::Resolved;
+    if (cls->state() != Decl::NotResolved)
+        return cls->is_ready();
 
     bool success = true;
 
@@ -489,20 +489,20 @@ Ref<Type> Resolver::apply_array_dims(
     return type;
 }
 
-std::optional<bool> Resolver::check_state(Ref<ScopeObject> obj) {
-    if (obj->res_state() == ScopeObject::Resolved)
+std::optional<bool> Resolver::check_state(Ref<Decl> obj) {
+    if (obj->state() == Decl::Resolved)
         return true;
-    if (obj->res_state() == ScopeObject::Resolving)
-        obj->set_res_state(ScopeObject::Unresolvable);
-    if (obj->res_state() == ScopeObject::Unresolvable)
+    if (obj->state() == Decl::Resolving)
+        obj->set_state(Decl::Unresolvable);
+    if (obj->state() == Decl::Unresolvable)
         return false;
-    obj->set_res_state(ScopeObject::Resolving);
+    obj->set_state(Decl::Resolving);
     return {};
 }
 
-void Resolver::update_state(Ref<ScopeObject> obj, bool is_resolved) {
-    obj->set_res_state(
-        is_resolved ? ScopeObject::Resolved : ScopeObject::Unresolvable);
+void Resolver::update_state(Ref<Decl> obj, bool is_resolved) {
+    obj->set_state(
+        is_resolved ? Decl::Resolved : Decl::Unresolvable);
 }
 
 std::string_view Resolver::str(str_id_t str_id) const {

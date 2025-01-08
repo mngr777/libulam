@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/semantic/scope/object.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
@@ -13,7 +13,7 @@ class VarDecl;
 
 namespace ulam {
 
-class Var : public ScopeObject {
+class Var : public Decl {
 public:
     using Flag = std::uint8_t;
     static constexpr Flag NoFlags = 0;

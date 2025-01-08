@@ -1,6 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/scope/object.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>

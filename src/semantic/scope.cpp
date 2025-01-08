@@ -72,7 +72,7 @@ Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
     vsyms.emplace_front(_version++, std::move(symbol));
     _changes.push_back(name_id);
     auto sym = &vsyms.front().symbol;
-    sym->as_scope_obj()->set_scope_version(version_);
+    sym->as_decl()->set_scope_version(version_);
     return sym;
 }
 

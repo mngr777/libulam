@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type_tpl.hpp>
@@ -16,7 +17,7 @@ namespace ulam {
 class Class;
 class Scope;
 
-class ClassTpl : public TypeTpl, public ClassBase, public ScopeObject {
+class ClassTpl : public TypeTpl, public ClassBase, public Decl {
     friend Class;
 
 public:
