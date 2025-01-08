@@ -43,26 +43,9 @@ void Class::add_param_var(Ptr<Var>&& var) {
     set(name_id, std::move(var));
 }
 
-Ref<cls::Layout> Class::layout() {
-    if (_layout)
-        init_layout();
-    return ref(_layout);
-}
-
-void Class::init_layout() {
-    auto layout = make<cls::Layout>();
-    for (auto& pair : members()) {
-        auto& [name_id, sym] = pair;
-        if (!sym.owns() || !sym.is<Var>())
-            continue;
-        auto var = sym.get<Var>();
-        layout->add(var);
-    }
-    // for (auto& anc : _ancestors) {
-    //     // layout->add()
-    //     // TODO
-    // }
-    _layout.swap(layout);
+void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
+    if (_ancestry.add(cls, node))
+        cls->members().export_symbols(members());
 }
 
 } // namespace ulam

@@ -101,12 +101,8 @@ bool Resolver::init(Ref<Class> cls) {
                     success = false;
                     continue;
                 }
-                auto anc_cls = type->as_class();
                 // add ancestor class
-                cls->add_ancestor(anc_cls, type_name);
-                // import symbols
-                anc_cls->members().export_symbols(
-                    cls->members(), false /* do not overwrite */);
+                cls->add_ancestor(type->as_class(), type_name);
             }
         }
     }
@@ -123,10 +119,10 @@ bool Resolver::resolve(Ref<Class> cls) {
     bool is_resolved = true;
 
     // resolve ancestors
-    for (auto anc : cls->ancestors()) {
-        if (!resolve(anc.cls())) {
+    for (auto anc : cls->parents()) {
+        if (!resolve(anc->cls())) {
             diag().emit(
-                Diag::Error, anc.node()->loc_id(), 1,
+                Diag::Error, anc->node()->loc_id(), 1,
                 "cannot resolve ancestor type");
             is_resolved = false;
         }
@@ -159,8 +155,8 @@ bool Resolver::resolve(Ref<Class> cls) {
     }
 
     // add funs from ancestors
-    for (auto anc : cls->ancestors()) {
-        for (auto& pair : anc.cls()->members()) {
+    for (auto anc : cls->parents()) {
+        for (auto& pair : anc->cls()->members()) {
             auto& [name_id, sym] = pair;
             if (!sym.is<FunSet>())
                 continue;
