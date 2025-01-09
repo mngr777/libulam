@@ -10,16 +10,16 @@
 #define ULAM_DEBUG_PREFIX "[sema::Resolver] "
 #include "src/debug.hpp"
 
-#define CHECK_STATE(obj)                                                       \
+#define CHECK_STATE(decl)                                                      \
     do {                                                                       \
-        auto is_resolved = check_state(obj);                                   \
+        auto is_resolved = check_state(decl);                                  \
         if (is_resolved.has_value())                                           \
             return is_resolved.value();                                        \
     } while (false)
 
-#define RET_UPD_STATE(obj, is_resolved)                                        \
+#define RET_UPD_STATE(decl, is_resolved)                                       \
     do {                                                                       \
-        update_state((obj), (is_resolved));                                    \
+        update_state((decl), (is_resolved));                                   \
         return (is_resolved);                                                  \
     } while (false)
 
@@ -501,8 +501,7 @@ std::optional<bool> Resolver::check_state(Ref<Decl> obj) {
 }
 
 void Resolver::update_state(Ref<Decl> obj, bool is_resolved) {
-    obj->set_state(
-        is_resolved ? Decl::Resolved : Decl::Unresolvable);
+    obj->set_state(is_resolved ? Decl::Resolved : Decl::Unresolvable);
 }
 
 std::string_view Resolver::str(str_id_t str_id) const {

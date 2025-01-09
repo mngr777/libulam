@@ -31,7 +31,26 @@ Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
-bitsize_t Class::bitsize() const { assert(false); /* not implemented */ }
+bitsize_t Class::bitsize() const {
+    bitsize_t size = direct_bitsize();
+    for (const auto& anc : _ancestry.ancestors())
+        size += anc->cls()->direct_bitsize();
+    return size;
+}
+
+bitsize_t Class::direct_bitsize() const {
+    bitsize_t size = 0;
+    for (auto& pair : members()) {
+        auto& [_, sym] = pair;
+        if (!sym.is<Var>())
+            continue;
+        auto var = sym.get<Var>();
+        if (!var->is_ready())
+            continue;
+        size += var->type()->bitsize();
+    }
+    return size;
+}
 
 void Class::add_param_var(Ptr<Var>&& var) {
     assert(var->is(Var::ClassParam | Var::Const));

@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <utility>
 #include <variant>
 
 namespace ulam {
@@ -42,7 +43,9 @@ public:
 
     bool owns() const { return std::holds_alternative<Ptr<T>>(_value); }
 
-    Ref<T> ref() {
+    Ref<T> ref() { return const_cast<Ref<T>>(std::as_const(*this).ref()); }
+
+    Ref<const T> ref() const {
         return owns() ? ulam::ref(std::get<Ptr<T>>(_value))
                       : std::get<Ref<T>>(_value);
     }

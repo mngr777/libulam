@@ -51,6 +51,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/class_tpl.hpp \
 	include/libulam/semantic/type/class/ancestry.hpp \
 	include/libulam/semantic/type/class/base.hpp \
+	include/libulam/semantic/type/class/layout.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/prim.hpp \
 	include/libulam/semantic/type/prim/ops.hpp \

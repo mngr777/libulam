@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
@@ -66,12 +67,17 @@ public:
 
     Flag flags() { return _flags; }
 
+    bool has_data_off() const { return _data_off == cls::NoDataOff; }
+    cls::data_off_t data_off() const { return _data_off; }
+    void set_data_off(cls::data_off_t off) { _data_off = off; }
+
 private:
     Ref<ast::TypeName> _type_node;
     Ref<ast::VarDecl> _node;
     Ref<Type> _type{};
     Value _value;
     Flag _flags;
+    cls::data_off_t _data_off{cls::NoDataOff};
 };
 
 } // namespace ulam

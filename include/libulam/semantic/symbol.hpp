@@ -39,6 +39,10 @@ public:
         return std::get<Value<T>>(_value).ref();
     }
 
+    template <typename T> Ref<const T> get() const {
+        return std::get<Value<T>>(_value).ref();
+    }
+
     Ref<Decl> as_decl() {
         return std::visit(
             [](auto&& value) -> Ref<Decl> { return value.ref(); }, _value);
@@ -69,6 +73,9 @@ public:
 
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
+
+    const auto begin() const { return _symbols.begin(); }
+    const auto end() const { return _symbols.end(); }
 
     template <typename... Ts>
     void export_symbols(_SymbolTable<Ts...>& other, bool overwrite = false) {

@@ -38,8 +38,8 @@ private:
     Ref<Type>
     apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope);
 
-    std::optional<bool> check_state(Ref<Decl> obj);
-    void update_state(Ref<Decl> obj, bool is_resolved);
+    std::optional<bool> check_state(Ref<Decl> decl);
+    void update_state(Ref<Decl> decl, bool is_resolved);
 
     Diag& diag() { return _program->diag(); }
     std::string_view str(str_id_t str_id) const;

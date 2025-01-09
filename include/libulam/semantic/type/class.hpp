@@ -19,6 +19,7 @@ class ClassTpl;
 
 class Class : public UserType, public ClassBase {
     friend ClassTpl;
+    friend cls::Ancestry;
 
 public:
     using ParamVarList = std::list<Ref<Var>>;
@@ -42,6 +43,7 @@ public:
     const auto& parents() const { return _ancestry.parents(); }
 
     bitsize_t bitsize() const override;
+    bitsize_t direct_bitsize() const;
 
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
