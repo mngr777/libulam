@@ -18,26 +18,44 @@ namespace ulam {
 
 class Builtins;
 
+// TODO: make virtual methods pure
 class PrimType : public Type {
 public:
     using Type::is_castable;
 
-    PrimType(TypeIdGen* id_gen);
+    PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
     bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
 
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
 
-    bool is_impl_castable(BuiltinTypeId id) const { return is_castable(id, false); }
-    bool is_expl_castable(BuiltinTypeId id) const { return is_castable(id, true); }
+    bool is_impl_castable_to(BuiltinTypeId id) const {
+        return is_castable_to(id, false);
+    }
+    bool is_expl_castable_to(BuiltinTypeId id) const {
+        return is_castable_to(id, true);
+    }
 
-    // TODO: make this pure virtual, implement for bulitins
-    virtual PrimTypedValue cast(BuiltinTypeId id) const { return {}; }
+    bool is_impl_castable_to(Ref<PrimType> type) const {
+        return is_castable_to(type, false);
+    }
+    bool is_expl_castable_to(Ref<PrimType> type) const {
+        return is_castable_to(type, true);
+    }
 
-    // TODO: make this pure virtual, implement for bulitins
-    virtual bool is_castable(BuiltinTypeId id, bool expl = true) const {
+    virtual bool is_castable_to(BuiltinTypeId id, bool expl = true) const {
         return false;
+    }
+    virtual bool is_castable_to(Ref<PrimType> type, bool expl = true) const {
+        return false;
+    }
+
+    virtual PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) {
+        return {};
+    }
+    virtual Value cast_to(Ref<PrimType> type, Value&& value) {
+        return {};
     }
 
     // TODO: make this pure virtual, implement for builtins
@@ -45,9 +63,15 @@ public:
         Op op,
         const Value& left_val,
         Ref<const PrimType> right_type,
-        const Value& right_val) const {
+        const Value& right_val) {
         assert(false);
     };
+
+protected:
+    Builtins& builtins() { return _builtins; }
+
+private:
+    Builtins& _builtins;
 };
 
 class PrimTypeTpl;
@@ -70,8 +94,12 @@ public:
     static constexpr bitsize_t MaxSize = Max;
     static constexpr bitsize_t DefaultSize = Default;
 
-    _PrimType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        PrimType{&id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
+    _PrimType(
+        Builtins& builtins,
+        TypeIdGen& id_gen,
+        Ref<PrimTypeTpl> tpl,
+        bitsize_t bitsize):
+        PrimType{builtins, &id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
 
     BuiltinTypeId builtin_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
@@ -86,7 +114,7 @@ private:
 
 class PrimTypeTpl : public TypeTpl {
 public:
-    PrimTypeTpl(TypeIdGen& id_gen);
+    PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen);
 
     Ref<Type> type(
         Diag& diag,
@@ -97,13 +125,17 @@ public:
     type(Diag& diag, Ref<ast::Node> node, bitsize_t bitsize) = 0;
 
     virtual Ref<PrimType> type(bitsize_t bitsize) = 0;
+
+protected:
+    Builtins& _builtins;
 };
 
 template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
     static_assert(T::MaxSize > 0);
 
 public:
-    _PrimTypeTpl(TypeIdGen& id_gen): PrimTypeTpl{id_gen} {}
+    _PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen):
+        PrimTypeTpl{builtins, id_gen} {}
 
     // TODO: this should probably be implemented at higher level ??
     Ref<Type> type(
@@ -169,7 +201,7 @@ private:
             if (it != _types.end())
                 return ref(it->second);
         }
-        auto type = make<T>(id_gen(), this, size);
+        auto type = make<T>(_builtins, id_gen(), this, size);
         auto type_ref = ref(type);
         _types.emplace(size, std::move(type));
         return type_ref;

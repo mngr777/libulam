@@ -24,13 +24,19 @@ constexpr int sign(Integer value) {
 
 constexpr Unsigned abs(Integer value) { return value < 0 ? -value : value; }
 
-constexpr bitsize_t bitsize(Unsigned value) {
+constexpr Unsigned log2(Unsigned value) {
     bitsize_t size = 0;
     do {
         ++size;
         value >>= 1;
     } while (value);
     return size;
+}
+
+constexpr bitsize_t bitsize(Unsigned value) { return log2(value); }
+
+constexpr bitsize_t unary_unsigned_bitsize(bitsize_t bitsize) {
+    return log2(bitsize);
 }
 
 constexpr bitsize_t bitsize(Integer value) { return bitsize(abs(value)) + 1; }

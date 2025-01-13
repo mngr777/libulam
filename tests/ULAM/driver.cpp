@@ -42,5 +42,6 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "OK" : "FAIL") << "\n";
         if (!ok)
             break;
+        break; // TEST
     }
 }

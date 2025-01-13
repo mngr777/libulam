@@ -1,5 +1,4 @@
 #pragma once
-#include "libulam/ast/nodes/module.hpp"
 #include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/parser.hpp>

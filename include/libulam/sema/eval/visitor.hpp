@@ -2,7 +2,6 @@
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
-#include <libulam/sema/cast.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/scope/stack.hpp>
@@ -38,7 +37,6 @@ private:
 
     Ref<Program> _program;
     Resolver _resolver;
-    Cast _cast;
     ScopeStack _scope_stack;
     Value _ret_value;
 };

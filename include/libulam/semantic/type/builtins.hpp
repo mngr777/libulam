@@ -11,7 +11,10 @@ public:
     Builtins(TypeIdGen& id_gen);
 
     Ref<PrimTypeTpl> prim_type_tpl(BuiltinTypeId id);
+
     Ref<PrimType> prim_type(BuiltinTypeId id);
+    Ref<PrimType> prim_type(BuiltinTypeId id, bitsize_t size);
+
     Ref<Type> type(BuiltinTypeId id);
 
     Ref<Type> boolean();

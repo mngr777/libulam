@@ -6,16 +6,15 @@ namespace ulam {
 namespace {
 
 bool is_numeric(Ref<const PrimType> type) {
-    return type->is(IntId) || type->is(UnsignedId);
+    return type->is(IntId) || type->is(UnsignedId) || type->is(UnaryId);
 }
 
-PrimTypeError
-check_type_match(Ref<const PrimType> type, BuiltinTypeId target) {
+PrimTypeError check_type_match(Ref<const PrimType> type, BuiltinTypeId target) {
     if (type->is(target))
         return {PrimTypeError::Ok, VoidId};
-    if (type->is_impl_castable(target))
+    if (type->is_impl_castable_to(target))
         return {PrimTypeError::ImplCastRequired};
-    if (type->is_expl_castable(target))
+    if (type->is_expl_castable_to(target))
         return {PrimTypeError::ExplCastRequired, target};
     return {PrimTypeError::Incompatible, VoidId};
 }
@@ -35,10 +34,20 @@ PrimTypeErrorPair prim_binary_op_type_check(
             errors.second = check_type_match(right_type, IntId);
         }
 
-        // signed type wins
-        if (left_type->builtin_type_id() != left_type->builtin_type_id()) {
+        // same type?
+        if (left_type->builtin_type_id() == left_type->builtin_type_id())
+            return errors;
+
+        // Int wins (explicit cast), otherwise Unary becomes Unsigned
+        // (implicit)
+        if (left_type->is(IntId) || right_type->is(IntId)) {
             auto& error = left_type->is(IntId) ? errors.second : errors.first;
             error = {PrimTypeError::ExplCastRequired, IntId};
+
+        } else if (left_type->is(UnsignedId) || right_type->is(UnsignedId)) {
+            auto& error =
+                left_type->is(UnsignedId) ? errors.second : errors.first;
+            error = {PrimTypeError::ImplCastRequired, UnsignedId};
         }
         return errors;
     }

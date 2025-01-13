@@ -12,8 +12,12 @@ namespace ulam {
 
 class BoolType : public _PrimType<BoolId, 1, ULAM_MAX_INT_SIZE, 1> {
 public:
-    BoolType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        _PrimType{id_gen, tpl, bitsize} {}
+    BoolType(
+        Builtins& builtins,
+        TypeIdGen& id_gen,
+        Ref<PrimTypeTpl> tpl,
+        bitsize_t bitsize):
+        _PrimType{builtins, id_gen, tpl, bitsize} {}
 };
 
 using BoolTypeTpl = _PrimTypeTpl<BoolType>;

@@ -5,9 +5,10 @@ namespace ulam {
 
 class Bits {
 public:
-    Bits(BitVector::size_t size): _bits(size) {}
+    explicit Bits(BitVector::size_t size): _bits(size) {}
 
-    const BitVector& bits() { return _bits; }
+    BitVector& bits() { return _bits; }
+    const BitVector& bits() const { return _bits; }
 
 private:
     BitVector _bits;

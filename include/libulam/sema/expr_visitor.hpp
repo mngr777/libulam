@@ -40,6 +40,8 @@ public:
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
 protected:
+    virtual ExprRes cast(Ref<ast::Node> node, ExprRes&& res, Ref<Type> type, bool is_expl);
+
     virtual PrimTypedValue
     prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id);
 

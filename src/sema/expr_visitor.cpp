@@ -1,9 +1,19 @@
+#include "libulam/sema/resolver.hpp"
+#include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/value.hpp>
 
+#ifdef DEBUG_PARSER
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::sema::ExprVisitor] "
+#endif
+#include "src/debug.hpp"
+
 namespace ulam::sema {
+
+// TODO: use canon types for casting
 
 ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) { return {}; }
 
@@ -98,6 +108,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
 
     } else {
         // TODO: operator funs for classes, error(?) for arrays, ...
+        assert(false);
     }
     return {};
 }
@@ -106,7 +117,41 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) { return {}; }
 ExprRes ExprVisitor::visit(Ref<ast::UnaryPostOp> node) { return {}; }
 
 ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
-    // auto res = node->expr()->accept(*this);
+    // eval expr
+    auto res = node->expr()->accept(*this);
+    if (!res.ok())
+        return {res.error()};
+
+    // resolve target type
+    Resolver resolver{_program};
+    auto cast_type = resolver.resolve_type_name(node->type_name(), _scope);
+    if (!cast_type)
+        return {ExprError::InvalidCast};
+
+    auto type = res.type();
+    auto val = res.move_value();
+
+    if (type->is_prim()) {
+        // prim type cast
+        if (!cast_type->is_prim()) {
+            diag().emit(
+                Diag::Error, node->loc_id(), 1,
+                "cannot cast to non-primitive type");
+            return {ExprError::InvalidCast};
+        }
+        auto prim_type = type->as_prim();
+        auto prim_cast_type = cast_type->as_prim();
+        if (!prim_type->is_expl_castable_to(prim_cast_type)) {
+            diag().emit(Diag::Error, node->loc_id(), 1, "not castable to type");
+            return {ExprError::InvalidCast};
+        }
+        val = prim_type->cast_to(prim_cast_type, std::move(val));
+        return {cast_type, std::move(val)};
+
+    } else {
+        // class type cast
+        assert(false);
+    }
     return {};
 }
 
@@ -177,9 +222,31 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) { return {}; }
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) { return {}; }
 
+ExprRes ExprVisitor::cast(
+    Ref<ast::Node> node, ExprRes&& res, Ref<Type> type, bool is_expl) {
+    if (res.type()->is_prim()) {
+        if (!type->is_prim()) {
+            diag().emit(
+                Diag::Error, node->loc_id(), 1,
+                "cannot cast to non-primitive type");
+            return {ExprError::InvalidCast};
+        }
+        if (!res.type()->as_prim()->is_castable_to(type->builtin_type_id())) {
+            diag().emit(
+                Diag::Error, node->loc_id(), 1,
+                std::string{"cannot cast to "} +
+                    std::string{builtin_type_str(type->builtin_type_id())});
+            return {ExprError::InvalidCast};
+        }
+        return {ExprError::NotImplemented};
+    } else {
+        return {ExprError::NotImplemented};
+    }
+}
+
 PrimTypedValue
 ExprVisitor::prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id) {
-    assert(tv.type()->is_expl_castable(type_id));
+    assert(tv.type()->is_expl_castable_to(type_id));
     return {}; // TODO
 }
 

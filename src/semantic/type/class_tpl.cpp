@@ -113,8 +113,8 @@ std::string ClassTpl::type_args_str(const TypedValueList& args) {
             str += std::to_string(rval->get<Integer>());
         } else if (rval->is<Unsigned>()) {
             str += std::to_string(rval->get<Unsigned>());
-        } else if (rval->is<Bool>()) {
-            str += (rval->get<Bool>() ? "t" : "f");
+        // } else if (rval->is<Bool>()) {
+        //     str += (rval->get<Bool>() ? "t" : "f");
         } else if (rval->is<String>()) {
             // str += std::to_string(
             //     program()->ast()->ctx().str_id(rval->get<String>()));

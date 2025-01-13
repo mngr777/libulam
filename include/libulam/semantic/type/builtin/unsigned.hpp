@@ -15,8 +15,12 @@ class Value;
 
 class UnsignedType : public _PrimType<UnsignedId, 1, ULAM_MAX_INT_SIZE, 32> {
 public:
-    UnsignedType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        _PrimType{id_gen, tpl, bitsize} {}
+    UnsignedType(
+        Builtins& builtins,
+        TypeIdGen& id_gen,
+        Ref<PrimTypeTpl> tpl,
+        bitsize_t bitsize):
+        _PrimType{builtins, id_gen, tpl, bitsize} {}
 };
 
 using UnsignedTypeTpl = _PrimTypeTpl<UnsignedType>;

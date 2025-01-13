@@ -81,8 +81,8 @@ void Mangler::write_mangled(std::ostream& os, const Value& value) {
         detail::write_leximited(os, rval->get<Unsigned>());
     } else if (rval->is<Integer>()){
         detail::write_leximited(os, rval->get<Integer>());
-    } else if (rval->is<Bool>()){
-        detail::write_leximited(os, rval->get<Bool>());
+    // } else if (rval->is<Bool>()){
+    //     detail::write_leximited(os, rval->get<Bool>());
     } else if (rval->is<String>()) {
         detail::write_leximited(os, rval->get<String>());
     } else {

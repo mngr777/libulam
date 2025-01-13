@@ -3,8 +3,12 @@
 
 namespace ulam {
 
-PrimType::PrimType(TypeIdGen* id_gen): Type{id_gen} { assert(id_gen); }
+PrimType::PrimType(Builtins& builtins, TypeIdGen* id_gen):
+    Type{id_gen}, _builtins{builtins} {
+    assert(id_gen);
+}
 
-PrimTypeTpl::PrimTypeTpl(TypeIdGen& id_gen): TypeTpl{id_gen} {}
+PrimTypeTpl::PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen):
+    TypeTpl{id_gen}, _builtins{builtins} {}
 
 } // namespace ulam

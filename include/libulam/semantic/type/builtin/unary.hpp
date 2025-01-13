@@ -15,8 +15,12 @@ class Value;
 
 class UnaryType : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, 32> {
 public:
-    UnaryType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        _PrimType{id_gen, tpl, bitsize} {}
+    UnaryType(
+        Builtins& builtins,
+        TypeIdGen& id_gen,
+        Ref<PrimTypeTpl> tpl,
+        bitsize_t bitsize):
+        _PrimType{builtins, id_gen, tpl, bitsize} {}
 };
 
 using UnaryTypeTpl = _PrimTypeTpl<UnaryType>;

@@ -11,13 +11,13 @@
 namespace ulam {
 
 Builtins::Builtins(TypeIdGen& id_gen) {
-    _prim_type_tpls[IntId] = make<IntTypeTpl>(id_gen);
-    _prim_type_tpls[UnsignedId] = make<UnsignedTypeTpl>(id_gen);
-    _prim_type_tpls[BoolId] = make<BoolTypeTpl>(id_gen);
-    _prim_type_tpls[UnaryId] = make<UnaryTypeTpl>(id_gen);
-    _prim_type_tpls[BitsId] = make<BitsTypeTpl>(id_gen);
-    _prim_types[VoidId] = make<VoidType>(&id_gen);
-    _prim_types[StringId] = make<StringType>(&id_gen);
+    _prim_type_tpls[IntId] = make<IntTypeTpl>(*this, id_gen);
+    _prim_type_tpls[UnsignedId] = make<UnsignedTypeTpl>(*this, id_gen);
+    _prim_type_tpls[BoolId] = make<BoolTypeTpl>(*this, id_gen);
+    _prim_type_tpls[UnaryId] = make<UnaryTypeTpl>(*this, id_gen);
+    _prim_type_tpls[BitsId] = make<BitsTypeTpl>(*this, id_gen);
+    _prim_types[VoidId] = make<VoidType>(*this, &id_gen);
+    _prim_types[StringId] = make<StringType>(*this, &id_gen);
     _other_types[FunId] = make<FunType>(&id_gen);
 }
 
@@ -31,6 +31,12 @@ Ref<PrimType> Builtins::prim_type(BuiltinTypeId id) {
     assert(is_prim(id) && !has_bitsize(id));
     assert(_prim_types.count(id) == 1);
     return ref(_prim_types[id]);
+}
+
+Ref<PrimType> Builtins::prim_type(BuiltinTypeId id, bitsize_t size) {
+    assert(is_prim(id) && has_bitsize(id));
+    assert(_prim_type_tpls.count(id) == 1);
+    return _prim_type_tpls[id]->type(size);
 }
 
 Ref<Type> Builtins::type(BuiltinTypeId id) {

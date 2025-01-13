@@ -10,18 +10,20 @@ class Value;
 
 class IntType : public _PrimType<IntId, 2, ULAM_MAX_INT_SIZE, 32> {
 public:
-    IntType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        _PrimType{id_gen, tpl, bitsize} {}
+    IntType(Builtins& builtins, TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
+        _PrimType{builtins, id_gen, tpl, bitsize} {}
 
-    // bool is_convertible(Ref<const Type> type) override;
+    bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
+    bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;
 
-    // Value cast(
-    //     Diag& diag,
-    //     Ref<ast::Node> node,
-    //     Ref<const Type> type,
-    //     const Value& value,
-    //     bool is_impl = true) override;
+    PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
+    Value cast_to(Ref<PrimType> type, Value&& value) override;
 
+    TypedValue binary_op(
+        Op op,
+        const Value& left_val,
+        Ref<const PrimType> right_type,
+        const Value& right_val) override;
 };
 
 using IntTypeTpl = _PrimTypeTpl<IntType>;

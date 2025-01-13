@@ -12,14 +12,14 @@
 namespace ulam::sema {
 
 Eval::Eval(Context& ctx, Ref<ast::Root> ast):
-    _ctx{ctx}, _ast{ast}, _ev{_ast->program()} {
+    _ctx{ctx}, _ast{ast}, _eval{_ast->program()} {
     assert(_ast->program());
 }
 
-void Eval::eval(std::string& text) {
+void Eval::eval(const std::string& text) {
     Parser parser{_ctx, _ast->ctx().str_pool()};
     auto block = parser.parse_stmts(text);
-    _ev.eval(ref(block));
+    _eval.eval(ref(block));
 }
 
 } // namespace ulam::sema

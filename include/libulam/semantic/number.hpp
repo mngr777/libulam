@@ -22,7 +22,7 @@ public:
     Radix radix() const { return _radix; }
 
     bool is_signed() const {
-        return std::holds_alternative<std::int64_t>(_value);
+        return std::holds_alternative<Integer>(_value);
     }
 
     Unsigned as_unsigned() const {

@@ -1,5 +1,6 @@
 #include "tests/ULAM/compiler.hpp"
 #include <libulam/sema.hpp>
+#include <libulam/sema/eval.hpp>
 #include <utility>
 
 void Compiler::parse_module_str(
@@ -16,5 +17,6 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
 }
 
 void Compiler::compile(std::ostream& out) {
-    // TODO
+    ulam::sema::Eval eval{_ctx, ulam::ref(_ast)};
+    eval.eval("test.test()");
 }

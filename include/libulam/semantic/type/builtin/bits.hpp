@@ -12,8 +12,12 @@ namespace ulam {
 
 class BitsType : public _PrimType<BitsId, 1, 4096, 8> {
 public:
-    BitsType(TypeIdGen& id_gen, Ref<PrimTypeTpl> tpl, bitsize_t bitsize):
-        _PrimType{id_gen, tpl, bitsize} {}
+    BitsType(
+        Builtins& builtins,
+        TypeIdGen& id_gen,
+        Ref<PrimTypeTpl> tpl,
+        bitsize_t bitsize):
+        _PrimType{builtins, id_gen, tpl, bitsize} {}
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;

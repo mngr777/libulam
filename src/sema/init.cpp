@@ -152,7 +152,7 @@ void Init::visit(Ref<ast::TypeDef> node) {
 }
 
 void Init::visit(Ref<ast::VarDefList> node) {
-    // visit TypeName
+    // visit `TypeName`
     assert(node->has_type_name());
     node->type_name()->accept(*this);
 
@@ -164,6 +164,10 @@ void Init::visit(Ref<ast::VarDefList> node) {
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
         auto name_id = def->name().str_id();
+
+        // visit value expr for possible `TypeName`s
+        if (def->has_default_value())
+            def->default_value()->accept(*this);
 
         // already in current scope?
         if (scope()->has(name_id, true)) {

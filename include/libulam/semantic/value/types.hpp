@@ -6,8 +6,8 @@
 
 namespace ulam {
 
-using Integer = std::int64_t;
-using Unsigned = std::uint64_t;
+using Integer = std::int32_t;
+using Unsigned = std::uint32_t;
 using Bool = bool;
 using String = std::string;
 

@@ -39,7 +39,7 @@ private:
 class RValue : public _Value<
                    Integer,
                    Unsigned /* or Unary */,
-                   Bool,
+//                    Bool,
                    Bits,
                    String,
                    Ref<FunSet>,

@@ -12,7 +12,7 @@
 namespace ulam::sema {
 
 EvalVisitor::EvalVisitor(Ref<Program> program):
-    _program{program}, _resolver{program}, _cast{program} {
+    _program{program}, _resolver{program} {
     // init global scope
     auto scope_raii{_scope_stack.raii(scp::Program)};
     for (auto& mod : program->modules())
@@ -145,10 +145,12 @@ ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
 
 bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
     ExprRes res{eval_expr(expr)};
-    res = _cast.to_boolean(std::move(res), expr, true /* implicit */);
-    if (!res.ok())
-        throw std::exception();
-    return res.value().rvalue()->get<Bool>();
+    // res = _cast.to_boolean(std::move(res), expr, true /* implicit */);
+    // if (!res.ok())
+    //     throw std::exception();
+    // return res.value().rvalue()->get<Bool>();
+    // TODO
+    return false;
 }
 
 } // namespace ulam::sema
