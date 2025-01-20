@@ -2,7 +2,7 @@
 
 static const char* Program = R"END(
 quark A {
-  constant Int mC1 = (Unsigned)(1 + 1);
+  constant Int mC1 = 1 + 1u;
 }
 )END";
 

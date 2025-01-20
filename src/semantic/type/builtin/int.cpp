@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -31,7 +30,6 @@ bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
     default:
         assert(false);
     }
-    return false;
 }
 
 bool IntType::is_castable_to(Ref<PrimType> type, bool expl) const {
@@ -72,7 +70,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
         return {this, std::move(value)};
     }
     case UnsignedId: {
-        intval = std::max((Integer)0, rval->get<Integer>());
+        intval = std::max((Integer)0, intval);
         auto size = detail::bitsize(value);
         auto type = builtins().prim_type(UnsignedId, size);
         return {type, RValue{(Unsigned)intval}};
@@ -86,7 +84,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
         Unsigned val = std::max((Integer)0, intval);
         val = std::min((Unsigned)ULAM_MAX_INT_SIZE, val);
         auto type = builtins().prim_type(UnaryId, value);
-        return {type, RValue(val)};
+        return {type, RValue{val}};
     }
     case BitsId: {
         auto size = detail::bitsize(intval);
@@ -133,7 +131,7 @@ Value IntType::cast_to(Ref<PrimType> type, Value&& value) {
     }
 }
 
-TypedValue IntType::binary_op(
+PrimTypedValue IntType::binary_op(
     Op op,
     const Value& left_val,
     Ref<const PrimType> right_type,

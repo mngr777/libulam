@@ -419,13 +419,16 @@ Ptr<ast::VarDef> Parser::parse_var_def_rest(ast::Str name, bool is_ref) {
 
     // value
     Ptr<ast::Expr> expr;
+    auto assign_loc_id = NoLocId;
     if (_tok.is(tok::Equal)) {
+        assign_loc_id = _tok.loc_id;
         consume();
         expr = parse_expr();
     }
 
     auto node = tree<ast::VarDef>(name, std::move(array_dims), std::move(expr));
     node->set_is_ref(is_ref);
+    node->set_assign_loc_id(assign_loc_id);
     return node;
 }
 
@@ -725,6 +728,7 @@ Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
     while (true) {
         // binary?
         Op op = _tok.bin_op();
+        auto op_loc_id = _tok.loc_id;
         if (op == Op::None || ops::prec(op) < min_prec) {
             // suffix?
             op = _tok.unary_post_op();
@@ -746,8 +750,9 @@ Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
             break;
         default:
             consume();
-            lhs = tree<ast::BinaryOp>(
-                op, std::move(lhs), parse_expr_climb(ops::right_prec(op)));
+            lhs = tree_loc<ast::BinaryOp>(
+                op_loc_id, op, std::move(lhs),
+                parse_expr_climb(ops::right_prec(op)));
         }
         if (!lhs)
             return {};
@@ -1002,9 +1007,10 @@ Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 
 Ptr<ast::NumLit> Parser::parse_num_lit() {
     assert(_tok.is(tok::Number));
+    auto loc_id = _tok.loc_id;
     auto number = detail::parse_num_str(_ctx.diag(), _tok.loc_id, tok_str());
     consume();
-    return tree<ast::NumLit>(std::move(number));
+    return tree_loc<ast::NumLit>(loc_id, std::move(number));
 }
 
 Ptr<ast::StrLit> Parser::parse_str_lit() {

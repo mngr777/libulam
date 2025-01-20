@@ -19,7 +19,7 @@ public:
     PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
     Value cast_to(Ref<PrimType> type, Value&& value) override;
 
-    TypedValue binary_op(
+    PrimTypedValue binary_op(
         Op op,
         const Value& left_val,
         Ref<const PrimType> right_type,

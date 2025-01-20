@@ -12,8 +12,9 @@ namespace ulam::ast {
 class VarDecl : public Tuple<Stmt, ExprList, Expr>,
                 public Named,
                 public DefNode {
-    ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
     ULAM_AST_REF_ATTR(Var, var)
+    ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, assign_loc_id, NoLocId)
 public:
     VarDecl(Str name, Ptr<ExprList>&& array_dims, Ptr<Expr>&& default_value):
         Tuple{std::move(array_dims), std::move(default_value)}, Named{name} {}

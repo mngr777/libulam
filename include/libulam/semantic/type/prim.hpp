@@ -45,21 +45,21 @@ public:
     }
 
     virtual bool is_castable_to(BuiltinTypeId id, bool expl = true) const {
-        return false;
+        assert(false);
     }
     virtual bool is_castable_to(Ref<PrimType> type, bool expl = true) const {
-        return false;
+        assert(false);
     }
 
     virtual PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) {
-        return {};
+        assert(false);
     }
     virtual Value cast_to(Ref<PrimType> type, Value&& value) {
-        return {};
+        assert(false);
     }
 
     // TODO: make this pure virtual, implement for builtins
-    virtual TypedValue binary_op(
+    virtual PrimTypedValue binary_op(
         Op op,
         const Value& left_val,
         Ref<const PrimType> right_type,

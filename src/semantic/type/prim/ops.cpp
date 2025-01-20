@@ -35,14 +35,13 @@ PrimTypeErrorPair prim_binary_op_type_check(
         }
 
         // same type?
-        if (left_type->builtin_type_id() == left_type->builtin_type_id())
+        if (left_type->builtin_type_id() == right_type->builtin_type_id())
             return errors;
 
-        // Int wins (explicit cast), otherwise Unary becomes Unsigned
-        // (implicit)
+        // Int wins, otherwise Unary becomes Unsigned (implicit)
         if (left_type->is(IntId) || right_type->is(IntId)) {
             auto& error = left_type->is(IntId) ? errors.second : errors.first;
-            error = {PrimTypeError::ExplCastRequired, IntId};
+            error = {PrimTypeError::ImplCastRequired, IntId};
 
         } else if (left_type->is(UnsignedId) || right_type->is(UnsignedId)) {
             auto& error =

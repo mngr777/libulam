@@ -232,6 +232,11 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
         if (node->has_default_value()) {
             ExprVisitor ev{_program, scope};
             ExprRes res = node->default_value()->accept(ev);
+            // impl. cast to var type
+            if (res.type() && var->type() != res.type()) {
+                res = ev.cast(node->assign_loc_id(), 1, std::move(res), var->type(), false);
+                RET_UPD_STATE(var, false);
+            }
             auto tv = res.move_typed_value();
             // TODO: conversion/type error, check if const
             var->value() = tv.move_value();

@@ -96,7 +96,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
         auto left_tv = recast(
             errors.first, {left_prim_type, left.move_value()}, node->lhs());
         auto right_tv = recast(
-            errors.first, {right_prim_type, right.move_value()}, node->lhs());
+            errors.second, {right_prim_type, right.move_value()}, node->rhs());
 
         // did casting help?
         if (left_tv.type() && right_tv.type()) {
@@ -223,17 +223,20 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) { return {}; }
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) { return {}; }
 
 ExprRes ExprVisitor::cast(
-    Ref<ast::Node> node, ExprRes&& res, Ref<Type> type, bool is_expl) {
+    loc_id_t loc_id,
+    std::size_t len,
+    ExprRes&& res,
+    Ref<Type> type,
+    bool is_expl) {
     if (res.type()->is_prim()) {
         if (!type->is_prim()) {
             diag().emit(
-                Diag::Error, node->loc_id(), 1,
-                "cannot cast to non-primitive type");
+                Diag::Error, loc_id, len, "cannot cast to non-primitive type");
             return {ExprError::InvalidCast};
         }
-        if (!res.type()->as_prim()->is_castable_to(type->builtin_type_id())) {
+        if (!res.type()->as_prim()->is_castable_to(type->builtin_type_id(), is_expl)) {
             diag().emit(
-                Diag::Error, node->loc_id(), 1,
+                Diag::Error, loc_id, len,
                 std::string{"cannot cast to "} +
                     std::string{builtin_type_str(type->builtin_type_id())});
             return {ExprError::InvalidCast};
@@ -247,13 +250,14 @@ ExprRes ExprVisitor::cast(
 PrimTypedValue
 ExprVisitor::prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id) {
     assert(tv.type()->is_expl_castable_to(type_id));
-    return {}; // TODO
+    return tv.type()->cast_to(type_id, tv.move_value());
 }
 
 ExprRes ExprVisitor::prim_binary_op(
     Op op, PrimTypedValue&& left, PrimTypedValue&& right) {
-    return left.type()->binary_op(
+    auto prim_tv = left.type()->binary_op(
         op, left.move_value(), right.type(), right.move_value());
+    return {prim_tv.type(), prim_tv.move_value()};
 }
 
 std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
