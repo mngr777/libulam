@@ -31,6 +31,9 @@ public:
     void set_version(ScopeVersion version) override;
     void set_version_after(ScopeVersion version) override;
 
+    Ptr<PersScopeView> view(ScopeVersion version) override;
+    Ptr<PersScopeView> view() override;
+
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 

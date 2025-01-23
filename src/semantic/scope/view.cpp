@@ -51,6 +51,15 @@ Scope::Symbol* PersScopeView::do_set(str_id_t name_id, Symbol&& symbol) {
     return sym;
 }
 
+Ptr<PersScopeView> PersScopeView::view(ScopeVersion version) {
+    assert(version <= this->version());
+    return _scope->view(version);
+}
+
+Ptr<PersScopeView> PersScopeView::view() {
+    return _scope->view(version());
+}
+
 Ref<PersScope> PersScopeView::scope() {
     assert(_scope);
     return _scope;

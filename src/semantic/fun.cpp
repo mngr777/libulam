@@ -4,6 +4,8 @@
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/scope/version.hpp>
+#include <libulam/semantic/type.hpp>
+#include <libulam/semantic/var.hpp>
 
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[ulam::Fun] "
@@ -13,21 +15,26 @@ namespace ulam {
 
 // Fun
 
+Fun::Fun(Ref<ast::FunDef> node): _node{node} {}
+Fun::~Fun() {}
+
+str_id_t Fun::name_id() const { return _node->name().str_id(); }
+
 Ref<ast::FunRetType> Fun::ret_type_node() {
     assert(_node->has_ret_type());
     return _node->ret_type();
 }
 
-void Fun::add_param(Ref<Type> type, Value&& value) {
+void Fun::add_param(Ptr<Var>&& param) {
     assert(params_node());
     assert(_params.size() < params_node()->child_num());
-    _params.push_back(type);
+    _params.push_back(std::move(param));
 }
 
 unsigned Fun::min_param_num() const {
     unsigned num = param_num();
     for (auto it = _params.rbegin(); it != _params.rend(); ++it) {
-        if (it->has_default_value())
+        if ((*it)->node()->has_default_value())
             break;
         --num;
     }
@@ -43,7 +50,7 @@ Fun::Match Fun::match(const TypedValueList& args) {
     auto param_it = _params.begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
         auto arg_type = arg_it->type();
-        auto param_type = param_it->type();
+        auto param_type = (*param_it)->type();
         if (*arg_type == *param_type)
             continue;
         if (!param_type->is_impl_castable(arg_type))
@@ -57,11 +64,18 @@ Ref<ast::ParamList> Fun::params_node() { return _node->params(); }
 
 Ref<ast::FunDefBody> Fun::body_node() { return _node->body(); }
 
-// Fun
+std::string Fun::key() const {
+    TypeList param_types;
+    for (const auto& param : _params)
+        param_types.push_back(param->type());
+    Mangler mangler;
+    return mangler.mangled(param_types);
+}
+
+// FunSet
 
 FunSet::FunSet(FunSet& other) {
-    other.for_each(
-        [&](Ref<Fun> fun) { add(fun->node(), fun->scope_version()); });
+    other.for_each([&](Ref<Fun> fun) { add(fun); });
 }
 
 FunSet::MatchRes FunSet::find_match(const TypedValueList& args) {
@@ -85,14 +99,9 @@ void FunSet::for_each(Cb cb) {
         cb(item.ref());
 }
 
-Ref<Fun> FunSet::add(Ref<ast::FunDef> node, ScopeVersion scope_version) {
-    assert(node);
-    auto fun = make<Fun>(node);
-    fun->set_scope_version(scope_version);
-    auto fun_ref = ref(fun);
-    _funs.push_back(std::move(fun));
-    return fun_ref;
-}
+void FunSet::add(Ptr<Fun>&& fun) { _funs.push_back(std::move(fun)); }
+
+void FunSet::add(Ref<Fun> fun) { _funs.push_back(fun); }
 
 void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     // debug() << __FUNCTION__ << "\n";
@@ -100,12 +109,11 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     _map.emplace();
 
     // group funs by param types (hopefully one per group)
-    Mangler mangler;
     using List = std::list<Ref<Fun>>;
     std::unordered_map<std::string, List> key_map;
     for (auto& item : _funs) {
         auto fun = item.ref();
-        auto key = mangler.mangled(fun->params());
+        auto key = fun->key();
         // debug() << str_pool.get(fun->node()->name().str_id()) << " " << key
         // << "\n";
         auto [it, _] = key_map.emplace(key, List{});
@@ -131,10 +139,8 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
 
 void FunSet::merge(Ref<FunSet> other) {
     assert(_map.has_value());
-    Mangler mangler;
     other->for_each([&](Ref<Fun> fun) {
-        auto key = mangler.mangled(fun->params());
-        _map.value().emplace(key, fun); // silently fail on duplicates
+        _map.value().emplace(fun->key(), fun); // silently fail on duplicates
     });
 }
 

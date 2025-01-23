@@ -16,10 +16,10 @@ std::string Mangler::mangled(const TypedValueList& values) {
     return ss.str();
 }
 
-std::string Mangler::mangled(const ParamList& params) {
+std::string Mangler::mangled(const TypeList& types) {
     std::stringstream ss;
-    for (const auto& param : params)
-        write_mangled(ss, param.type());
+    for (const auto type : types)
+        write_mangled(ss, type);
     return ss.str();
 }
 

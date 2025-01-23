@@ -7,6 +7,7 @@
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/str_pool.hpp>
+#include <list>
 
 namespace ulam::ast {
 class Node;
@@ -129,6 +130,8 @@ private:
     std::unordered_map<array_size_t, Ptr<ArrayType>> _array_types;
     Ptr<RefType> _ref_type;
 };
+
+using TypeList = std::list<Ref<Type>>;
 
 class UserType : public Type, public Decl {
 public:

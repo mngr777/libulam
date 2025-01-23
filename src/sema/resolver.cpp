@@ -234,7 +234,9 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             ExprRes res = node->default_value()->accept(ev);
             // impl. cast to var type
             if (res.type() && var->type() != res.type()) {
-                res = ev.cast(node->assign_loc_id(), 1, std::move(res), var->type(), false);
+                res = ev.cast(
+                    node->assign_loc_id(), 1, std::move(res), var->type(),
+                    false);
                 RET_UPD_STATE(var, false);
             }
             auto tv = res.move_typed_value();
@@ -289,24 +291,13 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
     }
 
     // params
-    BasicScope param_scope{scope}; // tmp scope
-    ExprVisitor ev{_program, &param_scope};
-    auto params_node = fun->params_node();
-    for (unsigned n = 0; n < params_node->child_num(); ++n) {
-        auto param_node = params_node->get(n);
-        auto param_type = resolve_var_decl_type(
-            param_node->type_name(), param_node, &param_scope);
-        Value default_value{};
-        if (param_type) {
-            if (param_node->has_default_value()) {
-                ExprRes res = param_node->default_value()->accept(ev);
-                auto tv = res.move_typed_value();
-                // TODO: conversion/type error
-                default_value = tv.move_value();
-            }
+    for (auto& param : fun->params()) {
+        auto type = resolve_var_decl_type(param->type_node(), param->node(), scope);
+        if (!type) {
+            is_resolved = false;
+            continue;
         }
-        fun->add_param(param_type, std::move(default_value));
-        is_resolved = param_type && is_resolved;
+        param->set_type(type);
     }
 
     RET_UPD_STATE(fun, is_resolved);

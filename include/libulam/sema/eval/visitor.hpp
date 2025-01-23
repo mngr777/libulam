@@ -8,7 +8,11 @@
 
 namespace ulam::sema {
 
+class EvalExprVisitor;
+
 class EvalVisitor : public ast::Visitor {
+    friend EvalExprVisitor;
+
 public:
     EvalVisitor(Ref<Program> program);
 
@@ -28,6 +32,9 @@ public:
     void visit(Ref<ast::MemberAccess> node) override;
     void visit(Ref<ast::TypeOpExpr> node) override;
     void visit(Ref<ast::Ident> node) override;
+
+protected:
+    virtual ExprRes funcall(Ref<Fun> fun, TypedValueList&& args);
 
 private:
     ExprRes eval_expr(Ref<ast::Expr> expr);

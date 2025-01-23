@@ -1,3 +1,5 @@
+#include "libulam/semantic/scope.hpp"
+#include <cassert>
 #include <exception>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -14,7 +16,7 @@ namespace ulam::sema {
 EvalVisitor::EvalVisitor(Ref<Program> program):
     _program{program}, _resolver{program} {
     // init global scope
-    auto scope_raii{_scope_stack.raii(scp::Program)};
+    _scope_stack.push(scp::Program);
     for (auto& mod : program->modules())
         mod->export_symbols(scope());
 }
@@ -115,24 +117,28 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     }
 }
 
-void EvalVisitor::visit(Ref<ast::FunCall> node) {
-    eval_expr(node);
-}
+void EvalVisitor::visit(Ref<ast::FunCall> node) { eval_expr(node); }
 
-void EvalVisitor::visit(Ref<ast::ArrayAccess> node) {
-    eval_expr(node);
-}
+void EvalVisitor::visit(Ref<ast::ArrayAccess> node) { eval_expr(node); }
 
-void EvalVisitor::visit(Ref<ast::MemberAccess> node) {
-    eval_expr(node);
-}
+void EvalVisitor::visit(Ref<ast::MemberAccess> node) { eval_expr(node); }
 
-void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) {
-    eval_expr(node);
-}
+void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
-void EvalVisitor::visit(Ref<ast::Ident> node) {
-    eval_expr(node);
+void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
+
+ExprRes EvalVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
+    assert(fun->params().size() == args.size());
+    auto class_scope = fun->cls()->scope();
+    _scope_stack.raii(make<BasicScope>(class_scope, scp::Fun));
+    // for (const auto& param : fun->params()) {
+    //     assert(args.size() > 0);
+    //     auto tv = std::move(args.front());
+    //     args.pop_front();
+    //     // auto var = make<Var>();
+    //     // scope()->set(param.name_id(), );
+    // }
+    return {};
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {

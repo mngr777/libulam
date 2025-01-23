@@ -17,6 +17,7 @@
 namespace ulam {
 
 class Module;
+class PersScopeView;
 
 // Scope base
 
@@ -44,6 +45,9 @@ public:
     virtual ScopeVersion version() const { return NoScopeVersion; }
     virtual void set_version(ScopeVersion version) { assert(false); }
     virtual void set_version_after(ScopeVersion version) { assert(false); }
+
+    virtual Ptr<PersScopeView> view(ScopeVersion version) { assert(false); }
+    virtual Ptr<PersScopeView> view() { assert(false); }
 
     virtual ScopeFlags flags() const = 0;
 
@@ -160,8 +164,8 @@ public:
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
 
-    Ptr<PersScopeView> view(ScopeVersion version);
-    Ptr<PersScopeView> view();
+    Ptr<PersScopeView> view(ScopeVersion version) override;
+    Ptr<PersScopeView> view() override;
 
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);

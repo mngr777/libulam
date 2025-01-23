@@ -2,7 +2,8 @@
 #include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
-#include <libulam/semantic/params.hpp>
+#include <libulam/semantic/typed_value.hpp>
+#include <libulam/str_pool.hpp>
 #include <list>
 #include <optional>
 #include <unordered_map>
@@ -18,13 +19,21 @@ class ParamList;
 namespace ulam {
 
 class Diag;
+class FunSet;
+class Scope;
 class Type;
+class Var;
 
 class Fun : public Decl {
+    friend FunSet;
+
 public:
     enum Match { NoMatch, IsMatch, ExactMatch };
 
-    Fun(Ref<ast::FunDef> node): _node{node} {}
+    Fun(Ref<ast::FunDef> node);
+    ~Fun();
+
+    str_id_t name_id() const;
 
     Ref<Type> ret_type() { return _ret_type; }
     Ref<const Type> ret_type() const { return _ret_type; }
@@ -34,12 +43,14 @@ public:
     // TMP
     auto& params() { return _params; }
     const auto& param() const { return _params; }
-    void add_param(Ref<Type> type, Value&& default_value);
+    void add_param(Ptr<Var>&& param);
 
     unsigned min_param_num() const;
     unsigned param_num() const { return _params.size(); }
 
     Match match(const TypedValueList& args);
+
+    Ref<Scope> scope();
 
     Ref<ast::FunDef> node() { return _node; }
     Ref<ast::FunRetType> ret_type_node();
@@ -47,9 +58,11 @@ public:
     Ref<ast::FunDefBody> body_node();
 
 private:
+    std::string key() const;
+
     Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
-    ParamList _params;
+    std::list<Ptr<Var>> _params;
 };
 
 class FunSet : public Decl {
@@ -64,7 +77,8 @@ public:
 
     void for_each(Cb cb);
 
-    Ref<Fun> add(Ref<ast::FunDef> node, ScopeVersion scope_version);
+    void add(Ptr<Fun>&& fun);
+    void add(Ref<Fun> fun);
 
     void init_map(Diag& diag, UniqStrPool& str_pool);
 

@@ -18,5 +18,5 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
 
 void Compiler::compile(std::ostream& out) {
     ulam::sema::Eval eval{_ctx, ulam::ref(_ast)};
-    eval.eval("test.test()");
+    eval.eval("A a; a.test();");
 }

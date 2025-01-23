@@ -239,12 +239,28 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     }
     fset = sym->get<FunSet>();
 
-    // create overload
-    auto fun = fset->add(node, scope_version);
+    // create fun
+    auto fun = make<Fun>(node);
     if (class_node->cls())
         fun->set_cls(class_node->cls());
-    node->set_fun(fun);
-    node->set_scope_version(scope_version);
+    fun->set_scope_version(scope_version);
+
+    // add params
+    auto params_node = fun->params_node();
+    assert(params_node);
+    for (unsigned n = 0; n < params_node->child_num(); ++n) {
+        auto param_node = params_node->get(n);
+        auto param = make<Var>(
+            param_node->type_name(), param_node, Ref<Type>{}, Var::FunParam);
+        fun->add_param(std::move(param));
+    }
+
+    // update node attrs
+    node->set_fun(ref(fun));
+    node->set_scope_version(scope_version); // TODO: remove?
+
+    // add to set
+    fset->add(std::move(fun));
     return true;
 }
 

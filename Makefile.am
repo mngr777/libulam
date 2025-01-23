@@ -30,7 +30,6 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/number.hpp \
 	include/libulam/semantic/ops.hpp \
 	include/libulam/semantic/ops.inc.hpp \
-	include/libulam/semantic/params.hpp \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
 	include/libulam/semantic/scope/stack.hpp \

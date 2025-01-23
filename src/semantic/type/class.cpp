@@ -63,6 +63,7 @@ void Class::add_param_var(Ptr<Var>&& var) {
 }
 
 void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
+    // TODO: merge fun sets?
     if (_ancestry.add(cls, node))
         cls->members().export_symbols(members());
 }

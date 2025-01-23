@@ -273,8 +273,7 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
 }
 
 ExprRes ExprVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
-    // TODO
-    return {};
+    return {fun->ret_type(), Value{}};
 }
 
 Diag& ExprVisitor::diag() { return _program->diag(); }
