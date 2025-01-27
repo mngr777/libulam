@@ -52,7 +52,10 @@ void Diag::emit(
     auto src = _sm.src(loc.src_id());
     std::cerr << level_prefix(lvl) << "in " << src->name() << ":" << loc.linum()
               << ":" << loc.chr() << "\n";
-    std::cerr << _sm.line_at(loc);
+    auto line = _sm.line_at(loc);
+    std::cerr << line;
+    if (line.size() > 0 && line[line.size() - 1] != '\n')
+        std::cerr << "\n";
     std::cerr << std::string(loc.chr() - 1, ' ') << "^\n";
     std::cerr << std::string(loc.chr() - 1, ' ') << text << "\n";
     if (lvl < Diag::Warn)

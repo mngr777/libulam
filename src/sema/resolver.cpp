@@ -1,3 +1,4 @@
+#include "libulam/semantic/type.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/array_dim_eval.hpp>
@@ -292,7 +293,8 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
 
     // params
     for (auto& param : fun->params()) {
-        auto type = resolve_var_decl_type(param->type_node(), param->node(), scope);
+        auto type =
+            resolve_var_decl_type(param->type_node(), param->node(), scope);
         if (!type) {
             is_resolved = false;
             continue;
@@ -456,18 +458,17 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         return type;
     }
 
-    // try searching for local alias
-    if (scope->in(scp::Fun)) {
-        auto name_id = type_spec->ident()->name().str_id();
-        auto sym = scope->get(name_id);
-        if (!sym)
-            return {};
-        auto type = sym->get<UserType>();
-        assert(type->is_alias());
-        return type;
+    // search in scope
+    auto name_id = type_spec->ident()->name().str_id();
+    auto sym = scope->get(name_id);
+    if (!sym) {
+        diag().emit(
+            Diag::Error, type_spec->loc_id(), str(name_id).size(),
+            "type not found");
+        return {};
     }
-
-    return {};
+    assert(sym->is<UserType>());
+    return sym->get<UserType>();
 }
 
 Ref<Type> Resolver::apply_array_dims(

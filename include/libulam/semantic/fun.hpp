@@ -40,7 +40,7 @@ public:
 
     void set_ret_type(Ref<Type> ret_type) { _ret_type = ret_type; }
 
-    // TMP
+    // TMP?
     auto& params() { return _params; }
     const auto& param() const { return _params; }
     void add_param(Ptr<Var>&& param);
@@ -72,6 +72,8 @@ public:
 
     FunSet() {}
     FunSet(FunSet& other);
+
+    bool is_virtual() const { return false; } // TODO
 
     MatchRes find_match(const TypedValueList& args);
 

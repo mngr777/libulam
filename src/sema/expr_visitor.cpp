@@ -1,5 +1,6 @@
 #include "libulam/sema/resolver.hpp"
 #include "libulam/semantic/expr_res.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/program.hpp>
@@ -219,7 +220,44 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     return {};
 }
 
-ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) { return {}; }
+ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
+    assert(node->has_obj());
+    // eval object expr
+    auto obj_res = node->obj()->accept(*this);
+    if (!obj_res.ok()) {
+        diag().emit(Diag::Error, node->obj()->loc_id(), 1, "object not found");
+        return {ExprError::SymbolNotFound};
+    }
+
+    // is an object?
+    if (!obj_res.type()->is_class()) {
+        diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not an object");
+        return {ExprError::NotObject};
+    }
+
+    auto obj_tv = obj_res.move_typed_value();
+    auto cls = obj_tv.type()->as_class();
+    auto name = node->ident()->name();
+    auto member = cls->get(name.str_id());
+    if (!member) {
+        diag().emit(Diag::Error, node->ident()->loc_id(), 1, "member not found");
+        return {ExprError::MemberNotFound};
+    }
+    // TODO: object/class data members
+    if (member->is<FunSet>()) {
+        auto fset = member->get<FunSet>();
+        if (fset->is_virtual()) {
+            auto& obj = obj_tv.value().rvalue()->get<Ptr<Object>>();
+            auto sym = obj->cls()->as_class()->get(name.str_id());
+            assert(sym && sym->is<FunSet>());
+            fset = sym->get<FunSet>();
+            assert(fset);
+        }
+        return {builtins().type(FunId), RValue{fset}};
+    }
+    return {ExprError::NotImplemented};
+}
+
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) { return {}; }
 
 ExprRes ExprVisitor::cast(
@@ -234,7 +272,8 @@ ExprRes ExprVisitor::cast(
                 Diag::Error, loc_id, len, "cannot cast to non-primitive type");
             return {ExprError::InvalidCast};
         }
-        if (!res.type()->as_prim()->is_castable_to(type->builtin_type_id(), is_expl)) {
+        if (!res.type()->as_prim()->is_castable_to(
+                type->builtin_type_id(), is_expl)) {
             diag().emit(
                 Diag::Error, loc_id, len,
                 std::string{"cannot cast to "} +

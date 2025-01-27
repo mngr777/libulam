@@ -3,7 +3,7 @@
 
 namespace ulam {
 
-ExprRes EvalExcept::move_res() {
+ExprRes EvalExceptReturn::move_res() {
     ExprRes res;
     std::swap(res, _res);
     return res;

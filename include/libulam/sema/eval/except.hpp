@@ -4,21 +4,29 @@
 
 namespace ulam {
 
-class EvalExcept : std::exception {
+class EvalExcept : std::exception {};
+
+class EvalExceptReturn : public EvalExcept {
 public:
-    enum Code { Error, Return };
-
-    EvalExcept(Code code): _code{code} {}
-    EvalExcept(Code code, ExprRes&& res): _code{code}, _res{std::move(res)} {}
-
-    Code code() const { return _code; }
+    EvalExceptReturn(ExprRes&& res): _res{std::move(res)} {}
 
     const ExprRes& res() const { return _res; }
     ExprRes move_res();
 
 private:
-    Code _code;
     ExprRes _res;
+};
+
+class EvalExceptError : public EvalExcept {
+public:
+    enum Code { Error };
+
+    EvalExceptError(Code code): _code{code} {}
+
+    Code code() const { return _code; }
+
+private:
+    Code _code;
 };
 
 } // namespace ulam

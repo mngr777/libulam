@@ -987,7 +987,7 @@ Ptr<ast::Ident> Parser::parse_ident() {
     assert(_tok.is(tok::Ident));
     auto str = tok_ast_str();
     consume();
-    return tree<ast::Ident>(str);
+    return tree_loc<ast::Ident>(str.loc_id(), str);
 }
 
 bool Parser::parse_is_ref() {

@@ -10,7 +10,9 @@ enum class ExprError {
     Ok,
     Error,
     SymbolNotFound,
+    MemberNotFound,
     NotImplemented,
+    NotObject,
     NoOperator,
     InvalidOperandType,
     CastRequired,
@@ -46,9 +48,7 @@ public:
         return tv;
     }
 
-    Value move_value() {
-        return _typed_value.move_value();
-    }
+    Value move_value() { return _typed_value.move_value(); }
 
     ExprError error() const { return _error; }
 

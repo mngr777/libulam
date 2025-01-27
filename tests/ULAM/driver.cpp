@@ -1,6 +1,5 @@
-#include "./compiler.hpp"
 #include "./test_case.hpp"
-#include <cstddef>
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -38,6 +37,7 @@ int main(int argc, char** argv) {
 
     for (const auto& path : test_paths) {
         std::cout << path.filename() << " ";
+        std::cout.flush();
         bool ok = run(path);
         std::cout << (ok ? "OK" : "FAIL") << "\n";
         if (!ok)
