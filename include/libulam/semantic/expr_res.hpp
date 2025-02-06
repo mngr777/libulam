@@ -11,6 +11,7 @@ enum class ExprError {
     Error,
     SymbolNotFound,
     MemberNotFound,
+    NotLvalue,
     NotImplemented,
     NotObject,
     NoOperator,

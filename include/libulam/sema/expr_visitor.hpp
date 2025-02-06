@@ -47,11 +47,17 @@ public:
         bool is_expl);
 
 protected:
+    virtual ExprRes prim_binary_op(
+        Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right);
+
+    virtual ExprRes
+    assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val);
+
     virtual PrimTypedValue
     prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id);
 
-    virtual ExprRes
-    prim_binary_op(Op op, PrimTypedValue&& left, PrimTypedValue&& right);
+    virtual PrimTypedValue
+    prim_binary_op_impl(Op op, PrimTypedValue&& left, PrimTypedValue&& right);
 
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);

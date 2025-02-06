@@ -26,6 +26,9 @@ PrimTypeErrorPair prim_binary_op_type_check(
 
     PrimTypeErrorPair errors;
     switch (ops::kind(op)) {
+    case ops::Kind::Assign: {
+        errors.second = check_type_match(right_type, left_type->builtin_type_id());
+    } break;
     case ops::Kind::Numeric: {
         // one or both operands non-numeric?
         if (!is_numeric(left_type) || !is_numeric(right_type)) {
@@ -48,15 +51,15 @@ PrimTypeErrorPair prim_binary_op_type_check(
                 left_type->is(UnsignedId) ? errors.second : errors.first;
             error = {PrimTypeError::ImplCastRequired, UnsignedId};
         }
-        return errors;
-    }
+    } break;
     case ops::Kind::Logical: {
         errors.first = check_type_match(left_type, BoolId);
         errors.second = check_type_match(right_type, BoolId);
-    }
-    case ops::Kind::Bitwise:
+    } break;
+    case ops::Kind::Bitwise: {
         errors.first = check_type_match(left_type, BitsId);
         errors.first = check_type_match(right_type, BoolId);
+    } break;
     }
     return errors;
 }

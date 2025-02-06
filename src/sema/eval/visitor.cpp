@@ -3,6 +3,7 @@
 #include <cassert>
 #include <exception>
 #include <libulam/sema/eval/except.hpp>
+#include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/expr_res.hpp>
@@ -140,7 +141,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
     assert(fun->params().size() == args.size());
 
     // add scope
-    _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
+    auto sr =
+        _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind params
     for (const auto& param : fun->params()) {
@@ -163,7 +165,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
-    ExprVisitor ev(_program, scope());
+    EvalExprVisitor ev{*this, scope()};
     ExprRes res = expr->accept(ev);
     if (!res.ok())
         throw std::exception(); // TODO

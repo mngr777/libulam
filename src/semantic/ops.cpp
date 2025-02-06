@@ -17,6 +17,8 @@ const char* str(Op op) {
 
 Kind kind(Op op) {
     switch (op) {
+    case Op::Assign:
+        return Kind::Assign;
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:
@@ -74,6 +76,36 @@ bool is_assign(Op op) {
         return true;
     default:
         return false;
+    }
+}
+
+Op non_assign(Op op) {
+    switch (op) {
+    case Op::Assign:
+        return Op::None;
+    case Op::AssignProd:
+        return Op::Prod;
+    case Op::AssignQuot:
+        return Op::Quot;
+    case Op::AssignRem:
+        return Op::Rem;
+    case Op::AssignSum:
+        return Op::Sum;
+    case Op::AssignDiff:
+        return Op::Diff;
+    case Op::AssignShiftLeft:
+        return Op::ShiftLeft;
+    case Op::AssignShiftRight:
+        return Op::ShiftRight;
+    case Op::AssignBwAnd:
+        return Op::BwAnd;
+    case Op::AssignBwXor:
+        return Op::BwXor;
+    case Op::AssignBwOr:
+        return Op::BwOr;
+    default:
+        assert(!is_assign(op));
+        return op;
     }
 }
 

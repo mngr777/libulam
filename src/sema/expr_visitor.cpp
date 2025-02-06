@@ -1,8 +1,9 @@
-#include "libulam/sema/resolver.hpp"
 #include "libulam/semantic/expr_res.hpp"
-#include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/ops.hpp"
+#include "libulam/semantic/type/prim/ops.hpp"
 #include <cassert>
 #include <libulam/sema/expr_visitor.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/value.hpp>
 
@@ -44,6 +45,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ParenExpr> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     assert(node->has_lhs() && node->has_rhs());
+
     auto left = node->lhs()->accept(*this);
     auto right = node->rhs()->accept(*this);
     if (!left || !right)
@@ -57,55 +59,9 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
                 "non-primitive type cannot be used as right operand type");
             return {ExprError::InvalidOperandType};
         }
-
-        // check types
-        auto left_prim_type = left.type()->as_prim();
-        auto right_prim_type = right.type()->as_prim();
-        auto errors = prim_binary_op_type_check(
-            node->op(), left_prim_type, right_prim_type);
-
-        // both ok?
-        if (errors.first.ok() && errors.second.ok()) {
-            // perform bin op
-            return prim_binary_op(
-                node->op(), {left_prim_type, left.move_value()},
-                {right_prim_type, right.move_value()});
-        }
-
-        // cast to suggested types if possible
-        auto recast = [&](PrimTypeError error, PrimTypedValue&& tv,
-                          Ref<const ast::Expr> node) -> PrimTypedValue {
-            // ok?
-            if (error.ok()) {
-                return std::move(tv);
-            }
-            // incompatible type?
-            if (error.incompatible()) {
-                diag().emit(
-                    Diag::Error, node->loc_id(), 1, "incompatible type");
-                return {};
-            }
-            if (error.requires_expl_cast()) {
-                diag().emit(
-                    Diag::Error, node->loc_id(), 1,
-                    std::string{"suggest casting to"} +
-                        std::string{builtin_type_str(error.suggested_type)});
-                // continue to cast
-            }
-            return prim_cast(std::move(tv), error.suggested_type);
-        };
-        auto left_tv = recast(
-            errors.first, {left_prim_type, left.move_value()}, node->lhs());
-        auto right_tv = recast(
-            errors.second, {right_prim_type, right.move_value()}, node->rhs());
-
-        // did casting help?
-        if (left_tv.type() && right_tv.type()) {
-            // perform bin op
-            return prim_binary_op(
-                node->op(), std::move(left_tv), std::move(right_tv));
-        }
-        return {}; // give up
+        return prim_binary_op(
+            node, {left.type()->as_prim(), left.move_value()},
+            {right.type()->as_prim(), right.move_value()});
 
     } else {
         // TODO: operator funs for classes, error(?) for arrays, ...
@@ -240,7 +196,8 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     auto name = node->ident()->name();
     auto member = cls->get(name.str_id());
     if (!member) {
-        diag().emit(Diag::Error, node->ident()->loc_id(), 1, "member not found");
+        diag().emit(
+            Diag::Error, node->ident()->loc_id(), 1, "member not found");
         return {ExprError::MemberNotFound};
     }
     // TODO: object/class data members
@@ -286,14 +243,75 @@ ExprRes ExprVisitor::cast(
     }
 }
 
+ExprRes ExprVisitor::prim_binary_op(
+    Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right) {
+    Op op = ops::non_assign(node->op());
+
+    PrimTypeErrorPair type_errors{};
+    if (op != Op::None) {
+        // check operand types
+        type_errors = prim_binary_op_type_check(op, left.type(), right.type());
+
+        // cast if required
+        auto recast = [&](PrimTypeError error, PrimTypedValue&& tv,
+                          Ref<const ast::Expr> node) -> PrimTypedValue {
+            switch (error.status) {
+            case PrimTypeError::Incompatible:
+                diag().emit(
+                    Diag::Error, node->loc_id(), 1, "incompatible type");
+                return {};
+            case PrimTypeError::ExplCastRequired: {
+                auto message =
+                    std::string{"suggest casting to"} +
+                    std::string{builtin_type_str(error.suggested_type)};
+                diag().emit(Diag::Error, node->loc_id(), 1, message);
+            } // fallthru
+            case PrimTypeError::ImplCastRequired:
+                return prim_cast(std::move(tv), error.suggested_type);
+            case PrimTypeError::Ok:
+                return std::move(tv);
+            default:
+                assert(false);
+            }
+        };
+        left = recast(type_errors.first, std::move(left), node->lhs());
+        right = recast(type_errors.second, std::move(right), node->rhs());
+
+        // apply op
+        right = prim_binary_op_impl(op, std::move(left), std::move(right));
+    }
+
+    // handle assignment
+    if (ops::is_assign(node->op())) {
+        if (!left.value().is_lvalue()) {
+            diag().emit(
+                Diag::Error, node->loc_id(), 1, "cannot assign to rvalue");
+            return {ExprError::NotLvalue};
+        }
+        return assign(
+            node, left.value().lvalue(), {right.type(), right.move_value()});
+    }
+    return {right.type(), right.move_value()};
+}
+
+ExprRes
+ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val) {
+    if (lval->is<Ref<Var>>()) {
+        assert(false && "assign to var");
+    } else {
+        assert(false);
+    }
+}
+
 PrimTypedValue
 ExprVisitor::prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id) {
     assert(tv.type()->is_expl_castable_to(type_id));
     return tv.type()->cast_to(type_id, tv.move_value());
 }
 
-ExprRes ExprVisitor::prim_binary_op(
+PrimTypedValue ExprVisitor::prim_binary_op_impl(
     Op op, PrimTypedValue&& left, PrimTypedValue&& right) {
+    assert(!ops::is_assign(op));
     auto prim_tv = left.type()->binary_op(
         op, left.move_value(), right.type(), right.move_value());
     return {prim_tv.type(), prim_tv.move_value()};
