@@ -63,7 +63,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/object.hpp \
 	include/libulam/semantic/value/types.hpp \
-	include/libulam/semantic/var.hpp
+	include/libulam/semantic/var.hpp \
+	include/libulam/semantic/var/base.hpp
 
 SEMANTIC_SOURCE_FILES = \
 	src/semantic/decl.cpp \
@@ -99,7 +100,8 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/value.cpp \
 	src/semantic/value/bit_vector.cpp \
 	src/semantic/value/object.cpp \
-	src/semantic/var.cpp
+	src/semantic/var.cpp \
+	src/semantic/var/base.cpp
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
