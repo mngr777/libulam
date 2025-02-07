@@ -7,6 +7,15 @@
 
 namespace ulam {
 
+Ref<const Var> ScopeBase::self() const {
+    return (_self || parent()) ? parent()->self() : _self;
+}
+
+void ScopeBase::set_self(Ref<Var> self) {
+    assert(!_self);
+    _self = self;
+}
+
 // BasicScope
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {

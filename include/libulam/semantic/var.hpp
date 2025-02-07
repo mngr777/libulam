@@ -14,6 +14,8 @@ class VarDecl;
 
 namespace ulam {
 
+// TODO: data member/parameter/... subclasses?
+
 class Var : public Decl {
 public:
     using Flag = std::uint8_t;

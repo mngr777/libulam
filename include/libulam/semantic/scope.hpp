@@ -51,6 +51,12 @@ public:
 
     virtual ScopeFlags flags() const = 0;
 
+    virtual Ref<Var> self() {
+        return const_cast<Ref<Var>>(std::as_const(*this).self());
+    };
+    virtual Ref<const Var> self() const { assert(false); }
+    virtual void set_self(Ref<Var> self) { assert(false); }
+
     bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
     bool in(ScopeFlags flags_) {
         return is(flags_) || (parent() && parent()->is(flags_));
@@ -77,16 +83,20 @@ protected:
 class ScopeBase : public Scope {
 public:
     ScopeBase(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
-        Scope{}, _parent{parent}, _flags{flags} {}
-
-    ScopeFlags flags() const override { return _flags; }
+        Scope{}, _parent{parent}, _flags{flags}, _self{} {}
 
     Ref<Scope> parent() override { return _parent; }
     Ref<const Scope> parent() const override { return _parent; }
 
+    ScopeFlags flags() const override { return _flags; }
+
+    Ref<const Var> self() const override;
+    void set_self(Ref<Var> self) override;
+
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
+    Ref<Var> _self;
 };
 
 // Transient
