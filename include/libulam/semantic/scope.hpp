@@ -9,6 +9,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
+#include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
@@ -23,7 +24,7 @@ class PersScopeView;
 
 class Scope {
 protected:
-    using SymbolTable = _SymbolTable<UserType, ulam::ClassTpl, FunSet, Var>;
+    using SymbolTable = _SymbolTable<UserType, ClassTpl, FunSet, Var, Prop>;
 
 public:
     using Symbol = SymbolTable::Symbol;
@@ -51,11 +52,8 @@ public:
 
     virtual ScopeFlags flags() const = 0;
 
-    virtual Ref<Var> self() {
-        return const_cast<Ref<Var>>(std::as_const(*this).self());
-    };
-    virtual Ref<const Var> self() const { assert(false); }
-    virtual void set_self(Ref<Var> self) { assert(false); }
+    virtual SPtr<Object> self() const { assert(false); }
+    virtual void set_self(SPtr<Object> self) { assert(false); }
 
     bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
     bool in(ScopeFlags flags_) {
@@ -90,13 +88,13 @@ public:
 
     ScopeFlags flags() const override { return _flags; }
 
-    Ref<const Var> self() const override;
-    void set_self(Ref<Var> self) override;
+    SPtr<Object> self() const override;
+    void set_self(SPtr<Object> self) override;
 
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
-    Ref<Var> _self;
+    SPtr<Object> _self;
 };
 
 // Transient

@@ -7,11 +7,11 @@
 
 namespace ulam {
 
-Ref<const Var> ScopeBase::self() const {
+SPtr<Object> ScopeBase::self() const {
     return (_self || parent()) ? parent()->self() : _self;
 }
 
-void ScopeBase::set_self(Ref<Var> self) {
+void ScopeBase::set_self(SPtr<Object> self) {
     assert(!_self);
     _self = self;
 }

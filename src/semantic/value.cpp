@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/bound.hpp"
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/var.hpp>
 
@@ -6,16 +7,20 @@ namespace ulam {
 // LValue
 
 RValue* LValue::rvalue() {
-    return const_cast<RValue*>(std::as_const(*this).rvalue());
-}
-
-const RValue* LValue::rvalue() const {
     if (is_unknown())
-        return nullptr;
+        return {};
+
     if (is<Ref<Var>>()) {
         auto var = get<Ref<Var>>();
-        return var ? var->rvalue() : nullptr;
+        return var->rvalue();
     }
+
+    // if (is<BoundProp>()) {
+    //     RValue rvalue;
+    //     auto& bound_prop = get<BoundProp>();
+    //     return bound_prop.load(rvalue);
+    // }
+
     assert(false);
 }
 

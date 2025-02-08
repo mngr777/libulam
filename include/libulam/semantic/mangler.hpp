@@ -14,7 +14,7 @@ public:
 
     void write_mangled(std::ostream& os, const TypedValue& tv);
     void write_mangled(std::ostream& os, Ref<const Type> type);
-    void write_mangled(std::ostream& os, const Value& value);
+    void write_mangled(std::ostream& os, const RValue* rvalue);
 };
 
 } // namespace ulam

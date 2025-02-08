@@ -7,6 +7,8 @@
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
+// TODO: props
+
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[sema::Resolver] "
 #include "src/debug.hpp"

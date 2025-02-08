@@ -1,9 +1,10 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/var.hpp>
 
 namespace ulam::ast {
@@ -16,7 +17,7 @@ class PersScope;
 
 class ClassBase {
 public:
-    using SymbolTable = _SymbolTable<UserType, FunSet, Var>;
+    using SymbolTable = _SymbolTable<UserType, FunSet, Var, Prop>;
     using Symbol = SymbolTable::Symbol;
 
     ClassBase(

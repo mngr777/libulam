@@ -7,6 +7,7 @@ namespace ulam {
 
 template <typename T> using Ptr = std::unique_ptr<T>; // owning pointer
 template <typename T> using Ref = T*;                 // nullable reference
+template <typename T> using SPtr = std::shared_ptr<T>;
 
 template <typename T> Ref<T> ref(Ptr<T>& ptr) { return ptr.get(); }
 template <typename T> const Ref<T> ref(const Ptr<T>& ptr) { return ptr.get(); }

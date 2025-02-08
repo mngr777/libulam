@@ -1,11 +1,9 @@
-#include "libulam/semantic/expr_res.hpp"
-#include "libulam/semantic/ops.hpp"
-#include "libulam/semantic/type/prim/ops.hpp"
 #include <cassert>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/bound.hpp>
 
 #ifdef DEBUG_PARSER
 #    define ULAM_DEBUG
@@ -28,13 +26,21 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
             "symbol not found");
         return {ExprError::SymbolNotFound};
     }
+
+    // TODO: visit
     if (sym->is<Var>()) {
         auto var = sym->get<Var>();
         return {var->type(), LValue{var}};
-    } else {
+
+    } else if (sym->is<Prop>()) {
+        auto prop = sym->get<Prop>();
+        return {prop->type(), LValue{BoundProp{_scope->self(), prop}}};
+
+    } else if (sym->is<FunSet>()) {
         assert(sym->is<FunSet>());
         auto fset = sym->get<FunSet>();
-        return {builtins().type(FunId), LValue{fset}};
+        return {
+            builtins().type(FunId), LValue{BoundFunSet{_scope->self(), fset}}};
     }
     assert(false);
 }
@@ -191,20 +197,31 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::NotObject};
     }
 
-    auto obj_tv = obj_res.move_typed_value();
-    auto cls = obj_tv.type()->as_class();
+    auto cls = obj_res.type()->as_class();
+    auto obj_val = obj_res.move_value();
+    assert(obj_val.rvalue()->is<SPtr<Object>>());
+    auto obj = obj_val.rvalue()->get<SPtr<Object>>();
+
+    // get symbol
     auto name = node->ident()->name();
-    auto member = cls->get(name.str_id());
-    if (!member) {
+    auto sym = cls->get(name.str_id());
+    if (!sym) {
         diag().emit(
             Diag::Error, node->ident()->loc_id(), 1, "member not found");
         return {ExprError::MemberNotFound};
     }
-    // TODO: object/class data members
-    if (member->is<FunSet>()) {
-        auto fset = member->get<FunSet>();
+
+    if (sym->is<Var>()) {
+        auto var = sym->get<Var>();
+        return {var->type(), LValue{var}};
+
+    } else if (sym->is<Prop>()) {
+        auto prop = sym->get<Prop>();
+        return {prop->type(), LValue{BoundProp{obj, prop}}};
+
+    } else if (sym->is<FunSet>()) {
+        auto fset = sym->get<FunSet>();
         if (fset->is_virtual()) {
-            auto& obj = obj_tv.value().rvalue()->get<Ptr<Object>>();
             auto sym = obj->cls()->as_class()->get(name.str_id());
             assert(sym && sym->is<FunSet>());
             fset = sym->get<FunSet>();
@@ -212,7 +229,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         }
         return {builtins().type(FunId), RValue{fset}};
     }
-    return {ExprError::NotImplemented};
+    assert(false);
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) { return {}; }

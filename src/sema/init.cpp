@@ -8,6 +8,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>
@@ -159,7 +160,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
     if (!scope()->is(scp::Persistent))
         return;
 
-    // create and set module/class/tpl variables
+    // add module/class/tpl variables/properties
     auto class_node = class_def();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
@@ -175,35 +176,45 @@ void Init::visit(Ref<ast::VarDefList> node) {
             continue;
         }
 
-        // make
+        auto install = [&](auto&& var) {
+            if (class_node) {
+                // set class const/prop
+                if (class_node->cls()) {
+                    auto cls = class_node->cls();
+                    var->set_cls(cls);
+                    cls->set(name_id, std::move(var));
+                } else {
+                    assert(class_node->cls_tpl());
+                    auto tpl = class_node->cls_tpl();
+                    tpl->set(name_id, std::move(var));
+                }
+            } else {
+                // add to module scope
+                scope()->set(name_id, std::move(var));
+            }
+        };
+
+        // flags
         Var::Flag flags = Var::NoFlags;
         if (node->is_const())
             flags |= Var::Const;
         if (class_node->cls_tpl())
             flags |= Var::Tpl;
-        auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
-        auto var_ref = ref(var);
 
-        // install
+        // create and add
         auto scope_version = scope()->version();
-        if (class_node) {
-            // class/tpl variable
-            if (class_node->cls()) {
-                auto cls = class_node->cls();
-                var->set_cls(cls);
-                cls->set(name_id, std::move(var));
-            } else {
-                assert(class_node->cls_tpl());
-                class_node->cls_tpl()->set(name_id, std::move(var));
-            }
-            // add to scope
-            scope()->set(name_id, var_ref);
+        if (class_node && !node->is_const()) {
+            auto prop = make<Prop>(node->type_name(), def, Ref<Type>{}, flags);
+            auto prop_ref = ref(prop);
+            install(std::move(prop));
+            def->set_prop(prop_ref);
         } else {
-            // module constant (is not a module member)
-            scope()->set(name_id, std::move(var));
+            auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
+            auto var_ref = ref(var);
+            install(std::move(var));
+            def->set_var(var_ref);
         }
-        def->set_scope_version(scope_version); // store scope version
-        def->set_var(var_ref);                 // set node attr
+        def->set_scope_version(scope_version);
     }
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bits.hpp>
+#include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
@@ -42,19 +43,19 @@ class RValue : public _Value<
                    Bits,
                    String,
                    Ref<FunSet>,
-                   Ptr<Object>> {
+                   SPtr<Object>> {
 public:
     template <typename T> RValue(T&& value): _Value{std::forward<T>(value)} {}
     RValue(): _Value{} {}
 };
 
-class LValue : public _Value<Ref<Var>, Ref<FunSet>> {
+class LValue
+    : public _Value<Ref<Var>, BoundFunSet, BoundProp /* TODO: array access */> {
 public:
     template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
     LValue(): _Value{} {}
 
     RValue* rvalue();
-    const RValue* rvalue() const;
 };
 
 class Value {
@@ -89,7 +90,8 @@ public:
     }
 
     const RValue* rvalue() const {
-        return is_lvalue() ? lvalue()->rvalue() : &std::get<RValue>(_value);
+        return is_lvalue() ? const_cast<LValue*>(lvalue())->rvalue()
+                           : &std::get<RValue>(_value);
     }
 
 private:

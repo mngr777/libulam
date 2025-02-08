@@ -1,6 +1,5 @@
 #pragma once
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/var/base.hpp>
@@ -9,11 +8,7 @@ namespace ulam {
 
 class Var : public VarBase {
 public:
-    Var(Ref<ast::TypeName> type_node,
-        Ref<ast::VarDecl> node,
-        Ref<Type> type,
-        Flag flags = NoFlags):
-        VarBase{type_node, node, type, flags} {}
+    using VarBase::VarBase;
 
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
@@ -32,13 +27,8 @@ public:
     // TODO: if reference, get rvalue from refd var
     RValue* rvalue() { return _value.rvalue(); };
 
-    bool has_data_off() const { return _data_off == cls::NoDataOff; }
-    cls::data_off_t data_off() const { return _data_off; }
-    void set_data_off(cls::data_off_t off) { _data_off = off; }
-
 private:
     Value _value;
-    cls::data_off_t _data_off{cls::NoDataOff};
 };
 
 } // namespace ulam

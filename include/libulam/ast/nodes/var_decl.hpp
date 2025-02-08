@@ -3,6 +3,7 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>
 #include <utility>
@@ -13,6 +14,7 @@ class VarDecl : public Tuple<Stmt, ExprList, Expr>,
                 public Named,
                 public DefNode {
     ULAM_AST_REF_ATTR(Var, var)
+    ULAM_AST_REF_ATTR(Prop, prop)
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
     ULAM_AST_SIMPLE_ATTR(loc_id_t, assign_loc_id, NoLocId)
 public:

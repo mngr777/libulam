@@ -4,6 +4,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
+#include <libulam/semantic/type/class/prop.hpp>
 #include <string_view>
 
 namespace ulam::ast {
