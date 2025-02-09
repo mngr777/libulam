@@ -18,6 +18,8 @@ public:
         Ref<PrimTypeTpl> tpl,
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
+
+    RValue construct() { return Bits{bitsize()}; }
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;

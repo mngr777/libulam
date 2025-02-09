@@ -85,6 +85,13 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
 
+            } else if (sym->is<Prop>()) {
+                auto prop = sym->get<Prop>();
+                auto copy = make<Prop>(
+                    prop->type_node(), prop->node(), Ref<Type>{}, prop->flags() & ~Prop::Tpl);
+                cls->scope()->set(name_id, ref(copy));
+                cls->set(name_id, std::move(copy));
+
             } else {
                 assert(sym->is<FunSet>());
                 auto fset = sym->get<FunSet>();

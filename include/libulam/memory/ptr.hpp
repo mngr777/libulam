@@ -16,6 +16,10 @@ template <typename T, typename... Args> Ptr<T> make(Args&&... args) {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
+template <typename T, typename... Args> SPtr<T> make_s(Args&&... args) {
+    return std::make_shared<T>(std::forward<Args>(args)...);
+}
+
 template <typename... Ts> using Variant = std::variant<Ptr<Ts>...>;
 
 template <typename T, typename... Ts> bool is(const Variant<Ts...>& v) {

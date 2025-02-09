@@ -1,4 +1,5 @@
 #include "libulam/semantic/type.hpp"
+#include "libulam/semantic/type/class/layout.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/array_dim_eval.hpp>
@@ -106,6 +107,20 @@ bool Resolver::init(Ref<Class> cls) {
                 }
                 // add ancestor class
                 cls->add_ancestor(type->as_class(), type_name);
+            }
+        }
+    }
+
+    // init props
+    {
+        cls::data_off_t off = 0;
+        for (auto& [_, sym] : cls->members()) {
+            if (sym.is<Prop>()) {
+                auto prop = sym.get<Prop>();
+                if (prop->is_ready()) {
+                    prop->set_data_off(off);
+                    off += prop->type()->bitsize();
+                }
             }
         }
     }

@@ -90,6 +90,7 @@ public:
     }
 
     const RValue* rvalue() const {
+        assert(!is_nil());
         return is_lvalue() ? const_cast<LValue*>(lvalue())->rvalue()
                            : &std::get<RValue>(_value);
     }

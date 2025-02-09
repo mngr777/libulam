@@ -203,6 +203,8 @@ void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
         _os << " {" << nl();
         visit(node->body());
         indent() << "}";
+    } else {
+        _os << ";";
     }
 }
 

@@ -143,9 +143,7 @@ ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::StrLit> node) {
-    // String
     auto type = builtins().prim_type(StringId);
-    assert(type);
     return {type, Value{RValue{node->value()}}};
 }
 
@@ -196,6 +194,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not an object");
         return {ExprError::NotObject};
     }
+    debug() << str(node->ident()->name().str_id()) << std::endl;
 
     auto cls = obj_res.type()->as_class();
     auto obj_val = obj_res.move_value();
@@ -227,7 +226,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             fset = sym->get<FunSet>();
             assert(fset);
         }
-        return {builtins().type(FunId), RValue{fset}};
+        return {builtins().type(FunId), LValue{BoundFunSet{obj, fset}}};
     }
     assert(false);
 }

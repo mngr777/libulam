@@ -20,6 +20,8 @@ public:
 
     bitsize_t bitsize() const override { return 8; /* TMP placeholder */ }
 
+    // RValue construct() override { return ...; }
+
     BuiltinTypeId builtin_type_id() const override { return StringId; }
 };
 

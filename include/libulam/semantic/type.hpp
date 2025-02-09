@@ -104,19 +104,10 @@ public:
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }
 
-    // TODO: move out of type?
-
-    // virtual Value cast(
-    //     Diag& diag,
-    //     Ref<ast::Node> node,
-    //     Ref<const Type> type,
-    //     const Value& value,
-    //     bool is_impl = true) {
-    //     return {};
-    // }
-
     virtual Ref<ArrayType> array_type(array_size_t size);
     virtual Ref<RefType> ref_type();
+
+    virtual RValue construct() { assert(false); }
 
 protected:
     virtual Ptr<ArrayType> make_array_type(array_size_t size);

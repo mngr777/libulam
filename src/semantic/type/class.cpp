@@ -40,9 +40,8 @@ bitsize_t Class::bitsize() const {
 
 bitsize_t Class::direct_bitsize() const {
     bitsize_t size = 0;
-    for (auto& pair : members()) {
-        auto& [_, sym] = pair;
-        if (!sym.is<Var>())
+    for (auto& [_, sym] : members()) {
+        if (!sym.is<Prop>())
             continue;
         auto var = sym.get<Var>();
         if (!var->is_ready())
@@ -50,6 +49,10 @@ bitsize_t Class::direct_bitsize() const {
         size += var->type()->bitsize();
     }
     return size;
+}
+
+RValue Class::construct() {
+    return make_s<Object>(this);
 }
 
 void Class::add_param_var(Ptr<Var>&& var) {

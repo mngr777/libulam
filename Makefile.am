@@ -227,6 +227,8 @@ test_sema_expr_SOURCES = tests/sema/expr.cpp $(TEST_SEMA_SOURCE_FILES)
 test_sema_expr_LDADD = $(TEST_LIBS)
 
 test_ulam_SOURCES = \
+	tests/ast/print.hpp \
+	tests/ast/print.cpp \
 	tests/ULAM/compiler.hpp \
 	tests/ULAM/compiler.cpp \
 	tests/ULAM/driver.cpp \

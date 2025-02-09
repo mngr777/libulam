@@ -1,4 +1,6 @@
 #include "tests/ULAM/compiler.hpp"
+#include "tests/ast/print.hpp"
+#include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
 #include <utility>
@@ -11,6 +13,10 @@ void Compiler::parse_module_str(
 }
 
 ulam::Ref<ulam::Program> Compiler::analyze() {
+    // TEST {
+    test::ast::Printer printer{std::cout, ulam::ref(_ast)};
+    printer.print();
+    // }
     ulam::Sema sema{_ctx.diag()};
     sema.analyze(ulam::ref(_ast));
     return _ast->program();

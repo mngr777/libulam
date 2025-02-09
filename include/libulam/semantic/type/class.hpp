@@ -49,6 +49,8 @@ public:
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
 
+    RValue construct() override;
+
 private:
     void add_param_var(Ptr<Var>&& var);
 
