@@ -5,9 +5,11 @@
 #include <libulam/sema/param_eval.hpp>
 #include <libulam/semantic/program.hpp>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[sema::Eval] "
-#include "src/debug.hpp"
+#ifdef DEBUG_EVAL
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[sema::Eval] "
+#    include "src/debug.hpp"
+#endif
 
 namespace ulam::sema {
 

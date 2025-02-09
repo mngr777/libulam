@@ -8,10 +8,6 @@
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[sema::RecVisitor] "
-#include "src/debug.hpp"
-
 namespace ulam::sema {
 
 void RecVisitor::analyze() { visit(_ast); }

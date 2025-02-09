@@ -16,9 +16,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[sema::Init] "
-#include "src/debug.hpp"
+#define DEBUG_INIT // TEST
+#ifdef DEBUG_INIT
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[sema::Init] "
+#    include "src/debug.hpp"
+#endif
 
 namespace ulam::sema {
 
@@ -179,6 +182,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
         auto install = [&](auto&& var) {
             if (class_node) {
                 // set class const/prop
+                auto var_ref = ref(var);
                 if (class_node->cls()) {
                     auto cls = class_node->cls();
                     var->set_cls(cls);
@@ -188,6 +192,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
                     auto tpl = class_node->cls_tpl();
                     tpl->set(name_id, std::move(var));
                 }
+                scope()->set(name_id, var_ref);
             } else {
                 // add to module scope
                 scope()->set(name_id, std::move(var));

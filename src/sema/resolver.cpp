@@ -154,15 +154,22 @@ bool Resolver::resolve(Ref<Class> cls) {
             auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
+
             bool res{};
             if (sym->is<UserType>()) {
                 // alias
                 auto type = sym->get<UserType>();
                 assert(type->is_alias());
                 res = resolve(type->as_alias(), ref(scope_view));
+
             } else if (sym->is<Var>()) {
                 // var
                 res = resolve(sym->get<Var>(), ref(scope_view));
+
+            } else if (sym->is<Prop>()) {
+                // prop
+                res = resolve(sym->get<Prop>(), ref(scope_view));
+
             } else {
                 // fun
                 assert(sym->is<FunSet>());
@@ -277,6 +284,23 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     }
 
     RET_UPD_STATE(var, is_resolved);
+}
+
+bool Resolver::resolve(Ref<Prop> prop, Ref<Scope> scope) {
+    assert(scope);
+    CHECK_STATE(prop);
+    bool is_resolved = true;
+    auto node = prop->node();
+    auto type_name = prop->type_node();
+
+    // type
+    if (!prop->has_type()) {
+        auto type = resolve_var_decl_type(type_name, node, scope);
+        if (type)
+            prop->set_type(type);
+        is_resolved = type && is_resolved;
+    }
+    RET_UPD_STATE(prop, is_resolved);
 }
 
 bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {

@@ -43,6 +43,12 @@ private:
 
     Ref<Scope> scope() { return _scope_stack.top(); }
 
+    Diag& diag() { return _program->diag(); }
+
+    std::string_view str(str_id_t str_id) {
+        return _program->str_pool().get(str_id);
+    }
+
     Ref<Program> _program;
     Resolver _resolver;
     ScopeStack _scope_stack;

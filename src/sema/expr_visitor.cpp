@@ -5,7 +5,8 @@
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bound.hpp>
 
-#ifdef DEBUG_PARSER
+#define DEBUG_EXPR_VISITOR // TEST
+#ifdef DEBUG_EXPR_VISITOR
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::sema::ExprVisitor] "
 #endif
@@ -15,9 +16,13 @@ namespace ulam::sema {
 
 // TODO: use canon types for casting
 
-ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) { return {}; }
+ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
+    debug() << __FUNCTION__ << " TypeOpExpr\n";
+    return {};
+}
 
 ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
+    debug() << __FUNCTION__ << " Ident `" << str(node->name().str_id()) << "`\n";
     auto name = node->name();
     auto sym = _scope->get(name.str_id());
     if (!sym) {
@@ -46,10 +51,12 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::ParenExpr> node) {
+    debug() << __FUNCTION__ << " ParenExpr\n";
     return node->inner()->accept(*this);
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
+    debug() << __FUNCTION__ << " BinaryOp\n";
     assert(node->has_lhs() && node->has_rhs());
 
     auto left = node->lhs()->accept(*this);
@@ -76,10 +83,18 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     return {};
 }
 
-ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) { return {}; }
-ExprRes ExprVisitor::visit(Ref<ast::UnaryPostOp> node) { return {}; }
+ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
+    debug() << __FUNCTION__ << " UnaryPreOp\n";
+    return {};
+}
+
+ExprRes ExprVisitor::visit(Ref<ast::UnaryPostOp> node) {
+    debug() << __FUNCTION__ << " UnaryPostOp\n";
+    return {};
+}
 
 ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
+    debug() << __FUNCTION__ << " Cast\n";
     // eval expr
     auto res = node->expr()->accept(*this);
     if (!res.ok())
@@ -119,6 +134,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
+    debug() << __FUNCTION__ << " BoolLit\n";
     // Bool(1)
     auto type = builtins().prim_type_tpl(BoolId)->type(diag(), node, 1);
     assert(type);
@@ -126,6 +142,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
+    debug() << __FUNCTION__ << " NumLit\n";
     const auto& number = node->value();
     if (number.is_signed()) {
         // Int(n)
@@ -143,23 +160,28 @@ ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::StrLit> node) {
+    debug() << __FUNCTION__ << " StrLit\n";
     auto type = builtins().prim_type(StringId);
     return {type, Value{RValue{node->value()}}};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
+    debug() << __FUNCTION__ << " FunCall\n";
     auto loc_id = node->callable()->loc_id();
     auto callable = node->callable()->accept(*this);
     if (!callable)
         return {};
 
-    // find fun set
-    auto rval = callable.value().rvalue();
-    if (!rval->is<Ref<FunSet>>()) {
-        diag().emit(Diag::Error, loc_id, 1, "is not a function name");
+    // get fun set
+    auto val = callable.move_value();
+    assert(val.is_lvalue());
+    auto lval = val.lvalue();
+    if (!lval->is<BoundFunSet>()) {
+        diag().emit(Diag::Error, loc_id, 1, "is not a function");
         return {};
     }
-    auto fset = rval->get<Ref<FunSet>>();
+    auto& bound_fset = lval->get<BoundFunSet>();
+    auto fset = bound_fset.mem();
 
     // eval args
     auto [arg_list, success] = eval_args(node->args());
@@ -181,6 +203,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
+    debug() << __FUNCTION__ << " MemberAccess\n";
     assert(node->has_obj());
     // eval object expr
     auto obj_res = node->obj()->accept(*this);
@@ -194,7 +217,6 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not an object");
         return {ExprError::NotObject};
     }
-    debug() << str(node->ident()->name().str_id()) << std::endl;
 
     auto cls = obj_res.type()->as_class();
     auto obj_val = obj_res.move_value();
@@ -231,7 +253,10 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     assert(false);
 }
 
-ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) { return {}; }
+ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
+    debug() << __FUNCTION__ << " ArrayAccess\n";
+    return {};
+}
 
 ExprRes ExprVisitor::cast(
     loc_id_t loc_id,
@@ -239,6 +264,7 @@ ExprRes ExprVisitor::cast(
     ExprRes&& res,
     Ref<Type> type,
     bool is_expl) {
+    debug() << __FUNCTION__ << "\n";
     if (res.type()->is_prim()) {
         if (!type->is_prim()) {
             diag().emit(
@@ -261,8 +287,8 @@ ExprRes ExprVisitor::cast(
 
 ExprRes ExprVisitor::prim_binary_op(
     Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right) {
+    debug() << __FUNCTION__ << "\n";
     Op op = ops::non_assign(node->op());
-
     PrimTypeErrorPair type_errors{};
     if (op != Op::None) {
         // check operand types
@@ -312,8 +338,14 @@ ExprRes ExprVisitor::prim_binary_op(
 
 ExprRes
 ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val) {
+    debug() << __FUNCTION__ << "\n";
     if (lval->is<Ref<Var>>()) {
         assert(false && "assign to var");
+
+    } else if (lval->is<BoundProp>()) {
+        lval->get<BoundProp>();
+        assert(false && "assign to prop");
+
     } else {
         assert(false);
     }
@@ -321,12 +353,14 @@ ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val) {
 
 PrimTypedValue
 ExprVisitor::prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id) {
+    debug() << __FUNCTION__ << "\n";
     assert(tv.type()->is_expl_castable_to(type_id));
     return tv.type()->cast_to(type_id, tv.move_value());
 }
 
 PrimTypedValue ExprVisitor::prim_binary_op_impl(
     Op op, PrimTypedValue&& left, PrimTypedValue&& right) {
+    debug() << __FUNCTION__ << "\n";
     assert(!ops::is_assign(op));
     auto prim_tv = left.type()->binary_op(
         op, left.move_value(), right.type(), right.move_value());
@@ -334,6 +368,7 @@ PrimTypedValue ExprVisitor::prim_binary_op_impl(
 }
 
 std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
+    debug() << __FUNCTION__ << "\n";
     std::pair<TypedValueList, bool> res;
     res.second = true;
     for (unsigned n = 0; n < args->child_num(); ++n) {
@@ -346,6 +381,7 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
 }
 
 ExprRes ExprVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
+    debug() << __FUNCTION__ << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }
 

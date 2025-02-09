@@ -25,6 +25,7 @@ public:
     bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
     bool resolve(Ref<Var> var, Ref<Scope> scope);
+    bool resolve(Ref<Prop> prop, Ref<Scope> scope);
     bool resolve(Ref<Class> cls, Ref<FunSet> fun);
     bool resolve(Ref<Fun> overload, Ref<Scope> scope);
 

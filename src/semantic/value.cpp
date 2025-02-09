@@ -6,6 +6,10 @@ namespace ulam {
 
 // LValue
 
+Ref<Type> LValue::type() {
+    return {}; // TODO
+}
+
 RValue* LValue::rvalue() {
     if (is_unknown())
         return {};

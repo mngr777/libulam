@@ -13,6 +13,13 @@
 #include <libulam/semantic/var.hpp>
 #include <utility>
 
+#define DEBUG_EVAL // TEST
+#ifdef DEBUG_EVAL
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[sema::EvalVisitor] "
+#    include "src/debug.hpp"
+#endif
+
 namespace ulam::sema {
 
 EvalVisitor::EvalVisitor(Ref<Program> program):
@@ -24,6 +31,7 @@ EvalVisitor::EvalVisitor(Ref<Program> program):
 }
 
 ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
+    debug() << __FUNCTION__ << "\n";
     try {
         auto num = block->child_num();
         for (unsigned n = 0; n < num; ++n) {
@@ -43,34 +51,40 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
 }
 
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
+    debug() << __FUNCTION__ << " TypeDef\n";
     Ptr<UserType> type = make<AliasType>(nullptr, node);
     if (_resolver.resolve(type->as_alias(), scope()))
         scope()->set(type->name_id(), std::move(type));
 }
 
 void EvalVisitor::visit(Ref<ast::VarDefList> node) {
+    debug() << __FUNCTION__ << " VarDefList\n";
     auto type_name = node->type_name();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def_node = node->def(n);
         auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
         if (_resolver.resolve(ref(var), scope())) {
+            var->set_value(var->type()->construct());
             scope()->set(var->name_id(), std::move(var));
         }
     }
 }
 
 void EvalVisitor::visit(Ref<ast::Block> node) {
+    debug() << __FUNCTION__ << " Block\n";
     auto scope_raii{_scope_stack.raii(scp::NoFlags)};
     for (unsigned n = 0; n < node->child_num(); ++n)
         node->get(n)->accept(*this);
 }
 
 void EvalVisitor::visit(Ref<ast::FunDefBody> node) {
+    debug() << __FUNCTION__ << " FunDefBody\n";
     for (unsigned n = 0; n < node->child_num(); ++n)
         node->get(n)->accept(*this);
 }
 
 void EvalVisitor::visit(Ref<ast::If> node) {
+    debug() << __FUNCTION__ << " If\n";
     assert(node->has_cond());
     if (eval_cond(node->cond())) {
         // if-branch
@@ -84,6 +98,7 @@ void EvalVisitor::visit(Ref<ast::If> node) {
 }
 
 void EvalVisitor::visit(Ref<ast::For> node) {
+    debug() << __FUNCTION__ << " For\n";
     auto scope_raii{_scope_stack.raii(scp::Break | scp::Continue)};
     if (node->has_init())
         node->init()->accept(*this);
@@ -101,6 +116,7 @@ void EvalVisitor::visit(Ref<ast::For> node) {
 }
 
 void EvalVisitor::visit(Ref<ast::Return> node) {
+    debug() << __FUNCTION__ << " Return\n";
     ExprRes res;
     if (node->has_expr()) {
         res = eval_expr(node->expr());
@@ -111,11 +127,13 @@ void EvalVisitor::visit(Ref<ast::Return> node) {
 }
 
 void EvalVisitor::visit(Ref<ast::ExprStmt> node) {
+    debug() << __FUNCTION__ << " ExprStmt\n";
     if (node->has_expr())
         eval_expr(node->expr());
 }
 
 void EvalVisitor::visit(Ref<ast::While> node) {
+    debug() << __FUNCTION__ << " While\n";
     assert(node->has_cond());
     unsigned loop_count = 0;
     while (eval_cond(node->cond())) {
@@ -138,6 +156,7 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
 ExprRes EvalVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
+    debug() << __FUNCTION__ << "`" << str(fun->name_id()) << "`\n";
     assert(fun->params().size() == args.size());
 
     // add scope
@@ -165,6 +184,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
+    debug() << __FUNCTION__ << "\n";
     EvalExprVisitor ev{*this, scope()};
     ExprRes res = expr->accept(ev);
     if (!res.ok())
@@ -173,7 +193,8 @@ ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
 }
 
 bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
-    ExprRes res{eval_expr(expr)};
+    debug() << __FUNCTION__ << "\n";
+    auto res = eval_expr(expr);
     // res = _cast.to_boolean(std::move(res), expr, true /* implicit */);
     // if (!res.ok())
     //     throw std::exception();

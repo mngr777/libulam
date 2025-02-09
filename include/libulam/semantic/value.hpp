@@ -11,6 +11,7 @@
 namespace ulam {
 
 class FunSet;
+class Type;
 class Var;
 
 template <typename... Ts> class _Value {
@@ -45,8 +46,8 @@ class RValue : public _Value<
                    Ref<FunSet>,
                    SPtr<Object>> {
 public:
-    template <typename T> RValue(T&& value): _Value{std::forward<T>(value)} {}
-    RValue(): _Value{} {}
+    template <typename T> RValue(T&& value): _Value{std::forward<T>(value)}
+    {} RValue(): _Value{} {}
 };
 
 class LValue
@@ -54,6 +55,8 @@ class LValue
 public:
     template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
     LValue(): _Value{} {}
+
+    Ref<Type> type();
 
     RValue* rvalue();
 };

@@ -43,7 +43,7 @@ bitsize_t Class::direct_bitsize() const {
     for (auto& [_, sym] : members()) {
         if (!sym.is<Prop>())
             continue;
-        auto var = sym.get<Var>();
+        auto var = sym.get<Prop>();
         if (!var->is_ready())
             continue;
         size += var->type()->bitsize();
