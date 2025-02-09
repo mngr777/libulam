@@ -60,7 +60,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     assert(is_expl_castable_to(id));
     assert(!value.is_nil());
     assert(value.rvalue()->is<Integer>());
-    assert(!value.rvalue()->is_unknown());
+    assert(!value.rvalue()->empty());
 
     auto rval = value.rvalue();
     auto intval = rval->get<Integer>();
@@ -102,7 +102,7 @@ Value IntType::cast_to(Ref<PrimType> type, Value&& value) {
     assert(is_expl_castable_to(type));
     assert(!value.is_nil());
     assert(value.rvalue()->is<Integer>());
-    assert(!value.rvalue()->is_unknown());
+    assert(!value.rvalue()->empty());
 
     auto rval = value.rvalue();
     Integer intval = rval->get<Integer>();
@@ -140,11 +140,12 @@ PrimTypedValue IntType::binary_op(
 
     auto left_rval = left_val.rvalue();
     auto right_rval = right_val.rvalue();
-    assert(left_rval->is_unknown() || left_rval->is<Integer>());
-    assert(right_rval->is_unknown() || right_rval->is<Integer>());;
-    bool is_unknown = left_rval->is_unknown() || right_rval->is_unknown();
-    Integer left_intval = left_rval->is_unknown() ? 0 : left_rval->get<Integer>();
-    Integer right_intval = right_rval->is_unknown() ? 0 : right_rval->get<Integer>();
+    assert(left_rval->empty() || left_rval->is<Integer>());
+    assert(right_rval->empty() || right_rval->is<Integer>());;
+
+    bool is_unknown = left_rval->empty() || right_rval->empty();
+    Integer left_intval = left_rval->empty() ? 0 : left_rval->get<Integer>();
+    Integer right_intval = right_rval->empty() ? 0 : right_rval->get<Integer>();
 
     switch (op) {
     case Op::Prod: {

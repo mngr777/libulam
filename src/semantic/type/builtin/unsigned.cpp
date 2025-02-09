@@ -55,7 +55,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
     assert(is_expl_castable_to(id));
     assert(!value.is_nil());
     assert(value.rvalue()->is<Unsigned>());
-    assert(!value.rvalue()->is_unknown());
+    assert(!value.rvalue()->empty());
 
     auto rval = value.rvalue();
     auto unsval = rval->get<Unsigned>();
@@ -98,7 +98,7 @@ Value UnsignedType::cast_to(Ref<PrimType> type, Value&& value) {
     assert(is_expl_castable_to(type));
     assert(!value.is_nil());
     assert(value.rvalue()->is<Unsigned>());
-    assert(!value.rvalue()->is_unknown());
+    assert(!value.rvalue()->empty());
 
     auto rval = value.rvalue();
     Unsigned unsval = rval->get<Unsigned>();

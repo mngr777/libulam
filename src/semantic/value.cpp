@@ -11,7 +11,7 @@ Ref<Type> LValue::type() {
 }
 
 RValue* LValue::rvalue() {
-    if (is_unknown())
+    if (empty())
         return {};
 
     if (is<Ref<Var>>()) {

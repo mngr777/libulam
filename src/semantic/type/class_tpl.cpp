@@ -113,7 +113,7 @@ std::string ClassTpl::type_args_str(const TypedValueList& args) {
     std::string str;
     for (const auto& arg : args) {
         auto rval = arg.value().rvalue();
-        assert(!rval->is_unknown());
+        assert(!rval->empty());
         if (!str.empty())
             str += "_";
         if (rval->is<Integer>()) {

@@ -12,7 +12,7 @@ std::pair<array_size_t, bool> ArrayDimEval::eval(Ref<ast::Expr> expr) {
     auto rval = res.value().rvalue();
 
     array_size_t size{0}; // TODO: what is max array size?
-    if (rval->is_unknown()) {
+    if (rval->empty()) {
         _program->diag().emit(
             Diag::Error, expr->loc_id(), 1, "cannot calculate");
         return {UnknownArraySize, false};

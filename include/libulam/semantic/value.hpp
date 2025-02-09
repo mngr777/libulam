@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/bound.hpp>
@@ -38,23 +39,22 @@ private:
     std::variant<std::monostate, Ts...> _value;
 };
 
-class RValue : public _Value<
+class RValue : public detail::Variant<
                    Integer,
-                   Unsigned /* Unary, Bool */,
+                   Unsigned /* Unary, Bool*/,
                    Bits,
                    String,
                    Ref<FunSet>,
                    SPtr<Object>> {
 public:
-    template <typename T> RValue(T&& value): _Value{std::forward<T>(value)}
-    {} RValue(): _Value{} {}
+    using Variant::Variant;
 };
 
 class LValue
-    : public _Value<Ref<Var>, BoundFunSet, BoundProp /* TODO: array access */> {
+    : public detail::
+          Variant<Ref<Var>, BoundFunSet, BoundProp /* TODO: array access */> {
 public:
-    template <typename T> LValue(T&& value): _Value{std::forward<T>(value)} {}
-    LValue(): _Value{} {}
+    using Variant::Variant;
 
     Ref<Type> type();
 

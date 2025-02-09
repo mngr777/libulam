@@ -139,6 +139,7 @@ HEADER_FILES = \
 	$(SEMANTIC_HEADER_FILES) \
 	$(SEMA_HEADER_FILES) \
 	include/libulam/context.hpp \
+	include/libulam/detail/variant.hpp \
 	include/libulam/diag.hpp \
 	include/libulam/lex.hpp \
 	include/libulam/memory/buf.hpp \
@@ -158,6 +159,7 @@ SOURCE_FILES = \
 	$(SEMA_SOURCE_FILES) \
 	src/debug.hpp \
 	src/detail/string.hpp \
+	src/detail/variant.hpp \
 	src/diag.cpp \
 	src/lex.cpp \
 	src/memory/notepad.cpp \
