@@ -1,7 +1,16 @@
 #pragma once
+#include <libulam/memory/ptr.hpp>
+#include <utility>
 #include <variant>
 
 namespace ulam::detail {
+
+namespace variant {
+template <class... Ts> struct Overloads : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts> Overloads(Ts...) -> Overloads<Ts...>;
+} // namespace variant
 
 template <typename... Ts> class Variant {
 public:
@@ -14,6 +23,8 @@ public:
 
     bool empty() const { return is<std::monostate>(); }
 
+    std::size_t index() const { return _value.index(); }
+
     template <typename T> bool is() const {
         return std::holds_alternative<T>(_value);
     }
@@ -21,12 +32,55 @@ public:
     template <typename T> T& get() { return std::get<T>(_value); }
     template <typename T> const T& get() const { return std::get<T>(_value); }
 
-    template <typename V> void accept(V&& visitor) {
-        std::visit(visitor, _value);
+    template <typename V> auto accept(V&& visitor) {
+        return std::visit(std::forward<V>(visitor), _value);
+    }
+
+    template <typename... Vs> auto accept(Vs&&... visitors) {
+        return std::visit(_value, variant::Overloads{visitors...});
     }
 
 private:
     std::variant<std::monostate, Ts...> _value;
+};
+
+template <typename... Ts> class RefPtrVariant {
+public:
+    template <typename T>
+    RefPtrVariant(Ptr<T>&& value): _value{std::move(value)} {}
+    template <typename T> RefPtrVariant(Ref<T> value): _value{value} {}
+    virtual ~RefPtrVariant() {}
+
+    RefPtrVariant(RefPtrVariant&&) = default;
+    RefPtrVariant& operator=(RefPtrVariant&&) = default;
+
+    bool owns() const {
+        return std::visit(
+            [](auto&& value) -> bool { return value.owns(); }, _value);
+    }
+
+    std::size_t index() const { return _value.index(); }
+
+    template <typename T> bool is() const {
+        return std::holds_alternative<RefPtr<T>>(_value);
+    }
+
+    template <typename T> Ref<T> get() {
+        return std::get<RefPtr<T>>(_value).ref();
+    }
+
+    template <typename T> Ref<const T> get() const {
+        return std::get<RefPtr<T>>(_value).ref();
+    }
+
+    template <typename... Vs> auto accept(Vs&&... visitors) {
+        return std::visit([&](auto&& value) {
+            return variant::Overloads{std::move(visitors)...}(value.ref());
+        }, _value);
+    }
+
+private:
+    std::variant<RefPtr<Ts>...> _value;
 };
 
 } // namespace ulam::detail

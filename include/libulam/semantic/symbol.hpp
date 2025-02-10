@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
@@ -6,54 +7,17 @@
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
-#include <type_traits>
 #include <unordered_map>
-#include <variant>
 
 namespace ulam {
 
-template <typename... Ss> class _Symbol {
-private:
-    template <typename T> using Value = RefPtr<T>;
-
+template <typename... Ts> class _Symbol : public detail::RefPtrVariant<Ts...> {
 public:
-    template <typename T> _Symbol(Ptr<T>&& value): _value{std::move(value)} {}
-
-    template <typename T> _Symbol(Ref<T> value): _value{value} {}
-
-    ~_Symbol() {}
-
-    _Symbol(_Symbol&& other) = default;
-    _Symbol& operator=(_Symbol&& other) = default;
-
-    bool owns() const {
-        return std::visit(
-            [](auto&& value) -> bool { return value.owns(); }, _value);
-    }
-
-    template <typename T> bool is() const {
-        return std::holds_alternative<Value<T>>(_value);
-    }
-
-    template <typename T> Ref<T> get() {
-        return std::get<Value<T>>(_value).ref();
-    }
-
-    template <typename T> Ref<const T> get() const {
-        return std::get<Value<T>>(_value).ref();
-    }
+    using detail::RefPtrVariant<Ts...>::RefPtrVariant;
 
     Ref<Decl> as_decl() {
-        return std::visit(
-            [](auto&& value) -> Ref<Decl> { return value.ref(); }, _value);
+        return this->accept([](auto&& value) -> Ref<Decl> { return value; });
     }
-
-    template <typename V> void visit(V&& v) { return std::visit(v, _value); }
-
-private:
-    template <typename... Ts> using Variant = std::variant<Value<Ts>...>;
-
-    Variant<Ss...> _value;
 };
 
 template <typename... Ss> class _SymbolTable {
@@ -82,13 +46,14 @@ public:
         for (auto& pair : _symbols) {
             auto name_id = pair.first;
             auto& sym = pair.second;
-            sym.visit([&](auto&& value) {
+            sym.accept([&](auto&& value) {
                 // (static) is import possible?
-                using T = typename std::decay_t<decltype(value)>::Type;
+                using T = typename std::remove_pointer<
+                    std::decay_t<decltype(value)>>::type;
                 static_assert((std::is_same_v<T, Ts> || ...));
                 // export as ref
                 if (overwrite || !other.has(name_id))
-                    other.set(name_id, value.ref());
+                    other.set(name_id, value);
             });
         }
     }

@@ -22,7 +22,8 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
-    debug() << __FUNCTION__ << " Ident `" << str(node->name().str_id()) << "`\n";
+    debug() << __FUNCTION__ << " Ident `" << str(node->name().str_id())
+            << "`\n";
     auto name = node->name();
     auto sym = _scope->get(name.str_id());
     if (!sym) {
@@ -33,6 +34,10 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     }
 
     // TODO: visit
+    // return sym->accept([&](Ref<Var> var) {
+    //     return ExprRes{var->type(), LValue{var}};
+    // });
+
     if (sym->is<Var>()) {
         auto var = sym->get<Var>();
         return {var->type(), LValue{var}};

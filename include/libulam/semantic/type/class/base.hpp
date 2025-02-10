@@ -34,8 +34,8 @@ public:
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
-    auto& members() { return _members; }
-    const auto& members() const { return _members; }
+    SymbolTable& members() { return _members; }
+    const SymbolTable& members() const { return _members; }
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
