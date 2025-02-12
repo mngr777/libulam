@@ -6,16 +6,27 @@
 
 namespace ulam {
 
+RValue UnsignedType::from_datum(Datum datum) {
+    return (Unsigned)datum;
+}
+
+Datum UnsignedType::to_datum(const RValue& rval) {
+    assert(rval.is<Unsigned>());
+    return rval.get<Unsigned>();
+}
+
 bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
     switch (id) {
     case IntId:
         return true;
     case UnsignedId:
         return true;
+    case BoolId:
+        return true;
     case UnaryId:
         return true;
     case BitsId:
-        return expl;
+        return true;
     case AtomId:
         return false;
     case StringId:
@@ -86,7 +97,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
         auto size = detail::bitsize(unsval);
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
-        // TODO: write `unsval` bits
+        store(val.bits(), 0, *rval);
         return {type, RValue{std::move(val)}};
     }
     default:

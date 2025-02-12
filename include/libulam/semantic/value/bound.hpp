@@ -20,6 +20,7 @@ public:
     Ref<const T> mem() const { return _mem; }
 
     virtual void load(RValue& rval) { assert(false); }
+    virtual void store(const RValue& rval) { assert(false); }
 
 private:
     SPtr<Object> _obj;
@@ -33,6 +34,7 @@ public:
     using Bound::Bound;
 
     void load(RValue& rval) override;
+    void store(const RValue& rval) override;
 };
 
 } // namespace ulam

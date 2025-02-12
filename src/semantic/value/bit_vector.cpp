@@ -92,8 +92,10 @@ void BitVector::write(idx_t idx, size_t len, unit_t value) {
     assert(len <= UnitSize);
     const unit_idx_t unit_idx = to_unit_idx(idx);
     const size_t off = to_off(idx);
-    if (off + len <= UnitSize)
+    if (off + len <= UnitSize) {
         write(unit_idx, off, len, value);
+        return;
+    }
     assert(unit_idx + 1 < _bits.size());
     const size_t len_1 = UnitSize - off;
     const size_t len_2 = len - len_1;

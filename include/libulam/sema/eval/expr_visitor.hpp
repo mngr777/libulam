@@ -1,5 +1,6 @@
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/value/object.hpp>
 
 namespace ulam::sema {
 
@@ -12,7 +13,7 @@ public:
     EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope);
 
 protected:
-    virtual ExprRes funcall(Ref<Fun> fun, TypedValueList&& args);
+    ExprRes funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) override;
 
 private:
     EvalVisitor& _eval;

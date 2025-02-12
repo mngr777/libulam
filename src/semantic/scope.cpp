@@ -8,7 +8,7 @@
 namespace ulam {
 
 SPtr<Object> ScopeBase::self() const {
-    return (_self || parent()) ? parent()->self() : _self;
+    return (_self || !parent()) ? _self : parent()->self();
 }
 
 void ScopeBase::set_self(SPtr<Object> self) {

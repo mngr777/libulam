@@ -9,6 +9,30 @@
 
 namespace ulam {
 
+RValue IntType::from_datum(Datum datum) {
+    int shift = sizeof(datum) * 8 - bitsize();
+    if (shift == 0)
+        return (Integer)datum;
+    assert(shift > 0);
+    if (1 << (bitsize() - 1) & datum) {
+        // negative, prepend with 1's
+        datum |= ((1 << (shift + 1)) - 1) << bitsize();
+    }
+    return (Integer)datum;
+}
+
+Datum IntType::to_datum(const RValue& rval) {
+    assert(rval.is<Integer>());
+    auto int_val = rval.get<Integer>();
+    auto datum = (Datum)int_val;
+    int shift = sizeof(datum) * 8 - bitsize();
+    if (shift == 0)
+        return datum;
+    assert(shift > 0);
+    datum = (datum << shift) >> shift;
+    return datum;
+}
+
 bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
     switch (id) {
     case IntId:
@@ -20,7 +44,7 @@ bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
     case UnaryId:
         return expl;
     case BitsId:
-        return expl;
+        return true;
     case AtomId:
         return false;
     case StringId:
@@ -47,7 +71,6 @@ bool IntType::is_castable_to(Ref<PrimType> type, bool expl) const {
         return expl || size <= bitsize();
     case AtomId:
         return false;
-    case StringId:
         return false;
     case FunId:
     case VoidId:
@@ -90,7 +113,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
         auto size = detail::bitsize(intval);
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
-        // TODO: write `intval` bits
+        store(val.bits().view(), 0, *rval);
         return {type, RValue{std::move(val)}};
     }
     default:
@@ -141,7 +164,8 @@ PrimTypedValue IntType::binary_op(
     auto left_rval = left_val.rvalue();
     auto right_rval = right_val.rvalue();
     assert(left_rval->empty() || left_rval->is<Integer>());
-    assert(right_rval->empty() || right_rval->is<Integer>());;
+    assert(right_rval->empty() || right_rval->is<Integer>());
+    ;
 
     bool is_unknown = left_rval->empty() || right_rval->empty();
     Integer left_intval = left_rval->empty() ? 0 : left_rval->get<Integer>();
@@ -150,7 +174,8 @@ PrimTypedValue IntType::binary_op(
     switch (op) {
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
-        auto size = std::min(MaxSize, (bitsize_t)(bitsize() + right_type->bitsize()));
+        auto size =
+            std::min(MaxSize, (bitsize_t)(bitsize() + right_type->bitsize()));
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, RValue{}};

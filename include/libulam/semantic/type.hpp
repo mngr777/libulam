@@ -6,6 +6,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/bit_vector.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 
@@ -64,6 +65,21 @@ public:
     type_id_t id() const { return _id; }
 
     virtual bitsize_t bitsize() const = 0;
+
+    RValue load(const BitVector& data, BitVector::idx_t off) {
+        return load(data.view(), off);
+    }
+
+    void store(BitVector& data, BitVector::idx_t off, const RValue& rval) {
+        store(data.view(), off, rval);
+    }
+
+    virtual RValue load(const BitVectorView data, BitVector::idx_t off) {
+        assert(false);
+    }
+    virtual void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) {
+        assert(false);
+    }
 
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }

@@ -1,14 +1,20 @@
 #pragma once
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/var/base.hpp>
 
 namespace ulam {
 
+class Object;
+
 class Prop : public VarBase {
 public:
     using VarBase::VarBase;
 
-    bool has_data_off() const { return _data_off == cls::NoDataOff; }
+    RValue load(SPtr<Object> obj);
+    void store(SPtr<Object> obj, const RValue& rval);
+
+    bool has_data_off() const { return _data_off != cls::NoDataOff; }
     cls::data_off_t data_off() const { return _data_off; }
     void set_data_off(cls::data_off_t off) { _data_off = off; }
 

@@ -111,20 +111,6 @@ bool Resolver::init(Ref<Class> cls) {
         }
     }
 
-    // init props
-    {
-        cls::data_off_t off = 0;
-        for (auto& [_, sym] : cls->members()) {
-            if (sym.is<Prop>()) {
-                auto prop = sym.get<Prop>();
-                if (prop->is_ready()) {
-                    prop->set_data_off(off);
-                    off += prop->type()->bitsize();
-                }
-            }
-        }
-    }
-
     if (!success)
         RET_UPD_STATE(cls, false);
 
@@ -150,32 +136,29 @@ bool Resolver::resolve(Ref<Class> cls) {
     {
         auto scope_view = cls->scope()->view();
         scope_view->reset();
+        cls::data_off_t data_off = 0;
         while (true) {
             auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
 
-            bool res{};
-            if (sym->is<UserType>()) {
-                // alias
-                auto type = sym->get<UserType>();
-                assert(type->is_alias());
-                res = resolve(type->as_alias(), ref(scope_view));
-
-            } else if (sym->is<Var>()) {
-                // var
-                res = resolve(sym->get<Var>(), ref(scope_view));
-
-            } else if (sym->is<Prop>()) {
-                // prop
-                res = resolve(sym->get<Prop>(), ref(scope_view));
-
-            } else {
-                // fun
-                assert(sym->is<FunSet>());
-                res = resolve(cls, sym->get<FunSet>());
-            }
-            is_resolved = is_resolved && res;
+            bool res = sym->accept(
+                [&](Ref<UserType> type) {
+                    assert(type->is_alias());
+                    return resolve(type->as_alias(), ref(scope_view));
+                },
+                [&](Ref<Var> var) { return resolve(var, ref(scope_view)); },
+                [&](Ref<Prop> prop) {
+                    auto res = resolve(prop, ref(scope_view));
+                    if (res) {
+                        prop->set_data_off(data_off);
+                        data_off += prop->type()->bitsize();
+                    }
+                    return res;
+                },
+                [&](Ref<FunSet> fset) { return resolve(cls, fset); },
+                [&](auto other) -> bool { assert(false); });
+            is_resolved = res && is_resolved;
         }
     }
 

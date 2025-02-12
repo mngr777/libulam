@@ -25,6 +25,16 @@ public:
 
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
+    RValue load(const BitVectorView data, BitVector::idx_t off) override {
+        return from_datum(data.read(off, bitsize()));
+    }
+    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) override {
+        data.write(off, bitsize(), to_datum(rval));
+    }
+
+    virtual RValue from_datum(Datum datum) { assert(false); }
+    virtual Datum to_datum(const RValue& rval) { assert(false); }
+
     bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
 
     Ref<PrimType> as_prim() override { return this; }
@@ -54,9 +64,7 @@ public:
     virtual PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) {
         assert(false);
     }
-    virtual Value cast_to(Ref<PrimType> type, Value&& value) {
-        assert(false);
-    }
+    virtual Value cast_to(Ref<PrimType> type, Value&& value) { assert(false); }
 
     // TODO: make this pure virtual, implement for builtins
     virtual PrimTypedValue binary_op(

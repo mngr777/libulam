@@ -15,6 +15,9 @@ public:
 
     RValue construct() override { return Integer{}; }
 
+    RValue from_datum(Datum datum) override;
+    Datum to_datum(const RValue& rval) override;
+
     bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
     bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;
 

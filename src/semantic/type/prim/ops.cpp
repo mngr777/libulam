@@ -10,10 +10,11 @@ bool is_numeric(Ref<const PrimType> type) {
 }
 
 PrimTypeError check_type_match(Ref<const PrimType> type, BuiltinTypeId target) {
+    assert(target != VoidId);
     if (type->is(target))
         return {PrimTypeError::Ok, VoidId};
     if (type->is_impl_castable_to(target))
-        return {PrimTypeError::ImplCastRequired};
+        return {PrimTypeError::ImplCastRequired, target};
     if (type->is_expl_castable_to(target))
         return {PrimTypeError::ExplCastRequired, target};
     return {PrimTypeError::Incompatible, VoidId};
@@ -58,7 +59,7 @@ PrimTypeErrorPair prim_binary_op_type_check(
     } break;
     case ops::Kind::Bitwise: {
         errors.first = check_type_match(left_type, BitsId);
-        errors.first = check_type_match(right_type, BoolId);
+        errors.second = check_type_match(right_type, BitsId);
     } break;
     }
     return errors;

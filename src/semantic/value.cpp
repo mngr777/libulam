@@ -14,10 +14,14 @@ RValue* LValue::rvalue() {
     if (empty())
         return {};
 
-    if (is<Ref<Var>>()) {
-        auto var = get<Ref<Var>>();
-        return var->rvalue();
-    }
+
+    // accept([&](Ref<Var> var) {
+    //     return var->rvalue();
+    // }, [&](BoundProp& bound_prop) {})
+    // if (is<Ref<Var>>()) {
+    //     auto var = get<Ref<Var>>();
+    //     return var->rvalue();
+    // }
 
     // if (is<BoundProp>()) {
     //     RValue rvalue;

@@ -35,7 +35,7 @@ public:
     void visit(Ref<ast::Ident> node) override;
 
 protected:
-    virtual ExprRes funcall(Ref<Fun> fun, TypedValueList&& args);
+    virtual ExprRes funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args);
 
 private:
     ExprRes eval_expr(Ref<ast::Expr> expr);

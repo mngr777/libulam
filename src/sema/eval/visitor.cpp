@@ -155,13 +155,17 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
-ExprRes EvalVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
+ExprRes EvalVisitor::funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) {
     debug() << __FUNCTION__ << "`" << str(fun->name_id()) << "`\n";
+    assert(obj);
     assert(fun->params().size() == args.size());
 
-    // add scope
+    // push fun scope
     auto sr =
         _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
+
+    // bind `self`
+    scope()->set_self(obj);
 
     // bind params
     for (const auto& param : fun->params()) {

@@ -6,21 +6,18 @@ namespace ulam {
 
 // Dynamically-sized simple version of MFM::BitVector
 
-class BitVector;
-
 class _BitVector {
-    using size_t = Unsigned;
-    using idx_t = Unsigned;
-    using unit_t = Unsigned;
-    using unit_idx_t = Unsigned;
-};
-
-class BitVectorView : public _BitVector {
 public:
     using size_t = Unsigned;
     using idx_t = Unsigned;
-    using unit_t = Unsigned;
+    using unit_t = Datum;
+    using unit_idx_t = Unsigned;
+};
 
+class BitVector;
+
+class BitVectorView : public _BitVector {
+public:
     BitVectorView(BitVector& data, size_t off, size_t len);
     BitVectorView(BitVector& data);
 
@@ -50,11 +47,6 @@ private:
 
 class BitVector : public _BitVector {
 public:
-    using size_t = Unsigned;
-    using idx_t = Unsigned;
-    using unit_idx_t = Unsigned;
-    using unit_t = Unsigned;
-
     static constexpr size_t UnitSize = sizeof(size_t) * 8;
     static constexpr Unsigned AtomSize = 96;
     static constexpr Unsigned Size8k = 8162;

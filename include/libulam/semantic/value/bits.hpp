@@ -3,6 +3,7 @@
 
 namespace ulam {
 
+// TODO: optimization for shorter values
 class Bits {
 public:
     explicit Bits(BitVector::size_t size): _bits(size) {}

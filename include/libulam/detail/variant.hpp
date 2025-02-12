@@ -32,12 +32,8 @@ public:
     template <typename T> T& get() { return std::get<T>(_value); }
     template <typename T> const T& get() const { return std::get<T>(_value); }
 
-    template <typename V> auto accept(V&& visitor) {
-        return std::visit(std::forward<V>(visitor), _value);
-    }
-
     template <typename... Vs> auto accept(Vs&&... visitors) {
-        return std::visit(_value, variant::Overloads{visitors...});
+        return std::visit(variant::Overloads{std::move(visitors)...}, _value);
     }
 
 private:
@@ -74,9 +70,11 @@ public:
     }
 
     template <typename... Vs> auto accept(Vs&&... visitors) {
-        return std::visit([&](auto&& value) {
-            return variant::Overloads{std::move(visitors)...}(value.ref());
-        }, _value);
+        return std::visit(
+            [&](auto&& value) {
+                return variant::Overloads{std::move(visitors)...}(value.ref());
+            },
+            _value);
     }
 
 private:

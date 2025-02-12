@@ -33,26 +33,17 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
         return {ExprError::SymbolNotFound};
     }
 
-    // TODO: visit
-    // return sym->accept([&](Ref<Var> var) {
-    //     return ExprRes{var->type(), LValue{var}};
-    // });
-
-    if (sym->is<Var>()) {
-        auto var = sym->get<Var>();
-        return {var->type(), LValue{var}};
-
-    } else if (sym->is<Prop>()) {
-        auto prop = sym->get<Prop>();
-        return {prop->type(), LValue{BoundProp{_scope->self(), prop}}};
-
-    } else if (sym->is<FunSet>()) {
-        assert(sym->is<FunSet>());
-        auto fset = sym->get<FunSet>();
-        return {
-            builtins().type(FunId), LValue{BoundFunSet{_scope->self(), fset}}};
-    }
-    assert(false);
+    return sym->accept(
+        [&](Ref<Var> var) -> ExprRes { return {var->type(), LValue{var}}; },
+        [&](Ref<Prop> prop) -> ExprRes {
+            return {prop->type(), LValue{BoundProp{_scope->self(), prop}}};
+        },
+        [&](Ref<FunSet> fset) -> ExprRes {
+            return {
+                builtins().type(FunId),
+                LValue{BoundFunSet{_scope->self(), fset}}};
+        },
+        [&](auto value) -> ExprRes { assert(false); });
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::ParenExpr> node) {
@@ -186,6 +177,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
         return {};
     }
     auto& bound_fset = lval->get<BoundFunSet>();
+    auto obj = bound_fset.obj();
     auto fset = bound_fset.mem();
 
     // eval args
@@ -197,7 +189,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     auto match_res = fset->find_match(arg_list);
     if (match_res.size() == 1) {
         // success, one match found
-        return funcall(*(match_res.begin()), std::move(arg_list));
+        return funcall(*(match_res.begin()), obj, std::move(arg_list));
     } else if (match_res.size() == 0) {
         diag().emit(Diag::Error, loc_id, 1, "no matching function found");
     } else {
@@ -237,25 +229,20 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::MemberNotFound};
     }
 
-    if (sym->is<Var>()) {
-        auto var = sym->get<Var>();
-        return {var->type(), LValue{var}};
-
-    } else if (sym->is<Prop>()) {
-        auto prop = sym->get<Prop>();
-        return {prop->type(), LValue{BoundProp{obj, prop}}};
-
-    } else if (sym->is<FunSet>()) {
-        auto fset = sym->get<FunSet>();
-        if (fset->is_virtual()) {
-            auto sym = obj->cls()->as_class()->get(name.str_id());
-            assert(sym && sym->is<FunSet>());
-            fset = sym->get<FunSet>();
-            assert(fset);
-        }
-        return {builtins().type(FunId), LValue{BoundFunSet{obj, fset}}};
-    }
-    assert(false);
+    return sym->accept(
+        [&](Ref<Var> var) -> ExprRes { return {var->type(), LValue{var}}; },
+        [&](Ref<Prop> prop) -> ExprRes {
+            return {prop->type(), LValue{BoundProp{obj, prop}}};
+        },
+        [&](Ref<FunSet> fset) -> ExprRes {
+            if (fset->is_virtual()) {
+                auto sym = obj->cls()->as_class()->get(name.str_id());
+                if (sym->is<FunSet>())
+                    fset = sym->get<FunSet>();
+            }
+            return {builtins().type(FunId), LValue{BoundFunSet{obj, fset}}};
+        },
+        [&](auto other) -> ExprRes { assert(false); });
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
@@ -292,7 +279,7 @@ ExprRes ExprVisitor::cast(
 
 ExprRes ExprVisitor::prim_binary_op(
     Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right) {
-    debug() << __FUNCTION__ << "\n";
+    debug() << __FUNCTION__ << " " << ops::str(node->op()) << "\n";
     Op op = ops::non_assign(node->op());
     PrimTypeErrorPair type_errors{};
     if (op != Op::None) {
@@ -342,18 +329,18 @@ ExprRes ExprVisitor::prim_binary_op(
 }
 
 ExprRes
-ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val) {
+ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
-    if (lval->is<Ref<Var>>()) {
-        assert(false && "assign to var");
-
-    } else if (lval->is<BoundProp>()) {
-        lval->get<BoundProp>();
-        assert(false && "assign to prop");
-
-    } else {
-        assert(false);
-    }
+    return lval->accept(
+        [&](Ref<Var> var) -> ExprRes { assert(false && "assign to var"); },
+        [&](BoundProp& bound_prop) -> ExprRes {
+            assert(bound_prop.mem()->type() == tv.type()); // TMP
+            auto rval = tv.value().rvalue();
+            if (rval)
+                bound_prop.store(*rval);
+            return {bound_prop.mem()->type(), LValue{bound_prop}};
+        },
+        [&](auto&& other) -> ExprRes { assert(false); });
 }
 
 PrimTypedValue
@@ -385,7 +372,7 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     return res;
 }
 
-ExprRes ExprVisitor::funcall(Ref<Fun> fun, TypedValueList&& args) {
+ExprRes ExprVisitor::funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) {
     debug() << __FUNCTION__ << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }
