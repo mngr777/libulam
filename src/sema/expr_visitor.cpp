@@ -217,8 +217,8 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     auto cls = obj_res.type()->as_class();
     auto obj_val = obj_res.move_value();
-    assert(obj_val.rvalue()->is<SPtr<Object>>());
-    auto obj = obj_val.rvalue()->get<SPtr<Object>>();
+    assert(obj_val.rvalue().is<SPtr<Object>>());
+    auto obj = obj_val.rvalue().get<SPtr<Object>>();
 
     // get symbol
     auto name = node->ident()->name();
@@ -336,8 +336,8 @@ ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
         [&](BoundProp& bound_prop) -> ExprRes {
             assert(bound_prop.mem()->type() == tv.type()); // TMP
             auto rval = tv.value().rvalue();
-            if (rval)
-                bound_prop.store(*rval);
+            if (!rval.empty())
+                bound_prop.store(rval);
             return {bound_prop.mem()->type(), LValue{bound_prop}};
         },
         [&](auto&& other) -> ExprRes { assert(false); });
@@ -372,7 +372,8 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     return res;
 }
 
-ExprRes ExprVisitor::funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) {
+ExprRes
+ExprVisitor::funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) {
     debug() << __FUNCTION__ << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }

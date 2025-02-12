@@ -6,7 +6,7 @@
 
 namespace ulam {
 
-RValue Prop::load(SPtr<Object> obj) {
+RValue Prop::load(SPtr<const Object> obj) const {
     assert(has_type());
     assert(obj);
     return type()->load(obj->bits().view(), data_off());

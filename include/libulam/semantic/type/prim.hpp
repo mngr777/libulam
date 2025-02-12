@@ -25,15 +25,15 @@ public:
 
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
-    RValue load(const BitVectorView data, BitVector::idx_t off) override {
+    RValue load(const BitVectorView data, BitVector::idx_t off) const override {
         return from_datum(data.read(off, bitsize()));
     }
-    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) override {
+    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const override {
         data.write(off, bitsize(), to_datum(rval));
     }
 
-    virtual RValue from_datum(Datum datum) { assert(false); }
-    virtual Datum to_datum(const RValue& rval) { assert(false); }
+    virtual RValue from_datum(Datum datum) const { assert(false); }
+    virtual Datum to_datum(const RValue& rval) const { assert(false); }
 
     bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
 
@@ -164,12 +164,12 @@ public:
             // get first arg
             auto& arg = args.front();
             auto rval = arg.value().rvalue();
-            assert(rval);
-            if (rval->is<Integer>()) {
-                auto int_val = rval->get<Integer>();
+            assert(!rval.empty());
+            if (rval.is<Integer>()) {
+                auto int_val = rval.get<Integer>();
                 size = (int_val < 0) ? 0 : static_cast<Unsigned>(int_val);
-            } else if (rval->is<Unsigned>()) {
-                size = rval->get<Unsigned>();
+            } else if (rval.is<Unsigned>()) {
+                size = rval.get<Unsigned>();
             } else {
                 diag.emit(
                     Diag::Error, args_node->loc_id(), 1,

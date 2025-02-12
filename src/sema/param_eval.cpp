@@ -20,7 +20,7 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
         if (value.is_nil())
             success = false;
         // has actual value?
-        if (_flags & ReqValues && value.rvalue()->empty()) {
+        if (_flags & ReqValues && value.rvalue().empty()) {
             success = false;
             _program->diag().emit(
                 Diag::Error, arg->loc_id(), 1, "failed to evaluate argument");

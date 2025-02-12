@@ -25,7 +25,7 @@ public:
     void set_value(Value&& value);
 
     // TODO: if reference, get rvalue from refd var
-    RValue* rvalue() { return _value.rvalue(); };
+    RValue rvalue() { return _value.rvalue(); };
 
 private:
     Value _value;

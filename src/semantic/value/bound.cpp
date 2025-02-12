@@ -3,7 +3,7 @@
 
 namespace ulam {
 
-void BoundProp::load(RValue& rval) {
+void BoundProp::load(RValue& rval) const {
     rval = mem()->load(obj());
 }
 

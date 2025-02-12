@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <ostream>
 #include <string_view>
 

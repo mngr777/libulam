@@ -66,18 +66,18 @@ public:
 
     virtual bitsize_t bitsize() const = 0;
 
-    RValue load(const BitVector& data, BitVector::idx_t off) {
+    RValue load(const BitVector& data, BitVector::idx_t off) const {
         return load(data.view(), off);
     }
 
-    void store(BitVector& data, BitVector::idx_t off, const RValue& rval) {
+    void store(BitVector& data, BitVector::idx_t off, const RValue& rval) const {
         store(data.view(), off, rval);
     }
 
-    virtual RValue load(const BitVectorView data, BitVector::idx_t off) {
+    virtual RValue load(const BitVectorView data, BitVector::idx_t off) const {
         assert(false);
     }
-    virtual void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) {
+    virtual void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const {
         assert(false);
     }
 

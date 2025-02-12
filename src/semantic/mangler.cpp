@@ -24,7 +24,8 @@ std::string Mangler::mangled(const TypeList& types) {
 }
 
 void Mangler::write_mangled(std::ostream& os, const TypedValue& tv) {
-    assert(tv.value().rvalue());
+    auto rval = tv.value().rvalue();
+    assert(!rval.empty());
     write_mangled(os, tv.type());
     write_mangled(os, tv.value().rvalue());
 }
@@ -65,7 +66,7 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         detail::write_leximited(os, cls->name());
         for (auto var : cls->param_vars()) {
             write_mangled(os, var->type());
-            write_mangled(os, var->rvalue());
+            write_mangled(os, var->value().rvalue());
         }
     } else {
         assert(type->is_prim());
@@ -75,16 +76,16 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
     }
 }
 
-void Mangler::write_mangled(std::ostream& os, const RValue* rvalue) {
-    assert(rvalue);
-    if (rvalue->is<Unsigned>()) {
-        detail::write_leximited(os, rvalue->get<Unsigned>());
-    } else if (rvalue->is<Integer>()){
-        detail::write_leximited(os, rvalue->get<Integer>());
-    // } else if (rvalue->is<Bool>()){
-    //     detail::write_leximited(os, rvalue->get<Bool>());
-    } else if (rvalue->is<String>()) {
-        detail::write_leximited(os, rvalue->get<String>());
+void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
+    assert(!rval.empty());
+    if (rval.is<Unsigned>()) {
+        detail::write_leximited(os, rval.get<Unsigned>());
+    } else if (rval.is<Integer>()){
+        detail::write_leximited(os, rval.get<Integer>());
+    // } else if (rval.is<Bool>()){
+    //     detail::write_leximited(os, rval.get<Bool>());
+    } else if (rval.is<String>()) {
+        detail::write_leximited(os, rval.get<String>());
     } else {
         assert(false); // TODO
     }

@@ -9,7 +9,7 @@
 
 namespace ulam {
 
-RValue IntType::from_datum(Datum datum) {
+RValue IntType::from_datum(Datum datum) const {
     int shift = sizeof(datum) * 8 - bitsize();
     if (shift == 0)
         return (Integer)datum;
@@ -21,7 +21,7 @@ RValue IntType::from_datum(Datum datum) {
     return (Integer)datum;
 }
 
-Datum IntType::to_datum(const RValue& rval) {
+Datum IntType::to_datum(const RValue& rval) const {
     assert(rval.is<Integer>());
     auto int_val = rval.get<Integer>();
     auto datum = (Datum)int_val;
@@ -82,38 +82,38 @@ bool IntType::is_castable_to(Ref<PrimType> type, bool expl) const {
 PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     assert(is_expl_castable_to(id));
     assert(!value.is_nil());
-    assert(value.rvalue()->is<Integer>());
-    assert(!value.rvalue()->empty());
 
     auto rval = value.rvalue();
-    auto intval = rval->get<Integer>();
+    assert(rval.is<Integer>());
+
+    auto int_val = rval.get<Integer>();
     switch (id) {
     case IntId: {
         assert(false);
         return {this, std::move(value)};
     }
     case UnsignedId: {
-        intval = std::max((Integer)0, intval);
+        int_val = std::max((Integer)0, int_val);
         auto size = detail::bitsize(value);
         auto type = builtins().prim_type(UnsignedId, size);
-        return {type, RValue{(Unsigned)intval}};
+        return {type, RValue{(Unsigned)int_val}};
     }
     case BoolId: {
-        Unsigned val = (intval == 0) ? 0 : 1;
+        Unsigned val = (int_val == 0) ? 0 : 1;
         auto type = builtins().prim_type(BoolId, 1);
         return {type, RValue{val}};
     }
     case UnaryId: {
-        Unsigned val = std::max((Integer)0, intval);
+        Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)ULAM_MAX_INT_SIZE, val);
         auto type = builtins().prim_type(UnaryId, value);
         return {type, RValue{val}};
     }
     case BitsId: {
-        auto size = detail::bitsize(intval);
+        auto size = detail::bitsize(int_val);
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
-        store(val.bits().view(), 0, *rval);
+        store(val.bits().view(), 0, rval);
         return {type, RValue{std::move(val)}};
     }
     default:
@@ -124,28 +124,28 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
 Value IntType::cast_to(Ref<PrimType> type, Value&& value) {
     assert(is_expl_castable_to(type));
     assert(!value.is_nil());
-    assert(value.rvalue()->is<Integer>());
-    assert(!value.rvalue()->empty());
 
     auto rval = value.rvalue();
-    Integer intval = rval->get<Integer>();
+    assert(rval.is<Integer>());
+
+    Integer int_val = rval.get<Integer>();
     switch (type->builtin_type_id()) {
     case IntId: {
         assert(false);
         return std::move(value);
     }
     case UnsignedId: {
-        Unsigned val = std::max((Integer)0, intval);
+        Unsigned val = std::max((Integer)0, int_val);
         val = std::min(detail::unsigned_max(type->bitsize()), val);
         return RValue{val};
     }
     case BoolId: {
-        Unsigned val =
-            (intval == 0) ? (Unsigned)0 : detail::unsigned_max(type->bitsize());
+        Unsigned val = (int_val == 0) ? (Unsigned)0
+                                      : detail::unsigned_max(type->bitsize());
         return RValue{val};
     }
     case UnaryId: {
-        Unsigned val = std::max((Integer)0, intval);
+        Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)type->bitsize(), val);
         return RValue{val};
     }
@@ -163,13 +163,13 @@ PrimTypedValue IntType::binary_op(
 
     auto left_rval = left_val.rvalue();
     auto right_rval = right_val.rvalue();
-    assert(left_rval->empty() || left_rval->is<Integer>());
-    assert(right_rval->empty() || right_rval->is<Integer>());
-    ;
+    assert(left_rval.empty() || left_rval.is<Integer>());
+    assert(right_rval.empty() || right_rval.is<Integer>());
 
-    bool is_unknown = left_rval->empty() || right_rval->empty();
-    Integer left_intval = left_rval->empty() ? 0 : left_rval->get<Integer>();
-    Integer right_intval = right_rval->empty() ? 0 : right_rval->get<Integer>();
+    bool is_unknown = left_rval.empty() || right_rval.empty();
+    Integer left_int_val = left_rval.empty() ? 0 : left_rval.get<Integer>();
+    Integer right_int_val =
+        right_rval.empty() ? 0 : right_rval.get<Integer>();
 
     switch (op) {
     case Op::Prod: {
@@ -179,7 +179,7 @@ PrimTypedValue IntType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, RValue{}};
-        auto [val, _] = detail::safe_prod(left_intval, right_intval);
+        auto [val, _] = detail::safe_prod(left_int_val, right_int_val);
         return {type, RValue{detail::truncate(val, size)}};
     }
     case Op::Quot: {
@@ -187,14 +187,14 @@ PrimTypedValue IntType::binary_op(
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
             return {this, RValue{}};
-        auto val = detail::safe_quot(left_intval, right_intval);
+        auto val = detail::safe_quot(left_int_val, right_int_val);
         return {this, RValue{val}};
     }
     case Op::Rem: {
         // Int(a) % Int(b) = Int(a)
         if (is_unknown)
             return {this, RValue{}};
-        auto val = detail::safe_rem(left_intval, right_intval);
+        auto val = detail::safe_rem(left_int_val, right_int_val);
         return {this, RValue{val}};
     }
     case Op::Sum: {
@@ -204,7 +204,7 @@ PrimTypedValue IntType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, RValue{}};
-        auto [val, _] = detail::safe_sum(left_intval, right_intval);
+        auto [val, _] = detail::safe_sum(left_int_val, right_int_val);
         return {type, RValue{val}};
     }
     case Op::Diff: {
@@ -214,7 +214,7 @@ PrimTypedValue IntType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, RValue{}};
-        auto [val, _] = detail::safe_diff(left_intval, right_intval);
+        auto [val, _] = detail::safe_diff(left_int_val, right_int_val);
         return {type, RValue{val}};
     }
     default:

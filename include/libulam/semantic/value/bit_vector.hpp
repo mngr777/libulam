@@ -53,8 +53,8 @@ public:
 
     BitVector(size_t len): _len{len}, _bits{(len + UnitSize - 1) / UnitSize} {}
 
-    BitVector(BitVector&& other) = default;
-    BitVector& operator=(BitVector&&) = default;
+    // BitVector(BitVector&& other) = default;
+    // BitVector& operator=(BitVector&&) = default;
 
     BitVectorView view() { return *this; }
     const BitVectorView view() const { return const_cast<BitVector&>(*this); }

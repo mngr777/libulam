@@ -12,21 +12,21 @@ std::pair<array_size_t, bool> ArrayDimEval::eval(Ref<ast::Expr> expr) {
     auto rval = res.value().rvalue();
 
     array_size_t size{0}; // TODO: what is max array size?
-    if (rval->empty()) {
+    if (rval.empty()) {
         _program->diag().emit(
             Diag::Error, expr->loc_id(), 1, "cannot calculate");
         return {UnknownArraySize, false};
 
-    } else if (rval->is<Unsigned>()) {
-        size = rval->get<Unsigned>();
+    } else if (rval.is<Unsigned>()) {
+        size = rval.get<Unsigned>();
 
-    } else if (rval->is<Integer>()) {
-        if (rval->get<Integer>() < 0) {
+    } else if (rval.is<Integer>()) {
+        if (rval.get<Integer>() < 0) {
             _program->diag().emit(
                 Diag::Error, expr->loc_id(), 1, "negative value");
             return {UnknownArraySize, false};
         }
-        size = (Unsigned)rval->get<Integer>();
+        size = (Unsigned)rval.get<Integer>();
 
     } else {
         _program->diag().emit(

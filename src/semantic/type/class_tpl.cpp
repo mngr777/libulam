@@ -88,7 +88,8 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             } else if (sym->is<Prop>()) {
                 auto prop = sym->get<Prop>();
                 auto copy = make<Prop>(
-                    prop->type_node(), prop->node(), Ref<Type>{}, prop->flags() & ~Prop::Tpl);
+                    prop->type_node(), prop->node(), Ref<Type>{},
+                    prop->flags() & ~Prop::Tpl);
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(copy));
 
@@ -96,9 +97,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
                 assert(sym->is<FunSet>());
                 auto fset = sym->get<FunSet>();
                 auto copy = make<FunSet>(*fset);
-                copy->for_each([&](Ref<Fun> fun) {
-                    fun->set_cls(ref(cls));
-                });
+                copy->for_each([&](Ref<Fun> fun) { fun->set_cls(ref(cls)); });
                 cls->scope()->set(name_id, ref(copy));
                 cls->set(name_id, std::move(fset));
             }
@@ -109,23 +108,23 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
 }
 
 std::string ClassTpl::type_args_str(const TypedValueList& args) {
-    // !! this is a temporary implementation
+    // TMP
     std::string str;
-    for (const auto& arg : args) {
+    for (auto& arg : args) {
         auto rval = arg.value().rvalue();
-        assert(!rval->empty());
+        assert(!rval.empty());
         if (!str.empty())
             str += "_";
-        if (rval->is<Integer>()) {
-            str += std::to_string(rval->get<Integer>());
-        } else if (rval->is<Unsigned>()) {
-            str += std::to_string(rval->get<Unsigned>());
-        // } else if (rval->is<Bool>()) {
-        //     str += (rval->get<Bool>() ? "t" : "f");
-        } else if (rval->is<String>()) {
+        if (rval.is<Integer>()) {
+            str += std::to_string(rval.get<Integer>());
+        } else if (rval.is<Unsigned>()) {
+            str += std::to_string(rval.get<Unsigned>());
+            // } else if (rval.is<Bool>()) {
+            //     str += (rval.get<Bool>() ? "t" : "f");
+        } else if (rval.is<String>()) {
             // str += std::to_string(
-            //     program()->ast()->ctx().str_id(rval->get<String>()));
-            return rval->get<String>();
+            //     program()->ast()->ctx().str_id(rval.get<String>()));
+            return rval.get<String>();
         } else {
             assert(false);
         }

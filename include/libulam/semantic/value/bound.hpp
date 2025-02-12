@@ -19,7 +19,7 @@ public:
     Ref<T> mem() { return _mem; }
     Ref<const T> mem() const { return _mem; }
 
-    virtual void load(RValue& rval) { assert(false); }
+    virtual void load(RValue& rval) const { assert(false); }
     virtual void store(const RValue& rval) { assert(false); }
 
 private:
@@ -33,7 +33,7 @@ class BoundProp : public Bound<Prop> {
 public:
     using Bound::Bound;
 
-    void load(RValue& rval) override;
+    void load(RValue& rval) const override;
     void store(const RValue& rval) override;
 };
 

@@ -35,6 +35,10 @@ public:
     template <typename... Vs> auto accept(Vs&&... visitors) {
         return std::visit(variant::Overloads{std::move(visitors)...}, _value);
     }
+    template <typename... Vs> auto accept(Vs&&... visitors) const {
+        return std::visit(variant::Overloads{std::move(visitors)...}, _value);
+    }
+
 
 private:
     std::variant<std::monostate, Ts...> _value;
@@ -76,6 +80,15 @@ public:
             },
             _value);
     }
+
+    template <typename... Vs> auto accept(Vs&&... visitors) const {
+        return std::visit(
+            [&](const auto&& value) {
+                return variant::Overloads{std::move(visitors)...}(value.ref());
+            },
+            _value);
+    }
+
 
 private:
     std::variant<RefPtr<Ts>...> _value;

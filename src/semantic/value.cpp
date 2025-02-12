@@ -1,4 +1,4 @@
-#include "libulam/semantic/value/bound.hpp"
+#include <libulam/detail/variant.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/var.hpp>
 
@@ -10,26 +10,31 @@ Ref<Type> LValue::type() {
     return {}; // TODO
 }
 
-RValue* LValue::rvalue() {
-    if (empty())
-        return {};
+RValue LValue::rvalue() const {
+    return accept(
+        [&](Ref<Var> var) { return var->rvalue(); },
+        [&](const BoundProp& bound_prop) {
+            RValue rvalue{};
+            bound_prop.load(rvalue);
+            return rvalue;
+        },
+        [&](std::monostate) { return RValue{}; },
+        [&](auto&&) -> RValue { assert(false); });
+}
 
+RValue RValue::copy_shallow() const {
+    return accept([&](auto&& value) { return RValue{value}; });
+}
 
-    // accept([&](Ref<Var> var) {
-    //     return var->rvalue();
-    // }, [&](BoundProp& bound_prop) {})
-    // if (is<Ref<Var>>()) {
-    //     auto var = get<Ref<Var>>();
-    //     return var->rvalue();
-    // }
+// Value
 
-    // if (is<BoundProp>()) {
-    //     RValue rvalue;
-    //     auto& bound_prop = get<BoundProp>();
-    //     return bound_prop.load(rvalue);
-    // }
-
-    assert(false);
+RValue Value::rvalue() const {
+    return std::visit(
+        detail::variant::Overloads{
+            [&](const LValue& lval) { return lval.rvalue(); },
+            [&](const RValue& rval) { return rval.copy_shallow(); },
+            [&](const std::monostate& val) { return RValue{}; }},
+        _value);
 }
 
 } // namespace ulam

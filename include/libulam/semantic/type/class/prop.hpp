@@ -11,7 +11,7 @@ class Prop : public VarBase {
 public:
     using VarBase::VarBase;
 
-    RValue load(SPtr<Object> obj);
+    RValue load(SPtr<const Object> obj) const;
     void store(SPtr<Object> obj, const RValue& rval);
 
     bool has_data_off() const { return _data_off != cls::NoDataOff; }

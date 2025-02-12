@@ -48,6 +48,8 @@ class RValue : public detail::Variant<
                    SPtr<Object>> {
 public:
     using Variant::Variant;
+
+    RValue copy_shallow() const;
 };
 
 class LValue
@@ -58,14 +60,14 @@ public:
 
     Ref<Type> type();
 
-    RValue* rvalue();
+    RValue rvalue() const;
 };
 
 class Value {
 public:
-    Value() {}
     Value(LValue&& lvalue): _value{std::move(lvalue)} {}
     Value(RValue&& rvalue): _value{std::move(rvalue)} {}
+    Value() {}
 
     Value(Value&&) = default;
     Value& operator=(Value&&) = default;
@@ -88,15 +90,7 @@ public:
         return &std::get<LValue>(_value);
     }
 
-    RValue* rvalue() {
-        return const_cast<RValue*>(std::as_const(*this).rvalue());
-    }
-
-    const RValue* rvalue() const {
-        assert(!is_nil());
-        return is_lvalue() ? const_cast<LValue*>(lvalue())->rvalue()
-                           : &std::get<RValue>(_value);
-    }
+    RValue rvalue() const;
 
 private:
     std::variant<std::monostate, LValue, RValue> _value;

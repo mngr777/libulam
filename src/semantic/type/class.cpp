@@ -52,7 +52,7 @@ bitsize_t Class::direct_bitsize() const {
 }
 
 RValue Class::construct() {
-    return make_s<Object>(this);
+    return {make_s<Object>(this)};
 }
 
 void Class::add_param_var(Ptr<Var>&& var) {
