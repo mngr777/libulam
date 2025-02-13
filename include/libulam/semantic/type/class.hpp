@@ -51,6 +51,10 @@ public:
 
     RValue construct() override;
 
+    RValue load(const BitVectorView data, BitVector::idx_t off) const override;
+    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval)
+        const override;
+
 private:
     void add_param_var(Ptr<Var>&& var);
 

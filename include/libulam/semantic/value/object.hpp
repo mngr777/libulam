@@ -1,5 +1,4 @@
 #pragma once
-#include <cassert>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bit_vector.hpp>
 
@@ -11,6 +10,7 @@ class Value;
 class Object {
 public:
     Object(Ref<Class> cls);
+    Object(Ref<Class> cls, BitVector&& bits);
     ~Object();
 
     Ref<Class> cls() { return _cls; }
