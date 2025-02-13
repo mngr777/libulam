@@ -81,7 +81,7 @@ bool IntType::is_castable_to(Ref<PrimType> type, bool expl) const {
 
 PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     assert(is_expl_castable_to(id));
-    assert(!value.is_nil());
+    assert(!value.empty());
 
     auto rval = value.rvalue();
     assert(rval.is<Integer>());
@@ -123,12 +123,12 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
 
 Value IntType::cast_to(Ref<PrimType> type, Value&& value) {
     assert(is_expl_castable_to(type));
-    assert(!value.is_nil());
+    assert(!value.empty());
 
     auto rval = value.rvalue();
     assert(rval.is<Integer>());
 
-    Integer int_val = rval.get<Integer>();
+    auto int_val = rval.get<Integer>();
     switch (type->builtin_type_id()) {
     case IntId: {
         assert(false);

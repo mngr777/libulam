@@ -17,7 +17,7 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
         ExprRes res = arg->accept(ev);
         const auto& value = res.value();
         // any result?
-        if (value.is_nil())
+        if (value.empty())
             success = false;
         // has actual value?
         if (_flags & ReqValues && value.rvalue().empty()) {

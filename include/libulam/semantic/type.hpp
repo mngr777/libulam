@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
-#include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bit_vector.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 
@@ -25,9 +25,6 @@ class Scope;
 
 using type_id_t = std::uint16_t;
 constexpr type_id_t NoTypeId = 0;
-
-using bitsize_t = std::uint16_t;
-constexpr bitsize_t NoBitsize = 0;
 
 using array_idx_t = std::uint16_t;
 using array_size_t = array_idx_t;
@@ -70,14 +67,16 @@ public:
         return load(data.view(), off);
     }
 
-    void store(BitVector& data, BitVector::idx_t off, const RValue& rval) const {
+    void
+    store(BitVector& data, BitVector::idx_t off, const RValue& rval) const {
         store(data.view(), off, rval);
     }
 
     virtual RValue load(const BitVectorView data, BitVector::idx_t off) const {
         assert(false);
     }
-    virtual void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const {
+    virtual void
+    store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const {
         assert(false);
     }
 

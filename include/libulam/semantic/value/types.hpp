@@ -6,6 +6,9 @@
 
 namespace ulam {
 
+using bitsize_t = std::uint16_t;
+constexpr bitsize_t NoBitsize = 0;
+
 using Integer = std::int32_t;
 using Unsigned = std::uint32_t;
 using Bool = bool; // TODO: remove

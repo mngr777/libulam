@@ -250,7 +250,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             auto tv = res.move_typed_value();
             // TODO: conversion/type error, check if const
             var->value() = tv.move_value();
-            if (var->value().is_nil()) {
+            if (var->value().empty()) {
                 auto name = node->name();
                 diag().emit(
                     Diag::Error, name.loc_id(), str(name.str_id()).size(),

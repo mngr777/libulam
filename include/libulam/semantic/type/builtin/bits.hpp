@@ -24,17 +24,17 @@ public:
 
     RValue construct() override { return Bits{bitsize()}; }
 
-    // bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
-    // bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;
+    bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
+    bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;
 
-    // PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
-    // Value cast_to(Ref<PrimType> type, Value&& value) override;
+    PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
+    Value cast_to(Ref<PrimType> type, Value&& value) override;
 
-    // PrimTypedValue binary_op(
-    //     Op op,
-    //     const Value& left_val,
-    //     Ref<const PrimType> right_type,
-    //     const Value& right_val) override;
+    PrimTypedValue binary_op(
+        Op op,
+        const Value& left_val,
+        Ref<const PrimType> right_type,
+        const Value& right_val) override;
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;

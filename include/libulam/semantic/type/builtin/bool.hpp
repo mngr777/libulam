@@ -20,6 +20,9 @@ public:
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
     RValue construct() override { return Unsigned{}; }
+
+    RValue from_datum(Datum datum) const override;
+    Datum to_datum(const RValue& rval) const override;
 };
 
 using BoolTypeTpl = _PrimTypeTpl<BoolType>;

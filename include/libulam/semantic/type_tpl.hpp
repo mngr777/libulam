@@ -2,6 +2,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/typed_value.hpp>
 
 namespace ulam::ast {
 class ArgList;

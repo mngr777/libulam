@@ -65,9 +65,10 @@ public:
 
 class Value : public detail::Variant<LValue, RValue> {
 public:
-    using Variant::Variant;
+    using RValueCb = std::function<void(RValue&)>;
+    using RValueConstCb = std::function<void(const RValue&)>;
 
-    bool is_nil() const { return empty(); }
+    using Variant::Variant;
 
     bool is_lvalue() const {
         return is<LValue>();
@@ -78,12 +79,13 @@ public:
     }
 
     const LValue* lvalue() const {
-        if (is_nil() || !is_lvalue())
+        if (empty() || !is_lvalue())
             return nullptr;
         return &const_cast<Value*>(this)->get<LValue>();
     }
 
     RValue rvalue() const;
+    RValue move_rvalue();
 };
 
 using ValueList = std::list<Value>;

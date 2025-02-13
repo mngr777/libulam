@@ -5,6 +5,7 @@
 // NOTE: keeping it simple for now
 // TODO: (maybe) optimize, see MFM::BitVector impl
 // TODO: naming: size/len
+// TODO: types: remove idx_t?
 
 namespace ulam {
 namespace {
@@ -39,22 +40,27 @@ BitVectorView::BitVectorView(BitVector& data):
 
 bool BitVectorView::read_bit(idx_t idx) const {
     assert(idx < _len);
-    return _data.read_bit(idx);
+    return _data.read_bit(_off + idx);
 }
 
 void BitVectorView::write_bit(idx_t idx, bool bit) {
     assert(idx < _len);
-    _data.write_bit(idx, bit);
+    _data.write_bit(_off + idx, bit);
 }
 
 BitVectorView::unit_t BitVectorView::read(idx_t idx, size_t len) const {
     assert(idx + len <= _len);
-    return _data.read(idx, len);
+    return _data.read(_off + idx, len);
 }
 
 void BitVectorView::write(idx_t idx, size_t len, unit_t value) {
     assert(idx + len <= _len);
-    _data.write(idx, len, value);
+    _data.write(_off + idx, len, value);
+}
+
+BitVectorView::unit_t BitVectorView::read_right(size_t len) const {
+    assert(len <= _len);
+    return _data.read(_off + _len - len, len);
 }
 
 BitVector BitVectorView::copy() const {
@@ -105,7 +111,7 @@ void BitVectorView::bin_op(const BitVectorView& other, UnitBinOp op) {
         size_t size1 = UnitSize;
         off1 += UnitSize;
         if (off1 > len()) {
-            size1 = off1 - len();
+            size1 = len() + UnitSize - off1;
             off1 = len();
         }
         unit_t u1 = read(len() - off1, size1);
@@ -119,9 +125,9 @@ void BitVectorView::bin_op(const BitVectorView& other, UnitBinOp op) {
             }
             assert(off2 <= other.len());
             assert(size2 > 0);
-            u2 = other.read(off2, size2);
+            u2 = other.read(other.len() - off2, size2);
         }
-        write(off1, size1, op(u1, u2));
+        write(len() - off1, size1, op(u1, u2));
     }
 }
 
@@ -162,6 +168,11 @@ BitVector::unit_t BitVector::read(idx_t idx, size_t len) const {
     return (read(unit_idx, off, len_1) << len_2) | read(unit_idx + 1, 0, len_2);
 }
 
+BitVector::unit_t BitVector::read_right(size_t len) const {
+    assert(len <= _len);
+    return read(_len - len, len);
+}
+
 void BitVector::write(idx_t idx, size_t len, unit_t value) {
     assert(idx < _len);
     assert(len <= UnitSize);
@@ -200,36 +211,60 @@ void BitVector::write(
     _bits[unit_idx] = (_bits[unit_idx] & ~mask) | (value << shift);
 }
 
-BitVector& BitVector::operator&=(const BitVectorView& other) {
+BitVector& BitVector::operator&=(const BitVector& other) {
+    return operator&=(other.view());
+}
+
+BitVector& BitVector::operator|=(const BitVector& other) {
+    return operator|=(other.view());
+}
+
+BitVector& BitVector::operator^=(const BitVector& other) {
+    return operator^=(other.view());
+}
+
+BitVector BitVector::operator&(const BitVector& other) const {
+    return operator&(other.view());
+}
+
+BitVector BitVector::operator|(const BitVector& other) const {
+    return operator|(other.view());
+}
+
+BitVector BitVector::operator^(const BitVector& other) const {
+    return operator^(other.view());
+}
+
+BitVector& BitVector::operator&=(const BitVectorView other) {
     view() &= other.view();
     return *this;
 }
 
-BitVector& BitVector::operator|=(const BitVectorView& other) {
+BitVector& BitVector::operator|=(const BitVectorView other) {
     view() |= other.view();
     return *this;
 }
 
-BitVector& BitVector::operator^=(const BitVectorView& other) {
+BitVector& BitVector::operator^=(const BitVectorView other) {
     view() ^= other.view();
     return *this;
 }
 
-BitVector BitVector::operator&(const BitVectorView& other) const {
+BitVector BitVector::operator&(const BitVectorView other) const {
     bool copy_other = other.len() > len();
     BitVector bv{copy_other ? other.copy() : copy()};
     bv.view() &= copy_other ? view() : other.view();
     return bv;
 }
 
-BitVector BitVector::operator|(const BitVectorView& other) const {
+BitVector BitVector::operator|(const BitVectorView other) const {
     bool copy_other = other.len() > len();
     BitVector bv{copy_other ? other.copy() : copy()};
     bv.view() |= copy_other ? view() : other.view();
     return bv;
 }
 
-BitVector BitVector::operator^(const BitVectorView& other) const {
+BitVector BitVector::operator^(const BitVectorView other) const {
     bool copy_other = other.len() > len();
     BitVector bv{copy_other ? other.copy() : copy()};
     bv.view() ^= copy_other ? view() : other.view();

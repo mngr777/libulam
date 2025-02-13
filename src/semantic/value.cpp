@@ -35,4 +35,15 @@ RValue Value::rvalue() const {
         [&](const std::monostate& val) { return RValue{}; });
 }
 
+RValue Value::move_rvalue() {
+    return accept(
+        [&](LValue& lval) { return lval.rvalue(); },
+        [&](RValue& rval) {
+            RValue res{};
+            std::swap(res, rval);
+            return res;
+        },
+        [&](const std::monostate& val) { return RValue{}; });
+}
+
 } // namespace ulam

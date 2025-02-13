@@ -42,6 +42,7 @@ Kind kind(Op op) {
     case Op::ShiftRight:
     case Op::BwNot:
     case Op::BwAnd:
+    case Op::BwXor:
     case Op::BwOr:
     case Op::AssignShiftLeft:
     case Op::AssignShiftRight:

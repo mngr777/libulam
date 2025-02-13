@@ -9,6 +9,8 @@ public:
     explicit Bits(BitVector::size_t size): _bits{size} {}
     explicit Bits(BitVector&& bits): _bits{std::move(bits)} {}
 
+    std::uint16_t bitsize() const { return _bits.len(); }
+
     BitVector& bits() { return _bits; }
     const BitVector& bits() const { return _bits; }
 
