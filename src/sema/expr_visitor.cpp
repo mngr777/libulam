@@ -335,9 +335,9 @@ ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
         [&](Ref<Var> var) -> ExprRes { assert(false && "assign to var"); },
         [&](BoundProp& bound_prop) -> ExprRes {
             assert(bound_prop.mem()->type() == tv.type()); // TMP
-            auto rval = tv.value().rvalue();
+            auto rval = tv.value().move_rvalue();
             if (!rval.empty())
-                bound_prop.store(rval);
+                bound_prop.store(std::move(rval));
             return {bound_prop.mem()->type(), LValue{bound_prop}};
         },
         [&](auto&& other) -> ExprRes { assert(false); });

@@ -156,13 +156,13 @@ Value IntType::cast_to(Ref<PrimType> type, Value&& value) {
 
 PrimTypedValue IntType::binary_op(
     Op op,
-    const Value& left_val,
+    Value&& left_val,
     Ref<const PrimType> right_type,
-    const Value& right_val) {
+    Value&& right_val) {
     assert(right_type->is(IntId));
 
-    auto left_rval = left_val.rvalue();
-    auto right_rval = right_val.rvalue();
+    auto left_rval = left_val.move_rvalue();
+    auto right_rval = right_val.move_rvalue();
     assert(left_rval.empty() || left_rval.is<Integer>());
     assert(right_rval.empty() || right_rval.is<Integer>());
 

@@ -26,9 +26,9 @@ public:
 
     PrimTypedValue binary_op(
         Op op,
-        const Value& left_val,
+        Value&& left_val,
         Ref<const PrimType> right_type,
-        const Value& right_val) override;
+        Value&& right_val) override;
 };
 
 using IntTypeTpl = _PrimTypeTpl<IntType>;

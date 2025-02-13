@@ -69,9 +69,9 @@ public:
     // TODO: make this pure virtual, implement for builtins
     virtual PrimTypedValue binary_op(
         Op op,
-        const Value& left_val,
+        Value&& left_val,
         Ref<const PrimType> right_type,
-        const Value& right_val) {
+        Value&& right_val) {
         assert(false);
     };
 

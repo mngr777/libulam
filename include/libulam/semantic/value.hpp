@@ -45,16 +45,17 @@ class RValue : public detail::Variant<
                    Bits,
                    String,
                    Ref<FunSet>, /* ?? */
-                   SPtr<Object>> {
+                   SPtr<Object>> /* TODO: store object */ {
 public:
     using Variant::Variant;
 
     RValue copy_shallow() const;
 };
 
-class LValue
-    : public detail::
-          Variant<Ref<Var>, BoundFunSet, BoundProp /* TODO: array access */> {
+class LValue : public detail::Variant<
+                   Ref<Var>,
+                   BoundFunSet,
+                   BoundProp /* TODO: object ref, array access */> {
 public:
     using Variant::Variant;
 
@@ -70,9 +71,7 @@ public:
 
     using Variant::Variant;
 
-    bool is_lvalue() const {
-        return is<LValue>();
-    }
+    bool is_lvalue() const { return is<LValue>(); }
 
     LValue* lvalue() {
         return const_cast<LValue*>(std::as_const(*this).lvalue());

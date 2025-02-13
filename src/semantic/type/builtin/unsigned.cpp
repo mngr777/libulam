@@ -137,9 +137,9 @@ Value UnsignedType::cast_to(Ref<PrimType> type, Value&& value) {
 
 PrimTypedValue UnsignedType::binary_op(
     Op op,
-    const Value& left_val,
+    Value&& left_val,
     Ref<const PrimType> right_type,
-    const Value& right_val) {
+    Value&& right_val) {
     assert(right_type->is(UnsignedId));
     assert(false); // not implemented
 }
