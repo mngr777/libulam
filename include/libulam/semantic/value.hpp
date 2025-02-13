@@ -63,22 +63,15 @@ public:
     RValue rvalue() const;
 };
 
-class Value {
+class Value : public detail::Variant<LValue, RValue> {
 public:
-    Value(LValue&& lvalue): _value{std::move(lvalue)} {}
-    Value(RValue&& rvalue): _value{std::move(rvalue)} {}
-    Value() {}
+    using Variant::Variant;
 
-    Value(Value&&) = default;
-    Value& operator=(Value&&) = default;
+    bool is_nil() const { return empty(); }
 
-    operator bool() { return !is_nil(); }
-
-    bool is_nil() const {
-        return std::holds_alternative<std::monostate>(_value);
+    bool is_lvalue() const {
+        return is<LValue>();
     }
-
-    bool is_lvalue() const { return std::holds_alternative<LValue>(_value); }
 
     LValue* lvalue() {
         return const_cast<LValue*>(std::as_const(*this).lvalue());
@@ -87,13 +80,10 @@ public:
     const LValue* lvalue() const {
         if (is_nil() || !is_lvalue())
             return nullptr;
-        return &std::get<LValue>(_value);
+        return &const_cast<Value*>(this)->get<LValue>();
     }
 
     RValue rvalue() const;
-
-private:
-    std::variant<std::monostate, LValue, RValue> _value;
 };
 
 using ValueList = std::list<Value>;

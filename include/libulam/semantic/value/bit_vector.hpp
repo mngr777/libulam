@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <libulam/semantic/value/types.hpp>
 #include <vector>
 
@@ -12,6 +13,10 @@ public:
     using idx_t = Unsigned;
     using unit_t = Datum;
     using unit_idx_t = Unsigned;
+
+    static constexpr size_t UnitSize = sizeof(size_t) * 8;
+    static constexpr Unsigned AtomSize = 96;
+    static constexpr Unsigned Size8k = 8162;
 };
 
 class BitVector;
@@ -39,7 +44,21 @@ public:
 
     size_t len() const { return _len; }
 
+    BitVector copy() const;
+
+    BitVectorView& operator&=(const BitVectorView& other);
+    BitVectorView& operator|=(const BitVectorView& other);
+    BitVectorView& operator^=(const BitVectorView& other);
+
+    BitVector operator&(const BitVectorView& other) const;
+    BitVector operator|(const BitVectorView& other) const;
+    BitVector operator^(const BitVectorView& other) const;
+
 private:
+    using UnitBinOp = std::function<unit_t(unit_t, unit_t)>;
+
+    void bin_op(const BitVectorView& other, UnitBinOp op);
+
     BitVector& _data;
     size_t _off;
     size_t _len;
@@ -47,11 +66,7 @@ private:
 
 class BitVector : public _BitVector {
 public:
-    static constexpr size_t UnitSize = sizeof(size_t) * 8;
-    static constexpr Unsigned AtomSize = 96;
-    static constexpr Unsigned Size8k = 8162;
-
-    BitVector(size_t len): _len{len}, _bits{(len + UnitSize - 1) / UnitSize} {}
+    explicit BitVector(size_t len): _len{len}, _bits{(len + UnitSize - 1) / UnitSize} {}
 
     // BitVector(BitVector&& other) = default;
     // BitVector& operator=(BitVector&&) = default;
@@ -64,6 +79,8 @@ public:
         return {const_cast<BitVector&>(*this), off, len};
     }
 
+    BitVector copy() const;
+
     bool read_bit(idx_t idx) const;
     void write_bit(idx_t idx, bool bit);
 
@@ -71,6 +88,15 @@ public:
     void write(idx_t idx, size_t len, unit_t value);
 
     size_t len() const { return _len; }
+
+    BitVector& operator&=(const BitVectorView& other);
+    BitVector& operator|=(const BitVectorView& other);
+    BitVector& operator^=(const BitVectorView& other);
+
+    BitVector operator&(const BitVectorView& other) const;
+    BitVector operator|(const BitVectorView& other) const;
+    BitVector operator^(const BitVectorView& other) const;
+
 
 private:
     unit_t read(unit_idx_t unit_idx, size_t start, size_t len) const;

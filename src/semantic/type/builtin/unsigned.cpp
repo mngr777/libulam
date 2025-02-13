@@ -74,7 +74,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
     case IntId: {
         auto size = std::min(
             (bitsize_t)ULAM_MAX_INT_SIZE,
-            (bitsize_t)(detail::bitsize(value) + 1));
+            (bitsize_t)(detail::bitsize(uns_val) + 1));
         Integer val = std::min((Unsigned)detail::integer_max(size), uns_val);
         auto type = builtins().prim_type(IntId, size);
         return {type, RValue{val}};
@@ -90,7 +90,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
     }
     case UnaryId: {
         Unsigned val = std::min((Unsigned)ULAM_MAX_INT_SIZE, uns_val);
-        auto type = builtins().prim_type(UnaryId, value);
+        auto type = builtins().prim_type(UnaryId, uns_val);
         return {type, RValue{val}};
     }
     case BitsId: {

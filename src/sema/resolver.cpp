@@ -236,7 +236,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     }
 
     // value
-    if (var->is_const() && !var->value()) {
+    if (var->is_const() && var->value().empty()) {
         if (node->has_default_value()) {
             ExprVisitor ev{_program, scope};
             ExprRes res = node->default_value()->accept(ev);

@@ -94,7 +94,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     }
     case UnsignedId: {
         int_val = std::max((Integer)0, int_val);
-        auto size = detail::bitsize(value);
+        auto size = detail::bitsize(int_val);
         auto type = builtins().prim_type(UnsignedId, size);
         return {type, RValue{(Unsigned)int_val}};
     }
@@ -106,7 +106,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     case UnaryId: {
         Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)ULAM_MAX_INT_SIZE, val);
-        auto type = builtins().prim_type(UnaryId, value);
+        auto type = builtins().prim_type(UnaryId, val);
         return {type, RValue{val}};
     }
     case BitsId: {
@@ -168,8 +168,7 @@ PrimTypedValue IntType::binary_op(
 
     bool is_unknown = left_rval.empty() || right_rval.empty();
     Integer left_int_val = left_rval.empty() ? 0 : left_rval.get<Integer>();
-    Integer right_int_val =
-        right_rval.empty() ? 0 : right_rval.get<Integer>();
+    Integer right_int_val = right_rval.empty() ? 0 : right_rval.get<Integer>();
 
     switch (op) {
     case Op::Prod: {

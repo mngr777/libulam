@@ -29,12 +29,10 @@ RValue RValue::copy_shallow() const {
 // Value
 
 RValue Value::rvalue() const {
-    return std::visit(
-        detail::variant::Overloads{
-            [&](const LValue& lval) { return lval.rvalue(); },
-            [&](const RValue& rval) { return rval.copy_shallow(); },
-            [&](const std::monostate& val) { return RValue{}; }},
-        _value);
+    return accept(
+        [&](const LValue& lval) { return lval.rvalue(); },
+        [&](const RValue& rval) { return rval.copy_shallow(); },
+        [&](const std::monostate& val) { return RValue{}; });
 }
 
 } // namespace ulam

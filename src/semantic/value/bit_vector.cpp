@@ -4,6 +4,7 @@
 
 // NOTE: keeping it simple for now
 // TODO: (maybe) optimize, see MFM::BitVector impl
+// TODO: naming: size/len
 
 namespace ulam {
 namespace {
@@ -56,7 +57,81 @@ void BitVectorView::write(idx_t idx, size_t len, unit_t value) {
     _data.write(idx, len, value);
 }
 
+BitVector BitVectorView::copy() const {
+    BitVector bv{len()};
+    for (idx_t off = 0; off < len(); off += UnitSize) {
+        size_t size = (off + UnitSize > len()) ? len() - off : UnitSize;
+        bv.write(off, size, read(off, size));
+    }
+    return bv;
+}
+
+BitVectorView& BitVectorView::operator&=(const BitVectorView& other) {
+    bin_op(other, std::bit_and<unit_t>{});
+    return *this;
+}
+
+BitVectorView& BitVectorView::operator|=(const BitVectorView& other) {
+    bin_op(other, std::bit_or<unit_t>{});
+    return *this;
+}
+
+BitVectorView& BitVectorView::operator^=(const BitVectorView& other) {
+    bin_op(other, std::bit_xor<unit_t>{});
+    return *this;
+}
+
+BitVector BitVectorView::operator&(const BitVectorView& other) const {
+    auto bv = copy();
+    bv.view() &= other;
+    return bv;
+}
+
+BitVector BitVectorView::operator|(const BitVectorView& other) const {
+    auto bv = copy();
+    bv.view() |= other;
+    return bv;
+}
+
+BitVector BitVectorView::operator^(const BitVectorView& other) const {
+    auto bv = copy();
+    bv.view() ^= other;
+    return bv;
+}
+
+void BitVectorView::bin_op(const BitVectorView& other, UnitBinOp op) {
+    size_t off1 = 0; // from the right
+    while (off1 < len()) {
+        size_t size1 = UnitSize;
+        off1 += UnitSize;
+        if (off1 > len()) {
+            size1 = off1 - len();
+            off1 = len();
+        }
+        unit_t u1 = read(len() - off1, size1);
+        unit_t u2 = 0;
+        if (other.len() + size1 < off1) {
+            size_t off2 = off1;
+            size_t size2 = size1;
+            if (off2 > other.len()) {
+                size2 = other.len() + size1 - off1;
+                off2 = other.len();
+            }
+            assert(off2 <= other.len());
+            assert(size2 > 0);
+            u2 = other.read(off2, size2);
+        }
+        write(off1, size1, op(u1, u2));
+    }
+}
+
 // BitVector
+
+BitVector BitVector::copy() const {
+    BitVector bv{len()};
+    bv._bits = _bits;
+    return bv;
+}
 
 bool BitVector::read_bit(idx_t idx) const {
     assert(idx < _len);
@@ -123,6 +198,42 @@ void BitVector::write(
     const size_t shift = UnitSize - (start + len);
     const unit_t mask = make_mask(len, shift);
     _bits[unit_idx] = (_bits[unit_idx] & ~mask) | (value << shift);
+}
+
+BitVector& BitVector::operator&=(const BitVectorView& other) {
+    view() &= other.view();
+    return *this;
+}
+
+BitVector& BitVector::operator|=(const BitVectorView& other) {
+    view() |= other.view();
+    return *this;
+}
+
+BitVector& BitVector::operator^=(const BitVectorView& other) {
+    view() ^= other.view();
+    return *this;
+}
+
+BitVector BitVector::operator&(const BitVectorView& other) const {
+    bool copy_other = other.len() > len();
+    BitVector bv{copy_other ? other.copy() : copy()};
+    bv.view() &= copy_other ? view() : other.view();
+    return bv;
+}
+
+BitVector BitVector::operator|(const BitVectorView& other) const {
+    bool copy_other = other.len() > len();
+    BitVector bv{copy_other ? other.copy() : copy()};
+    bv.view() |= copy_other ? view() : other.view();
+    return bv;
+}
+
+BitVector BitVector::operator^(const BitVectorView& other) const {
+    bool copy_other = other.len() > len();
+    BitVector bv{copy_other ? other.copy() : copy()};
+    bv.view() ^= copy_other ? view() : other.view();
+    return bv;
 }
 
 } // namespace ulam
