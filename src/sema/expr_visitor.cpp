@@ -217,8 +217,6 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     auto cls = obj_res.type()->as_class();
     auto obj_val = obj_res.move_value();
-    assert(obj_val.rvalue().is<SPtr<Object>>());
-    auto obj = obj_val.rvalue().get<SPtr<Object>>();
 
     // get symbol
     auto name = node->ident()->name();
@@ -229,41 +227,86 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::MemberNotFound};
     }
 
-    // auto make_bound_prop = [&](Ref<Prop> prop) {
-    //     return obj_val.accept(
-    //         [&](LValue& lval) {
-    //             lval.accept(
-    //                 [&](ObjectView obj_view) {
-    //                     return BoundProp{obj_view, prop};
-    //                 },
-    //                 [&](BoundProp& bound_prop) {
-    //                     return BoundProp{bound_prop, prop};
-    //                 },
-    //                 [&](auto other) -> BoundProp {
-    //                     assert(false);
-    //                 });
-    //         },
-    //         [&](RValue& rval) {
-    //             assert(rval.is<SPtr<Object>>());
-    //             return BoundProp{rval.get<SPtr<Object>>(), prop};
-    //         },
-    //         [&](auto other) -> BoundProp{
-    //             assert(false);
-    //         });
-    // };
+    auto make_bound_prop = [&](Ref<Prop> prop) {
+        return obj_val.accept(
+            [&](LValue& lval) {
+                return lval.accept(
+                    [&](Ref<Var> var) {
+                        return BoundProp{var->obj_view(), prop};
+                    },
+                    [&](ObjectView obj_view) {
+                        return BoundProp{obj_view, prop};
+                    },
+                    [&](BoundProp& bound_prop) {
+                        return bound_prop.mem_obj_bound_prop(prop);
+                    },
+                    [&](auto other) -> BoundProp { assert(false); });
+            },
+            [&](RValue& rval) {
+                assert(rval.is<SPtr<Object>>());
+                return BoundProp{rval.get<SPtr<Object>>(), prop};
+            },
+            [&](auto other) -> BoundProp { assert(false); });
+    };
+
+    auto make_bound_fset = [&](Ref<FunSet> fset) {
+        return obj_val.accept(
+            [&](LValue& lval) {
+                return lval.accept(
+                    [&](Ref<Var> var) {
+                        return BoundFunSet{var->obj_view(), fset};
+                    },
+                    [&](ObjectView obj_view) {
+                        return BoundFunSet{obj_view, fset};
+                    },
+                    [&](BoundProp& bound_prop) {
+                        return bound_prop.mem_obj_bound_fset(fset);
+                    },
+                    [&](auto other) -> BoundFunSet { assert(false); });
+            },
+            [&](RValue& rval) {
+                assert(rval.is<SPtr<Object>>());
+                return BoundFunSet{rval.get<SPtr<Object>>(), fset};
+            },
+            [&](auto other) -> BoundFunSet { assert(false); });
+    };
+
+    auto get_obj_cls = [&]() {
+        return obj_val.accept(
+            [&](LValue& lval) {
+                return lval.accept(
+                    [&](Ref<Var> var) {
+                        assert(var->type()->is_class());
+                        return var->type()->as_class();
+                    },
+                    [&](ObjectView obj_view) { return obj_view.cls(); },
+                    [&](BoundProp& bound_prop) {
+                        auto type = bound_prop.mem()->type();
+                        assert(type->is_class());
+                        return type->as_class();
+                    },
+                    [&](auto other) -> Ref<Class> { assert(false); });
+            },
+            [&](RValue& rval) {
+                assert(rval.is<SPtr<Object>>());
+                return rval.get<SPtr<Object>>()->cls();
+            },
+            [&](auto other) -> Ref<Class> { assert(false); });
+    };
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes { return {var->type(), LValue{var}}; },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), LValue{BoundProp{obj, prop}}};
+            return {prop->type(), LValue{make_bound_prop(prop)}};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            if (fset->is_virtual()) {
-                auto sym = obj->cls()->as_class()->get(name.str_id());
+            auto obj_cls = get_obj_cls();
+            if (fset->is_virtual() && obj_cls != cls) {
+                auto sym = obj_cls->get(name.str_id());
                 if (sym->is<FunSet>())
                     fset = sym->get<FunSet>();
             }
-            return {builtins().type(FunId), LValue{BoundFunSet{obj, fset}}};
+            return {builtins().type(FunId), LValue{make_bound_fset(fset)}};
         },
         [&](auto other) -> ExprRes { assert(false); });
 }
@@ -309,7 +352,7 @@ ExprRes ExprVisitor::prim_binary_op(
         // check operand types
         type_errors = prim_binary_op_type_check(op, left.type(), right.type());
 
-        // cast if required
+        // cast if required and possible
         auto recast = [&](PrimTypeError error, PrimTypedValue&& tv,
                           Ref<const ast::Expr> node) -> PrimTypedValue {
             switch (error.status) {
@@ -382,6 +425,12 @@ PrimTypedValue ExprVisitor::prim_binary_op_impl(
     return {prim_tv.type(), prim_tv.move_value()};
 }
 
+ExprRes
+ExprVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
+    debug() << __FUNCTION__ << " " << str(fun->name_id()) << "\n";
+    return {fun->ret_type(), Value{}};
+}
+
 std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     debug() << __FUNCTION__ << "\n";
     std::pair<TypedValueList, bool> res;
@@ -395,13 +444,8 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     return res;
 }
 
-ExprRes
-ExprVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
-    debug() << __FUNCTION__ << str(fun->name_id()) << "\n";
-    return {fun->ret_type(), Value{}};
-}
-
 Diag& ExprVisitor::diag() { return _program->diag(); }
+
 Builtins& ExprVisitor::builtins() { return _program->builtins(); }
 
 std::string_view ExprVisitor::str(str_id_t str_id) {

@@ -59,10 +59,11 @@ protected:
     virtual PrimTypedValue
     prim_binary_op_impl(Op op, PrimTypedValue&& left, PrimTypedValue&& right);
 
+    virtual ExprRes
+    funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args);
+
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
-
-    virtual ExprRes funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args);
 
     Diag& diag();
     Builtins& builtins();

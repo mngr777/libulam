@@ -24,6 +24,8 @@ public:
     const Value& value() const { return _value; }
     void set_value(Value&& value);
 
+    ObjectView obj_view();
+
     // TODO: if reference, get rvalue from refd var
     RValue rvalue() { return _value.rvalue(); };
 

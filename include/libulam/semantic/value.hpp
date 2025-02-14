@@ -50,6 +50,9 @@ class RValue : public detail::Variant<
 public:
     using Variant::Variant;
 
+    RValue(RValue&&) = default;
+    RValue& operator=(RValue&&) = default;
+
     RValue copy_shallow() const;
 };
 
@@ -73,7 +76,11 @@ public:
 
     using Variant::Variant;
 
+    Value(Value&&) = default;
+    Value& operator=(Value&&) = default;
+
     bool is_lvalue() const { return is<LValue>(); }
+    bool is_rvalue() const { return is<RValue>(); }
 
     LValue* lvalue() {
         return const_cast<LValue*>(std::as_const(*this).lvalue());

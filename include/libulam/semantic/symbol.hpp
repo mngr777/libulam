@@ -15,6 +15,9 @@ template <typename... Ts> class _Symbol : public detail::RefPtrVariant<Ts...> {
 public:
     using detail::RefPtrVariant<Ts...>::RefPtrVariant;
 
+    _Symbol(_Symbol&&) = default;
+    _Symbol& operator=(_Symbol&&) = default;
+
     Ref<Decl> as_decl() {
         return this->accept([](auto&& value) -> Ref<Decl> { return value; });
     }

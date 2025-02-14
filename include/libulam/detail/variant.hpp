@@ -18,6 +18,9 @@ public:
     Variant() {}
     virtual ~Variant() {}
 
+    Variant(const Variant&) = default;
+    Variant& operator=(const Variant&) = default;
+
     Variant(Variant&&) = default;
     Variant& operator=(Variant&&) = default;
 
@@ -49,6 +52,9 @@ public:
     RefPtrVariant(Ptr<T>&& value): _value{std::move(value)} {}
     template <typename T> RefPtrVariant(Ref<T> value): _value{value} {}
     virtual ~RefPtrVariant() {}
+
+    RefPtrVariant(const RefPtrVariant&) = default;
+    RefPtrVariant& operator=(const RefPtrVariant&) = default;
 
     RefPtrVariant(RefPtrVariant&&) = default;
     RefPtrVariant& operator=(RefPtrVariant&&) = default;
