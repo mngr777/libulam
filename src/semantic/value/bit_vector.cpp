@@ -31,7 +31,7 @@ BitVector::size_t to_off(BitVector::idx_t idx) {
 // BitVectorView
 
 BitVectorView::BitVectorView(BitVector& data, size_t off, size_t len):
-    _data{data}, _off{off}, _len{len} {
+    _data{&data}, _off{off}, _len{len} {
     assert(off + len <= data.len());
 }
 
@@ -40,27 +40,27 @@ BitVectorView::BitVectorView(BitVector& data):
 
 bool BitVectorView::read_bit(idx_t idx) const {
     assert(idx < _len);
-    return _data.read_bit(_off + idx);
+    return data().read_bit(_off + idx);
 }
 
 void BitVectorView::write_bit(idx_t idx, bool bit) {
     assert(idx < _len);
-    _data.write_bit(_off + idx, bit);
+    data().write_bit(_off + idx, bit);
 }
 
 BitVectorView::unit_t BitVectorView::read(idx_t idx, size_t len) const {
     assert(idx + len <= _len);
-    return _data.read(_off + idx, len);
+    return data().read(_off + idx, len);
 }
 
 void BitVectorView::write(idx_t idx, size_t len, unit_t value) {
     assert(idx + len <= _len);
-    _data.write(_off + idx, len, value);
+    data().write(_off + idx, len, value);
 }
 
 BitVectorView::unit_t BitVectorView::read_right(size_t len) const {
     assert(len <= _len);
-    return _data.read(_off + _len - len, len);
+    return data().read(_off + _len - len, len);
 }
 
 BitVector BitVectorView::copy() const {
@@ -129,6 +129,16 @@ void BitVectorView::bin_op(const BitVectorView& other, UnitBinOp op) {
         }
         write(len() - off1, size1, op(u1, u2));
     }
+}
+
+BitVector& BitVectorView::data() {
+    assert(_data);
+    return *_data;
+}
+
+const BitVector& BitVectorView::data() const {
+    assert(_data);
+    return *_data;
 }
 
 // BitVector

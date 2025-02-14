@@ -6,17 +6,15 @@
 
 namespace ulam {
 
-RValue Prop::load(SPtr<const Object> obj) const {
+RValue Prop::load(ObjectView obj_view) const {
     assert(has_type());
-    assert(obj);
-    return type()->load(obj->bits().view(), data_off());
+    return type()->load(obj_view.bits(), data_off());
 }
 
-void Prop::store(SPtr<Object> obj, const RValue& rval) {
+void Prop::store(ObjectView obj_view, const RValue& rval) {
     assert(has_type());
     assert(has_data_off());
-    assert(obj);
-    type()->store(obj->bits().view(), data_off(), rval);
+    type()->store(obj_view.bits(), data_off(), rval);
 }
 
 } // namespace ulam

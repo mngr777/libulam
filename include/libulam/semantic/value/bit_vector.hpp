@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <libulam/semantic/value/types.hpp>
+#include <type_traits>
 #include <vector>
 
 namespace ulam {
@@ -25,15 +26,16 @@ class BitVectorView : public _BitVector {
 public:
     BitVectorView(BitVector& data, size_t off, size_t len);
     BitVectorView(BitVector& data);
+    BitVectorView() {}
 
     BitVectorView view() { return *this; }
     const BitVectorView view() const { return *this; }
 
     BitVectorView view(size_t off, size_t len) {
-        return {_data, _off + off, len};
+        return {data(), _off + off, len};
     }
     const BitVectorView view(size_t off, size_t len) const {
-        return {const_cast<BitVector&>(_data), _off + off, len};
+        return {const_cast<BitVector&>(data()), _off + off, len};
     }
 
     bool read_bit(idx_t idx) const;
@@ -48,6 +50,8 @@ public:
 
     BitVector copy() const;
 
+    operator bool() const { return _data; }
+
     BitVectorView& operator&=(const BitVectorView& other);
     BitVectorView& operator|=(const BitVectorView& other);
     BitVectorView& operator^=(const BitVectorView& other);
@@ -61,7 +65,10 @@ private:
 
     void bin_op(const BitVectorView& other, UnitBinOp op);
 
-    BitVector& _data;
+    BitVector& data();
+    const BitVector& data() const;
+
+    BitVector* _data{};
     size_t _off;
     size_t _len;
 };
@@ -101,7 +108,6 @@ public:
     BitVector operator&(const BitVector& other) const;
     BitVector operator|(const BitVector& other) const;
     BitVector operator^(const BitVector& other) const;
-
 
     BitVector& operator&=(const BitVectorView other);
     BitVector& operator|=(const BitVectorView other);

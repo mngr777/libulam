@@ -177,7 +177,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
         return {};
     }
     auto& bound_fset = lval->get<BoundFunSet>();
-    auto obj = bound_fset.obj();
+    auto obj_view = bound_fset.obj_view();
     auto fset = bound_fset.mem();
 
     // eval args
@@ -189,7 +189,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     auto match_res = fset->find_match(arg_list);
     if (match_res.size() == 1) {
         // success, one match found
-        return funcall(*(match_res.begin()), obj, std::move(arg_list));
+        return funcall(*(match_res.begin()), obj_view, std::move(arg_list));
     } else if (match_res.size() == 0) {
         diag().emit(Diag::Error, loc_id, 1, "no matching function found");
     } else {
@@ -228,6 +228,29 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             Diag::Error, node->ident()->loc_id(), 1, "member not found");
         return {ExprError::MemberNotFound};
     }
+
+    // auto make_bound_prop = [&](Ref<Prop> prop) {
+    //     return obj_val.accept(
+    //         [&](LValue& lval) {
+    //             lval.accept(
+    //                 [&](ObjectView obj_view) {
+    //                     return BoundProp{obj_view, prop};
+    //                 },
+    //                 [&](BoundProp& bound_prop) {
+    //                     return BoundProp{bound_prop, prop};
+    //                 },
+    //                 [&](auto other) -> BoundProp {
+    //                     assert(false);
+    //                 });
+    //         },
+    //         [&](RValue& rval) {
+    //             assert(rval.is<SPtr<Object>>());
+    //             return BoundProp{rval.get<SPtr<Object>>(), prop};
+    //         },
+    //         [&](auto other) -> BoundProp{
+    //             assert(false);
+    //         });
+    // };
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes { return {var->type(), LValue{var}}; },
@@ -373,7 +396,7 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
 }
 
 ExprRes
-ExprVisitor::funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) {
+ExprVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
     debug() << __FUNCTION__ << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }

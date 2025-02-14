@@ -6,6 +6,7 @@
 #include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -54,6 +55,7 @@ public:
 
 class LValue : public detail::Variant<
                    Ref<Var>,
+                   ObjectView,
                    BoundFunSet,
                    BoundProp /* TODO: object ref, array access */> {
 public:

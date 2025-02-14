@@ -39,7 +39,6 @@ public:
         return std::visit(variant::Overloads{std::move(visitors)...}, _value);
     }
 
-
 private:
     std::variant<std::monostate, Ts...> _value;
 };
@@ -88,7 +87,6 @@ public:
             },
             _value);
     }
-
 
 private:
     std::variant<RefPtr<Ts>...> _value;

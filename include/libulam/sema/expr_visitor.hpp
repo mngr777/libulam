@@ -62,7 +62,7 @@ protected:
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
 
-    virtual ExprRes funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args);
+    virtual ExprRes funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args);
 
     Diag& diag();
     Builtins& builtins();

@@ -7,11 +7,11 @@
 
 namespace ulam {
 
-SPtr<Object> ScopeBase::self() const {
+ObjectView ScopeBase::self() {
     return (_self || !parent()) ? _self : parent()->self();
 }
 
-void ScopeBase::set_self(SPtr<Object> self) {
+void ScopeBase::set_self(ObjectView self) {
     assert(!_self);
     _self = self;
 }

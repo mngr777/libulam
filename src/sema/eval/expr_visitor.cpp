@@ -13,9 +13,10 @@ namespace ulam::sema {
 EvalExprVisitor::EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope):
     ExprVisitor{eval._program, scope}, _eval{eval} {}
 
-ExprRes EvalExprVisitor::funcall(Ref<Fun> fun, SPtr<Object> obj, TypedValueList&& args) {
+ExprRes EvalExprVisitor::funcall(
+    Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
     debug() << __FUNCTION__ << "\n";
-    return _eval.funcall(fun, obj, std::move(args));
+    return _eval.funcall(fun, obj_view, std::move(args));
 }
 
 } // namespace ulam::sema

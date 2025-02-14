@@ -52,8 +52,8 @@ public:
 
     virtual ScopeFlags flags() const = 0;
 
-    virtual SPtr<Object> self() const { assert(false); }
-    virtual void set_self(SPtr<Object> self) { assert(false); }
+    virtual ObjectView self() { assert(false); }
+    virtual void set_self(ObjectView self) { assert(false); }
 
     bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
     bool in(ScopeFlags flags_) {
@@ -88,13 +88,13 @@ public:
 
     ScopeFlags flags() const override { return _flags; }
 
-    SPtr<Object> self() const override;
-    void set_self(SPtr<Object> self) override;
+    ObjectView self() override;
+    void set_self(ObjectView self) override;
 
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
-    SPtr<Object> _self;
+    ObjectView _self;
 };
 
 // Transient
