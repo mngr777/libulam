@@ -25,37 +25,35 @@ constexpr int sign(Integer value) {
 constexpr Unsigned abs(Integer value) { return value < 0 ? -value : value; }
 
 constexpr Unsigned log2(Unsigned value) {
-    bitsize_t size = 0;
-    do {
-        ++size;
-        value >>= 1;
-    } while (value);
-    return size;
-}
-
-constexpr std::uint32_t ones32(bitsize_t n) {
-    return (n == 32) ? -1 : ((std::uint32_t)1 << n) - 1;
-}
-
-constexpr std::uint64_t ones64(bitsize_t n) {
-    return (n == 64) ? -1 : ((std::uint64_t)1 << n) - 1;
+    if (value == 0)
+        return 0;
+#if ULAM_INT_64
+    return 63 - __builtin_clsll(value);
+#else
+    return 31 - __builtin_clz(value);
+#endif
 }
 
 constexpr Unsigned ones(bitsize_t n) {
-    if constexpr (sizeof(Unsigned) == 8)
-        return ones64(n);
-    static_assert(sizeof(Unsigned) == 4);
-    return ones32(n);
+    if (n == sizeof(Unsigned) * 8)
+        return -1;
+    return ((Unsigned)1 << n) - 1;
 }
 
 constexpr Unsigned count_ones(Unsigned value) {
+#if ULAM_INT_64
+    return __builtin_popcountll(value);
+#else
     return __builtin_popcount(value);
+#endif
 }
 
-constexpr bitsize_t bitsize(Unsigned value) { return log2(value); }
+constexpr bitsize_t bitsize(Unsigned value) {
+    return (value < 2) ? 1 : log2(value);
+}
 
-constexpr bitsize_t unary_unsigned_bitsize(bitsize_t bitsize) {
-    return log2(bitsize);
+constexpr bitsize_t unary_unsigned_bitsize(bitsize_t size) {
+    return bitsize(size);
 }
 
 constexpr bitsize_t bitsize(Integer value) { return bitsize(abs(value)) + 1; }

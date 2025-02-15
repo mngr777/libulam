@@ -35,15 +35,14 @@ int main(int argc, char** argv) {
     }
     std::sort(test_paths.begin(), test_paths.end());
 
-    // for (const auto& path : test_paths) {
-    //     std::cout << path.filename() << " ";
-    //     bool ok = run(path);
-    //     std::cout << (ok ? "OK" : "FAIL") << "\n";
-    //     if (!ok)
-    //         break;
-    // }
-    auto& path = test_paths[3];
-    std::cout << path.filename() << " ";
-    bool ok = run(path);
-    std::cout << (ok ? "OK" : "FAIL") << "\n";
+    for (unsigned n = 0; n < test_paths.size(); ++n) {
+        auto& path = test_paths[n];
+        std::cout << path.filename() << " ";
+        bool ok = run(path);
+        std::cout << (ok ? "OK" : "FAIL") << "\n";
+        if (!ok)
+            break;
+        if (n > 6)
+            break;
+    }
 }

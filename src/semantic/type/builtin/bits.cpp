@@ -75,7 +75,8 @@ RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
     case BoolId:
     case UnaryId: {
         // TODO: this is probably not how it works, to be caught by ULAM tests
-        return RValue{type->from_datum(bits.bits().read_right(type->bitsize()))};
+        auto datum = bits.bits().read_right(std::min(bitsize(), type->bitsize()));
+        return RValue{type->from_datum(datum)};
     }
     case BitsId: {
         Bits copy{type->bitsize()};

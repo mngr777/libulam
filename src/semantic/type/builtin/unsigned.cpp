@@ -20,7 +20,7 @@ bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
     case UnsignedId:
         return true;
     case BoolId:
-        return true;
+        return false;
     case UnaryId:
         return true;
     case BitsId:
@@ -44,7 +44,7 @@ bool UnsignedType::is_castable_to(Ref<PrimType> type, bool expl) const {
     case UnsignedId:
         return expl || size <= bitsize();
     case BoolId:
-        return true;
+        return false;
     case UnaryId:
         return expl || detail::unary_unsigned_bitsize(size) <= bitsize();
     case BitsId:
@@ -64,7 +64,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
     assert(is_expl_castable_to(id));
     assert(!value.empty());
 
-    auto rval = value.rvalue();
+    auto rval = value.move_rvalue();
     assert(rval.is<Unsigned>());
 
     auto uns_val = rval.get<Unsigned>();
@@ -79,16 +79,11 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
     }
     case UnsignedId: {
         assert(false);
-        return {this, std::move(value)};
-    }
-    case BoolId: {
-        Unsigned val = (uns_val == 0) ? 0 : 1;
-        auto type = builtins().prim_type(BoolId, 1);
-        return {type, RValue{val}};
+        return {this, std::move(rval)};
     }
     case UnaryId: {
         Unsigned val = std::min((Unsigned)ULAM_MAX_INT_SIZE, uns_val);
-        auto type = builtins().prim_type(UnaryId, uns_val);
+        auto type = builtins().prim_type(UnaryId, detail::ones(uns_val));
         return {type, RValue{val}};
     }
     case BitsId: {
@@ -110,8 +105,8 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
     Unsigned uns_val = rval.get<Unsigned>();
     switch (type->builtin_type_id()) {
     case IntId: {
-        Integer val =
-            std::min(detail::integer_max(type->bitsize()), (Integer)uns_val);
+        Unsigned int_max = detail::integer_max(type->bitsize());
+        Integer val = std::min(int_max, uns_val);
         return RValue{val};
     }
     case UnsignedId: {
@@ -120,13 +115,9 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
             return RValue{uns_max};
         return std::move(rval);
     }
-    case BoolId: {
-        Unsigned val = (uns_val == 0) ? (Unsigned)0
-                                      : detail::unsigned_max(type->bitsize());
-        return RValue{val};
-    }
     case UnaryId: {
-        Unsigned val = std::min((Unsigned)type->bitsize(), uns_val);
+        Unsigned val =
+            std::min((Unsigned)type->bitsize(), detail::ones(uns_val));
         return RValue{val};
     }
     default:
