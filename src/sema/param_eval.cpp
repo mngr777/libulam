@@ -15,17 +15,14 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
     for (unsigned n = 0; n < args->child_num(); ++n) {
         auto arg = args->get(n);
         ExprRes res = arg->accept(ev);
-        const auto& value = res.value();
-        // any result?
-        if (value.empty())
-            success = false;
         // has actual value?
-        if (_flags & ReqValues && value.rvalue().empty()) {
+        auto rval = res.move_value().move_rvalue();
+        if (_flags & ReqValues && rval.empty()) {
             success = false;
             _program->diag().emit(
                 Diag::Error, arg->loc_id(), 1, "failed to evaluate argument");
         }
-        values.push_back(res.move_typed_value());
+        values.push_back(TypedValue{res.type(), std::move(rval)});
     }
     return {std::move(values), success};
 }

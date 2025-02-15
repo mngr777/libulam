@@ -11,4 +11,6 @@ ObjectView Var::obj_view() {
         [&](auto& other) -> ObjectView { assert(false); });
 }
 
+RValue Var::rvalue() { return _value.copy_rvalue(); }
+
 } // namespace ulam

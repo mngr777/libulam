@@ -26,8 +26,7 @@ public:
 
     ObjectView obj_view();
 
-    // TODO: if reference, get rvalue from refd var
-    RValue rvalue() { return _value.rvalue(); };
+    RValue rvalue();
 
 private:
     Value _value;

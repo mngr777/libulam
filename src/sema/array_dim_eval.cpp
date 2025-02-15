@@ -1,6 +1,6 @@
 #include <libulam/diag.hpp>
-#include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/array_dim_eval.hpp>
+#include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type.hpp>
 
@@ -9,7 +9,10 @@ namespace ulam::sema {
 std::pair<array_size_t, bool> ArrayDimEval::eval(Ref<ast::Expr> expr) {
     ExprVisitor ev{_program, _scope};
     ExprRes res = expr->accept(ev);
-    auto rval = res.value().rvalue();
+    auto rval = res.move_value().move_rvalue();
+
+    // !! TODO: this is wrong in general, e.g. doesn't distinguish Unsigned and
+    // Unary
 
     array_size_t size{0}; // TODO: what is max array size?
     if (rval.empty()) {

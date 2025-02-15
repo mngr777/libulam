@@ -111,7 +111,8 @@ std::string ClassTpl::type_args_str(const TypedValueList& args) {
     // TMP
     std::string str;
     for (auto& arg : args) {
-        auto rval = arg.value().rvalue();
+        // TODO: visit RValue instead to avoid copying
+        auto rval = arg.value().copy_rvalue();
         assert(!rval.empty());
         if (!str.empty())
             str += "_";

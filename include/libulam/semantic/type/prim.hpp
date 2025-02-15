@@ -67,7 +67,9 @@ public:
     virtual PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) {
         assert(false);
     }
-    virtual RValue cast_to(Ref<PrimType> type, RValue&& value) { assert(false); }
+    virtual RValue cast_to(Ref<PrimType> type, RValue&& value) {
+        assert(false);
+    }
 
     // TODO: make this pure virtual, implement for builtins
     virtual PrimTypedValue binary_op(
@@ -166,7 +168,7 @@ public:
             }
             // get first arg
             auto& arg = args.front();
-            auto rval = arg.value().rvalue();
+            auto rval = arg.value().move_rvalue();
             assert(!rval.empty());
             if (rval.is<Integer>()) {
                 auto int_val = rval.get<Integer>();

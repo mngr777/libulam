@@ -37,7 +37,7 @@ RValue RValue::copy() const {
 
 // Value
 
-RValue Value::rvalue() const {
+RValue Value::copy_rvalue() const {
     return accept(
         [&](const LValue& lval) { return lval.rvalue(); },
         [&](const RValue& rval) { return rval.copy(); },

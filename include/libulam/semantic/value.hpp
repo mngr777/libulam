@@ -92,7 +92,7 @@ public:
         return &const_cast<Value*>(this)->get<LValue>();
     }
 
-    RValue rvalue() const;
+    RValue copy_rvalue() const;
     RValue move_rvalue();
 };
 

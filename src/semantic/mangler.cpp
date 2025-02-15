@@ -24,10 +24,11 @@ std::string Mangler::mangled(const TypeList& types) {
 }
 
 void Mangler::write_mangled(std::ostream& os, const TypedValue& tv) {
-    auto rval = tv.value().rvalue();
+    // TODO: visit RValue to avoid copying
+    auto rval = tv.value().copy_rvalue();
     assert(!rval.empty());
     write_mangled(os, tv.type());
-    write_mangled(os, tv.value().rvalue());
+    write_mangled(os, rval);
 }
 
 // see ULAM {UlamType,UlamTypeClass}::getUlamTypeMangledType()
@@ -66,7 +67,8 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         detail::write_leximited(os, cls->name());
         for (auto var : cls->param_vars()) {
             write_mangled(os, var->type());
-            write_mangled(os, var->value().rvalue());
+            // TODO: visit RValue to avoid copying
+            write_mangled(os, var->value().copy_rvalue());
         }
     } else {
         assert(type->is_prim());
