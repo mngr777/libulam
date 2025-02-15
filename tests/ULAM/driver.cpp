@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     //     if (!ok)
     //         break;
     // }
-    auto& path = test_paths[1];
+    auto& path = test_paths[3];
     std::cout << path.filename() << " ";
     bool ok = run(path);
     std::cout << (ok ? "OK" : "FAIL") << "\n";

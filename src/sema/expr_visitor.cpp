@@ -358,6 +358,10 @@ ExprRes ExprVisitor::prim_binary_op(
     Op op = ops::non_assign(node->op());
     PrimTypeErrorPair type_errors{};
     if (op != Op::None) {
+        // get rvalues
+        PrimTypedValue left_tv = {left.type(), RValue{left.value().move_rvalue()}};
+        PrimTypedValue right_tv = {right.type(), RValue{right.value().move_rvalue()}};
+
         // check operand types
         type_errors = prim_binary_op_type_check(op, left.type(), right.type());
 
@@ -383,11 +387,11 @@ ExprRes ExprVisitor::prim_binary_op(
                 assert(false);
             }
         };
-        left = recast(type_errors.first, std::move(left), node->lhs());
-        right = recast(type_errors.second, std::move(right), node->rhs());
+        left_tv = recast(type_errors.first, std::move(left_tv), node->lhs());
+        right_tv = recast(type_errors.second, std::move(right_tv), node->rhs());
 
         // apply op
-        right = prim_binary_op_impl(op, std::move(left), std::move(right));
+        right = prim_binary_op_impl(op, std::move(left_tv), std::move(right_tv));
     }
 
     // handle assignment
