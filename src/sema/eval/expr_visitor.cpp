@@ -14,8 +14,16 @@ EvalExprVisitor::EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope):
     ExprVisitor{eval._program, scope}, _eval{eval} {}
 
 ExprRes EvalExprVisitor::funcall(
-    Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
+    Ref<ast::FunCall> node,
+    Ref<Fun> fun,
+    ObjectView obj_view,
+    TypedValueList&& args) {
     debug() << __FUNCTION__ << "\n";
+    if (fun->is_native()) {
+        diag().emit(
+            Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
+        return {fun->ret_type(), RValue{}};
+    }
     return _eval.funcall(fun, obj_view, std::move(args));
 }
 

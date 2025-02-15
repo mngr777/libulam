@@ -24,6 +24,10 @@ Kind kind(Op op) {
     case Op::Rem:
     case Op::Sum:
     case Op::Diff:
+    case Op::Less:
+    case Op::LessOrEq:
+    case Op::Greater:
+    case Op::GreaterOrEq:
     case Op::PreInc:
     case Op::PreDec:
     case Op::PostInc:

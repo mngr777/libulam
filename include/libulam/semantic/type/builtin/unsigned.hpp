@@ -31,7 +31,7 @@ public:
     bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;
 
     PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
-    Value cast_to(Ref<PrimType> type, Value&& value) override;
+    RValue cast_to(Ref<PrimType> type, RValue&& value) override;
 
     PrimTypedValue binary_op(
         Op op,

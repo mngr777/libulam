@@ -103,11 +103,8 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
     }
 }
 
-Value UnsignedType::cast_to(Ref<PrimType> type, Value&& value) {
+RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    assert(!value.empty());
-
-    auto rval = value.rvalue();
     assert(rval.is<Unsigned>());
 
     Unsigned uns_val = rval.get<Unsigned>();
@@ -118,8 +115,10 @@ Value UnsignedType::cast_to(Ref<PrimType> type, Value&& value) {
         return RValue{val};
     }
     case UnsignedId: {
-        assert(false);
-        return std::move(value);
+        auto uns_max = detail::unsigned_max(type->bitsize());
+        if (uns_val > uns_max)
+            return RValue{uns_max};
+        return std::move(rval);
     }
     case BoolId: {
         Unsigned val = (uns_val == 0) ? (Unsigned)0

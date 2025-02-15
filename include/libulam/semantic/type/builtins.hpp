@@ -17,7 +17,7 @@ public:
 
     Ref<Type> type(BuiltinTypeId id);
 
-    Ref<Type> boolean();
+    Ref<PrimType> boolean();
 
 private:
     std::map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;

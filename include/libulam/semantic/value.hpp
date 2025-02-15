@@ -46,7 +46,7 @@ class RValue : public detail::Variant<
                    Bits,
                    String,
                    Ref<FunSet>, /* ?? */
-                   SPtr<Object>> /* TODO: store object */ {
+                   SPtr<Object>> {
 public:
     using Variant::Variant;
 

@@ -20,6 +20,8 @@ Fun::~Fun() {}
 
 str_id_t Fun::name_id() const { return _node->name().str_id(); }
 
+bool Fun::is_native() const { return _node->is_native(); }
+
 Ref<ast::FunRetType> Fun::ret_type_node() {
     assert(_node->has_ret_type());
     return _node->ret_type();

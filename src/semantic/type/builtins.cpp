@@ -51,6 +51,6 @@ Ref<Type> Builtins::type(BuiltinTypeId id) {
     return type;
 }
 
-Ref<Type> Builtins::boolean() { return prim_type_tpl(BoolId)->type(1); }
+Ref<PrimType> Builtins::boolean() { return prim_type_tpl(BoolId)->type(1); }
 
 } // namespace ulam

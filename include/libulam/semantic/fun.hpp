@@ -35,6 +35,8 @@ public:
 
     str_id_t name_id() const;
 
+    bool is_native() const;
+
     Ref<Type> ret_type() { return _ret_type; }
     Ref<const Type> ret_type() const { return _ret_type; }
 

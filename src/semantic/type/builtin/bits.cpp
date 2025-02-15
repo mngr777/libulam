@@ -64,10 +64,8 @@ PrimTypedValue BitsType::cast_to(BuiltinTypeId id, Value&& value) {
     assert(false && "Bits is not implicitly castable to other types");
 }
 
-Value BitsType::cast_to(Ref<PrimType> type, Value&& value) {
+RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-
-    auto rval = value.move_rvalue();
     assert(rval.is<Bits>());
 
     auto& bits = rval.get<Bits>();
@@ -77,7 +75,7 @@ Value BitsType::cast_to(Ref<PrimType> type, Value&& value) {
     case BoolId:
     case UnaryId: {
         // TODO: this is probably not how it works, to be caught by ULAM tests
-        return type->from_datum(bits.bits().read_right(type->bitsize()));
+        return RValue{type->from_datum(bits.bits().read_right(type->bitsize()))};
     }
     case BitsId: {
         Bits copy{type->bitsize()};

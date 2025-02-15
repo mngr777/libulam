@@ -18,7 +18,14 @@ namespace ulam::sema {
 
 ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n";
-    return {};
+    if (node->has_type_name()) {
+        Resolver resolver{_program};
+        auto type = resolver.resolve_type_name(node->type_name(), _scope);
+        return type->type_op(node->op());
+    }
+    assert(node->has_expr());
+    auto expr_res = node->expr()->accept(*this);
+    return expr_res.type()->type_op(node->op());
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
@@ -119,8 +126,9 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
             diag().emit(Diag::Error, node->loc_id(), 1, "not castable to type");
             return {ExprError::InvalidCast};
         }
-        val = prim_type->cast_to(prim_cast_type, std::move(val));
-        return {cast_type, std::move(val)};
+        return {
+            cast_type,
+            Value{prim_type->cast_to(prim_cast_type, val.move_rvalue())}};
 
     } else {
         // class type cast
@@ -189,7 +197,8 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     auto match_res = fset->find_match(arg_list);
     if (match_res.size() == 1) {
         // success, one match found
-        return funcall(*(match_res.begin()), obj_view, std::move(arg_list));
+        return funcall(
+            node, *(match_res.begin()), obj_view, std::move(arg_list));
     } else if (match_res.size() == 0) {
         diag().emit(Diag::Error, loc_id, 1, "no matching function found");
     } else {
@@ -367,7 +376,7 @@ ExprRes ExprVisitor::prim_binary_op(
                 diag().emit(Diag::Error, node->loc_id(), 1, message);
             } // fallthru
             case PrimTypeError::ImplCastRequired:
-                return prim_cast(std::move(tv), error.suggested_type);
+                return prim_cast(error.suggested_type, std::move(tv));
             case PrimTypeError::Ok:
                 return std::move(tv);
             default:
@@ -400,8 +409,8 @@ ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
     return lval->accept(
         [&](Ref<Var> var) -> ExprRes { assert(false && "assign to var"); },
         [&](BoundProp& bound_prop) -> ExprRes {
-            assert(bound_prop.mem()->type() == tv.type()); // TMP
-            auto rval = tv.value().move_rvalue();
+            auto [rval, _] =
+                maybe_cast(node, bound_prop.mem()->type(), std::move(tv));
             if (!rval.empty())
                 bound_prop.store(std::move(rval));
             return {bound_prop.mem()->type(), LValue{bound_prop}};
@@ -409,11 +418,40 @@ ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
         [&](auto&& other) -> ExprRes { assert(false); });
 }
 
+std::pair<RValue, bool>
+ExprVisitor::maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
+    if (type == tv.type())
+        return {tv.value().move_rvalue(), false};
+    if (tv.type()->is_impl_castable(type))
+        return {do_cast(type, std::move(tv)), true};
+    if (tv.type()->is_expl_castable(type)) {
+        diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
+        return {do_cast(type, std::move(tv)), true};
+    }
+    return {RValue{}, false};
+}
+
+RValue ExprVisitor::do_cast(Ref<Type> type, TypedValue&& tv) {
+    if (type->is_prim()) {
+        assert(tv.type()->is_prim());
+        return prim_cast(
+            type->as_prim(), {tv.type()->as_prim(), tv.move_value()});
+    } else {
+        assert(false);
+    }
+}
+
 PrimTypedValue
-ExprVisitor::prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id) {
-    debug() << __FUNCTION__ << "\n";
+ExprVisitor::prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv) {
+    debug() << __FUNCTION__ << " (type ID)\n";
     assert(tv.type()->is_expl_castable_to(type_id));
     return tv.type()->cast_to(type_id, tv.move_value());
+}
+
+RValue ExprVisitor::prim_cast(Ref<PrimType> type, PrimTypedValue&& tv) {
+    debug() << __FUNCTION__ << "\n";
+    assert(tv.type()->is_expl_castable_to(type));
+    return tv.type()->cast_to(type, tv.value().move_rvalue());
 }
 
 PrimTypedValue ExprVisitor::prim_binary_op_impl(
@@ -425,8 +463,11 @@ PrimTypedValue ExprVisitor::prim_binary_op_impl(
     return {prim_tv.type(), prim_tv.move_value()};
 }
 
-ExprRes
-ExprVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
+ExprRes ExprVisitor::funcall(
+    Ref<ast::FunCall> node,
+    Ref<Fun> fun,
+    ObjectView obj_view,
+    TypedValueList&& args) {
     debug() << __FUNCTION__ << " " << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }

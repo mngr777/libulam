@@ -4,6 +4,8 @@
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type_ops.hpp>
+#include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bit_vector.hpp>
 #include <libulam/semantic/value/types.hpp>
@@ -105,6 +107,8 @@ public:
 
     virtual Ref<RefType> as_ref() { return {}; }
     virtual Ref<const RefType> as_ref() const { return {}; }
+
+    virtual TypedValue type_op(TypeOp op) { assert(false); }
 
     bool is_expl_castable(Ref<const Type> type) {
         return is_castable(type, true);

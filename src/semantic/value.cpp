@@ -7,7 +7,7 @@ namespace ulam {
 // LValue
 
 Ref<Type> LValue::type() {
-    return {}; // TODO
+    return {};
 }
 
 RValue LValue::rvalue() const {

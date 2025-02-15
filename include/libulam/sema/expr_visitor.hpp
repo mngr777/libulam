@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/access.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -53,14 +54,24 @@ protected:
     virtual ExprRes
     assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val);
 
+    virtual std::pair<RValue, bool>
+    maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
+
+    RValue do_cast(Ref<Type> type, TypedValue&& tv);
+
     virtual PrimTypedValue
-    prim_cast(PrimTypedValue&& tv, BuiltinTypeId type_id);
+    prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv);
+
+    virtual RValue prim_cast(Ref<PrimType>, PrimTypedValue&& tv);
 
     virtual PrimTypedValue
     prim_binary_op_impl(Op op, PrimTypedValue&& left, PrimTypedValue&& right);
 
-    virtual ExprRes
-    funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args);
+    virtual ExprRes funcall(
+        Ref<ast::FunCall> node,
+        Ref<Fun> fun,
+        ObjectView obj_view,
+        TypedValueList&& args);
 
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);

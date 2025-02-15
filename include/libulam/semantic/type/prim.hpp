@@ -8,6 +8,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim/typed_value.hpp>
+#include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
@@ -25,20 +26,21 @@ public:
 
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
+    bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
+
+    Ref<PrimType> as_prim() override { return this; }
+    Ref<const PrimType> as_prim() const override { return this; }
+
     RValue load(const BitVectorView data, BitVector::idx_t off) const override {
         return from_datum(data.read(off, bitsize()));
     }
-    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const override {
+    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval)
+        const override {
         data.write(off, bitsize(), to_datum(rval));
     }
 
     virtual RValue from_datum(Datum datum) const { assert(false); }
     virtual Datum to_datum(const RValue& rval) const { assert(false); }
-
-    bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
-
-    Ref<PrimType> as_prim() override { return this; }
-    Ref<const PrimType> as_prim() const override { return this; }
 
     bool is_impl_castable_to(BuiltinTypeId id) const {
         return is_castable_to(id, false);
@@ -64,7 +66,7 @@ public:
     virtual PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) {
         assert(false);
     }
-    virtual Value cast_to(Ref<PrimType> type, Value&& value) { assert(false); }
+    virtual RValue cast_to(Ref<PrimType> type, RValue&& value) { assert(false); }
 
     // TODO: make this pure virtual, implement for builtins
     virtual PrimTypedValue binary_op(

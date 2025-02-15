@@ -13,8 +13,11 @@ public:
     EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope);
 
 protected:
-    ExprRes
-    funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) override;
+    ExprRes funcall(
+        Ref<ast::FunCall> node,
+        Ref<Fun> fun,
+        ObjectView obj_view,
+        TypedValueList&& args) override;
 
 private:
     EvalVisitor& _eval;

@@ -33,6 +33,25 @@ constexpr Unsigned log2(Unsigned value) {
     return size;
 }
 
+constexpr std::uint32_t ones32(bitsize_t n) {
+    return (n == 32) ? -1 : ((std::uint32_t)1 << n) - 1;
+}
+
+constexpr std::uint64_t ones64(bitsize_t n) {
+    return (n == 64) ? -1 : ((std::uint64_t)1 << n) - 1;
+}
+
+constexpr Unsigned ones(bitsize_t n) {
+    if constexpr (sizeof(Unsigned) == 8)
+        return ones64(n);
+    static_assert(sizeof(Unsigned) == 4);
+    return ones32(n);
+}
+
+constexpr Unsigned count_ones(Unsigned value) {
+    return __builtin_popcount(value);
+}
+
 constexpr bitsize_t bitsize(Unsigned value) { return log2(value); }
 
 constexpr bitsize_t unary_unsigned_bitsize(bitsize_t bitsize) {

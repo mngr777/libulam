@@ -9,6 +9,17 @@
 
 namespace ulam {
 
+TypedValue IntType::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::MinOf:
+        return {this, Value{RValue{detail::integer_min(bitsize())}}};
+    case TypeOp::MaxOf:
+        return {this, Value{RValue{detail::integer_max(bitsize())}}};
+    default:
+        assert(false);
+    }
+}
+
 RValue IntType::from_datum(Datum datum) const {
     int shift = sizeof(datum) * 8 - bitsize();
     if (shift == 0)
@@ -121,18 +132,20 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     }
 }
 
-Value IntType::cast_to(Ref<PrimType> type, Value&& value) {
+RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    assert(!value.empty());
-
-    auto rval = value.rvalue();
     assert(rval.is<Integer>());
 
     auto int_val = rval.get<Integer>();
     switch (type->builtin_type_id()) {
     case IntId: {
-        assert(false);
-        return std::move(value);
+        auto int_min = detail::integer_min(type->bitsize());
+        if (int_val < int_min)
+            return RValue{int_min};
+        auto int_max = detail::integer_max(type->bitsize());
+        if (int_val > int_max)
+            return RValue{int_max};
+        return std::move(rval);
     }
     case UnsignedId: {
         Unsigned val = std::max((Integer)0, int_val);
@@ -215,6 +228,26 @@ PrimTypedValue IntType::binary_op(
             return {type, RValue{}};
         auto [val, _] = detail::safe_diff(left_int_val, right_int_val);
         return {type, RValue{val}};
+    }
+    case Op::Less: {
+        return {
+            builtins().boolean(),
+            Value{RValue{(Unsigned)(left_int_val < right_int_val)}}};
+    }
+    case Op::LessOrEq: {
+        return {
+            builtins().boolean(),
+            Value(RValue{(Unsigned)(left_int_val <= right_int_val)})};
+    }
+    case Op::Greater: {
+        return {
+            builtins().boolean(),
+            Value{RValue{(Unsigned)(left_int_val > right_int_val)}}};
+    }
+    case Op::GreaterOrEq: {
+        return {
+            builtins().boolean(),
+            Value(RValue{(Unsigned)(left_int_val >= right_int_val)})};
     }
     default:
         assert(false);
