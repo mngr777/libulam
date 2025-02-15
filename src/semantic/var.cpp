@@ -8,7 +8,7 @@ ObjectView Var::obj_view() {
     assert(_value.is_rvalue());
     return _value.get<RValue>().accept(
         [&](SPtr<Object> obj) { return obj->view(); },
-        [&](auto other) -> ObjectView { assert(false); });
+        [&](auto& other) -> ObjectView { assert(false); });
 }
 
 } // namespace ulam

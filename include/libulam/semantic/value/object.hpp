@@ -14,6 +14,11 @@ public:
     Object(Ref<Class> cls, BitVector&& bits);
     ~Object();
 
+    Object(Object&&) = default;
+    Object& operator=(Object&&) = default;
+
+    SPtr<Object> copy() const;
+
     ObjectView view();
     const ObjectView view() const;
 

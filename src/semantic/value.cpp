@@ -22,8 +22,17 @@ RValue LValue::rvalue() const {
         [&](auto&&) -> RValue { assert(false); });
 }
 
-RValue RValue::copy_shallow() const {
-    return accept([&](auto&& value) { return RValue{value}; });
+RValue RValue::copy() const {
+    return accept(
+        [&](const Bits& bits) {
+            return RValue{bits.copy()};
+        },
+        [&](SPtr<const Object> obj) {
+            return RValue{obj->copy()};
+        },
+        [&](auto value) {
+            return RValue{value};
+    });
 }
 
 // Value
@@ -31,7 +40,7 @@ RValue RValue::copy_shallow() const {
 RValue Value::rvalue() const {
     return accept(
         [&](const LValue& lval) { return lval.rvalue(); },
-        [&](const RValue& rval) { return rval.copy_shallow(); },
+        [&](const RValue& rval) { return rval.copy(); },
         [&](const std::monostate& val) { return RValue{}; });
 }
 

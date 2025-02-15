@@ -53,7 +53,7 @@ public:
     RValue(RValue&&) = default;
     RValue& operator=(RValue&&) = default;
 
-    RValue copy_shallow() const;
+    RValue copy() const;
 };
 
 class LValue : public detail::Variant<

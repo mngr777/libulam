@@ -9,6 +9,11 @@ public:
     explicit Bits(BitVector::size_t size): _bits{size} {}
     explicit Bits(BitVector&& bits): _bits{std::move(bits)} {}
 
+    Bits(Bits&&) = default;
+    Bits& operator=(Bits&&) = default;
+
+    Bits copy() const { return Bits{_bits.copy()}; }
+
     std::uint16_t bitsize() const { return _bits.len(); }
 
     BitVector& bits() { return _bits; }
