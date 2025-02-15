@@ -1,10 +1,12 @@
 #pragma once
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type/prim.hpp>
 #include <map>
 
 namespace ulam {
+
+class BoolType;
 
 class Builtins {
 public:
@@ -17,7 +19,7 @@ public:
 
     Ref<Type> type(BuiltinTypeId id);
 
-    Ref<PrimType> boolean();
+    Ref<BoolType> boolean();
 
 private:
     std::map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;

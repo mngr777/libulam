@@ -19,6 +19,9 @@ Kind kind(Op op) {
     switch (op) {
     case Op::Assign:
         return Kind::Assign;
+    case Op::Equal:
+    case Op::NotEqual:
+        return Kind::Equality;
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:

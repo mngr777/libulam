@@ -92,7 +92,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
         return {type, RValue{val}};
     }
     case BitsId: {
-        auto size = detail::bitsize(uns_val);
+        auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
         store(val.bits(), 0, rval);

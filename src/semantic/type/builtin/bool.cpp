@@ -3,6 +3,10 @@
 
 namespace ulam {
 
+RValue BoolType::construct(bool value) {
+    return RValue{detail::ones(bitsize())};
+}
+
 RValue BoolType::from_datum(Datum datum) const { return (Unsigned)datum; }
 
 Datum BoolType::to_datum(const RValue& rval) const {

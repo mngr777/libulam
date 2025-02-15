@@ -4,6 +4,7 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 
@@ -121,7 +122,7 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
         return {type, RValue{val}};
     }
     case BitsId: {
-        auto size = detail::bitsize(int_val);
+        auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
         store(val.bits().view(), 0, rval);
@@ -184,6 +185,14 @@ PrimTypedValue IntType::binary_op(
     Integer right_int_val = right_rval.empty() ? 0 : right_rval.get<Integer>();
 
     switch (op) {
+    case Op::Equal: {
+        auto type = builtins().boolean();
+        return {type, type->construct(left_int_val == right_int_val)};
+    }
+    case Op::NotEqual: {
+        auto type = builtins().boolean();
+        return {type, type->construct(left_int_val != right_int_val)};
+    }
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
         auto size =

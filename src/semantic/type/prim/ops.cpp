@@ -30,6 +30,9 @@ PrimTypeErrorPair prim_binary_op_type_check(
     case ops::Kind::Assign: {
         errors.second = check_type_match(right_type, left_type->builtin_type_id());
     } break;
+    case ops::Kind::Equality: {
+        errors.second = check_type_match(right_type, left_type->builtin_type_id());
+    } break;
     case ops::Kind::Numeric: {
         // one or both operands non-numeric?
         if (!is_numeric(left_type) || !is_numeric(right_type)) {
