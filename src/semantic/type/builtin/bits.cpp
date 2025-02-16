@@ -6,13 +6,14 @@ namespace ulam {
 
 RValue BitsType::load(const BitVectorView data, BitVector::idx_t off) const {
     Bits val{data.view(off, bitsize()).copy()};
-    return val;
+    return RValue{std::move(val)};
 }
 
 void BitsType::store(
     BitVectorView data, BitVector::idx_t off, const RValue& rval) const {
     assert(off + bitsize() <= data.len());
     assert(rval.is<Bits>());
+    assert(false); // TODO
     // data.write();
 }
 
@@ -107,11 +108,11 @@ PrimTypedValue BitsType::binary_op(
         auto size = std::max(bitsize(), right_type->bitsize());
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, RValue{}};
+            return {type, Value{RValue{}}};
         auto& left_bits = left_rval.get<Bits>();
         auto& right_bits = right_rval.get<Bits>();
         Bits bits{op(left_bits.bits(), right_bits.bits())};
-        return {type, RValue{std::move(bits)}};
+        return {type, Value{RValue{std::move(bits)}}};
     };
 
     // TODO: shift

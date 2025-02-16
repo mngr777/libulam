@@ -22,7 +22,7 @@ ParamEval::eval(Ref<ast::ArgList> args, Ref<Scope> scope) {
             _program->diag().emit(
                 Diag::Error, arg->loc_id(), 1, "failed to evaluate argument");
         }
-        values.push_back(TypedValue{res.type(), std::move(rval)});
+        values.emplace_back(res.type(), Value{std::move(rval)});
     }
     return {std::move(values), success};
 }

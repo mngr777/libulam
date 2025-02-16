@@ -47,7 +47,7 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
     } catch (EvalExceptError& e) {
         // TODO
     }
-    return {_program->builtins().type(VoidId), RValue{}};
+    return {_program->builtins().type(VoidId), Value{RValue{}}};
 }
 
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
@@ -64,7 +64,7 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
         auto def_node = node->def(n);
         auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
         if (_resolver.resolve(ref(var), scope())) {
-            var->set_value(var->type()->construct());
+            var->set_value(Value{var->type()->construct()});
             scope()->set(var->name_id(), std::move(var));
         }
     }
@@ -121,7 +121,7 @@ void EvalVisitor::visit(Ref<ast::Return> node) {
     if (node->has_expr()) {
         res = eval_expr(node->expr());
     } else {
-        res = {_program->builtins().type(VoidId), RValue{}};
+        res = {_program->builtins().type(VoidId), Value{RValue{}}};
     }
     throw EvalExceptReturn(std::move(res));
 }
@@ -155,7 +155,8 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
-ExprRes EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
+ExprRes
+EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
     debug() << __FUNCTION__ << "`" << str(fun->name_id()) << "`\n";
     assert(fun->params().size() == args.size());
 
@@ -183,7 +184,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&&
     } catch (EvalExceptReturn& ret) {
         return ret.move_res();
     }
-    return {_program->builtins().type(VoidId), RValue{}};
+    return {_program->builtins().type(VoidId), Value{RValue{}}};
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {

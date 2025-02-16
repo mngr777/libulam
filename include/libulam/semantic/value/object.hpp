@@ -10,7 +10,7 @@ class Value;
 
 class Object : public _BitStorage {
 public:
-    Object(Ref<Class> cls);
+    explicit Object(Ref<Class> cls);
     Object(Ref<Class> cls, BitVector&& bits);
     ~Object();
 

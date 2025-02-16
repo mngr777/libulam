@@ -14,7 +14,7 @@ template <class... Ts> Overloads(Ts...) -> Overloads<Ts...>;
 
 template <typename... Ts> class Variant {
 public:
-    template <typename T> Variant(T&& value): _value{std::forward<T>(value)} {}
+    template <typename T> explicit Variant(T&& value): _value{std::forward<T>(value)} {}
     Variant() {}
     virtual ~Variant() {}
 

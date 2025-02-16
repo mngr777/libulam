@@ -41,14 +41,17 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     }
 
     return sym->accept(
-        [&](Ref<Var> var) -> ExprRes { return {var->type(), LValue{var}}; },
+        [&](Ref<Var> var) -> ExprRes {
+            return {var->type(), Value{LValue{var}}};
+        },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), LValue{BoundProp{_scope->self(), prop}}};
+            return {
+                prop->type(), Value{LValue{BoundProp{_scope->self(), prop}}}};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
             return {
                 builtins().type(FunId),
-                LValue{BoundFunSet{_scope->self(), fset}}};
+                Value{LValue{BoundFunSet{_scope->self(), fset}}}};
         },
         [&](auto value) -> ExprRes { assert(false); });
 }
@@ -153,13 +156,13 @@ ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
         auto tpl = builtins().prim_type_tpl(IntId);
         auto type = tpl->type(diag(), node, number.bitsize());
         assert(type);
-        return {type, RValue{number.value<Integer>()}};
+        return {type, Value{RValue{number.value<Integer>()}}};
     } else {
         // Unsigned(n)
         auto tpl = builtins().prim_type_tpl(UnsignedId);
         auto type = tpl->type(diag(), node, number.bitsize());
         assert(type);
-        return {type, RValue{number.value<Unsigned>()}};
+        return {type, Value{RValue{number.value<Unsigned>()}}};
     }
 }
 
@@ -304,9 +307,11 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     };
 
     return sym->accept(
-        [&](Ref<Var> var) -> ExprRes { return {var->type(), LValue{var}}; },
+        [&](Ref<Var> var) -> ExprRes {
+            return {var->type(), Value{LValue{var}}};
+        },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), LValue{make_bound_prop(prop)}};
+            return {prop->type(), Value{LValue{make_bound_prop(prop)}}};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
             auto obj_cls = get_obj_cls();
@@ -315,7 +320,8 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
                 if (sym->is<FunSet>())
                     fset = sym->get<FunSet>();
             }
-            return {builtins().type(FunId), LValue{make_bound_fset(fset)}};
+            return {
+                builtins().type(FunId), Value{LValue{make_bound_fset(fset)}}};
         },
         [&](auto other) -> ExprRes { assert(false); });
 }
@@ -359,8 +365,10 @@ ExprRes ExprVisitor::prim_binary_op(
     PrimTypeErrorPair type_errors{};
     if (op != Op::None) {
         // get rvalues
-        PrimTypedValue left_tv = {left.type(), RValue{left.value().move_rvalue()}};
-        PrimTypedValue right_tv = {right.type(), RValue{right.value().move_rvalue()}};
+        PrimTypedValue left_tv = {
+            left.type(), Value{RValue{left.value().move_rvalue()}}};
+        PrimTypedValue right_tv = {
+            right.type(), Value{RValue{right.value().move_rvalue()}}};
 
         // check operand types
         type_errors = prim_binary_op_type_check(op, left.type(), right.type());
@@ -391,7 +399,8 @@ ExprRes ExprVisitor::prim_binary_op(
         right_tv = recast(type_errors.second, std::move(right_tv), node->rhs());
 
         // apply op
-        right = prim_binary_op_impl(op, std::move(left_tv), std::move(right_tv));
+        right =
+            prim_binary_op_impl(op, std::move(left_tv), std::move(right_tv));
     }
 
     // handle assignment
@@ -417,7 +426,7 @@ ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
                 maybe_cast(node, bound_prop.mem()->type(), std::move(tv));
             if (!rval.empty())
                 bound_prop.store(std::move(rval));
-            return {bound_prop.mem()->type(), LValue{bound_prop}};
+            return {bound_prop.mem()->type(), Value{LValue{bound_prop}}};
         },
         [&](auto&& other) -> ExprRes { assert(false); });
 }

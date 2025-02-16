@@ -22,7 +22,7 @@ public:
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
-    RValue construct() override { return Unsigned{}; }
+    RValue construct() override { return RValue{Unsigned{}}; }
 
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;

@@ -22,7 +22,7 @@ ExprRes EvalExprVisitor::funcall(
     if (fun->is_native()) {
         diag().emit(
             Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
-        return {fun->ret_type(), RValue{}};
+        return {fun->ret_type(), Value{RValue{}}};
     }
     return _eval.funcall(fun, obj_view, std::move(args));
 }

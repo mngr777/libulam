@@ -24,13 +24,13 @@ TypedValue IntType::type_op(TypeOp op) {
 RValue IntType::from_datum(Datum datum) const {
     int shift = sizeof(datum) * 8 - bitsize();
     if (shift == 0)
-        return (Integer)datum;
+        return RValue{(Integer)datum};
     assert(shift > 0);
     if (1 << (bitsize() - 1) & datum) {
         // negative, prepend with 1's
         datum |= ((1 << (shift + 1)) - 1) << bitsize();
     }
-    return (Integer)datum;
+    return RValue{(Integer)datum};
 }
 
 Datum IntType::to_datum(const RValue& rval) const {
@@ -102,26 +102,26 @@ PrimTypedValue IntType::cast_to(BuiltinTypeId id, Value&& value) {
     switch (id) {
     case IntId: {
         assert(false);
-        return {this, std::move(rval)};
+        return {this, Value{std::move(rval)}};
     }
     case UnsignedId: {
         int_val = std::max((Integer)0, int_val);
         auto size = detail::bitsize(int_val);
         auto type = builtins().prim_type(UnsignedId, size);
-        return {type, RValue{(Unsigned)int_val}};
+        return {type, Value{RValue{(Unsigned)int_val}}};
     }
     case UnaryId: {
         Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)ULAM_MAX_INT_SIZE, detail::ones(val));
         auto type = builtins().prim_type(UnaryId, val);
-        return {type, RValue{val}};
+        return {type, Value{RValue{val}}};
     }
     case BitsId: {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
         store(val.bits().view(), 0, rval);
-        return {type, RValue{std::move(val)}};
+        return {type, Value{RValue{std::move(val)}}};
     }
     default:
         assert(false);
@@ -177,11 +177,11 @@ PrimTypedValue IntType::binary_op(
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
-        return {type, type->construct(left_int_val == right_int_val)};
+        return {type, Value{type->construct(left_int_val == right_int_val)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
-        return {type, type->construct(left_int_val != right_int_val)};
+        return {type, Value{type->construct(left_int_val != right_int_val)}};
     }
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
@@ -189,24 +189,24 @@ PrimTypedValue IntType::binary_op(
             std::min(MaxSize, (bitsize_t)(bitsize() + right_type->bitsize()));
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, RValue{}};
+            return {type, Value{RValue{}}};
         auto [val, _] = detail::safe_prod(left_int_val, right_int_val);
-        return {type, RValue{detail::truncate(val, size)}};
+        return {type, Value{RValue{detail::truncate(val, size)}}};
     }
     case Op::Quot: {
         // Int(a) / Int(b) = Int(a) NOTE: does not match
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
-            return {this, RValue{}};
+            return {this, Value{RValue{}}};
         auto val = detail::safe_quot(left_int_val, right_int_val);
-        return {this, RValue{val}};
+        return {this, Value{RValue{val}}};
     }
     case Op::Rem: {
         // Int(a) % Int(b) = Int(a)
         if (is_unknown)
-            return {this, RValue{}};
+            return {this, Value{RValue{}}};
         auto val = detail::safe_rem(left_int_val, right_int_val);
-        return {this, RValue{val}};
+        return {this, Value{RValue{val}}};
     }
     case Op::Sum: {
         // Int(a) + Int(b) + Int(max(a, b) + 1)
@@ -214,9 +214,9 @@ PrimTypedValue IntType::binary_op(
         size = std::min(size, MaxSize);
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, RValue{}};
+            return {type, Value{RValue{}}};
         auto [val, _] = detail::safe_sum(left_int_val, right_int_val);
-        return {type, RValue{val}};
+        return {type, Value{RValue{val}}};
     }
     case Op::Diff: {
         // Int(a) - Int(b) = Int(max(a, b) + 1)
@@ -224,9 +224,9 @@ PrimTypedValue IntType::binary_op(
         size = std::min(size, MaxSize);
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, RValue{}};
+            return {type, Value{RValue{}}};
         auto [val, _] = detail::safe_diff(left_int_val, right_int_val);
-        return {type, RValue{val}};
+        return {type, Value{RValue{val}}};
     }
     case Op::Less: {
         return {

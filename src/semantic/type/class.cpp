@@ -51,7 +51,7 @@ bitsize_t Class::direct_bitsize() const {
     return size;
 }
 
-RValue Class::construct() { return {make_s<Object>(this)}; }
+RValue Class::construct() { return RValue{make_s<Object>(this)}; }
 
 RValue Class::load(const BitVectorView data, BitVector::idx_t off) const {
     return {};

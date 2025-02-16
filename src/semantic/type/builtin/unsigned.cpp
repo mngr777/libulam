@@ -6,7 +6,9 @@
 
 namespace ulam {
 
-RValue UnsignedType::from_datum(Datum datum) const { return (Unsigned)datum; }
+RValue UnsignedType::from_datum(Datum datum) const {
+    return RValue{(Unsigned)datum};
+}
 
 Datum UnsignedType::to_datum(const RValue& rval) const {
     assert(rval.is<Unsigned>());
@@ -75,23 +77,23 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
             (bitsize_t)(detail::bitsize(uns_val) + 1));
         Integer val = std::min((Unsigned)detail::integer_max(size), uns_val);
         auto type = builtins().prim_type(IntId, size);
-        return {type, RValue{val}};
+        return {type, Value{RValue{val}}};
     }
     case UnsignedId: {
         assert(false);
-        return {this, std::move(rval)};
+        return {this, Value{std::move(rval)}};
     }
     case UnaryId: {
         Unsigned val = std::min((Unsigned)ULAM_MAX_INT_SIZE, uns_val);
         auto type = builtins().prim_type(UnaryId, detail::ones(uns_val));
-        return {type, RValue{val}};
+        return {type, Value{RValue{val}}};
     }
     case BitsId: {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
         store(val.bits(), 0, rval);
-        return {type, RValue{std::move(val)}};
+        return {type, Value{RValue{std::move(val)}}};
     }
     default:
         assert(false);

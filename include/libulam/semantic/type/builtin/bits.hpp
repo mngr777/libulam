@@ -20,9 +20,10 @@ public:
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
     RValue load(const BitVectorView data, BitVector::idx_t off) const override;
-    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const override;
+    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval)
+        const override;
 
-    RValue construct() override { return Bits{bitsize()}; }
+    RValue construct() override { return RValue{Bits{bitsize()}}; }
 
     bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
     bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;

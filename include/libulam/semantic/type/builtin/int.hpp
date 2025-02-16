@@ -20,7 +20,7 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct() override { return Integer{}; }
+    RValue construct() override { return RValue{Integer{}}; }
 
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;

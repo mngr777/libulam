@@ -7,7 +7,7 @@ RValue BoolType::construct(bool value) {
     return RValue{detail::ones(bitsize())};
 }
 
-RValue BoolType::from_datum(Datum datum) const { return (Unsigned)datum; }
+RValue BoolType::from_datum(Datum datum) const { return RValue{(Unsigned)datum}; }
 
 Datum BoolType::to_datum(const RValue& rval) const {
     assert(rval.is<Unsigned>());
