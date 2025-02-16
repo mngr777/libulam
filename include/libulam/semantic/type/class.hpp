@@ -51,8 +51,8 @@ public:
 
     RValue construct() override;
 
-    RValue load(const BitVectorView data, BitVector::idx_t off) const override;
-    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval)
+    RValue load(const BitVectorView data, BitVector::size_t off) const override;
+    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override;
 
 private:

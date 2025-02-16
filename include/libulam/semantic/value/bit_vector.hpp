@@ -1,7 +1,6 @@
 #pragma once
 #include <functional>
 #include <libulam/semantic/value/types.hpp>
-#include <type_traits>
 #include <vector>
 
 namespace ulam {
@@ -11,7 +10,6 @@ namespace ulam {
 class _BitVector {
 public:
     using size_t = Unsigned;
-    using idx_t = Unsigned;
     using unit_t = Datum;
     using unit_idx_t = Unsigned;
 
@@ -24,25 +22,26 @@ class BitVector;
 
 class BitVectorView : public _BitVector {
 public:
-    BitVectorView(BitVector& data, size_t off, size_t len);
-    BitVectorView(BitVector& data);
+    explicit BitVectorView(BitVector& data, size_t off, size_t len);
+    explicit BitVectorView(BitVector& data);
     BitVectorView() {}
 
     BitVectorView view() { return *this; }
     const BitVectorView view() const { return *this; }
 
     BitVectorView view(size_t off, size_t len) {
-        return {data(), _off + off, len};
+        return BitVectorView{data(), _off + off, len};
     }
     const BitVectorView view(size_t off, size_t len) const {
-        return {const_cast<BitVector&>(data()), _off + off, len};
+        return BitVectorView{const_cast<BitVector&>(data()), _off + off, len};
     }
 
-    bool read_bit(idx_t idx) const;
-    void write_bit(idx_t idx, bool bit);
+    bool read_bit(size_t idx) const;
+    void write_bit(size_t idx, bool bit);
 
-    unit_t read(idx_t idx, size_t len) const;
-    void write(idx_t idx, size_t len, unit_t value);
+    unit_t read(size_t idx, size_t len) const;
+    void write(size_t idx, size_t len, unit_t value);
+    void write(size_t idx, const BitVectorView other);
 
     unit_t read_right(size_t len) const;
 
@@ -81,21 +80,26 @@ public:
     // BitVector(BitVector&& other) = default;
     // BitVector& operator=(BitVector&&) = default;
 
-    BitVectorView view() { return *this; }
-    const BitVectorView view() const { return const_cast<BitVector&>(*this); }
+    BitVectorView view() { return BitVectorView{*this}; }
+    const BitVectorView view() const {
+        return BitVectorView{const_cast<BitVector&>(*this)};
+    }
 
-    BitVectorView view(size_t off, size_t len) { return {*this, off, len}; }
+    BitVectorView view(size_t off, size_t len) {
+        return BitVectorView{*this, off, len};
+    }
     const BitVectorView view(size_t off, size_t len) const {
-        return {const_cast<BitVector&>(*this), off, len};
+        return BitVectorView{const_cast<BitVector&>(*this), off, len};
     }
 
     BitVector copy() const;
 
-    bool read_bit(idx_t idx) const;
-    void write_bit(idx_t idx, bool bit);
+    bool read_bit(size_t idx) const;
+    void write_bit(size_t idx, bool bit);
 
-    unit_t read(idx_t idx, size_t len) const;
-    void write(idx_t idx, size_t len, unit_t value);
+    unit_t read(size_t idx, size_t len) const;
+    void write(size_t idx, size_t len, unit_t value);
+    void write(size_t idx, const BitVectorView view);
 
     unit_t read_right(size_t len) const;
 

@@ -92,7 +92,7 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
-        store(val.bits(), 0, rval);
+        store(val.bits().view(), 0, rval);
         return {type, Value{RValue{std::move(val)}}};
     }
     default:

@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/value/array.hpp>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/object.hpp>
@@ -46,6 +47,7 @@ class RValue : public detail::Variant<
                    Bits,
                    String,
                    Ref<FunSet>, /* ?? */
+                   Array,
                    SPtr<Object>> {
 public:
     using Variant::Variant;
@@ -58,6 +60,7 @@ public:
 
 class LValue : public detail::Variant<
                    Ref<Var>,
+                   ArrayAccess,
                    ObjectView,
                    BoundFunSet,
                    BoundProp /* TODO: object ref, array access */> {

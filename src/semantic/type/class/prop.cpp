@@ -12,7 +12,7 @@ ObjectView Prop::obj_view(ObjectView obj_view) {
     auto cls = type()->canon()->as_class();
     auto bits = bits_view(obj_view);
     assert(bits.len() == cls->bitsize());
-    return {cls, bits};
+    return ObjectView{cls, bits};
 }
 
 BitVectorView Prop::bits_view(ObjectView obj_view) {

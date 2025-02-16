@@ -27,6 +27,9 @@ RValue RValue::copy() const {
         [&](const Bits& bits) {
             return RValue{bits.copy()};
         },
+        [&](const Array& array) {
+            return RValue{array.copy()};
+        },
         [&](SPtr<const Object> obj) {
             return RValue{obj->copy()};
         },

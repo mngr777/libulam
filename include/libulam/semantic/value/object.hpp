@@ -28,7 +28,7 @@ private:
 
 class ObjectView : public _BitStorageView {
 public:
-    ObjectView(Ref<Class> cls, BitVectorView bits);
+    explicit ObjectView(Ref<Class> cls, BitVectorView bits);
     ObjectView() {}
 
     operator bool() const;

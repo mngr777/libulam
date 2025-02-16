@@ -5,7 +5,6 @@
 // NOTE: keeping it simple for now
 // TODO: (maybe) optimize, see MFM::BitVector impl
 // TODO: naming: size/len
-// TODO: types: remove idx_t?
 
 namespace ulam {
 namespace {
@@ -18,11 +17,11 @@ BitVector::unit_t make_mask(BitVector::size_t len, BitVector::size_t shift) {
     return ((len < BitVector::UnitSize) ? (1u << len) - 1 : -1) << shift;
 }
 
-BitVector::unit_idx_t to_unit_idx(BitVector::idx_t idx) {
+BitVector::unit_idx_t to_unit_idx(BitVector::size_t idx) {
     return idx / BitVector::UnitSize;
 }
 
-BitVector::size_t to_off(BitVector::idx_t idx) {
+BitVector::size_t to_off(BitVector::size_t idx) {
     return idx % BitVector::UnitSize;
 }
 
@@ -38,24 +37,34 @@ BitVectorView::BitVectorView(BitVector& data, size_t off, size_t len):
 BitVectorView::BitVectorView(BitVector& data):
     BitVectorView{data, 0, data.len()} {}
 
-bool BitVectorView::read_bit(idx_t idx) const {
+bool BitVectorView::read_bit(size_t idx) const {
     assert(idx < _len);
     return data().read_bit(_off + idx);
 }
 
-void BitVectorView::write_bit(idx_t idx, bool bit) {
+void BitVectorView::write_bit(size_t idx, bool bit) {
     assert(idx < _len);
     data().write_bit(_off + idx, bit);
 }
 
-BitVectorView::unit_t BitVectorView::read(idx_t idx, size_t len) const {
+BitVectorView::unit_t BitVectorView::read(size_t idx, size_t len) const {
     assert(idx + len <= _len);
     return data().read(_off + idx, len);
 }
 
-void BitVectorView::write(idx_t idx, size_t len, unit_t value) {
+void BitVectorView::write(size_t idx, size_t len, unit_t value) {
     assert(idx + len <= _len);
     data().write(_off + idx, len, value);
+}
+
+void BitVectorView::write(size_t idx, const BitVectorView other) {
+    assert(idx < _len);
+    assert(idx + other.len() <= _len);
+    for (size_t idx2 = 0; idx2 < other.len(); idx2 += UnitSize) {
+        size_t size = std::min(UnitSize, other.len() - idx2);
+        write(idx, size, other.read(idx2, size));
+        idx += size;
+    }
 }
 
 BitVectorView::unit_t BitVectorView::read_right(size_t len) const {
@@ -65,7 +74,7 @@ BitVectorView::unit_t BitVectorView::read_right(size_t len) const {
 
 BitVector BitVectorView::copy() const {
     BitVector bv{len()};
-    for (idx_t off = 0; off < len(); off += UnitSize) {
+    for (size_t off = 0; off < len(); off += UnitSize) {
         size_t size = (off + UnitSize > len()) ? len() - off : UnitSize;
         bv.write(off, size, read(off, size));
     }
@@ -149,12 +158,12 @@ BitVector BitVector::copy() const {
     return bv;
 }
 
-bool BitVector::read_bit(idx_t idx) const {
+bool BitVector::read_bit(size_t idx) const {
     assert(idx < _len);
     return _bits[to_unit_idx(idx)] & (MSB >> to_off(idx));
 }
 
-void BitVector::write_bit(idx_t idx, bool bit) {
+void BitVector::write_bit(size_t idx, bool bit) {
     assert(idx < _len);
     const unit_idx_t unit_idx = to_unit_idx(idx);
     const unit_t mask = MSB >> to_off(idx);
@@ -165,7 +174,7 @@ void BitVector::write_bit(idx_t idx, bool bit) {
     }
 }
 
-BitVector::unit_t BitVector::read(idx_t idx, size_t len) const {
+BitVector::unit_t BitVector::read(size_t idx, size_t len) const {
     assert(idx < _len);
     assert(len <= UnitSize);
     const unit_idx_t unit_idx = to_unit_idx(idx);
@@ -178,12 +187,7 @@ BitVector::unit_t BitVector::read(idx_t idx, size_t len) const {
     return (read(unit_idx, off, len_1) << len_2) | read(unit_idx + 1, 0, len_2);
 }
 
-BitVector::unit_t BitVector::read_right(size_t len) const {
-    assert(len <= _len);
-    return read(_len - len, len);
-}
-
-void BitVector::write(idx_t idx, size_t len, unit_t value) {
+void BitVector::write(size_t idx, size_t len, unit_t value) {
     assert(idx < _len);
     assert(len <= UnitSize);
     const unit_idx_t unit_idx = to_unit_idx(idx);
@@ -197,6 +201,15 @@ void BitVector::write(idx_t idx, size_t len, unit_t value) {
     const size_t len_2 = len - len_1;
     write(unit_idx, off, len_1, value >> len_2);
     write(unit_idx + 1, 0, len_2, value << len_1);
+}
+
+void BitVector::write(size_t idx, const BitVectorView view_) {
+    view().write(idx, view_);
+}
+
+BitVector::unit_t BitVector::read_right(size_t len) const {
+    assert(len <= _len);
+    return read(_len - len, len);
 }
 
 BitVector::unit_t

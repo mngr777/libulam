@@ -31,10 +31,10 @@ public:
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
 
-    RValue load(const BitVectorView data, BitVector::idx_t off) const override {
+    RValue load(const BitVectorView data, BitVector::size_t off) const override {
         return from_datum(data.read(off, bitsize()));
     }
-    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval)
+    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override {
         data.write(off, bitsize(), to_datum(rval));
     }

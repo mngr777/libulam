@@ -19,8 +19,8 @@ public:
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
-    RValue load(const BitVectorView data, BitVector::idx_t off) const override;
-    void store(BitVectorView data, BitVector::idx_t off, const RValue& rval)
+    RValue load(const BitVectorView data, BitVector::size_t off) const override;
+    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override;
 
     RValue construct() override { return RValue{Bits{bitsize()}}; }

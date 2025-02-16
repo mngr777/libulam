@@ -4,17 +4,16 @@
 
 namespace ulam {
 
-RValue BitsType::load(const BitVectorView data, BitVector::idx_t off) const {
+RValue BitsType::load(const BitVectorView data, BitVector::size_t off) const {
     Bits val{data.view(off, bitsize()).copy()};
     return RValue{std::move(val)};
 }
 
 void BitsType::store(
-    BitVectorView data, BitVector::idx_t off, const RValue& rval) const {
+    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
     assert(off + bitsize() <= data.len());
     assert(rval.is<Bits>());
-    assert(false); // TODO
-    // data.write();
+    data.write(off, rval.get<Bits>().bits().view());
 }
 
 bool BitsType::is_castable_to(BuiltinTypeId id, bool expl) const {
@@ -76,7 +75,8 @@ RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
     case BoolId:
     case UnaryId: {
         // TODO: this is probably not how it works, to be caught by ULAM tests
-        auto datum = bits.bits().read_right(std::min(bitsize(), type->bitsize()));
+        auto datum =
+            bits.bits().read_right(std::min(bitsize(), type->bitsize()));
         return RValue{type->from_datum(datum)};
     }
     case BitsId: {

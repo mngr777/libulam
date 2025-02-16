@@ -22,7 +22,7 @@ SPtr<Object> Object::copy() const {
     return make_s<Object>(_cls, bits().copy());
 }
 
-ObjectView Object::view() { return {cls(), bits().view()}; }
+ObjectView Object::view() { return ObjectView{cls(), bits().view()}; }
 
 const ObjectView Object::view() const {
     return const_cast<Object*>(this)->view();

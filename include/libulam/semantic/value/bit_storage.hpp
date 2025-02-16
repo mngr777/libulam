@@ -6,9 +6,8 @@ namespace ulam {
 
 class _BitStorage {
 public:
-    _BitStorage(BitVector::size_t size): _bits{size} {}
-
-    _BitStorage(BitVector&& bits): _bits{std::move(bits)} {}
+    explicit _BitStorage(BitVector::size_t size): _bits{size} {}
+    explicit _BitStorage(BitVector&& bits): _bits{std::move(bits)} {}
     _BitStorage(): _bits{0} {}
 
     _BitStorage(_BitStorage&&) = default;
@@ -23,8 +22,10 @@ private:
 
 class _BitStorageView {
 public:
-    _BitStorageView(BitVectorView bits): _bits{bits} {}
+    explicit _BitStorageView(BitVectorView bits): _bits{bits} {}
     _BitStorageView() {}
+
+    operator bool() const { return _bits; }
 
     BitVectorView bits() { return _bits; }
     const BitVectorView bits() const { return _bits; }

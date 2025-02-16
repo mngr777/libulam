@@ -53,12 +53,12 @@ bitsize_t Class::direct_bitsize() const {
 
 RValue Class::construct() { return RValue{make_s<Object>(this)}; }
 
-RValue Class::load(const BitVectorView data, BitVector::idx_t off) const {
+RValue Class::load(const BitVectorView data, BitVector::size_t off) const {
     return {};
 }
 
 void Class::store(
-    BitVectorView data, BitVector::idx_t off, const RValue& rval) const {}
+    BitVectorView data, BitVector::size_t off, const RValue& rval) const {}
 
 void Class::add_param_var(Ptr<Var>&& var) {
     assert(var->is(Var::ClassParam | Var::Const));

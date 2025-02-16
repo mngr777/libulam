@@ -28,10 +28,6 @@ class Scope;
 using type_id_t = std::uint16_t;
 constexpr type_id_t NoTypeId = 0;
 
-using array_idx_t = std::uint16_t;
-using array_size_t = array_idx_t;
-constexpr array_size_t UnknownArraySize = -1;
-
 class TypeIdGen {
 public:
     TypeIdGen(): _next{1} {}
@@ -65,20 +61,20 @@ public:
 
     virtual bitsize_t bitsize() const = 0;
 
-    RValue load(const BitVector& data, BitVector::idx_t off) const {
+    RValue load(const BitVector& data, BitVector::size_t off) const {
         return load(data.view(), off);
     }
 
     void
-    store(BitVector& data, BitVector::idx_t off, const RValue& rval) const {
+    store(BitVector& data, BitVector::size_t off, const RValue& rval) const {
         store(data.view(), off, rval);
     }
 
-    virtual RValue load(const BitVectorView data, BitVector::idx_t off) const {
+    virtual RValue load(const BitVectorView data, BitVector::size_t off) const {
         assert(false);
     }
     virtual void
-    store(BitVectorView data, BitVector::idx_t off, const RValue& rval) const {
+    store(BitVectorView data, BitVector::size_t off, const RValue& rval) const {
         assert(false);
     }
 
