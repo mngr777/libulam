@@ -1,6 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/value/bit_vector.hpp>
+#include <libulam/semantic/value/bit_storage.hpp>
 
 namespace ulam {
 
@@ -8,14 +8,11 @@ class Class;
 class ObjectView;
 class Value;
 
-class Object {
+class Object : public _BitStorage {
 public:
     Object(Ref<Class> cls);
     Object(Ref<Class> cls, BitVector&& bits);
     ~Object();
-
-    Object(Object&&) = default;
-    Object& operator=(Object&&) = default;
 
     SPtr<Object> copy() const;
 
@@ -25,15 +22,11 @@ public:
     Ref<Class> cls() { return _cls; }
     Ref<const Class> cls() const { return _cls; }
 
-    BitVector& bits() { return _bits; }
-    const BitVector& bits() const { return _bits; }
-
 private:
     Ref<Class> _cls;
-    BitVector _bits;
 };
 
-class ObjectView {
+class ObjectView : public _BitStorageView {
 public:
     ObjectView(Ref<Class> cls, BitVectorView bits);
     ObjectView() {}
@@ -43,12 +36,8 @@ public:
     Ref<Class> cls() { return _cls; }
     Ref<const Class> cls() const { return _cls; }
 
-    BitVectorView bits() { return _bits; }
-    const BitVectorView bits() const { return _bits; }
-
 private:
     Ref<Class> _cls{};
-    BitVectorView _bits;
 };
 
 } // namespace ulam
