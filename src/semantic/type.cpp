@@ -51,6 +51,8 @@ Ref<RefType> Type::ref_type() {
 
 TypedValue Type::type_op(TypeOp op) { assert(false); }
 
+RValue Type::cast_to(Ref<Type> type, RValue&& rval) { assert(false); }
+
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
     return make<ArrayType>(_id_gen, this, size);
 }

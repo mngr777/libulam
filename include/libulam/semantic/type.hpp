@@ -96,15 +96,17 @@ public:
 
     virtual TypedValue type_op(TypeOp op);
 
-    bool is_expl_castable_to(Ref<const Type> type) {
+    bool is_expl_castable_to(Ref<const Type> type) const {
         return is_castable_to(type, true);
     }
-    bool is_impl_castable_to(Ref<const Type> type) {
+    bool is_impl_castable_to(Ref<const Type> type) const {
         return is_castable_to(type, false);
     }
     virtual bool is_castable_to(Ref<const Type> type, bool expl = true) const {
         return false;
     }
+
+    virtual RValue cast_to(Ref<Type> type, RValue&& rval);
 
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }

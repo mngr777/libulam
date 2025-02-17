@@ -51,11 +51,11 @@ Fun::Match Fun::match(const TypedValueList& args) {
     auto arg_it = args.begin();
     auto param_it = _params.begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
-        auto arg_type = arg_it->type();
-        auto param_type = (*param_it)->type();
+        auto arg_type = arg_it->type()->canon();
+        auto param_type = (*param_it)->type()->canon();
         if (*arg_type == *param_type)
             continue;
-        if (!param_type->is_impl_castable_to(arg_type))
+        if (!arg_type->is_impl_castable_to(param_type))
             return NoMatch;
         is_exact = false;
     }

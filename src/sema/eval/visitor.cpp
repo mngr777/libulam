@@ -157,7 +157,7 @@ void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
 ExprRes
 EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
-    debug() << __FUNCTION__ << "`" << str(fun->name_id()) << "`\n";
+    debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "`\n";
     assert(fun->params().size() == args.size());
 
     // push fun scope
@@ -170,11 +170,18 @@ EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
     // bind params
     for (const auto& param : fun->params()) {
         assert(args.size() >= 0);
-        auto tv = std::move(args.front());
+        auto arg = std::move(args.front());
         args.pop_front();
-        assert(param->type() && tv.type() == param->type());
+        auto type = arg.type();
+        assert(param->type());
+        if (type != param->type()) {
+            assert(type->is_impl_castable_to(param->type()));
+            auto rval =
+                type->cast_to(param->type(), arg.move_value().move_rvalue());
+            arg = {param->type(), Value{std::move(rval)}};
+        }
         auto var = make<Var>(
-            param->type_node(), param->node(), tv.type(), param->flags());
+            param->type_node(), param->node(), arg.type(), param->flags());
         scope()->set(var->name_id(), std::move(var));
     }
 

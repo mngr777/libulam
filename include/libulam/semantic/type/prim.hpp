@@ -47,7 +47,8 @@ public:
                                 : false;
     }
 
-    virtual bool is_castable_to(Ref<const PrimType> type, bool expl = true) const {
+    virtual bool
+    is_castable_to(Ref<const PrimType> type, bool expl = true) const {
         assert(false);
     }
 
@@ -67,6 +68,12 @@ public:
 
     virtual bool is_castable_to(BuiltinTypeId id, bool expl = true) const {
         assert(false);
+    }
+
+    RValue cast_to(Ref<Type> type, RValue&& rval) override {
+        auto canon = type->canon();
+        return canon->is_prim() ? cast_to(canon->as_prim(), std::move(rval))
+                                : RValue{};
     }
 
     // TODO: should take RValue&&
