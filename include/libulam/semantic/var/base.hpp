@@ -26,7 +26,7 @@ public:
         Ref<ast::VarDecl> node,
         Ref<Type> type,
         Flag flags = NoFlags):
-        _type_node{type_node}, _node{node}, _flags{flags} {}
+        _type_node{type_node}, _node{node}, _type{type}, _flags{flags} {}
 
     str_id_t name_id() const;
     bitsize_t bitsize() const;

@@ -215,7 +215,7 @@ BitVector::unit_t BitVector::read_right(size_t len) const {
 BitVector::unit_t
 BitVector::read(unit_idx_t unit_idx, size_t off, size_t len) const {
     assert(unit_idx < _bits.size());
-    assert(off + len < UnitSize);
+    assert(off + len <= UnitSize);
     if (len == 0)
         return 0;
     const size_t shift = UnitSize - (off + len);
@@ -226,7 +226,7 @@ BitVector::read(unit_idx_t unit_idx, size_t off, size_t len) const {
 void BitVector::write(
     unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
     assert(unit_idx < _bits.size());
-    assert(start + len < UnitSize);
+    assert(start + len <= UnitSize);
     if (len == 0)
         return;
     const size_t shift = UnitSize - (start + len);

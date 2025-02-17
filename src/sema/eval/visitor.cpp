@@ -123,6 +123,8 @@ void EvalVisitor::visit(Ref<ast::Return> node) {
     } else {
         res = {_program->builtins().type(VoidId), Value{RValue{}}};
     }
+    if (res.ok())
+        res = {res.type(), Value{res.move_value().move_rvalue()}};
     throw EvalExceptReturn(std::move(res));
 }
 
@@ -157,7 +159,7 @@ void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
 ExprRes
 EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
-    debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "`\n";
+    debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
     assert(fun->params().size() == args.size());
 
     // push fun scope
@@ -181,7 +183,9 @@ EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
             arg = {param->type(), Value{std::move(rval)}};
         }
         auto var = make<Var>(
-            param->type_node(), param->node(), arg.type(), param->flags());
+            param->type_node(), param->node(), param->type(), param->flags());
+        assert(!param->type()->is_ref()); // not handling references just yet
+        var->set_value(Value{arg.move_value().move_rvalue()});
         scope()->set(var->name_id(), std::move(var));
     }
 
@@ -189,8 +193,10 @@ EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
     try {
         fun->body_node()->accept(*this);
     } catch (EvalExceptReturn& ret) {
+        debug() << "}\n";
         return ret.move_res();
     }
+    debug() << "}\n";
     return {_program->builtins().type(VoidId), Value{RValue{}}};
 }
 
