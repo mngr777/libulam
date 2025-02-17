@@ -37,7 +37,7 @@ class Ancestry {
 public:
     bool add(Ref<Class> cls, Ref<ast::TypeName> node);
 
-    bool is_base(Ref<Class> cls) const;
+    bool is_base(Ref<const Class> cls) const;
 
     auto& parents() { return _parents; }
     const auto& parents() const { return _parents; }

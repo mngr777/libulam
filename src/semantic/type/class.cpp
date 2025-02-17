@@ -31,6 +31,10 @@ Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
+bool Class::is_base_of(Ref<const Class> other) const {
+    return other->_ancestry.is_base(this);
+}
+
 bitsize_t Class::bitsize() const {
     bitsize_t size = direct_bitsize();
     for (const auto& anc : _ancestry.ancestors())

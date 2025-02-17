@@ -242,97 +242,21 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::MemberNotFound};
     }
 
-    auto make_bound_prop = [&](Ref<Prop> prop) {
-        return obj_val.accept(
-            [&](LValue& lval) {
-                return lval.accept(
-                    [&](Ref<Var> var) {
-                        return BoundProp{var->obj_view(), prop};
-                    },
-                    [&](ArrayAccess& array_access) {
-                        auto obj_view = array_access.item_object_view();
-                        return BoundProp{obj_view, prop};
-                    },
-                    [&](ObjectView obj_view) {
-                        return BoundProp{obj_view, prop};
-                    },
-                    [&](BoundProp& bound_prop) {
-                        return bound_prop.mem_obj_bound_prop(prop);
-                    },
-                    [&](auto other) -> BoundProp { assert(false); });
-            },
-            [&](RValue& rval) {
-                assert(rval.is<SPtr<Object>>());
-                return BoundProp{rval.get<SPtr<Object>>(), prop};
-            },
-            [&](auto other) -> BoundProp { assert(false); });
-    };
-
-    auto make_bound_fset = [&](Ref<FunSet> fset) {
-        return obj_val.accept(
-            [&](LValue& lval) {
-                return lval.accept(
-                    [&](Ref<Var> var) {
-                        return BoundFunSet{var->obj_view(), fset};
-                    },
-                    [&](ArrayAccess& array_access) {
-                        auto obj_view = array_access.item_object_view();
-                        return BoundFunSet{obj_view, fset};
-                    },
-                    [&](ObjectView obj_view) {
-                        return BoundFunSet{obj_view, fset};
-                    },
-                    [&](BoundProp& bound_prop) {
-                        return bound_prop.mem_obj_bound_fset(fset);
-                    },
-                    [&](auto other) -> BoundFunSet { assert(false); });
-            },
-            [&](RValue& rval) {
-                assert(rval.is<SPtr<Object>>());
-                return BoundFunSet{rval.get<SPtr<Object>>(), fset};
-            },
-            [&](auto other) -> BoundFunSet { assert(false); });
-    };
-
-    auto get_obj_cls = [&]() {
-        return obj_val.accept(
-            [&](LValue& lval) {
-                return lval.accept(
-                    [&](Ref<Var> var) {
-                        assert(var->type()->is_class());
-                        return var->type()->as_class();
-                    },
-                    [&](ObjectView obj_view) { return obj_view.cls(); },
-                    [&](BoundProp& bound_prop) {
-                        auto type = bound_prop.mem()->type();
-                        assert(type->is_class());
-                        return type->as_class();
-                    },
-                    [&](auto other) -> Ref<Class> { assert(false); });
-            },
-            [&](RValue& rval) {
-                assert(rval.is<SPtr<Object>>());
-                return rval.get<SPtr<Object>>()->cls();
-            },
-            [&](auto other) -> Ref<Class> { assert(false); });
-    };
-
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
             return {var->type(), Value{LValue{var}}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), Value{LValue{make_bound_prop(prop)}}};
+            return {prop->type(), obj_val.bound_prop(prop)};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            auto obj_cls = get_obj_cls();
+            auto obj_cls = obj_val.obj_cls();
             if (fset->is_virtual() && obj_cls != cls) {
                 auto sym = obj_cls->get(name.str_id());
                 if (sym->is<FunSet>())
                     fset = sym->get<FunSet>();
             }
-            return {
-                builtins().type(FunId), Value{LValue{make_bound_fset(fset)}}};
+            return {builtins().type(FunId), obj_val.bound_fset(fset)};
         },
         [&](auto other) -> ExprRes { assert(false); });
 }
@@ -371,7 +295,6 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
             "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
     }
-
     return {item_type, array_val.array_access(item_type, index)};
 }
 
@@ -442,9 +365,9 @@ ExprRes ExprVisitor::prim_binary_op(
     if (op != Op::None) {
         // get rvalues
         PrimTypedValue left_tv = {
-            left.type(), Value{RValue{left.value().move_rvalue()}}};
+            left.type(), Value{left.value().move_rvalue()}};
         PrimTypedValue right_tv = {
-            right.type(), Value{RValue{right.value().move_rvalue()}}};
+            right.type(), Value{right.value().move_rvalue()}};
 
         // check operand types
         type_errors = prim_binary_op_type_check(op, left.type(), right.type());
@@ -459,7 +382,7 @@ ExprRes ExprVisitor::prim_binary_op(
                 return {};
             case PrimTypeError::ExplCastRequired: {
                 auto message =
-                    std::string{"suggest casting to"} +
+                    std::string{"suggest casting to "} +
                     std::string{builtin_type_str(error.suggested_type)};
                 diag().emit(Diag::Error, node->loc_id(), 1, message);
             } // fallthru
@@ -495,27 +418,9 @@ ExprRes ExprVisitor::prim_binary_op(
 ExprRes
 ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue& lval, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
-    return lval.accept(
-        [&](Ref<Var> var) -> ExprRes {
-            var->set_value(Value{tv.move_value().move_rvalue()});
-            return {var->type(), Value{LValue{var}}};
-        },
-        [&](ArrayAccess& array_access) -> ExprRes {
-            auto [rval, _] =
-                maybe_cast(node, array_access.type(), std::move(tv));
-            auto res_rval = rval.copy();
-            if (!rval.empty())
-                array_access.store(std::move(rval));
-            return {array_access.type(), Value{std::move(res_rval)}};
-        },
-        [&](BoundProp& bound_prop) -> ExprRes {
-            auto [rval, _] =
-                maybe_cast(node, bound_prop.mem()->type(), std::move(tv));
-            if (!rval.empty())
-                bound_prop.store(std::move(rval));
-            return {bound_prop.mem()->type(), Value{LValue{bound_prop}}};
-        },
-        [&](auto&& other) -> ExprRes { assert(false); });
+    auto type = lval.type();
+    auto [rval, _] = maybe_cast(node, type, std::move(tv));
+    return {type, lval.assign(std::move(rval))};
 }
 
 std::pair<RValue, bool>

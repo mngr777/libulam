@@ -40,6 +40,8 @@ public:
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
 
+    bool is_base_of(Ref<const Class> other) const;
+
     auto& parents() { return _ancestry.parents(); }
     const auto& parents() const { return _ancestry.parents(); }
 

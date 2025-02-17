@@ -11,8 +11,13 @@
 namespace ulam {
 
 class FunSet;
+class Prop;
 class Type;
+class TypedValue;
 class Var;
+
+class RValue;
+class Value;
 
 class LValue
     : public detail::
@@ -20,11 +25,16 @@ class LValue
 public:
     using Variant::Variant;
 
-    Ref<Type> type();
-
     RValue rvalue() const;
 
+    Ref<Type> type();
+    Ref<Class> obj_cls();
+
     LValue array_access(Ref<Type> item_type, array_idx_t index);
+    LValue bound_prop(Ref<Prop> prop);
+    LValue bound_fset(Ref<FunSet> fset);
+
+    Value assign(RValue&& rval);
 };
 
 class RValue : public detail::Variant<
@@ -43,7 +53,11 @@ public:
 
     RValue copy() const;
 
+    Ref<Class> obj_cls();
+
     RValue array_access(Ref<Type> item_type, array_idx_t index);
+    LValue bound_prop(Ref<Prop> prop);
+    LValue bound_fset(Ref<FunSet> fset);
 };
 
 class Value : public detail::Variant<LValue, RValue> {
@@ -65,7 +79,11 @@ public:
     RValue& rvalue() { return get<RValue>(); }
     const RValue& rvalue() const { return get<RValue>(); }
 
+    Ref<Class> obj_cls();
+
     Value array_access(Ref<Type> item_type, array_idx_t index);
+    Value bound_prop(Ref<Prop> prop);
+    Value bound_fset(Ref<FunSet> fset);
 
     RValue copy_rvalue() const;
     RValue move_rvalue();

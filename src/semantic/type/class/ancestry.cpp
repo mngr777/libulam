@@ -22,7 +22,7 @@ bool Ancestry::add(Ref<Class> cls, Ref<ast::TypeName> node) {
     return true;
 }
 
-bool Ancestry::is_base(Ref<Class> cls) const {
+bool Ancestry::is_base(Ref<const Class> cls) const {
     assert(cls->id() != NoTypeId);
     return _map.count(cls->id()) == 1;
 }
