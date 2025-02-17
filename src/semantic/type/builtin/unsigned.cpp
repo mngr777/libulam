@@ -38,19 +38,19 @@ bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-bool UnsignedType::is_castable_to(Ref<PrimType> type, bool expl) const {
+bool UnsignedType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     auto size = type->bitsize();
     switch (type->builtin_type_id()) {
     case IntId:
-        return expl || size + 1 <= bitsize();
+        return expl || size > bitsize();
     case UnsignedId:
-        return expl || size <= bitsize();
+        return expl || size >= bitsize();
     case BoolId:
         return false;
     case UnaryId:
         return expl || detail::unary_unsigned_bitsize(size) <= bitsize();
     case BitsId:
-        return expl || size <= bitsize();
+        return expl || size >= bitsize();
     case AtomId:
         return false;
     case StringId:

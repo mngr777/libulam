@@ -26,7 +26,7 @@ public:
     Datum to_datum(const RValue& rval) const override;
 
     bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
-    bool is_castable_to(Ref<PrimType> type, bool expl = true) const override;
+    bool is_castable_to(Ref<const PrimType> type, bool expl = true) const override;
 
     PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
     RValue cast_to(Ref<PrimType> type, RValue&& value) override;

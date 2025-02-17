@@ -22,7 +22,11 @@ constexpr int sign(Integer value) {
     return (value == 0) ? 0 : (value < 0 ? -1 : 1);
 }
 
-constexpr Unsigned abs(Integer value) { return value < 0 ? -value : value; }
+constexpr Unsigned abs(Integer value) {
+    if (value == min<Integer>())
+        return max<Unsigned>();
+    return value < 0 ? -value : value;
+}
 
 constexpr Unsigned log2(Unsigned value) {
     if (value == 0)
@@ -49,14 +53,16 @@ constexpr Unsigned count_ones(Unsigned value) {
 }
 
 constexpr bitsize_t bitsize(Unsigned value) {
-    return (value < 2) ? 1 : log2(value);
+    return log2(value) + 1;
 }
 
-constexpr bitsize_t unary_unsigned_bitsize(bitsize_t size) {
-    return bitsize(size);
+inline bitsize_t unary_unsigned_bitsize(bitsize_t size) {
+    return bitsize((Unsigned)size);
 }
 
-constexpr bitsize_t bitsize(Integer value) { return bitsize(abs(value)) + 1; }
+inline bitsize_t bitsize(Integer value) {
+    return bitsize(abs(value)) + 1;
+}
 
 constexpr Unsigned unsigned_max(bitsize_t size) {
     assert(0 < size && size <= sizeof(Unsigned) * 8);

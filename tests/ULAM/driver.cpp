@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "OK" : "FAIL") << "\n";
         if (!ok)
             break;
-        if (n > 8)
+        if (n == 9)
             break;
     }
 }

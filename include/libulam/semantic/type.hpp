@@ -96,13 +96,13 @@ public:
 
     virtual TypedValue type_op(TypeOp op);
 
-    bool is_expl_castable(Ref<const Type> type) {
-        return is_castable(type, true);
+    bool is_expl_castable_to(Ref<const Type> type) {
+        return is_castable_to(type, true);
     }
-    bool is_impl_castable(Ref<const Type> type) {
-        return is_castable(type, false);
+    bool is_impl_castable_to(Ref<const Type> type) {
+        return is_castable_to(type, false);
     }
-    virtual bool is_castable(Ref<const Type> type, bool expl = true) const {
+    virtual bool is_castable_to(Ref<const Type> type, bool expl = true) const {
         return false;
     }
 

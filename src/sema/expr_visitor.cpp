@@ -539,9 +539,9 @@ std::pair<RValue, bool>
 ExprVisitor::maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
     if (type == tv.type())
         return {tv.value().move_rvalue(), false};
-    if (tv.type()->is_impl_castable(type))
+    if (tv.type()->is_impl_castable_to(type))
         return {do_cast(type, std::move(tv)), true};
-    if (tv.type()->is_expl_castable(type)) {
+    if (tv.type()->is_expl_castable_to(type)) {
         diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
         return {do_cast(type, std::move(tv)), true};
     }

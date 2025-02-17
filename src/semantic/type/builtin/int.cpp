@@ -68,19 +68,19 @@ bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-bool IntType::is_castable_to(Ref<PrimType> type, bool expl) const {
+bool IntType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     auto size = type->bitsize();
     switch (type->builtin_type_id()) {
     case IntId:
-        return expl || size <= bitsize();
+        return expl || size >= bitsize();
     case UnsignedId:
-        return expl || size <= bitsize() + 1;
+        return expl;
     case BoolId:
         return false;
     case UnaryId:
         return expl || detail::unary_unsigned_bitsize(size) <= bitsize() + 1;
     case BitsId:
-        return expl || size <= bitsize();
+        return expl || size >= bitsize();
     case AtomId:
         return false;
         return false;
@@ -152,6 +152,12 @@ RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
         Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)type->bitsize(), detail::ones(val));
         return RValue{val};
+    }
+    case BitsId: {
+        auto bits_rval = type->construct();
+        // TODO: !! which part to write where in case of bitsize mismatch?
+        bits_rval.get<Bits>().bits().write(0, type->bitsize(), to_datum(rval));
+        return bits_rval;
     }
     default:
         assert(false);

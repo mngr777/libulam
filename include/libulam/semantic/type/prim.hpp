@@ -22,8 +22,6 @@ class Builtins;
 // TODO: make virtual methods pure
 class PrimType : public Type {
 public:
-    using Type::is_castable;
-
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
     bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
@@ -31,7 +29,8 @@ public:
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
 
-    RValue load(const BitVectorView data, BitVector::size_t off) const override {
+    RValue
+    load(const BitVectorView data, BitVector::size_t off) const override {
         return from_datum(data.read(off, bitsize()));
     }
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
@@ -42,6 +41,23 @@ public:
     virtual RValue from_datum(Datum datum) const { assert(false); }
     virtual Datum to_datum(const RValue& rval) const { assert(false); }
 
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override {
+        auto canon = type->canon();
+        return canon->is_prim() ? is_castable_to(canon->as_prim(), expl)
+                                : false;
+    }
+
+    virtual bool is_castable_to(Ref<const PrimType> type, bool expl = true) const {
+        assert(false);
+    }
+
+    bool is_impl_castable_to(Ref<const PrimType> type) const {
+        return is_castable_to(type, false);
+    }
+    bool is_expl_castable_to(Ref<const PrimType> type) const {
+        return is_castable_to(type, true);
+    }
+
     bool is_impl_castable_to(BuiltinTypeId id) const {
         return is_castable_to(id, false);
     }
@@ -49,17 +65,7 @@ public:
         return is_castable_to(id, true);
     }
 
-    bool is_impl_castable_to(Ref<PrimType> type) const {
-        return is_castable_to(type, false);
-    }
-    bool is_expl_castable_to(Ref<PrimType> type) const {
-        return is_castable_to(type, true);
-    }
-
     virtual bool is_castable_to(BuiltinTypeId id, bool expl = true) const {
-        assert(false);
-    }
-    virtual bool is_castable_to(Ref<PrimType> type, bool expl = true) const {
         assert(false);
     }
 

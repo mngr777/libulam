@@ -26,6 +26,8 @@ bool BitsType::is_castable_to(BuiltinTypeId id, bool expl) const {
         return expl;
     case UnaryId:
         return expl;
+    case BitsId:
+        return true;
     case AtomId:
         assert(false); // TMP
         return expl;
@@ -39,7 +41,7 @@ bool BitsType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-bool BitsType::is_castable_to(Ref<PrimType> type, bool expl) const {
+bool BitsType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     switch (type->builtin_type_id()) {
     case IntId:
         return expl;
@@ -47,6 +49,10 @@ bool BitsType::is_castable_to(Ref<PrimType> type, bool expl) const {
         return expl;
     case BoolId:
         return expl;
+    case UnaryId:
+        return expl;
+    case BitsId:
+        return expl || type->bitsize() >= bitsize();
     case AtomId:
         assert(false); // TMP
         return expl;
