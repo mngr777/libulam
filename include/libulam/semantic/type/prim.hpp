@@ -84,7 +84,9 @@ public:
         assert(false);
     }
 
-    // TODO: make this pure virtual, implement for builtins
+    virtual PrimTypedValue unary_op(Op op, RValue&& rval) { assert(false); }
+
+    // TODO: use RValue&&
     virtual PrimTypedValue binary_op(
         Op op,
         Value&& left_val,

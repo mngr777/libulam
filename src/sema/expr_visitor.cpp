@@ -1,4 +1,6 @@
+#include "libulam/ast/nodes/expr.hpp"
 #include "libulam/semantic/expr_res.hpp"
+#include "libulam/semantic/type/prim/ops.hpp"
 #include "libulam/semantic/value/array.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
@@ -95,11 +97,71 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
     debug() << __FUNCTION__ << " UnaryPreOp\n";
-    return {};
+    auto res = node->arg()->accept(*this);
+    if (!res.ok())
+        return res;
+
+    Op op = node->op();
+    auto type = res.type();
+
+    LValue lval;
+    bool inc_dec = (op == Op::PreInc || op == Op::PreDec);
+    if (inc_dec) {
+        if (!res.value().is_lvalue()) {
+            diag().emit(Diag::Error, node->loc_id(), 1, "cannot modify rvalue");
+            return {ExprError::NotLvalue};
+        }
+        lval = res.value().lvalue();
+    }
+
+    if (type->canon()->is_prim()) {
+        // TODO: move to separate virtual function
+        PrimTypedValue prim_tv{type->canon()->as_prim(), res.move_value()};
+
+        // check operand type, cast if required and possible
+        auto error = prim_unary_op_type_check(op, prim_tv.type());
+        switch (error.status) {
+        case PrimTypeError::Incompatible:
+            diag().emit(Diag::Error, node->loc_id(), 1, "incompatible type");
+            return {ExprError::InvalidOperandType};
+        case PrimTypeError::ExplCastRequired:
+            if (inc_dec) {
+                // cannot cast for in-place operations
+                diag().emit(Diag::Error, node->loc_id(), 1, "non-numeric type");
+                return {ExprError::InvalidOperandType};
+            } else {
+                auto message =
+                    std::string{"suggest casting to "} +
+                    std::string{builtin_type_str(error.suggested_type)};
+                diag().emit(Diag::Error, node->loc_id(), 1, message);
+            }
+            [[fallthrough]];
+        case PrimTypeError::ImplCastRequired:
+            assert(!inc_dec);
+            prim_tv = prim_cast(error.suggested_type, std::move(prim_tv));
+            break;
+        case PrimTypeError::Ok:
+            break;
+        }
+
+        // apply op
+        prim_tv = prim_tv.type()->unary_op(op, prim_tv.move_value().move_rvalue());
+        if (inc_dec) {
+            assign(node, lval, {prim_tv.type(), prim_tv.move_value()});
+            return {prim_tv.type(), Value{lval}};
+        }
+        return {prim_tv.type(), prim_tv.move_value()};
+
+    } else {
+        assert(false); // not implemented
+    }
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::UnaryPostOp> node) {
     debug() << __FUNCTION__ << " UnaryPostOp\n";
+    auto res = node->arg()->accept(*this);
+    if (!res.ok())
+        return res;
     return {};
 }
 
@@ -108,7 +170,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     // eval expr
     auto res = node->expr()->accept(*this);
     if (!res.ok())
-        return {res.error()};
+        return res;
 
     // resolve target type
     Resolver resolver{_program};
@@ -385,7 +447,8 @@ ExprRes ExprVisitor::prim_binary_op(
                     std::string{"suggest casting to "} +
                     std::string{builtin_type_str(error.suggested_type)};
                 diag().emit(Diag::Error, node->loc_id(), 1, message);
-            } // fallthru
+            }
+                [[fallthrough]];
             case PrimTypeError::ImplCastRequired:
                 return prim_cast(error.suggested_type, std::move(tv));
             case PrimTypeError::Ok:
@@ -396,6 +459,8 @@ ExprRes ExprVisitor::prim_binary_op(
         };
         left_tv = recast(type_errors.first, std::move(left_tv), node->lhs());
         right_tv = recast(type_errors.second, std::move(right_tv), node->rhs());
+        if (!left_tv || !right_tv)
+            return {ExprError::InvalidOperandType};
 
         // apply op
         right =
@@ -416,7 +481,7 @@ ExprRes ExprVisitor::prim_binary_op(
 }
 
 ExprRes
-ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue& lval, TypedValue&& tv) {
+ExprVisitor::assign(Ref<ast::OpExpr> node, LValue& lval, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
     auto type = lval.type();
     auto [rval, _] = maybe_cast(node, type, std::move(tv));

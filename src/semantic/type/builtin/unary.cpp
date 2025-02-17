@@ -120,6 +120,10 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
+PrimTypedValue UnaryType::unary_op(Op op, RValue&& rval) {
+    assert(false); // not implemented
+}
+
 PrimTypedValue UnaryType::binary_op(
     Op op,
     Value&& left_val,

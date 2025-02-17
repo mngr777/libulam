@@ -127,6 +127,10 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
+PrimTypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
+    assert(false); // not implemented
+}
+
 PrimTypedValue UnsignedType::binary_op(
     Op op,
     Value&& left_val,

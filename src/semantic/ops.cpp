@@ -31,6 +31,8 @@ Kind kind(Op op) {
     case Op::LessOrEq:
     case Op::Greater:
     case Op::GreaterOrEq:
+    case Op::UnaryPlus:
+    case Op::UnaryMinus:
     case Op::PreInc:
     case Op::PreDec:
     case Op::PostInc:

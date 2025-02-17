@@ -16,6 +16,8 @@ public:
     _TypedValue(_TypedValue&&) = default;
     _TypedValue& operator=(_TypedValue&&) = default;
 
+    operator bool() { return _type; }
+
     Ref<T> type() { return _type; }
     Ref<const T> type() const { return _type; }
 

@@ -164,6 +164,34 @@ RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
+PrimTypedValue IntType::unary_op(Op op, RValue&& rval) {
+    if (rval.empty())
+        return {this, Value{RValue{}}};
+
+    auto int_val = rval.get<Integer>();
+    switch (op) {
+    case Op::UnaryMinus:
+        int_val = (int_val == detail::min<Integer>()) ? detail::max<Integer>()
+                                                      : -int_val;
+        break;
+    case Op::UnaryPlus:
+        break;
+    case Op::PreInc:
+    case Op::PostInc:
+        if (int_val < detail::integer_max(bitsize()))
+            ++int_val;
+        break;
+    case Op::PreDec:
+    case Op::PostDec:
+        if (int_val > detail::integer_min(bitsize()))
+            --int_val;
+        break;
+    default:
+        assert(false);
+    }
+    return {this, Value{RValue{int_val}}};
+}
+
 PrimTypedValue IntType::binary_op(
     Op op,
     Value&& left_val,

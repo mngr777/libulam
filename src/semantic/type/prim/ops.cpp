@@ -22,16 +22,34 @@ PrimTypeError check_type_match(Ref<const PrimType> type, BuiltinTypeId target) {
 
 } // Namespace
 
+PrimTypeError prim_unary_op_type_check(Op op, Ref<PrimType> type) {
+    switch (ops::kind(op)) {
+    case ops::Kind::Numeric:
+        if (!is_numeric(type))
+            // NOTE: using IntId as placeholder for "any numeric type"
+            return check_type_match(type, IntId);
+        return {PrimTypeError::Ok, VoidId};
+    case ops::Kind::Bitwise:
+        return check_type_match(type, BitsId);
+    case ops::Kind::Logical:
+        return check_type_match(type, BoolId);
+    default:
+        assert(false);
+    }
+}
+
 PrimTypeErrorPair prim_binary_op_type_check(
     Op op, Ref<PrimType> left_type, Ref<PrimType> right_type) {
 
     PrimTypeErrorPair errors;
     switch (ops::kind(op)) {
     case ops::Kind::Assign: {
-        errors.second = check_type_match(right_type, left_type->builtin_type_id());
+        errors.second =
+            check_type_match(right_type, left_type->builtin_type_id());
     } break;
     case ops::Kind::Equality: {
-        errors.second = check_type_match(right_type, left_type->builtin_type_id());
+        errors.second =
+            check_type_match(right_type, left_type->builtin_type_id());
     } break;
     case ops::Kind::Numeric: {
         // one or both operands non-numeric?

@@ -24,6 +24,8 @@ public:
 using PrimTypeErrorPair = std::pair<PrimTypeError, PrimTypeError>;
 using PrimTypeErrorList = std::list<PrimTypeError>;
 
+PrimTypeError prim_unary_op_type_check(Op op, Ref<PrimType> type);
+
 PrimTypeErrorPair prim_binary_op_type_check(
     Op op, Ref<PrimType> left_type, Ref<PrimType> right_type);
 

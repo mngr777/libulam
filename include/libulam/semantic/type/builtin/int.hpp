@@ -31,6 +31,8 @@ public:
     PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) override;
     RValue cast_to(Ref<PrimType> type, RValue&& rval) override;
 
+    PrimTypedValue unary_op(Op op, RValue&& rval) override;
+
     PrimTypedValue binary_op(
         Op op,
         Value&& left_val,
