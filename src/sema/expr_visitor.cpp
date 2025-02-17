@@ -372,24 +372,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return {ExprError::ArrayIndexOutOfRange};
     }
 
-    if (array_val.is_lvalue()) {
-        ArrayAccess access = array_val.lvalue().accept(
-            [&](Ref<Var> var) {
-                return ArrayAccess{var->array_view(), item_type, index};
-            },
-            [&](ArrayAccess& array_access) {
-                return array_access.item_array_access(index);
-            },
-            [&](BoundProp& bound_prop) {
-                return ArrayAccess{
-                    bound_prop.mem_array_view(), item_type, index};
-            },
-            [&](auto& other) -> ArrayAccess { assert(false); });
-        return {item_type, Value{LValue{std::move(access)}}};
-    } else {
-        auto rval = array_val.move_rvalue();
-        return {item_type, Value{rval.get<Array>().load(item_type, index)}};
-    }
+    return {item_type, array_val.array_access(item_type, index)};
 }
 
 ExprRes ExprVisitor::cast(

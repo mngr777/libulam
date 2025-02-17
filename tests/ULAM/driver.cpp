@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     for (unsigned n = 0; n < test_paths.size(); ++n) {
-        if (n != 9)
+        if (n != 10)
             continue;
         auto& path = test_paths[n];
         std::cout << path.filename() << " ";
@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "OK" : "FAIL") << "\n";
         if (!ok)
             break;
-        if (n == 9)
-            break;
+        break;
     }
 }

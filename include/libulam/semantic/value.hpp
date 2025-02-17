@@ -7,8 +7,6 @@
 #include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
-#include <utility>
-#include <variant>
 
 namespace ulam {
 
@@ -16,28 +14,17 @@ class FunSet;
 class Type;
 class Var;
 
-template <typename... Ts> class _Value {
+class LValue
+    : public detail::
+          Variant<Ref<Var>, ArrayAccess, ObjectView, BoundFunSet, BoundProp> {
 public:
-    template <typename T> _Value(T&& value): _value{std::forward<T>(value)} {}
-    _Value() {}
+    using Variant::Variant;
 
-    bool is_unknown() const { return is<std::monostate>(); }
+    Ref<Type> type();
 
-    template <typename T> bool is() const {
-        return std::holds_alternative<T>(_value);
-    }
+    RValue rvalue() const;
 
-    template <typename T> T& get() { return std::get<T>(_value); }
-    template <typename T> const T& get() const { return std::get<T>(_value); }
-
-    template <typename T> void set(T&& value) { _value = value; }
-
-    template <typename V> void accept(V&& visitor) {
-        std::visit(visitor, _value);
-    }
-
-private:
-    std::variant<std::monostate, Ts...> _value;
+    LValue array_access(Ref<Type> item_type, array_idx_t index);
 };
 
 class RValue : public detail::Variant<
@@ -55,17 +42,8 @@ public:
     RValue& operator=(RValue&&) = default;
 
     RValue copy() const;
-};
 
-class LValue
-    : public detail::
-          Variant<Ref<Var>, ArrayAccess, ObjectView, BoundFunSet, BoundProp> {
-public:
-    using Variant::Variant;
-
-    Ref<Type> type();
-
-    RValue rvalue() const;
+    RValue array_access(Ref<Type> item_type, array_idx_t index);
 };
 
 class Value : public detail::Variant<LValue, RValue> {
@@ -86,6 +64,8 @@ public:
 
     RValue& rvalue() { return get<RValue>(); }
     const RValue& rvalue() const { return get<RValue>(); }
+
+    Value array_access(Ref<Type> item_type, array_idx_t index);
 
     RValue copy_rvalue() const;
     RValue move_rvalue();

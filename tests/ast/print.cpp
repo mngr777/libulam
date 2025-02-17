@@ -284,6 +284,18 @@ void Printer::visit(ulam::Ref<ulam::ast::For> node) {
     }
 }
 
+void Printer::visit(ulam::Ref<ulam::ast::While> node) {
+    _os << "while (";
+    accept_me(node->cond());
+    _os << ")";
+    if (node->has_body()) {
+        _os << " ";
+        accept_me(node->body());
+    } else {
+        _os << ";";
+    }
+}
+
 void Printer::visit(ulam::Ref<ulam::ast::Return> node) {
     _os << "return ";
     if (node->has_expr())
