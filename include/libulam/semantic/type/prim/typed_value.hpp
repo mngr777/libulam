@@ -6,7 +6,11 @@ namespace ulam {
 
 class PrimType;
 
-using PrimTypedValue = _TypedValue<PrimType>;
+class PrimTypedValue : public _TypedValue<PrimType> {
+public:
+    using _TypedValue::_TypedValue;
+};
+
 using PrimTypedValueList = std::list<PrimTypedValue>;
 
 } // namespace ulam

@@ -7,7 +7,6 @@
 #include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
-#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -58,12 +57,9 @@ public:
     RValue copy() const;
 };
 
-class LValue : public detail::Variant<
-                   Ref<Var>,
-                   ArrayAccess,
-                   ObjectView,
-                   BoundFunSet,
-                   BoundProp /* TODO: object ref, array access */> {
+class LValue
+    : public detail::
+          Variant<Ref<Var>, ArrayAccess, ObjectView, BoundFunSet, BoundProp> {
 public:
     using Variant::Variant;
 
@@ -85,15 +81,11 @@ public:
     bool is_lvalue() const { return is<LValue>(); }
     bool is_rvalue() const { return is<RValue>(); }
 
-    LValue* lvalue() {
-        return const_cast<LValue*>(std::as_const(*this).lvalue());
-    }
+    LValue& lvalue() { return get<LValue>(); }
+    const LValue& lvalue() const { return get<LValue>(); }
 
-    const LValue* lvalue() const {
-        if (empty() || !is_lvalue())
-            return nullptr;
-        return &const_cast<Value*>(this)->get<LValue>();
-    }
+    RValue& rvalue() { return get<RValue>(); }
+    const RValue& rvalue() const { return get<RValue>(); }
 
     RValue copy_rvalue() const;
     RValue move_rvalue();

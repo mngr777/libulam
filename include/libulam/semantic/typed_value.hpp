@@ -6,8 +6,7 @@
 
 namespace ulam {
 
-template <typename T>
-class _TypedValue {
+template <typename T> class _TypedValue {
 public:
     _TypedValue(): _type{}, _value{} {}
 
@@ -36,7 +35,11 @@ private:
 
 class Type;
 
-using TypedValue = _TypedValue<Type>;
+class TypedValue : public _TypedValue<Type> {
+public:
+    using _TypedValue::_TypedValue;
+};
+
 using TypedValueList = std::list<TypedValue>;
 
 } // namespace ulam

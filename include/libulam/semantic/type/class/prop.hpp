@@ -1,11 +1,10 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/class/layout.hpp>
+#include <libulam/semantic/value/object.hpp>
 #include <libulam/semantic/var/base.hpp>
 
 namespace ulam {
-
-class Object;
 
 class Prop : public VarBase {
 public:

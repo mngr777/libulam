@@ -2,19 +2,14 @@
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
-#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type_ops.hpp>
-#include <libulam/semantic/typed_value.hpp>
-#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bit_vector.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 
 namespace ulam::ast {
-class Node;
-class BinaryOp;
 class TypeDef;
 class TypeName;
 class TypeExpr;
@@ -24,6 +19,8 @@ namespace ulam {
 
 class Diag;
 class Scope;
+class RValue;
+class TypedValue;
 
 using type_id_t = std::uint16_t;
 constexpr type_id_t NoTypeId = 0;
@@ -61,22 +58,15 @@ public:
 
     virtual bitsize_t bitsize() const = 0;
 
-    RValue load(const BitVector& data, BitVector::size_t off) const {
-        return load(data.view(), off);
-    }
+    virtual RValue construct();
 
+    RValue load(const BitVector& data, BitVector::size_t off) const;
     void
-    store(BitVector& data, BitVector::size_t off, const RValue& rval) const {
-        store(data.view(), off, rval);
-    }
+    store(BitVector& data, BitVector::size_t off, const RValue& rval) const;
 
-    virtual RValue load(const BitVectorView data, BitVector::size_t off) const {
-        assert(false);
-    }
+    virtual RValue load(const BitVectorView data, BitVector::size_t off) const;
     virtual void
-    store(BitVectorView data, BitVector::size_t off, const RValue& rval) const {
-        assert(false);
-    }
+    store(BitVectorView data, BitVector::size_t off, const RValue& rval) const;
 
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
@@ -104,7 +94,7 @@ public:
     virtual Ref<RefType> as_ref() { return {}; }
     virtual Ref<const RefType> as_ref() const { return {}; }
 
-    virtual TypedValue type_op(TypeOp op) { assert(false); }
+    virtual TypedValue type_op(TypeOp op);
 
     bool is_expl_castable(Ref<const Type> type) {
         return is_castable(type, true);
@@ -121,8 +111,6 @@ public:
 
     virtual Ref<ArrayType> array_type(array_size_t size);
     virtual Ref<RefType> ref_type();
-
-    virtual RValue construct() { assert(false); }
 
 protected:
     virtual Ptr<ArrayType> make_array_type(array_size_t size);
@@ -188,13 +176,11 @@ public:
         TypeIdGen* id_gen,
         Ref<Type> item_type,
         array_size_t array_size,
-        Ref<ArrayType> canon = {}):
-        Type{id_gen},
-        _item_type{item_type},
-        _array_size{array_size},
-        _canon{this} {}
+        Ref<ArrayType> canon = {});
 
     bitsize_t bitsize() const override;
+
+    RValue construct() override;
 
     Ref<ArrayType> as_array() override { return this; }
     Ref<const ArrayType> as_array() const override { return this; }

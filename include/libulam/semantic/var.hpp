@@ -24,6 +24,7 @@ public:
     const Value& value() const { return _value; }
     void set_value(Value&& value);
 
+    ArrayView array_view();
     ObjectView obj_view();
 
     RValue rvalue();

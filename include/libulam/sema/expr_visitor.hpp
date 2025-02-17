@@ -47,12 +47,14 @@ public:
         Ref<Type> type,
         bool is_expl);
 
+    virtual array_idx_t array_index(Ref<ast::Expr> expr);
+
 protected:
     virtual ExprRes prim_binary_op(
         Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right);
 
     virtual ExprRes
-    assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& val);
+    assign(Ref<ast::BinaryOp> node, LValue& lval, TypedValue&& val);
 
     virtual std::pair<RValue, bool>
     maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);

@@ -1,9 +1,13 @@
+#include "libulam/semantic/expr_res.hpp"
+#include "libulam/semantic/value/array.hpp"
+#include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bound.hpp>
+#include <libulam/semantic/value/types.hpp>
 
 #define DEBUG_EXPR_VISITOR // TEST
 #ifdef DEBUG_EXPR_VISITOR
@@ -183,11 +187,11 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     auto val = callable.move_value();
     assert(val.is_lvalue());
     auto lval = val.lvalue();
-    if (!lval->is<BoundFunSet>()) {
+    if (!lval.is<BoundFunSet>()) {
         diag().emit(Diag::Error, loc_id, 1, "is not a function");
         return {};
     }
-    auto& bound_fset = lval->get<BoundFunSet>();
+    auto& bound_fset = lval.get<BoundFunSet>();
     auto obj_view = bound_fset.obj_view();
     auto fset = bound_fset.mem();
 
@@ -214,15 +218,14 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     debug() << __FUNCTION__ << " MemberAccess\n";
     assert(node->has_obj());
+
     // eval object expr
     auto obj_res = node->obj()->accept(*this);
-    if (!obj_res.ok()) {
-        diag().emit(Diag::Error, node->obj()->loc_id(), 1, "object not found");
-        return {ExprError::SymbolNotFound};
-    }
+    if (!obj_res.ok())
+        return {ExprError::Error};
 
     // is an object?
-    if (!obj_res.type()->is_class()) {
+    if (!obj_res.type()->canon()->is_class()) {
         diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not an object");
         return {ExprError::NotObject};
     }
@@ -246,6 +249,10 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
                     [&](Ref<Var> var) {
                         return BoundProp{var->obj_view(), prop};
                     },
+                    [&](ArrayAccess& array_access) {
+                        auto obj_view = array_access.item_object_view();
+                        return BoundProp{obj_view, prop};
+                    },
                     [&](ObjectView obj_view) {
                         return BoundProp{obj_view, prop};
                     },
@@ -267,6 +274,10 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
                 return lval.accept(
                     [&](Ref<Var> var) {
                         return BoundFunSet{var->obj_view(), fset};
+                    },
+                    [&](ArrayAccess& array_access) {
+                        auto obj_view = array_access.item_object_view();
+                        return BoundFunSet{obj_view, fset};
                     },
                     [&](ObjectView obj_view) {
                         return BoundFunSet{obj_view, fset};
@@ -328,7 +339,57 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     debug() << __FUNCTION__ << " ArrayAccess\n";
-    return {};
+    assert(node->has_array());
+    assert(node->has_index());
+
+    // eval array expr
+    auto array_res = node->array()->accept(*this);
+    if (!array_res.ok())
+        return {ExprError::Error};
+
+    if (array_res.type()->canon()->is_class())
+        assert(false); // not implemented
+
+    // is an array?
+    if (!array_res.type()->canon()->is_array()) {
+        diag().emit(Diag::Error, node->array()->loc_id(), 1, "not an array");
+        return {ExprError::NotArray};
+    }
+
+    // array
+    auto array_type = array_res.type()->as_array();
+    auto item_type = array_type->item_type();
+    auto array_val = array_res.move_value();
+
+    // index
+    auto index = array_index(node->index());
+    if (index == UnknownArrayIdx)
+        return {ExprError::UnknownArrayIndex};
+    if (index + 1 > array_type->array_size()) {
+        diag().emit(
+            Diag::Error, node->index()->loc_id(), 1,
+            "array index is out of range");
+        return {ExprError::ArrayIndexOutOfRange};
+    }
+
+    if (array_val.is_lvalue()) {
+        ArrayAccess access = array_val.lvalue().accept(
+            [&](Ref<Var> var) {
+                return ArrayAccess{var->array_view(), item_type, index};
+            },
+            [&](ArrayAccess& array_access) {
+                return array_access.item_array_access(index);
+            },
+            [&](BoundProp& bound_prop) {
+                return ArrayAccess{
+                    bound_prop.mem_array_view(), item_type, index};
+            },
+            [&](auto& other) -> ArrayAccess { assert(false); });
+        return {item_type, Value{LValue{std::move(access)}}};
+    } else {
+        auto rval = array_val.move_rvalue();
+        return {item_type, Value{rval.get<Array>().load(item_type, index)}};
+    }
 }
 
 ExprRes ExprVisitor::cast(
@@ -355,6 +416,38 @@ ExprRes ExprVisitor::cast(
         return {ExprError::NotImplemented};
     } else {
         return {ExprError::NotImplemented};
+    }
+}
+
+array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
+    debug() << __FUNCTION__ << "\n";
+    ExprRes res = expr->accept(*this);
+    if (!res.ok())
+        return UnknownArrayIdx;
+
+    auto type = res.type();
+    auto rval = res.move_value().move_rvalue();
+    switch (type->builtin_type_id()) {
+    case IntId: {
+        auto int_val = rval.get<Integer>();
+        if (int_val < 0) {
+            diag().emit(Diag::Error, expr->loc_id(), 1, "array index is < 0");
+            return UnknownArrayIdx;
+        }
+        return (array_idx_t)int_val;
+    }
+    case UnsignedId: {
+        auto uns_val = rval.get<Unsigned>();
+        return (array_idx_t)uns_val;
+    }
+    case UnaryId: {
+        auto uns_val = detail::count_ones(rval.get<Unsigned>());
+        return (array_idx_t)uns_val;
+    }
+    default:
+        diag().emit(
+            Diag::Error, expr->loc_id(), 1, "array index is non-numeric");
+        return UnknownArrayIdx;
     }
 }
 
@@ -417,10 +510,21 @@ ExprRes ExprVisitor::prim_binary_op(
 }
 
 ExprRes
-ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue* lval, TypedValue&& tv) {
+ExprVisitor::assign(Ref<ast::BinaryOp> node, LValue& lval, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
-    return lval->accept(
-        [&](Ref<Var> var) -> ExprRes { assert(false && "assign to var"); },
+    return lval.accept(
+        [&](Ref<Var> var) -> ExprRes {
+            var->set_value(Value{tv.move_value().move_rvalue()});
+            return {var->type(), Value{LValue{var}}};
+        },
+        [&](ArrayAccess& array_access) -> ExprRes {
+            auto [rval, _] =
+                maybe_cast(node, array_access.type(), std::move(tv));
+            auto res_rval = rval.copy();
+            if (!rval.empty())
+                array_access.store(std::move(rval));
+            return {array_access.type(), Value{std::move(res_rval)}};
+        },
         [&](BoundProp& bound_prop) -> ExprRes {
             auto [rval, _] =
                 maybe_cast(node, bound_prop.mem()->type(), std::move(tv));

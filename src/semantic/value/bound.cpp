@@ -1,5 +1,7 @@
 #include <cassert>
 #include <libulam/semantic/type/class/prop.hpp>
+#include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/array.hpp>
 #include <libulam/semantic/value/bound.hpp>
 
 namespace ulam {
@@ -12,6 +14,11 @@ BoundProp BoundProp::mem_obj_bound_prop(Ref<Prop> prop) {
 
 BoundFunSet BoundProp::mem_obj_bound_fset(Ref<FunSet> fset) {
     return {main(), mem_obj_view(), fset};
+}
+
+ArrayView BoundProp::mem_array_view() {
+    assert(mem()->type()->is_array());
+    return ArrayView{mem()->bits_view(obj_view())};
 }
 
 ObjectView BoundProp::mem_obj_view() { return mem()->obj_view(obj_view()); }

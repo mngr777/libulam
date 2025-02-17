@@ -5,6 +5,7 @@
 
 namespace ulam {
 
+class ArrayView;
 class FunSet;
 class Prop;
 class RValue;
@@ -49,6 +50,7 @@ public:
     BoundProp mem_obj_bound_prop(Ref<Prop> prop);
     BoundFunSet mem_obj_bound_fset(Ref<FunSet> fset);
 
+    ArrayView mem_array_view();
     ObjectView mem_obj_view();
     BitVectorView bits_view();
 
