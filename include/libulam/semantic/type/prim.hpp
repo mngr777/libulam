@@ -89,9 +89,9 @@ public:
     // TODO: use RValue&&
     virtual PrimTypedValue binary_op(
         Op op,
-        Value&& left_val,
+        RValue&& left_rval,
         Ref<const PrimType> right_type,
-        Value&& right_val) {
+        RValue&& right_rval) {
         assert(false);
     };
 

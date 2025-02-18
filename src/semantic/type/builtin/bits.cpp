@@ -97,14 +97,10 @@ RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
 
 PrimTypedValue BitsType::binary_op(
     Op op,
-    Value&& left_val,
+    RValue&& left_rval,
     Ref<const PrimType> right_type,
-    Value&& right_val) {
+    RValue&& right_rval) {
     assert(right_type->is(BitsId));
-
-    // TODO: avoid copying?
-    auto left_rval = left_val.move_rvalue();
-    auto right_rval = right_val.move_rvalue();
     assert(left_rval.empty() || left_rval.is<Bits>());
     bool is_unknown = left_rval.empty() || right_rval.empty();
 

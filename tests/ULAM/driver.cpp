@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     for (unsigned n = 0; n < test_paths.size(); ++n) {
-        if (n != 12)
+        if (n != 14)
             continue;
         auto& path = test_paths[n];
         std::cout << path.filename() << " ";

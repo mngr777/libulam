@@ -27,6 +27,11 @@ bool is_bitwise(Op op);
 bool is_assign(Op op);
 Op non_assign(Op op);
 
+bool is_unary_op(Op op);
+bool is_unary_pre_op(Op op);
+bool is_unary_post_op(Op op);
+bool is_inc_dec(Op op);
+
 Prec prec(Op op);
 Prec right_prec(Op op);
 Assoc assoc(Op op);

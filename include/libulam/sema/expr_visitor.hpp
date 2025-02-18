@@ -31,8 +31,7 @@ public:
     virtual ExprRes visit(Ref<ast::Ident> node) override;
     virtual ExprRes visit(Ref<ast::ParenExpr> node) override;
     virtual ExprRes visit(Ref<ast::BinaryOp> node) override;
-    virtual ExprRes visit(Ref<ast::UnaryPreOp> node) override;
-    virtual ExprRes visit(Ref<ast::UnaryPostOp> node) override;
+    virtual ExprRes visit(Ref<ast::UnaryOp> node) override;
     virtual ExprRes visit(Ref<ast::Cast> node) override;
     virtual ExprRes visit(Ref<ast::BoolLit> node) override;
     virtual ExprRes visit(Ref<ast::NumLit> node) override;
@@ -66,9 +65,6 @@ protected:
     prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv);
 
     virtual RValue prim_cast(Ref<PrimType>, PrimTypedValue&& tv);
-
-    virtual PrimTypedValue
-    prim_binary_op_impl(Op op, PrimTypedValue&& left, PrimTypedValue&& right);
 
     virtual ExprRes funcall(
         Ref<ast::FunCall> node,

@@ -37,9 +37,9 @@ public:
 
     PrimTypedValue binary_op(
         Op op,
-        Value&& left_val,
+        RValue&& left_rval,
         Ref<const PrimType> right_type,
-        Value&& right_val) override;
+        RValue&& right_rval) override;
 };
 
 using UnaryTypeTpl = _PrimTypeTpl<UnaryType>;

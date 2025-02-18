@@ -64,7 +64,7 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
         auto def_node = node->def(n);
         auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
         if (_resolver.resolve(ref(var), scope())) {
-            var->set_value(Value{var->type()->construct()});
+            var->set_value(Value{var->type()->canon()->construct()});
             scope()->set(var->name_id(), std::move(var));
         }
     }

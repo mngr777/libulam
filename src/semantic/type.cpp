@@ -83,6 +83,7 @@ void AliasType::set_aliased(Ref<Type> type) {
     assert(!_aliased);
     _aliased = type;
     _canon = type->canon();
+    _non_alias = type->non_alias();
 }
 
 Ptr<ArrayType> AliasType::make_array_type(array_size_t size) {

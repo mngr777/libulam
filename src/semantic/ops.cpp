@@ -119,6 +119,44 @@ Op non_assign(Op op) {
     }
 }
 
+bool is_unary_op(Op op) { return is_unary_pre_op(op) || is_unary_post_op(op); }
+
+bool is_unary_pre_op(Op op) {
+    switch (op) {
+    case Op::UnaryPlus:
+    case Op::UnaryMinus:
+    case Op::PreInc:
+    case Op::PreDec:
+    case Op::Negate:
+    case Op::BwNot:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool is_unary_post_op(Op op) {
+    switch (op) {
+    case Op::PostInc:
+    case Op::PostDec:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool is_inc_dec(Op op) {
+    switch (op) {
+    case Op::PreInc:
+    case Op::PreDec:
+    case Op::PostInc:
+    case Op::PostDec:
+        return true;
+    default:
+        return false;
+    }
+}
+
 Prec prec(Op op) {
     switch (op) {
     case Op::Is:
@@ -183,9 +221,7 @@ Prec prec(Op op) {
     }
 }
 
-Prec right_prec(Op op) {
-    return prec(op) + (assoc(op) == Assoc::Left ? 1 : 0);
-}
+Prec right_prec(Op op) { return prec(op) + (assoc(op) == Assoc::Left ? 1 : 0); }
 
 Assoc assoc(Op op) {
     switch (op) {

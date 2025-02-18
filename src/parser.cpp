@@ -712,7 +712,7 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
     if (op != Op::None) {
         auto loc_id = _tok.loc_id;
         consume();
-        lhs = tree_loc<ast::UnaryPreOp>(
+        lhs = tree_loc<ast::UnaryOp>(
             loc_id, op, parse_expr_climb(ops::prec(op)));
     } else {
         lhs = parse_expr_lhs();
@@ -735,7 +735,7 @@ Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
             if (op == Op::None || ops::prec(op) < min_prec)
                 break;
             consume();
-            lhs = tree<ast::UnaryPostOp>(op, std::move(lhs));
+            lhs = tree<ast::UnaryOp>(op, std::move(lhs));
             continue;
         }
         switch (op) {

@@ -109,8 +109,7 @@ protected:
     void visit(ulam::Ref<ulam::ast::ParenExpr> node) override;
     void visit(ulam::Ref<ulam::ast::Cast> node) override;
     void visit(ulam::Ref<ulam::ast::BinaryOp> node) override;
-    void visit(ulam::Ref<ulam::ast::UnaryPreOp> node) override;
-    void visit(ulam::Ref<ulam::ast::UnaryPostOp> node) override;
+    void visit(ulam::Ref<ulam::ast::UnaryOp> node) override;
     void visit(ulam::Ref<ulam::ast::ArrayAccess> node) override;
     void visit(ulam::Ref<ulam::ast::MemberAccess> node) override;
 

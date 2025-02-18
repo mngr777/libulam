@@ -132,9 +132,9 @@ PrimTypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
 
 PrimTypedValue UnsignedType::binary_op(
     Op op,
-    Value&& left_val,
+    RValue&& left_rval,
     Ref<const PrimType> right_type,
-    Value&& right_val) {
+    RValue&& right_rval) {
     assert(right_type->is(UnsignedId));
     assert(false); // not implemented
 }

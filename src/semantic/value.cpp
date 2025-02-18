@@ -13,6 +13,7 @@ namespace ulam {
 Ref<Type> LValue::type() {
     return accept(
         [&](Ref<Var> var) { return var->type(); },
+        [&](ArrayAccess& array_access) { return array_access.type(); },
         [&](ObjectView& obj_view) -> Ref<Type> { return obj_view.cls(); },
         [&](BoundProp& bound_prop) { return bound_prop.mem()->type(); },
         [&](auto& other) -> Ref<Type> { assert(false); });

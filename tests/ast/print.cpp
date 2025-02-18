@@ -325,14 +325,12 @@ void Printer::visit(ulam::Ref<ulam::ast::BinaryOp> node) {
     accept_me(node->rhs());
 }
 
-void Printer::visit(ulam::Ref<ulam::ast::UnaryPreOp> node) {
-    _os << ulam::ops::str(node->op());
+void Printer::visit(ulam::Ref<ulam::ast::UnaryOp> node) {
+    if (ulam::ops::is_unary_pre_op(node->op()))
+        _os << ulam::ops::str(node->op());
     accept_me(node->arg());
-}
-
-void Printer::visit(ulam::Ref<ulam::ast::UnaryPostOp> node) {
-    accept_me(node->arg());
-    _os << ulam::ops::str(node->op());
+    if (ulam::ops::is_unary_post_op(node->op()))
+        _os << ulam::ops::str(node->op());
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {

@@ -193,13 +193,11 @@ PrimTypedValue IntType::unary_op(Op op, RValue&& rval) {
 
 PrimTypedValue IntType::binary_op(
     Op op,
-    Value&& left_val,
+    RValue&& left_rval,
     Ref<const PrimType> right_type,
-    Value&& right_val) {
+    RValue&& right_rval) {
     assert(right_type->is(IntId));
 
-    auto left_rval = left_val.move_rvalue();
-    auto right_rval = right_val.move_rvalue();
     assert(left_rval.empty() || left_rval.is<Integer>());
     assert(right_rval.empty() || right_rval.is<Integer>());
 

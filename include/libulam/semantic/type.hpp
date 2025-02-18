@@ -94,6 +94,9 @@ public:
     virtual Ref<RefType> as_ref() { return {}; }
     virtual Ref<const RefType> as_ref() const { return {}; }
 
+    virtual Ref<Type> non_alias() { return this; }
+    virtual Ref<const Type> non_alias() const { return this; }
+
     virtual TypedValue type_op(TypeOp op);
 
     bool is_expl_castable_to(Ref<const Type> type) const {
@@ -155,6 +158,9 @@ public:
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
 
+    Ref<Type> non_alias() override { return _non_alias; }
+    Ref<const Type> non_alias() const override { return _non_alias; }
+
     Ref<Type> aliased() { return _aliased; }
     Ref<const Type> aliased() const { return _aliased; }
 
@@ -168,6 +174,7 @@ private:
     Ref<ast::TypeDef> _node;
     Ref<Type> _aliased{};
     Ref<Type> _canon{};
+    Ref<Type> _non_alias{};
 };
 
 class ArrayType : public Type {

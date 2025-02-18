@@ -1,5 +1,6 @@
 #include "libulam/ast/nodes/expr.hpp"
 #include "libulam/semantic/expr_res.hpp"
+#include "libulam/semantic/ops.hpp"
 #include "libulam/semantic/type/prim/ops.hpp"
 #include "libulam/semantic/value/array.hpp"
 #include "src/semantic/detail/integer.hpp"
@@ -76,17 +77,29 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     if (!left || !right)
         return {ExprError::Error};
 
-    if (left.type()->is_prim()) {
+    if (left.type()->canon()->is_prim()) {
         // binary op on primitive types
-        if (!right.type()->is_prim()) {
+        if (!right.type()->canon()->is_prim()) {
             diag().emit(
                 Diag::Error, node->rhs()->loc_id(), 1,
                 "non-primitive type cannot be used as right operand type");
             return {ExprError::InvalidOperandType};
         }
         return prim_binary_op(
-            node, {left.type()->as_prim(), left.move_value()},
-            {right.type()->as_prim(), right.move_value()});
+            node, {left.type()->canon()->as_prim(), left.move_value()},
+            {right.type()->canon()->as_prim(), right.move_value()});
+
+    } else if (left.type()->canon()->is_array()) {
+        // if (node->op() != Op::Assign) {
+        //     diag().emit(Diag::Error, node->loc_id(), 1, "unsupported array
+        //     operation"); return {ExprError::InvalidOperandType};
+        // }
+        // if (!right.type()->canon()->is_array()) {
+        //     diag().emit(Diag::Error, node->loc_id(), 1, "cannot assign to
+        //     array"); return {ExprError::InvalidOperandType};
+        // }
+        // if ()
+        // return assign(node, );
 
     } else {
         // TODO: operator funs for classes, error(?) for arrays, ...
@@ -95,8 +108,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     return {};
 }
 
-ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
-    debug() << __FUNCTION__ << " UnaryPreOp\n";
+ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
+    debug() << __FUNCTION__ << " UnaryOp\n";
     auto res = node->arg()->accept(*this);
     if (!res.ok())
         return res;
@@ -105,13 +118,18 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
     auto type = res.type();
 
     LValue lval;
-    bool inc_dec = (op == Op::PreInc || op == Op::PreDec);
-    if (inc_dec) {
+    RValue orig_rval;
+    if (ops::is_inc_dec(op)) {
+        // store lvalue
         if (!res.value().is_lvalue()) {
             diag().emit(Diag::Error, node->loc_id(), 1, "cannot modify rvalue");
             return {ExprError::NotLvalue};
         }
         lval = res.value().lvalue();
+
+        // store original rvalue
+        if (ops::is_unary_post_op(op))
+            orig_rval = res.value().copy_rvalue();
     }
 
     if (type->canon()->is_prim()) {
@@ -125,7 +143,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
             diag().emit(Diag::Error, node->loc_id(), 1, "incompatible type");
             return {ExprError::InvalidOperandType};
         case PrimTypeError::ExplCastRequired:
-            if (inc_dec) {
+            if (ops::is_inc_dec(op)) {
                 // cannot cast for in-place operations
                 diag().emit(Diag::Error, node->loc_id(), 1, "non-numeric type");
                 return {ExprError::InvalidOperandType};
@@ -137,7 +155,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
             }
             [[fallthrough]];
         case PrimTypeError::ImplCastRequired:
-            assert(!inc_dec);
+            assert(!ops::is_inc_dec(op));
             prim_tv = prim_cast(error.suggested_type, std::move(prim_tv));
             break;
         case PrimTypeError::Ok:
@@ -145,24 +163,19 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryPreOp> node) {
         }
 
         // apply op
-        prim_tv = prim_tv.type()->unary_op(op, prim_tv.move_value().move_rvalue());
-        if (inc_dec) {
+        prim_tv =
+            prim_tv.type()->unary_op(op, prim_tv.move_value().move_rvalue());
+        if (ops::is_inc_dec(op)) {
             assign(node, lval, {prim_tv.type(), prim_tv.move_value()});
-            return {prim_tv.type(), Value{lval}};
+            if (ops::is_unary_pre_op(op))
+                return {prim_tv.type(), Value{lval}};
+            return {prim_tv.type(), Value{std::move(orig_rval)}};
         }
         return {prim_tv.type(), prim_tv.move_value()};
 
     } else {
         assert(false); // not implemented
     }
-}
-
-ExprRes ExprVisitor::visit(Ref<ast::UnaryPostOp> node) {
-    debug() << __FUNCTION__ << " UnaryPostOp\n";
-    auto res = node->arg()->accept(*this);
-    if (!res.ok())
-        return res;
-    return {};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
@@ -333,17 +346,17 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (!array_res.ok())
         return {ExprError::Error};
 
-    if (array_res.type()->canon()->is_class())
+    if (array_res.type()->non_alias()->is_class())
         assert(false); // not implemented
 
     // is an array?
-    if (!array_res.type()->canon()->is_array()) {
+    if (!array_res.type()->non_alias()->is_array()) {
         diag().emit(Diag::Error, node->array()->loc_id(), 1, "not an array");
         return {ExprError::NotArray};
     }
 
     // array
-    auto array_type = array_res.type()->as_array();
+    auto array_type = array_res.type()->non_alias()->as_array();
     auto item_type = array_type->item_type();
     auto array_val = array_res.move_value();
 
@@ -463,8 +476,9 @@ ExprRes ExprVisitor::prim_binary_op(
             return {ExprError::InvalidOperandType};
 
         // apply op
-        right =
-            prim_binary_op_impl(op, std::move(left_tv), std::move(right_tv));
+        right = left_tv.type()->binary_op(
+            op, left_tv.move_value().move_rvalue(), right_tv.type(),
+            right_tv.move_value().move_rvalue());
     }
 
     // handle assignment
@@ -522,15 +536,6 @@ RValue ExprVisitor::prim_cast(Ref<PrimType> type, PrimTypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
     assert(tv.type()->is_expl_castable_to(type));
     return tv.type()->cast_to(type, tv.value().move_rvalue());
-}
-
-PrimTypedValue ExprVisitor::prim_binary_op_impl(
-    Op op, PrimTypedValue&& left, PrimTypedValue&& right) {
-    debug() << __FUNCTION__ << "\n";
-    assert(!ops::is_assign(op));
-    auto prim_tv = left.type()->binary_op(
-        op, left.move_value(), right.type(), right.move_value());
-    return {prim_tv.type(), prim_tv.move_value()};
 }
 
 ExprRes ExprVisitor::funcall(
