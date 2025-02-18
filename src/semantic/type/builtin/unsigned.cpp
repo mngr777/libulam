@@ -1,8 +1,9 @@
-#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
+#include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/value/types.hpp>
 
 namespace ulam {
 
@@ -125,7 +126,34 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
 }
 
 PrimTypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
-    assert(false); // not implemented
+    if (rval.empty())
+        return {this, Value{RValue{}}};
+
+    auto uns_val = rval.get<Unsigned>();
+    switch (op) {
+    case Op::UnaryMinus: {
+        bitsize_t size = std::min<bitsize_t>(bitsize() + 1, ULAM_MAX_INT_SIZE);
+        Integer int_val =
+            std::max<Integer>(detail::integer_min(size), -uns_val);
+        auto type = builtins().prim_type(IntId, size);
+        return {type, Value{RValue{int_val}}};
+    }
+    case Op::UnaryPlus:
+        break;
+    case Op::PreInc:
+    case Op::PostInc:
+        if (uns_val < detail::unsigned_max(bitsize()))
+            ++uns_val;
+        break;
+    case Op::PreDec:
+    case Op::PostDec:
+        if (uns_val > 0)
+            --uns_val;
+        break;
+    default:
+        assert(false);
+    }
+    return {this, Value{RValue{uns_val}}};
 }
 
 PrimTypedValue UnsignedType::binary_op(
@@ -134,7 +162,95 @@ PrimTypedValue UnsignedType::binary_op(
     Ref<const PrimType> right_type,
     RValue&& right_rval) {
     assert(right_type->is(UnsignedId));
-    assert(false); // not implemented
+    assert(left_rval.empty() || left_rval.is<Unsigned>());
+    assert(right_rval.empty() || right_rval.is<Unsigned>());
+
+    bool is_unknown = left_rval.empty() || right_rval.empty();
+    Unsigned left_uns_val = left_rval.empty() ? 0 : left_rval.get<Unsigned>();
+    Unsigned right_uns_val =
+        right_rval.empty() ? 0 : right_rval.get<Unsigned>();
+
+    switch (op) {
+    case Op::Equal: {
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_uns_val == right_uns_val)}};
+    }
+    case Op::NotEqual: {
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_uns_val != right_uns_val)}};
+    }
+    case Op::Prod: {
+        // Unsigned(a) * Unsigned(b) = Unsigned(a + b)
+        auto size = std::min<bitsize_t>(MaxSize, bitsize() + right_type->bitsize());
+        auto type = tpl()->type(size);
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        auto [val, _] = detail::safe_prod(left_uns_val, right_uns_val);
+        return {this, Value{RValue{val}}};
+    }
+    case Op::Quot: {
+        // Unsigned(a) / Unsigned(b) = Int(a) NOTE: does not match
+        // ULAM's max(a, b), TODO: investigate
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        auto val = detail::safe_quot(left_uns_val, right_uns_val);
+        return {this, Value{RValue{val}}};
+    }
+    case Op::Rem: {
+        // Unsigned(a) % Unsigned(b) = Unsigned(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        auto val = detail::safe_rem(left_uns_val, right_uns_val);
+        return {this, Value{RValue{val}}};
+    }
+    case Op::Sum: {
+        // Unsigned(a) + Unsigned(b) = Unsigned(max(a, b) + 1)
+        bitsize_t size = std::max(bitsize(), right_type->bitsize()) + 1;
+        size = std::min(size, MaxSize);
+        auto type = tpl()->type(size);
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        auto [val, _] = detail::safe_sum(left_uns_val, right_uns_val);
+        return {type, Value{RValue{val}}};
+    }
+    case Op::Diff: {
+        // Unsigned(a) - Unsigned(b) = Unsigned(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        Unsigned val = (left_uns_val > right_uns_val) ? left_uns_val - right_uns_val : 0;
+        return {this, Value{RValue{val}}};
+    }
+    case Op::Less: {
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_uns_val < right_uns_val)}};
+    }
+    case Op::LessOrEq: {
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_uns_val <= right_uns_val)}};
+    }
+    case Op::Greater: {
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_uns_val > right_uns_val)}};
+    }
+    case Op::GreaterOrEq: {
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value(type->construct(left_uns_val >= right_uns_val))};
+    }
+    default:
+        assert(false);
+    }
 }
 
 } // namespace ulam

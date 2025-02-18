@@ -1,3 +1,4 @@
+#include "libulam/semantic/value.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -195,7 +196,6 @@ PrimTypedValue IntType::binary_op(
     Ref<const PrimType> right_type,
     RValue&& right_rval) {
     assert(right_type->is(IntId));
-
     assert(left_rval.empty() || left_rval.is<Integer>());
     assert(right_rval.empty() || right_rval.is<Integer>());
 
@@ -215,7 +215,7 @@ PrimTypedValue IntType::binary_op(
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
         auto size =
-            std::min(MaxSize, (bitsize_t)(bitsize() + right_type->bitsize()));
+            std::min<bitsize_t>(MaxSize, bitsize() + right_type->bitsize());
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
@@ -238,7 +238,7 @@ PrimTypedValue IntType::binary_op(
         return {this, Value{RValue{val}}};
     }
     case Op::Sum: {
-        // Int(a) + Int(b) + Int(max(a, b) + 1)
+        // Int(a) + Int(b) = Int(max(a, b) + 1)
         bitsize_t size = std::max(bitsize(), right_type->bitsize()) + 1;
         size = std::min(size, MaxSize);
         auto type = tpl()->type(size);
@@ -258,24 +258,28 @@ PrimTypedValue IntType::binary_op(
         return {type, Value{RValue{val}}};
     }
     case Op::Less: {
-        return {
-            builtins().boolean(),
-            Value{RValue{(Unsigned)(left_int_val < right_int_val)}}};
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_int_val < right_int_val)}};
     }
     case Op::LessOrEq: {
-        return {
-            builtins().boolean(),
-            Value(RValue{(Unsigned)(left_int_val <= right_int_val)})};
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_int_val <= right_int_val)}};
     }
     case Op::Greater: {
-        return {
-            builtins().boolean(),
-            Value{RValue{(Unsigned)(left_int_val > right_int_val)}}};
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value{type->construct(left_int_val > right_int_val)}};
     }
     case Op::GreaterOrEq: {
-        return {
-            builtins().boolean(),
-            Value(RValue{(Unsigned)(left_int_val >= right_int_val)})};
+        auto type = builtins().boolean();
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        return {type, Value(type->construct(left_int_val >= right_int_val))};
     }
     default:
         assert(false);
