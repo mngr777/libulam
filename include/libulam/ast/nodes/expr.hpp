@@ -88,6 +88,7 @@ public:
 };
 
 class UnaryOp : public Tuple<OpExpr, Expr> {
+    ULAM_AST_EXPR
 public:
     UnaryOp(Op op, Ptr<Expr>&& arg): Tuple{std::move(arg), op} {}
 
