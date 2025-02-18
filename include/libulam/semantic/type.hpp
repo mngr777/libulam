@@ -191,6 +191,10 @@ public:
 
     RValue construct() override;
 
+    RValue load(const BitVectorView data, BitVector::size_t off) const override;
+    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
+        const override;
+
     Ref<ArrayType> as_array() override { return this; }
     Ref<const ArrayType> as_array() const override { return this; }
 

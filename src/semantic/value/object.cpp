@@ -35,6 +35,10 @@ ObjectView::ObjectView(Ref<Class> cls, BitVectorView bits_):
     assert(bits_.len() == cls->bitsize());
 }
 
+SPtr<Object> ObjectView::copy() const {
+    return make_s<Object>(_cls, bits().copy());
+}
+
 ObjectView::operator bool() const {
     assert((bool)_cls == (bool)bits());
     return _cls;

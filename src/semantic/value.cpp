@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/bound.hpp"
 #include <libulam/detail/variant.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
@@ -28,12 +27,15 @@ Ref<Class> LValue::obj_cls() {
 RValue LValue::rvalue() const {
     return accept(
         [&](Ref<Var> var) { return var->rvalue(); },
-        [&](const BoundProp& bound_prop) {
-            RValue rvalue{};
-            bound_prop.load(rvalue);
-            return rvalue;
+        [&](const ArrayAccess& array_access) {
+            return array_access.load();
         },
-        [&](std::monostate) { return RValue{}; },
+        [&](const ObjectView& obj_view) {
+            return RValue{obj_view.copy()};
+        },
+        [&](const BoundProp& bound_prop) {
+            return bound_prop.load();
+        },
         [&](auto&) -> RValue { assert(false); });
 }
 

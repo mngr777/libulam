@@ -116,7 +116,20 @@ bitsize_t ArrayType::bitsize() const {
     return _array_size * _item_type->bitsize();
 }
 
-RValue ArrayType::construct() { return RValue{Array{this}}; }
+RValue ArrayType::construct() { return RValue{Array{bitsize()}}; }
+
+// TODO: use construct(), make it const
+RValue ArrayType::load(const BitVectorView data, BitVector::size_t off) const {
+    Array array{bitsize()};
+    array.bits().write(0, data.view(off, bitsize()));
+    return RValue{std::move(array)};
+}
+
+void ArrayType::store(
+    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    assert(rval.is<Array>());
+    data.write(off, rval.get<Array>().bits().view());
+}
 
 void ArrayType::set_canon(Ref<ArrayType> canon) {
     assert(canon);

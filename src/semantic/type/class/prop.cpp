@@ -22,11 +22,11 @@ BitVectorView Prop::bits_view(ObjectView obj_view) {
 }
 
 RValue Prop::load(ObjectView obj_view) const {
-    return type()->load(obj_view.bits(), data_off());
+    return type()->canon()->load(obj_view.bits(), data_off());
 }
 
 void Prop::store(ObjectView obj_view, const RValue& rval) {
-    type()->store(obj_view.bits(), data_off(), rval);
+    type()->canon()->store(obj_view.bits(), data_off(), rval);
 }
 
 cls::data_off_t Prop::data_off() const {

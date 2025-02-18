@@ -21,8 +21,6 @@
 
 namespace ulam::sema {
 
-// TODO: use canon types for casting
-
 ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n";
     if (node->has_type_name()) {
@@ -90,16 +88,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             {right.type()->canon()->as_prim(), right.move_value()});
 
     } else if (left.type()->canon()->is_array()) {
-        // if (node->op() != Op::Assign) {
-        //     diag().emit(Diag::Error, node->loc_id(), 1, "unsupported array
-        //     operation"); return {ExprError::InvalidOperandType};
-        // }
-        // if (!right.type()->canon()->is_array()) {
-        //     diag().emit(Diag::Error, node->loc_id(), 1, "cannot assign to
-        //     array"); return {ExprError::InvalidOperandType};
-        // }
-        // if ()
-        // return assign(node, );
+        return array_binary_op(
+            node, left.move_typed_value(), right.move_typed_value());
 
     } else {
         // TODO: operator funs for classes, error(?) for arrays, ...
@@ -114,64 +104,9 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     if (!res.ok())
         return res;
 
-    Op op = node->op();
-    auto type = res.type();
-
-    LValue lval;
-    RValue orig_rval;
-    if (ops::is_inc_dec(op)) {
-        // store lvalue
-        if (!res.value().is_lvalue()) {
-            diag().emit(Diag::Error, node->loc_id(), 1, "cannot modify rvalue");
-            return {ExprError::NotLvalue};
-        }
-        lval = res.value().lvalue();
-
-        // store original rvalue
-        if (ops::is_unary_post_op(op))
-            orig_rval = res.value().copy_rvalue();
-    }
-
-    if (type->canon()->is_prim()) {
-        // TODO: move to separate virtual function
-        PrimTypedValue prim_tv{type->canon()->as_prim(), res.move_value()};
-
-        // check operand type, cast if required and possible
-        auto error = prim_unary_op_type_check(op, prim_tv.type());
-        switch (error.status) {
-        case PrimTypeError::Incompatible:
-            diag().emit(Diag::Error, node->loc_id(), 1, "incompatible type");
-            return {ExprError::InvalidOperandType};
-        case PrimTypeError::ExplCastRequired:
-            if (ops::is_inc_dec(op)) {
-                // cannot cast for in-place operations
-                diag().emit(Diag::Error, node->loc_id(), 1, "non-numeric type");
-                return {ExprError::InvalidOperandType};
-            } else {
-                auto message =
-                    std::string{"suggest casting to "} +
-                    std::string{builtin_type_str(error.suggested_type)};
-                diag().emit(Diag::Error, node->loc_id(), 1, message);
-            }
-            [[fallthrough]];
-        case PrimTypeError::ImplCastRequired:
-            assert(!ops::is_inc_dec(op));
-            prim_tv = prim_cast(error.suggested_type, std::move(prim_tv));
-            break;
-        case PrimTypeError::Ok:
-            break;
-        }
-
-        // apply op
-        prim_tv =
-            prim_tv.type()->unary_op(op, prim_tv.move_value().move_rvalue());
-        if (ops::is_inc_dec(op)) {
-            assign(node, lval, {prim_tv.type(), prim_tv.move_value()});
-            if (ops::is_unary_pre_op(op))
-                return {prim_tv.type(), Value{lval}};
-            return {prim_tv.type(), Value{std::move(orig_rval)}};
-        }
-        return {prim_tv.type(), prim_tv.move_value()};
+    if (res.type()->canon()->is_prim()) {
+        return prim_unary_op(
+            node, {res.type()->canon()->as_prim(), res.move_value()});
 
     } else {
         assert(false); // not implemented
@@ -432,6 +367,58 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
     }
 }
 
+ExprRes
+ExprVisitor::prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg) {
+    debug() << __FUNCTION__ << "\n";
+    Op op = node->op();
+    LValue lval;
+    RValue orig_rval;
+    if (ops::is_inc_dec(op)) {
+        // store lvalue
+        if (!arg.value().is_lvalue()) {
+            diag().emit(Diag::Error, node->loc_id(), 1, "cannot modify rvalue");
+            return {ExprError::NotLvalue};
+        }
+        lval = arg.value().lvalue();
+
+        // store original rvalue
+        if (ops::is_unary_post_op(op))
+            orig_rval = arg.value().copy_rvalue();
+    }
+
+    auto error = prim_unary_op_type_check(op, arg.type());
+    switch (error.status) {
+    case PrimTypeError::Incompatible:
+        diag().emit(Diag::Error, node->loc_id(), 1, "incompatible type");
+        return {ExprError::InvalidOperandType};
+    case PrimTypeError::ExplCastRequired:
+        if (ops::is_inc_dec(op)) {
+            // cannot cast for in-place operations
+            diag().emit(Diag::Error, node->loc_id(), 1, "non-numeric type");
+            return {ExprError::InvalidOperandType};
+        } else {
+            auto message = std::string{"suggest casting to "} +
+                           std::string{builtin_type_str(error.suggested_type)};
+            diag().emit(Diag::Error, node->loc_id(), 1, message);
+        }
+        [[fallthrough]];
+    case PrimTypeError::ImplCastRequired:
+        assert(!ops::is_inc_dec(op));
+        arg = prim_cast(error.suggested_type, std::move(arg));
+        break;
+    case PrimTypeError::Ok:
+        break;
+    }
+
+    if (ops::is_inc_dec(op)) {
+        assign(node, Value{lval}, {arg.type(), arg.move_value()});
+        if (ops::is_unary_pre_op(op))
+            return {arg.type(), Value{lval}};
+        return {arg.type(), Value{std::move(orig_rval)}};
+    }
+    return {arg.type(), arg.move_value()};
+}
+
 ExprRes ExprVisitor::prim_binary_op(
     Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right) {
     debug() << __FUNCTION__ << " " << ops::str(node->op()) << "\n";
@@ -489,17 +476,46 @@ ExprRes ExprVisitor::prim_binary_op(
             return {ExprError::NotLvalue};
         }
         return assign(
-            node, left.value().lvalue(), {right.type(), right.move_value()});
+            node, left.move_value(), {right.type(), right.move_value()});
     }
     return {right.type(), right.move_value()};
 }
 
-ExprRes
-ExprVisitor::assign(Ref<ast::OpExpr> node, LValue& lval, TypedValue&& tv) {
+ExprRes ExprVisitor::array_binary_op(
+    Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right) {
     debug() << __FUNCTION__ << "\n";
-    auto type = lval.type();
-    auto [rval, _] = maybe_cast(node, type, std::move(tv));
-    return {type, lval.assign(std::move(rval))};
+    // assignment only
+    if (node->op() != Op::Assign) {
+        diag().emit(
+            Diag::Error, node->loc_id(), 1, "unsupported array operation");
+        return {ExprError::InvalidOperandType};
+    }
+    if (!right.type()->canon()->is_array()) {
+        diag().emit(
+            Diag::Error, node->loc_id(), 1, "cannot assign to an array");
+        return {ExprError::InvalidOperandType};
+    }
+    if (right.type()->canon() != left.type()->canon()) {
+        diag().emit(Diag::Error, node->loc_id(), 1, "array types do not match");
+        return {ExprError::TypeMismatch};
+    }
+    if (!left.value().is_lvalue()) {
+        diag().emit(Diag::Error, node->loc_id(), 1, "cannot assign");
+        return {ExprError::NotLvalue};
+    }
+    return assign(node, left.move_value(), std::move(right));
+}
+
+ExprRes
+ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
+    debug() << __FUNCTION__ << "\n";
+    if (!val.is_lvalue()) {
+        diag().emit(Diag::Error, node->loc_id(), 1, "cannot assign to rvalue");
+        return {ExprError::NotLvalue};
+    }
+    auto lval = val.lvalue();
+    auto [rval, _] = maybe_cast(node, lval.type(), std::move(tv));
+    return {lval.type(), lval.assign(std::move(rval))};
 }
 
 std::pair<RValue, bool>

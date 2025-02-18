@@ -14,6 +14,7 @@ enum class ExprError {
     NotLvalue,
     NotImplemented,
     NotArray,
+    TypeMismatch,
     UnknownArrayIndex,
     ArrayIndexOutOfRange,
     NotObject,

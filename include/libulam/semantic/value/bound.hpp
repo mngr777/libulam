@@ -54,7 +54,7 @@ public:
     ObjectView mem_obj_view();
     BitVectorView bits_view();
 
-    void load(RValue& rval) const;
+    RValue load() const;
     void store(const RValue& rval);
 };
 

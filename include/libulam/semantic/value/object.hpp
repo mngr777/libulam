@@ -33,6 +33,8 @@ public:
 
     operator bool() const;
 
+    SPtr<Object> copy() const;
+
     Ref<Class> cls() { return _cls; }
     Ref<const Class> cls() const { return _cls; }
 

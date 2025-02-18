@@ -50,11 +50,16 @@ public:
     virtual array_idx_t array_index(Ref<ast::Expr> expr);
 
 protected:
+    virtual ExprRes prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg);
+
     virtual ExprRes prim_binary_op(
         Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right);
 
+    virtual ExprRes array_binary_op(
+        Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right);
+
     virtual ExprRes
-    assign(Ref<ast::OpExpr> node, LValue& lval, TypedValue&& val);
+    assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
 
     virtual std::pair<RValue, bool>
     maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
@@ -64,7 +69,7 @@ protected:
     virtual PrimTypedValue
     prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv);
 
-    virtual RValue prim_cast(Ref<PrimType>, PrimTypedValue&& tv);
+    virtual RValue prim_cast(Ref<PrimType> type, PrimTypedValue&& tv);
 
     virtual ExprRes funcall(
         Ref<ast::FunCall> node,
