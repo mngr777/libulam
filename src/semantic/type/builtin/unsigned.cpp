@@ -61,11 +61,9 @@ bool UnsignedType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     }
 }
 
-PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, Value&& value) {
+PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
-    assert(!value.empty());
-
-    auto rval = value.move_rvalue();
+    assert(!rval.empty());
     assert(rval.is<Unsigned>());
 
     auto uns_val = rval.get<Unsigned>();

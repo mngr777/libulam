@@ -77,7 +77,7 @@ public:
     }
 
     // TODO: should take RValue&&
-    virtual PrimTypedValue cast_to(BuiltinTypeId id, Value&& value) {
+    virtual PrimTypedValue cast_to(BuiltinTypeId id, RValue&& value) {
         assert(false);
     }
     virtual RValue cast_to(Ref<PrimType> type, RValue&& value) {

@@ -41,7 +41,7 @@ bool BoolType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     return is_castable_to(type->builtin_type_id(), expl);
 }
 
-PrimTypedValue BoolType::cast_to(BuiltinTypeId id, Value&& value) {
+PrimTypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(false);
 }

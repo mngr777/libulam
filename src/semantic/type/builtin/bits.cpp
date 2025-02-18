@@ -66,7 +66,7 @@ bool BitsType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     }
 }
 
-PrimTypedValue BitsType::cast_to(BuiltinTypeId id, Value&& value) {
+PrimTypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(false && "Bits is not implicitly castable to other types");
 }
 

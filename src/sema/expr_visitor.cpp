@@ -529,7 +529,7 @@ PrimTypedValue
 ExprVisitor::prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv) {
     debug() << __FUNCTION__ << " (type ID)\n";
     assert(tv.type()->is_expl_castable_to(type_id));
-    return tv.type()->cast_to(type_id, tv.move_value());
+    return tv.type()->cast_to(type_id, tv.value().move_rvalue());
 }
 
 RValue ExprVisitor::prim_cast(Ref<PrimType> type, PrimTypedValue&& tv) {
