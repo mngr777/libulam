@@ -69,18 +69,17 @@ bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
 }
 
 bool IntType::is_castable_to(Ref<const PrimType> type, bool expl) const {
-    auto size = type->bitsize();
     switch (type->builtin_type_id()) {
     case IntId:
-        return expl || size >= bitsize();
+        return expl || type->bitsize() >= bitsize();
     case UnsignedId:
         return expl;
     case BoolId:
         return false;
     case UnaryId:
-        return expl || detail::unary_unsigned_bitsize(size) <= bitsize() + 1;
+        return expl;
     case BitsId:
-        return expl || size >= bitsize();
+        return expl;
     case AtomId:
         return false;
         return false;

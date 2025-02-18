@@ -50,7 +50,7 @@ bool UnaryType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     case UnaryId:
         return expl || size >= bitsize();
     case BitsId:
-        return expl || size >= bitsize();
+        return expl;
     case AtomId:
         return false;
     case StringId:
