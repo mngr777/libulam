@@ -371,11 +371,7 @@ ExprVisitor::prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg) {
     }
 
     // apply op
-    // if (arg.type()->builtin_type_id() == IntId)
-    //     debug() << "arg: " << arg.value().copy_rvalue().get<Integer>() << "\n";
     arg = arg.type()->unary_op(op, arg.move_value().move_rvalue());
-    // if (arg.type()->builtin_type_id() == IntId)
-    //     debug() << "res: " << arg.value().copy_rvalue().get<Integer>() << "\n";
 
     if (ops::is_inc_dec(op)) {
         assign(node, Value{lval}, {arg.type(), arg.move_value()});
@@ -510,13 +506,15 @@ RValue ExprVisitor::do_cast(Ref<Type> type, TypedValue&& tv) {
 
 PrimTypedValue
 ExprVisitor::prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv) {
-    debug() << __FUNCTION__ << " (type ID)\n";
+    debug() << __FUNCTION__ << " " << tv.type()->name() << " -> "
+            << builtin_type_str(type_id) << "\n";
     assert(tv.type()->is_expl_castable_to(type_id));
     return tv.type()->cast_to(type_id, tv.value().move_rvalue());
 }
 
 RValue ExprVisitor::prim_cast(Ref<PrimType> type, PrimTypedValue&& tv) {
-    debug() << __FUNCTION__ << "\n";
+    debug() << __FUNCTION__ << " " << tv.type()->name() << " -> "
+            << type->name() << "\n";
     assert(tv.type()->is_expl_castable_to(type));
     return tv.type()->cast_to(type, tv.value().move_rvalue());
 }

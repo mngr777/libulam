@@ -56,6 +56,8 @@ public:
     bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
 
+    virtual std::string name() const { assert(false); }
+
     virtual bitsize_t bitsize() const = 0;
 
     virtual RValue construct();

@@ -52,26 +52,28 @@ PrimTypeErrorPair prim_binary_op_type_check(
             check_type_match(right_type, left_type->builtin_type_id());
     } break;
     case ops::Kind::Numeric: {
-        // one or both operands non-numeric?
-        if (!is_numeric(left_type) || !is_numeric(right_type)) {
+        auto suggest_cast = [&](BuiltinTypeId type_id) -> bool {
+            if (left_type->is(type_id)) {
+                errors.second = check_type_match(right_type, type_id);
+                return true;
+            } else if (right_type->is(type_id)) {
+                errors.first = check_type_match(left_type, type_id);
+                return true;
+            }
+            return false;
+        };
+        if (is_numeric(left_type) || is_numeric(right_type)) {
+            // same type?
+            if (left_type == right_type)
+                return errors;
+            // suggest casting to preferred type, Int over Unsigned over Unary
+            if (suggest_cast(IntId) || suggest_cast(UnsignedId) || suggest_cast(UnaryId))
+                return errors;
+            assert(false);
+        } else {
             // suggest casting to Int
             errors.first = check_type_match(left_type, IntId);
             errors.second = check_type_match(right_type, IntId);
-        }
-
-        // same type?
-        if (left_type->builtin_type_id() == right_type->builtin_type_id())
-            return errors;
-
-        // Int wins, otherwise Unary becomes Unsigned (implicit)
-        if (left_type->is(IntId) || right_type->is(IntId)) {
-            auto& error = left_type->is(IntId) ? errors.second : errors.first;
-            error = {PrimTypeError::ImplCastRequired, IntId};
-
-        } else if (left_type->is(UnsignedId) || right_type->is(UnsignedId)) {
-            auto& error =
-                left_type->is(UnsignedId) ? errors.second : errors.first;
-            error = {PrimTypeError::ImplCastRequired, UnsignedId};
         }
     } break;
     case ops::Kind::Logical: {

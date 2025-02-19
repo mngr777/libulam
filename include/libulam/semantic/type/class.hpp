@@ -33,7 +33,7 @@ public:
         Ref<Scope> scope);
     ~Class();
 
-    const std::string_view name() const { return _name; }
+    std::string name() const override { return std::string{_name}; }
     str_id_t name_id() const override;
 
     const ParamVarList& param_vars() const { return _param_vars; }

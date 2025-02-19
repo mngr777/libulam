@@ -24,6 +24,8 @@ class PrimType : public Type {
 public:
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
+    std::string name() const override;
+
     bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
 
     Ref<PrimType> as_prim() override { return this; }

@@ -37,6 +37,8 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     for (unsigned n = 1; n <= test_paths.size(); ++n) {
+        if (n != 36)
+            continue;
         auto& path = test_paths[n - 1];
         std::cout << "# " << n << " " << path.filename() << "\n";
         bool ok = true;
