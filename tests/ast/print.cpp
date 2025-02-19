@@ -4,6 +4,7 @@
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 
 namespace test::ast {
@@ -301,6 +302,16 @@ void Printer::visit(ulam::Ref<ulam::ast::Return> node) {
     if (node->has_expr())
         accept_me(node->expr());
     _os << ";";
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::TypeOpExpr> node) {
+    assert(node->has_type_name() != node->has_expr());
+    if (node->has_type_name()) {
+        accept_me(node->type_name());
+    } else if (node->has_expr()) {
+        accept_me(node->expr());
+    }
+    _os << "." << ulam::ops::str(node->op());
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ParenExpr> node) {

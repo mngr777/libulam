@@ -58,6 +58,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/prim/typed_value.hpp \
 	include/libulam/semantic/type.hpp \
 	include/libulam/semantic/type_ops.hpp \
+	include/libulam/semantic/type_ops.inc.hpp \
 	include/libulam/semantic/type_tpl.hpp \
 	include/libulam/semantic/value.hpp \
 	include/libulam/semantic/value/array.hpp \
@@ -89,6 +90,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/mangler.cpp \
 	src/semantic/module.cpp \
 	src/semantic/ops.cpp \
+	src/semantic/type_ops.cpp \
 	src/semantic/program.cpp \
 	src/semantic/scope.cpp \
 	src/semantic/scope/stack.cpp \
@@ -138,7 +140,6 @@ SEMA_SOURCE_FILES = \
 	src/sema/param_eval.cpp \
 	src/sema/visitor.cpp
 
-# Library
 HEADER_FILES = \
 	$(AST_HEADER_FILES) \
 	$(SEMANTIC_HEADER_FILES) \

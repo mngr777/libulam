@@ -106,6 +106,7 @@ protected:
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
 
+    void visit(ulam::Ref<ulam::ast::TypeOpExpr> node) override;
     void visit(ulam::Ref<ulam::ast::ParenExpr> node) override;
     void visit(ulam::Ref<ulam::ast::Cast> node) override;
     void visit(ulam::Ref<ulam::ast::BinaryOp> node) override;
