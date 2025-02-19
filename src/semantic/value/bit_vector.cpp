@@ -72,6 +72,11 @@ BitVectorView::unit_t BitVectorView::read_right(size_t len) const {
     return data().read(_off + _len - len, len);
 }
 
+void BitVectorView::write_right(size_t len, unit_t value) {
+    assert(len <= _len);
+    data().write(_off + _len - len, len, value);
+}
+
 BitVector BitVectorView::copy() const {
     BitVector bv{len()};
     for (size_t off = 0; off < len(); off += UnitSize) {
@@ -210,6 +215,11 @@ void BitVector::write(size_t idx, const BitVectorView view_) {
 BitVector::unit_t BitVector::read_right(size_t len) const {
     assert(len <= _len);
     return read(_len - len, len);
+}
+
+void BitVector::write_right(size_t len, unit_t value) {
+    assert(len <= _len);
+    return write(_len - len, len, value);
 }
 
 BitVector::unit_t

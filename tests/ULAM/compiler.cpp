@@ -22,7 +22,8 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
     return _ast->program();
 }
 
-void Compiler::compile(std::ostream& out) {
+void Compiler::compile(std::ostream& out, const std::string_view main_name) {
     ulam::sema::Eval eval{_ctx, ulam::ref(_ast)};
-    eval.eval("A _a; _a.test();");
+    auto text = std::string{main_name} + " foo; foo.test();";
+    eval.eval(text);
 }

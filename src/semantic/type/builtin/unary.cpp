@@ -1,4 +1,5 @@
 #include "libulam/semantic/type/builtin/unsigned.hpp"
+#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
@@ -113,6 +114,10 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
         uns_val = std::min(detail::unsigned_max(type->bitsize()), uns_val);
         return RValue{uns_val};
     }
+    case UnaryId: {
+        assert(false);
+        return std::move(rval);
+    }
     default:
         assert(false);
     }
@@ -124,11 +129,48 @@ PrimTypedValue UnaryType::unary_op(Op op, RValue&& rval) {
 
 PrimTypedValue UnaryType::binary_op(
     Op op,
-    RValue&& left_val,
+    RValue&& left_rval,
     Ref<const PrimType> right_type,
-    RValue&& right_val) {
-    assert(right_type->is(UnsignedId));
-    assert(false); // not implemented
+    RValue&& right_rval) {
+    assert(right_type->is(UnaryId));
+    assert(left_rval.empty() || left_rval.is<Unsigned>());
+    assert(right_rval.empty() || right_rval.is<Unsigned>());
+
+    bool is_unknown = left_rval.empty() || right_rval.empty();
+    Unsigned left_uns =
+        left_rval.empty() ? 0 : detail::count_ones(left_rval.get<Unsigned>());
+    Unsigned right_uns =
+        right_rval.empty() ? 0 : detail::count_ones(right_rval.get<Unsigned>());
+
+    switch (op) {
+    case Op::Equal: {
+        auto type = builtins().boolean();
+        return {type, Value{type->construct(left_uns == right_uns)}};
+    }
+    case Op::NotEqual: {
+        auto type = builtins().boolean();
+        return {type, Value{type->construct(left_uns != right_uns)}};
+    }
+    case Op::Sum: {
+        // Unary(a) + Unary(b) = Unary(a + b)
+        bitsize_t size =
+            std::min<bitsize_t>(MaxSize, bitsize() + right_type->bitsize());
+        auto type = tpl()->type(size);
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        assert(left_uns + right_uns <= size);
+        return {type, Value{RValue{detail::ones(left_uns + right_uns)}}};
+    }
+    case Op::Diff: {
+        // Unary(a) - Unary(b) = Unary(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        Unsigned diff = (left_uns > right_uns) ? left_uns - right_uns : 0;
+        return {this, Value{RValue{detail::ones(diff)}}};
+    }
+    default:
+        assert(false);
+    }
 }
 
 } // namespace ulam

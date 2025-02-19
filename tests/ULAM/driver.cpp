@@ -36,14 +36,14 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     for (unsigned n = 1; n <= test_paths.size(); ++n) {
-        if (n != 21)
-            continue;
+        // if (n != 35)
+        //     continue;
         auto& path = test_paths[n - 1];
-        std::cout << "# " << n << " " << path.filename() << " ";
+        std::cout << "# " << n << " " << path.filename() << "\n";
         bool ok = run(path);
         std::cout << (ok ? "OK" : "FAIL") << "\n";
         if (!ok)
             break;
-        break;
+        // break;
     }
 }

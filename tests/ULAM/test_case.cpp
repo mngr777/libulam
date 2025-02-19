@@ -23,7 +23,7 @@ void TestCase::run() {
     auto program = compiler.analyze();
     if (!program)
         throw std::invalid_argument("failed to analyze program");
-    compiler.compile(out);
+    compiler.compile(out, _srcs[0].first);
 }
 
 void TestCase::load(const std::filesystem::path& path) {

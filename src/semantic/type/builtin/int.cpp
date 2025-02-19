@@ -153,8 +153,9 @@ RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
     case BitsId: {
         auto bits_rval = type->construct();
-        // TODO: !! which part to write where in case of bitsize mismatch?
-        bits_rval.get<Bits>().bits().write(0, type->bitsize(), to_datum(rval));
+        // TODO: adjust value?
+        bits_rval.get<Bits>().bits().write_right(
+            type->bitsize(), to_datum(rval));
         return bits_rval;
     }
     default:
@@ -200,17 +201,17 @@ PrimTypedValue IntType::binary_op(
     assert(right_rval.empty() || right_rval.is<Integer>());
 
     bool is_unknown = left_rval.empty() || right_rval.empty();
-    Integer left_int_val = left_rval.empty() ? 0 : left_rval.get<Integer>();
-    Integer right_int_val = right_rval.empty() ? 0 : right_rval.get<Integer>();
+    Integer left_int = left_rval.empty() ? 0 : left_rval.get<Integer>();
+    Integer right_int = right_rval.empty() ? 0 : right_rval.get<Integer>();
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
-        return {type, Value{type->construct(left_int_val == right_int_val)}};
+        return {type, Value{type->construct(left_int == right_int)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
-        return {type, Value{type->construct(left_int_val != right_int_val)}};
+        return {type, Value{type->construct(left_int != right_int)}};
     }
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
@@ -219,7 +220,7 @@ PrimTypedValue IntType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        auto [val, _] = detail::safe_prod(left_int_val, right_int_val);
+        auto [val, _] = detail::safe_prod(left_int, right_int);
         return {type, Value{RValue{detail::truncate(val, size)}}};
     }
     case Op::Quot: {
@@ -227,14 +228,14 @@ PrimTypedValue IntType::binary_op(
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
             return {this, Value{RValue{}}};
-        auto val = detail::safe_quot(left_int_val, right_int_val);
+        auto val = detail::safe_quot(left_int, right_int);
         return {this, Value{RValue{val}}};
     }
     case Op::Rem: {
         // Int(a) % Int(b) = Int(a)
         if (is_unknown)
             return {this, Value{RValue{}}};
-        auto val = detail::safe_rem(left_int_val, right_int_val);
+        auto val = detail::safe_rem(left_int, right_int);
         return {this, Value{RValue{val}}};
     }
     case Op::Sum: {
@@ -244,7 +245,7 @@ PrimTypedValue IntType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        auto [val, _] = detail::safe_sum(left_int_val, right_int_val);
+        auto [val, _] = detail::safe_sum(left_int, right_int);
         return {type, Value{RValue{val}}};
     }
     case Op::Diff: {
@@ -254,32 +255,32 @@ PrimTypedValue IntType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        auto [val, _] = detail::safe_diff(left_int_val, right_int_val);
+        auto [val, _] = detail::safe_diff(left_int, right_int);
         return {type, Value{RValue{val}}};
     }
     case Op::Less: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_int_val < right_int_val)}};
+        return {type, Value{type->construct(left_int < right_int)}};
     }
     case Op::LessOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_int_val <= right_int_val)}};
+        return {type, Value{type->construct(left_int <= right_int)}};
     }
     case Op::Greater: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_int_val > right_int_val)}};
+        return {type, Value{type->construct(left_int > right_int)}};
     }
     case Op::GreaterOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value(type->construct(left_int_val >= right_int_val))};
+        return {type, Value(type->construct(left_int >= right_int))};
     }
     default:
         assert(false);

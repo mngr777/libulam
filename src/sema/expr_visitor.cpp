@@ -1,12 +1,9 @@
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/semantic/expr_res.hpp"
-#include "libulam/semantic/ops.hpp"
-#include "libulam/semantic/type/prim/ops.hpp"
-#include "libulam/semantic/value/array.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
+#include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bound.hpp>
@@ -127,31 +124,10 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
         return {ExprError::InvalidCast};
 
     auto type = res.type();
-    auto val = res.move_value();
-
-    if (type->is_prim()) {
-        // prim type cast
-        if (!cast_type->is_prim()) {
-            diag().emit(
-                Diag::Error, node->loc_id(), 1,
-                "cannot cast to non-primitive type");
-            return {ExprError::InvalidCast};
-        }
-        auto prim_type = type->as_prim();
-        auto prim_cast_type = cast_type->as_prim();
-        if (!prim_type->is_expl_castable_to(prim_cast_type)) {
-            diag().emit(Diag::Error, node->loc_id(), 1, "not castable to type");
-            return {ExprError::InvalidCast};
-        }
-        return {
-            cast_type,
-            Value{prim_type->cast_to(prim_cast_type, val.move_rvalue())}};
-
-    } else {
-        // class type cast
-        assert(false);
-    }
-    return {};
+    auto cast_res = maybe_cast(node, type, res.move_typed_value());
+    if (cast_res.second == CastError)
+        return {ExprError::InvalidCast};
+    return {cast_type, Value{std::move(cast_res.first)}};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
@@ -341,6 +317,8 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
     if (!res.ok())
         return UnknownArrayIdx;
 
+    // TODO: clean up
+
     auto type = res.type();
     auto rval = res.move_value().move_rvalue();
     switch (type->builtin_type_id()) {
@@ -518,17 +496,17 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     return {lval.type(), lval.assign(std::move(rval))};
 }
 
-std::pair<RValue, bool>
+ExprVisitor::CastRes
 ExprVisitor::maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
-    if (type == tv.type())
-        return {tv.value().move_rvalue(), false};
+    if (type->canon() == tv.type()->canon())
+        return {tv.value().move_rvalue(), NoCast};
     if (tv.type()->is_impl_castable_to(type))
-        return {do_cast(type, std::move(tv)), true};
+        return {do_cast(type, std::move(tv)), CastOk};
     if (tv.type()->is_expl_castable_to(type)) {
         diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
-        return {do_cast(type, std::move(tv)), true};
+        return {do_cast(type, std::move(tv)), CastOk};
     }
-    return {RValue{}, false};
+    return {RValue{}, CastError};
 }
 
 RValue ExprVisitor::do_cast(Ref<Type> type, TypedValue&& tv) {

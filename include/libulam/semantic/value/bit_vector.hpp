@@ -44,6 +44,7 @@ public:
     void write(size_t idx, const BitVectorView other);
 
     unit_t read_right(size_t len) const;
+    void write_right(size_t len, unit_t value);
 
     size_t len() const { return _len; }
 
@@ -77,6 +78,7 @@ public:
     explicit BitVector(size_t len):
         _len{len}, _bits((len + UnitSize - 1) / UnitSize, 0) {}
 
+    // TODO: disable copying
     // BitVector(BitVector&& other) = default;
     // BitVector& operator=(BitVector&&) = default;
 
@@ -102,6 +104,7 @@ public:
     void write(size_t idx, const BitVectorView view);
 
     unit_t read_right(size_t len) const;
+    void write_right(size_t len, unit_t value);
 
     size_t len() const { return _len; }
 

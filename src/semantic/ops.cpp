@@ -1,4 +1,4 @@
-#include "libulam/semantic/ops.hpp"
+#include <libulam/semantic/ops.hpp>
 #include <cassert>
 
 namespace ulam::ops {

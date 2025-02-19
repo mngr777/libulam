@@ -22,6 +22,8 @@ public:
     RValue construct() override { return RValue{Unsigned{}}; }
     RValue construct(bool value);
 
+    bool is_true(const RValue& rval) const;
+
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;
 

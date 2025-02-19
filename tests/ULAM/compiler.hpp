@@ -4,6 +4,7 @@
 #include <libulam/parser.hpp>
 #include <libulam/semantic/program.hpp>
 #include <string>
+#include <string_view>
 
 class Compiler {
 public:
@@ -14,7 +15,7 @@ public:
 
     void parse_module_str(const std::string& text, const std::string& name);
     ulam::Ref<ulam::Program> analyze();
-    void compile(std::ostream& out);
+    void compile(std::ostream& out, const std::string_view main_name);
 
 private:
     ulam::Context _ctx;
