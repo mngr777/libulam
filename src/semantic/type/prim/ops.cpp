@@ -64,12 +64,19 @@ PrimTypeErrorPair prim_binary_op_type_check(
         };
         if (is_numeric(left_type) || is_numeric(right_type)) {
             // same type?
-            if (left_type == right_type)
+            if (left_type == right_type) {
+                // Unary casted to Unsigned
+                if (left_type->is(UnaryId)) {
+                    errors.first = check_type_match(left_type, UnsignedId);
+                    errors.second = check_type_match(left_type, UnsignedId);
+                }
                 return errors;
-            // suggest casting to preferred type, Int over Unsigned over Unary
-            if (suggest_cast(IntId) || suggest_cast(UnsignedId) || suggest_cast(UnaryId))
+            }
+            // suggest casting to preferred type, Int over Unsigned
+            if (suggest_cast(IntId) || suggest_cast(UnsignedId))
                 return errors;
             assert(false);
+
         } else {
             // suggest casting to Int
             errors.first = check_type_match(left_type, IntId);

@@ -48,7 +48,7 @@ bool UnsignedType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     case BoolId:
         return false;
     case UnaryId:
-        return expl;
+        return expl || detail::unsigned_max(bitsize()) <= type->bitsize();
     case BitsId:
         return expl;
     case AtomId:
