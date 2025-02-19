@@ -72,7 +72,7 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
 
 bool Resolver::init(Ref<Class> cls) {
     if (cls->state() != Decl::NotResolved)
-        return cls->is_ready();
+        return cls->is_ready() || cls->is_resolving();
 
     bool success = true;
 
@@ -277,7 +277,7 @@ bool Resolver::resolve(Ref<Prop> prop, Ref<Scope> scope) {
 
     // type
     if (!prop->has_type()) {
-        auto type = resolve_var_decl_type(type_name, node, scope);
+        auto type = resolve_var_decl_type(type_name, node, scope, true);
         if (type)
             prop->set_type(type);
         is_resolved = type && is_resolved;
@@ -329,11 +329,14 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
 }
 
 Ref<Type> Resolver::resolve_var_decl_type(
-    Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, Ref<Scope> scope) {
+    Ref<ast::TypeName> type_name,
+    Ref<ast::VarDecl> node,
+    Ref<Scope> scope,
+    bool resolve_class) {
     assert(scope);
 
     // base type
-    auto type = resolve_type_name(type_name, scope);
+    auto type = resolve_type_name(type_name, scope, resolve_class);
     if (!type)
         return {};
 
@@ -368,8 +371,8 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
     return type;
 }
 
-Ref<Type>
-Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
+Ref<Type> Resolver::resolve_type_name(
+    Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     assert(scope);
 
     auto type_spec = type_name->first();
@@ -408,8 +411,9 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope) {
         // done?
         if (++n == type_name->child_num()) {
             if (type->canon()->is_class()) {
-                // class type itself is required, resolve it now
-                if (!resolve(type->canon()->as_class())) {
+                auto cls = type->canon()->as_class();
+                bool resolved = resolve_class ? resolve(cls) : init(cls);
+                if (!resolved) {
                     diag().emit(
                         Diag::Error, ident->loc_id(), str(name_id).size(),
                         "cannot resolve");

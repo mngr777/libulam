@@ -11,6 +11,7 @@ public:
     enum State { NotResolved, Resolving, Resolved, Unresolvable };
 
     bool is_ready() const { return _state == Resolved; }
+    bool is_resolving() const { return _state == Resolving; };
 
     Ref<Class> cls();
     Ref<const Class> cls() const;

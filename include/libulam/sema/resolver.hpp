@@ -30,9 +30,15 @@ public:
     bool resolve(Ref<Fun> overload, Ref<Scope> scope);
 
     Ref<Type> resolve_var_decl_type(
-        Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, Ref<Scope> scope);
+        Ref<ast::TypeName> type_name,
+        Ref<ast::VarDecl> node,
+        Ref<Scope> scope,
+        bool resolve_class = false);
     Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
-    Ref<Type> resolve_type_name(Ref<ast::TypeName> type_name, Ref<Scope> scope);
+    Ref<Type> resolve_type_name(
+        Ref<ast::TypeName> type_name,
+        Ref<Scope> scope,
+        bool resolve_class = false);
     Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
 
 private:
