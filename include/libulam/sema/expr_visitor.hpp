@@ -57,6 +57,9 @@ protected:
     virtual ExprRes array_binary_op(
         Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right);
 
+    virtual ExprRes class_binary_op(
+        Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right);
+
     virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
 
     virtual CastRes maybe_cast(
