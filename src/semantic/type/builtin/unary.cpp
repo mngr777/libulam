@@ -115,8 +115,8 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
         return RValue{uns_val};
     }
     case UnaryId: {
-        assert(false);
-        return std::move(rval);
+        uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
+        return RValue{detail::ones(uns_val)};
     }
     default:
         assert(false);
