@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
@@ -48,6 +49,8 @@ Fun::Match Fun::match(const TypedValueList& args) {
         return NoMatch;
 
     bool is_exact = true;
+    bool has_builtin = false;
+    bool is_type_id_match = true;
     auto arg_it = args.begin();
     auto param_it = _params.begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
@@ -57,9 +60,16 @@ Fun::Match Fun::match(const TypedValueList& args) {
             continue;
         if (!arg_type->is_impl_castable_to(param_type))
             return NoMatch;
+        if (arg_type->is_builtin()) {
+            has_builtin = true;
+            if (arg_type->builtin_type_id() != param_type->builtin_type_id())
+                is_type_id_match = false;
+        }
         is_exact = false;
     }
-    return is_exact ? ExactMatch : IsMatch;
+    if (is_exact)
+        return ExactMatch;
+    return (has_builtin && is_type_id_match) ? IsBuiltinTypeIdMatch : IsMatch;
 }
 
 Ref<ast::ParamList> Fun::params_node() { return _node->params(); }
@@ -81,7 +91,8 @@ FunSet::FunSet(FunSet& other) {
 }
 
 FunSet::MatchRes FunSet::find_match(const TypedValueList& args) {
-    MatchRes res;
+    MatchRes matches;
+    MatchRes type_id_matches;
     for (auto& item : _funs) {
         auto fun = item.ref();
         switch (fun->match(args)) {
@@ -90,10 +101,15 @@ FunSet::MatchRes FunSet::find_match(const TypedValueList& args) {
         case Fun::ExactMatch:
             return {fun};
         case Fun::IsMatch:
-            res.insert(fun);
+            if (type_id_matches.size() == 0)
+                matches.insert(fun);
+            break;
+        case Fun::IsBuiltinTypeIdMatch:
+            type_id_matches.insert(fun);
+            break;
         }
     }
-    return res;
+    return (type_id_matches.size() > 0) ? type_id_matches : matches;
 }
 
 void FunSet::for_each(Cb cb) {
