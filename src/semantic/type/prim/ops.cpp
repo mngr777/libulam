@@ -64,7 +64,7 @@ PrimTypeErrorPair prim_binary_op_type_check(
         };
         if (is_numeric(left_type) || is_numeric(right_type)) {
             // same type?
-            if (left_type == right_type) {
+            if (left_type->builtin_type_id() == right_type->builtin_type_id()) {
                 // Unary casted to Unsigned
                 if (left_type->is(UnaryId)) {
                     errors.first = check_type_match(left_type, UnsignedId);
