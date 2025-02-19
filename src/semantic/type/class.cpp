@@ -58,7 +58,9 @@ bitsize_t Class::direct_bitsize() const {
 RValue Class::construct() { return RValue{make_s<Object>(this)}; }
 
 RValue Class::load(const BitVectorView data, BitVector::size_t off) const {
-    return {};
+    // TMP: const cast hack
+    return RValue{make_s<Object>(
+        const_cast<Class*>(this), data.view(off, bitsize()).copy())};
 }
 
 void Class::store(
