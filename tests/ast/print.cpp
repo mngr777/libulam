@@ -205,7 +205,7 @@ void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
         visit(node->body());
         indent() << "}";
     } else {
-        _os << ";";
+        _os << " native;";
     }
 }
 
