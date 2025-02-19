@@ -123,8 +123,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     if (!cast_type)
         return {ExprError::InvalidCast};
 
-    auto type = res.type();
-    auto cast_res = maybe_cast(node, type, res.move_typed_value());
+    auto cast_res = maybe_cast(node, cast_type, res.move_typed_value(), true);
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
     return {cast_type, Value{std::move(cast_res.first)}};
@@ -496,13 +495,13 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     return {lval.type(), lval.assign(std::move(rval))};
 }
 
-ExprVisitor::CastRes
-ExprVisitor::maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
+ExprVisitor::CastRes ExprVisitor::maybe_cast(
+    Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv, bool expl) {
     if (type->canon() == tv.type()->canon())
         return {tv.value().move_rvalue(), NoCast};
-    if (tv.type()->is_impl_castable_to(type))
+    if (tv.type()->is_castable_to(type, expl))
         return {do_cast(type, std::move(tv)), CastOk};
-    if (tv.type()->is_expl_castable_to(type)) {
+    if (!expl && tv.type()->is_expl_castable_to(type)) {
         diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
         return {do_cast(type, std::move(tv)), CastOk};
     }

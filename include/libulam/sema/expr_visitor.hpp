@@ -63,8 +63,11 @@ protected:
 
     virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
 
-    virtual CastRes
-    maybe_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
+    virtual CastRes maybe_cast(
+        Ref<ast::Expr> node,
+        Ref<Type> type,
+        TypedValue&& tv,
+        bool expl = false);
 
     RValue do_cast(Ref<Type> type, TypedValue&& tv);
 
