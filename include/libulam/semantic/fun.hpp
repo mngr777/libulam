@@ -28,7 +28,7 @@ class Fun : public Decl {
     friend FunSet;
 
 public:
-    enum Match { NoMatch, IsMatch, ExactMatch };
+    enum Match { NoMatch, IsMatch, IsBuiltinTypeIdMatch, ExactMatch };
 
     Fun(Ref<ast::FunDef> node);
     ~Fun();

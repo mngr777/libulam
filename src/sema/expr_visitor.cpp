@@ -89,11 +89,10 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
         return array_binary_op(
             node, left.move_typed_value(), right.move_typed_value());
 
-    } else {
-        // TODO: operator funs for classes, error(?) for arrays, ...
-        assert(false);
+    } else if (left.type()->canon()->is_class()) {
+        return class_binary_op(node, left.move_typed_value(), right.move_typed_value());
     }
-    return {};
+    assert(false);
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
@@ -450,7 +449,7 @@ ExprRes ExprVisitor::array_binary_op(
     // assignment only
     if (node->op() != Op::Assign) {
         diag().emit(
-            Diag::Error, node->loc_id(), 1, "unsupported array operation");
+            Diag::Error, node->loc_id(), 1, "unsupported array operator");
         return {ExprError::InvalidOperandType};
     }
     if (!right.type()->canon()->is_array()) {
@@ -467,6 +466,16 @@ ExprRes ExprVisitor::array_binary_op(
         return {ExprError::NotLvalue};
     }
     return assign(node, left.move_value(), std::move(right));
+}
+
+ExprRes ExprVisitor::class_binary_op(
+    Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right) {
+    debug() << __FUNCTION__ << " " << ops::str(node->op()) << "\n";
+    // TODO: operator overloading
+    // TMP
+    if (node->op() == Op::Assign)
+        return assign(node, left.move_value(), std::move(right));
+    assert(false);
 }
 
 ExprRes
