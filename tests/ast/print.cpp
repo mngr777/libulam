@@ -324,41 +324,55 @@ void Printer::visit(ulam::Ref<ulam::ast::ParenExpr> node) {
 void Printer::visit(ulam::Ref<ulam::ast::Cast> node) {
     assert(node->has_type_name());
     assert(node->expr());
+    paren_l();
     _os << "(";
     accept_me(node->type_name());
     _os << ") ";
     accept_me(node->expr());
+    paren_r();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::BinaryOp> node) {
+    assert(node->has_lhs());
+    assert(node->has_rhs());
+    paren_l();
     accept_me(node->lhs());
     _os << " " << ulam::ops::str(node->op()) << " ";
     accept_me(node->rhs());
+    paren_r();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::UnaryOp> node) {
+    assert(node->op() != ulam::Op::None);
+    assert(node->has_arg());
+    paren_l();
     if (ulam::ops::is_unary_pre_op(node->op()))
         _os << ulam::ops::str(node->op());
     accept_me(node->arg());
     if (ulam::ops::is_unary_post_op(node->op()))
         _os << ulam::ops::str(node->op());
+    paren_r();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {
     assert(node->has_array());
     assert(node->has_index());
+    paren_l();
     accept_me(node->array());
     _os << "[";
     accept_me(node->index());
     _os << "]";
+    paren_r();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
     assert(node->has_obj());
     assert(node->has_ident());
+    paren_l();
     accept_me(node->obj());
     _os << ".";
     accept_me(node->ident());
+    paren_r();
 }
 
 bool Printer::do_visit(ulam::Ref<ulam::ast::ModuleDef> node) {

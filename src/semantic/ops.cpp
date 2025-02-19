@@ -169,6 +169,7 @@ Prec prec(Op op) {
     case Op::Negate:
     case Op::BwNot:
         return 13;
+    case Op::Cast:
     case Op::UnaryMinus:
     case Op::UnaryPlus:
     case Op::PostInc:

@@ -796,7 +796,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
         if (_tok.is(tok::ParenR)) {
             // cast
             consume();
-            auto expr = parse_expr();
+            auto expr = parse_expr_climb(ops::prec(Op::Cast));
             if (!expr)
                 return {};
             return tree<ast::Cast>(std::move(type_name), std::move(expr));
