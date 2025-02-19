@@ -13,6 +13,7 @@ public:
     bool is_ready() const { return _state == Resolved; }
     bool is_resolving() const { return _state == Resolving; };
 
+    bool has_cls() const;
     Ref<Class> cls();
     Ref<const Class> cls() const;
     void set_cls(Ref<Class> cls);

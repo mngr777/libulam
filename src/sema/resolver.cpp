@@ -289,6 +289,9 @@ bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
     CHECK_STATE(fset);
     bool is_resolved = true;
 
+    assert(!fset->has_cls());
+    fset->set_cls(cls);
+
     auto scope = cls->scope();
     fset->for_each([&](Ref<Fun> fun) {
         auto scope_view = scope->view(fun->scope_version());

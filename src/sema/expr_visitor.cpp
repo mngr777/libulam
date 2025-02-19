@@ -504,10 +504,10 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
 }
 
 RValue ExprVisitor::do_cast(Ref<Type> type, TypedValue&& tv) {
-    if (type->is_prim()) {
-        assert(tv.type()->is_prim());
+    if (type->canon()->is_prim()) {
+        assert(tv.type()->canon()->is_prim());
         return prim_cast(
-            type->as_prim(), {tv.type()->as_prim(), tv.move_value()});
+            type->canon()->as_prim(), {tv.type()->canon()->as_prim(), tv.move_value()});
     } else {
         assert(false);
     }

@@ -3,6 +3,10 @@
 
 namespace ulam {
 
+bool Decl::has_cls() const {
+    return _cls;
+}
+
 Ref<Class> Decl::cls() {
     assert(_cls);
     return _cls;
