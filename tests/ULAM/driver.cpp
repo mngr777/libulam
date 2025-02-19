@@ -1,5 +1,6 @@
 #include "./test_case.hpp"
 #include <algorithm>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -36,12 +37,17 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     for (unsigned n = 1; n <= test_paths.size(); ++n) {
-        // if (n != 35)
-        //     continue;
         auto& path = test_paths[n - 1];
         std::cout << "# " << n << " " << path.filename() << "\n";
-        bool ok = run(path);
-        std::cout << (ok ? "OK" : "FAIL") << "\n";
+        bool ok = true;
+        try {
+            ok = run(path);
+        } catch (std::exception& exc) {
+            std::cout << "exception thrown\n";
+            ok = false;
+        }
+        std::cout << "# " << n << " " << path.filename() << " "
+                  << (ok ? "OK" : "FAIL") << "\n";
         if (!ok)
             break;
         // break;

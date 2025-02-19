@@ -43,12 +43,8 @@ public:
     virtual ExprRes visit(Ref<ast::MemberAccess> node) override;
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
-    virtual ExprRes cast(
-        loc_id_t loc_id,
-        std::size_t len,
-        ExprRes&& res,
-        Ref<Type> type,
-        bool is_expl);
+    virtual ExprRes
+    cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 
     virtual array_idx_t array_index(Ref<ast::Expr> expr);
 

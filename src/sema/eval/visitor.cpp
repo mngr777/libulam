@@ -1,5 +1,3 @@
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/semantic/scope.hpp"
 #include <cassert>
 #include <exception>
 #include <libulam/sema/eval/except.hpp>
@@ -10,6 +8,7 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/var.hpp>
 #include <utility>
 
@@ -212,12 +211,13 @@ ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
 bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
     auto res = eval_expr(expr);
-    // res = _cast.to_boolean(std::move(res), expr, true /* implicit */);
-    // if (!res.ok())
-    //     throw std::exception();
-    // return res.value().rvalue()->get<Bool>();
-    // TODO
-    return false;
+
+    auto boolean = _program->builtins().boolean();
+    EvalExprVisitor ev{*this, scope()};
+    res = ev.cast(expr, boolean, std::move(res), false);
+    if (!res.ok())
+        throw std::exception();
+    return boolean->is_true(res.move_value().move_rvalue());
 }
 
 } // namespace ulam::sema

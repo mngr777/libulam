@@ -243,8 +243,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             // impl. cast to var type
             if (res.type() && var->type() != res.type()) {
                 res = ev.cast(
-                    node->assign_loc_id(), 1, std::move(res), var->type(),
-                    false);
+                    node->default_value(), var->type(), std::move(res), false);
                 RET_UPD_STATE(var, false);
             }
             auto tv = res.move_typed_value();

@@ -5,13 +5,13 @@
 namespace ulam {
 
 RValue BoolType::construct(bool value) {
-    return RValue{detail::ones(bitsize())};
+    return RValue{value ? detail::ones(bitsize()) : 0};
 }
 
 bool BoolType::is_true(const RValue& rval) const {
     assert(rval.is<Unsigned>());
     auto uns_val = rval.get<Unsigned>();
-    return detail::count_ones(uns_val) >= bitsize() + 1 / 2;
+    return detail::count_ones(uns_val) >= (bitsize() + 1u) / 2;
 }
 
 RValue BoolType::from_datum(Datum datum) const {

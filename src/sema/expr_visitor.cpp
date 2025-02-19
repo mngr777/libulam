@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
@@ -284,30 +285,12 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
 }
 
 ExprRes ExprVisitor::cast(
-    loc_id_t loc_id,
-    std::size_t len,
-    ExprRes&& res,
-    Ref<Type> type,
-    bool is_expl) {
+    Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl) {
     debug() << __FUNCTION__ << "\n";
-    if (res.type()->is_prim()) {
-        if (!type->is_prim()) {
-            diag().emit(
-                Diag::Error, loc_id, len, "cannot cast to non-primitive type");
-            return {ExprError::InvalidCast};
-        }
-        if (!res.type()->as_prim()->is_castable_to(
-                type->builtin_type_id(), is_expl)) {
-            diag().emit(
-                Diag::Error, loc_id, len,
-                std::string{"cannot cast to "} +
-                    std::string{builtin_type_str(type->builtin_type_id())});
-            return {ExprError::InvalidCast};
-        }
-        return {ExprError::NotImplemented};
-    } else {
-        return {ExprError::NotImplemented};
-    }
+    auto cast_res = maybe_cast(node, type, res.move_typed_value(), expl);
+    if (cast_res.second == CastError)
+        return {ExprError::InvalidCast};
+    return {type, Value{std::move(cast_res.first)}};
 }
 
 array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
@@ -346,7 +329,7 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
 
 ExprRes
 ExprVisitor::prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg) {
-    debug() << __FUNCTION__ << "\n";
+    debug() << __FUNCTION__ << " " << ops::str(node->op()) << "\n";
     Op op = node->op();
     LValue lval;
     RValue orig_rval;
@@ -386,6 +369,13 @@ ExprVisitor::prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg) {
     case PrimTypeError::Ok:
         break;
     }
+
+    // apply op
+    // if (arg.type()->builtin_type_id() == IntId)
+    //     debug() << "arg: " << arg.value().copy_rvalue().get<Integer>() << "\n";
+    arg = arg.type()->unary_op(op, arg.move_value().move_rvalue());
+    // if (arg.type()->builtin_type_id() == IntId)
+    //     debug() << "res: " << arg.value().copy_rvalue().get<Integer>() << "\n";
 
     if (ops::is_inc_dec(op)) {
         assign(node, Value{lval}, {arg.type(), arg.move_value()});
