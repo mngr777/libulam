@@ -27,6 +27,6 @@ using PrimTypeErrorList = std::list<PrimTypeError>;
 PrimTypeError prim_unary_op_type_check(Op op, Ref<PrimType> type);
 
 PrimTypeErrorPair prim_binary_op_type_check(
-    Op op, Ref<PrimType> left_type, Ref<PrimType> right_type);
+    Op op, Ref<PrimType> left_type, Ref<Type> right_type);
 
 } // namespace ulam

@@ -52,7 +52,7 @@ protected:
     virtual ExprRes prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg);
 
     virtual ExprRes prim_binary_op(
-        Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right);
+        Ref<ast::BinaryOp> node, PrimTypedValue&& left, TypedValue&& right);
 
     virtual ExprRes array_binary_op(
         Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right);
@@ -69,6 +69,8 @@ protected:
         bool expl = false);
 
     RValue do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
+    PrimTypedValue do_cast(
+        Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv);
 
     virtual PrimTypedValue
     prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv);

@@ -39,29 +39,6 @@ bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-bool UnsignedType::is_castable_to(Ref<const PrimType> type, bool expl) const {
-    switch (type->builtin_type_id()) {
-    case IntId:
-        return expl;
-    case UnsignedId:
-        return expl || type->bitsize() >= bitsize();
-    case BoolId:
-        return bitsize() == 1;
-    case UnaryId:
-        return expl || detail::unsigned_max(bitsize()) <= type->bitsize();
-    case BitsId:
-        return expl;
-    case AtomId:
-        return false;
-    case StringId:
-        return false;
-    case FunId:
-    case VoidId:
-    default:
-        assert(false);
-    }
-}
-
 PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(!rval.empty());
@@ -265,6 +242,29 @@ PrimTypedValue UnsignedType::binary_op(
             return {type, Value{RValue{}}};
         return {type, Value(type->construct(left_uns_val >= right_uns_val))};
     }
+    default:
+        assert(false);
+    }
+}
+
+bool UnsignedType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
+    switch (type->builtin_type_id()) {
+    case IntId:
+        return expl;
+    case UnsignedId:
+        return expl || type->bitsize() >= bitsize();
+    case BoolId:
+        return bitsize() == 1;
+    case UnaryId:
+        return expl || detail::unsigned_max(bitsize()) <= type->bitsize();
+    case BitsId:
+        return expl;
+    case AtomId:
+        return false;
+    case StringId:
+        return false;
+    case FunId:
+    case VoidId:
     default:
         assert(false);
     }

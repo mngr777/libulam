@@ -112,6 +112,17 @@ public:
         return false;
     }
 
+    bool is_impl_castable_to(BuiltinTypeId builtin_type_id) const {
+        return is_castable_to(builtin_type_id, false);
+    }
+    bool is_expl_castable_to(BuiltinTypeId builtin_type_id) const {
+        return is_castable_to(builtin_type_id, true);
+    }
+    virtual bool
+    is_castable_to(BuiltinTypeId builtin_type_id, bool expl = true) const {
+        return false;
+    }
+
     virtual RValue cast_to(Ref<Type> type, RValue&& rval);
 
     virtual Ref<Type> deref() { return this; }

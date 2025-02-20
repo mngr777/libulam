@@ -46,15 +46,6 @@ bool BoolType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-bool BoolType::is_castable_to(Ref<const PrimType> type, bool expl) const {
-    switch (type->id()) {
-    case BitsId:
-        return type->bitsize() >= bitsize();
-    default:
-        return is_castable_to(type->builtin_type_id(), expl);
-    }
-}
-
 PrimTypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     switch (id) {
@@ -110,6 +101,15 @@ RValue BoolType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
     default:
         assert(false);
+    }
+}
+
+bool BoolType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
+    switch (type->id()) {
+    case BitsId:
+        return type->bitsize() >= bitsize();
+    default:
+        return is_castable_to(type->builtin_type_id(), expl);
     }
 }
 

@@ -73,16 +73,9 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
         return {ExprError::Error};
 
     if (left.type()->canon()->is_prim()) {
-        // binary op on primitive types
-        if (!right.type()->canon()->is_prim()) {
-            diag().emit(
-                Diag::Error, node->rhs()->loc_id(), 1,
-                "non-primitive type cannot be used as right operand type");
-            return {ExprError::InvalidOperandType};
-        }
         return prim_binary_op(
             node, {left.type()->canon()->as_prim(), left.move_value()},
-            {right.type()->canon()->as_prim(), right.move_value()});
+            right.move_typed_value());
 
     } else if (left.type()->canon()->is_array()) {
         return array_binary_op(
@@ -368,23 +361,17 @@ ExprVisitor::prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg) {
 }
 
 ExprRes ExprVisitor::prim_binary_op(
-    Ref<ast::BinaryOp> node, PrimTypedValue&& left, PrimTypedValue&& right) {
+    Ref<ast::BinaryOp> node, PrimTypedValue&& left, TypedValue&& right) {
     debug() << __FUNCTION__ << " " << ops::str(node->op()) << "\n";
     Op op = ops::non_assign(node->op());
     PrimTypeErrorPair type_errors{};
     if (op != Op::None) {
-        // get rvalues
-        PrimTypedValue left_tv = {
-            left.type(), Value{left.value().move_rvalue()}};
-        PrimTypedValue right_tv = {
-            right.type(), Value{right.value().move_rvalue()}};
-
         // check operand types
         type_errors = prim_binary_op_type_check(op, left.type(), right.type());
 
         // cast if required and possible
-        auto recast = [&](PrimTypeError error, PrimTypedValue&& tv,
-                          Ref<const ast::Expr> node) -> PrimTypedValue {
+        auto recast = [&](PrimTypeError error, TypedValue&& tv,
+                          Ref<ast::Expr> node) -> PrimTypedValue {
             switch (error.status) {
             case PrimTypeError::Incompatible:
                 diag().emit(
@@ -397,23 +384,28 @@ ExprRes ExprVisitor::prim_binary_op(
                 diag().emit(Diag::Error, node->loc_id(), 1, message);
             }
                 [[fallthrough]];
-            case PrimTypeError::ImplCastRequired:
-                return prim_cast(error.suggested_type, std::move(tv));
+            case PrimTypeError::ImplCastRequired: {
+                return do_cast(node, error.suggested_type, std::move(tv));
+            }
             case PrimTypeError::Ok:
-                return std::move(tv);
+                return {tv.type()->canon()->as_prim(), tv.move_value()};
             default:
                 assert(false);
             }
         };
-        left_tv = recast(type_errors.first, std::move(left_tv), node->lhs());
-        right_tv = recast(type_errors.second, std::move(right_tv), node->rhs());
+        auto left_tv = recast(
+            type_errors.first, {left.type(), Value{left.value().copy_rvalue()}},
+            node->lhs());
+        auto right_tv =
+            recast(type_errors.second, std::move(right), node->rhs());
         if (!left_tv || !right_tv)
             return {ExprError::InvalidOperandType};
 
         // apply op
-        right = left_tv.type()->binary_op(
+        left_tv = left_tv.type()->binary_op(
             op, left_tv.move_value().move_rvalue(), right_tv.type(),
             right_tv.move_value().move_rvalue());
+        right = {left_tv.type(), left_tv.move_value()};
     }
 
     // handle assignment
@@ -423,8 +415,7 @@ ExprRes ExprVisitor::prim_binary_op(
                 Diag::Error, node->loc_id(), 1, "cannot assign to rvalue");
             return {ExprError::NotLvalue};
         }
-        return assign(
-            node, left.move_value(), {right.type(), right.move_value()});
+        return assign(node, left.move_value(), std::move(right));
     }
     return {right.type(), right.move_value()};
 }
@@ -513,12 +504,33 @@ ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
     assert(false);
 }
 
+PrimTypedValue ExprVisitor::do_cast(
+    Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv) {
+    auto canon = tv.type()->canon();
+    assert(canon->is_expl_castable_to(builtin_type_id));
+    if (canon->is_prim()) {
+        return prim_cast(builtin_type_id, {canon->as_prim(), tv.move_value()});
+
+    } else if (canon->is_class()) {
+        auto cls = canon->as_class();
+        auto fun = cls->conversion(builtin_type_id);
+        assert(fun);
+        auto obj_val = tv.move_value();
+        ExprRes res = funcall(node, fun, obj_val.obj_view(), {});
+        if (!res.ok())
+            diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
+        assert(res.type()->is_prim());
+        return {res.type()->as_prim(), res.move_value()};
+    }
+    assert(false);
+}
+
 PrimTypedValue
-ExprVisitor::prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv) {
+ExprVisitor::prim_cast(BuiltinTypeId builtin_type_id, PrimTypedValue&& tv) {
     debug() << __FUNCTION__ << " " << tv.type()->name() << " -> "
-            << builtin_type_str(type_id) << "\n";
-    assert(tv.type()->is_expl_castable_to(type_id));
-    return tv.type()->cast_to(type_id, tv.value().move_rvalue());
+            << builtin_type_str(builtin_type_id) << "\n";
+    assert(tv.type()->is_expl_castable_to(builtin_type_id));
+    return tv.type()->cast_to(builtin_type_id, tv.value().move_rvalue());
 }
 
 RValue ExprVisitor::prim_cast(Ref<PrimType> type, PrimTypedValue&& tv) {

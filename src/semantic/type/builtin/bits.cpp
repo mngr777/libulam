@@ -41,31 +41,6 @@ bool BitsType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-bool BitsType::is_castable_to(Ref<const PrimType> type, bool expl) const {
-    switch (type->builtin_type_id()) {
-    case IntId:
-        return expl;
-    case UnsignedId:
-        return expl;
-    case BoolId:
-        return expl;
-    case UnaryId:
-        return expl;
-    case BitsId:
-        return expl || type->bitsize() >= bitsize();
-    case AtomId:
-        assert(false); // TMP
-        return expl;
-    case StringId:
-        assert(false); // TMP
-        return expl;
-    case FunId:
-    case VoidId:
-    default:
-        assert(false);
-    }
-}
-
 PrimTypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(false && "Bits is not implicitly castable to other types");
 }
@@ -130,6 +105,31 @@ PrimTypedValue BitsType::binary_op(
         return binop(std::bit_or<BitVector>{});
     case Op::BwXor:
         return binop(std::bit_xor<BitVector>{});
+    default:
+        assert(false);
+    }
+}
+
+bool BitsType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
+    switch (type->builtin_type_id()) {
+    case IntId:
+        return expl;
+    case UnsignedId:
+        return expl;
+    case BoolId:
+        return expl;
+    case UnaryId:
+        return expl;
+    case BitsId:
+        return expl || type->bitsize() >= bitsize();
+    case AtomId:
+        assert(false); // TMP
+        return expl;
+    case StringId:
+        assert(false); // TMP
+        return expl;
+    case FunId:
+    case VoidId:
     default:
         assert(false);
     }

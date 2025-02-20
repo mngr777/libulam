@@ -9,13 +9,13 @@ bool is_numeric(Ref<const PrimType> type) {
     return type->is(IntId) || type->is(UnsignedId) || type->is(UnaryId);
 }
 
-PrimTypeError check_type_match(Ref<const PrimType> type, BuiltinTypeId target) {
-    assert(target != VoidId);
-    if (type->is(target))
+PrimTypeError check_type_match(Ref<const Type> type, BuiltinTypeId target) {
+    auto canon = type->canon();
+    if (canon->is_prim() && canon->as_prim()->is(target))
         return {PrimTypeError::Ok, VoidId};
-    if (type->is_impl_castable_to(target))
+    if (canon->is_impl_castable_to(target))
         return {PrimTypeError::ImplCastRequired, target};
-    if (type->is_expl_castable_to(target))
+    if (canon->is_expl_castable_to(target))
         return {PrimTypeError::ExplCastRequired, target};
     return {PrimTypeError::Incompatible, VoidId};
 }
@@ -39,7 +39,7 @@ PrimTypeError prim_unary_op_type_check(Op op, Ref<PrimType> type) {
 }
 
 PrimTypeErrorPair prim_binary_op_type_check(
-    Op op, Ref<PrimType> left_type, Ref<PrimType> right_type) {
+    Op op, Ref<PrimType> left_type, Ref<Type> right_type) {
 
     PrimTypeErrorPair errors;
     switch (ops::kind(op)) {
@@ -53,16 +53,18 @@ PrimTypeErrorPair prim_binary_op_type_check(
     } break;
     case ops::Kind::Numeric: {
         auto suggest_cast = [&](BuiltinTypeId type_id) -> bool {
+            assert(right_type->is_prim());
             if (left_type->is(type_id)) {
                 errors.second = check_type_match(right_type, type_id);
                 return true;
-            } else if (right_type->is(type_id)) {
+            } else if (right_type->as_prim()->is(type_id)) {
                 errors.first = check_type_match(left_type, type_id);
                 return true;
             }
             return false;
         };
-        if (is_numeric(left_type) || is_numeric(right_type)) {
+        if (right_type->is_prim() &&
+            (is_numeric(left_type) || is_numeric(right_type->as_prim()))) {
             // same type?
             if (left_type->builtin_type_id() == right_type->builtin_type_id()) {
                 // Unary casted to Unsigned

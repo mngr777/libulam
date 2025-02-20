@@ -2,6 +2,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
@@ -63,7 +64,11 @@ public:
         const override;
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool is_castable_to(
+        BuiltinTypeId builtin_type_id, bool expl = true) const override;
+
     Ref<Fun> conversion(Ref<Type> type);
+    Ref<Fun> conversion(BuiltinTypeId builtin_type_id);
 
 private:
     void add_param_var(Ptr<Var>&& var);
@@ -74,6 +79,7 @@ private:
     std::list<Ref<Var>> _param_vars;
     cls::Ancestry _ancestry;
     std::unordered_map<type_id_t, Ref<Fun>> _conversions;
+    std::unordered_map<BuiltinTypeId, Ref<Fun>> _bi_conversions;
 };
 
 } // namespace ulam

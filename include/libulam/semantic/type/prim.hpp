@@ -45,31 +45,13 @@ public:
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override {
         auto canon = type->canon();
-        return canon->is_prim() ? is_castable_to(canon->as_prim(), expl)
+        return canon->is_prim() ? is_castable_to_prim(canon->as_prim(), expl)
                                 : false;
     }
 
-    virtual bool
-    is_castable_to(Ref<const PrimType> type, bool expl = true) const {
-        assert(false);
-    }
-
-    bool is_impl_castable_to(Ref<const PrimType> type) const {
-        return is_castable_to(type, false);
-    }
-    bool is_expl_castable_to(Ref<const PrimType> type) const {
-        return is_castable_to(type, true);
-    }
-
-    bool is_impl_castable_to(BuiltinTypeId id) const {
-        return is_castable_to(id, false);
-    }
-    bool is_expl_castable_to(BuiltinTypeId id) const {
-        return is_castable_to(id, true);
-    }
-
-    virtual bool is_castable_to(BuiltinTypeId id, bool expl = true) const {
-        assert(false);
+    bool is_castable_to(
+        BuiltinTypeId builtin_type_id, bool expl = true) const override {
+        return false;
     }
 
     RValue cast_to(Ref<Type> type, RValue&& rval) override {
@@ -98,6 +80,11 @@ public:
     };
 
 protected:
+    virtual bool
+    is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
+        return false;
+    }
+
     Builtins& builtins() { return _builtins; }
 
 private:

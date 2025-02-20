@@ -28,10 +28,13 @@ public:
     Datum to_datum(const RValue& rval) const override;
 
     bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
-    bool is_castable_to(Ref<const PrimType> type, bool expl = true) const override;
 
     PrimTypedValue cast_to(BuiltinTypeId id, RValue&& value) override;
     RValue cast_to(Ref<PrimType> type, RValue&& value) override;
+
+protected:
+    bool is_castable_to_prim(
+        Ref<const PrimType> type, bool expl = true) const override;
 };
 
 using BoolTypeTpl = _PrimTypeTpl<BoolType>;

@@ -86,15 +86,31 @@ bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
     return _conversions.count(type->canon()->id()) == 1;
 }
 
+bool Class::is_castable_to(BuiltinTypeId builtin_type_id, bool expl) const {
+    return _bi_conversions.count(builtin_type_id) == 1;
+}
+
 Ref<Fun> Class::conversion(Ref<Type> type) {
     auto it = _conversions.find(type->canon()->id());
     return (it != _conversions.end()) ? it->second : Ref<Fun>{};
 }
 
+Ref<Fun> Class::conversion(BuiltinTypeId builtin_type_id) {
+    auto it = _bi_conversions.find(builtin_type_id);
+    return (it != _bi_conversions.end()) ? it->second : Ref<Fun>{};
+}
+
 void Class::add_conversion(Ref<Type> type, Ref<Fun> fun) {
+    auto canon = type->canon();
     assert(fun->cls() == this);
-    assert(_conversions.count(type->canon()->id()) == 0);
-    _conversions[type->canon()->id()] = fun;
+    assert(_conversions.count(canon->id()) == 0);
+    _conversions[canon->id()] = fun;
+    // conversion to built-in type?
+    // NOTE: can only have one (??)
+    if (canon->is_builtin()) {
+        assert(_bi_conversions.count(canon->builtin_type_id()) == 0);
+        _bi_conversions[canon->builtin_type_id()] = fun;
+    }
 }
 
 } // namespace ulam

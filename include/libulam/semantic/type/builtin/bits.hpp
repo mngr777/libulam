@@ -26,7 +26,6 @@ public:
     RValue construct() override { return RValue{Bits{bitsize()}}; }
 
     bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
-    bool is_castable_to(Ref<const PrimType> type, bool expl = true) const override;
 
     PrimTypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
     RValue cast_to(Ref<PrimType> type, RValue&& rval) override;
@@ -36,6 +35,9 @@ public:
         RValue&& left_rval,
         Ref<const PrimType> right_type,
         RValue&& right_rval) override;
+
+protected:
+    bool is_castable_to_prim(Ref<const PrimType> type, bool expl = true) const override;
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;
