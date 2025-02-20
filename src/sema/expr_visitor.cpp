@@ -493,12 +493,16 @@ ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
 
     } else if (tv.type()->canon()->is_class()) {
         auto cls = tv.type()->canon()->as_class();
-        auto fun = cls->conversion(type);
-        assert(fun);
+        auto convs = cls->conversion(type);
+        assert(convs.size() == 1);
         auto obj_val = tv.move_value();
-        ExprRes res = funcall(node, fun, obj_val.obj_view(), {});
-        if (!res.ok())
+        ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
+        if (!res.ok()) {
             diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
+            return RValue{};
+        }
+        if (res.type()->canon() != type->canon())
+            return do_cast(node, type, res.move_typed_value());
         return res.move_value().move_rvalue();
     }
     assert(false);
@@ -513,14 +517,18 @@ PrimTypedValue ExprVisitor::do_cast(
 
     } else if (canon->is_class()) {
         auto cls = canon->as_class();
-        auto fun = cls->conversion(builtin_type_id);
-        assert(fun);
+        auto convs = cls->conversion(builtin_type_id);
+        assert(convs.size() == 1);
         auto obj_val = tv.move_value();
-        ExprRes res = funcall(node, fun, obj_val.obj_view(), {});
-        if (!res.ok())
+        ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
+        if (!res.ok()) {
             diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
+            return {}; // ??
+        }
         assert(res.type()->is_prim());
-        return {res.type()->as_prim(), res.move_value()};
+        if (!res.type()->canon()->as_prim()->is(builtin_type_id))
+            return do_cast(node, builtin_type_id, res.move_typed_value());
+        return {res.type()->canon()->as_prim(), res.move_value()};
     }
     assert(false);
 }

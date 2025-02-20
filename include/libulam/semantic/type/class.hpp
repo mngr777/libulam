@@ -7,6 +7,7 @@
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <string_view>
+#include <set>
 
 namespace ulam::ast {
 class ArgList;
@@ -30,6 +31,7 @@ class Class : public UserType, public ClassBase {
 
 public:
     using ParamVarList = std::list<Ref<Var>>;
+    using ConversionMatchRes = std::set<Ref<Fun>>;
 
     Class(TypeIdGen* id_gen, std::string_view name, Ref<ClassTpl> tpl);
     Class(
@@ -67,8 +69,8 @@ public:
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    Ref<Fun> conversion(Ref<Type> type);
-    Ref<Fun> conversion(BuiltinTypeId builtin_type_id);
+    ConversionMatchRes conversion(Ref<const Type> type, bool expl = false) const;
+    ConversionMatchRes conversion(BuiltinTypeId builtin_type_id, bool expl = false) const;
 
 private:
     void add_param_var(Ptr<Var>&& var);
@@ -79,7 +81,6 @@ private:
     std::list<Ref<Var>> _param_vars;
     cls::Ancestry _ancestry;
     std::unordered_map<type_id_t, Ref<Fun>> _conversions;
-    std::unordered_map<BuiltinTypeId, Ref<Fun>> _bi_conversions;
 };
 
 } // namespace ulam

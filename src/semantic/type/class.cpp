@@ -83,21 +83,54 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 }
 
 bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
-    return _conversions.count(type->canon()->id()) == 1;
+    return conversion(type, expl).size() == 1;
 }
 
 bool Class::is_castable_to(BuiltinTypeId builtin_type_id, bool expl) const {
-    return _bi_conversions.count(builtin_type_id) == 1;
+    return conversion(builtin_type_id, expl).size() == 1;
 }
 
-Ref<Fun> Class::conversion(Ref<Type> type) {
-    auto it = _conversions.find(type->canon()->id());
-    return (it != _conversions.end()) ? it->second : Ref<Fun>{};
+// TODO: conversion functions to be reviewed
+
+Class::ConversionMatchRes
+Class::conversion(Ref<const Type> type, bool expl) const {
+    auto canon = type->canon();
+    {
+        auto it = _conversions.find(type->canon()->id());
+        if (it != _conversions.end())
+            return {it->second};
+    }
+    ConversionMatchRes matches{};
+    ConversionMatchRes bi_matches{};
+    for (auto [_, fun] : _conversions) {
+        auto ret_canon = fun->ret_type()->canon();
+        if (canon->is_builtin() &&
+            canon->builtin_type_id() == ret_canon->builtin_type_id()) {
+            bi_matches.insert(fun);
+        } else if (
+            bi_matches.size() == 0 && ret_canon->is_castable_to(type, expl)) {
+            matches.insert(fun);
+        }
+    }
+    return (bi_matches.size() > 0) ? bi_matches : matches;
 }
 
-Ref<Fun> Class::conversion(BuiltinTypeId builtin_type_id) {
-    auto it = _bi_conversions.find(builtin_type_id);
-    return (it != _bi_conversions.end()) ? it->second : Ref<Fun>{};
+Class::ConversionMatchRes
+Class::conversion(BuiltinTypeId builtin_type_id, bool expl) const {
+    ConversionMatchRes matches{};
+    ConversionMatchRes bi_matches{};
+    for (auto [_, fun] : _conversions) {
+        auto ret_canon = fun->ret_type()->canon();
+        if (ret_canon->is_builtin() &&
+            ret_canon->builtin_type_id() == builtin_type_id) {
+            bi_matches.insert(fun);
+        } else if (
+            bi_matches.size() == 0 &&
+            ret_canon->is_castable_to(builtin_type_id, expl)) {
+            matches.insert(fun);
+        }
+    }
+    return (bi_matches.size() > 0) ? bi_matches : matches;
 }
 
 void Class::add_conversion(Ref<Type> type, Ref<Fun> fun) {
@@ -105,12 +138,6 @@ void Class::add_conversion(Ref<Type> type, Ref<Fun> fun) {
     assert(fun->cls() == this);
     assert(_conversions.count(canon->id()) == 0);
     _conversions[canon->id()] = fun;
-    // conversion to built-in type?
-    // NOTE: can only have one (??)
-    if (canon->is_builtin()) {
-        assert(_bi_conversions.count(canon->builtin_type_id()) == 0);
-        _bi_conversions[canon->builtin_type_id()] = fun;
-    }
 }
 
 } // namespace ulam
