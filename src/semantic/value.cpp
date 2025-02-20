@@ -1,3 +1,5 @@
+#include "libulam/semantic/value/array.hpp"
+#include "libulam/semantic/value/bound.hpp"
 #include <libulam/detail/variant.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
@@ -24,18 +26,23 @@ Ref<Class> LValue::obj_cls() {
     return type_->as_class();
 }
 
+ObjectView LValue::obj_view() {
+    return accept(
+        [&](Ref<Var> var) { return var->obj_view(); },
+        [&](ArrayAccess& array_access) {
+            return array_access.item_object_view();
+        },
+        [&](ObjectView& obj_view) { return ObjectView{obj_view}; },
+        [&](BoundProp& bound_prop) { return bound_prop.mem_obj_view(); },
+        [&](auto& other) -> ObjectView { assert(false); });
+}
+
 RValue LValue::rvalue() const {
     return accept(
         [&](Ref<Var> var) { return var->rvalue(); },
-        [&](const ArrayAccess& array_access) {
-            return array_access.load();
-        },
-        [&](const ObjectView& obj_view) {
-            return RValue{obj_view.copy()};
-        },
-        [&](const BoundProp& bound_prop) {
-            return bound_prop.load();
-        },
+        [&](const ArrayAccess& array_access) { return array_access.load(); },
+        [&](const ObjectView& obj_view) { return RValue{obj_view.copy()}; },
+        [&](const BoundProp& bound_prop) { return bound_prop.load(); },
         [&](auto&) -> RValue { assert(false); });
 }
 
@@ -114,6 +121,12 @@ Ref<Class> RValue::obj_cls() {
         [&](auto& other) -> Ref<Class> { assert(false); });
 }
 
+ObjectView RValue::obj_view() {
+    return accept(
+        [&](SPtr<Object> obj) { return obj->view(); },
+        [&](auto& other) -> ObjectView { assert(false); });
+}
+
 RValue RValue::array_access(Ref<Type> item_type, array_idx_t index) {
     return accept(
         [&](const Array& array) { return array.load(item_type, index); },
@@ -149,6 +162,13 @@ Ref<Class> Value::obj_cls() {
         [&](LValue& lval) { return lval.obj_cls(); },
         [&](RValue& rval) { return rval.obj_cls(); },
         [&](auto& other) -> Ref<Class> { assert(false); });
+}
+
+ObjectView Value::obj_view() {
+    return accept(
+        [&](LValue& lval) { return lval.obj_view(); },
+        [&](RValue& rval) { return rval.obj_view(); },
+        [&](auto& other) -> ObjectView { assert(false); });
 }
 
 Value Value::array_access(Ref<Type> item_type, array_idx_t index) {

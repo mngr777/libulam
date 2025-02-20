@@ -82,4 +82,19 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
         cls->members().export_symbols(members());
 }
 
+bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
+    return _conversions.count(type->canon()->id()) == 1;
+}
+
+Ref<Fun> Class::conversion(Ref<Type> type) {
+    auto it = _conversions.find(type->canon()->id());
+    return (it != _conversions.end()) ? it->second : Ref<Fun>{};
+}
+
+void Class::add_conversion(Ref<Type> type, Ref<Fun> fun) {
+    assert(fun->cls() == this);
+    assert(_conversions.count(type->canon()->id()) == 0);
+    _conversions[type->canon()->id()] = fun;
+}
+
 } // namespace ulam

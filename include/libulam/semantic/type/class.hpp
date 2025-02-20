@@ -13,6 +13,10 @@ class ClassDef;
 class TypeName;
 } // namespace ulam::ast
 
+namespace ulam::sema {
+class Resolver;
+}
+
 namespace ulam {
 
 class Diag;
@@ -20,6 +24,7 @@ class ClassTpl;
 
 class Class : public UserType, public ClassBase {
     friend ClassTpl;
+    friend sema::Resolver;
     friend cls::Ancestry;
 
 public:
@@ -57,13 +62,18 @@ public:
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override;
 
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    Ref<Fun> conversion(Ref<Type> type);
+
 private:
     void add_param_var(Ptr<Var>&& var);
+    void add_conversion(Ref<Type> type, Ref<Fun> fun);
 
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     std::list<Ref<Var>> _param_vars;
     cls::Ancestry _ancestry;
+    std::unordered_map<type_id_t, Ref<Fun>> _conversions;
 };
 
 } // namespace ulam

@@ -14,7 +14,7 @@ EvalExprVisitor::EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope):
     ExprVisitor{eval._program, scope}, _eval{eval} {}
 
 ExprRes EvalExprVisitor::funcall(
-    Ref<ast::FunCall> node,
+    Ref<ast::Expr> node,
     Ref<Fun> fun,
     ObjectView obj_view,
     TypedValueList&& args) {

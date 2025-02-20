@@ -29,6 +29,7 @@ public:
 
     Ref<Type> type();
     Ref<Class> obj_cls();
+    ObjectView obj_view();
 
     LValue array_access(Ref<Type> item_type, array_idx_t index);
     LValue bound_prop(Ref<Prop> prop);
@@ -54,6 +55,7 @@ public:
     RValue copy() const;
 
     Ref<Class> obj_cls();
+    ObjectView obj_view();
 
     RValue array_access(Ref<Type> item_type, array_idx_t index);
     LValue bound_prop(Ref<Prop> prop);
@@ -80,6 +82,7 @@ public:
     const RValue& rvalue() const { return get<RValue>(); }
 
     Ref<Class> obj_cls();
+    ObjectView obj_view();
 
     Value array_access(Ref<Type> item_type, array_idx_t index);
     Value bound_prop(Ref<Prop> prop);

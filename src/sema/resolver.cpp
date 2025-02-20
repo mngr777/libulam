@@ -1,5 +1,4 @@
-#include "libulam/semantic/type.hpp"
-#include "libulam/semantic/type/class/layout.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/array_dim_eval.hpp>
@@ -7,6 +6,7 @@
 #include <libulam/sema/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 
 // TODO: props
 
@@ -296,6 +296,29 @@ bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
     fset->for_each([&](Ref<Fun> fun) {
         auto scope_view = scope->view(fun->scope_version());
         is_resolved = resolve(fun, ref(scope_view)) && is_resolved;
+
+        // conversion to Int?
+        if (fun->is_ready() && str(fun->name_id()) == "toInt") {
+            bool is_conv = true;
+            // check ret type
+            auto int_type =
+                _program->builtins().prim_type(IntId, IntType::DefaultSize);
+            if (is_conv && fun->ret_type()->canon() != int_type) {
+                diag().emit(
+                    Diag::Warn, fun->node()->loc_id(), 1,
+                    std::string{"return type must be "} + int_type->name());
+                is_conv = false;
+            }
+            // check params
+            if (is_conv && fun->param_num() != 0) {
+                diag().emit(
+                    Diag::Warn, fun->node()->loc_id(), 1,
+                    "toInt function cannot have parameters");
+                is_conv = false;
+            }
+            if (is_conv)
+                cls->add_conversion(int_type, fun);
+        }
     });
     fset->init_map(diag(), _program->str_pool());
 
@@ -310,7 +333,9 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
     // return type
     auto ret_type_node = fun->ret_type_node();
     auto ret_type = resolve_fun_ret_type(ret_type_node, scope);
-    if (!ret_type) {
+    if (ret_type) {
+        fun->set_ret_type(ret_type);
+    } else {
         diag().emit(
             Diag::Error, ret_type_node->loc_id(), 1,
             "cannot resolve return type");

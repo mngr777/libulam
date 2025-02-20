@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
@@ -6,6 +5,7 @@
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/types.hpp>
@@ -90,7 +90,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             node, left.move_typed_value(), right.move_typed_value());
 
     } else if (left.type()->canon()->is_class()) {
-        return class_binary_op(node, left.move_typed_value(), right.move_typed_value());
+        return class_binary_op(
+            node, left.move_typed_value(), right.move_typed_value());
     }
     assert(false);
 }
@@ -298,32 +299,18 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
     if (!res.ok())
         return UnknownArrayIdx;
 
-    // TODO: clean up
+    // Cast to default Int
+    auto int_type = builtins().prim_type(IntId, IntType::DefaultSize);
+    auto cast_res = maybe_cast(expr, int_type, res.move_typed_value());
+    if (cast_res.second == CastError)
+        return UnknownArrayIdx;
 
-    auto type = res.type();
-    auto rval = res.move_value().move_rvalue();
-    switch (type->builtin_type_id()) {
-    case IntId: {
-        auto int_val = rval.get<Integer>();
-        if (int_val < 0) {
-            diag().emit(Diag::Error, expr->loc_id(), 1, "array index is < 0");
-            return UnknownArrayIdx;
-        }
-        return (array_idx_t)int_val;
-    }
-    case UnsignedId: {
-        auto uns_val = rval.get<Unsigned>();
-        return (array_idx_t)uns_val;
-    }
-    case UnaryId: {
-        auto uns_val = detail::count_ones(rval.get<Unsigned>());
-        return (array_idx_t)uns_val;
-    }
-    default:
-        diag().emit(
-            Diag::Error, expr->loc_id(), 1, "array index is non-numeric");
+    auto int_val = cast_res.first.get<Integer>();
+    if (int_val < 0) {
+        diag().emit(Diag::Error, expr->loc_id(), 1, "array index is < 0");
         return UnknownArrayIdx;
     }
+    return (array_idx_t)int_val;
 }
 
 ExprRes
@@ -494,23 +481,36 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
     Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv, bool expl) {
     if (type->canon() == tv.type()->canon())
         return {tv.value().move_rvalue(), NoCast};
+
     if (tv.type()->is_castable_to(type, expl))
-        return {do_cast(type, std::move(tv)), CastOk};
+        return {do_cast(node, type, std::move(tv)), CastOk};
+
     if (!expl && tv.type()->is_expl_castable_to(type)) {
         diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
-        return {do_cast(type, std::move(tv)), CastOk};
+        return {do_cast(node, type, std::move(tv)), CastOk};
     }
     return {RValue{}, CastError};
 }
 
-RValue ExprVisitor::do_cast(Ref<Type> type, TypedValue&& tv) {
-    if (type->canon()->is_prim()) {
-        assert(tv.type()->canon()->is_prim());
+RValue
+ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
+    if (tv.type()->canon()->is_prim()) {
+        assert(type->canon()->is_prim());
         return prim_cast(
-            type->canon()->as_prim(), {tv.type()->canon()->as_prim(), tv.move_value()});
-    } else {
-        assert(false);
+            type->canon()->as_prim(),
+            {tv.type()->canon()->as_prim(), tv.move_value()});
+
+    } else if (tv.type()->canon()->is_class()) {
+        auto cls = tv.type()->canon()->as_class();
+        auto fun = cls->conversion(type);
+        assert(fun);
+        auto obj_val = tv.move_value();
+        ExprRes res = funcall(node, fun, obj_val.obj_view(), {});
+        if (!res.ok())
+            diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
+        return res.move_value().move_rvalue();
     }
+    assert(false);
 }
 
 PrimTypedValue
@@ -529,7 +529,7 @@ RValue ExprVisitor::prim_cast(Ref<PrimType> type, PrimTypedValue&& tv) {
 }
 
 ExprRes ExprVisitor::funcall(
-    Ref<ast::FunCall> node,
+    Ref<ast::Expr> node,
     Ref<Fun> fun,
     ObjectView obj_view,
     TypedValueList&& args) {

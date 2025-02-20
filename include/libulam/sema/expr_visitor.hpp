@@ -68,7 +68,7 @@ protected:
         TypedValue&& tv,
         bool expl = false);
 
-    RValue do_cast(Ref<Type> type, TypedValue&& tv);
+    RValue do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
 
     virtual PrimTypedValue
     prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv);
@@ -76,7 +76,7 @@ protected:
     virtual RValue prim_cast(Ref<PrimType> type, PrimTypedValue&& tv);
 
     virtual ExprRes funcall(
-        Ref<ast::FunCall> node,
+        Ref<ast::Expr> node,
         Ref<Fun> fun,
         ObjectView obj_view,
         TypedValueList&& args);
