@@ -102,6 +102,12 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
         uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
         return RValue{detail::ones(uns_val)};
     }
+    case BitsId: {
+        auto bits_rval = type->construct();
+        bits_rval.get<Bits>().bits().write_right(
+            type->bitsize(), to_datum(rval));
+        return bits_rval;
+    }
     default:
         assert(false);
     }
