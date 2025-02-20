@@ -78,9 +78,8 @@ public:
     explicit BitVector(size_t len):
         _len{len}, _bits((len + UnitSize - 1) / UnitSize, 0) {}
 
-    // TODO: disable copying
-    // BitVector(BitVector&& other) = default;
-    // BitVector& operator=(BitVector&&) = default;
+    BitVector(BitVector&& other) = default;
+    BitVector& operator=(BitVector&&) = default;
 
     BitVectorView view() { return BitVectorView{*this}; }
     const BitVectorView view() const {
