@@ -19,7 +19,7 @@ public:
 
     Ref<Type> type(BuiltinTypeId id);
 
-    Ref<BoolType> boolean();
+    Ref<BoolType> boolean(bitsize_t bitsize = 1);
 
 private:
     std::map<BuiltinTypeId, Ptr<PrimTypeTpl>> _prim_type_tpls;

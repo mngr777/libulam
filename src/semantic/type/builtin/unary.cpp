@@ -22,7 +22,7 @@ bool UnaryType::is_castable_to(BuiltinTypeId id, bool expl) const {
     case UnsignedId:
         return true;
     case BoolId:
-        return false;
+        return bitsize() == 1;
     case UnaryId:
         return true;
     case BitsId:
@@ -46,7 +46,7 @@ bool UnaryType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     case UnsignedId:
         return expl || detail::unsigned_max(size) >= bitsize();
     case BoolId:
-        return false;
+        return bitsize() == 1;
     case UnaryId:
         return expl || size >= bitsize();
     case BitsId:
@@ -82,6 +82,11 @@ PrimTypedValue UnaryType::cast_to(BuiltinTypeId id, RValue&& rval) {
         auto type = builtins().prim_type(UnsignedId, size);
         return {type, Value{RValue{uns_val}}};
     }
+    case BoolId: {
+        assert(bitsize() == 1);
+        auto boolean = builtins().boolean();
+        return {boolean, Value{boolean->construct(uns_val > 0)}};
+    }
     case UnaryId: {
         assert(false);
         return {this, Value{std::move(rval)}};
@@ -112,6 +117,10 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
     case UnsignedId: {
         uns_val = std::min(detail::unsigned_max(type->bitsize()), uns_val);
         return RValue{uns_val};
+    }
+    case BoolId: {
+        assert(bitsize() == 1);
+        return builtins().boolean(type->bitsize())->construct(uns_val > 0);
     }
     case UnaryId: {
         uns_val = std::min<Unsigned>(type->bitsize(), uns_val);

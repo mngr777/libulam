@@ -59,7 +59,8 @@ int main(int argc, char** argv) {
 
     if (case_num == 0) {
         for (unsigned n = 1; n <= test_paths.size(); ++n)
-            run(n, test_paths);
+            if (!run(n, test_paths))
+                break;
     } else {
         if (case_num <= test_paths.size()) {
             run(case_num, test_paths);

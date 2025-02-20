@@ -23,7 +23,7 @@ bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
     case UnsignedId:
         return true;
     case BoolId:
-        return false;
+        return bitsize() == 1;
     case UnaryId:
         return true;
     case BitsId:
@@ -46,7 +46,7 @@ bool UnsignedType::is_castable_to(Ref<const PrimType> type, bool expl) const {
     case UnsignedId:
         return expl || type->bitsize() >= bitsize();
     case BoolId:
-        return false;
+        return bitsize() == 1;
     case UnaryId:
         return expl || detail::unsigned_max(bitsize()) <= type->bitsize();
     case BitsId:
@@ -80,6 +80,11 @@ PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
     case UnsignedId: {
         assert(false);
         return {this, Value{std::move(rval)}};
+    }
+    case BoolId: {
+        assert(bitsize() == 1);
+        auto boolean = builtins().boolean();
+        return {boolean, Value{boolean->construct(uns_val > 0)}};
     }
     case UnaryId: {
         Unsigned val = std::min((Unsigned)ULAM_MAX_INT_SIZE, uns_val);
@@ -115,10 +120,20 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
             return RValue{uns_max};
         return std::move(rval);
     }
+    case BoolId: {
+        assert(bitsize() == 1);
+        return builtins().boolean(type->bitsize())->construct();
+    }
     case UnaryId: {
         Unsigned val =
             std::min((Unsigned)type->bitsize(), detail::ones(uns_val));
         return RValue{val};
+    }
+    case BitsId: {
+        auto bits_rval = type->construct();
+        bits_rval.get<Bits>().bits().write_right(
+            type->bitsize(), to_datum(rval));
+        return bits_rval;
     }
     default:
         assert(false);
@@ -185,7 +200,8 @@ PrimTypedValue UnsignedType::binary_op(
     }
     case Op::Prod: {
         // Unsigned(a) * Unsigned(b) = Unsigned(a + b)
-        auto size = std::min<bitsize_t>(MaxSize, bitsize() + right_type->bitsize());
+        auto size =
+            std::min<bitsize_t>(MaxSize, bitsize() + right_type->bitsize());
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
@@ -221,7 +237,8 @@ PrimTypedValue UnsignedType::binary_op(
         // Unsigned(a) - Unsigned(b) = Unsigned(a)
         if (is_unknown)
             return {this, Value{RValue{}}};
-        Unsigned val = (left_uns_val > right_uns_val) ? left_uns_val - right_uns_val : 0;
+        Unsigned val =
+            (left_uns_val > right_uns_val) ? left_uns_val - right_uns_val : 0;
         return {this, Value{RValue{val}}};
     }
     case Op::Less: {

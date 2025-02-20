@@ -1,4 +1,3 @@
-#include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -494,6 +493,7 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
 
 RValue
 ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
+    assert(tv.type()->canon()->is_expl_castable_to(type->canon()));
     if (tv.type()->canon()->is_prim()) {
         assert(type->canon()->is_prim());
         return prim_cast(

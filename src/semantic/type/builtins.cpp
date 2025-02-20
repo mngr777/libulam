@@ -51,8 +51,8 @@ Ref<Type> Builtins::type(BuiltinTypeId id) {
     return type;
 }
 
-Ref<BoolType> Builtins::boolean() {
-    return dynamic_cast<Ref<BoolType>>(prim_type_tpl(BoolId)->type(1));
+Ref<BoolType> Builtins::boolean(bitsize_t bitsize) {
+    return dynamic_cast<Ref<BoolType>>(prim_type_tpl(BoolId)->type(bitsize));
 }
 
 } // namespace ulam
