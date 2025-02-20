@@ -28,6 +28,7 @@ class Fun : public Decl {
     friend FunSet;
 
 public:
+    using Params = std::list<Ptr<Var>>;
     enum Match { NoMatch, IsMatch, IsBuiltinTypeIdMatch, ExactMatch };
 
     Fun(Ref<ast::FunDef> node);
@@ -43,8 +44,8 @@ public:
     void set_ret_type(Ref<Type> ret_type) { _ret_type = ret_type; }
 
     // TMP?
-    auto& params() { return _params; }
-    const auto& param() const { return _params; }
+    Params& params() { return _params; }
+    const Params& param() const { return _params; }
     void add_param(Ptr<Var>&& param);
 
     unsigned min_param_num() const;
@@ -64,7 +65,7 @@ private:
 
     Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
-    std::list<Ptr<Var>> _params;
+    Params _params;
 };
 
 class FunSet : public Decl {
