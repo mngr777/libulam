@@ -1,10 +1,11 @@
+#include <algorithm>
 #include <cassert>
 #include <libulam/semantic/value/bit_vector.hpp>
 #include <limits>
 
 // NOTE: keeping it simple for now
-// TODO: (maybe) optimize, see MFM::BitVector impl
-// TODO: naming: size/len
+// TODO: (maybe) optimize, see MFM::BitVector impl, use variant<uint32_t,vector>
+// TODO: naming: size/len, capitalize consts
 
 namespace ulam {
 namespace {
@@ -120,7 +121,7 @@ BitVector BitVectorView::operator^(const BitVectorView& other) const {
 }
 
 void BitVectorView::bin_op(const BitVectorView& other, UnitBinOp op) {
-    size_t off1 = 0; // from the right
+    size_t off1 = 0; // offset from the right
     while (off1 < len()) {
         size_t size1 = UnitSize;
         off1 += UnitSize;
@@ -256,6 +257,65 @@ BitVector& BitVector::operator^=(const BitVector& other) {
     return operator^=(other.view());
 }
 
+BitVector& BitVector::operator<<=(size_t shift) {
+    if (_len == 0 || shift == 0) {
+        return *this;
+    }
+    if (shift >= _len) {
+        clear();
+        return *this;
+    }
+    const unit_idx_t ShiftUnits = shift / UnitSize;
+    const size_t ShiftRem = shift % UnitSize;
+    if (ShiftRem > 0) {
+        const unit_t Mask = make_mask(ShiftRem, UnitSize - ShiftRem);
+        auto to = _bits.begin();
+        auto from = to + ShiftUnits;
+        while (true) {
+            *to = *from << ShiftRem;
+            if (++from == _bits.end())
+                break;
+            *to |= (*from & Mask) >> (UnitSize - ShiftRem);
+            ++to;
+        }
+    } else {
+        std::copy(_bits.begin() + ShiftUnits, _bits.end(), _bits.begin());
+    }
+    assert((*(_bits.end() - 1) & ~last_unit_mask()) == 0);
+    std::fill_n(_bits.end() - ShiftUnits, ShiftUnits, 0);
+    return *this;
+}
+
+BitVector& BitVector::operator>>=(size_t shift) {
+    if (_len == 0 || shift == 0) {
+        return *this;
+    }
+    if (shift >= _len) {
+        clear();
+        return *this;
+    }
+    const unit_idx_t ShiftUnits = shift / UnitSize;
+    const size_t ShiftRem = shift % UnitSize;
+    if (ShiftRem > 0) {
+        const unit_t Mask = make_mask(ShiftRem, 0);
+        auto to = _bits.end() - 1;
+        auto from = _bits.end() - 1 - ShiftUnits;
+        while (true) {
+            *to = *from >> ShiftRem;
+            if (from == _bits.begin())
+                break;
+            --from;
+            *to |= (*from & Mask) << (UnitSize - ShiftRem);
+            --to;
+        }
+    } else {
+        std::copy_backward(_bits.begin(), _bits.end() - ShiftUnits, _bits.end());
+    }
+    *(_bits.end() - 1) &= last_unit_mask();
+    std::fill_n(_bits.begin(), ShiftUnits, 0);
+    return *this;
+}
+
 BitVector BitVector::operator&(const BitVector& other) const {
     return operator&(other.view());
 }
@@ -302,6 +362,25 @@ BitVector BitVector::operator^(const BitVectorView other) const {
     BitVector bv{copy_other ? other.copy() : copy()};
     bv.view() ^= copy_other ? view() : other.view();
     return bv;
+}
+
+BitVector BitVector::operator<<(size_t shift) {
+    auto bv = copy();
+    bv <<= shift;
+    return bv;
+}
+
+BitVector BitVector::operator>>(size_t shift) {
+    auto bv = copy();
+    bv >>= shift;
+    return bv;
+}
+
+void BitVector::clear() { std::fill(_bits.begin(), _bits.end(), 0); }
+
+BitVector::unit_t BitVector::last_unit_mask() const {
+    size_t rem = _len % UnitSize;
+    return (rem == 0) ? make_mask(UnitSize, 0) : make_mask(rem, UnitSize - rem);
 }
 
 } // namespace ulam

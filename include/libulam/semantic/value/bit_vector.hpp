@@ -110,10 +110,14 @@ public:
     BitVector& operator&=(const BitVector& other);
     BitVector& operator|=(const BitVector& other);
     BitVector& operator^=(const BitVector& other);
+    BitVector& operator<<=(size_t shift);
+    BitVector& operator>>=(size_t shift);
 
     BitVector operator&(const BitVector& other) const;
     BitVector operator|(const BitVector& other) const;
     BitVector operator^(const BitVector& other) const;
+    BitVector operator<<(size_t shift);
+    BitVector operator>>(size_t shift);
 
     BitVector& operator&=(const BitVectorView other);
     BitVector& operator|=(const BitVectorView other);
@@ -126,6 +130,9 @@ public:
 private:
     unit_t read(unit_idx_t unit_idx, size_t start, size_t len) const;
     void write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value);
+
+    void clear();
+    unit_t last_unit_mask() const;
 
     size_t _len;
     std::vector<unit_t> _bits;
