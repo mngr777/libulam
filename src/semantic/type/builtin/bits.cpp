@@ -75,7 +75,7 @@ PrimTypedValue BitsType::binary_op(
     RValue&& left_rval,
     Ref<const PrimType> right_type,
     RValue&& right_rval) {
-    assert(right_type->is(BitsId));
+    assert(right_type->is(BitsId) || right_type->is(UnsignedId));
     assert(left_rval.empty() || left_rval.is<Bits>());
     bool is_unknown = left_rval.empty() || right_rval.empty();
 
@@ -92,13 +92,17 @@ PrimTypedValue BitsType::binary_op(
         return {type, Value{RValue{std::move(bits)}}};
     };
 
-    // TODO: shift
-
     switch (op) {
-    case Op::ShiftLeft:
-        assert(false);
-    case Op::ShiftRight:
-        assert(false);
+    case Op::ShiftLeft: {
+        Unsigned shift = right_rval.get<Unsigned>();
+        Bits bits{left_rval.get<Bits>().bits() << shift};
+        return {this, Value{RValue{std::move(bits)}}};
+    }
+    case Op::ShiftRight: {
+        Unsigned shift = right_rval.get<Unsigned>();
+        Bits bits{left_rval.get<Bits>().bits() >> shift};
+        return {this, Value{RValue{std::move(bits)}}};
+    }
     case Op::BwAnd:
         return binop(std::bit_and<BitVector>{});
     case Op::BwOr:

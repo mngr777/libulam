@@ -91,7 +91,11 @@ PrimTypeErrorPair prim_binary_op_type_check(
     } break;
     case ops::Kind::Bitwise: {
         errors.first = check_type_match(left_type, BitsId);
-        errors.second = check_type_match(right_type, BitsId);
+        if (op == Op::ShiftLeft || op == Op::ShiftRight) {
+            errors.second = check_type_match(right_type, UnsignedId);
+        } else {
+            errors.second = check_type_match(right_type, BitsId);
+        }
     } break;
     }
     return errors;
