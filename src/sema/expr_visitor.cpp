@@ -470,7 +470,7 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
     Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv, bool expl) {
-    if (type->canon() == tv.type()->canon())
+    if (tv.type()->is_same(type))
         return {tv.value().move_rvalue(), NoCast};
 
     if (tv.type()->is_castable_to(type, expl))
@@ -494,7 +494,7 @@ ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
 
     } else if (tv.type()->canon()->is_class()) {
         auto cls = tv.type()->canon()->as_class();
-        auto convs = cls->convs(type);
+        auto convs = cls->convs(type, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
@@ -518,7 +518,7 @@ PrimTypedValue ExprVisitor::do_cast(
 
     } else if (canon->is_class()) {
         auto cls = canon->as_class();
-        auto convs = cls->convs(builtin_type_id);
+        auto convs = cls->convs(builtin_type_id, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});

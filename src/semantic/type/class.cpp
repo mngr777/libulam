@@ -113,7 +113,7 @@ ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {
             return res;
         }
     }
-    if (!type->is_prim())
+    if (!canon_->is_prim())
         return res;
 
     // class to primitive type to other primitive type
