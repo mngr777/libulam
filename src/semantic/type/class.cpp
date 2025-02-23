@@ -1,8 +1,12 @@
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
+#include <libulam/semantic/type/conv.hpp>
+#include <libulam/semantic/type/prim.hpp>
 
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[Class] "
@@ -82,62 +86,75 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
         cls->members().export_symbols(members());
 }
 
+// NOTE: for ambiguous conversion truth is returned,
+// the error is to be catched when applying conversions
+
 bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
-    return conversion(type, expl).size() == 1;
+    return !convs(type, expl).empty();
 }
 
-bool Class::is_castable_to(BuiltinTypeId builtin_type_id, bool expl) const {
-    return conversion(builtin_type_id, expl).size() == 1;
+bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
+    return !convs(bi_type_id, expl).empty();
 }
 
-// TODO: conversion functions to be reviewed
+// TODO: handle non-primitive builtins
 
-Class::ConversionMatchRes
-Class::conversion(Ref<const Type> type, bool expl) const {
-    auto canon = type->canon();
+ConvList Class::convs(Ref<const Type> type, bool expl) const {
+    auto canon_ = type->canon();
+    ConvList res;
     {
-        auto it = _conversions.find(type->canon()->id());
-        if (it != _conversions.end())
-            return {it->second};
-    }
-    ConversionMatchRes matches{};
-    ConversionMatchRes bi_matches{};
-    for (auto [_, fun] : _conversions) {
-        auto ret_canon = fun->ret_type()->canon();
-        if (canon->is_builtin() &&
-            canon->builtin_type_id() == ret_canon->builtin_type_id()) {
-            bi_matches.insert(fun);
-        } else if (
-            bi_matches.size() == 0 && ret_canon->is_castable_to(type, expl)) {
-            matches.insert(fun);
+        // has exact conversion?
+        auto it = _convs.find(canon_->id());
+        if (it != _convs.end()) {
+            res.push(it->second, ClassConvCost);
+            return res;
         }
     }
-    return (bi_matches.size() > 0) ? bi_matches : matches;
-}
+    if (!type->is_prim())
+        return res;
 
-Class::ConversionMatchRes
-Class::conversion(BuiltinTypeId builtin_type_id, bool expl) const {
-    ConversionMatchRes matches{};
-    ConversionMatchRes bi_matches{};
-    for (auto [_, fun] : _conversions) {
+    // class to primitive type to other primitive type
+    for (auto& [_, fun] : _convs) {
         auto ret_canon = fun->ret_type()->canon();
-        if (ret_canon->is_builtin() &&
-            ret_canon->builtin_type_id() == builtin_type_id) {
-            bi_matches.insert(fun);
-        } else if (
-            bi_matches.size() == 0 &&
-            ret_canon->is_castable_to(builtin_type_id, expl)) {
-            matches.insert(fun);
+        if (!ret_canon->is_prim())
+            continue;
+        if (ret_canon->is_impl_castable_to(canon_)) {
+            // implicit
+            auto cost = prim_conv_cost(ret_canon->as_prim(), canon_->as_prim());
+            res.push(fun, ClassConvCost + cost);
+        } else if (expl && ret_canon->is_expl_castable_to(canon_)) {
+            // explicit
+            auto cost = prim_cast_cost(ret_canon->as_prim(), canon_->as_prim());
+            res.push(fun, ClassConvCost + cost);
         }
     }
-    return (bi_matches.size() > 0) ? bi_matches : matches;
+    return res;
 }
 
-void Class::add_conversion(Ref<Type> type, Ref<Fun> fun) {
-    auto canon = type->canon();
+ConvList Class::convs(BuiltinTypeId bi_type_id, bool expl) const {
+    ConvList res;
+    for (auto& [_, fun] : _convs) {
+        auto ret_canon = fun->ret_type()->canon();
+        if (!ret_canon->is_prim())
+            continue;
+        if (ret_canon->is_impl_castable_to(bi_type_id)) {
+            // implicit
+            auto cost = prim_conv_cost(ret_canon->as_prim(), bi_type_id);
+            res.push(fun, ClassConvCost + cost);
+        } else if (expl && ret_canon->is_expl_castable_to(bi_type_id)) {
+            // explicit
+            auto cost = prim_cast_cost(ret_canon->as_prim(), bi_type_id);
+            res.push(fun, ClassConvCost + cost);
+        }
+    }
+    return res;
+}
+
+void Class::add_conv(Ref<Fun> fun) {
     assert(fun->cls() == this);
-    assert(_conversions.count(canon->id()) == 0);
-    _conversions[canon->id()] = fun;
+    auto ret_canon = fun->ret_type()->canon();
+    assert(_convs.count(ret_canon->id()));
+    _convs[ret_canon->id()] = fun;
 }
 
 } // namespace ulam

@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>

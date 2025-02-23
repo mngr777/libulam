@@ -53,6 +53,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/class/layout.hpp \
 	include/libulam/semantic/type/class/prop.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
+	include/libulam/semantic/type/conv.hpp \
 	include/libulam/semantic/type/prim.hpp \
 	include/libulam/semantic/type/prim/ops.hpp \
 	include/libulam/semantic/type/prim/typed_value.hpp \
@@ -103,6 +104,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtin/unary.cpp \
 	src/semantic/type/builtin/unsigned.cpp \
 	src/semantic/type/builtins.cpp \
+	src/semantic/type/conv.cpp \
 	src/semantic/type_tpl.cpp \
 	src/semantic/value.cpp \
 	src/semantic/value/array.cpp \

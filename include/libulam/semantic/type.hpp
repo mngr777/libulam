@@ -8,6 +8,7 @@
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
+#include <set>
 
 namespace ulam::ast {
 class TypeDef;
@@ -145,6 +146,8 @@ private:
 };
 
 using TypeList = std::list<Ref<Type>>;
+using TypeIdSet = std::set<type_id_t>;
+using TypeSet = std::set<Ref<Type>>;
 
 class UserType : public Type, public Decl {
 public:

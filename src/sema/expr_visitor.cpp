@@ -5,6 +5,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/types.hpp>
@@ -493,7 +494,7 @@ ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
 
     } else if (tv.type()->canon()->is_class()) {
         auto cls = tv.type()->canon()->as_class();
-        auto convs = cls->conversion(type);
+        auto convs = cls->convs(type);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
@@ -517,7 +518,7 @@ PrimTypedValue ExprVisitor::do_cast(
 
     } else if (canon->is_class()) {
         auto cls = canon->as_class();
-        auto convs = cls->conversion(builtin_type_id);
+        auto convs = cls->convs(builtin_type_id);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});

@@ -1,13 +1,10 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
-#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
-#include <libulam/semantic/type/class/prop.hpp>
+#include <map>
 #include <string_view>
-#include <set>
 
 namespace ulam::ast {
 class ArgList;
@@ -15,23 +12,19 @@ class ClassDef;
 class TypeName;
 } // namespace ulam::ast
 
-namespace ulam::sema {
-class Resolver;
-}
-
 namespace ulam {
 
+class ConvList;
 class Diag;
 class ClassTpl;
+class Type;
 
 class Class : public UserType, public ClassBase {
     friend ClassTpl;
-    friend sema::Resolver;
     friend cls::Ancestry;
 
 public:
     using ParamVarList = std::list<Ref<Var>>;
-    using ConversionMatchRes = std::set<Ref<Fun>>;
 
     Class(TypeIdGen* id_gen, std::string_view name, Ref<ClassTpl> tpl);
     Class(
@@ -69,18 +62,18 @@ public:
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    ConversionMatchRes conversion(Ref<const Type> type, bool expl = false) const;
-    ConversionMatchRes conversion(BuiltinTypeId builtin_type_id, bool expl = false) const;
+    ConvList convs(Ref<const Type> type, bool expl = false) const;
+    ConvList convs(BuiltinTypeId bi_type_id, bool expl = false) const;
+
+    void add_param_var(Ptr<Var>&& var);
+    void add_conv(Ref<Fun> fun);
 
 private:
-    void add_param_var(Ptr<Var>&& var);
-    void add_conversion(Ref<Type> type, Ref<Fun> fun);
-
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     std::list<Ref<Var>> _param_vars;
     cls::Ancestry _ancestry;
-    std::unordered_map<type_id_t, Ref<Fun>> _conversions;
+    std::map<type_id_t, Ref<Fun>> _convs;
 };
 
 } // namespace ulam

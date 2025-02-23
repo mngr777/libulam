@@ -317,7 +317,7 @@ bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
                 is_conv = false;
             }
             if (is_conv)
-                cls->add_conversion(int_type, fun);
+                cls->add_conv(fun);
         }
     });
     fset->init_map(diag(), _program->str_pool());
