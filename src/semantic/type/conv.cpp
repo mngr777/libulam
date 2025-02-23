@@ -13,10 +13,11 @@ void ConvList::push(Ref<Fun> fun, conv_cost_t cost) {
     _list.push_back(fun);
 }
 
-conv_cost_t prim_conv_cost(Ref<const PrimType> from, Ref<const PrimType> to) {
-    assert(from->is_impl_castable_to(to));
-    return from->is(to->builtin_type_id()) ? SamePrimTypeConvCost
-                                           : DiffPrimTypeConvCost;
+conv_cost_t
+prim_conv_cost(Ref<const PrimType> type, Ref<const PrimType> target) {
+    assert(type->is_impl_castable_to(target));
+    return type->is(target->builtin_type_id()) ? SamePrimTypeConvCost
+                                               : DiffPrimTypeConvCost;
 }
 
 conv_cost_t prim_cast_cost(Ref<const PrimType> from, Ref<const PrimType> to) {

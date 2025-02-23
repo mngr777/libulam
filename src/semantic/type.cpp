@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/conv.hpp"
 #include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
@@ -50,6 +51,14 @@ Ref<RefType> Type::ref_type() {
 }
 
 TypedValue Type::type_op(TypeOp op) { assert(false); }
+
+bool Type::is_same(Ref<const Type> type) const {
+    return canon() == type->canon();
+}
+
+conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
+    return is_same(type) ? 0 : MaxConvCost;
+}
 
 RValue Type::cast_to(Ref<Type> type, RValue&& rval) { assert(false); }
 

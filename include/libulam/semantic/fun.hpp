@@ -2,6 +2,7 @@
 #include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
@@ -29,7 +30,8 @@ class Fun : public Decl {
 
 public:
     using Params = std::list<Ptr<Var>>;
-    enum Match { NoMatch, IsMatch, IsBuiltinTypeIdMatch, ExactMatch };
+    enum MatchStatus { NoMatch, IsMatch, ExactMatch };
+    using MatchRes = std::pair<MatchStatus, conv_cost_t>;
 
     Fun(Ref<ast::FunDef> node);
     ~Fun();
@@ -51,7 +53,7 @@ public:
     unsigned min_param_num() const;
     unsigned param_num() const { return _params.size(); }
 
-    Match match(const TypedValueList& args);
+    MatchRes match(const TypedValueList& args);
 
     Ref<Scope> scope();
 
@@ -71,14 +73,14 @@ private:
 class FunSet : public Decl {
 public:
     using Cb = std::function<void(Ref<Fun>)>;
-    using MatchRes = std::unordered_set<Ref<Fun>>;
+    using Matches = std::unordered_set<Ref<Fun>>;
 
     FunSet() {}
     FunSet(FunSet& other);
 
     bool is_virtual() const { return false; } // TODO
 
-    MatchRes find_match(const TypedValueList& args);
+    Matches find_match(const TypedValueList& args);
 
     void for_each(Cb cb);
 

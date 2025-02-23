@@ -3,6 +3,7 @@
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
+#include <libulam/semantic/type/conv.hpp>
 #include <map>
 #include <string_view>
 
@@ -62,8 +63,11 @@ public:
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    ConvList convs(Ref<const Type> type, bool expl = false) const;
-    ConvList convs(BuiltinTypeId bi_type_id, bool expl = false) const;
+    conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
+    ConvList convs(Ref<const Type> type, bool allow_cast = false) const;
+    ConvList convs(BuiltinTypeId bi_type_id, bool allow_cast = false) const;
 
     void add_param_var(Ptr<Var>&& var);
     void add_conv(Ref<Fun> fun);

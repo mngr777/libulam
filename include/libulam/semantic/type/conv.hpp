@@ -32,13 +32,17 @@ public:
     std::size_t size() const { return _list.size(); }
     bool empty() const { return size() == 0; }
 
+    conv_cost_t cost() const { return _cost; }
+
 private:
     List _list;
     conv_cost_t _cost;
 };
 
-conv_cost_t prim_conv_cost(Ref<const PrimType> type, Ref<const PrimType> target);
-conv_cost_t prim_cast_cost(Ref<const PrimType> type, Ref<const PrimType> target);
+conv_cost_t
+prim_conv_cost(Ref<const PrimType> type, Ref<const PrimType> target);
+conv_cost_t
+prim_cast_cost(Ref<const PrimType> type, Ref<const PrimType> target);
 
 conv_cost_t prim_conv_cost(Ref<const PrimType> type, BuiltinTypeId bi_type_id);
 conv_cost_t prim_cast_cost(Ref<const PrimType> type, BuiltinTypeId bi_type_id);

@@ -1,3 +1,5 @@
+#include "libulam/semantic/type/conv.hpp"
+#include <algorithm>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
@@ -7,9 +9,12 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/var.hpp>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[ulam::Fun] "
-#include "src/debug.hpp"
+#define DEBUG_FUN // TEST
+#ifdef DEBUG_FUN
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::Fun] "
+#    include "src/debug.hpp"
+#endif
 
 namespace ulam {
 
@@ -43,32 +48,24 @@ unsigned Fun::min_param_num() const {
     return num;
 }
 
-Fun::Match Fun::match(const TypedValueList& args) {
+Fun::MatchRes Fun::match(const TypedValueList& args) {
     if (min_param_num() > args.size() || args.size() > param_num())
-        return NoMatch;
+        return {NoMatch, MaxConvCost};
 
-    bool is_exact = true;
-    bool has_builtin = false;
-    bool is_type_id_match = true;
+    conv_cost_t max_conv_cost = 0;
     auto arg_it = args.begin();
     auto param_it = _params.begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
-        auto arg_type = arg_it->type()->canon();
-        auto param_type = (*param_it)->type()->canon();
-        if (*arg_type == *param_type)
-            continue;
-        if (!arg_type->is_impl_castable_to(param_type))
-            return NoMatch;
-        if (arg_type->is_builtin()) {
-            has_builtin = true;
-            if (arg_type->builtin_type_id() != param_type->builtin_type_id())
-                is_type_id_match = false;
-        }
-        is_exact = false;
+        auto arg_type = arg_it->type();
+        auto param_type = (*param_it)->type();
+        max_conv_cost =
+            std::max(max_conv_cost, arg_type->conv_cost(param_type));
+        if (max_conv_cost == MaxConvCost)
+            return {NoMatch, MaxConvCost};
     }
-    if (is_exact)
-        return ExactMatch;
-    return (has_builtin && is_type_id_match) ? IsBuiltinTypeIdMatch : IsMatch;
+
+    auto status = (max_conv_cost == 0) ? ExactMatch : IsMatch;
+    return {status, max_conv_cost};
 }
 
 Ref<ast::ParamList> Fun::params_node() { return _node->params(); }
@@ -89,26 +86,29 @@ FunSet::FunSet(FunSet& other) {
     other.for_each([&](Ref<Fun> fun) { add(fun); });
 }
 
-FunSet::MatchRes FunSet::find_match(const TypedValueList& args) {
-    MatchRes matches;
-    MatchRes type_id_matches;
+FunSet::Matches FunSet::find_match(const TypedValueList& args) {
+    Matches matches;
+    conv_cost_t min_conv_cost = MaxConvCost;
     for (auto& item : _funs) {
         auto fun = item.ref();
-        switch (fun->match(args)) {
+        auto match_res = fun->match(args);
+        switch (match_res.first) {
         case Fun::NoMatch:
             continue;
         case Fun::ExactMatch:
             return {fun};
-        case Fun::IsMatch:
-            if (type_id_matches.size() == 0)
+        case Fun::IsMatch: {
+            if (match_res.second < min_conv_cost) {
+                // better match
+                min_conv_cost = match_res.second;
+                matches = {fun};
+            } else if (match_res.second == min_conv_cost) {
                 matches.insert(fun);
-            break;
-        case Fun::IsBuiltinTypeIdMatch:
-            type_id_matches.insert(fun);
-            break;
+            }
+        } break;
         }
     }
-    return (type_id_matches.size() > 0) ? type_id_matches : matches;
+    return matches;
 }
 
 void FunSet::for_each(Cb cb) {

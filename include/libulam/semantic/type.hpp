@@ -3,6 +3,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value/bit_vector.hpp>
 #include <libulam/semantic/value/types.hpp>
@@ -103,6 +104,8 @@ public:
 
     virtual TypedValue type_op(TypeOp op);
 
+    bool is_same(Ref<const Type> type) const;
+
     bool is_expl_castable_to(Ref<const Type> type) const {
         return is_castable_to(type, true);
     }
@@ -123,6 +126,9 @@ public:
     is_castable_to(BuiltinTypeId builtin_type_id, bool expl = true) const {
         return false;
     }
+
+    virtual conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const;
 
     virtual RValue cast_to(Ref<Type> type, RValue&& rval);
 

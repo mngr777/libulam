@@ -31,28 +31,20 @@ public:
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
 
-    RValue
-    load(const BitVectorView data, BitVector::size_t off) const override {
-        return from_datum(data.read(off, bitsize()));
-    }
+    RValue load(const BitVectorView data, BitVector::size_t off) const override;
+
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
-        const override {
-        data.write(off, bitsize(), to_datum(rval));
-    }
+        const override;
 
     virtual RValue from_datum(Datum datum) const { assert(false); }
     virtual Datum to_datum(const RValue& rval) const { assert(false); }
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override {
-        auto canon = type->canon();
-        return canon->is_prim() ? is_castable_to_prim(canon->as_prim(), expl)
-                                : false;
-    }
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
     bool is_castable_to(
-        BuiltinTypeId builtin_type_id, bool expl = true) const override {
-        return false;
-    }
+        BuiltinTypeId builtin_type_id, bool expl = true) const override;
+
+    conv_cost_t conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
     RValue cast_to(Ref<Type> type, RValue&& rval) override {
         auto canon = type->canon();
@@ -60,7 +52,6 @@ public:
                                 : RValue{};
     }
 
-    // TODO: should take RValue&&
     virtual PrimTypedValue cast_to(BuiltinTypeId id, RValue&& value) {
         assert(false);
     }
@@ -70,7 +61,6 @@ public:
 
     virtual PrimTypedValue unary_op(Op op, RValue&& rval) { assert(false); }
 
-    // TODO: use RValue&&
     virtual PrimTypedValue binary_op(
         Op op,
         RValue&& left_rval,
