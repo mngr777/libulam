@@ -1,3 +1,4 @@
+#include "libulam/semantic/ops.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/semantic/type/builtin/bool.hpp>
@@ -39,7 +40,7 @@ bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-PrimTypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
+TypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(!rval.empty());
     assert(rval.is<Unsigned>());
@@ -117,7 +118,7 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
-PrimTypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
+TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
         return {this, Value{RValue{}}};
 
@@ -148,7 +149,7 @@ PrimTypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
     return {this, Value{RValue{uns_val}}};
 }
 
-PrimTypedValue UnsignedType::binary_op(
+TypedValue UnsignedType::binary_op(
     Op op,
     RValue&& left_rval,
     Ref<const PrimType> right_type,
@@ -158,22 +159,28 @@ PrimTypedValue UnsignedType::binary_op(
     assert(right_rval.empty() || right_rval.is<Unsigned>());
 
     bool is_unknown = left_rval.empty() || right_rval.empty();
-    Unsigned left_uns_val = left_rval.empty() ? 0 : left_rval.get<Unsigned>();
-    Unsigned right_uns_val =
-        right_rval.empty() ? 0 : right_rval.get<Unsigned>();
+    Unsigned left_uns = left_rval.empty() ? 0 : left_rval.get<Unsigned>();
+    Unsigned right_uns = right_rval.empty() ? 0 : right_rval.get<Unsigned>();
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns_val == right_uns_val)}};
+        return {type, Value{type->construct(left_uns == right_uns)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns_val != right_uns_val)}};
+        return {type, Value{type->construct(left_uns != right_uns)}};
+    }
+    case Op::AssignProd: {
+        // (Unsigned(a) *= Unsigned(b)) = Unsigned(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        auto [val, _] = detail::safe_prod(left_uns, right_uns);
+        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
     }
     case Op::Prod: {
         // Unsigned(a) * Unsigned(b) = Unsigned(a + b)
@@ -182,23 +189,32 @@ PrimTypedValue UnsignedType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        auto [val, _] = detail::safe_prod(left_uns_val, right_uns_val);
+        auto [val, _] = detail::safe_prod(left_uns, right_uns);
         return {this, Value{RValue{val}}};
     }
+    case Op::AssignQuot:
     case Op::Quot: {
         // Unsigned(a) / Unsigned(b) = Int(a) NOTE: does not match
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
             return {this, Value{RValue{}}};
-        auto val = detail::safe_quot(left_uns_val, right_uns_val);
+        auto val = detail::safe_quot(left_uns, right_uns);
         return {this, Value{RValue{val}}};
     }
+    case Op::AssignRem:
     case Op::Rem: {
         // Unsigned(a) % Unsigned(b) = Unsigned(a)
         if (is_unknown)
             return {this, Value{RValue{}}};
-        auto val = detail::safe_rem(left_uns_val, right_uns_val);
+        auto val = detail::safe_rem(left_uns, right_uns);
         return {this, Value{RValue{val}}};
+    }
+    case Op::AssignSum: {
+        // (Unsigned(a) += Unsigned(b)) = Unsigned(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        auto [val, _] = detail::safe_sum(left_uns, right_uns);
+        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
     }
     case Op::Sum: {
         // Unsigned(a) + Unsigned(b) = Unsigned(max(a, b) + 1)
@@ -207,47 +223,48 @@ PrimTypedValue UnsignedType::binary_op(
         auto type = tpl()->type(size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        auto [val, _] = detail::safe_sum(left_uns_val, right_uns_val);
+        auto [val, _] = detail::safe_sum(left_uns, right_uns);
         return {type, Value{RValue{val}}};
     }
+    case Op::AssignDiff:
     case Op::Diff: {
         // Unsigned(a) - Unsigned(b) = Unsigned(a)
         if (is_unknown)
             return {this, Value{RValue{}}};
-        Unsigned val =
-            (left_uns_val > right_uns_val) ? left_uns_val - right_uns_val : 0;
+        Unsigned val = (left_uns > right_uns) ? left_uns - right_uns : 0;
         return {this, Value{RValue{val}}};
     }
     case Op::Less: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns_val < right_uns_val)}};
+        return {type, Value{type->construct(left_uns < right_uns)}};
     }
     case Op::LessOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns_val <= right_uns_val)}};
+        return {type, Value{type->construct(left_uns <= right_uns)}};
     }
     case Op::Greater: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns_val > right_uns_val)}};
+        return {type, Value{type->construct(left_uns > right_uns)}};
     }
     case Op::GreaterOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value(type->construct(left_uns_val >= right_uns_val))};
+        return {type, Value(type->construct(left_uns >= right_uns))};
     }
     default:
         assert(false);
     }
 }
 
-bool UnsignedType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
+bool UnsignedType::is_castable_to_prim(
+    Ref<const PrimType> type, bool expl) const {
     switch (type->builtin_type_id()) {
     case IntId:
         return expl;

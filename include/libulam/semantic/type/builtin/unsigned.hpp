@@ -29,12 +29,12 @@ public:
 
     bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
 
-    PrimTypedValue cast_to(BuiltinTypeId id, RValue&& value) override;
+    TypedValue cast_to(BuiltinTypeId id, RValue&& value) override;
     RValue cast_to(Ref<PrimType> type, RValue&& value) override;
 
-    PrimTypedValue unary_op(Op op, RValue&& rval) override;
+    TypedValue unary_op(Op op, RValue&& rval) override;
 
-    PrimTypedValue binary_op(
+    TypedValue binary_op(
         Op op,
         RValue&& left_rval,
         Ref<const PrimType> right_type,

@@ -41,7 +41,7 @@ bool BitsType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-PrimTypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
+TypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(false && "Bits is not implicitly castable to other types");
 }
 
@@ -70,7 +70,7 @@ RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
-PrimTypedValue BitsType::binary_op(
+TypedValue BitsType::binary_op(
     Op op,
     RValue&& left_rval,
     Ref<const PrimType> right_type,
@@ -80,35 +80,53 @@ PrimTypedValue BitsType::binary_op(
     bool is_unknown = left_rval.empty() || right_rval.empty();
 
     // &, |, ^
-    using BinOp = std::function<BitVector(const BitVector&, const BitVector&)>;
-    auto binop = [&](BinOp op) -> PrimTypedValue {
-        auto size = std::max(bitsize(), right_type->bitsize());
-        auto type = tpl()->type(size);
+    using BinOp =
+        std::function<BitVector(const BitVectorView, const BitVectorView)>;
+    auto binop = [&](BinOp op, bool assign) -> TypedValue {
+        auto type = this;
+        if (assign)
+            tpl()->type(std::max(bitsize(), right_type->bitsize()));
         if (is_unknown)
             return {type, Value{RValue{}}};
         auto& left_bits = left_rval.get<Bits>();
         auto& right_bits = right_rval.get<Bits>();
-        Bits bits{op(left_bits.bits(), right_bits.bits())};
+        auto left_view = left_bits.bits().view();
+        auto right_view = (assign && bitsize() < right_type->bitsize())
+                              ? right_bits.bits().view_right(bitsize())
+                              : right_bits.bits().view();
+        Bits bits{op(left_view, right_view)};
         return {type, Value{RValue{std::move(bits)}}};
     };
 
+    auto bw_and = [](auto v1, auto v2) { return v1 | v2; };
+    auto bw_or = [](auto v1, auto v2) { return v1 | v2; };
+    auto bw_xor = [](auto v1, auto v2) { return v1 ^ v2; };
+
     switch (op) {
+    case Op::AssignShiftLeft:
     case Op::ShiftLeft: {
         Unsigned shift = right_rval.get<Unsigned>();
         Bits bits{left_rval.get<Bits>().bits() << shift};
         return {this, Value{RValue{std::move(bits)}}};
     }
+    case Op::AssignShiftRight:
     case Op::ShiftRight: {
         Unsigned shift = right_rval.get<Unsigned>();
         Bits bits{left_rval.get<Bits>().bits() >> shift};
         return {this, Value{RValue{std::move(bits)}}};
     }
+    case Op::AssignBwAnd:
+        return binop(bw_and, true);
     case Op::BwAnd:
-        return binop(std::bit_and<BitVector>{});
+        return binop(bw_and, false);
+    case Op::AssignBwOr:
+        return binop(bw_or, true);
     case Op::BwOr:
-        return binop(std::bit_or<BitVector>{});
+        return binop(bw_or, false);
+    case Op::AssignBwXor:
+        return binop(bw_xor, true);
     case Op::BwXor:
-        return binop(std::bit_xor<BitVector>{});
+        return binop(bw_xor, false);
     default:
         assert(false);
     }

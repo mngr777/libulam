@@ -1,4 +1,3 @@
-#include "libulam/semantic/value.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -8,6 +7,7 @@
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam {
 
@@ -69,7 +69,7 @@ bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-PrimTypedValue IntType::cast_to(BuiltinTypeId id, RValue&& rval) {
+TypedValue IntType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(!rval.empty());
     assert(rval.is<Integer>());
@@ -141,7 +141,7 @@ RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
-PrimTypedValue IntType::unary_op(Op op, RValue&& rval) {
+TypedValue IntType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
         return {this, Value{RValue{}}};
 
@@ -169,7 +169,7 @@ PrimTypedValue IntType::unary_op(Op op, RValue&& rval) {
     return {this, Value{RValue{int_val}}};
 }
 
-PrimTypedValue IntType::binary_op(
+TypedValue IntType::binary_op(
     Op op,
     RValue&& left_rval,
     Ref<const PrimType> right_type,
@@ -191,6 +191,11 @@ PrimTypedValue IntType::binary_op(
         auto type = builtins().boolean();
         return {type, Value{type->construct(left_int != right_int)}};
     }
+    case Op::AssignProd: {
+        // (Int(a) += Int(b)) == Int(a)
+        auto [val, _] = detail::safe_prod(left_int, right_int);
+        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
+    }
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
         auto size =
@@ -201,6 +206,7 @@ PrimTypedValue IntType::binary_op(
         auto [val, _] = detail::safe_prod(left_int, right_int);
         return {type, Value{RValue{detail::truncate(val, size)}}};
     }
+    case Op::AssignQuot:
     case Op::Quot: {
         // Int(a) / Int(b) = Int(a) NOTE: does not match
         // ULAM's max(a, b), TODO: investigate
@@ -209,12 +215,20 @@ PrimTypedValue IntType::binary_op(
         auto val = detail::safe_quot(left_int, right_int);
         return {this, Value{RValue{val}}};
     }
+    case Op::AssignRem:
     case Op::Rem: {
         // Int(a) % Int(b) = Int(a)
         if (is_unknown)
             return {this, Value{RValue{}}};
         auto val = detail::safe_rem(left_int, right_int);
         return {this, Value{RValue{val}}};
+    }
+    case Op::AssignSum: {
+        // (Int(a) += Int(b)) = Int(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        auto [val, _] = detail::safe_sum(left_int, right_int);
+        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
     }
     case Op::Sum: {
         // Int(a) + Int(b) = Int(max(a, b) + 1)
@@ -225,6 +239,13 @@ PrimTypedValue IntType::binary_op(
             return {type, Value{RValue{}}};
         auto [val, _] = detail::safe_sum(left_int, right_int);
         return {type, Value{RValue{val}}};
+    }
+    case Op::AssignDiff: {
+        // (Int(a) -= Int(b)) = Int(a)
+        if (is_unknown)
+            return {this, Value{RValue{}}};
+        auto [val, _] = detail::safe_diff(left_int, right_int);
+        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
     }
     case Op::Diff: {
         // Int(a) - Int(b) = Int(max(a, b) + 1)

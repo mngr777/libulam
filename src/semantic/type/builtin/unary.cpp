@@ -38,7 +38,7 @@ bool UnaryType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-PrimTypedValue UnaryType::cast_to(BuiltinTypeId id, RValue&& rval) {
+TypedValue UnaryType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(!rval.empty());
     assert(rval.is<Unsigned>());
@@ -113,11 +113,11 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
     }
 }
 
-PrimTypedValue UnaryType::unary_op(Op op, RValue&& rval) {
+TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
     assert(false); // not implemented
 }
 
-PrimTypedValue UnaryType::binary_op(
+TypedValue UnaryType::binary_op(
     Op op,
     RValue&& left_rval,
     Ref<const PrimType> right_type,

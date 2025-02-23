@@ -93,6 +93,9 @@ public:
         return BitVectorView{const_cast<BitVector&>(*this), off, len};
     }
 
+    BitVectorView view_right(size_t len);
+    const BitVectorView view_right(size_t len) const;
+
     BitVector copy() const;
 
     bool read_bit(size_t idx) const;

@@ -30,6 +30,8 @@ public:
         return val;
     }
 
+    std::pair<Ref<Type>, Value> move() { return {_type, move_value()}; }
+
 private:
     Ref<T> _type;
     Value _value;

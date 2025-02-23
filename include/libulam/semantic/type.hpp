@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type_ops.hpp>
@@ -72,6 +73,7 @@ public:
     virtual void
     store(BitVectorView data, BitVector::size_t off, const RValue& rval) const;
 
+    bool is_canon() const;
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
 

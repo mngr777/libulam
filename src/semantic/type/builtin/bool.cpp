@@ -46,7 +46,7 @@ bool BoolType::is_castable_to(BuiltinTypeId id, bool expl) const {
     }
 }
 
-PrimTypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
+TypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     switch (id) {
     case IntId: {

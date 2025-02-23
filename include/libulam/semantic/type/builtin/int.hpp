@@ -25,23 +25,23 @@ public:
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;
 
-    bool
-    is_castable_to(BuiltinTypeId builtin_type_id, bool expl = true) const override;
+    bool is_castable_to(
+        BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    PrimTypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
+    TypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
     RValue cast_to(Ref<PrimType> type, RValue&& rval) override;
 
-    PrimTypedValue unary_op(Op op, RValue&& rval) override;
+    TypedValue unary_op(Op op, RValue&& rval) override;
 
-    PrimTypedValue binary_op(
+    TypedValue binary_op(
         Op op,
         RValue&& left_rval,
         Ref<const PrimType> right_type,
         RValue&& right_rval) override;
 
 protected:
-    bool
-    is_castable_to_prim(Ref<const PrimType> type, bool expl = true) const override;
+    bool is_castable_to_prim(
+        Ref<const PrimType> type, bool expl = true) const override;
 };
 
 using IntTypeTpl = _PrimTypeTpl<IntType>;

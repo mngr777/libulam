@@ -7,7 +7,6 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
-#include <libulam/semantic/type/prim/typed_value.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/semantic/typed_value.hpp>
@@ -44,7 +43,8 @@ public:
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    conv_cost_t conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+    conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
     RValue cast_to(Ref<Type> type, RValue&& rval) override {
         auto canon = type->canon();
@@ -52,16 +52,16 @@ public:
                                 : RValue{};
     }
 
-    virtual PrimTypedValue cast_to(BuiltinTypeId id, RValue&& value) {
+    virtual TypedValue cast_to(BuiltinTypeId id, RValue&& value) {
         assert(false);
     }
     virtual RValue cast_to(Ref<PrimType> type, RValue&& value) {
         assert(false);
     }
 
-    virtual PrimTypedValue unary_op(Op op, RValue&& rval) { assert(false); }
+    virtual TypedValue unary_op(Op op, RValue&& rval) { assert(false); }
 
-    virtual PrimTypedValue binary_op(
+    virtual TypedValue binary_op(
         Op op,
         RValue&& left_rval,
         Ref<const PrimType> right_type,

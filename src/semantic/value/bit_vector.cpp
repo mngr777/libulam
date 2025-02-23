@@ -164,6 +164,15 @@ BitVector BitVector::copy() const {
     return bv;
 }
 
+BitVectorView BitVector::view_right(size_t len) {
+    assert(len <= _len);
+    return BitVectorView{*this, _len - len, len};
+}
+
+const BitVectorView BitVector::view_right(size_t len) const {
+    return const_cast<BitVector*>(this)->view_right(len);
+}
+
 bool BitVector::read_bit(size_t idx) const {
     assert(idx < _len);
     return _bits[to_unit_idx(idx)] & (MSB >> to_off(idx));

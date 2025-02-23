@@ -6,8 +6,6 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
-#include <libulam/semantic/type/prim/ops.hpp>
-#include <libulam/semantic/type/prim/typed_value.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/str_pool.hpp>
 #include <string_view>
@@ -49,17 +47,6 @@ public:
     virtual array_idx_t array_index(Ref<ast::Expr> expr);
 
 protected:
-    virtual ExprRes prim_unary_op(Ref<ast::UnaryOp> node, PrimTypedValue&& arg);
-
-    virtual ExprRes prim_binary_op(
-        Ref<ast::BinaryOp> node, PrimTypedValue&& left, TypedValue&& right);
-
-    virtual ExprRes array_binary_op(
-        Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right);
-
-    virtual ExprRes class_binary_op(
-        Ref<ast::BinaryOp> node, TypedValue&& left, TypedValue&& right);
-
     virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
 
     virtual CastRes maybe_cast(
@@ -69,13 +56,8 @@ protected:
         bool expl = false);
 
     RValue do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
-    PrimTypedValue do_cast(
+    TypedValue do_cast(
         Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv);
-
-    virtual PrimTypedValue
-    prim_cast(BuiltinTypeId type_id, PrimTypedValue&& tv);
-
-    virtual RValue prim_cast(Ref<PrimType> type, PrimTypedValue&& tv);
 
     virtual ExprRes funcall(
         Ref<ast::Expr> node,

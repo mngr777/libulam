@@ -34,6 +34,8 @@ void Type::store(
     assert(false);
 }
 
+bool Type::is_canon() const { return canon() == this; }
+
 Ref<ArrayType> Type::array_type(array_size_t size) {
     auto it = _array_types.find(size);
     if (it != _array_types.end())
