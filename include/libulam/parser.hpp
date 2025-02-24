@@ -63,6 +63,8 @@ private:
     Ptr<ast::For> parse_for();
     Ptr<ast::While> parse_while();
     Ptr<ast::Return> parse_return();
+    Ptr<ast::Break> parse_break();
+    Ptr<ast::Continue> parse_continue();
 
     Ptr<ast::Expr> parse_expr();
     Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);

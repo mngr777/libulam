@@ -12,6 +12,8 @@ TOK("else", Else)
 TOK("for", For)
 TOK("while", While)
 TOK("return", Return)
+TOK("break", Break)
+TOK("continue", Continue)
 
 TOK("element", Element)
 TOK("quark", Quark)

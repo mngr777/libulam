@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/stmts.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -536,6 +537,10 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         return parse_while();
     case tok::Return:
         return parse_return();
+    case tok::Break:
+        return parse_break();
+    case tok::Continue:
+        return parse_continue();
     case tok::BraceL:
         return parse_block();
     case tok::Semicol:
@@ -609,15 +614,38 @@ Ptr<ast::While> Parser::parse_while() {
 
 Ptr<ast::Return> Parser::parse_return() {
     assert(_tok.is(tok::Return));
+    auto loc_id = _tok.loc_id;
     consume();
     Ptr<ast::Expr> expr{};
-    if (!_tok.is(tok::Semicol)) {
+    if (!_tok.is(tok::Semicol))
         expr = parse_expr();
-        if (!expect(tok::Semicol))
-            panic(tok::Semicol, tok::BraceR);
+    if (!expect(tok::Semicol)) {
+        panic(tok::Semicol, tok::BraceR);
+        consume_if(tok::Semicol);
     }
-    consume_if(tok::Semicol);
-    return tree<ast::Return>(std::move(expr));
+    return tree_loc<ast::Return>(loc_id, std::move(expr));
+}
+
+Ptr<ast::Break> Parser::parse_break() {
+    assert(_tok.is(tok::Break));
+    auto loc_id = _tok.loc_id;
+    consume();
+    if (!expect(tok::Semicol)) {
+        panic(tok::Semicol, tok::BraceR);
+        consume_if(tok::Semicol);
+    }
+    return tree_loc<ast::Break>(loc_id);
+}
+
+Ptr<ast::Continue> Parser::parse_continue() {
+    assert(_tok.is(tok::Continue));
+    auto loc_id = _tok.loc_id;
+    consume();
+    if (!expect(tok::Semicol)) {
+        panic(tok::Semicol, tok::BraceR);
+        consume_if(tok::Semicol);
+    }
+    return tree_loc<ast::Continue>(loc_id);
 }
 
 Ptr<ast::ParamList> Parser::parse_param_list() {

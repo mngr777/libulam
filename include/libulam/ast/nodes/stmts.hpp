@@ -60,4 +60,12 @@ public:
     ULAM_AST_TUPLE_PROP(expr, 0)
 };
 
+class Break : public Stmt {
+    ULAM_AST_NODE
+};
+
+class Continue : public Stmt {
+    ULAM_AST_NODE
+};
+
 } // namespace ulam::ast

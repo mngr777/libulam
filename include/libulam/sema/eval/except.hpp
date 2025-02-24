@@ -17,6 +17,9 @@ private:
     ExprRes _res;
 };
 
+class EvalExceptBreak : public EvalExcept {};
+class EvalExceptContinue : public EvalExcept {};
+
 class EvalExceptError : public EvalExcept {
 public:
     enum Code { Error };

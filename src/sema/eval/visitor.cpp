@@ -98,17 +98,26 @@ void EvalVisitor::visit(Ref<ast::If> node) {
 
 void EvalVisitor::visit(Ref<ast::For> node) {
     debug() << __FUNCTION__ << " For\n";
+
     auto scope_raii{_scope_stack.raii(scp::Break | scp::Continue)};
     if (node->has_init())
         node->init()->accept(*this);
-
     unsigned loop_count = 0;
     while (!node->has_cond() || eval_cond(node->cond())) {
         if (loop_count++ == 1000) // TODO: max loops option
             throw std::exception();
 
-        if (node->has_body())
-            node->body()->accept(*this);
+        if (node->has_body()) {
+            try {
+                node->body()->accept(*this);
+            } catch (const EvalExceptContinue&) {
+                debug() << "continue\n";
+            } catch (const EvalExceptBreak&) {
+                debug() << "break";
+                break;
+            }
+        }
+
         if (node->has_upd())
             node->upd()->accept(*this);
     }
@@ -127,6 +136,24 @@ void EvalVisitor::visit(Ref<ast::Return> node) {
     throw EvalExceptReturn(std::move(res));
 }
 
+void EvalVisitor::visit(Ref<ast::Break> node) {
+    debug() << __FUNCTION__ << " Break\n";
+    if (scope()->in(scp::Break)) {
+        throw EvalExceptBreak();
+    } else {
+        diag().emit(Diag::Error, node->loc_id(), 1, "unexpected break");
+    }
+}
+
+void EvalVisitor::visit(Ref<ast::Continue> node) {
+    debug() << __FUNCTION__ << " Continue\n";
+    if (scope()->in(scp::Continue)) {
+        throw EvalExceptContinue();
+    } else {
+        diag().emit(Diag::Error, node->loc_id(), 1, "unexpected continue");
+    }
+}
+
 void EvalVisitor::visit(Ref<ast::ExprStmt> node) {
     debug() << __FUNCTION__ << " ExprStmt\n";
     if (node->has_expr())
@@ -136,13 +163,23 @@ void EvalVisitor::visit(Ref<ast::ExprStmt> node) {
 void EvalVisitor::visit(Ref<ast::While> node) {
     debug() << __FUNCTION__ << " While\n";
     assert(node->has_cond());
+
+    auto scope_raii{_scope_stack.raii(scp::Break | scp::Continue)};
     unsigned loop_count = 0;
     while (eval_cond(node->cond())) {
         if (loop_count++ == 1000) // TODO: max loops option
             throw std::exception();
 
-        if (node->has_body())
-            node->body()->accept(*this);
+        if (node->has_body()) {
+            try {
+                node->body()->accept(*this);
+            } catch (const EvalExceptContinue&) {
+                debug() << "continue";
+            } catch (const EvalExceptBreak&) {
+                debug() << "break";
+                break;
+            }
+        }
     }
 }
 
