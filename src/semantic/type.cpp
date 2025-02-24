@@ -12,7 +12,7 @@ namespace ulam {
 
 Type::~Type() {}
 
-RValue Type::construct() { assert(false); }
+RValue Type::construct() const { assert(false); }
 
 RValue Type::load(const BitVector& data, BitVector::size_t off) const {
     return load(data.view(), off);
@@ -80,6 +80,10 @@ bool Type::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
     return false;
 }
 
+bool Type::is_impl_castable_to(Ref<const Type> type, const Value& val) const {
+    return is_impl_castable_to(type);
+}
+
 bool Type::is_impl_castable_to(
     BuiltinTypeId bi_type_id, const Value& val) const {
     return is_impl_castable_to(bi_type_id);
@@ -89,7 +93,7 @@ conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return is_same(type) ? 0 : MaxConvCost;
 }
 
-RValue Type::cast_to(Ref<Type> type, RValue&& rval) { assert(false); }
+RValue Type::cast_to(Ref<const Type> type, RValue&& rval) { assert(false); }
 
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
     return make<ArrayType>(_id_gen, this, size);
@@ -154,7 +158,7 @@ bitsize_t ArrayType::bitsize() const {
     return _array_size * _item_type->bitsize();
 }
 
-RValue ArrayType::construct() { return RValue{Array{bitsize()}}; }
+RValue ArrayType::construct() const { return RValue{Array{bitsize()}}; }
 
 // TODO: use construct(), make it const
 RValue ArrayType::load(const BitVectorView data, BitVector::size_t off) const {

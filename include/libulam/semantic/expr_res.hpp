@@ -47,6 +47,8 @@ public:
 
     const Value& value() { return _typed_value.value(); }
 
+    const TypedValue& typed_value() { return _typed_value; }
+
     TypedValue move_typed_value() {
         TypedValue tv;
         std::swap(tv, _typed_value);

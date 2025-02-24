@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -29,12 +30,36 @@ void PrimType::store(
 
 bool PrimType::is_castable_to(Ref<const Type> type, bool expl) const {
     auto canon = type->canon();
-    return canon->is_prim() ? is_castable_to_prim(canon->as_prim(), expl)
-                            : false;
+    if (!canon->is_prim())
+        return false;
+    return is_castable_to_prim(canon->as_prim(), expl);
 }
 
 bool PrimType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
-    return false;
+    if (!ulam::is_prim(bi_type_id))
+        return false;
+    return is_castable_to_prim(bi_type_id, expl);
+}
+
+bool PrimType::is_impl_castable_to(
+    Ref<const Type> type, const Value& val) const {
+    auto canon = type->canon();
+    if (!canon->is_prim())
+        return false;
+    return is_impl_castable_to_prim(canon->as_prim(), val);
+}
+
+bool PrimType::is_impl_castable_to(
+    BuiltinTypeId bi_type_id, const Value& val) const {
+    if (!ulam::is_prim(bi_type_id))
+        return false;
+    return is_impl_castable_to_prim(bi_type_id, val);
+}
+
+RValue PrimType::cast_to(Ref<const Type> type, RValue&& rval) {
+    auto canon = type->canon();
+    assert(canon->is_prim());
+    return cast_to(canon->as_prim(), std::move(rval));
 }
 
 conv_cost_t PrimType::conv_cost(Ref<const Type> type, bool allow_cast) const {
@@ -44,6 +69,24 @@ conv_cost_t PrimType::conv_cost(Ref<const Type> type, bool allow_cast) const {
         return MaxConvCost;
     assert(canon()->is_prim() && type->canon()->is_prim());
     return prim_conv_cost(canon()->as_prim(), type->canon()->as_prim());
+}
+
+bool PrimType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
+    return false;
+}
+
+bool PrimType::is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const {
+    return false;
+}
+
+bool PrimType::is_impl_castable_to_prim(
+    Ref<const PrimType> type, const Value& val) const {
+    return is_castable_to_prim(type, false);
+}
+
+bool PrimType::is_impl_castable_to_prim(
+    BuiltinTypeId bi_type_id, const Value& value) const {
+    return is_castable_to_prim(bi_type_id, false);
 }
 
 // PrimTypeTpl

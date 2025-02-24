@@ -1,6 +1,7 @@
 #include <cassert>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/typed_value.hpp>
 
 namespace ulam {
 
@@ -23,7 +24,7 @@ bool is_numeric(Ref<const PrimType> type) {
 }
 
 TypeError check_type_match(Ref<const Type> type, BuiltinTypeId target) {
-    assert(type->is_canon());
+    type = type->canon();
     if (type->is_prim() && type->as_prim()->is(target))
         return {TypeError::Ok};
     if (type->is_impl_castable_to(target))
@@ -33,29 +34,55 @@ TypeError check_type_match(Ref<const Type> type, BuiltinTypeId target) {
     return {TypeError::Incompatible};
 }
 
+TypeError
+check_type_match(Ref<const Type> type, const Value& val, BuiltinTypeId target) {
+    type = type->canon();
+    if (type->is_prim() && type->as_prim()->is(target))
+        return {TypeError::Ok};
+    if (type->is_impl_castable_to(target, val))
+        return {TypeError::ImplCastRequired, target};
+    if (type->is_expl_castable_to(target))
+        return {TypeError::ExplCastRequired, target};
+    return {TypeError::Incompatible};
+}
+
+TypeError check_type_match(
+    Ref<const Type> type, const Value& val, Ref<Type> target) {
+    if (type->is_same(target))
+        return {TypeError::Ok};
+    if (type->is_impl_castable_to(target, val))
+        return {TypeError::ImplCastRequired, target};
+    if (type->is_expl_castable_to(target))
+        return {TypeError::ExplCastRequired, target};
+    return {TypeError::Incompatible};
+}
+
 TypeErrorPair numeric_prim_binary_op_type_check_prim(
-    Op op, Ref<const PrimType> left, Ref<const PrimType> right) {
-    assert(is_numeric(left));
+    Op op,
+    Ref<const PrimType> l_type,
+    Ref<const PrimType> r_type,
+    const Value& r_val) {
+    assert(is_numeric(r_type));
     TypeErrorPair errors;
 
     auto suggest = [&](BuiltinTypeId target) -> bool {
-        if (left->is(target)) {
-            errors.second = check_type_match(right, target);
+        if (l_type->is(target)) {
+            errors.second = check_type_match(r_type, r_val, target);
             return true;
-        } else if (right->is(target)) {
-            errors.first = check_type_match(left, target);
+        } else if (r_type->is(target)) {
+            errors.first = check_type_match(l_type, target);
             return true;
         }
         return false;
     };
 
-    if (is_numeric(left) || is_numeric(right)) {
+    if (is_numeric(l_type) || is_numeric(l_type)) {
         // same type?
-        if (left->is(right->bi_type_id())) {
+        if (l_type->is(r_type->bi_type_id())) {
             // suggest casting Unary ot Unsigned
-            if (left->is(UnaryId)) {
-                errors.first = check_type_match(left, UnsignedId);
-                errors.second = check_type_match(right, UnsignedId);
+            if (l_type->is(UnaryId)) {
+                errors.first = check_type_match(l_type, UnsignedId);
+                errors.second = check_type_match(r_type, r_val, UnsignedId);
             }
             return errors;
         }
@@ -66,14 +93,14 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
 
     } else {
         // suggest casting to Int
-        errors.first = check_type_match(left, IntId);
-        errors.second = check_type_match(right, IntId);
+        errors.first = check_type_match(l_type, IntId);
+        errors.second = check_type_match(r_type, r_val, IntId);
     }
     return errors;
 }
 
 TypeErrorPair numeric_prim_binary_op_type_check_class(
-    Op op, Ref<const PrimType> left, Ref<const Class> right) {
+    Op op, Ref<PrimType> left, Ref<Class> right) {
     assert(is_numeric(left));
     TypeErrorPair errors;
     if (left->is(IntId)) {
@@ -87,34 +114,36 @@ TypeErrorPair numeric_prim_binary_op_type_check_class(
 }
 
 TypeErrorPair prim_binary_op_type_check(
-    Op op, Ref<const PrimType> left, Ref<const Type> right) {
-    assert(right->canon() == right);
+    Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
+    auto r_type = r_tv.type()->canon();
     TypeErrorPair errors;
     switch (ops::kind(op)) {
     case ops::Kind::Assign: {
-        errors.second = check_type_match(right, left->bi_type_id());
+        errors.second = check_type_match(r_tv.type(), r_tv.value(), l_type);
     } break;
     case ops::Kind::Equality: {
-        errors.second = check_type_match(right, left->bi_type_id());
+        errors.second =
+            check_type_match(r_tv.type(), r_tv.value(), l_type->bi_type_id());
     } break;
     case ops::Kind::Numeric: {
-        if (right->is_prim())
+        auto r_type = r_tv.type()->canon();
+        if (r_type->is_prim())
             return numeric_prim_binary_op_type_check_prim(
-                op, left, right->as_prim());
-        if (right->is_class())
+                op, l_type, r_type->as_prim(), r_tv.value());
+        if (r_type->is_class())
             return numeric_prim_binary_op_type_check_class(
-                op, left, right->as_class());
+                op, l_type, r_type->as_class());
         errors.first = {TypeError::Incompatible};
         errors.second = {TypeError::Incompatible};
     } break;
     case ops::Kind::Logical: {
-        errors.first = check_type_match(left, BoolId);
-        errors.second = check_type_match(right, BoolId);
+        errors.first = check_type_match(l_type, BoolId);
+        errors.second = check_type_match(r_type, BoolId);
     } break;
     case ops::Kind::Bitwise: {
-        errors.first = check_type_match(left, BitsId);
+        errors.first = check_type_match(l_type, BitsId);
         errors.second =
-            check_type_match(right, is_shift(op) ? UnsignedId : BitsId);
+            check_type_match(r_type, is_shift(op) ? UnsignedId : BitsId);
     } break;
     }
     return errors;
@@ -138,13 +167,18 @@ TypeError::TypeError(Status status): status{status} {
     assert(status == Ok || status == Incompatible);
 }
 
+TypeError::TypeError(Status status, Ref<Type> cast_type):
+    status{status}, cast_type{cast_type} {
+    assert(status == ImplCastRequired || status == ExplCastRequired);
+}
+
 TypeError::TypeError(Status status, BuiltinTypeId cast_bi_type_id):
-    status(status), cast_bi_type_id(cast_bi_type_id) {
+    status{status}, cast_bi_type_id{cast_bi_type_id} {
     assert(status == ImplCastRequired || status == ExplCastRequired);
     assert(is_prim(cast_bi_type_id));
 }
 
-TypeError unary_op_type_check(Op op, Ref<const Type> type) {
+TypeError unary_op_type_check(Op op, Ref<Type> type) {
     switch (ops::kind(op)) {
     case ops::Kind::Numeric:
         if (!type->is_prim() || !is_numeric(type->as_prim()))
@@ -162,16 +196,15 @@ TypeError unary_op_type_check(Op op, Ref<const Type> type) {
 }
 
 TypeErrorPair
-binary_op_type_check(Op op, Ref<const Type> left, Ref<const Type> right) {
-    if (left->canon()->is_prim())
-        return prim_binary_op_type_check(
-            op, left->canon()->as_prim(), right->canon());
-    if (left->canon()->is_class())
+binary_op_type_check(Op op, Ref<Type> l_type, const TypedValue& r_tv) {
+    if (l_type->canon()->is_prim())
+        return prim_binary_op_type_check(op, l_type->canon()->as_prim(), r_tv);
+    if (l_type->canon()->is_class())
         return class_binary_op_type_check(
-            op, left->canon()->as_class(), right->canon());
+            op, l_type->canon()->as_class(), r_tv.type()->canon());
 
     TypeErrorPair errors;
-    if (op == Op::Assign && left->is_same(right))
+    if (op == Op::Assign && l_type->is_same(r_tv.type()))
         return errors;
     errors.first.status = TypeError::Incompatible;
     errors.second.status = TypeError::Incompatible;

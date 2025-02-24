@@ -20,16 +20,13 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct() override { return RValue{Integer{}}; }
+    RValue construct() const override { return RValue{Integer{}}; }
 
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;
 
-    bool is_castable_to(
-        BuiltinTypeId builtin_type_id, bool expl = true) const override;
-
     TypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
-    RValue cast_to(Ref<PrimType> type, RValue&& rval) override;
+    RValue cast_to(Ref<const PrimType> type, RValue&& rval) override;
 
     TypedValue unary_op(Op op, RValue&& rval) override;
 
@@ -42,6 +39,15 @@ public:
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;
+
+    bool is_castable_to_prim(
+        BuiltinTypeId bi_type_id, bool expl = true) const override;
+
+    bool is_impl_castable_to_prim(
+        Ref<const PrimType> type, const Value& val) const override;
+
+    bool is_impl_castable_to_prim(
+        BuiltinTypeId bi_type_id, const Value& val) const override;
 };
 
 using IntTypeTpl = _PrimTypeTpl<IntType>;

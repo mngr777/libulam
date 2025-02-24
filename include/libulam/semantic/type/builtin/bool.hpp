@@ -19,22 +19,22 @@ public:
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
-    RValue construct() override { return RValue{Unsigned{}}; }
-    RValue construct(bool value);
+    RValue construct() const override { return RValue{Unsigned{}}; }
+    RValue construct(bool value) const;
 
     bool is_true(const RValue& rval) const;
 
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;
 
-    bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
-
     TypedValue cast_to(BuiltinTypeId id, RValue&& value) override;
-    RValue cast_to(Ref<PrimType> type, RValue&& value) override;
+    RValue cast_to(Ref<const PrimType> type, RValue&& value) override;
 
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;
+
+    bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 };
 
 using BoolTypeTpl = _PrimTypeTpl<BoolType>;

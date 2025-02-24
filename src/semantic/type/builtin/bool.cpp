@@ -4,7 +4,7 @@
 
 namespace ulam {
 
-RValue BoolType::construct(bool value) {
+RValue BoolType::construct(bool value) const {
     return RValue{value ? detail::ones(bitsize()) : 0};
 }
 
@@ -21,29 +21,6 @@ RValue BoolType::from_datum(Datum datum) const {
 Datum BoolType::to_datum(const RValue& rval) const {
     assert(rval.is<Unsigned>());
     return rval.get<Unsigned>(); // ??
-}
-
-bool BoolType::is_castable_to(BuiltinTypeId id, bool expl) const {
-    switch (id) {
-    case IntId:
-        return expl;
-    case UnsignedId:
-        return expl;
-    case BoolId:
-        return true;
-    case UnaryId:
-        return expl;
-    case BitsId:
-        return true;
-    case AtomId:
-        return false;
-    case StringId:
-        return false;
-    case FunId:
-    case VoidId:
-    default:
-        assert(false);
-    }
 }
 
 TypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
@@ -74,7 +51,7 @@ TypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue BoolType::cast_to(Ref<PrimType> type, RValue&& rval) {
+RValue BoolType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     assert(rval.is<Unsigned>());
 
@@ -110,6 +87,29 @@ bool BoolType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
         return type->bitsize() >= bitsize();
     default:
         return is_castable_to(type->bi_type_id(), expl);
+    }
+}
+
+bool BoolType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
+    switch (id) {
+    case IntId:
+        return expl;
+    case UnsignedId:
+        return expl;
+    case BoolId:
+        return true;
+    case UnaryId:
+        return expl;
+    case BitsId:
+        return true;
+    case AtomId:
+        return false;
+    case StringId:
+        return false;
+    case FunId:
+    case VoidId:
+    default:
+        assert(false);
     }
 }
 

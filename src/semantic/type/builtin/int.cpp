@@ -1,3 +1,5 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -46,29 +48,6 @@ Datum IntType::to_datum(const RValue& rval) const {
     return datum;
 }
 
-bool IntType::is_castable_to(BuiltinTypeId id, bool expl) const {
-    switch (id) {
-    case IntId:
-        return true;
-    case UnsignedId:
-        return expl;
-    case BoolId:
-        return false;
-    case UnaryId:
-        return expl;
-    case BitsId:
-        return true;
-    case AtomId:
-        return false;
-    case StringId:
-        return false;
-    case FunId:
-    case VoidId:
-    default:
-        assert(false);
-    }
-}
-
 TypedValue IntType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(!rval.empty());
@@ -104,7 +83,7 @@ TypedValue IntType::cast_to(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
+RValue IntType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     assert(rval.is<Integer>());
 
@@ -306,6 +285,63 @@ bool IntType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     default:
         assert(false);
     }
+}
+
+bool IntType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
+    switch (id) {
+    case IntId:
+        return true;
+    case UnsignedId:
+        return expl;
+    case BoolId:
+        return false;
+    case UnaryId:
+        return expl;
+    case BitsId:
+        return true;
+    case AtomId:
+        return false;
+    case StringId:
+        return false;
+    case FunId:
+    case VoidId:
+    default:
+        assert(false);
+    }
+}
+
+bool IntType::is_impl_castable_to_prim(
+    Ref<const PrimType> type, const Value& val) const {
+    if (!type->is(UnsignedId) && !type->is(UnaryId) && !type->is(BitsId))
+        return is_castable_to_prim(type, false);
+
+    auto rval = val.copy_rvalue();
+    if (rval.empty() || !rval.is_consteval())
+        return is_castable_to_prim(type, false);
+
+    assert(rval.is<Integer>());
+    auto int_val = rval.get<Integer>();
+    if (int_val < 0)
+        return false;
+
+    auto uns_val = (Unsigned)int_val;
+    if (type->is(UnaryId))
+        return type->bitsize() >= uns_val;
+    return type->bitsize() >= detail::bitsize(uns_val);
+}
+
+bool IntType::is_impl_castable_to_prim(
+    BuiltinTypeId bi_type_id, const Value& val) const {
+    if (bi_type_id != UnsignedId && bi_type_id != UnaryId && bi_type_id != BitsId)
+        return is_castable_to_prim(bi_type_id, false);
+
+    auto rval = val.copy_rvalue();
+    if (rval.empty() || !rval.is_consteval())
+        return is_castable_to_prim(bi_type_id, false);
+
+    assert(rval.is<Integer>());
+    auto int_val = rval.get<Integer>();
+    return int_val >= 0;
 }
 
 } // namespace ulam

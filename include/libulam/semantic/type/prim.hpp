@@ -21,6 +21,8 @@ class Builtins;
 // TODO: make virtual methods pure
 class PrimType : public Type {
 public:
+    using Type::is_impl_castable_to;
+
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
     std::string name() const override;
@@ -43,19 +45,21 @@ public:
     bool
     is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
 
+    bool
+    is_impl_castable_to(Ref<const Type> type, const Value& val) const override;
+
+    bool is_impl_castable_to(
+        BuiltinTypeId bi_type_id, const Value& val) const override;
+
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
-    RValue cast_to(Ref<Type> type, RValue&& rval) override {
-        auto canon = type->canon();
-        return canon->is_prim() ? cast_to(canon->as_prim(), std::move(rval))
-                                : RValue{};
-    }
+    RValue cast_to(Ref<const Type> type, RValue&& rval) override;
 
     virtual TypedValue cast_to(BuiltinTypeId id, RValue&& value) {
         assert(false);
     }
-    virtual RValue cast_to(Ref<PrimType> type, RValue&& value) {
+    virtual RValue cast_to(Ref<const PrimType> type, RValue&& value) {
         assert(false);
     }
 
@@ -70,10 +74,15 @@ public:
     };
 
 protected:
-    virtual bool
-    is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
-        return false;
-    }
+    virtual bool is_castable_to_prim(Ref<const PrimType> type, bool expl) const;
+
+    virtual bool is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const;
+
+    virtual bool is_impl_castable_to_prim(
+        Ref<const PrimType> type, const Value& val) const;
+
+    virtual bool is_impl_castable_to_prim(
+        BuiltinTypeId bi_type_id, const Value& val) const;
 
     Builtins& builtins() { return _builtins; }
 

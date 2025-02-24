@@ -16,29 +16,6 @@ Datum UnsignedType::to_datum(const RValue& rval) const {
     return rval.get<Unsigned>();
 }
 
-bool UnsignedType::is_castable_to(BuiltinTypeId id, bool expl) const {
-    switch (id) {
-    case IntId:
-        return true;
-    case UnsignedId:
-        return true;
-    case BoolId:
-        return bitsize() == 1;
-    case UnaryId:
-        return true;
-    case BitsId:
-        return true;
-    case AtomId:
-        return false;
-    case StringId:
-        return false;
-    case FunId:
-    case VoidId:
-    default:
-        assert(false);
-    }
-}
-
 TypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
     assert(!rval.empty());
@@ -80,7 +57,7 @@ TypedValue UnsignedType::cast_to(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
+RValue UnsignedType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     assert(rval.is<Unsigned>());
 
@@ -275,6 +252,29 @@ bool UnsignedType::is_castable_to_prim(
         return expl || detail::unsigned_max(bitsize()) <= type->bitsize();
     case BitsId:
         return expl;
+    case AtomId:
+        return false;
+    case StringId:
+        return false;
+    case FunId:
+    case VoidId:
+    default:
+        assert(false);
+    }
+}
+
+bool UnsignedType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
+    switch (id) {
+    case IntId:
+        return true;
+    case UnsignedId:
+        return true;
+    case BoolId:
+        return bitsize() == 1;
+    case UnaryId:
+        return true;
+    case BitsId:
+        return true;
     case AtomId:
         return false;
     case StringId:

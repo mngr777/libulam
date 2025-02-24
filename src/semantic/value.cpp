@@ -109,10 +109,14 @@ Value LValue::assign(RValue&& rval) {
 
 RValue RValue::copy() const {
     return accept(
-        [&](const Bits& bits) { return RValue{bits.copy()}; },
-        [&](const Array& array) { return RValue{array.copy()}; },
-        [&](SPtr<const Object> obj) { return RValue{obj->copy()}; },
-        [&](auto value) { return RValue{value}; });
+        [&](const Bits& bits) { return RValue{bits.copy(), is_consteval()}; },
+        [&](const Array& array) {
+            return RValue{array.copy(), is_consteval()};
+        },
+        [&](SPtr<const Object> obj) {
+            return RValue{obj->copy(), is_consteval()};
+        },
+        [&](auto value) { return RValue{value, is_consteval()}; });
 }
 
 Ref<Class> RValue::obj_cls() {

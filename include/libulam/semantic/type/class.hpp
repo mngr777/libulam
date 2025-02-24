@@ -53,7 +53,7 @@ public:
     Ref<Class> as_class() override { return this; }
     Ref<const Class> as_class() const override { return this; }
 
-    RValue construct() override;
+    RValue construct() const override;
 
     RValue load(const BitVectorView data, BitVector::size_t off) const override;
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)

@@ -23,12 +23,10 @@ public:
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override;
 
-    RValue construct() override { return RValue{Bits{bitsize()}}; }
-
-    bool is_castable_to(BuiltinTypeId id, bool expl = true) const override;
+    RValue construct() const override { return RValue{Bits{bitsize()}}; }
 
     TypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
-    RValue cast_to(Ref<PrimType> type, RValue&& rval) override;
+    RValue cast_to(Ref<const PrimType> type, RValue&& rval) override;
 
     TypedValue binary_op(
         Op op,
@@ -39,6 +37,8 @@ public:
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;
+
+    bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 };
 
 using BitsTypeTpl = _PrimTypeTpl<BitsType>;

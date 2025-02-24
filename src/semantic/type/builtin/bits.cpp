@@ -16,36 +16,11 @@ void BitsType::store(
     data.write(off, rval.get<Bits>().bits().view());
 }
 
-bool BitsType::is_castable_to(BuiltinTypeId id, bool expl) const {
-    switch (id) {
-    case IntId:
-        return expl;
-    case UnsignedId:
-        return expl;
-    case BoolId:
-        return expl;
-    case UnaryId:
-        return expl;
-    case BitsId:
-        return true;
-    case AtomId:
-        assert(false); // TMP
-        return expl;
-    case StringId:
-        assert(false); // TMP
-        return expl;
-    case FunId:
-    case VoidId:
-    default:
-        assert(false);
-    }
-}
-
 TypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(false && "Bits is not implicitly castable to other types");
 }
 
-RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
+RValue BitsType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     assert(rval.is<Bits>());
 
@@ -144,6 +119,31 @@ bool BitsType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
         return expl;
     case BitsId:
         return expl || type->bitsize() >= bitsize();
+    case AtomId:
+        assert(false); // TMP
+        return expl;
+    case StringId:
+        assert(false); // TMP
+        return expl;
+    case FunId:
+    case VoidId:
+    default:
+        assert(false);
+    }
+}
+
+bool BitsType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
+    switch (id) {
+    case IntId:
+        return expl;
+    case UnsignedId:
+        return expl;
+    case BoolId:
+        return expl;
+    case UnaryId:
+        return expl;
+    case BitsId:
+        return true;
     case AtomId:
         assert(false); // TMP
         return expl;

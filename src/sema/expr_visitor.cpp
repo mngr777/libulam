@@ -86,7 +86,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
         lval = left.value().lvalue();
     }
 
-    auto type_errors = binary_op_type_check(op, left.type(), right.type());
+    auto type_errors =
+        binary_op_type_check(op, left.type(), right.typed_value());
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
                       TypedValue&& tv) -> TypedValue {
         switch (error.status) {
@@ -95,13 +96,21 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             return {};
         case TypeError::ExplCastRequired: {
             auto rval = tv.move_value().move_rvalue();
-            auto message = std::string{"suggest casting to "} +
-                           std::string{builtin_type_str(error.cast_bi_type_id)};
+            auto message =
+                std::string{"suggest casting "} + tv.type()->name() + " to ";
+            message +=
+                (error.cast_bi_type_id != NoBuiltinTypeId)
+                    ? std::string{builtin_type_str(error.cast_bi_type_id)}
+                    : error.cast_type->name();
             diag().emit(Diag::Error, expr->loc_id(), 1, message);
             return {};
         }
         case TypeError::ImplCastRequired: {
-            return do_cast(expr, error.cast_bi_type_id, std::move(tv));
+            if (error.cast_bi_type_id != NoBuiltinTypeId)
+                return do_cast(expr, error.cast_bi_type_id, std::move(tv));
+            assert(error.cast_type);
+            RValue rval = do_cast(expr, error.cast_type, std::move(tv));
+            return {error.cast_type, Value{std::move(rval)}};
         }
         case TypeError::Ok:
             return std::move(tv);
@@ -419,8 +428,8 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
     return {RValue{}, CastError};
 }
 
-RValue
-ExprVisitor::do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv) {
+RValue ExprVisitor::do_cast(
+    Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv) {
     assert(tv.type()->canon()->is_expl_castable_to(type->canon()));
     if (tv.type()->canon()->is_prim()) {
         assert(type->canon()->is_prim());
@@ -486,9 +495,11 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     res.second = true;
     for (unsigned n = 0; n < args->child_num(); ++n) {
         ExprRes arg_res = args->get(n)->accept(*this);
-        res.first.push_back(arg_res.move_typed_value());
-        if (!arg_res)
+        if (!arg_res) {
             res.second = false;
+            break;
+        }
+        res.first.push_back(arg_res.move_typed_value());
     }
     return res;
 }

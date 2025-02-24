@@ -64,7 +64,7 @@ public:
 
     virtual bitsize_t bitsize() const = 0;
 
-    virtual RValue construct();
+    virtual RValue construct() const;
 
     RValue load(const BitVector& data, BitVector::size_t off) const;
     void
@@ -118,15 +118,17 @@ public:
     virtual bool
     is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const;
 
-    // NOTE: this overload allows e.g. auto-casting Int to Unsigned if value is
+    // NOTE: these overloads allow e.g. auto-casting Int to Unsigned if value is
     // consteval and  >= 0: `Unsigned a = 1;`
+    virtual bool
+    is_impl_castable_to(Ref<const Type> type, const Value& val) const;
     virtual bool
     is_impl_castable_to(BuiltinTypeId bi_type_id, const Value& val) const;
 
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;
 
-    virtual RValue cast_to(Ref<Type> type, RValue&& rval);
+    virtual RValue cast_to(Ref<const Type> type, RValue&& rval);
 
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }
@@ -208,7 +210,7 @@ public:
 
     bitsize_t bitsize() const override;
 
-    RValue construct() override;
+    RValue construct() const override;
 
     RValue load(const BitVectorView data, BitVector::size_t off) const override;
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)

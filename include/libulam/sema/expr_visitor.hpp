@@ -55,7 +55,8 @@ protected:
         TypedValue&& tv,
         bool expl = false);
 
-    RValue do_cast(Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv);
+    RValue do_cast(Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv);
+
     TypedValue do_cast(
         Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv);
 

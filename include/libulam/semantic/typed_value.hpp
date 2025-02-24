@@ -18,8 +18,7 @@ public:
 
     operator bool() { return _type; }
 
-    Ref<T> type() { return _type; }
-    Ref<const T> type() const { return _type; }
+    Ref<T> type() const { return _type; }
 
     Value& value() { return _value; }
     const Value& value() const { return _value; }
