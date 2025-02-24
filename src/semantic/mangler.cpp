@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <libulam/semantic/mangler.hpp>
@@ -72,8 +71,8 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         }
     } else {
         assert(type->is_prim());
-        detail::write_leximited(os, builtin_type_code(type->builtin_type_id()));
-        if (has_bitsize(type->builtin_type_id()))
+        detail::write_leximited(os, builtin_type_code(type->bi_type_id()));
+        if (has_bitsize(type->bi_type_id()))
             detail::write_leximited(os, (Unsigned)type->bitsize());
     }
 }

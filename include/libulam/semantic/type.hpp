@@ -24,6 +24,7 @@ class Diag;
 class Scope;
 class RValue;
 class TypedValue;
+class Value;
 
 using type_id_t = std::uint16_t;
 constexpr type_id_t NoTypeId = 0;
@@ -77,8 +78,8 @@ public:
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
 
-    bool is_builtin() const { return builtin_type_id() != NoBuiltinTypeId; }
-    virtual BuiltinTypeId builtin_type_id() const { return NoBuiltinTypeId; }
+    bool is_builtin() const { return bi_type_id() != NoBuiltinTypeId; }
+    virtual BuiltinTypeId bi_type_id() const { return NoBuiltinTypeId; }
 
     bool is_prim() const { return as_prim(); }
     bool is_class() const { return as_class(); }
@@ -112,10 +113,15 @@ public:
     bool is_impl_castable_to(Ref<const Type> type) const;
     virtual bool is_castable_to(Ref<const Type> type, bool expl = true) const;
 
-    bool is_impl_castable_to(BuiltinTypeId builtin_type_id) const;
-    bool is_expl_castable_to(BuiltinTypeId builtin_type_id) const;
+    bool is_impl_castable_to(BuiltinTypeId bi_type_id) const;
+    bool is_expl_castable_to(BuiltinTypeId bi_type_id) const;
     virtual bool
-    is_castable_to(BuiltinTypeId builtin_type_id, bool expl = true) const;
+    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const;
+
+    // NOTE: this overload allows e.g. auto-casting Int to Unsigned if value is
+    // consteval and  >= 0: `Unsigned a = 1;`
+    virtual bool
+    is_impl_castable_to(BuiltinTypeId bi_type_id, const Value& val) const;
 
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;

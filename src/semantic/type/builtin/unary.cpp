@@ -84,7 +84,7 @@ RValue UnaryType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(rval.is<Unsigned>());
 
     Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId: {
         Unsigned int_max = detail::integer_max(type->bitsize());
         Integer val = std::min(int_max, uns_val);
@@ -153,7 +153,7 @@ TypedValue UnaryType::binary_op(
 
 bool UnaryType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     auto size = type->bitsize();
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId:
         return expl || detail::integer_max(size) >= bitsize();
     case UnsignedId:

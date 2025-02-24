@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -52,7 +51,7 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
 
     if (is_numeric(left) || is_numeric(right)) {
         // same type?
-        if (left->is(right->builtin_type_id())) {
+        if (left->is(right->bi_type_id())) {
             // suggest casting Unary ot Unsigned
             if (left->is(UnaryId)) {
                 errors.first = check_type_match(left, UnsignedId);
@@ -93,10 +92,10 @@ TypeErrorPair prim_binary_op_type_check(
     TypeErrorPair errors;
     switch (ops::kind(op)) {
     case ops::Kind::Assign: {
-        errors.second = check_type_match(right, left->builtin_type_id());
+        errors.second = check_type_match(right, left->bi_type_id());
     } break;
     case ops::Kind::Equality: {
-        errors.second = check_type_match(right, left->builtin_type_id());
+        errors.second = check_type_match(right, left->bi_type_id());
     } break;
     case ops::Kind::Numeric: {
         if (right->is_prim())

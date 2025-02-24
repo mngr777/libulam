@@ -25,7 +25,7 @@ public:
 
     std::string name() const override;
 
-    bool is(BuiltinTypeId id) const { return builtin_type_id() == id; }
+    bool is(BuiltinTypeId id) const { return bi_type_id() == id; }
 
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
@@ -40,8 +40,8 @@ public:
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
-    bool is_castable_to(
-        BuiltinTypeId builtin_type_id, bool expl = true) const override;
+    bool
+    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
@@ -108,7 +108,7 @@ public:
         bitsize_t bitsize):
         PrimType{builtins, &id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
 
-    BuiltinTypeId builtin_type_id() const override { return TypeId; }
+    BuiltinTypeId bi_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
 
 protected:

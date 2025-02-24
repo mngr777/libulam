@@ -109,7 +109,7 @@ RValue IntType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(rval.is<Integer>());
 
     auto int_val = rval.get<Integer>();
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId: {
         auto int_min = detail::integer_min(type->bitsize());
         if (int_val < int_min)
@@ -287,7 +287,7 @@ TypedValue IntType::binary_op(
 }
 
 bool IntType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId:
         return expl || type->bitsize() >= bitsize();
     case UnsignedId:

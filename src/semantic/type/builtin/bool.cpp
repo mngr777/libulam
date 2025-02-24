@@ -80,7 +80,7 @@ RValue BoolType::cast_to(Ref<PrimType> type, RValue&& rval) {
 
     bool is_truth = is_true(rval);
     rval = construct(is_truth);
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId: {
         return RValue{(Integer)(is_truth ? 1 : 0)};
     }
@@ -109,7 +109,7 @@ bool BoolType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case BitsId:
         return type->bitsize() >= bitsize();
     default:
-        return is_castable_to(type->builtin_type_id(), expl);
+        return is_castable_to(type->bi_type_id(), expl);
     }
 }
 

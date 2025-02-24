@@ -1,5 +1,3 @@
-#include "libulam/semantic/type/conv.hpp"
-#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -70,16 +68,21 @@ bool Type::is_castable_to(Ref<const Type> type, bool expl) const {
     return false;
 }
 
-bool Type::is_impl_castable_to(BuiltinTypeId builtin_type_id) const {
-    return is_castable_to(builtin_type_id, false);
+bool Type::is_impl_castable_to(BuiltinTypeId bi_type_id) const {
+    return is_castable_to(bi_type_id, false);
 }
 
-bool Type::is_expl_castable_to(BuiltinTypeId builtin_type_id) const {
-    return is_castable_to(builtin_type_id, true);
+bool Type::is_expl_castable_to(BuiltinTypeId bi_type_id) const {
+    return is_castable_to(bi_type_id, true);
 }
 
-bool Type::is_castable_to(BuiltinTypeId builtin_type_id, bool expl) const {
+bool Type::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
     return false;
+}
+
+bool Type::is_impl_castable_to(
+    BuiltinTypeId bi_type_id, const Value& val) const {
+    return is_impl_castable_to(bi_type_id);
 }
 
 conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {

@@ -50,7 +50,7 @@ RValue BitsType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(rval.is<Bits>());
 
     auto& bits = rval.get<Bits>();
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId:
     case UnsignedId:
     case BoolId:
@@ -133,7 +133,7 @@ TypedValue BitsType::binary_op(
 }
 
 bool BitsType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId:
         return expl;
     case UnsignedId:

@@ -1,4 +1,3 @@
-#include "libulam/semantic/ops.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
 #include <libulam/semantic/type/builtin/bool.hpp>
@@ -86,7 +85,7 @@ RValue UnsignedType::cast_to(Ref<PrimType> type, RValue&& rval) {
     assert(rval.is<Unsigned>());
 
     Unsigned uns_val = rval.get<Unsigned>();
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId: {
         Unsigned int_max = detail::integer_max(type->bitsize());
         Integer val = std::min(int_max, uns_val);
@@ -265,7 +264,7 @@ TypedValue UnsignedType::binary_op(
 
 bool UnsignedType::is_castable_to_prim(
     Ref<const PrimType> type, bool expl) const {
-    switch (type->builtin_type_id()) {
+    switch (type->bi_type_id()) {
     case IntId:
         return expl;
     case UnsignedId:

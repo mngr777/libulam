@@ -22,7 +22,7 @@ public:
 
     // RValue construct() override { return ...; }
 
-    BuiltinTypeId builtin_type_id() const override { return StringId; }
+    BuiltinTypeId bi_type_id() const override { return StringId; }
 };
 
 } // namespace ulam

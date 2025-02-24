@@ -1,5 +1,5 @@
-#include <libulam/semantic/type/conv.hpp>
 #include <cassert>
+#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <sstream>
 
@@ -14,28 +14,26 @@ PrimType::PrimType(Builtins& builtins, TypeIdGen* id_gen):
 
 std::string PrimType::name() const {
     std::stringstream ss;
-    ss << builtin_type_str(builtin_type_id());
+    ss << builtin_type_str(bi_type_id());
     ss << "(" << (Unsigned)bitsize() << ")";
     return ss.str();
 }
 
-RValue
-PrimType::load(const BitVectorView data, BitVector::size_t off) const {
+RValue PrimType::load(const BitVectorView data, BitVector::size_t off) const {
     return from_datum(data.read(off, bitsize()));
 }
-void PrimType::store(BitVectorView data, BitVector::size_t off, const RValue& rval)
-    const {
+void PrimType::store(
+    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
     data.write(off, bitsize(), to_datum(rval));
 }
 
 bool PrimType::is_castable_to(Ref<const Type> type, bool expl) const {
     auto canon = type->canon();
     return canon->is_prim() ? is_castable_to_prim(canon->as_prim(), expl)
-        : false;
+                            : false;
 }
 
-bool PrimType::is_castable_to(
-    BuiltinTypeId builtin_type_id, bool expl) const {
+bool PrimType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
     return false;
 }
 
