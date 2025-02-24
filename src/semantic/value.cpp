@@ -214,4 +214,11 @@ RValue Value::move_rvalue() {
         [&](const std::monostate& val) { return RValue{}; });
 }
 
+bool Value::is_consteval() const {
+    return accept(
+        [&](const LValue& lval) { return lval.is_consteval(); },
+        [&](const RValue& rval) { return rval.is_consteval(); },
+        [&](const std::monostate& val) { return false; });
+}
+
 } // namespace ulam

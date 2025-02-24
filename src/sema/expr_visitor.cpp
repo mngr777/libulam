@@ -218,7 +218,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
     // Bool(1)
     auto type = builtins().boolean();
     auto rval = type->construct(node->value());
-    rval.set_is_const(true);
+    rval.set_is_consteval(true);
     return {type, Value{std::move(rval)}};
 }
 

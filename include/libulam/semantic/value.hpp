@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/array.hpp>
@@ -36,6 +37,8 @@ public:
     LValue bound_fset(Ref<FunSet> fset);
 
     Value assign(RValue&& rval);
+
+    bool is_consteval() const { return false; } // TODO
 };
 
 class RValue : public detail::Variant<
@@ -48,10 +51,10 @@ class RValue : public detail::Variant<
                    SPtr<Object>> {
 public:
     template <typename T>
-    explicit RValue(T&& value, bool is_const = false):
-        Variant{std::forward<T>(value)}, _is_const{is_const} {}
+    explicit RValue(T&& value, bool is_consteval = false):
+        Variant{std::forward<T>(value)}, _is_consteval{is_consteval} {}
 
-    RValue(): Variant{}, _is_const{false} {}
+    RValue(): Variant{}, _is_consteval{false} {}
 
     RValue(RValue&&) = default;
     RValue& operator=(RValue&&) = default;
@@ -65,11 +68,11 @@ public:
     LValue bound_prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
 
-    bool is_const() const { return _is_const; }
-    void set_is_const(bool is_const) { _is_const = is_const; } // TMP?
+    bool is_consteval() const { return _is_consteval; }
+    void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; } // TMP??
 
 private:
-    bool _is_const;
+    bool _is_consteval;
 };
 
 class Value : public detail::Variant<LValue, RValue> {
@@ -100,6 +103,23 @@ public:
 
     RValue copy_rvalue() const;
     RValue move_rvalue();
+
+    bool is_consteval() const;
+
+    template <typename R>
+    R with_rvalue(std::function<R(const RValue&)> cb) const {
+        return accept(
+            [&](LValue& lval) {
+                // TODO: can go deeper to avoid copying
+                auto rval = lval.rvalue();
+                return cb(rval);
+            },
+            [&](RValue& rval) { return cb(rval); },
+            [&](std::monostate&) {
+                RValue rval;
+                return cb(rval);
+            });
+    }
 };
 
 using ValueList = std::list<Value>;
