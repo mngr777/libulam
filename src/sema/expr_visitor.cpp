@@ -118,8 +118,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             assert(false);
         };
     };
-    auto l_tv =
-        recast(node->lhs(), type_errors.first, left.move_typed_value());
+    auto l_tv = recast(node->lhs(), type_errors.first, left.move_typed_value());
     auto r_tv =
         recast(node->rhs(), type_errors.second, right.move_typed_value());
     if (!l_tv || !r_tv)
@@ -417,13 +416,16 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
     Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv, bool expl) {
-    if (tv.type()->is_same(type))
+    auto to = type->canon();
+    auto from = tv.type()->canon();
+
+    if (to->is_same(from))
         return {tv.value().move_rvalue(), NoCast};
 
-    if (tv.type()->is_castable_to(type, expl))
-        return {do_cast(node, type, std::move(tv)), CastOk};
+    if (from->is_castable_to(to, expl))
+        return {do_cast(node, to, std::move(tv)), CastOk};
 
-    if (!expl && tv.type()->is_expl_castable_to(type)) {
+    if (!expl && from->is_expl_castable_to(to)) {
         diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
     }
     return {RValue{}, CastError};
@@ -431,15 +433,17 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
 
 RValue ExprVisitor::do_cast(
     Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv) {
-    assert(tv.type()->canon()->is_expl_castable_to(type->canon()));
-    if (tv.type()->canon()->is_prim()) {
-        assert(type->canon()->is_prim());
-        return tv.type()->as_prim()->cast_to(
-            type, tv.move_value().move_rvalue());
+    auto to = type->canon();
+    auto from = tv.type()->canon();
 
-    } else if (tv.type()->canon()->is_class()) {
-        auto cls = tv.type()->canon()->as_class();
-        auto convs = cls->convs(type, true);
+    assert(from->is_expl_castable_to(to));
+    if (from->is_prim()) {
+        assert(to->is_prim());
+        return from->as_prim()->cast_to(to, tv.move_value().move_rvalue());
+
+    } else if (from->is_class()) {
+        auto cls = from->as_class();
+        auto convs = cls->convs(to, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
@@ -447,8 +451,10 @@ RValue ExprVisitor::do_cast(
             diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
             return RValue{};
         }
-        if (res.type()->canon() != type->canon())
+        if (res.type()->is_same(to)) {
+            assert(res.type()->is_expl_castable_to(to));
             return do_cast(node, type, res.move_typed_value());
+        }
         return res.move_value().move_rvalue();
     }
     assert(false);
