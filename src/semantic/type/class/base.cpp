@@ -1,3 +1,4 @@
+#include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 
@@ -12,5 +13,7 @@ ClassBase::ClassBase(
     assert(module_scope);
     assert(module_scope->is(scp::Module));
 }
+
+ClassKind ClassBase::kind() const { return node()->kind(); }
 
 } // namespace ulam

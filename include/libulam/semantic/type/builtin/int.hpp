@@ -6,9 +6,6 @@
 
 namespace ulam {
 
-class Diag;
-class Value;
-
 class IntType : public _PrimType<IntId, 2, ULAM_MAX_INT_SIZE, 32> {
 public:
     IntType(

@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
+#include <libulam/ast/node.hpp>
 #include <libulam/diag.hpp>
 
 namespace ulam {
@@ -32,6 +33,11 @@ const char* level_prefix(Diag::Level lvl) {
 }
 
 } // namespace
+
+void Diag::emit(
+    Diag::Level lvl, Ref<const ast::Node> node, const std::string& text) {
+    emit(lvl, node->loc_id(), 1, text);
+}
 
 void Diag::emit(
     Diag::Level lvl,

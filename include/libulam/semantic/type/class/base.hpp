@@ -5,6 +5,7 @@
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
+#include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 
 namespace ulam::ast {
@@ -29,6 +30,8 @@ public:
     ClassBase& operator=(ClassBase&&) = default;
 
 public:
+    ClassKind kind() const;
+
     bool has(str_id_t name_id) const { return _members.has(name_id); }
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }

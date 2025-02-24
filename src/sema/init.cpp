@@ -27,7 +27,6 @@ namespace ulam::sema {
 
 void Init::visit(Ref<ast::Root> node) {
     assert(!node->program());
-    // make program
     node->set_program(make<Program>(diag(), node->ctx().str_pool()));
     RecVisitor::visit(node);
     export_classes();
@@ -50,8 +49,8 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
     // already defined?
     auto prev = module()->get(name_id);
     if (prev) {
-        diag().emit(
-            Diag::Error, node->name().loc_id(), str(name_id).size(),
+        diag().error(
+            node->name().loc_id(), str(name_id).size(),
             "already defined"); // TODO: say where
         return false;
     }
@@ -175,7 +174,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
 
         // already in current scope?
         if (scope()->has(name_id, true)) {
-            diag().emit(Diag::Error, def->loc_id(), 1, "already defined");
+            diag().error(def, "already defined");
             continue;
         }
 
@@ -243,8 +242,8 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     Ref<FunSet> fset{};
     if (sym) {
         if (!sym->is<FunSet>()) {
-            diag().emit(
-                Diag::Error, node->loc_id(), str(name_id).size(),
+            diag().error(
+                node->loc_id(), str(name_id).size(),
                 "defined and is not a function");
             return false;
         }
@@ -347,9 +346,9 @@ void Init::export_classes() {
                     assert(sym->is<ClassTpl>());
                     cls_base = sym->get<ClassTpl>();
                 }
-                diag().emit(
-                    Diag::Error, cls_base->node()->loc_id(),
-                    str(name_id).size(), "defined in multiple modules");
+                diag().error(
+                    cls_base->node()->loc_id(), str(name_id).size(),
+                    "defined in multiple modules");
             }
             it = exporting.erase(it);
         } else {
@@ -399,9 +398,8 @@ void Init::export_classes() {
                 continue; // success
             }
         }
-        diag().emit(
-            Diag::Error, item.node->loc_id(), str(name_id).size(),
-            "failed to resolve");
+        diag().error(
+            item.node->loc_id(), str(name_id).size(), "failed to resolve");
     }
 }
 
