@@ -47,7 +47,11 @@ class RValue : public detail::Variant<
                    Array,
                    SPtr<Object>> {
 public:
-    using Variant::Variant;
+    template <typename T>
+    explicit RValue(T&& value, bool is_const = false):
+        Variant{std::forward<T>(value)}, _is_const{is_const} {}
+
+    RValue(): Variant{}, _is_const{false} {}
 
     RValue(RValue&&) = default;
     RValue& operator=(RValue&&) = default;
@@ -60,6 +64,12 @@ public:
     RValue array_access(Ref<Type> item_type, array_idx_t index);
     LValue bound_prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
+
+    bool is_const() const { return _is_const; }
+    void set_is_const(bool is_const) { _is_const = is_const; } // TMP?
+
+private:
+    bool _is_const;
 };
 
 class Value : public detail::Variant<LValue, RValue> {

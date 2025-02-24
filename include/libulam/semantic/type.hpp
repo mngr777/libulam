@@ -108,26 +108,14 @@ public:
 
     bool is_same(Ref<const Type> type) const;
 
-    bool is_expl_castable_to(Ref<const Type> type) const {
-        return is_castable_to(type, true);
-    }
-    bool is_impl_castable_to(Ref<const Type> type) const {
-        return is_castable_to(type, false);
-    }
-    virtual bool is_castable_to(Ref<const Type> type, bool expl = true) const {
-        return false;
-    }
+    bool is_expl_castable_to(Ref<const Type> type) const;
+    bool is_impl_castable_to(Ref<const Type> type) const;
+    virtual bool is_castable_to(Ref<const Type> type, bool expl = true) const;
 
-    bool is_impl_castable_to(BuiltinTypeId builtin_type_id) const {
-        return is_castable_to(builtin_type_id, false);
-    }
-    bool is_expl_castable_to(BuiltinTypeId builtin_type_id) const {
-        return is_castable_to(builtin_type_id, true);
-    }
+    bool is_impl_castable_to(BuiltinTypeId builtin_type_id) const;
+    bool is_expl_castable_to(BuiltinTypeId builtin_type_id) const;
     virtual bool
-    is_castable_to(BuiltinTypeId builtin_type_id, bool expl = true) const {
-        return false;
-    }
+    is_castable_to(BuiltinTypeId builtin_type_id, bool expl = true) const;
 
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;

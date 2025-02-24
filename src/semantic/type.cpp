@@ -58,6 +58,30 @@ bool Type::is_same(Ref<const Type> type) const {
     return canon() == type->canon();
 }
 
+bool Type::is_expl_castable_to(Ref<const Type> type) const {
+    return is_castable_to(type, true);
+}
+
+bool Type::is_impl_castable_to(Ref<const Type> type) const {
+    return is_castable_to(type, false);
+}
+
+bool Type::is_castable_to(Ref<const Type> type, bool expl) const {
+    return false;
+}
+
+bool Type::is_impl_castable_to(BuiltinTypeId builtin_type_id) const {
+    return is_castable_to(builtin_type_id, false);
+}
+
+bool Type::is_expl_castable_to(BuiltinTypeId builtin_type_id) const {
+    return is_castable_to(builtin_type_id, true);
+}
+
+bool Type::is_castable_to(BuiltinTypeId builtin_type_id, bool expl) const {
+    return false;
+}
+
 conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return is_same(type) ? 0 : MaxConvCost;
 }

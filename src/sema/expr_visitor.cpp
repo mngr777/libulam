@@ -1,10 +1,11 @@
-#include "libulam/semantic/expr_res.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/ops.hpp>
@@ -93,6 +94,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             diag().emit(Diag::Error, expr->loc_id(), 1, "incompatible type");
             return {};
         case TypeError::ExplCastRequired: {
+            auto rval = tv.move_value().move_rvalue();
             auto message = std::string{"suggest casting to "} +
                            std::string{builtin_type_str(error.cast_bi_type_id)};
             diag().emit(Diag::Error, expr->loc_id(), 1, message);
@@ -214,9 +216,10 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
     debug() << __FUNCTION__ << " BoolLit\n";
     // Bool(1)
-    auto type = builtins().prim_type_tpl(BoolId)->type(diag(), node, 1);
-    assert(type);
-    return {type, Value{RValue{(Unsigned)node->value()}}};
+    auto type = builtins().boolean();
+    auto rval = type->construct(node->value());
+    rval.set_is_const(true);
+    return {type, Value{std::move(rval)}};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
@@ -224,16 +227,12 @@ ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
     const auto& number = node->value();
     if (number.is_signed()) {
         // Int(n)
-        auto tpl = builtins().prim_type_tpl(IntId);
-        auto type = tpl->type(diag(), node, number.bitsize());
-        assert(type);
-        return {type, Value{RValue{number.value<Integer>()}}};
+        auto type = builtins().prim_type(IntId, number.bitsize());
+        return {type, Value{RValue{number.value<Integer>(), true}}};
     } else {
         // Unsigned(n)
-        auto tpl = builtins().prim_type_tpl(UnsignedId);
-        auto type = tpl->type(diag(), node, number.bitsize());
-        assert(type);
-        return {type, Value{RValue{number.value<Unsigned>()}}};
+        auto type = builtins().prim_type(UnsignedId, number.bitsize());
+        return {type, Value{RValue{number.value<Unsigned>(), true}}};
     }
 }
 
