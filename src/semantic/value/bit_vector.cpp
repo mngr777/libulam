@@ -87,6 +87,22 @@ BitVector BitVectorView::copy() const {
     return bv;
 }
 
+bool BitVectorView::operator==(const BitVectorView& other) {
+    if (_len != other._len)
+        return false;
+    for (unit_idx_t unit_idx = 0; unit_idx < _len / UnitSize; ++unit_idx) {
+        size_t idx = unit_idx * UnitSize;
+        if (read(idx, UnitSize) != other.read(idx, UnitSize))
+            return false;
+    }
+    size_t rem = _len % UnitSize;
+    return (rem == 0) || read_right(rem) == other.read_right(rem);
+}
+
+bool BitVectorView::operator!=(const BitVectorView& other) {
+    return !operator==(other);
+}
+
 BitVectorView& BitVectorView::operator&=(const BitVectorView& other) {
     bin_op(other, std::bit_and<unit_t>{});
     return *this;
@@ -252,6 +268,14 @@ void BitVector::write(
     const size_t shift = UnitSize - (start + len);
     const unit_t mask = make_mask(len, shift);
     _bits[unit_idx] = (_bits[unit_idx] & ~mask) | (value << shift);
+}
+
+bool BitVector::operator==(const BitVector& other) const {
+    return _len == other._len && _bits == other._bits;
+}
+
+bool BitVector::operator!=(const BitVector& other) const {
+    return !operator==(other);
 }
 
 BitVector& BitVector::operator&=(const BitVector& other) {

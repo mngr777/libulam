@@ -1,3 +1,4 @@
+#include "libulam/semantic/ops.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtins.hpp>
@@ -76,6 +77,15 @@ RValue BoolType::cast_to(Ref<const PrimType> type, RValue&& rval) {
         bits_rval.get<Bits>().bits().write_right(size, to_datum(rval));
         return bits_rval;
     }
+    default:
+        assert(false);
+    }
+}
+
+TypedValue BoolType::unary_op(Op op, RValue&& rval) {
+    switch (op) {
+    case Op::Negate:
+        return {this, Value{construct(!is_true(rval))}};
     default:
         assert(false);
     }

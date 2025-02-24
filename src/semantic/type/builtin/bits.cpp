@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/bits.hpp>
+#include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtins.hpp>
 
 namespace ulam {
 
@@ -47,12 +49,12 @@ RValue BitsType::cast_to(Ref<const PrimType> type, RValue&& rval) {
 
 TypedValue BitsType::binary_op(
     Op op,
-    RValue&& left_rval,
-    Ref<const PrimType> right_type,
-    RValue&& right_rval) {
-    assert(right_type->is(BitsId) || right_type->is(UnsignedId));
-    assert(left_rval.empty() || left_rval.is<Bits>());
-    bool is_unknown = left_rval.empty() || right_rval.empty();
+    RValue&& l_rval,
+    Ref<const PrimType> r_type,
+    RValue&& r_rval) {
+    assert(r_type->is(BitsId) || r_type->is(UnsignedId));
+    assert(l_rval.empty() || l_rval.is<Bits>());
+    bool is_unknown = l_rval.empty() || r_rval.empty();
 
     // &, |, ^
     using BinOp =
@@ -60,16 +62,16 @@ TypedValue BitsType::binary_op(
     auto binop = [&](BinOp op, bool assign) -> TypedValue {
         auto type = this;
         if (assign)
-            tpl()->type(std::max(bitsize(), right_type->bitsize()));
+            tpl()->type(std::max(bitsize(), r_type->bitsize()));
         if (is_unknown)
             return {type, Value{RValue{}}};
-        auto& left_bits = left_rval.get<Bits>();
-        auto& right_bits = right_rval.get<Bits>();
-        auto left_view = left_bits.bits().view();
-        auto right_view = (assign && bitsize() < right_type->bitsize())
-                              ? right_bits.bits().view_right(bitsize())
-                              : right_bits.bits().view();
-        Bits bits{op(left_view, right_view)};
+        auto& l_bits = l_rval.get<Bits>();
+        auto& r_bits = r_rval.get<Bits>();
+        auto l_view = l_bits.bits().view();
+        auto r_view = (assign && bitsize() < r_type->bitsize())
+                              ? r_bits.bits().view_right(bitsize())
+                              : r_bits.bits().view();
+        Bits bits{op(l_view, r_view)};
         return {type, Value{RValue{std::move(bits)}}};
     };
 
@@ -78,16 +80,27 @@ TypedValue BitsType::binary_op(
     auto bw_xor = [](auto v1, auto v2) { return v1 ^ v2; };
 
     switch (op) {
+    case Op::Equal:
+    case Op::NotEqual: {
+        auto boolean = builtins().boolean();
+        if (is_unknown)
+            return {boolean, Value{RValue{}}};
+        auto& l_bits = l_rval.get<Bits>();
+        auto& r_bits = l_rval.get<Bits>();
+        bool is_equal = (l_bits.bits() == r_bits.bits());
+        bool val = (is_equal == (op == Op::Equal));
+        return {boolean, Value{boolean->construct(val)}};
+    }
     case Op::AssignShiftLeft:
     case Op::ShiftLeft: {
-        Unsigned shift = right_rval.get<Unsigned>();
-        Bits bits{left_rval.get<Bits>().bits() << shift};
+        Unsigned shift = r_rval.get<Unsigned>();
+        Bits bits{l_rval.get<Bits>().bits() << shift};
         return {this, Value{RValue{std::move(bits)}}};
     }
     case Op::AssignShiftRight:
     case Op::ShiftRight: {
-        Unsigned shift = right_rval.get<Unsigned>();
-        Bits bits{left_rval.get<Bits>().bits() >> shift};
+        Unsigned shift = r_rval.get<Unsigned>();
+        Bits bits{l_rval.get<Bits>().bits() >> shift};
         return {this, Value{RValue{std::move(bits)}}};
     }
     case Op::AssignBwAnd:

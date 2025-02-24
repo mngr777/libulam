@@ -30,9 +30,9 @@ public:
 
     TypedValue binary_op(
         Op op,
-        RValue&& left_rval,
-        Ref<const PrimType> right_type,
-        RValue&& right_rval) override;
+        RValue&& l_rval,
+        Ref<const PrimType> r_type,
+        RValue&& r_rval) override;
 
 protected:
     bool is_castable_to_prim(

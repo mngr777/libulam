@@ -143,7 +143,7 @@ TypeErrorPair prim_binary_op_type_check(
     case ops::Kind::Bitwise: {
         errors.first = check_type_match(l_type, BitsId);
         errors.second =
-            check_type_match(r_type, is_shift(op) ? UnsignedId : BitsId);
+            check_type_match(r_type, r_tv.value(), is_shift(op) ? UnsignedId : BitsId);
     } break;
     }
     return errors;

@@ -30,6 +30,8 @@ public:
     TypedValue cast_to(BuiltinTypeId id, RValue&& value) override;
     RValue cast_to(Ref<const PrimType> type, RValue&& value) override;
 
+    TypedValue unary_op(Op op, RValue&& rval) override;
+
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;

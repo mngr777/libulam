@@ -52,6 +52,9 @@ public:
 
     operator bool() const { return _data; }
 
+    bool operator==(const BitVectorView& other);
+    bool operator!=(const BitVectorView& other);
+
     BitVectorView& operator&=(const BitVectorView& other);
     BitVectorView& operator|=(const BitVectorView& other);
     BitVectorView& operator^=(const BitVectorView& other);
@@ -109,6 +112,9 @@ public:
     void write_right(size_t len, unit_t value);
 
     size_t len() const { return _len; }
+
+    bool operator==(const BitVector& other) const;
+    bool operator!=(const BitVector& other) const;
 
     BitVector& operator&=(const BitVector& other);
     BitVector& operator|=(const BitVector& other);
