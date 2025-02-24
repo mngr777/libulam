@@ -118,21 +118,22 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             assert(false);
         };
     };
-    auto left_tv =
+    auto l_tv =
         recast(node->lhs(), type_errors.first, left.move_typed_value());
-    auto right_tv =
+    auto r_tv =
         recast(node->rhs(), type_errors.second, right.move_typed_value());
-    if (!left_tv || !right_tv)
+    if (!l_tv || !r_tv)
         return {ExprError::InvalidOperandType};
 
     if (op != Op::Assign) {
-        if (left_tv.type()->is_prim()) {
-            auto left_type = left_tv.type()->as_prim();
-            auto right_type = right_tv.type()->as_prim();
-            auto left_rval = left_tv.move_value().move_rvalue();
-            auto right_rval = right_tv.move_value().move_rvalue();
-            right_tv = left_type->binary_op(
-                op, std::move(left_rval), right_type, std::move(right_rval));
+        if (l_tv.type()->canon()->is_prim()) {
+            assert(r_tv.type()->canon()->is_prim());
+            auto l_type = l_tv.type()->canon()->as_prim();
+            auto r_type = r_tv.type()->canon()->as_prim();
+            auto l_rval = l_tv.move_value().move_rvalue();
+            auto r_rval = r_tv.move_value().move_rvalue();
+            r_tv = l_type->binary_op(
+                op, std::move(l_rval), r_type, std::move(r_rval));
         } else {
             // TODO
             assert(false);
@@ -141,8 +142,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
 
     // handle assignment
     if (ops::is_assign(op))
-        return assign(node, Value{lval}, std::move(right_tv));
-    return {std::move(right_tv)};
+        return assign(node, Value{lval}, std::move(r_tv));
+    return {std::move(r_tv)};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
