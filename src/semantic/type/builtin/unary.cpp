@@ -140,7 +140,7 @@ bool UnaryType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case UnaryId:
         return expl || size >= bitsize();
     case BitsId:
-        return expl;
+        return expl || size >= bitsize();
     case AtomId:
         return false;
     case StringId:
