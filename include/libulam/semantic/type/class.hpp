@@ -27,12 +27,8 @@ class Class : public UserType, public ClassBase {
 public:
     using ParamVarList = std::list<Ref<Var>>;
 
-    Class(TypeIdGen* id_gen, std::string_view name, Ref<ClassTpl> tpl);
-    Class(
-        TypeIdGen* id_gen,
-        std::string_view name,
-        Ref<ast::ClassDef> node,
-        Ref<Scope> scope);
+    Class(std::string_view name, Ref<ClassTpl> tpl);
+    Class(std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module);
     ~Class();
 
     std::string name() const override { return std::string{_name}; }

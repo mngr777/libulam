@@ -60,7 +60,7 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
                 break;
             assert(sym && sym->is<Var>());
             auto var = sym->get<Var>();
-            assert(var->is(Var::Const | Var::ClassParam | Var::Tpl));
+            assert(var->is(Var::Const | Var::ClassParam /* | Var::Tpl */));
             is_resolved = resolve(var, ref(scope_view)) && is_resolved;
         }
     }

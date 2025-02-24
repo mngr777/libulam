@@ -103,6 +103,13 @@ Ptr<RefType> Type::make_ref_type() { return make<RefType>(_id_gen, this); }
 
 // AliasType
 
+AliasType::AliasType(TypeIdGen* id_gen, Ref<ast::TypeDef> node):
+    UserType{id_gen}, _node(node) {
+    assert(!node->alias_type());
+    if (has_id())
+        node->set_alias_type(this);
+}
+
 str_id_t AliasType::name_id() const { return _node->alias_id(); }
 
 bitsize_t AliasType::bitsize() const {

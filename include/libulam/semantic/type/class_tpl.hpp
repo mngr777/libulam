@@ -15,17 +15,14 @@ class ClassDef;
 namespace ulam {
 
 class Class;
+class Module;
 class Scope;
 
 class ClassTpl : public TypeTpl, public ClassBase, public Decl {
     friend Class;
 
 public:
-    ClassTpl(
-        TypeIdGen& id_gen,
-        UniqStrPool& str_pool,
-        Ref<ast::ClassDef> node,
-        Ref<Scope> scope);
+    ClassTpl(Ref<ast::ClassDef> node, Ref<Module> module);
     ~ClassTpl();
 
     str_id_t name_id() const;
@@ -41,7 +38,6 @@ private:
     // TMP
     std::string type_args_str(const TypedValueList& args);
 
-    UniqStrPool& _str_pool;
     Ref<ast::ClassDef> _node;
     std::unordered_map<std::string, Ptr<Class>> _classes;
 };

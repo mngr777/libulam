@@ -79,6 +79,8 @@ class Named {
     ULAM_AST_SIMPLE_ATTR(Str, name, Str{})
 public:
     Named(Str name): _attr_name{name} {}
+
+    str_id_t name_id() const { return name().str_id(); }
 };
 
 // Version number of persistent scope before definition

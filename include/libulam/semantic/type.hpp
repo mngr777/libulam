@@ -162,8 +162,7 @@ public:
 
 class AliasType : public UserType {
 public:
-    AliasType(TypeIdGen* id_gen, Ref<ast::TypeDef> node):
-        UserType{id_gen}, _node(node) {}
+    AliasType(TypeIdGen* id_gen, Ref<ast::TypeDef> node);
 
     str_id_t name_id() const override;
 

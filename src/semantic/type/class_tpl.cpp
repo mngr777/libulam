@@ -1,5 +1,7 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/semantic/module.hpp>
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
@@ -7,14 +9,12 @@
 
 namespace ulam {
 
-ClassTpl::ClassTpl(
-    TypeIdGen& id_gen,
-    UniqStrPool& str_pool,
-    Ref<ast::ClassDef> node,
-    Ref<Scope> scope):
-    TypeTpl{id_gen},
-    ClassBase{node, scope, scp::ClassTpl},
-    _str_pool{str_pool} {}
+ClassTpl::ClassTpl(Ref<ast::ClassDef> node, Ref<Module> module):
+    TypeTpl{module->program()->type_id_gen()},
+    ClassBase{node, module, scp::ClassTpl} {
+    assert(!node->cls_tpl());
+    node->set_cls_tpl(this);
+}
 
 ClassTpl::~ClassTpl() {}
 
@@ -33,7 +33,8 @@ ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
 }
 
 Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
-    auto cls = make<Class>(&id_gen(), _str_pool.get(name_id()), this);
+    auto& str_pool = module()->program()->str_pool();
+    auto cls = make<Class>(str_pool.get(name_id()), this);
 
     // create params
     {

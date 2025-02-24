@@ -55,50 +55,8 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
         return false;
     }
 
-    // add to module, set node attrs
-    if (node->params()) {
-        assert(node->params()->child_num() > 0);
-        assert(node->kind() != ClassKind::Element);
-
-        // class tpl
-        auto params = node->params();
-        auto tpl = make<ClassTpl>(
-            program()->type_id_gen(), ast()->ctx().str_pool(), node,
-            module()->scope());
-        auto tpl_ref = ref(tpl);
-
-        // add tpl params
-        for (unsigned n = 0; n < params->child_num(); ++n) {
-            auto param_node = params->get(n);
-            auto param_name_id = param_node->name().str_id();
-            // make var
-            auto var = make<Var>(
-                param_node->type_name(), param_node, Ref<Type>{},
-                Var::Tpl | Var::ClassParam | Var::Const);
-            auto var_ref = ref(var);
-            // set tpl var symbol, add to scope, store scope version
-            tpl->set(param_name_id, std::move(var));
-            param_node->set_scope_version(tpl->param_scope()->version());
-            tpl->param_scope()->set(param_name_id, var_ref);
-        }
-        // set module tpl symbol, add to scope, store scope version
-        module()->set<ClassTpl>(name_id, std::move(tpl));
-        scope()->set(name_id, tpl_ref);
-        node->set_scope_version(scope()->version());
-        node->set_cls_tpl(tpl_ref); // link to node
-
-    } else {
-        // class
-        auto name = program()->str_pool().get(name_id);
-        auto cls = make<Class>(
-            &program()->type_id_gen(), name, node, module()->scope());
-        auto cls_ref = ref(cls);
-        // set module class symbol, add to scope, store scope version
-        node->set_scope_version(scope()->version());
-        module()->set<Class>(name_id, std::move(cls));
-        scope()->set(name_id, cls_ref);
-        node->set_cls(cls_ref); // link to node
-    }
+    module()->add_class_or_tpl(node);
+    sync_scope(node);
     return true;
 }
 
@@ -116,37 +74,18 @@ void Init::visit(Ref<ast::TypeDef> node) {
 
     auto class_node = class_def();
     if (scope()->is(scp::Persistent)) {
-        // persistent typedef (module-local or class/tpl)
-        Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
-        auto type_ref = ref(type);
-        auto scope_version = scope()->version();
         if (scope()->is(scp::Module)) {
-            // module typedef (is not a module member)
-            scope()->set(alias_id, std::move(type));
-
+            module()->add_type_def(node);
         } else if (scope()->is(scp::Class)) {
-            // class member
             assert(class_node->cls());
-            auto cls = class_node->cls();
-            // add to class, add to scope
-            type->set_cls(cls);
-            cls->set(alias_id, std::move(type));
-            scope()->set(alias_id, type_ref);
-
+            class_node->cls()->add_type_def(node);
         } else if (scope()->is(scp::ClassTpl)) {
-            // tpl member
             assert(class_node->cls_tpl());
-            auto tpl = class_node->cls_tpl();
-            // add to class tpl, add to scope
-            tpl->set(alias_id, std::move(type));
-            scope()->set(alias_id, type_ref);
+            class_node->cls_tpl()->add_type_def(node);
         } else {
             assert(false);
         }
-        // store scope version and alias type
-        node->set_scope_version(scope_version);
-        node->set_alias_type(type_ref->as_alias());
-
+        sync_scope(node);
     } else {
         // transient typedef (in function body)
         Ptr<UserType> type = make<AliasType>(nullptr, node);

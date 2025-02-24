@@ -10,10 +10,13 @@
 
 namespace ulam::ast {
 class ClassDef;
+class Param;
+class TypeDef;
 }
 
 namespace ulam {
 
+class Module;
 class PersScope;
 
 class ClassBase {
@@ -23,7 +26,7 @@ public:
 
     ClassBase(
         Ref<ast::ClassDef> node,
-        Ref<Scope> module_scope,
+        Ref<Module> module,
         ScopeFlags scope_flags);
 
     ClassBase(ClassBase&&) = default;
@@ -37,9 +40,25 @@ public:
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
+    void add_param(Ref<ast::Param> node);
+    void add_type_def(Ref<ast::TypeDef> node);
+
+    // TODO: remove
     SymbolTable& members() { return _members; }
     const SymbolTable& members() const { return _members; }
 
+    Ref<ast::ClassDef> node() { return _node; }
+    Ref<const ast::ClassDef> node() const { return _node; }
+
+    Ref<Module> module() { return _module; }
+    Ref<const Module> module() const { return _module; }
+
+    Ref<PersScope> param_scope() { return ref(_param_scope); }
+    // TODO: templates don't need inheritance scope
+    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
+    Ref<PersScope> scope() { return ref(_scope); }
+
+    // TODO: make protected
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
     }
@@ -48,16 +67,9 @@ public:
         return _members.set(name_id, value);
     }
 
-    auto node() { return _node; }
-    const auto node() const { return _node; }
-
-    Ref<PersScope> param_scope() { return ref(_param_scope); }
-    // TODO: templates don't need inheritance scope
-    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
-    Ref<PersScope> scope() { return ref(_scope); }
-
 private:
     Ref<ast::ClassDef> _node;
+    Ref<Module> _module;
     Ptr<PersScope> _param_scope;
     Ptr<PersScope> _inh_scope;
     Ptr<PersScope> _scope;
