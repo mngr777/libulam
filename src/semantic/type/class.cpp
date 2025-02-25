@@ -35,6 +35,12 @@ Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
+void Class::add_fun(Ref<ast::FunDef> node) {
+    ClassBase::add_fun(node);
+    assert(node->fun());
+    node->fun()->set_cls(this);
+}
+
 bool Class::is_base_of(Ref<const Class> other) const {
     return other->_ancestry.is_base(this);
 }

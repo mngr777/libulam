@@ -10,6 +10,7 @@
 namespace ulam::ast {
 class ArgList;
 class ClassDef;
+class FunDef;
 class TypeName;
 } // namespace ulam::ast
 
@@ -35,6 +36,8 @@ public:
     str_id_t name_id() const override;
 
     const ParamVarList& param_vars() const { return _param_vars; }
+
+    virtual void add_fun(Ref<ast::FunDef> node) override;
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
 

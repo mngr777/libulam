@@ -10,6 +10,7 @@
 
 namespace ulam::ast {
 class ClassDef;
+class FunDef;
 class Param;
 class TypeDef;
 }
@@ -40,8 +41,9 @@ public:
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
-    void add_param(Ref<ast::Param> node);
-    void add_type_def(Ref<ast::TypeDef> node);
+    virtual void add_param(Ref<ast::Param> node);
+    virtual void add_type_def(Ref<ast::TypeDef> node);
+    virtual void add_fun(Ref<ast::FunDef> node);
 
     // TODO: remove
     SymbolTable& members() { return _members; }

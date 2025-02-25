@@ -172,7 +172,7 @@ bool RecVisitor::sync_scope(Ref<ast::DefNode> node) {
     auto scope = _scopes.top();
     assert(scope->has_version() == (node->scope_version() != NoScopeVersion));
     if (scope->has_version()) {
-        scope->set_version_after(node->scope_version());
+        scope->set_version(node->scope_version());
         return true;
     }
     return false;

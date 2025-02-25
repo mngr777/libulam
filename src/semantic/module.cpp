@@ -18,8 +18,8 @@ Module::~Module() {}
 void Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
     Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
-    node->set_scope_version(scope()->version());
     scope()->set(name_id, std::move(type)); // ??
+    node->set_scope_version(scope()->version());
 }
 
 void Module::add_class_or_tpl(Ref<ast::ClassDef> node) {
@@ -34,8 +34,8 @@ void Module::add_class_or_tpl(Ref<ast::ClassDef> node) {
 void Module::add_class(Ref<ast::ClassDef> node) {
     auto name = program()->str_pool().get(node->name_id());
     auto cls = make<Class>(name, node, this);
-    cls->node()->set_scope_version(scope()->version());
     scope()->set(cls->name_id(), ref(cls));
+    cls->node()->set_scope_version(scope()->version());
     set(cls->name_id(), std::move(cls));
 }
 
@@ -54,8 +54,8 @@ void Module::add_class_tpl(Ref<ast::ClassDef> node) {
         tpl->add_param(param);
     }
 
-    node->set_scope_version(scope()->version());
     scope()->set(name_id, ref(tpl));
+    node->set_scope_version(scope()->version());
     set(tpl->name_id(), std::move(tpl));
 }
 

@@ -14,6 +14,7 @@ namespace ulam::ast {
 class FunDef;
 class FunDefBody;
 class FunRetType;
+class Param;
 class ParamList;
 } // namespace ulam::ast
 
@@ -48,7 +49,8 @@ public:
     // TMP?
     Params& params() { return _params; }
     const Params& param() const { return _params; }
-    void add_param(Ptr<Var>&& param);
+    void add_param(Ptr<Var>&& param); // TODO: remove
+    void add_param(Ref<ast::Param> node);
 
     unsigned min_param_num() const;
     unsigned param_num() const { return _params.size(); }

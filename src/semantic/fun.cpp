@@ -20,7 +20,11 @@ namespace ulam {
 
 // Fun
 
-Fun::Fun(Ref<ast::FunDef> node): _node{node} {}
+Fun::Fun(Ref<ast::FunDef> node): _node{node} {
+    assert(!node->fun());
+    node->set_fun(this);
+}
+
 Fun::~Fun() {}
 
 str_id_t Fun::name_id() const { return _node->name().str_id(); }
@@ -36,6 +40,11 @@ void Fun::add_param(Ptr<Var>&& param) {
     assert(params_node());
     assert(_params.size() < params_node()->child_num());
     _params.push_back(std::move(param));
+}
+
+void Fun::add_param(Ref<ast::Param> node) {
+    auto param = make<Var>(node->type_name(), node, Ref<Type>{}, Var::FunParam);
+    add_param(std::move(param));
 }
 
 unsigned Fun::min_param_num() const {

@@ -145,7 +145,6 @@ void Init::visit(Ref<ast::VarDefList> node) {
             flags |= Var::Tpl;
 
         // create and add
-        auto scope_version = scope()->version();
         if (class_node && !node->is_const()) {
             auto prop = make<Prop>(node->type_name(), def, Ref<Type>{}, flags);
             auto prop_ref = ref(prop);
@@ -157,7 +156,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
             install(std::move(var));
             def->set_var(var_ref);
         }
-        def->set_scope_version(scope_version);
+        def->set_scope_version(scope()->version());
     }
 }
 
@@ -174,47 +173,17 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     }
     assert(cls_base);
 
-    // find or create fun set
-    auto name_id = node->name().str_id();
-    auto scope_version = scope()->version();
+    auto name_id = node->name_id();
     auto sym = cls_base->get(name_id);
-    Ref<FunSet> fset{};
-    if (sym) {
-        if (!sym->is<FunSet>()) {
-            diag().error(
-                node->loc_id(), str(name_id).size(),
-                "defined and is not a function");
-            return false;
-        }
-    } else {
-        // add to class/tpl, add to scope
-        sym = cls_base->set(name_id, make<FunSet>());
-        scope()->set(name_id, sym->get<FunSet>());
-    }
-    fset = sym->get<FunSet>();
-
-    // create fun
-    auto fun = make<Fun>(node);
-    if (class_node->cls())
-        fun->set_cls(class_node->cls());
-    fun->set_scope_version(scope_version);
-
-    // add params
-    auto params_node = fun->params_node();
-    assert(params_node);
-    for (unsigned n = 0; n < params_node->child_num(); ++n) {
-        auto param_node = params_node->get(n);
-        auto param = make<Var>(
-            param_node->type_name(), param_node, Ref<Type>{}, Var::FunParam);
-        fun->add_param(std::move(param));
+    if (sym && !sym->is<FunSet>()) {
+        diag().error(
+            node->loc_id(), str(name_id).size(),
+            "defined and is not a function");
+        return false;
     }
 
-    // update node attrs
-    node->set_fun(ref(fun));
-    node->set_scope_version(scope_version); // TODO: remove?
-
-    // add to set
-    fset->add(std::move(fun));
+    cls_base->add_fun(node);
+    sync_scope(node);
     return true;
 }
 
