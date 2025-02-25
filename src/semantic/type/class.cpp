@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
@@ -87,16 +88,18 @@ bitsize_t Class::bitsize() const {
 }
 
 bitsize_t Class::direct_bitsize() const {
-    bitsize_t size = 0;
-    for (auto& [_, sym] : members()) {
-        if (!sym.is<Prop>())
+    bitsize_t total = 0;
+    for (auto prop : props()) {
+        if (!prop->is_ready())
             continue;
-        auto var = sym.get<Prop>();
-        if (!var->is_ready())
-            continue;
-        size += var->type()->bitsize();
+        auto size = prop->type()->bitsize();
+        if (kind() == ClassKind::Union) {
+            total = std::max(total, size);
+        } else {
+            total += size;
+        }
     }
-    return size;
+    return total;
 }
 
 RValue Class::construct() const {

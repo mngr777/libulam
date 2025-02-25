@@ -19,7 +19,10 @@ Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
     Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
     auto ref = ulam::ref(type)->as_alias();
-    scope()->set(name_id, std::move(type)); // ??
+    type->set_scope_version(scope()->version());
+    scope()->set(name_id, std::move(type));
+
+    assert(!node->has_scope_version());
     node->set_scope_version(scope()->version());
     return ref;
 }
@@ -33,7 +36,10 @@ Ref<Var>
 Module::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node) {
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
+    var->set_scope_version(scope()->version());
     scope()->set(var->name_id(), std::move(var));
+
+    assert(!node->has_scope_version());
     node->set_var(ref);
     node->set_scope_version(scope()->version());
     return ref;
@@ -43,8 +49,12 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
     auto name = program()->str_pool().get(node->name_id());
     auto cls = make<Class>(name, node, this);
     auto ref = ulam::ref(cls);
+    cls->set_scope_version(scope()->version());
+
     scope()->set(cls->name_id(), ref);
     set(cls->name_id(), std::move(cls));
+
+    assert(!node->has_scope_version());
     node->set_cls(ref);
     node->set_scope_version(scope()->version());
     return ref;
@@ -57,6 +67,7 @@ Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     auto name_id = node->name_id();
     auto tpl = make<ClassTpl>(node, this);
     auto ref = ulam::ref(tpl);
+    tpl->set_scope_version(scope()->version());
 
     auto params = node->params();
     for (unsigned n = 0; n < params->child_num(); ++n) {
@@ -68,6 +79,8 @@ Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
 
     scope()->set(name_id, ref);
     set(tpl->name_id(), std::move(tpl));
+
+    assert(!node->has_scope_version());
     node->set_cls_tpl(ref);
     node->set_scope_version(scope()->version());
     return ref;
