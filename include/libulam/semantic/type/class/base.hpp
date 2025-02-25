@@ -60,11 +60,11 @@ public:
     virtual Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
 
-    // TODO: remove
+    const auto& params() const { return _params; }
+    const auto& props() const { return _props; }
+
     SymbolTable& members() { return _members; }
     const SymbolTable& members() const { return _members; }
-
-    const auto& params() const { return _params; }
 
     Ref<ast::ClassDef> node() { return _node; }
     Ref<const ast::ClassDef> node() const { return _node; }
@@ -94,6 +94,7 @@ private:
     Ptr<PersScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;
+    std::list<Ref<Prop>> _props;
 };
 
 } // namespace ulam

@@ -1,9 +1,12 @@
 #pragma once
 #include <libulam/semantic/scope.hpp>
+#include <libulam/str_pool.hpp>
+#include <utility>
 
 namespace ulam {
 
 class PersScope;
+class PersScopeIterator;
 
 class PersScopeView : public Scope {
 public:
@@ -33,6 +36,12 @@ public:
 
     Ptr<PersScopeView> view(ScopeVersion version) override;
     Ptr<PersScopeView> view() override;
+
+    PersScopeIterator begin();
+    PersScopeIterator end();
+
+    bool operator==(const PersScopeView& other) const;
+    bool operator!=(const PersScopeView& other) const;
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;

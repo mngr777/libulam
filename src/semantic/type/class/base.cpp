@@ -1,4 +1,3 @@
-#include "libulam/semantic/fun.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
@@ -106,6 +105,7 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = prop->name_id();
     scope()->set(name_id, ref);
     set(name_id, std::move(prop));
+    _props.push_back(ref);
     if (!node->has_scope_version()) {
         node->set_prop(ref);
         node->set_scope_version(scope()->version());

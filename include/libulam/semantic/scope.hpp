@@ -175,6 +175,7 @@ public:
     Ptr<PersScopeView> view(ScopeVersion version) override;
     Ptr<PersScopeView> view() override;
 
+    // TODO: remove, use iterators instead
     void for_each(ItemCb cb) override { for_each(cb, _version); }
     void for_each(ItemCb cb, ScopeVersion version);
 

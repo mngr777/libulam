@@ -1,4 +1,5 @@
 #include <libulam/semantic/scope/view.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 
 namespace ulam {
 
@@ -44,20 +45,34 @@ void PersScopeView::set_version_after(ScopeVersion version) {
     set_version(version + 1);
 }
 
-Scope::Symbol* PersScopeView::do_set(str_id_t name_id, Symbol&& symbol) {
-    assert(_version == scope()->version());
-    auto sym = scope()->do_set(name_id, std::move(symbol));
-    sync();
-    return sym;
-}
-
 Ptr<PersScopeView> PersScopeView::view(ScopeVersion version) {
     assert(version <= this->version());
     return _scope->view(version);
 }
 
-Ptr<PersScopeView> PersScopeView::view() {
-    return _scope->view(version());
+Ptr<PersScopeView> PersScopeView::view() { return _scope->view(version()); }
+
+PersScopeIterator PersScopeView::begin() {
+    return PersScopeIterator(PersScopeView{_scope, 0});
+}
+
+PersScopeIterator PersScopeView::end() {
+    return PersScopeIterator();
+}
+
+bool PersScopeView::operator==(const PersScopeView& other) const {
+    return _scope == other._scope && _version == other._version;
+}
+
+bool PersScopeView::operator!=(const PersScopeView& other) const {
+    return !operator==(other);
+}
+
+Scope::Symbol* PersScopeView::do_set(str_id_t name_id, Symbol&& symbol) {
+    assert(_version == scope()->version());
+    auto sym = scope()->do_set(name_id, std::move(symbol));
+    sync();
+    return sym;
 }
 
 Ref<PersScope> PersScopeView::scope() {

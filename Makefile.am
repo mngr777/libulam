@@ -32,6 +32,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/ops.inc.hpp \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
+	include/libulam/semantic/scope/iterator.hpp \
 	include/libulam/semantic/scope/stack.hpp \
 	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/scope/view.hpp \
@@ -92,6 +93,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type_ops.cpp \
 	src/semantic/program.cpp \
 	src/semantic/scope.cpp \
+	src/semantic/scope/iterator.cpp \
 	src/semantic/scope/stack.cpp \
 	src/semantic/scope/view.cpp \
 	src/semantic/type.cpp \

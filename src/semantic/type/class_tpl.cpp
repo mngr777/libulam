@@ -5,6 +5,7 @@
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 #include <utility>
 
 namespace ulam {
@@ -54,60 +55,42 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls = make<Class>(str_pool.get(name_id()), this);
 
     // create params
-    {
-        TypedValue tv;
-        auto scope_view = param_scope()->view();
-        scope_view->reset();
-        while (true) {
-            auto [name_id, sym] = scope_view->advance();
-            if (!sym)
-                break;
+    TypedValue tv;
+    for (auto var : params()) {
+        assert(args.size() > 0);
+        std::swap(tv, args.front());
+        args.pop_front();
 
-            assert(sym->is<Var>());
-            auto var = sym->get<Var>();
-            assert(var->is_const() && var->is(Var::ClassParam & Var::Tpl));
-
-            std::swap(tv, args.front());
-            args.pop_front();
-
-            cls->add_param(var->type_node(), var->node(), tv.move_value());
-        }
-        assert(param_scope()->version() == scope_view->version()); // in sync?
-        assert(args.size() == 0); // all args consumed?
+        // assert(tv.type()->is_same(var->type())); // TODO
+        cls->add_param(var->type_node(), var->node(), tv.move_value());
     }
 
-    // create members
-    {
-        auto scope_view = scope()->view();
-        scope_view->reset();
-        while (true) {
-            auto [name_id_, sym] = scope_view->advance();
-            if (!sym)
-                break;
-
-            // (cannot use struct. binding in lambda in C++17)
-            auto name_id = name_id_; 
-            sym->accept(
-                [&](Ref<UserType> type) {
-                    cls->add_type_def(type->as_alias()->node());
-                },
-                [&](Ref<Var> var) {
-                    cls->add_const(var->type_node(), var->node());
-                },
-                [&](Ref<Prop> prop) {
-                    cls->add_prop(prop->type_node(), prop->node());
-                },
-                [&](Ref<FunSet> fset) {
-                    auto copy = make<FunSet>(*fset);
-                    copy->for_each(
-                        [&](Ref<Fun> fun) { fun->set_cls(ref(cls)); });
-                    cls->scope()->set(name_id, ref(copy));
-                    cls->set(name_id, std::move(copy));
-                },
-                [&](auto&&) { assert(false); });
-        }
-        assert(scope_view->version() == scope()->version()); // in sync?
+    // create other members
+    auto scope_view = scope()->view();
+    for (auto [name_id_, sym] : *scope_view) {
+        // (cannot use struct. binding in lambda in C++17)
+        auto name_id = name_id_; 
+        sym->accept(
+            [&](Ref<UserType> type) {
+                cls->add_type_def(type->as_alias()->node());
+            },
+            [&](Ref<Var> var) {
+                cls->add_const(var->type_node(), var->node());
+            },
+            [&](Ref<Prop> prop) {
+                cls->add_prop(prop->type_node(), prop->node());
+            },
+            [&](Ref<FunSet> fset) {
+                auto copy = make<FunSet>(*fset);
+                copy->for_each(
+                    [&](Ref<Fun> fun) { fun->set_cls(ref(cls)); });
+                cls->scope()->set(name_id, ref(copy));
+                cls->set(name_id, std::move(copy));
+            },
+            [&](auto&&) { assert(false); });
     }
+    assert(scope_view->version() == scope()->version()); // in sync?
+
     return cls;
 }
 
