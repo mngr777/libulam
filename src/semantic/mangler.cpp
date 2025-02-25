@@ -64,10 +64,11 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
     if (type->is_class()) {
         auto cls = type->as_class();
         detail::write_leximited(os, cls->name());
-        for (auto var : cls->param_vars()) {
+        for (auto var : cls->params()) {
             write_mangled(os, var->type());
-            // TODO: visit RValue to avoid copying
-            write_mangled(os, var->value().copy_rvalue());
+            var->value().with_rvalue([&](const RValue& rval) {
+                write_mangled(os, rval);
+            });
         }
     } else {
         assert(type->is_prim());

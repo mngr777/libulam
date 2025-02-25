@@ -69,7 +69,9 @@ public:
     LValue bound_fset(Ref<FunSet> fset);
 
     bool is_consteval() const { return _is_consteval; }
-    void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; } // TMP??
+    void set_is_consteval(bool is_consteval) {
+        _is_consteval = is_consteval;
+    } // TMP??
 
 private:
     bool _is_consteval;
@@ -106,20 +108,7 @@ public:
 
     bool is_consteval() const;
 
-    template <typename R>
-    R with_rvalue(std::function<R(const RValue&)> cb) const {
-        return accept(
-            [&](LValue& lval) {
-                // TODO: can go deeper to avoid copying
-                auto rval = lval.rvalue();
-                return cb(rval);
-            },
-            [&](RValue& rval) { return cb(rval); },
-            [&](std::monostate&) {
-                RValue rval;
-                return cb(rval);
-            });
-    }
+    void with_rvalue(std::function<void(const RValue&)> cb) const;
 };
 
 using ValueList = std::list<Value>;

@@ -1,5 +1,7 @@
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/ast/nodes/type.hpp>
+#include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -8,6 +10,7 @@
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/value.hpp>
 
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[Class] "
@@ -32,6 +35,20 @@ Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
+Ref<Var>
+Class::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+    auto var = ClassBase::add_param(type_node, node);
+    var->set_cls(this);
+    return var;
+}
+
+Ref<Var> Class::add_param(
+    Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val) {
+    auto var = add_param(type_node, node);
+    var->set_value(std::move(val));
+    return var;
+}
+
 Ref<AliasType> Class::add_type_def(Ref<ast::TypeDef> node) {
     auto type = ClassBase::add_type_def(node);
     type->set_cls(this);
@@ -44,13 +61,15 @@ Ref<Fun> Class::add_fun(Ref<ast::FunDef> node) {
     return fun;
 }
 
-Ref<Var> Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Ref<Var>
+Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = ClassBase::add_const(type_node, node);
     var->set_cls(this);
     return var;
 }
 
-Ref<Prop> Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Ref<Prop>
+Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto prop = ClassBase::add_prop(type_node, node);
     prop->set_cls(this);
     return prop;
@@ -92,16 +111,6 @@ RValue Class::load(const BitVectorView data, BitVector::size_t off) const {
 
 void Class::store(
     BitVectorView data, BitVector::size_t off, const RValue& rval) const {}
-
-void Class::add_param_var(Ptr<Var>&& var) {
-    assert(var->is(Var::ClassParam | Var::Const));
-    auto name_id = var->name_id();
-    assert(!param_scope()->has(name_id));
-    assert(!has(name_id));
-    _param_vars.push_back(ref(var));
-    param_scope()->set(name_id, ref(var));
-    set(name_id, std::move(var));
-}
 
 void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
     // TODO: merge fun sets?

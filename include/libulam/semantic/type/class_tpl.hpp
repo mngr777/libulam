@@ -30,9 +30,13 @@ public:
 
     str_id_t name_id() const;
 
-    Ref<Var> add_param(Ref<ast::Param> node) override;
+    using ClassBase::add_param;
+
+    Ref<Var> add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+
     Ref<Var>
     add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 

@@ -17,8 +17,8 @@ ClassTpl::~ClassTpl() {}
 
 str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 
-Ref<Var> ClassTpl::add_param(Ref<ast::Param> node) {
-    auto var = ClassBase::add_param(node);
+Ref<Var> ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+    auto var = ClassBase::add_param(type_node, node);
     var->set_flag(Var::Tpl);
     return var;
 }
@@ -55,23 +55,22 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
 
     // create params
     {
+        TypedValue tv;
         auto scope_view = param_scope()->view();
         scope_view->reset();
         while (true) {
             auto [name_id, sym] = scope_view->advance();
             if (!sym)
                 break;
+
             assert(sym->is<Var>());
             auto var = sym->get<Var>();
-            var->set_cls(ref(cls));
             assert(var->is_const() && var->is(Var::ClassParam & Var::Tpl));
-            TypedValue value;
-            std::swap(value, args.front());
+
+            std::swap(tv, args.front());
             args.pop_front();
-            auto copy = make<Var>(
-                var->type_node(), var->node(), std::move(value),
-                var->flags() & ~Var::Tpl);
-            cls->add_param_var(std::move(copy));
+
+            cls->add_param(var->type_node(), var->node(), tv.move_value());
         }
         assert(param_scope()->version() == scope_view->version()); // in sync?
         assert(args.size() == 0); // all args consumed?
@@ -86,8 +85,8 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
             if (!sym)
                 break;
 
-            auto name_id =
-                name_id_; // cannot use struct. binding in lambda in C++17
+            // (cannot use struct. binding in lambda in C++17)
+            auto name_id = name_id_; 
             sym->accept(
                 [&](Ref<UserType> type) {
                     cls->add_type_def(type->as_alias()->node());

@@ -225,4 +225,18 @@ bool Value::is_consteval() const {
         [&](const std::monostate& val) { return false; });
 }
 
+void Value::with_rvalue(std::function<void(const RValue&)> cb) const {
+    accept(
+        [&](const LValue& lval) {
+            // TODO: LValue::with_rvalue
+            auto rval = lval.rvalue();
+            cb(rval);
+        },
+        [&](const RValue& rval) { cb(rval); },
+        [&](const std::monostate&) {
+            RValue rval;
+            cb(rval);
+        });
+}
+
 } // namespace ulam

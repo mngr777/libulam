@@ -18,15 +18,21 @@ ClassBase::ClassBase(
 ClassKind ClassBase::kind() const { return node()->kind(); }
 
 Ref<Var> ClassBase::add_param(Ref<ast::Param> node) {
+    return add_param(node->type_name(), node);
+}
+
+Ref<Var>
+ClassBase::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
     assert(!has(name_id));
-    auto var = make<Var>(
-        node->type_name(), node, Ref<Type>{}, Var::ClassParam | Var::Const);
+    auto var =
+        make<Var>(type_node, node, Ref<Type>{}, Var::ClassParam | Var::Const);
     auto ref = ulam::ref(var);
     param_scope()->set(name_id, ref);
     if (!node->has_scope_version())
         node->set_scope_version(param_scope()->version());
     set(name_id, std::move(var));
+    _params.push_back(ref);
     return ref;
 }
 
@@ -79,7 +85,8 @@ void ClassBase::add_var_list(Ref<ast::VarDefList> node) {
     }
 }
 
-Ref<Var> ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Ref<Var>
+ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
     auto name_id = var->name_id();
@@ -92,7 +99,8 @@ Ref<Var> ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> no
     return ref;
 }
 
-Ref<Prop> ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Ref<Prop>
+ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto prop = make<Prop>(type_node, node, Ref<Type>{}, Var::NoFlags);
     auto ref = ulam::ref(prop);
     auto name_id = prop->name_id();
