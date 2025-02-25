@@ -17,8 +17,7 @@ public:
         VarBase{type_node, node, tv.type(), flags}, _value{tv.move_value()} {}
 
     bool requires_value() const {
-        // return is_const() && !(is(Tpl) && is(ClassParam)) && !is(FunParam);
-        return false; // TMP
+        return is_const() && !(is(Tpl) && is(ClassParam)) && !is(FunParam);
     }
 
     Value& value() { return _value; } // TMP

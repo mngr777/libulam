@@ -13,6 +13,9 @@ class ClassDef;
 class FunDef;
 class Param;
 class TypeDef;
+class TypeName;
+class VarDef;
+class VarDefList;
 }
 
 namespace ulam {
@@ -41,9 +44,12 @@ public:
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
-    virtual void add_param(Ref<ast::Param> node);
-    virtual void add_type_def(Ref<ast::TypeDef> node);
-    virtual void add_fun(Ref<ast::FunDef> node);
+    virtual Ref<Var> add_param(Ref<ast::Param> node);
+    virtual Ref<AliasType> add_type_def(Ref<ast::TypeDef> node);
+    virtual Ref<Fun> add_fun(Ref<ast::FunDef> node);
+    virtual void add_var_list(Ref<ast::VarDefList> node);
+    virtual Ref<Var> add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
+    virtual Ref<Prop> add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
 
     // TODO: remove
     SymbolTable& members() { return _members; }

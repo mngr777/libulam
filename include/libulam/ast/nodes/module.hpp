@@ -62,6 +62,12 @@ public:
 
     ClassKind kind() const { return _kind; }
 
+    Ref<ClassBase> cls_or_tpl() {
+        if (cls())
+            return cls();
+        return cls_tpl();
+    }
+
 private:
     ClassKind _kind;
 };

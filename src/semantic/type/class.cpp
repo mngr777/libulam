@@ -26,19 +26,34 @@ Class::Class(
     UserType{&module->program()->type_id_gen()},
     ClassBase{node, module, scp::Class},
     _name{name},
-    _tpl{} {
-    assert(!node->cls());
-    node->set_cls(this);
-}
+    _tpl{} {}
 
 Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
-void Class::add_fun(Ref<ast::FunDef> node) {
-    ClassBase::add_fun(node);
-    assert(node->fun());
-    node->fun()->set_cls(this);
+Ref<AliasType> Class::add_type_def(Ref<ast::TypeDef> node) {
+    auto type = ClassBase::add_type_def(node);
+    type->set_cls(this);
+    return type;
+}
+
+Ref<Fun> Class::add_fun(Ref<ast::FunDef> node) {
+    auto fun = ClassBase::add_fun(node);
+    fun->set_cls(this);
+    return fun;
+}
+
+Ref<Var> Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+    auto var = ClassBase::add_const(type_node, node);
+    var->set_cls(this);
+    return var;
+}
+
+Ref<Prop> Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+    auto prop = ClassBase::add_prop(type_node, node);
+    prop->set_cls(this);
+    return prop;
 }
 
 bool Class::is_base_of(Ref<const Class> other) const {

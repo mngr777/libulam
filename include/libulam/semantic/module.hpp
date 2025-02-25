@@ -9,7 +9,10 @@
 
 namespace ulam::ast {
 class ModuleDef;
+class TypeName;
 class TypeSpec;
+class VarDef;
+class VarDefList;
 } // namespace ulam::ast
 
 namespace ulam {
@@ -61,8 +64,11 @@ public:
 
     Ref<ast::ModuleDef> node() { return _node; }
 
-    void add_type_def(Ref<ast::TypeDef> node);
-    void add_class_or_tpl(Ref<ast::ClassDef> node);
+    Ref<AliasType> add_type_def(Ref<ast::TypeDef> node);
+    void add_const_list(Ref<ast::VarDefList> node);
+    Ref<Var> add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node);
+    Ref<Class> add_class(Ref<ast::ClassDef> node);
+    Ref<ClassTpl> add_class_tpl(Ref<ast::ClassDef> node);
 
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
@@ -85,9 +91,6 @@ public:
     add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
 
 private:
-    void add_class(Ref<ast::ClassDef> node);
-    void add_class_tpl(Ref<ast::ClassDef> node);
-
     Ref<Program> _program;
     module_id_t _id;
     Ref<ast::ModuleDef> _node;

@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/array_dim_eval.hpp>
@@ -60,7 +59,7 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
                 break;
             assert(sym && sym->is<Var>());
             auto var = sym->get<Var>();
-            assert(var->is(Var::Const | Var::ClassParam /* | Var::Tpl */));
+            assert(var->is(Var::Const | Var::ClassParam | Var::Tpl));
             is_resolved = resolve(var, ref(scope_view)) && is_resolved;
         }
     }
@@ -89,23 +88,20 @@ bool Resolver::init(Ref<Class> cls) {
     }
 
     // init inherited members
-    {
-        if (cls->node()->has_ancestors()) {
-            auto ancestors = cls->node()->ancestors();
-            auto scope = cls->inh_scope();
-            for (unsigned n = 0; n < ancestors->child_num(); ++n) {
-                // resolve ancestor type
-                auto type_name = ancestors->get(n);
-                auto type = resolve_type_name(type_name, scope);
-                if (!type->is_class()) {
-                    diag().emit(
-                        Diag::Error, type_name->loc_id(), 1, "not a class");
-                    success = false;
-                    continue;
-                }
-                // add ancestor class
-                cls->add_ancestor(type->as_class(), type_name);
+    if (cls->node()->has_ancestors()) {
+        auto ancestors = cls->node()->ancestors();
+        auto scope = cls->inh_scope();
+        for (unsigned n = 0; n < ancestors->child_num(); ++n) {
+            // resolve ancestor type
+            auto type_name = ancestors->get(n);
+            auto type = resolve_type_name(type_name, scope);
+            if (!type->is_class()) {
+                diag().error(type_name, "not a class");
+                success = false;
+                continue;
             }
+            // add ancestor class
+            cls->add_ancestor(type->as_class(), type_name);
         }
     }
 
@@ -123,9 +119,7 @@ bool Resolver::resolve(Ref<Class> cls) {
     // resolve ancestors
     for (auto anc : cls->parents()) {
         if (!resolve(anc->cls())) {
-            diag().emit(
-                Diag::Error, anc->node()->loc_id(), 1,
-                "cannot resolve ancestor type");
+            diag().error(anc->node(), "cannot resolve ancestor type");
             is_resolved = false;
         }
     }
@@ -173,9 +167,8 @@ bool Resolver::resolve(Ref<Class> cls) {
                 // is it a var?
                 if (cls_sym->is<Var>()) {
                     auto var = cls_sym->get<Var>();
-                    diag().emit(
-                        Diag::Notice, var->node()->loc_id(),
-                        str(var->name_id()).size(),
+                    diag().notice(
+                        var->node()->loc_id(), str(var->name_id()).size(),
                         "variable shadows inherited function");
                     continue;
                 }
@@ -249,15 +242,15 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             var->value() = tv.move_value();
             if (var->value().empty()) {
                 auto name = node->name();
-                diag().emit(
-                    Diag::Error, name.loc_id(), str(name.str_id()).size(),
+                diag().error(
+                    name.loc_id(), str(name.str_id()).size(),
                     "cannot calculate constant value");
                 is_resolved = false;
             }
         } else if (var->requires_value()) {
             auto name = node->name();
-            diag().emit(
-                Diag::Error, name.loc_id(), str(name.str_id()).size(),
+            diag().error(
+                name.loc_id(), str(name.str_id()).size(),
                 "constant value required");
             is_resolved = false;
         }
@@ -270,12 +263,9 @@ bool Resolver::resolve(Ref<Prop> prop, Ref<Scope> scope) {
     assert(scope);
     CHECK_STATE(prop);
     bool is_resolved = true;
-    auto node = prop->node();
-    auto type_name = prop->type_node();
-
-    // type
     if (!prop->has_type()) {
-        auto type = resolve_var_decl_type(type_name, node, scope, true);
+        auto type =
+            resolve_var_decl_type(prop->type_node(), prop->node(), scope, true);
         if (type)
             prop->set_type(type);
         is_resolved = type && is_resolved;
@@ -302,15 +292,15 @@ bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
             auto int_type =
                 _program->builtins().prim_type(IntId, IntType::DefaultSize);
             if (is_conv && fun->ret_type()->canon() != int_type) {
-                diag().emit(
-                    Diag::Warn, fun->node()->loc_id(), 1,
+                diag().warn(
+                    fun->node()->loc_id(), 1,
                     std::string{"return type must be "} + int_type->name());
                 is_conv = false;
             }
             // check params
             if (is_conv && fun->param_num() != 0) {
-                diag().emit(
-                    Diag::Warn, fun->node()->loc_id(), 1,
+                diag().warn(
+                    fun->node()->loc_id(), 1,
                     "toInt function cannot have parameters");
                 is_conv = false;
             }
@@ -334,9 +324,7 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
     if (ret_type) {
         fun->set_ret_type(ret_type);
     } else {
-        diag().emit(
-            Diag::Error, ret_type_node->loc_id(), 1,
-            "cannot resolve return type");
+        diag().error(ret_type_node, "cannot resolve return type");
         is_resolved = false;
     }
 
@@ -413,8 +401,8 @@ Ref<Type> Resolver::resolve_type_name(
         if (type_name->child_num() > 1) {
             auto ident = type_name->ident(1);
             auto name_id = ident->name().str_id();
-            diag().emit(
-                Diag::Error, ident->loc_id(), str(name_id).size(),
+            diag().error(
+                ident->loc_id(), str(name_id).size(),
                 "built-ins don't have member types");
         }
         return type;
@@ -428,9 +416,8 @@ Ref<Type> Resolver::resolve_type_name(
         // recursively resolve aliases
         if (type->is_alias()) {
             if (!resolve(type->as_alias(), scope)) {
-                diag().emit(
-                    Diag::Error, ident->loc_id(), str(name_id).size(),
-                    "cannot resolve");
+                diag().error(
+                    ident->loc_id(), str(name_id).size(), "cannot resolve");
                 return {};
             }
         }
@@ -440,9 +427,7 @@ Ref<Type> Resolver::resolve_type_name(
                 auto cls = type->canon()->as_class();
                 bool resolved = resolve_class ? resolve(cls) : init(cls);
                 if (!resolved) {
-                    diag().emit(
-                        Diag::Error, ident->loc_id(), str(name_id).size(),
-                        "cannot resolve");
+                    diag().error(ident, "cannot resolve");
                     return {};
                 }
             }
@@ -453,9 +438,7 @@ Ref<Type> Resolver::resolve_type_name(
         assert(type->canon());
         auto canon = type->canon();
         if (!canon->is_class()) {
-            diag().emit(
-                Diag::Error, ident->loc_id(), str(name_id).size(),
-                "not a class");
+            diag().error(ident, "not a class");
             return {};
         }
         auto cls = canon->as_class();
@@ -466,9 +449,7 @@ Ref<Type> Resolver::resolve_type_name(
         ident = type_name->ident(n);
         name_id = ident->name().str_id();
         if (!cls->get(name_id)) {
-            diag().emit(
-                Diag::Error, ident->loc_id(), str(name_id).size(),
-                "name not found in class");
+            diag().error(ident, "name not found in class");
             return {};
         }
         auto sym = cls->get(name_id);
@@ -515,9 +496,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     auto name_id = type_spec->ident()->name().str_id();
     auto sym = scope->get(name_id);
     if (!sym) {
-        diag().emit(
-            Diag::Error, type_spec->loc_id(), str(name_id).size(),
-            "type not found");
+        diag().error(type_spec, "type not found");
         return {};
     }
     assert(sym->is<UserType>());

@@ -12,6 +12,8 @@ class ArgList;
 class ClassDef;
 class FunDef;
 class TypeName;
+class VarDecl;
+class VarDefList;
 } // namespace ulam::ast
 
 namespace ulam {
@@ -37,7 +39,12 @@ public:
 
     const ParamVarList& param_vars() const { return _param_vars; }
 
-    virtual void add_fun(Ref<ast::FunDef> node) override;
+    Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
+    Ref<Fun> add_fun(Ref<ast::FunDef> node) override;
+    Ref<Var>
+    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    Ref<Prop>
+    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
 

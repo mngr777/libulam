@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -86,6 +87,8 @@ public:
 // Version number of persistent scope before definition
 class DefNode {
     ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
+public:
+    bool has_scope_version() { return scope_version() != NoScopeVersion; }
 };
 
 template <typename N> class NameIdMap {

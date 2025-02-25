@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/flags.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -44,9 +45,8 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
     assert(!node->cls() && !node->cls_tpl());
     assert(scope()->is(scp::Module));
 
-    auto name_id = node->name().str_id();
-
     // already defined?
+    auto name_id = node->name_id();
     auto prev = module()->get(name_id);
     if (prev) {
         diag().error(
@@ -55,7 +55,12 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
         return false;
     }
 
-    module()->add_class_or_tpl(node);
+    if (node->has_params()) {
+        assert(node->params()->child_num() > 0);
+        module()->add_class_tpl(node);
+    } else {
+        module()->add_class(node);
+    }
     sync_scope(node);
     return true;
 }
@@ -72,18 +77,13 @@ void Init::visit(Ref<ast::TypeDef> node) {
         return;
     }
 
-    auto class_node = class_def();
     if (scope()->is(scp::Persistent)) {
         if (scope()->is(scp::Module)) {
             module()->add_type_def(node);
-        } else if (scope()->is(scp::Class)) {
-            assert(class_node->cls());
-            class_node->cls()->add_type_def(node);
-        } else if (scope()->is(scp::ClassTpl)) {
-            assert(class_node->cls_tpl());
-            class_node->cls_tpl()->add_type_def(node);
-        } else {
-            assert(false);
+        } else if (scope()->is(scp::Class) || scope()->is(scp::ClassTpl)) {
+            auto class_base = class_def()->cls_or_tpl();
+            assert(class_base);
+            class_base->add_type_def(node);
         }
         sync_scope(node);
     } else {
@@ -98,14 +98,10 @@ void Init::visit(Ref<ast::VarDefList> node) {
     assert(node->has_type_name());
     node->type_name()->accept(*this);
 
-    if (!scope()->is(scp::Persistent))
-        return;
-
     // add module/class/tpl variables/properties
-    auto class_node = class_def();
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def = node->def(n);
-        auto name_id = def->name().str_id();
+        auto name_id = def->name_id();
 
         // visit value expr for possible `TypeName`s
         if (def->has_default_value())
@@ -117,46 +113,22 @@ void Init::visit(Ref<ast::VarDefList> node) {
             continue;
         }
 
-        auto install = [&](auto&& var) {
-            if (class_node) {
-                // set class const/prop
-                auto var_ref = ref(var);
-                if (class_node->cls()) {
-                    auto cls = class_node->cls();
-                    var->set_cls(cls);
-                    cls->set(name_id, std::move(var));
-                } else {
-                    assert(class_node->cls_tpl());
-                    auto tpl = class_node->cls_tpl();
-                    tpl->set(name_id, std::move(var));
-                }
-                scope()->set(name_id, var_ref);
+        if (!scope()->is(scp::Persistent))
+            continue;
+
+        // add to module/class/tpl
+        if (scope()->is(scp::Module)) {
+            module()->add_const(node->type_name(), def);
+        } else if (scope()->is(scp::Class) || scope()->is(scp::ClassTpl)) {
+            auto cls_base = class_def()->cls_or_tpl();
+            assert(cls_base);
+            if (node->is_const()) {
+                cls_base->add_const(node->type_name(), def);
             } else {
-                // add to module scope
-                scope()->set(name_id, std::move(var));
+                cls_base->add_prop(node->type_name(), def);
             }
-        };
-
-        // flags
-        Var::Flag flags = Var::NoFlags;
-        if (node->is_const())
-            flags |= Var::Const;
-        if (class_node->cls_tpl())
-            flags |= Var::Tpl;
-
-        // create and add
-        if (class_node && !node->is_const()) {
-            auto prop = make<Prop>(node->type_name(), def, Ref<Type>{}, flags);
-            auto prop_ref = ref(prop);
-            install(std::move(prop));
-            def->set_prop(prop_ref);
-        } else {
-            auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
-            auto var_ref = ref(var);
-            install(std::move(var));
-            def->set_var(var_ref);
         }
-        def->set_scope_version(scope()->version());
+        sync_scope(def);
     }
 }
 
@@ -164,13 +136,7 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
 
     // get class/tpl, name
-    auto class_node = class_def();
-    Ref<ClassBase> cls_base{};
-    if (class_node->cls()) {
-        cls_base = class_node->cls();
-    } else {
-        cls_base = class_node->cls_tpl();
-    }
+    auto cls_base = class_def()->cls_or_tpl();
     assert(cls_base);
 
     auto name_id = node->name_id();
@@ -247,13 +213,10 @@ void Init::export_classes() {
             for (auto& mod : mods) {
                 auto sym = mod->get(name_id);
                 assert(sym);
-                Ref<ClassBase> cls_base{};
-                if (sym->is<Class>()) {
-                    cls_base = sym->get<Class>();
-                } else {
-                    assert(sym->is<ClassTpl>());
-                    cls_base = sym->get<ClassTpl>();
-                }
+                auto cls_base =
+                    sym->accept([&](auto cls_or_tpl) -> Ref<ClassBase> {
+                        return cls_or_tpl;
+                    });
                 diag().error(
                     cls_base->node()->loc_id(), str(name_id).size(),
                     "defined in multiple modules");
@@ -275,12 +238,9 @@ void Init::export_classes() {
             if (*exporter != *mod) {
                 auto sym = exporter->get(name_id);
                 assert(sym);
-                if (sym->is<Class>()) {
-                    mod->add_import(name_id, exporter, sym->get<Class>());
-                } else {
-                    assert(sym->is<ClassTpl>());
-                    mod->add_import(name_id, exporter, sym->get<ClassTpl>());
-                }
+                sym->accept([&](auto cls_or_tpl) {
+                    mod->add_import(name_id, exporter, cls_or_tpl);
+                });
             }
         }
     }
@@ -297,12 +257,11 @@ void Init::export_classes() {
             // set type/tpl
             // don't use symbols from same module (disabled)
             if (true || exporter->id() != item.module_id) {
-                if (sym->is<Class>()) {
-                    type_spec->set_type(sym->get<Class>());
-                } else {
-                    assert(sym->is<ClassTpl>());
-                    type_spec->set_type_tpl(sym->get<ClassTpl>());
-                }
+                sym->accept(
+                    [&](Ref<Class> cls) { type_spec->set_type(cls); },
+                    [&](Ref<ClassTpl> cls_tpl) {
+                        type_spec->set_type_tpl(cls_tpl);
+                    });
                 continue; // success
             }
         }

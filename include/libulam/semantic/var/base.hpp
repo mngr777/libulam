@@ -42,6 +42,8 @@ public:
     bool is(Flag flags) const { return (_flags & flags) == flags; }
     bool is_const() const { return is(Const); }
     Flag flags() { return _flags; }
+    void set_flag(Flag flag) { _flags |= flag; };
+    void unset_flag(Flag flag) { _flags &= ~flag; };
 
 private:
     Ref<ast::TypeName> _type_node;

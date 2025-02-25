@@ -15,36 +15,48 @@ Module::Module(Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node):
 
 Module::~Module() {}
 
-void Module::add_type_def(Ref<ast::TypeDef> node) {
+Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
     Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
+    auto ref = ulam::ref(type)->as_alias();
     scope()->set(name_id, std::move(type)); // ??
     node->set_scope_version(scope()->version());
+    return ref;
 }
 
-void Module::add_class_or_tpl(Ref<ast::ClassDef> node) {
-    assert(!node->cls() && !node->cls_tpl());
-    if (node->has_params()) {
-        add_class_tpl(node);
-    } else {
-        add_class(node);
-    }
+void Module::add_const_list(Ref<ast::VarDefList> node) {
+    for (unsigned n = 0; n < node->def_num(); ++n)
+        add_const(node->type_name(), node->def(n));
 }
 
-void Module::add_class(Ref<ast::ClassDef> node) {
+Ref<Var>
+Module::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node) {
+    auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
+    auto ref = ulam::ref(var);
+    scope()->set(var->name_id(), std::move(var));
+    node->set_var(ref);
+    node->set_scope_version(scope()->version());
+    return ref;
+}
+
+Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
     auto name = program()->str_pool().get(node->name_id());
     auto cls = make<Class>(name, node, this);
-    scope()->set(cls->name_id(), ref(cls));
-    cls->node()->set_scope_version(scope()->version());
+    auto ref = ulam::ref(cls);
+    scope()->set(cls->name_id(), ref);
     set(cls->name_id(), std::move(cls));
+    node->set_cls(ref);
+    node->set_scope_version(scope()->version());
+    return ref;
 }
 
-void Module::add_class_tpl(Ref<ast::ClassDef> node) {
+Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     assert(node->params()->child_num() > 0);
     assert(node->kind() != ClassKind::Element);
 
     auto name_id = node->name_id();
     auto tpl = make<ClassTpl>(node, this);
+    auto ref = ulam::ref(tpl);
 
     auto params = node->params();
     for (unsigned n = 0; n < params->child_num(); ++n) {
@@ -54,9 +66,11 @@ void Module::add_class_tpl(Ref<ast::ClassDef> node) {
         tpl->add_param(param);
     }
 
-    scope()->set(name_id, ref(tpl));
-    node->set_scope_version(scope()->version());
+    scope()->set(name_id, ref);
     set(tpl->name_id(), std::move(tpl));
+    node->set_cls_tpl(ref);
+    node->set_scope_version(scope()->version());
+    return ref;
 }
 
 void Module::export_symbols(Ref<Scope> scope) {
