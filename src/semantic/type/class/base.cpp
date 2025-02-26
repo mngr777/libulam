@@ -10,8 +10,8 @@ ClassBase::ClassBase(
     Ref<ast::ClassDef> node, Ref<Module> module, ScopeFlags scope_flags):
     _node{node},
     _module{module},
-    _param_scope{make<PersScope>(module->scope())},
-    _inh_scope{make<PersScope>(ref(_param_scope))},
+    _inh_scope{make<PersScope>(module->scope())},
+    _param_scope{make<PersScope>(ref(_param_scope))},
     _scope{make<PersScope>(ref(_inh_scope), scope_flags)} {}
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
@@ -114,7 +114,6 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
     scope()->set(name_id, ref);
     set(name_id, std::move(prop));
-    _props.push_back(ref);
 
     if (!node->has_scope_version()) {
         node->set_prop(ref);

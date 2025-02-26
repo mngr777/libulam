@@ -45,16 +45,27 @@ public:
     const auto end() const { return _symbols.end(); }
 
     template <typename... Ts>
+    void import_sym(str_id_t name_id, _Symbol<Ts...>& sym, bool overwrite = false) {
+        sym.accept([&](auto&& value) {
+            using T = typename std::remove_pointer<
+                std::decay_t<decltype(value)>>::type;
+            static_assert((std::is_same_v<T, Ss> || ...));
+            // import as Ref<T>
+            if (overwrite || !has(name_id))
+                set(name_id, value);
+        });
+    }
+
+    template <typename... Ts>
     void export_symbols(_SymbolTable<Ts...>& other, bool overwrite = false) {
         for (auto& pair : _symbols) {
             auto name_id = pair.first;
             auto& sym = pair.second;
             sym.accept([&](auto&& value) {
-                // (static) is import possible?
                 using T = typename std::remove_pointer<
                     std::decay_t<decltype(value)>>::type;
                 static_assert((std::is_same_v<T, Ts> || ...));
-                // export as ref
+                // export as Ref<T>
                 if (overwrite || !other.has(name_id))
                     other.set(name_id, value);
             });

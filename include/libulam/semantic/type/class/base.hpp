@@ -60,26 +60,13 @@ public:
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
 
     const auto& params() const { return _params; }
-    const auto& props() const { return _props; }
-
-    // TODO: remove
-    SymbolTable& members() { return _members; }
-    const SymbolTable& members() const { return _members; }
 
     Ref<ast::ClassDef> node() { return _node; }
     Ref<const ast::ClassDef> node() const { return _node; }
 
-    Ref<Module> module() { return _module; }
-    Ref<const Module> module() const { return _module; }
-
-    // TODO: remove scope accessors, remove inheritance scope
-
-    Ref<PersScope> param_scope() { return ref(_param_scope); }
-    // TODO: templates don't need inheritance scope
-    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
     Ref<PersScope> scope() { return ref(_scope); }
 
-    // TODO: make protected
+protected:
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
     }
@@ -88,19 +75,25 @@ public:
         return _members.set(name_id, value);
     }
 
-protected:
+    Ref<Module> module() { return _module; }
+    Ref<const Module> module() const { return _module; }
+
+    Ref<PersScope> param_scope() { return ref(_param_scope); }
+    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
+
+    auto& members() { return _members; }
+
     auto& fsets() { return _fsets; }
     virtual Ref<FunSet> add_fset(str_id_t name_id);
 
 private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
-    Ptr<PersScope> _param_scope;
     Ptr<PersScope> _inh_scope;
+    Ptr<PersScope> _param_scope;
     Ptr<PersScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;
-    std::list<Ref<Prop>> _props;
     std::map<str_id_t, Ref<FunSet>> _fsets;
 };
 

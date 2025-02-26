@@ -4,6 +4,7 @@
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/conv.hpp>
+#include <list>
 #include <map>
 #include <string_view>
 
@@ -52,9 +53,6 @@ public:
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
-    // TODO: remove
-    void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
-
     bool init(sema::Resolver& resolver);
     bool resolve(sema::Resolver& resolver);
 
@@ -96,12 +94,17 @@ private:
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
     bool resolve_members(sema::Resolver& resolver);
 
+    void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
+
     void merge_fsets();
     void init_layout();
+
+    const auto& props() const { return _props; }
 
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
+    std::list<Ref<Prop>> _props;
     std::map<type_id_t, Ref<Fun>> _convs;
 };
 

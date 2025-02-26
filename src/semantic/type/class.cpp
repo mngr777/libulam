@@ -83,6 +83,7 @@ Ref<Prop>
 Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto prop = ClassBase::add_prop(type_node, node);
     prop->set_cls(this);
+    _props.push_back(prop);
     return prop;
 }
 
@@ -159,12 +160,9 @@ RValue Class::load(const BitVectorView data, BitVector::size_t off) const {
 }
 
 void Class::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {}
-
-void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
-    // TODO: merge fun sets?
-    if (_ancestry.add(cls, node))
-        cls->members().export_symbols(members());
+    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    assert(rval.is<SPtr<Object>>());
+    data.write(off, rval.get<SPtr<Object>>()->bits().view());
 }
 
 // NOTE: for ambiguous conversion truth is returned,
@@ -181,8 +179,6 @@ bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 conv_cost_t Class::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return is_same(type) ? 0 : convs(type, allow_cast).cost();
 }
-
-// TODO: handle non-primitive builtins
 
 ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {
     auto canon_ = type->canon();
@@ -283,6 +279,15 @@ bool Class::resolve_members(sema::Resolver& resolver) {
             return false;
     }
     return true;
+}
+
+void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
+    if (!_ancestry.add(cls, node))
+        return;
+    for (auto& [name_id, sym] : cls->members()) {
+        if (!sym.is<FunSet>()) // handled separately, see Class::merge_fsets
+            members().import_sym(name_id, sym);
+    }
 }
 
 void Class::merge_fsets() {
