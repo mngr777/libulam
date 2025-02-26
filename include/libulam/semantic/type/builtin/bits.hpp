@@ -3,6 +3,7 @@
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/value/types.hpp>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -10,7 +11,7 @@ class BinaryOp;
 
 namespace ulam {
 
-class BitsType : public _PrimType<BitsId, 1, 4096, 8> {
+class BitsType : public _PrimType<BitsId, 1, 4096, ULAM_MAX_INT_SIZE> {
 public:
     BitsType(
         Builtins& builtins,
@@ -41,6 +42,8 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 };
 
-using BitsTypeTpl = _PrimTypeTpl<BitsType>;
+class BitsTypeTpl : public _PrimTypeTpl<BitsType> {
+    using _PrimTypeTpl::_PrimTypeTpl;
+};
 
 } // namespace ulam

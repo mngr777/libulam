@@ -39,6 +39,8 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 };
 
-using BoolTypeTpl = _PrimTypeTpl<BoolType>;
+class BoolTypeTpl : public _PrimTypeTpl<BoolType> {
+    using _PrimTypeTpl::_PrimTypeTpl;
+};
 
 } // namespace ulam

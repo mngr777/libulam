@@ -76,7 +76,7 @@ RValue UnsignedType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     }
     case BoolId: {
         assert(bitsize() == 1);
-        return builtins().boolean(type->bitsize())->construct();
+        return builtins().bool_type(type->bitsize())->construct();
     }
     case UnaryId: {
         Unsigned val =

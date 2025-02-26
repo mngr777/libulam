@@ -209,8 +209,10 @@ public:
 
     Ref<PrimType> type(bitsize_t size) override { return get(size); }
 
+    Ref<T> exact_type(bitsize_t size) { return get(size); }
+
 private:
-    Ref<PrimType> get(bitsize_t size) {
+    Ref<T> get(bitsize_t size) {
         assert(T::MinSize <= size && size <= T::MaxSize);
         {
             auto it = _types.find(size);

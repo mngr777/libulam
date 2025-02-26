@@ -6,7 +6,7 @@ namespace ulam {
 
 class FunType : public Type {
 public:
-    FunType(TypeIdGen* id_gen): Type{id_gen} {}
+    FunType(TypeIdGen& id_gen): Type{&id_gen} {}
 
     bitsize_t bitsize() const override { assert(false); }
 

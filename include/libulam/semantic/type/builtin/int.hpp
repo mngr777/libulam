@@ -3,10 +3,12 @@
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/types.hpp>
 
 namespace ulam {
 
-class IntType : public _PrimType<IntId, 2, ULAM_MAX_INT_SIZE, 32> {
+class IntType
+    : public _PrimType<IntId, 2, ULAM_MAX_INT_SIZE, ULAM_MAX_INT_SIZE> {
 public:
     IntType(
         Builtins& builtins,
@@ -47,6 +49,8 @@ protected:
         BuiltinTypeId bi_type_id, const Value& val) const override;
 };
 
-using IntTypeTpl = _PrimTypeTpl<IntType>;
+class IntTypeTpl : public _PrimTypeTpl<IntType> {
+    using _PrimTypeTpl::_PrimTypeTpl;
+};
 
 } // namespace ulam

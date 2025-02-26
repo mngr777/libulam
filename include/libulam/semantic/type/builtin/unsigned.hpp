@@ -45,6 +45,8 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 };
 
-using UnsignedTypeTpl = _PrimTypeTpl<UnsignedType>;
+class UnsignedTypeTpl : public _PrimTypeTpl<UnsignedType> {
+    using _PrimTypeTpl::_PrimTypeTpl;
+};
 
 } // namespace ulam

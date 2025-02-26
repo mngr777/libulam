@@ -4,6 +4,7 @@
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/types.hpp>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -13,7 +14,8 @@ namespace ulam {
 
 class Value;
 
-class UnaryType : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, 32> {
+class UnaryType
+    : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, ULAM_MAX_INT_SIZE> {
 public:
     UnaryType(
         Builtins& builtins,
@@ -45,6 +47,8 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 };
 
-using UnaryTypeTpl = _PrimTypeTpl<UnaryType>;
+class UnaryTypeTpl : public _PrimTypeTpl<UnaryType> {
+    using _PrimTypeTpl::_PrimTypeTpl;
+};
 
 } // namespace ulam

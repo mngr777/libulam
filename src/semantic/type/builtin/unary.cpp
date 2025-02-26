@@ -73,7 +73,7 @@ RValue UnaryType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     }
     case BoolId: {
         assert(bitsize() == 1);
-        return builtins().boolean(type->bitsize())->construct(uns_val > 0);
+        return builtins().bool_type(type->bitsize())->construct(uns_val > 0);
     }
     case UnaryId: {
         uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
