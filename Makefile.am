@@ -124,7 +124,6 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/init.hpp \
 	include/libulam/sema/resolver.hpp \
-	include/libulam/sema/array_dim_eval.hpp \
 	include/libulam/sema/param_eval.hpp \
 	include/libulam/sema/visitor.hpp
 
@@ -139,7 +138,6 @@ SEMA_SOURCE_FILES = \
 	src/sema/out.cpp \
 	src/sema/init.cpp \
 	src/sema/resolver.cpp \
-	src/sema/array_dim_eval.cpp \
 	src/sema/param_eval.cpp \
 	src/sema/visitor.cpp
 

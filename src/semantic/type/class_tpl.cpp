@@ -1,5 +1,6 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
@@ -53,6 +54,24 @@ ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     return prop;
 }
 
+bool ClassTpl::resolve(sema::Resolver& resolver) {
+    switch (state()) {
+    case Resolved:
+        return true;
+    case Resolving:
+        set_state(Unresolvable);
+        return false;
+    case Unresolvable:
+        return false;
+    default:
+        set_state(Resolving);
+    }
+
+    bool resolved = resolve_params(resolver);
+    set_state(resolved ? Resolved : Unresolvable);
+    return resolved;
+}
+
 Ref<Type>
 ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto key = type_args_str(args);
@@ -63,6 +82,16 @@ ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
     auto cls_ref = ref(cls);
     _classes.emplace(key, std::move(cls));
     return cls_ref;
+}
+
+bool ClassTpl::resolve_params(sema::Resolver& resolver) {
+    for (auto [_, sym] : *param_scope()) {
+        auto scope_version = sym->as_decl()->scope_version();
+        auto scope = param_scope()->view(scope_version);
+        if (!resolver.resolve(sym, ref(scope)))
+            return false;
+    }
+    return true;
 }
 
 Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {

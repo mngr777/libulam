@@ -53,9 +53,6 @@ public:
 
     virtual Ref<Fun> add_fun(Ref<ast::FunDef> node);
 
-    // TODO: remove
-    virtual void add_var_list(Ref<ast::VarDefList> node);
-
     virtual Ref<Var>
     add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
 

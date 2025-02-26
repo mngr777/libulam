@@ -85,7 +85,6 @@ Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 }
 
 bool Class::init(sema::Resolver& resolver) {
-    debug() << __FUNCTION__ << " " << name() << "\n";
     switch (state()) {
     case Initializing:
     case Initialized:
@@ -103,7 +102,6 @@ bool Class::init(sema::Resolver& resolver) {
 }
 
 bool Class::resolve(sema::Resolver& resolver) {
-    debug() << __FUNCTION__ << " " << name() << "\n";
     switch (state()) {
     case Resolved:
         return true;

@@ -83,17 +83,6 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
     return ref;
 }
 
-void ClassBase::add_var_list(Ref<ast::VarDefList> node) {
-    for (unsigned n = 0; n < node->def_num(); ++n) {
-        auto def = node->def(n);
-        if (node->is_const()) {
-            add_const(node->type_name(), def);
-        } else {
-            add_prop(node->type_name(), def);
-        }
-    }
-}
-
 Ref<Var>
 ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();

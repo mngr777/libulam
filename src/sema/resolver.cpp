@@ -1,6 +1,5 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
-#include <libulam/sema/array_dim_eval.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/param_eval.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -50,24 +49,7 @@ void Resolver::resolve(Ref<Module> module) {
 }
 
 bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
-    CHECK_STATE(cls_tpl);
-    bool is_resolved = true;
-
-    // params
-    {
-        auto scope_view = cls_tpl->param_scope()->view(0);
-        while (true) {
-            auto [name_id, sym] = scope_view->advance();
-            if (name_id == NoStrId)
-                break;
-            assert(sym && sym->is<Var>());
-            auto var = sym->get<Var>();
-            assert(var->is(Var::Const | Var::ClassParam | Var::Tpl));
-            is_resolved = resolve(var, ref(scope_view)) && is_resolved;
-        }
-    }
-
-    RET_UPD_STATE(cls_tpl, is_resolved);
+    return cls_tpl->resolve(*this);
 }
 
 bool Resolver::init(Ref<Class> cls) {
@@ -76,77 +58,6 @@ bool Resolver::init(Ref<Class> cls) {
 }
 
 bool Resolver::resolve(Ref<Class> cls) {
-    // CHECK_STATE(cls);
-    // bool is_resolved = true;
-
-    // // resolve ancestors
-    // for (auto anc : cls->parents()) {
-    //     if (!resolve(anc->cls())) {
-    //         diag().error(anc->node(), "cannot resolve ancestor type");
-    //         is_resolved = false;
-    //     }
-    // }
-
-    // // members
-    // {
-    //     auto scope_view = cls->scope()->view();
-    //     scope_view->reset();
-    //     cls::data_off_t data_off = 0;
-    //     while (true) {
-    //         auto [name_id, sym] = scope_view->advance();
-    //         if (!sym)
-    //             break;
-
-    //         bool res = sym->accept(
-    //             [&](Ref<UserType> type) {
-    //                 assert(type->is_alias());
-    //                 return resolve(type->as_alias(), ref(scope_view));
-    //             },
-    //             [&](Ref<Var> var) { return resolve(var, ref(scope_view)); },
-    //             [&](Ref<Prop> prop) {
-    //                 auto res = resolve(prop, ref(scope_view));
-    //                 if (res) {
-    //                     prop->set_data_off(data_off);
-    //                     data_off += prop->type()->bitsize();
-    //                 }
-    //                 return res;
-    //             },
-    //             [&](Ref<FunSet> fset) { return resolve(cls, fset); },
-    //             [&](auto other) -> bool { assert(false); });
-    //         is_resolved = res && is_resolved;
-    //     }
-    // }
-
-    // // add funs from ancestors
-    // for (auto anc : cls->parents()) {
-    //     for (auto& pair : anc->cls()->members()) {
-    //         auto& [name_id, sym] = pair;
-    //         if (!sym.is<FunSet>())
-    //             continue;
-
-    //         if (cls->has(name_id)) {
-    //             // symbol found in class
-    //             auto cls_sym = cls->get(name_id);
-    //             // is it a var?
-    //             if (cls_sym->is<Var>()) {
-    //                 auto var = cls_sym->get<Var>();
-    //                 diag().notice(
-    //                     var->node()->loc_id(), str(var->name_id()).size(),
-    //                     "variable shadows inherited function");
-    //                 continue;
-    //             }
-    //             //  must be a fun set, merge
-    //             assert(cls_sym->is<FunSet>());
-    //             cls_sym->get<FunSet>()->merge(sym.get<FunSet>());
-
-    //         } else {
-    //             // add parent fun set
-    //             cls->set(name_id, sym.get<FunSet>());
-    //         }
-    //     }
-    // }
-
-    // RET_UPD_STATE(cls, is_resolved);
     return cls->resolve(*this);
 }
 
@@ -501,11 +412,10 @@ Ref<Type> Resolver::apply_array_dims(
     Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
-    ArrayDimEval eval{_program, scope};
+    ExprVisitor ev{_program, scope};
     for (unsigned n = 0; n < dims->child_num(); ++n) {
-        auto expr = dims->get(n);
-        auto [size, success] = eval.eval(expr);
-        if (!success)
+        array_idx_t size = ev.array_index(dims->get(n));
+        if (size == UnknownArraySize)
             return {};
         type = type->array_type(size);
     }

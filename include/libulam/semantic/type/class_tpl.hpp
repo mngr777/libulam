@@ -18,6 +18,10 @@ class TypeName;
 class VarDecl;
 } // namespace ulam::ast
 
+namespace ulam::sema {
+class Resolver;
+}
+
 namespace ulam {
 
 class Class;
@@ -48,6 +52,8 @@ public:
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
+    bool resolve(sema::Resolver& resolver);
+
     Ref<Type> type(
         Diag& diag,
         Ref<ast::ArgList> args_node,
@@ -55,6 +61,8 @@ public:
 
 private:
     using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
+
+    bool resolve_params(sema::Resolver& resolver);
 
     Ptr<Class> inst(Ref<ast::ArgList> args_node, TypedValueList&& args);
 
