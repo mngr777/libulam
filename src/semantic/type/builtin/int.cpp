@@ -20,7 +20,7 @@ TypedValue IntType::type_op(TypeOp op) {
     case TypeOp::MaxOf:
         return {this, Value{RValue{detail::integer_max(bitsize())}}};
     default:
-        assert(false);
+        return _PrimType::type_op(op);
     }
 }
 

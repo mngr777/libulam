@@ -28,14 +28,16 @@
 namespace ulam {
 
 Class::Class(std::string_view name, Ref<ClassTpl> tpl):
-    UserType{&tpl->module()->program()->type_id_gen()},
+    UserType{
+        tpl->module()->program()->builtins(),
+        &tpl->module()->program()->type_id_gen()},
     ClassBase{tpl->node(), tpl->module(), scp::Class},
     _name{name},
     _tpl{tpl} {}
 
 Class::Class(
     std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module):
-    UserType{&module->program()->type_id_gen()},
+    UserType{module->program()->builtins(), &module->program()->type_id_gen()},
     ClassBase{node, module, scp::Class},
     _name{name},
     _tpl{} {}

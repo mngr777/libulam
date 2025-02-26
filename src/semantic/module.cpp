@@ -17,7 +17,8 @@ Module::~Module() {}
 
 Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
-    Ptr<UserType> type = make<AliasType>(&program()->type_id_gen(), node);
+    Ptr<UserType> type =
+        make<AliasType>(program()->builtins(), &program()->type_id_gen(), node);
     auto ref = ulam::ref(type)->as_alias();
     type->set_scope_version(scope()->version());
     scope()->set(name_id, std::move(type));

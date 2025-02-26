@@ -43,10 +43,11 @@ ClassBase::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
 Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
-    auto& id_gen = module()->program()->type_id_gen();
+    auto program = module()->program();
     assert(!has(name_id));
 
-    Ptr<UserType> type = make<AliasType>(&id_gen, node);
+    Ptr<UserType> type =
+        make<AliasType>(program->builtins(), &program->type_id_gen(), node);
     auto ref = ulam::ref(type)->as_alias();
     type->set_scope_version(scope()->version());
 

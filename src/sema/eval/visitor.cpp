@@ -51,7 +51,7 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
 
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
     debug() << __FUNCTION__ << " TypeDef\n";
-    Ptr<UserType> type = make<AliasType>(nullptr, node);
+    Ptr<UserType> type = make<AliasType>(builtins(), nullptr, node);
     if (_resolver.resolve(type->as_alias(), scope()))
         scope()->set(type->name_id(), std::move(type));
 }

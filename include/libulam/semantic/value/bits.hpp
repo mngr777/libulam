@@ -6,7 +6,7 @@ namespace ulam {
 // TODO: optimization for shorter values
 class Bits {
 public:
-    explicit Bits(BitVector::size_t size): _bits{size} {}
+    explicit Bits(bitsize_t size): _bits{size} {}
     explicit Bits(BitVector&& bits): _bits{std::move(bits)} {}
 
     Bits(Bits&&) = default;
@@ -14,7 +14,7 @@ public:
 
     Bits copy() const { return Bits{_bits.copy()}; }
 
-    std::uint16_t bitsize() const { return _bits.len(); }
+    bitsize_t bitsize() const { return _bits.len(); }
 
     BitVector& bits() { return _bits; }
     const BitVector& bits() const { return _bits; }

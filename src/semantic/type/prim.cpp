@@ -9,7 +9,7 @@ namespace ulam {
 // PrimType
 
 PrimType::PrimType(Builtins& builtins, TypeIdGen* id_gen):
-    Type{id_gen}, _builtins{builtins} {
+    Type{builtins, id_gen} {
     assert(id_gen);
 }
 

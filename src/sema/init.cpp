@@ -1,4 +1,3 @@
-#include "libulam/semantic/scope/flags.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -6,6 +5,7 @@
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -88,7 +88,8 @@ void Init::visit(Ref<ast::TypeDef> node) {
         sync_scope(node);
     } else {
         // transient typedef (in function body)
-        Ptr<UserType> type = make<AliasType>(nullptr, node);
+        Ptr<UserType> type =
+            make<AliasType>(program()->builtins(), nullptr, node);
         scope()->set(alias_id, std::move(type));
     }
 }
@@ -153,7 +154,7 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     return true;
 }
 
-// TODO: do not set type/tpl, do it in resolver
+// TODO: do not set type/tpl, do it in resolver?
 bool Init::do_visit(Ref<ast::TypeName> node) {
     // set type/tpl TypeSpec attr
     // NOTE: any name not in scope has to be imported and
@@ -162,10 +163,12 @@ bool Init::do_visit(Ref<ast::TypeName> node) {
     if (type_spec->is_builtin()) {
         // builtin type/tpl
         BuiltinTypeId id = type_spec->builtin_type_id();
+        assert(id != NoBuiltinTypeId);
+        assert(id != FunId);
         if (has_bitsize(id)) {
             type_spec->set_type_tpl(program()->builtins().prim_type_tpl(id));
-        } else if (is_prim(id)) {
-            type_spec->set_type(program()->builtins().prim_type(id));
+        } else {
+            type_spec->set_type(program()->builtins().type(id));
         }
         return false;
     }

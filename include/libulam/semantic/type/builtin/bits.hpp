@@ -24,7 +24,7 @@ public:
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override;
 
-    RValue construct() const override { return RValue{Bits{bitsize()}}; }
+    RValue construct() const override;
 
     TypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
     RValue cast_to(Ref<const PrimType> type, RValue&& rval) override;

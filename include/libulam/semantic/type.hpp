@@ -20,8 +20,7 @@ class TypeExpr;
 
 namespace ulam {
 
-class Diag;
-class Scope;
+class Builtins;
 class RValue;
 class TypedValue;
 class Value;
@@ -50,8 +49,10 @@ class RefType;
 
 class Type {
 public:
-    explicit Type(TypeIdGen* id_gen):
-        _id_gen{id_gen}, _id{id_gen ? id_gen->next() : NoTypeId} {}
+    explicit Type(Builtins& builtins, TypeIdGen* id_gen):
+        _builtins{builtins},
+        _id_gen{id_gen},
+        _id{id_gen ? id_gen->next() : NoTypeId} {}
     virtual ~Type();
 
     bool operator==(const Type& other) const { return this == &other; }
@@ -140,9 +141,11 @@ protected:
     virtual Ptr<ArrayType> make_array_type(array_size_t size);
     virtual Ptr<RefType> make_ref_type();
 
+    Builtins& builtins() { return _builtins; }
     TypeIdGen* id_gen() { return _id_gen; }
 
 private:
+    Builtins& _builtins;
     TypeIdGen* _id_gen;
     type_id_t _id;
     std::unordered_map<array_size_t, Ptr<ArrayType>> _array_types;
@@ -155,14 +158,15 @@ using TypeSet = std::set<Ref<Type>>;
 
 class UserType : public Type, public Decl {
 public:
-    explicit UserType(TypeIdGen* id_gen): Type{id_gen} {}
+    explicit UserType(Builtins& builtins, TypeIdGen* id_gen):
+        Type{builtins, id_gen} {}
 
     virtual str_id_t name_id() const = 0;
 };
 
 class AliasType : public UserType {
 public:
-    AliasType(TypeIdGen* id_gen, Ref<ast::TypeDef> node);
+    AliasType(Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node);
 
     str_id_t name_id() const override;
 
@@ -202,6 +206,7 @@ class ArrayType : public Type {
 
 public:
     ArrayType(
+        Builtins& builtins,
         TypeIdGen* id_gen,
         Ref<Type> item_type,
         array_size_t array_size,
@@ -238,8 +243,8 @@ class RefType : public Type {
     friend AliasType;
 
 public:
-    RefType(TypeIdGen* id_gen, Ref<Type> refd):
-        Type{id_gen}, _refd{refd}, _canon{this} {}
+    RefType(Builtins& builtins, TypeIdGen* id_gen, Ref<Type> refd):
+        Type{builtins, id_gen}, _refd{refd}, _canon{this} {}
 
     bitsize_t bitsize() const override;
 

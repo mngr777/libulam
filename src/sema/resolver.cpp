@@ -174,8 +174,7 @@ bool Resolver::resolve(Ref<FunSet> fset, Ref<Scope> scope) {
         if (fun->is_ready() && str(fun->name_id()) == "toInt") {
             bool is_conv = true;
             // check ret type
-            auto int_type =
-                _program->builtins().prim_type(IntId, IntType::DefaultSize);
+            auto int_type = _program->builtins().int_type();
             if (is_conv && !fun->ret_type()->is_same(int_type)) {
                 diag().warn(
                     fun->node(),
@@ -289,8 +288,6 @@ Ref<Type> Resolver::resolve_type_name(
 
     // builtin?
     if (type_spec->is_builtin()) {
-        // builtins don't have members (??)
-        // TODO: write a sensible error message, also catch this in parser?
         if (type_name->child_num() > 1) {
             auto ident = type_name->ident(1);
             auto name_id = ident->name().str_id();

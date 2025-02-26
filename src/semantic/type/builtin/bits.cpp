@@ -13,10 +13,11 @@ RValue BitsType::load(const BitVectorView data, BitVector::size_t off) const {
 
 void BitsType::store(
     BitVectorView data, BitVector::size_t off, const RValue& rval) const {
-    assert(off + bitsize() <= data.len());
     assert(rval.is<Bits>());
     data.write(off, rval.get<Bits>().bits().view());
 }
+
+RValue BitsType::construct() const { return RValue{Bits{bitsize()}}; }
 
 TypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
     assert(false && "Bits is not implicitly castable to other types");

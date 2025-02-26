@@ -22,7 +22,7 @@ Builtins::Builtins(TypeIdGen& id_gen) {
     _atom_type = make<AtomType>(*this, id_gen);
     _string_type = make<StringType>(*this, id_gen);
     _void_type = make<VoidType>(*this, id_gen);
-    _fun_type = make<FunType>(id_gen);
+    _fun_type = make<FunType>(*this, id_gen);
 }
 
 Builtins::~Builtins() {}

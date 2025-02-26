@@ -84,10 +84,6 @@ protected:
     virtual bool is_impl_castable_to_prim(
         BuiltinTypeId bi_type_id, const Value& val) const;
 
-    Builtins& builtins() { return _builtins; }
-
-private:
-    Builtins& _builtins;
 };
 
 class PrimTypeTpl;

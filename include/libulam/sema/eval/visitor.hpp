@@ -46,6 +46,7 @@ private:
 
     Ref<Scope> scope() { return _scope_stack.top(); }
 
+    Builtins& builtins() { return _program->builtins(); }
     Diag& diag() { return _program->diag(); }
 
     std::string_view str(str_id_t str_id) {

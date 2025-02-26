@@ -2,6 +2,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/array.hpp>
@@ -50,7 +51,15 @@ Ref<RefType> Type::ref_type() {
     return ref(_ref_type);
 }
 
-TypedValue Type::type_op(TypeOp op) { assert(false); }
+TypedValue Type::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::SizeOf:
+        return TypedValue{
+            builtins().type(UnsignedId), Value{RValue{(Unsigned)bitsize()}}};
+    default:
+        return {};
+    }
+}
 
 bool Type::is_same(Ref<const Type> type) const {
     return canon() == type->canon();
@@ -96,15 +105,18 @@ conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
 RValue Type::cast_to(Ref<const Type> type, RValue&& rval) { assert(false); }
 
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
-    return make<ArrayType>(_id_gen, this, size);
+    return make<ArrayType>(_builtins, _id_gen, this, size);
 }
 
-Ptr<RefType> Type::make_ref_type() { return make<RefType>(_id_gen, this); }
+Ptr<RefType> Type::make_ref_type() {
+    return make<RefType>(_builtins, _id_gen, this);
+}
 
 // AliasType
 
-AliasType::AliasType(TypeIdGen* id_gen, Ref<ast::TypeDef> node):
-    UserType{id_gen}, _node(node) {
+AliasType::AliasType(
+    Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node):
+    UserType{builtins, id_gen}, _node(node) {
     assert(!node->alias_type());
     if (has_id())
         node->set_alias_type(this);
@@ -152,11 +164,15 @@ Ptr<RefType> AliasType::make_ref_type() {
 // ArrayType
 
 ArrayType::ArrayType(
+    Builtins& builtins,
     TypeIdGen* id_gen,
     Ref<Type> item_type,
     array_size_t array_size,
     Ref<ArrayType> canon):
-    Type{id_gen}, _item_type{item_type}, _array_size{array_size}, _canon{this} {
+    Type{builtins, id_gen},
+    _item_type{item_type},
+    _array_size{array_size},
+    _canon{this} {
     assert(array_size != UnknownArraySize);
 }
 
