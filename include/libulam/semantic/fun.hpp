@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <iterator>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type/conv.hpp>
@@ -59,10 +60,10 @@ public:
 
     Ref<Scope> scope();
 
-    Ref<ast::FunDef> node() { return _node; }
-    Ref<ast::FunRetType> ret_type_node();
-    Ref<ast::ParamList> params_node();
-    Ref<ast::FunDefBody> body_node();
+    Ref<ast::FunDef> node() const { return _node; }
+    Ref<ast::FunRetType> ret_type_node() const;
+    Ref<ast::ParamList> params_node() const;
+    Ref<ast::FunDefBody> body_node() const;
 
 private:
     std::string key() const;
@@ -73,9 +74,34 @@ private:
 };
 
 class FunSet : public Decl {
+private:
+    using FunList = std::list<RefPtr<Fun>>;
+
 public:
-    using Cb = std::function<void(Ref<Fun>)>;
     using Matches = std::unordered_set<Ref<Fun>>;
+
+    class Iterator {
+        friend FunSet;
+
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = Ref<Fun>;
+        using pointer_type = Ref<Fun>;
+        using reference_type = Ref<Fun>;
+
+        Iterator& operator++();
+
+        reference_type operator*();
+        pointer_type operator->();
+
+        bool operator==(const Iterator& other);
+        bool operator!=(const Iterator& other);
+
+    private:
+        explicit Iterator(FunList::iterator it);
+
+        FunList::iterator _it;
+    };
 
     FunSet() {}
     FunSet(FunSet& other);
@@ -84,10 +110,14 @@ public:
 
     Matches find_match(const TypedValueList& args);
 
-    void for_each(Cb cb);
-
     void add(Ptr<Fun>&& fun);
     void add(Ref<Fun> fun);
+
+    Iterator begin() { return Iterator{_funs.begin()}; }
+    Iterator end() { return Iterator{_funs.end()}; }
+
+    std::size_t size() const { return _funs.size(); }
+    bool empty() const { return _funs.empty(); }
 
     void init_map(Diag& diag, UniqStrPool& str_pool);
 
@@ -96,7 +126,7 @@ public:
 private:
     using ParamTypeMap = std::unordered_map<std::string, Ref<Fun>>;
 
-    std::list<RefPtr<Fun>> _funs;
+    FunList _funs;
     std::optional<ParamTypeMap> _map;
 };
 

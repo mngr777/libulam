@@ -1,11 +1,16 @@
+#include "libulam/semantic/decl.hpp"
+#include "libulam/semantic/type/class/layout.hpp"
+#include "libulam/semantic/value/types.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
@@ -13,9 +18,12 @@
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value.hpp>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[Class] "
-#include "src/debug.hpp"
+#define DEBUG_CLASS // TEST
+#ifdef DEBUG_CLASS
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::Class] "
+#    include "src/debug.hpp"
+#endif
 
 namespace ulam {
 
@@ -76,6 +84,47 @@ Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     return prop;
 }
 
+bool Class::init(sema::Resolver& resolver) {
+    debug() << __FUNCTION__ << " " << name() << "\n";
+    switch (state()) {
+    case Initializing:
+    case Initialized:
+    case Resolved:
+        return true;
+    case Unresolvable:
+        return false;
+    default:
+        set_state(Initializing);
+    }
+
+    bool resolved = resolve_params(resolver) && init_ancestors(resolver, false);
+    set_state(resolved ? Initialized : Unresolvable);
+    return resolved;
+}
+
+bool Class::resolve(sema::Resolver& resolver) {
+    debug() << __FUNCTION__ << " " << name() << "\n";
+    switch (state()) {
+    case Resolved:
+        return true;
+    case Resolving:
+        set_state(Unresolvable);
+        return false;
+    case Unresolvable:
+        return false;
+    default:
+        set_state(Resolving);
+    }
+
+    bool resolved = init_ancestors(resolver, true) && resolve_members(resolver);
+    if (resolved) {
+        merge_fsets();
+        init_layout();
+    }
+    set_state(resolved ? Resolved : Unresolvable);
+    return resolved;
+}
+
 bool Class::is_base_of(Ref<const Class> other) const {
     return other->_ancestry.is_base(this);
 }
@@ -90,13 +139,10 @@ bitsize_t Class::bitsize() const {
 bitsize_t Class::direct_bitsize() const {
     bitsize_t total = 0;
     for (auto prop : props()) {
-        if (!prop->is_ready())
-            continue;
-        auto size = prop->type()->bitsize();
         if (kind() == ClassKind::Union) {
-            total = std::max(total, size);
+            total = std::max(total, prop->bitsize());
         } else {
-            total += size;
+            total += prop->bitsize();
         }
     }
     return total;
@@ -194,6 +240,75 @@ void Class::add_conv(Ref<Fun> fun) {
     auto ret_canon = fun->ret_type()->canon();
     assert(_convs.count(ret_canon->id()) == 0);
     _convs[ret_canon->id()] = fun;
+}
+
+Ref<FunSet> Class::add_fset(str_id_t name_id) {
+    auto fset = ClassBase::add_fset(name_id);
+    if (!fset->has_cls())
+        fset->set_cls(this);
+    return fset;
+}
+
+bool Class::resolve_params(sema::Resolver& resolver) {
+    for (auto [_, sym] : *param_scope()) {
+        auto scope_version = sym->as_decl()->scope_version();
+        auto scope = param_scope()->view(scope_version);
+        if (!resolver.resolve(sym, ref(scope)))
+            return false;
+    }
+    return true;
+}
+
+bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
+    if (!node()->has_ancestors())
+        return true;
+
+    for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
+        auto cls_name = node()->ancestors()->get(n);
+        // TODO: check if element's ancestor is element or transient etc.
+        auto cls =
+            resolver.resolve_class_name(cls_name, param_scope(), resolve);
+        if (!cls)
+            return false;
+        add_ancestor(cls, cls_name);
+    }
+    return true;
+}
+
+bool Class::resolve_members(sema::Resolver& resolver) {
+    for (auto [_, sym] : *scope()) {
+        auto scope_version = sym->as_decl()->scope_version();
+        auto scope = param_scope()->view(scope_version);
+        if (!resolver.resolve(sym, ref(scope)))
+            return false;
+    }
+    return true;
+}
+
+void Class::merge_fsets() {
+    for (auto parent : parents()) {
+        for (auto [name_id, fset] : parent->cls()->fsets()) {
+            auto sym = get(name_id);
+            if (!sym || sym->is<FunSet>())
+                add_fset(name_id)->merge(fset);
+        }
+    }
+}
+
+void Class::init_layout() {
+    cls::data_off_t off = 0;
+
+    // properties
+    for (auto prop : props()) {
+        prop->set_data_off(off);
+        if (kind() == ClassKind::Union) {
+            off = std::max<bitsize_t>(off, prop->bitsize());
+        } else {
+            off += prop->bitsize();
+        }
+    }
+
+    // TODO: ancestors
 }
 
 } // namespace ulam

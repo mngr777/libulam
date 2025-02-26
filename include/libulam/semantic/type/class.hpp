@@ -16,6 +16,10 @@ class VarDecl;
 class VarDefList;
 } // namespace ulam::ast
 
+namespace ulam::sema {
+class Resolver;
+}
+
 namespace ulam {
 
 class ConvList;
@@ -48,7 +52,11 @@ public:
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
+    // TODO: remove
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
+
+    bool init(sema::Resolver& resolver);
+    bool resolve(sema::Resolver& resolver);
 
     bool is_base_of(Ref<const Class> other) const;
 
@@ -77,9 +85,20 @@ public:
     ConvList convs(Ref<const Type> type, bool allow_cast = false) const;
     ConvList convs(BuiltinTypeId bi_type_id, bool allow_cast = false) const;
 
+    // TODO: make protected
     void add_conv(Ref<Fun> fun);
 
+protected:
+    Ref<FunSet> add_fset(str_id_t name_id) override;
+
 private:
+    bool resolve_params(sema::Resolver& resolver);
+    bool init_ancestors(sema::Resolver& resolver, bool resolve);
+    bool resolve_members(sema::Resolver& resolver);
+
+    void merge_fsets();
+    void init_layout();
+
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;

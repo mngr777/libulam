@@ -4,35 +4,35 @@
 
 namespace ulam::sema {
 
-void Out::print(Ref<Scope> scope) {
-    assert(false);
-    if (scope->flags() == scp::NoFlags) {
-        _os << "<no flags>";
-    } else {
-        if (scope->flags() & scp::Program)
-            _os << "[program]";
-        if (scope->flags() & scp::ModuleEnv)
-            _os << "[module-env]";
-        if (scope->flags() & scp::Module)
-            _os << "[module]";
-        if (scope->flags() & scp::ClassTpl)
-            _os << "[class-tpl]";
-        if (scope->flags() & scp::Class)
-            _os << "[class]";
-    }
-    _os << "\n";
-    scope->for_each([&](str_id_t name_id, Scope::Symbol& sym) {
-        _os << str(name_id) << ": ";
-        print(&sym);
-        _os << "\n";
-    });
-    if (scope->parent()) {
-        _os << "----------\n";
-        print(scope->parent());
-    } else {
-        _os << "==========\n";
-    }
-}
+// void Out::print(Ref<Scope> scope) {
+//     assert(false);
+//     if (scope->flags() == scp::NoFlags) {
+//         _os << "<no flags>";
+//     } else {
+//         if (scope->flags() & scp::Program)
+//             _os << "[program]";
+//         if (scope->flags() & scp::ModuleEnv)
+//             _os << "[module-env]";
+//         if (scope->flags() & scp::Module)
+//             _os << "[module]";
+//         if (scope->flags() & scp::ClassTpl)
+//             _os << "[class-tpl]";
+//         if (scope->flags() & scp::Class)
+//             _os << "[class]";
+//     }
+//     _os << "\n";
+//     scope->for_each([&](str_id_t name_id, Scope::Symbol& sym) {
+//         _os << str(name_id) << ": ";
+//         print(&sym);
+//         _os << "\n";
+//     });
+//     if (scope->parent()) {
+//         _os << "----------\n";
+//         print(scope->parent());
+//     } else {
+//         _os << "==========\n";
+//     }
+// }
 
 void Out::print(RecVisitor::Pass pass) {
     switch (pass) {

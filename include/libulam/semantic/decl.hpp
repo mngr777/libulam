@@ -8,10 +8,19 @@ class Class;
 
 class Decl {
 public:
-    enum State { NotResolved, Resolving, Resolved, Unresolvable };
+    enum State {
+        NotResolved,
+        Initializing, // class only
+        Initialized, // class only
+        Resolving,
+        Resolved,
+        Unresolvable
+    };
 
     bool is_ready() const { return _state == Resolved; }
     bool is_resolving() const { return _state == Resolving; };
+
+    bool state_is(State state) const { return _state == state; }
 
     bool has_cls() const;
     Ref<Class> cls();

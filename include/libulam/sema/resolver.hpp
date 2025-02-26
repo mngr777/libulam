@@ -23,25 +23,34 @@ public:
     bool resolve(Ref<ClassTpl> cls_tpl);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
+    bool resolve(Scope::Symbol* sym, Ref<Scope> scope);
     bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
     bool resolve(Ref<Var> var, Ref<Scope> scope);
     bool resolve(Ref<Prop> prop, Ref<Scope> scope);
-    bool resolve(Ref<Class> cls, Ref<FunSet> fun);
-    bool resolve(Ref<Fun> overload, Ref<Scope> scope);
+    bool resolve(Ref<FunSet> fset, Ref<Scope> scope);
+    bool resolve(Ref<Fun> fun, Ref<Scope> scope);
 
     Ref<Type> resolve_var_decl_type(
         Ref<ast::TypeName> type_name,
         Ref<ast::VarDecl> node,
         Ref<Scope> scope,
         bool resolve_class = false);
+
     Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
+
+    Ref<Class> resolve_class_name(
+        Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class = false);
+
     Ref<Type> resolve_type_name(
         Ref<ast::TypeName> type_name,
         Ref<Scope> scope,
         bool resolve_class = false);
+
     Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
 
 private:
+    bool resolve_cls_deps(Ref<Type> type);
+
     Ref<Type>
     apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope);
 
@@ -52,7 +61,7 @@ private:
     std::string_view str(str_id_t str_id) const;
 
     Ref<Program> _program;
-    std::list<Ref<Class>> _classes;
+    std::set<Ref<Class>> _classes;
 };
 
 } // namespace ulam::sema

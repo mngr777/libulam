@@ -1,9 +1,12 @@
 #pragma once
+#include <libulam/detail/variant.hpp>
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type_tpl.hpp>
 #include <libulam/str_pool.hpp>
+#include <list>
 #include <string>
 #include <unordered_map>
 
@@ -32,7 +35,12 @@ public:
 
     using ClassBase::add_param;
 
-    Ref<Var> add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    Ref<Var>
+    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+
+    Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
+
+    Ref<Fun> add_fun(Ref<ast::FunDef> node) override;
 
     Ref<Var>
     add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
@@ -46,6 +54,8 @@ public:
         TypedValueList&& args) override;
 
 private:
+    using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
+
     Ptr<Class> inst(Ref<ast::ArgList> args_node, TypedValueList&& args);
 
     // TMP
@@ -53,6 +63,7 @@ private:
 
     Ref<ast::ClassDef> _node;
     std::unordered_map<std::string, Ptr<Class>> _classes;
+    std::list<Member> _ordered_members;
 };
 
 } // namespace ulam

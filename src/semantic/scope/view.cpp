@@ -22,8 +22,6 @@ Ref<Scope> PersScopeView::parent() { return scope()->parent(); }
 
 Ref<const Scope> PersScopeView::parent() const { return scope()->parent(); }
 
-void PersScopeView::for_each(ItemCb cb) { scope()->for_each(cb, _version); }
-
 ScopeFlags PersScopeView::flags() const { return scope()->flags(); }
 
 Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
@@ -46,7 +44,7 @@ void PersScopeView::set_version_after(ScopeVersion version) {
 }
 
 Ptr<PersScopeView> PersScopeView::view(ScopeVersion version) {
-    assert(version <= this->version());
+    // assert(version <= this->version());
     return _scope->view(version);
 }
 

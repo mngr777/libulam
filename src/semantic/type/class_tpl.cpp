@@ -2,10 +2,10 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
-#include <libulam/semantic/scope/iterator.hpp>
 #include <utility>
 
 namespace ulam {
@@ -18,16 +18,30 @@ ClassTpl::~ClassTpl() {}
 
 str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 
-Ref<Var> ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Ref<Var>
+ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = ClassBase::add_param(type_node, node);
     var->set_flag(Var::Tpl);
     return var;
+}
+
+Ref<AliasType> ClassTpl::add_type_def(Ref<ast::TypeDef> node) {
+    auto alias = ClassBase::add_type_def(node);
+    _ordered_members.emplace_back(alias);
+    return alias;
+}
+
+Ref<Fun> ClassTpl::add_fun(Ref<ast::FunDef> node) {
+    auto fun = ClassBase::add_fun(node);
+    _ordered_members.emplace_back(fun);
+    return fun;
 }
 
 Ref<Var>
 ClassTpl::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = ClassBase::add_const(type_node, node);
     var->set_flag(Var::Tpl);
+    _ordered_members.emplace_back(var);
     return var;
 }
 
@@ -35,6 +49,7 @@ Ref<Prop>
 ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto prop = ClassBase::add_prop(type_node, node);
     prop->set_flag(Var::Tpl);
+    _ordered_members.emplace_back(prop);
     return prop;
 }
 
@@ -66,31 +81,18 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
     }
 
     // create other members
-    auto scope_view = scope()->view();
-    for (auto [name_id_, sym] : *scope_view) {
-        // (cannot use struct. binding in lambda in C++17)
-        auto name_id = name_id_; 
-        sym->accept(
-            [&](Ref<UserType> type) {
-                cls->add_type_def(type->as_alias()->node());
-            },
+    for (auto& mem : _ordered_members) {
+        mem.accept(
+            [&](Ref<AliasType> alias) { cls->add_type_def(alias->node()); },
             [&](Ref<Var> var) {
                 cls->add_const(var->type_node(), var->node());
             },
             [&](Ref<Prop> prop) {
                 cls->add_prop(prop->type_node(), prop->node());
             },
-            [&](Ref<FunSet> fset) {
-                auto copy = make<FunSet>(*fset);
-                copy->for_each(
-                    [&](Ref<Fun> fun) { fun->set_cls(ref(cls)); });
-                cls->scope()->set(name_id, ref(copy));
-                cls->set(name_id, std::move(copy));
-            },
-            [&](auto&&) { assert(false); });
+            [&](Ref<Fun> fun) { cls->add_fun(fun->node()); },
+            [&](auto) { assert(false); });
     }
-    assert(scope_view->version() == scope()->version()); // in sync?
-
     return cls;
 }
 

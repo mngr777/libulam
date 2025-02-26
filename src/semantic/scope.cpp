@@ -1,4 +1,5 @@
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
 #define ULAM_DEBUG
@@ -23,11 +24,6 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
     return (sym || current || !parent()) ? sym : parent()->get(name_id);
 }
 
-void BasicScope::for_each(ItemCb cb) {
-    for (auto& pair : _symbols)
-        cb(pair.first, pair.second);
-}
-
 // PersScope
 
 Ptr<PersScopeView> PersScope::view(ScopeVersion version) {
@@ -38,17 +34,11 @@ Ptr<PersScopeView> PersScope::view() {
     return make<PersScopeView>(this, version());
 }
 
-void PersScope::for_each(ItemCb cb, ScopeVersion version) {
-    for (auto& pair : _symbols) {
-        auto& [name_id, vsyms] = pair;
-        for (auto& vsym : vsyms) {
-            if (vsym.version < version) {
-                cb(name_id, vsym.symbol);
-                break;
-            }
-        }
-    }
+PersScopeIterator PersScope::begin() {
+    return PersScopeIterator(PersScopeView{this, 0});
 }
+
+PersScopeIterator PersScope::end() { return PersScopeIterator{}; }
 
 Scope::Symbol* PersScope::get(str_id_t name_id, bool current) {
     return get(name_id, _version, current);

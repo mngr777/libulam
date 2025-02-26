@@ -36,9 +36,6 @@ public:
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
-    // TODO: const version
-    virtual void for_each(ItemCb cb) = 0;
-
     virtual Ref<Scope> parent() = 0;
     virtual Ref<const Scope> parent() const = 0;
 
@@ -109,8 +106,6 @@ public:
     BasicScope(BasicScope&&) = default;
     BasicScope& operator=(BasicScope&&) = default;
 
-    void for_each(ItemCb cb) override;
-
     Symbol* get(str_id_t name_id, bool current = false) override;
 
 protected:
@@ -146,6 +141,7 @@ so a scope state at the point of definition can  be later restored from any
 point, which allows to resolve dependencies recursively.
 */
 
+class PersScopeIterator;
 class PersScopeView;
 
 class PersScope : public ScopeBase {
@@ -175,9 +171,8 @@ public:
     Ptr<PersScopeView> view(ScopeVersion version) override;
     Ptr<PersScopeView> view() override;
 
-    // TODO: remove, use iterators instead
-    void for_each(ItemCb cb) override { for_each(cb, _version); }
-    void for_each(ItemCb cb, ScopeVersion version);
+    PersScopeIterator begin();
+    PersScopeIterator end();
 
     bool has(str_id_t name_id, bool current = false) override {
         return has(name_id, version(), current);

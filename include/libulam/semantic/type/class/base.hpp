@@ -8,6 +8,7 @@
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 #include <list>
+#include <map>
 
 namespace ulam::ast {
 class ClassDef;
@@ -52,6 +53,7 @@ public:
 
     virtual Ref<Fun> add_fun(Ref<ast::FunDef> node);
 
+    // TODO: remove
     virtual void add_var_list(Ref<ast::VarDefList> node);
 
     virtual Ref<Var>
@@ -63,6 +65,7 @@ public:
     const auto& params() const { return _params; }
     const auto& props() const { return _props; }
 
+    // TODO: remove
     SymbolTable& members() { return _members; }
     const SymbolTable& members() const { return _members; }
 
@@ -71,6 +74,8 @@ public:
 
     Ref<Module> module() { return _module; }
     Ref<const Module> module() const { return _module; }
+
+    // TODO: remove scope accessors, remove inheritance scope
 
     Ref<PersScope> param_scope() { return ref(_param_scope); }
     // TODO: templates don't need inheritance scope
@@ -86,6 +91,10 @@ public:
         return _members.set(name_id, value);
     }
 
+protected:
+    auto& fsets() { return _fsets; }
+    virtual Ref<FunSet> add_fset(str_id_t name_id);
+
 private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
@@ -95,6 +104,7 @@ private:
     SymbolTable _members;
     std::list<Ref<Var>> _params;
     std::list<Ref<Prop>> _props;
+    std::map<str_id_t, Ref<FunSet>> _fsets;
 };
 
 } // namespace ulam

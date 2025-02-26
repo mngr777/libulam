@@ -22,8 +22,6 @@ public:
 
     operator bool() const { return _scope; }
 
-    void for_each(ItemCb cb) override;
-
     ScopeFlags flags() const override;
 
     Symbol* get(str_id_t name_id, bool current = false) override;

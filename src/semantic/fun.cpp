@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/conv.hpp"
 #include <algorithm>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -7,6 +6,7 @@
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/var.hpp>
 
 #define DEBUG_FUN // TEST
@@ -27,14 +27,9 @@ Fun::Fun(Ref<ast::FunDef> node): _node{node} {
 
 Fun::~Fun() {}
 
-str_id_t Fun::name_id() const { return _node->name().str_id(); }
+str_id_t Fun::name_id() const { return _node->name_id(); }
 
 bool Fun::is_native() const { return _node->is_native(); }
-
-Ref<ast::FunRetType> Fun::ret_type_node() {
-    assert(_node->has_ret_type());
-    return _node->ret_type();
-}
 
 void Fun::add_param(Ptr<Var>&& param) {
     assert(params_node());
@@ -77,9 +72,17 @@ Fun::MatchRes Fun::match(const TypedValueList& args) {
     return {status, max_conv_cost};
 }
 
-Ref<ast::ParamList> Fun::params_node() { return _node->params(); }
+Ref<ast::FunRetType> Fun::ret_type_node() const {
+    assert(_node->has_ret_type());
+    return _node->ret_type();
+}
 
-Ref<ast::FunDefBody> Fun::body_node() { return _node->body(); }
+Ref<ast::ParamList> Fun::params_node() const {
+    assert(_node->has_params());
+    return _node->params();
+}
+
+Ref<ast::FunDefBody> Fun::body_node() const { return _node->body(); }
 
 std::string Fun::key() const {
     TypeList param_types;
@@ -91,15 +94,32 @@ std::string Fun::key() const {
 
 // FunSet
 
-FunSet::FunSet(FunSet& other) {
-    other.for_each([&](Ref<Fun> fun) { add(fun); });
+FunSet::Iterator::Iterator(FunList::iterator it): _it{it} {}
+
+FunSet::Iterator::reference_type FunSet::Iterator::operator*() {
+    return _it->ref();
+}
+FunSet::Iterator::pointer_type FunSet::Iterator::operator->() {
+    return _it->ref();
+}
+
+bool FunSet::Iterator::operator==(const Iterator& other) {
+    return _it == other._it;
+}
+
+bool FunSet::Iterator::operator!=(const Iterator& other) {
+    return !operator==(other);
+}
+
+FunSet::Iterator& FunSet::Iterator::operator++() {
+    _it++;
+    return *this;
 }
 
 FunSet::Matches FunSet::find_match(const TypedValueList& args) {
     Matches matches;
     conv_cost_t min_conv_cost = MaxConvCost;
-    for (auto& item : _funs) {
-        auto fun = item.ref();
+    for (auto fun : *this) {
         auto match_res = fun->match(args);
         switch (match_res.first) {
         case Fun::NoMatch:
@@ -118,11 +138,6 @@ FunSet::Matches FunSet::find_match(const TypedValueList& args) {
         }
     }
     return matches;
-}
-
-void FunSet::for_each(Cb cb) {
-    for (auto& item : _funs)
-        cb(item.ref());
 }
 
 void FunSet::add(Ptr<Fun>&& fun) { _funs.push_back(std::move(fun)); }
@@ -165,9 +180,8 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
 
 void FunSet::merge(Ref<FunSet> other) {
     assert(_map.has_value());
-    other->for_each([&](Ref<Fun> fun) {
+    for (auto fun : *other)
         _map.value().emplace(fun->key(), fun); // silently fail on duplicates
-    });
 }
 
 } // namespace ulam

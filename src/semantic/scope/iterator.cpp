@@ -2,14 +2,19 @@
 
 namespace ulam {
 
+PersScopeIterator::PersScopeIterator(PersScopeView view):
+    _view{std::move(view)}, _cur{} {
+    view.reset();
+    operator++();
+}
+
 PersScopeIterator& PersScopeIterator::operator++() {
-    if (_cur.second)
-        _cur = _view.advance();
+    _cur = _view.advance();
     return *this;
 }
 
 bool PersScopeIterator::operator==(const PersScopeIterator& other) {
-    return _view == other._view || (!_cur.second && !other._cur.second);
+    return (_view == other._view) || (!_cur.second && !other._cur.second);
 }
 
 bool PersScopeIterator::operator!=(const PersScopeIterator& other) {

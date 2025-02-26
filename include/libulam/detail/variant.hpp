@@ -12,6 +12,8 @@ template <class... Ts> struct Overloads : Ts... {
 template <class... Ts> Overloads(Ts...) -> Overloads<Ts...>;
 } // namespace variant
 
+// TODO: nullable/non-nullable
+
 template <typename... Ts> class Variant {
 public:
     template <typename T> explicit Variant(T&& value): _value{std::forward<T>(value)} {}
@@ -45,6 +47,9 @@ public:
 private:
     std::variant<std::monostate, Ts...> _value;
 };
+
+template <typename... Ts>
+using RefVariant = Variant<Ref<Ts>...>;
 
 template <typename... Ts> class RefPtrVariant {
 public:

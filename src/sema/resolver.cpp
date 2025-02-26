@@ -7,9 +7,12 @@
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[sema::Resolver] "
-#include "src/debug.hpp"
+#define DEBUG_SEMA_RESOLVER // TEST
+#ifdef DEBUG_SEMA_RESOLVER
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[sema::Resolver] "
+#    include "src/debug.hpp"
+#endif
 
 #define CHECK_STATE(decl)                                                      \
     do {                                                                       \
@@ -31,7 +34,7 @@ void Resolver::resolve() {
         resolve(ref(module));
     for (auto cls : _classes)
         resolve(cls);
-    _classes = {};
+    _classes.clear();
 }
 
 void Resolver::resolve(Ref<Module> module) {
@@ -68,122 +71,95 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
 }
 
 bool Resolver::init(Ref<Class> cls) {
-    if (cls->state() != Decl::NotResolved)
-        return cls->is_ready() || cls->is_resolving();
-
-    bool success = true;
-
-    // params
-    {
-        auto scope_view = cls->param_scope()->view(0);
-        while (true) {
-            auto [name_id, sym] = scope_view->advance();
-            if (!sym)
-                break;
-            assert(sym->is<Var>());
-            auto var = sym->get<Var>();
-            assert(var->is(Var::Const | Var::ClassParam));
-            success = resolve(var, ref(scope_view)) && success;
-        }
-    }
-
-    // init inherited members
-    if (cls->node()->has_ancestors()) {
-        auto ancestors = cls->node()->ancestors();
-        auto scope = cls->inh_scope();
-        for (unsigned n = 0; n < ancestors->child_num(); ++n) {
-            // resolve ancestor type
-            auto type_name = ancestors->get(n);
-            auto type = resolve_type_name(type_name, scope);
-            if (!type->is_class()) {
-                diag().error(type_name, "not a class");
-                success = false;
-                continue;
-            }
-            // add ancestor class
-            cls->add_ancestor(type->as_class(), type_name);
-        }
-    }
-
-    if (!success)
-        RET_UPD_STATE(cls, false);
-
-    _classes.push_back(cls);
-    return true;
+    _classes.insert(cls);
+    return cls->init(*this);
 }
 
 bool Resolver::resolve(Ref<Class> cls) {
-    CHECK_STATE(cls);
-    bool is_resolved = true;
+    // CHECK_STATE(cls);
+    // bool is_resolved = true;
 
-    // resolve ancestors
-    for (auto anc : cls->parents()) {
-        if (!resolve(anc->cls())) {
-            diag().error(anc->node(), "cannot resolve ancestor type");
-            is_resolved = false;
-        }
-    }
+    // // resolve ancestors
+    // for (auto anc : cls->parents()) {
+    //     if (!resolve(anc->cls())) {
+    //         diag().error(anc->node(), "cannot resolve ancestor type");
+    //         is_resolved = false;
+    //     }
+    // }
 
-    // members
-    {
-        auto scope_view = cls->scope()->view();
-        scope_view->reset();
-        cls::data_off_t data_off = 0;
-        while (true) {
-            auto [name_id, sym] = scope_view->advance();
-            if (!sym)
-                break;
+    // // members
+    // {
+    //     auto scope_view = cls->scope()->view();
+    //     scope_view->reset();
+    //     cls::data_off_t data_off = 0;
+    //     while (true) {
+    //         auto [name_id, sym] = scope_view->advance();
+    //         if (!sym)
+    //             break;
 
-            bool res = sym->accept(
-                [&](Ref<UserType> type) {
-                    assert(type->is_alias());
-                    return resolve(type->as_alias(), ref(scope_view));
-                },
-                [&](Ref<Var> var) { return resolve(var, ref(scope_view)); },
-                [&](Ref<Prop> prop) {
-                    auto res = resolve(prop, ref(scope_view));
-                    if (res) {
-                        prop->set_data_off(data_off);
-                        data_off += prop->type()->bitsize();
-                    }
-                    return res;
-                },
-                [&](Ref<FunSet> fset) { return resolve(cls, fset); },
-                [&](auto other) -> bool { assert(false); });
-            is_resolved = res && is_resolved;
-        }
-    }
+    //         bool res = sym->accept(
+    //             [&](Ref<UserType> type) {
+    //                 assert(type->is_alias());
+    //                 return resolve(type->as_alias(), ref(scope_view));
+    //             },
+    //             [&](Ref<Var> var) { return resolve(var, ref(scope_view)); },
+    //             [&](Ref<Prop> prop) {
+    //                 auto res = resolve(prop, ref(scope_view));
+    //                 if (res) {
+    //                     prop->set_data_off(data_off);
+    //                     data_off += prop->type()->bitsize();
+    //                 }
+    //                 return res;
+    //             },
+    //             [&](Ref<FunSet> fset) { return resolve(cls, fset); },
+    //             [&](auto other) -> bool { assert(false); });
+    //         is_resolved = res && is_resolved;
+    //     }
+    // }
 
-    // add funs from ancestors
-    for (auto anc : cls->parents()) {
-        for (auto& pair : anc->cls()->members()) {
-            auto& [name_id, sym] = pair;
-            if (!sym.is<FunSet>())
-                continue;
+    // // add funs from ancestors
+    // for (auto anc : cls->parents()) {
+    //     for (auto& pair : anc->cls()->members()) {
+    //         auto& [name_id, sym] = pair;
+    //         if (!sym.is<FunSet>())
+    //             continue;
 
-            if (cls->has(name_id)) {
-                // symbol found in class
-                auto cls_sym = cls->get(name_id);
-                // is it a var?
-                if (cls_sym->is<Var>()) {
-                    auto var = cls_sym->get<Var>();
-                    diag().notice(
-                        var->node()->loc_id(), str(var->name_id()).size(),
-                        "variable shadows inherited function");
-                    continue;
-                }
-                //  must be a fun set, merge
-                assert(cls_sym->is<FunSet>());
-                cls_sym->get<FunSet>()->merge(sym.get<FunSet>());
+    //         if (cls->has(name_id)) {
+    //             // symbol found in class
+    //             auto cls_sym = cls->get(name_id);
+    //             // is it a var?
+    //             if (cls_sym->is<Var>()) {
+    //                 auto var = cls_sym->get<Var>();
+    //                 diag().notice(
+    //                     var->node()->loc_id(), str(var->name_id()).size(),
+    //                     "variable shadows inherited function");
+    //                 continue;
+    //             }
+    //             //  must be a fun set, merge
+    //             assert(cls_sym->is<FunSet>());
+    //             cls_sym->get<FunSet>()->merge(sym.get<FunSet>());
 
-            } else {
-                // add parent fun set
-                cls->set(name_id, sym.get<FunSet>());
-            }
-        }
-    }
+    //         } else {
+    //             // add parent fun set
+    //             cls->set(name_id, sym.get<FunSet>());
+    //         }
+    //     }
+    // }
 
-    RET_UPD_STATE(cls, is_resolved);
+    // RET_UPD_STATE(cls, is_resolved);
+    return cls->resolve(*this);
+}
+
+bool Resolver::resolve(Scope::Symbol* sym, Ref<Scope> scope) {
+    return sym->accept(
+        [&](Ref<UserType> type) {
+            if (type->is_alias())
+                return resolve(type->as_alias(), scope);
+            assert(type->is_class());
+            return resolve(type->as_class());
+        },
+        [&](Ref<ClassTpl> cls_tpl) { return resolve(cls_tpl); },
+        [&](auto&& other) { return resolve(other, scope); });
 }
 
 bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
@@ -273,17 +249,15 @@ bool Resolver::resolve(Ref<Prop> prop, Ref<Scope> scope) {
     RET_UPD_STATE(prop, is_resolved);
 }
 
-bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
+bool Resolver::resolve(Ref<FunSet> fset, Ref<Scope> scope) {
     CHECK_STATE(fset);
+
     bool is_resolved = true;
-
-    assert(!fset->has_cls());
-    fset->set_cls(cls);
-
-    auto scope = cls->scope();
-    fset->for_each([&](Ref<Fun> fun) {
+    for (auto fun : *fset) {
         auto scope_view = scope->view(fun->scope_version());
         is_resolved = resolve(fun, ref(scope_view)) && is_resolved;
+
+        // TODO: move to Class to handle inherited conversion functions
 
         // conversion to Int?
         if (fun->is_ready() && str(fun->name_id()) == "toInt") {
@@ -291,25 +265,23 @@ bool Resolver::resolve(Ref<Class> cls, Ref<FunSet> fset) {
             // check ret type
             auto int_type =
                 _program->builtins().prim_type(IntId, IntType::DefaultSize);
-            if (is_conv && fun->ret_type()->canon() != int_type) {
+            if (is_conv && !fun->ret_type()->is_same(int_type)) {
                 diag().warn(
-                    fun->node()->loc_id(), 1,
+                    fun->node(),
                     std::string{"return type must be "} + int_type->name());
                 is_conv = false;
             }
             // check params
             if (is_conv && fun->param_num() != 0) {
                 diag().warn(
-                    fun->node()->loc_id(), 1,
-                    "toInt function cannot have parameters");
+                    fun->node(), "conversion function cannot take params");
                 is_conv = false;
             }
             if (is_conv)
-                cls->add_conv(fun);
+                fun->cls()->add_conv(fun);
         }
-    });
+    }
     fset->init_map(diag(), _program->str_pool());
-
     RET_UPD_STATE(fset, is_resolved);
 }
 
@@ -385,6 +357,16 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
     return type;
 }
 
+Ref<Class> Resolver::resolve_class_name(
+    Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
+    auto type = resolve_type_name(type_name, scope, resolve_class);
+    if (!type->canon()->is_class()) {
+        diag().error(type_name, "not a class");
+        return Ref<Class>{};
+    }
+    return type->canon()->as_class();
+}
+
 Ref<Type> Resolver::resolve_type_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     assert(scope);
@@ -423,13 +405,15 @@ Ref<Type> Resolver::resolve_type_name(
         }
         // done?
         if (++n == type_name->child_num()) {
-            if (type->canon()->is_class()) {
-                auto cls = type->canon()->as_class();
-                bool resolved = resolve_class ? resolve(cls) : init(cls);
-                if (!resolved) {
-                    diag().error(ident, "cannot resolve");
-                    return {};
-                }
+            // init class
+            if (type->is_class() && !init(type->as_class())) {
+                diag().error(ident, "cannot resolve");
+                return {};
+            }
+            // resolve class dependencies
+            if (resolve_class && !resolve_cls_deps(type)) {
+                diag().error(ident, "cannot resolve");
+                return {};
             }
             return type;
         }
@@ -501,6 +485,16 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();
+}
+
+bool Resolver::resolve_cls_deps(Ref<Type> type) {
+    type = type->canon();
+    if (type->is_class())
+        return resolve(type->as_class());
+    if (type->is_array())
+        return resolve_cls_deps(type->as_array()->item_type());
+    // NOTE: not resolving referenced classes
+    return true;
 }
 
 Ref<Type> Resolver::apply_array_dims(

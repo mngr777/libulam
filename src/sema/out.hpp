@@ -15,7 +15,7 @@ public:
     Out(Ref<Program> program): _program{program}, _os{std::cout} {}
 
     void print_str(str_id_t str_id) { _os << str(str_id) << "\n"; }
-    void print(Ref<Scope> scope);
+    // void print(Ref<Scope> scope);
     void print(RecVisitor::Pass pass);
     void print(Scope::Symbol* sym);
     void print(Ref<Type> type, bool canon = false);

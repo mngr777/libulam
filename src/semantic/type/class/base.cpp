@@ -73,13 +73,7 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
         fun->add_param(param_node);
     }
 
-    auto sym = get(name_id);
-    assert(!sym || sym->is<FunSet>());
-    if (!sym) {
-        sym = set(name_id, make<FunSet>());
-        scope()->set(name_id, sym->get<FunSet>());
-    }
-    auto fset = sym->get<FunSet>();
+    auto fset = add_fset(name_id);
     fset->add(std::move(fun));
 
     if (!node->has_scope_version()) {
@@ -103,6 +97,7 @@ void ClassBase::add_var_list(Ref<ast::VarDefList> node) {
 Ref<Var>
 ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
+    assert(!scope()->has(name_id));
 
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
@@ -121,6 +116,7 @@ ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 Ref<Prop>
 ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
+    assert(!scope()->has(name_id));
 
     auto prop = make<Prop>(type_node, node, Ref<Type>{}, Var::NoFlags);
     auto ref = ulam::ref(prop);
@@ -135,6 +131,18 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
         node->set_scope_version(scope()->version());
     }
     return ref;
+}
+
+Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
+    auto sym = get(name_id);
+    assert(!sym || sym->is<FunSet>());
+    if (!sym) {
+        assert(_fsets.count(name_id) == 0);
+        sym = set(name_id, make<FunSet>());
+        scope()->set(name_id, sym->get<FunSet>());
+        _fsets[name_id] = sym->get<FunSet>();
+    }
+    return sym->get<FunSet>();
 }
 
 } // namespace ulam
