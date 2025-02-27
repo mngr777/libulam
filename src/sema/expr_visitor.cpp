@@ -48,16 +48,14 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
-            return {var->type(), Value{LValue{var}}};
+            return {var->type(), Value{var->lvalue()}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {
-                prop->type(), Value{LValue{BoundProp{_scope->self(), prop}}}};
+            return {prop->type(), Value{_scope->self().bound_prop(prop)}};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
             return {
-                builtins().type(FunId),
-                Value{LValue{BoundFunSet{_scope->self(), fset}}}};
+                builtins().type(FunId), Value{_scope->self().bound_fset(fset)}};
         },
         [&](auto value) -> ExprRes { assert(false); });
 }
@@ -267,7 +265,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
         return {};
     }
     auto& bound_fset = lval.get<BoundFunSet>();
-    auto obj_view = bound_fset.obj_view();
+    auto self = lval.bound_self();
     auto fset = bound_fset.mem();
 
     // eval args
@@ -279,8 +277,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     auto match_res = fset->find_match(arg_list);
     if (match_res.size() == 1) {
         // success, one match found
-        return funcall(
-            node, *(match_res.begin()), obj_view, std::move(arg_list));
+        return funcall(node, *(match_res.begin()), self, std::move(arg_list));
     } else if (match_res.size() == 0) {
         diag().emit(Diag::Error, loc_id, 1, "no matching function found");
     } else {
@@ -319,7 +316,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
-            return {var->type(), Value{LValue{var}}};
+            return {var->type(), Value{var->lvalue()}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
             return {prop->type(), obj_val.bound_prop(prop)};
@@ -446,7 +443,7 @@ RValue ExprVisitor::do_cast(
         auto convs = cls->convs(to, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
-        ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
+        ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
         if (!res.ok()) {
             diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
             return RValue{};
@@ -474,7 +471,7 @@ TypedValue ExprVisitor::do_cast(
         auto convs = cls->convs(builtin_type_id, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
-        ExprRes res = funcall(node, *convs.begin(), obj_val.obj_view(), {});
+        ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
         if (!res.ok()) {
             diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
             return {}; // ??
@@ -490,7 +487,7 @@ TypedValue ExprVisitor::do_cast(
 ExprRes ExprVisitor::funcall(
     Ref<ast::Expr> node,
     Ref<Fun> fun,
-    ObjectView obj_view,
+    LValue self,
     TypedValueList&& args) {
     debug() << __FUNCTION__ << " " << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};

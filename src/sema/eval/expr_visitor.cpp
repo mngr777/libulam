@@ -16,7 +16,7 @@ EvalExprVisitor::EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope):
 ExprRes EvalExprVisitor::funcall(
     Ref<ast::Expr> node,
     Ref<Fun> fun,
-    ObjectView obj_view,
+    LValue self,
     TypedValueList&& args) {
     debug() << __FUNCTION__ << "\n";
     if (fun->is_native()) {
@@ -24,7 +24,7 @@ ExprRes EvalExprVisitor::funcall(
             Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
         return {fun->ret_type(), Value{RValue{}}};
     }
-    return _eval.funcall(fun, obj_view, std::move(args));
+    return _eval.funcall(fun, self, std::move(args));
 }
 
 } // namespace ulam::sema

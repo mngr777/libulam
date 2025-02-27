@@ -30,6 +30,7 @@ public:
     ScopeStack(ScopeStack&& other) = default;
     ScopeStack& operator=(ScopeStack&& other) = default;
 
+    std::size_t size() { return _stack.size(); }
     bool empty() { return _stack.empty(); }
 
     Ref<Scope> top();

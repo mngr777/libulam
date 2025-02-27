@@ -11,6 +11,10 @@
 
 namespace ulam {
 
+using scope_lvl_t = std::uint16_t;
+constexpr scope_lvl_t NoScopeLvl = -1;
+constexpr scope_lvl_t AutoScopeLvl = -2;
+
 class FunSet;
 class Prop;
 class Type;
@@ -20,9 +24,12 @@ class Var;
 class RValue;
 class Value;
 
-class LValue
-    : public detail::
-          NullableVariant<Ref<Var>, ArrayAccess, ObjectView, BoundFunSet, BoundProp> {
+class LValue : public detail::NullableVariant<
+                   Ref<Var>,
+                   ArrayAccess,
+                   ObjectView,
+                   BoundFunSet,
+                   BoundProp> {
 public:
     using Variant::Variant;
 
@@ -36,9 +43,20 @@ public:
     LValue bound_prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
 
+    LValue bound_self();
+    LValue self();
+
     Value assign(RValue&& rval);
 
     bool is_consteval() const { return false; } // TODO
+
+    bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
+    bool has_auto_scope_lvl() const { return _scope_lvl == AutoScopeLvl; }
+    scope_lvl_t scope_lvl() const { return _scope_lvl; }
+    void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
+
+private:
+    scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 
 class RValue : public detail::NullableVariant<
@@ -66,6 +84,8 @@ public:
     RValue array_access(Ref<Type> item_type, array_idx_t index);
     LValue bound_prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
+
+    LValue self();
 
     bool is_consteval() const { return _is_consteval; }
     void set_is_consteval(bool is_consteval) {
@@ -101,6 +121,8 @@ public:
     Value array_access(Ref<Type> item_type, array_idx_t index);
     Value bound_prop(Ref<Prop> prop);
     Value bound_fset(Ref<FunSet> fset);
+
+    LValue self();
 
     RValue copy_rvalue() const;
     RValue move_rvalue();

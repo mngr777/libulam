@@ -38,7 +38,7 @@ public:
 
 protected:
     virtual ExprRes
-    funcall(Ref<Fun> fun, ObjectView obj, TypedValueList&& args);
+    funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
 private:
     ExprRes eval_expr(Ref<ast::Expr> expr);

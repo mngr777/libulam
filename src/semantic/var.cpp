@@ -18,6 +18,16 @@ ObjectView Var::obj_view() {
         [&](auto& other) -> ObjectView { assert(false); });
 }
 
+LValue Var::lvalue() {
+    return _value.accept(
+        [&](LValue& lval) { return LValue{lval}; },
+        [&](auto& other) {
+            LValue lval(this);
+            lval.set_scope_lvl(_scope_lvl);
+            return lval;
+        });
+}
+
 RValue Var::rvalue() { return _value.copy_rvalue(); }
 
 } // namespace ulam

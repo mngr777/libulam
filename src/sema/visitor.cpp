@@ -154,7 +154,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
                     if (res.ok()) {
                         // TODO: conversion/type error
                         auto tv = res.move_typed_value();
-                        var->value() = tv.move_value();
+                        var->set_value(tv.move_value());
                     }
                 }
                 scope()->set(var->name_id(), std::move(var));

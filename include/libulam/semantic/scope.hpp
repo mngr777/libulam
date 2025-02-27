@@ -9,7 +9,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
-#include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
 #include <unordered_map>
@@ -49,8 +49,8 @@ public:
 
     virtual ScopeFlags flags() const = 0;
 
-    virtual ObjectView self() { assert(false); }
-    virtual void set_self(ObjectView self) { assert(false); }
+    virtual LValue self() { assert(false); }
+    virtual void set_self(LValue self) { assert(false); }
 
     bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
     bool in(ScopeFlags flags_) {
@@ -85,13 +85,13 @@ public:
 
     ScopeFlags flags() const override { return _flags; }
 
-    ObjectView self() override;
-    void set_self(ObjectView self) override;
+    LValue self() override;
+    void set_self(LValue self) override;
 
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
-    ObjectView _self;
+    LValue _self;
 };
 
 // Transient

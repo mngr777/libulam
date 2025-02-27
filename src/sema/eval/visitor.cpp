@@ -62,6 +62,7 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
     for (unsigned n = 0; n < node->def_num(); ++n) {
         auto def_node = node->def(n);
         auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
+        var->set_scope_lvl(_scope_stack.size());
         if (_resolver.resolve(ref(var), scope())) {
             var->set_value(Value{var->type()->canon()->construct()});
             scope()->set(var->name_id(), std::move(var));
@@ -194,16 +195,19 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
 ExprRes
-EvalVisitor::funcall(Ref<Fun> fun, ObjectView obj_view, TypedValueList&& args) {
+EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
     assert(fun->params().size() == args.size());
 
     // push fun scope
+    scope_lvl_t scope_lvl = _scope_stack.size();
     auto sr =
         _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind `self`
-    scope()->set_self(obj_view);
+    scope()->set_self(self);
+    if (self.has_auto_scope_lvl())
+        self.set_scope_lvl(scope_lvl);
 
     // bind params
     for (const auto& param : fun->params()) {

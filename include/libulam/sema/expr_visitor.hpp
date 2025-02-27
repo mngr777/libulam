@@ -63,7 +63,7 @@ protected:
     virtual ExprRes funcall(
         Ref<ast::Expr> node,
         Ref<Fun> fun,
-        ObjectView obj_view,
+        LValue self,
         TypedValueList&& args);
 
     // TODO: return type, refactoring

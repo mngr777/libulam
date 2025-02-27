@@ -8,12 +8,12 @@
 
 namespace ulam {
 
-ObjectView ScopeBase::self() {
-    return (_self || !parent()) ? _self : parent()->self();
+LValue ScopeBase::self() {
+    return (!_self.empty() || !parent()) ? _self : parent()->self();
 }
 
-void ScopeBase::set_self(ObjectView self) {
-    assert(!_self);
+void ScopeBase::set_self(LValue self) {
+    assert(_self.empty());
     _self = self;
 }
 

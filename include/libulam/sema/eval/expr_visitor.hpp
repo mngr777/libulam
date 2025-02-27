@@ -1,6 +1,6 @@
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam::sema {
 
@@ -16,7 +16,7 @@ protected:
     ExprRes funcall(
         Ref<ast::Expr> node,
         Ref<Fun> fun,
-        ObjectView obj_view,
+        LValue self,
         TypedValueList&& args) override;
 
 private:
