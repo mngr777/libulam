@@ -75,6 +75,10 @@ public:
     virtual void
     store(BitVectorView data, BitVector::size_t off, const RValue& rval) const;
 
+    // canonical non-reference type, type of value
+    Ref<Type> actual();
+    Ref<const Type> actual() const;
+
     bool is_canon() const;
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
@@ -193,6 +197,10 @@ public:
 
     void set_aliased(Ref<Type> type);
 
+    // NOTE: do not call on alias, use `canon()` then deref canon type
+    Ref<Type> deref() override;
+    Ref<const Type> deref() const override;
+
 protected:
     Ptr<ArrayType> make_array_type(array_size_t size) override;
     Ptr<RefType> make_ref_type() override;
@@ -212,8 +220,7 @@ public:
         Builtins& builtins,
         TypeIdGen* id_gen,
         Ref<Type> item_type,
-        array_size_t array_size,
-        Ref<ArrayType> canon = {});
+        array_size_t size);
 
     bitsize_t bitsize() const override;
 
@@ -247,7 +254,9 @@ class RefType : public Type {
 
 public:
     RefType(Builtins& builtins, TypeIdGen* id_gen, Ref<Type> refd):
-        Type{builtins, id_gen}, _refd{refd}, _canon{this} {}
+        Type{builtins, id_gen},
+        _refd{refd},
+        _canon{refd->is_canon() ? this : refd->canon()->ref_type()} {}
 
     bitsize_t bitsize() const override;
 

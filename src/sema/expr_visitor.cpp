@@ -123,16 +123,16 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
         return {ExprError::InvalidOperandType};
 
     if (op != Op::Assign) {
-        if (l_tv.type()->canon()->is_prim()) {
-            assert(r_tv.type()->canon()->is_prim());
-            auto l_type = l_tv.type()->canon()->as_prim();
-            auto r_type = r_tv.type()->canon()->as_prim();
+        if (l_tv.type()->actual()->is_prim()) {
+            assert(r_tv.type()->actual()->is_prim());
+            auto l_type = l_tv.type()->actual()->as_prim();
+            auto r_type = r_tv.type()->actual()->as_prim();
             auto l_rval = l_tv.move_value().move_rvalue();
             auto r_rval = r_tv.move_value().move_rvalue();
             r_tv = l_type->binary_op(
                 op, std::move(l_rval), r_type, std::move(r_rval));
         } else {
-            // TODO
+            // TODO: class operators
             assert(false);
         }
     }
@@ -187,7 +187,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
         break;
     }
 
-    if (tv.type()->canon()->is_prim()) {
+    if (tv.type()->actual()->is_prim()) {
         tv = tv.type()->as_prim()->unary_op(op, tv.move_value().move_rvalue());
     } else {
         assert(false); // TODO
@@ -297,7 +297,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::Error};
 
     // is an object?
-    if (!obj_res.type()->canon()->is_class()) {
+    if (!obj_res.type()->actual()->is_class()) {
         diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not a class");
         return {ExprError::NotObject};
     }
@@ -343,17 +343,19 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (!array_res.ok())
         return {ExprError::Error};
 
-    if (array_res.type()->canon()->is_class())
+    if (array_res.type()->actual()->is_class())
         assert(false); // not implemented
 
     // is an array?
-    if (!array_res.type()->canon()->is_array()) {
+    if (!array_res.type()->actual()->is_array()) {
         diag().emit(Diag::Error, node->array()->loc_id(), 1, "not an array");
         return {ExprError::NotArray};
     }
 
     // array
-    auto array_type = array_res.type()->non_alias()->as_array();
+    auto array_type =
+        array_res.type()->non_alias()->deref()->non_alias()->as_array();
+    assert(array_type);
     auto item_type = array_type->item_type();
     auto array_val = array_res.move_value();
 
@@ -413,8 +415,8 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
     Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv, bool expl) {
-    auto to = type->canon();
-    auto from = tv.type()->canon();
+    auto to = type->actual();
+    auto from = tv.type()->actual();
 
     if (to->is_same(from))
         return {tv.value().move_rvalue(), NoCast};
@@ -430,8 +432,8 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
 
 RValue ExprVisitor::do_cast(
     Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv) {
-    auto to = type->canon();
-    auto from = tv.type()->canon();
+    auto to = type->actual();
+    auto from = tv.type()->actual();
 
     assert(from->is_expl_castable_to(to));
     if (from->is_prim()) {
@@ -459,15 +461,15 @@ RValue ExprVisitor::do_cast(
 
 TypedValue ExprVisitor::do_cast(
     Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv) {
-    auto canon = tv.type()->canon();
-    assert(canon->is_expl_castable_to(builtin_type_id));
-    if (canon->is_prim()) {
+    auto actual = tv.type()->actual();
+    assert(actual->is_expl_castable_to(builtin_type_id));
+    if (actual->is_prim()) {
         assert(tv.type()->is_prim());
         return tv.type()->as_prim()->cast_to(
             builtin_type_id, tv.move_value().move_rvalue());
 
-    } else if (canon->is_class()) {
-        auto cls = canon->as_class();
+    } else if (actual->is_class()) {
+        auto cls = actual->as_class();
         auto convs = cls->convs(builtin_type_id, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();
@@ -477,18 +479,15 @@ TypedValue ExprVisitor::do_cast(
             return {}; // ??
         }
         assert(res.type()->is_prim());
-        if (!res.type()->canon()->as_prim()->is(builtin_type_id))
+        if (!res.type()->actual()->as_prim()->is(builtin_type_id))
             return do_cast(node, builtin_type_id, res.move_typed_value());
-        return {res.type()->canon()->as_prim(), res.move_value()};
+        return {res.type()->actual()->as_prim(), res.move_value()};
     }
     assert(false);
 }
 
 ExprRes ExprVisitor::funcall(
-    Ref<ast::Expr> node,
-    Ref<Fun> fun,
-    LValue self,
-    TypedValueList&& args) {
+    Ref<ast::Expr> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " " << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }

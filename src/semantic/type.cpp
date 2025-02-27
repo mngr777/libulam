@@ -33,6 +33,14 @@ void Type::store(
     assert(false);
 }
 
+Ref<Type> Type::actual() {
+    return canon()->deref();
+}
+
+Ref<const Type> Type::actual() const {
+    return canon()->deref();
+}
+
 bool Type::is_canon() const { return canon() == this; }
 
 bool Type::is(BuiltinTypeId id) const {
@@ -154,17 +162,21 @@ void AliasType::set_aliased(Ref<Type> type) {
     _non_alias = type->non_alias();
 }
 
+Ref<Type> AliasType::deref() { assert(false); }
+
+Ref<const Type> AliasType::deref() const { assert(false); }
+
 Ptr<ArrayType> AliasType::make_array_type(array_size_t size) {
-    auto type = Type::make_array_type(size);
     assert(_canon);
-    type->set_canon(_canon->array_type(size));
+    auto type = Type::make_array_type(size);
+    assert(type->canon() == _canon->array_type(size));
     return type;
 }
 
 Ptr<RefType> AliasType::make_ref_type() {
-    auto type = Type::make_ref_type();
     assert(_canon);
-    type->set_canon(_canon->ref_type());
+    auto type = Type::make_ref_type();
+    assert(type->canon() == _canon->ref_type());
     return type;
 }
 
@@ -174,13 +186,13 @@ ArrayType::ArrayType(
     Builtins& builtins,
     TypeIdGen* id_gen,
     Ref<Type> item_type,
-    array_size_t array_size,
-    Ref<ArrayType> canon):
+    array_size_t size):
     Type{builtins, id_gen},
     _item_type{item_type},
-    _array_size{array_size},
-    _canon{this} {
-    assert(array_size != UnknownArraySize);
+    _array_size{size},
+    _canon{
+        item_type->is_canon() ? this : item_type->canon()->array_type(size)} {
+    assert(size != UnknownArraySize);
 }
 
 bitsize_t ArrayType::bitsize() const {

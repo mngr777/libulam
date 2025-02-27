@@ -32,9 +32,7 @@ void Mangler::write_mangled(std::ostream& os, const TypedValue& tv) {
 
 // see ULAM {UlamType,UlamTypeClass}::getUlamTypeMangledType()
 void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
-    assert(type);
-    assert(type->canon());
-
+    assert(type && type->canon());
     type = type->canon();
 
     // &
@@ -84,8 +82,6 @@ void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
         detail::write_leximited(os, rval.get<Unsigned>());
     } else if (rval.is<Integer>()){
         detail::write_leximited(os, rval.get<Integer>());
-    // } else if (rval.is<Bool>()){
-    //     detail::write_leximited(os, rval.get<Bool>());
     } else if (rval.is<String>()) {
         detail::write_leximited(os, rval.get<String>());
     } else {

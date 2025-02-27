@@ -24,7 +24,7 @@ bool is_numeric(Ref<const PrimType> type) {
 }
 
 TypeError check_type_match(Ref<const Type> type, BuiltinTypeId target) {
-    type = type->canon();
+    type = type->actual();
     if (type->is_prim() && type->as_prim()->is(target))
         return {TypeError::Ok};
     if (type->is_impl_castable_to(target))
@@ -36,7 +36,7 @@ TypeError check_type_match(Ref<const Type> type, BuiltinTypeId target) {
 
 TypeError
 check_type_match(Ref<const Type> type, const Value& val, BuiltinTypeId target) {
-    type = type->canon();
+    type = type->actual();
     if (type->is_prim() && type->as_prim()->is(target))
         return {TypeError::Ok};
     if (type->is_impl_castable_to(target, val))
@@ -115,7 +115,7 @@ TypeErrorPair numeric_prim_binary_op_type_check_class(
 
 TypeErrorPair prim_binary_op_type_check(
     Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
-    auto r_type = r_tv.type()->canon();
+    auto r_type = r_tv.type()->actual();
     TypeErrorPair errors;
     switch (ops::kind(op)) {
     case ops::Kind::Assign: {
@@ -126,7 +126,7 @@ TypeErrorPair prim_binary_op_type_check(
             check_type_match(r_tv.type(), r_tv.value(), l_type->bi_type_id());
     } break;
     case ops::Kind::Numeric: {
-        auto r_type = r_tv.type()->canon();
+        auto r_type = r_tv.type()->actual();
         if (r_type->is_prim())
             return numeric_prim_binary_op_type_check_prim(
                 op, l_type, r_type->as_prim(), r_tv.value());
@@ -151,7 +151,7 @@ TypeErrorPair prim_binary_op_type_check(
 
 TypeErrorPair class_binary_op_type_check(
     Op op, Ref<const Class> left, Ref<const Type> right) {
-    assert(right->canon() == right);
+    assert(right->actual() == right);
     // TODO: class operators
     TypeErrorPair errors;
     if (op == Op::Assign && left->is_same(right))
@@ -197,11 +197,11 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
 
 TypeErrorPair
 binary_op_type_check(Op op, Ref<Type> l_type, const TypedValue& r_tv) {
-    if (l_type->canon()->is_prim())
-        return prim_binary_op_type_check(op, l_type->canon()->as_prim(), r_tv);
-    if (l_type->canon()->is_class())
+    if (l_type->actual()->is_prim())
+        return prim_binary_op_type_check(op, l_type->actual()->as_prim(), r_tv);
+    if (l_type->actual()->is_class())
         return class_binary_op_type_check(
-            op, l_type->canon()->as_class(), r_tv.type()->canon());
+            op, l_type->actual()->as_class(), r_tv.type()->actual());
 
     TypeErrorPair errors;
     if (op == Op::Assign && l_type->is_same(r_tv.type()))
