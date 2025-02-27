@@ -128,6 +128,11 @@ Ref<FunSet> ClassBase::find_fset(str_id_t name_id) {
     return sym ? sym->get<FunSet>() : add_fset(name_id);
 }
 
+Ref<FunSet> ClassBase::find_fset(Op op) {
+    auto it = _ops.find(op);
+    return (it != _ops.end()) ? ref(it->second) : add_fset(op);
+}
+
 Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
     auto fset = make<FunSet>();
     auto ref = ulam::ref(fset);
@@ -135,5 +140,14 @@ Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
     scope()->set(name_id, ref);
     return ref;
 }
+
+Ref<FunSet> ClassBase::add_fset(Op op) {
+    assert(_ops.count(op) == 0);
+    auto fset = make<FunSet>();
+    auto ref = ulam::ref(fset);
+    _ops[op] = std::move(fset);
+    return ref;
+}
+
 
 } // namespace ulam

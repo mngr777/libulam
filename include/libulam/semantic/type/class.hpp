@@ -88,6 +88,7 @@ public:
 
 protected:
     Ref<FunSet> add_fset(str_id_t name_id) override;
+    Ref<FunSet> add_fset(Op op) override;
 
 private:
     bool resolve_params(sema::Resolver& resolver);

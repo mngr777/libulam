@@ -247,6 +247,12 @@ Ref<FunSet> Class::add_fset(str_id_t name_id) {
     return fset;
 }
 
+Ref<FunSet> Class::add_fset(Op op) {
+    auto fset = ClassBase::add_fset(op);
+    fset->set_cls(this);
+    return fset;
+}
+
 bool Class::resolve_params(sema::Resolver& resolver) {
     for (auto [_, sym] : *param_scope()) {
         auto scope_version = sym->as_decl()->scope_version();

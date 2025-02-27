@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
@@ -8,6 +9,7 @@
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 #include <list>
+#include <map>
 
 namespace ulam::ast {
 class ClassDef;
@@ -83,7 +85,11 @@ protected:
     auto& members() { return _members; }
 
     Ref<FunSet> find_fset(str_id_t name_id);
+    Ref<FunSet> find_fset(Op op);
+
     virtual Ref<FunSet> add_fset(str_id_t name_id);
+    virtual Ref<FunSet> add_fset(Op op);
+
 
 private:
     Ref<ast::ClassDef> _node;
@@ -93,6 +99,7 @@ private:
     Ptr<PersScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;
+    std::map<Op, Ptr<FunSet>> _ops;
 };
 
 } // namespace ulam
