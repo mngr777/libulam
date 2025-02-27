@@ -32,6 +32,12 @@ public:
 
     TypedValue unary_op(Op op, RValue&& rval) override;
 
+    TypedValue binary_op(
+        Op op,
+        RValue&& l_rval,
+        Ref<const PrimType> r_type,
+        RValue&& r_rval) override;
+
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;

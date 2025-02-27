@@ -91,6 +91,34 @@ TypedValue BoolType::unary_op(Op op, RValue&& rval) {
     }
 }
 
+TypedValue BoolType::binary_op(
+    Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
+    assert(r_type->is(BoolId));
+    assert(l_rval.empty() || l_rval.is<Unsigned>());
+    assert(r_rval.empty() || r_rval.is<Unsigned>());
+
+    auto type = builtins().bool_type(std::max(bitsize(), r_type->bitsize()));
+    bool is_unknown = l_rval.empty() || r_rval.empty();
+    if (is_unknown)
+        return {type, Value{RValue{}}};
+
+    auto left = is_true(l_rval);
+    auto right = builtins().bool_type(r_type->bitsize())->is_true(r_rval);
+
+    switch (op) {
+    case Op::Equal:
+        return {type, Value{type->construct(left == right)}};
+    case Op::NotEqual:
+        return {type, Value{type->construct(left != right)}};
+    case Op::And:
+        return {type, Value{type->construct(left && right)}};
+    case Op::Or:
+        return {type, Value{type->construct(left || right)}};
+    default:
+        assert(false);
+    }
+}
+
 bool BoolType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     switch (type->id()) {
     case BitsId:

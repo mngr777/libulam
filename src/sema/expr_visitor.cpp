@@ -74,6 +74,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     debug() << __FUNCTION__ << " BinaryOp\n";
     assert(node->has_lhs() && node->has_rhs());
 
+    // TODO: special case for short-circuiting
     auto left = node->lhs()->accept(*this);
     auto right = node->rhs()->accept(*this);
     if (!left || !right)
