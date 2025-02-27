@@ -1,46 +1,55 @@
 #include <cassert>
-#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/type.hpp>
 
 namespace ulam {
 
 // Object
 
-Object::Object(Ref<Class> cls): _BitStorage{cls->bitsize()}, _cls{cls} {}
+Object::Object(Ref<Type> type): _BitStorage{type->bitsize()}, _type{type} {
+    assert(type->is_object());
+}
 
-Object::Object(Ref<Class> cls, BitVector&& bits_):
-    _BitStorage{std::move(bits_)}, _cls{cls} {
-    assert(cls);
-    assert(bits().len() == cls->bitsize());
+Object::Object(Ref<Type> type, BitVector&& bits_):
+    _BitStorage{std::move(bits_)}, _type{type} {
+    assert(_type && bits().len() == type->bitsize());
+    assert(type->is_object());
 }
 
 Object::~Object() {}
 
 SPtr<Object> Object::copy() const {
-    return make_s<Object>(_cls, bits().copy());
+    return make_s<Object>(_type, bits().copy());
 }
 
-ObjectView Object::view() { return ObjectView{cls(), bits().view()}; }
+ObjectView Object::view() { return ObjectView{_type, bits().view()}; }
 
 const ObjectView Object::view() const {
     return const_cast<Object*>(this)->view();
 }
 
+Ref<Class> Object::cls() const {
+    return _type->as_class();
+}
+
 // ObjectView
 
-ObjectView::ObjectView(Ref<Class> cls, BitVectorView bits_):
-    _BitStorageView{bits_}, _cls{cls} {
-    assert(bits_.len() == cls->bitsize());
+ObjectView::ObjectView(Ref<Type> type, BitVectorView bits_):
+    _BitStorageView{bits_}, _type{type} {
 }
 
 SPtr<Object> ObjectView::copy() const {
-    return make_s<Object>(_cls, bits().copy());
+    return make_s<Object>(_type, bits().copy());
 }
 
 ObjectView::operator bool() const {
-    assert((bool)_cls == (bool)bits());
-    return _cls;
+    assert((bool)_type == (bits().len() == 0));
+    return _type;
+}
+
+Ref<Class> ObjectView::cls() const {
+    return _type->as_class();
 }
 
 } // namespace ulam

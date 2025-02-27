@@ -27,8 +27,6 @@ public:
 
     std::string name() const override;
 
-    bool is(BuiltinTypeId id) const { return bi_type_id() == id; }
-
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
 

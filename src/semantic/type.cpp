@@ -35,6 +35,13 @@ void Type::store(
 
 bool Type::is_canon() const { return canon() == this; }
 
+bool Type::is(BuiltinTypeId id) const {
+    assert(id != NoBuiltinTypeId);
+    return bi_type_id() == id;
+}
+
+bool Type::is_object() const { return is_class() || is(AtomId); }
+
 Ref<ArrayType> Type::array_type(array_size_t size) {
     auto it = _array_types.find(size);
     if (it != _array_types.end())

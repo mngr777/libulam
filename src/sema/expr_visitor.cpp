@@ -298,7 +298,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     // is an object?
     if (!obj_res.type()->canon()->is_class()) {
-        diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not an object");
+        diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not a class");
         return {ExprError::NotObject};
     }
 

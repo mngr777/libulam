@@ -6,12 +6,13 @@ namespace ulam {
 
 class Class;
 class ObjectView;
-class Value;
+class Type;
 
 class Object : public _BitStorage {
 public:
-    explicit Object(Ref<Class> cls);
-    Object(Ref<Class> cls, BitVector&& bits);
+    explicit Object(Ref<Type> cls);
+    Object(Ref<Type> cls, BitVector&& bits);
+
     ~Object();
 
     SPtr<Object> copy() const;
@@ -19,27 +20,27 @@ public:
     ObjectView view();
     const ObjectView view() const;
 
-    Ref<Class> cls() { return _cls; }
-    Ref<const Class> cls() const { return _cls; }
+    Ref<Type> type() const { return _type; }
+    Ref<Class> cls() const;
 
 private:
-    Ref<Class> _cls;
+    Ref<Type> _type;
 };
 
 class ObjectView : public _BitStorageView {
 public:
-    explicit ObjectView(Ref<Class> cls, BitVectorView bits);
+    explicit ObjectView(Ref<Type> cls, BitVectorView bits);
     ObjectView() {}
 
     operator bool() const;
 
     SPtr<Object> copy() const;
 
-    Ref<Class> cls() { return _cls; }
-    Ref<const Class> cls() const { return _cls; }
+    Ref<Type> type() const { return _type; }
+    Ref<Class> cls() const;
 
 private:
-    Ref<Class> _cls{};
+    Ref<Type> _type;
 };
 
 } // namespace ulam

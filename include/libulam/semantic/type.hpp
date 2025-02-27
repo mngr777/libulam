@@ -79,8 +79,11 @@ public:
     virtual Ref<Type> canon() { return this; }
     virtual Ref<const Type> canon() const { return this; }
 
+    bool is(BuiltinTypeId id) const;
     bool is_builtin() const { return bi_type_id() != NoBuiltinTypeId; }
     virtual BuiltinTypeId bi_type_id() const { return NoBuiltinTypeId; }
+
+    bool is_object() const;
 
     bool is_prim() const { return as_prim(); }
     bool is_class() const { return as_class(); }

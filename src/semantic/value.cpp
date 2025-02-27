@@ -15,7 +15,7 @@ Ref<Type> LValue::type() {
     return accept(
         [&](Ref<Var> var) { return var->type(); },
         [&](ArrayAccess& array_access) { return array_access.type(); },
-        [&](ObjectView& obj_view) -> Ref<Type> { return obj_view.cls(); },
+        [&](ObjectView& obj_view) -> Ref<Type> { return obj_view.type(); },
         [&](BoundProp& bound_prop) { return bound_prop.mem()->type(); },
         [&](auto& other) -> Ref<Type> { assert(false); });
 }
@@ -161,6 +161,7 @@ RValue RValue::array_access(Ref<Type> item_type, array_idx_t index) {
 LValue RValue::bound_prop(Ref<Prop> prop) {
     return accept(
         [&](SPtr<Object> obj) {
+            assert(obj->cls());
             assert(
                 prop->cls() == obj->cls() ||
                 prop->cls()->is_base_of(obj->cls()));

@@ -56,8 +56,8 @@ ArrayView ArrayAccess::item_array_view() {
 }
 
 ObjectView ArrayAccess::item_object_view() {
-    assert(_type->is_class());
-    return ObjectView{_type->as_class(), item_bits_view()};
+    assert(_type->is_object());
+    return ObjectView{_type, item_bits_view()};
 }
 
 RValue ArrayAccess::load() const {
