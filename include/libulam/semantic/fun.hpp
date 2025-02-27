@@ -1,5 +1,4 @@
 #pragma once
-#include <functional>
 #include <iterator>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>

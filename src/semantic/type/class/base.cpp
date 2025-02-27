@@ -74,7 +74,7 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
         fun->add_param(param_node);
     }
 
-    auto fset = add_fset(name_id);
+    auto fset = find_fset(name_id);
     fset->add(std::move(fun));
 
     if (!node->has_scope_version()) {
@@ -122,16 +122,18 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     return ref;
 }
 
-Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
+Ref<FunSet> ClassBase::find_fset(str_id_t name_id) {
     auto sym = get(name_id);
     assert(!sym || sym->is<FunSet>());
-    if (!sym) {
-        assert(_fsets.count(name_id) == 0);
-        sym = set(name_id, make<FunSet>());
-        scope()->set(name_id, sym->get<FunSet>());
-        _fsets[name_id] = sym->get<FunSet>();
-    }
-    return sym->get<FunSet>();
+    return sym ? sym->get<FunSet>() : add_fset(name_id);
+}
+
+Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
+    auto fset = make<FunSet>();
+    auto ref = ulam::ref(fset);
+    set(name_id, std::move(fset));
+    scope()->set(name_id, ref);
+    return ref;
 }
 
 } // namespace ulam

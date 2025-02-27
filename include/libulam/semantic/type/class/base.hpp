@@ -8,7 +8,6 @@
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 #include <list>
-#include <map>
 
 namespace ulam::ast {
 class ClassDef;
@@ -83,7 +82,7 @@ protected:
 
     auto& members() { return _members; }
 
-    auto& fsets() { return _fsets; }
+    Ref<FunSet> find_fset(str_id_t name_id);
     virtual Ref<FunSet> add_fset(str_id_t name_id);
 
 private:
@@ -94,7 +93,6 @@ private:
     Ptr<PersScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;
-    std::map<str_id_t, Ref<FunSet>> _fsets;
 };
 
 } // namespace ulam

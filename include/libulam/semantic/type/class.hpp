@@ -100,12 +100,14 @@ private:
     void init_layout();
 
     const auto& props() const { return _props; }
+    auto& fsets() { return _fsets; }
 
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
     std::list<Ref<Prop>> _props;
     std::map<type_id_t, Ref<Fun>> _convs;
+    std::map<str_id_t, Ref<FunSet>> _fsets;
 };
 
 } // namespace ulam

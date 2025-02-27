@@ -233,7 +233,7 @@ ConvList Class::convs(BuiltinTypeId bi_type_id, bool allow_cast) const {
 }
 
 void Class::add_conv(Ref<Fun> fun) {
-    assert(fun->cls() == this);
+    assert(fun->cls() == this); // TODO: inherited convs
     auto ret_canon = fun->ret_type()->canon();
     assert(_convs.count(ret_canon->id()) == 0);
     _convs[ret_canon->id()] = fun;
@@ -241,8 +241,9 @@ void Class::add_conv(Ref<Fun> fun) {
 
 Ref<FunSet> Class::add_fset(str_id_t name_id) {
     auto fset = ClassBase::add_fset(name_id);
-    if (!fset->has_cls())
-        fset->set_cls(this);
+    fset->set_cls(this);
+    assert(_fsets.count(name_id) == 0);
+    _fsets[name_id] = fset;
     return fset;
 }
 
