@@ -150,6 +150,7 @@ bitsize_t Class::direct_bitsize() const {
 }
 
 RValue Class::construct() const {
+    // TODO
     return RValue{make_s<Object>(const_cast<Class*>(this))};
 }
 

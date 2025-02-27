@@ -1,5 +1,7 @@
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/object.hpp>
 
 namespace ulam {
 
@@ -12,6 +14,9 @@ void AtomType::store(
     assert(false);
 }
 
-RValue AtomType::construct() const { assert(false); }
+RValue AtomType::construct() const {
+    // TODO
+    return RValue{make_s<Object>(const_cast<AtomType*>(this))};
+}
 
 } // namespace ulam
