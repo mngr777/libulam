@@ -12,11 +12,10 @@ template <class... Ts> struct Overloads : Ts... {
 template <class... Ts> Overloads(Ts...) -> Overloads<Ts...>;
 } // namespace variant
 
-// TODO: nullable/non-nullable
-
 template <typename... Ts> class Variant {
 public:
-    template <typename T> explicit Variant(T&& value): _value{std::forward<T>(value)} {}
+    template <typename T>
+    explicit Variant(T&& value): _value{std::forward<T>(value)} {}
     Variant() {}
     virtual ~Variant() {}
 
@@ -26,7 +25,10 @@ public:
     Variant(Variant&&) = default;
     Variant& operator=(Variant&&) = default;
 
-    bool empty() const { return is<std::monostate>(); }
+    bool empty() const {
+        static_assert((std::is_same_v<std::monostate, Ts> || ...));
+        return is<std::monostate>();
+    }
 
     std::size_t index() const { return _value.index(); }
 
@@ -45,11 +47,13 @@ public:
     }
 
 private:
-    std::variant<std::monostate, Ts...> _value;
+    std::variant<Ts...> _value;
 };
 
 template <typename... Ts>
-using RefVariant = Variant<Ref<Ts>...>;
+using NullableVariant = Variant<std::monostate, Ts...>;
+
+template <typename... Ts> using RefVariant = Variant<Ref<Ts>...>;
 
 template <typename... Ts> class RefPtrVariant {
 public:

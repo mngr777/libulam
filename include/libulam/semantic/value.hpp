@@ -22,7 +22,7 @@ class Value;
 
 class LValue
     : public detail::
-          Variant<Ref<Var>, ArrayAccess, ObjectView, BoundFunSet, BoundProp> {
+          NullableVariant<Ref<Var>, ArrayAccess, ObjectView, BoundFunSet, BoundProp> {
 public:
     using Variant::Variant;
 
@@ -41,7 +41,7 @@ public:
     bool is_consteval() const { return false; } // TODO
 };
 
-class RValue : public detail::Variant<
+class RValue : public detail::NullableVariant<
                    Integer,
                    Unsigned /* Unary, Bool*/,
                    Bits,
@@ -76,7 +76,7 @@ private:
     bool _is_consteval;
 };
 
-class Value : public detail::Variant<LValue, RValue> {
+class Value : public detail::NullableVariant<LValue, RValue> {
 public:
     using RValueCb = std::function<void(RValue&)>;
     using RValueConstCb = std::function<void(const RValue&)>;
