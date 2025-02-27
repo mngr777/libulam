@@ -110,7 +110,6 @@ Value LValue::assign(RValue&& rval) {
 RValue RValue::copy() const {
     return accept(
         [&](const Bits& bits) { return RValue{bits.copy(), is_consteval()}; },
-        [&](const Atom& atom) { return RValue{atom.copy(), is_consteval()}; },
         [&](const Array& array) {
             return RValue{array.copy(), is_consteval()};
         },

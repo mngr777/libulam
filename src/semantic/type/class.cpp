@@ -1,22 +1,22 @@
-#include "libulam/semantic/decl.hpp"
-#include "libulam/semantic/type/class/layout.hpp"
-#include "libulam/semantic/value/types.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/types.hpp>
 
 #define DEBUG_CLASS // TEST
 #ifdef DEBUG_CLASS

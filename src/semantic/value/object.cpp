@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/bit_storage.hpp"
 #include <cassert>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/value.hpp>

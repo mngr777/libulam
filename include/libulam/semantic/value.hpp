@@ -3,7 +3,6 @@
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/array.hpp>
-#include <libulam/semantic/value/atom.hpp>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/object.hpp>
@@ -46,7 +45,6 @@ class RValue : public detail::Variant<
                    Integer,
                    Unsigned /* Unary, Bool*/,
                    Bits,
-                   Atom,
                    String,
                    Array,
                    SPtr<Object>> {
