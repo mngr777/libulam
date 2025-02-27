@@ -22,6 +22,8 @@ public:
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
+    TypedValue type_op(TypeOp op) override;
+
     RValue construct() const override { return RValue{Unsigned{}}; }
 
     RValue from_datum(Datum datum) const override;

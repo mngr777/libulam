@@ -19,6 +19,7 @@ enum class ExprError {
     ArrayIndexOutOfRange,
     NotObject,
     NoOperator,
+    InvalidTypeOperator,
     InvalidOperandType,
     CastRequired,
     InvalidCast

@@ -42,30 +42,30 @@ ArrayAccess::ArrayAccess(
 }
 
 BitVectorView ArrayAccess::item_bits_view() {
-    return _array_view.bits().view(offset(_type, _index), _type->bitsize());
+    return _array_view.bits().view(offset(_type, _index), _type->actual()->bitsize());
 }
 
 ArrayAccess ArrayAccess::item_array_access(array_idx_t index) {
     return ArrayAccess{
-        item_array_view(), _type->as_array()->item_type(), index};
+        item_array_view(), _type->actual()->as_array()->item_type(), index};
 }
 
 ArrayView ArrayAccess::item_array_view() {
-    assert(_type->is_array());
+    assert(_type->actual()->is_array());
     return ArrayView{item_bits_view()};
 }
 
 ObjectView ArrayAccess::item_object_view() {
-    assert(_type->is_object());
+    assert(_type->actual()->is_object());
     return ObjectView{_type, item_bits_view()};
 }
 
 RValue ArrayAccess::load() const {
-    return _type->load(_array_view.bits(), offset(_type, _index));
+    return _type->actual()->load(_array_view.bits(), offset(_type, _index));
 }
 
 void ArrayAccess::store(RValue&& rval) {
-    _type->store(_array_view.bits(), offset(_type, _index), rval);
+    _type->actual()->store(_array_view.bits(), offset(_type, _index), rval);
 }
 
 } // namespace ulam

@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -27,11 +26,17 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     if (node->has_type_name()) {
         Resolver resolver{_program};
         auto type = resolver.resolve_type_name(node->type_name(), _scope);
-        return type->type_op(node->op());
+        auto tv = type->actual()->type_op(node->op());
+        if (!tv)
+            return {ExprError::InvalidTypeOperator};
+        return tv;
     }
     assert(node->has_expr());
     auto expr_res = node->expr()->accept(*this);
-    return expr_res.type()->type_op(node->op());
+    auto tv = expr_res.type()->actual()->type_op(node->op());
+    if (!tv)
+        return {ExprError::InvalidTypeOperator};
+    return tv;
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
@@ -464,8 +469,8 @@ TypedValue ExprVisitor::do_cast(
     auto actual = tv.type()->actual();
     assert(actual->is_expl_castable_to(builtin_type_id));
     if (actual->is_prim()) {
-        assert(tv.type()->is_prim());
-        return tv.type()->as_prim()->cast_to(
+        assert(tv.type()->actual()->is_prim());
+        return tv.type()->actual()->as_prim()->cast_to(
             builtin_type_id, tv.move_value().move_rvalue());
 
     } else if (actual->is_class()) {

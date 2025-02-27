@@ -7,6 +7,17 @@
 
 namespace ulam {
 
+TypedValue UnsignedType::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::MinOf:
+        return {this, Value{RValue{(Unsigned)0}}};
+    case TypeOp::MaxOf:
+        return {this, Value{RValue{detail::unsigned_max(bitsize())}}};
+    default:
+        return _PrimType::type_op(op);
+    }
+}
+
 RValue UnsignedType::from_datum(Datum datum) const {
     return RValue{(Unsigned)datum};
 }
