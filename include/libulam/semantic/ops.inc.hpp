@@ -5,7 +5,6 @@
 
 OP("<noop>", None)
 OP("is", Is)
-OP("as", As)
 OP("++", PostInc)
 OP("--", PostDec)
 OP("(", FunCall)

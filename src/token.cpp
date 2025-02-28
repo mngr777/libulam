@@ -139,8 +139,6 @@ Op bin_op(Type type) {
     switch (type) {
     case Is:
         return Op::Is;
-    case As:
-        return Op::As;
     case ParenL:
         return Op::FunCall;
     case BracketL:
