@@ -4,6 +4,7 @@
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/typed_value.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 #include <optional>
@@ -38,6 +39,9 @@ public:
     ~Fun();
 
     str_id_t name_id() const;
+
+    bool is_op() const;
+    Op op() const;
 
     bool is_native() const;
 

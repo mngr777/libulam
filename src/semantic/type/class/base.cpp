@@ -16,6 +16,11 @@ ClassBase::ClassBase(
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
 
+Ref<FunSet> ClassBase::op(Op op) {
+    auto it = _ops.find(op);
+    return (it != _ops.end()) ? ref(it->second) : Ref<FunSet>{};
+}
+
 Ref<Var> ClassBase::add_param(Ref<ast::Param> node) {
     return add_param(node->type_name(), node);
 }
@@ -74,7 +79,7 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
         fun->add_param(param_node);
     }
 
-    auto fset = find_fset(name_id);
+    auto fset = node->is_op() ? find_fset(node->op()) : find_fset(name_id);
     fset->add(std::move(fun));
 
     if (!node->has_scope_version()) {
@@ -148,6 +153,5 @@ Ref<FunSet> ClassBase::add_fset(Op op) {
     _ops[op] = std::move(fset);
     return ref;
 }
-
 
 } // namespace ulam

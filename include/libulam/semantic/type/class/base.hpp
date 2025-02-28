@@ -46,6 +46,8 @@ public:
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
+    Ref<FunSet> op(Op op);
+
     Ref<Var> add_param(Ref<ast::Param> node);
     virtual Ref<Var>
     add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);

@@ -29,6 +29,10 @@ Fun::~Fun() {}
 
 str_id_t Fun::name_id() const { return _node->name_id(); }
 
+bool Fun::is_op() const { return _node->is_op(); }
+
+Op Fun::op() const { return _node->op(); }
+
 bool Fun::is_native() const { return _node->is_native(); }
 
 void Fun::add_param(Ptr<Var>&& param) {
