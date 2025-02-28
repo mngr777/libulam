@@ -826,6 +826,8 @@ Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
         Op op = _tok.bin_op();
         auto op_loc_id = _tok.loc_id;
         if (op == Op::None || ops::prec(op) < min_prec) {
+            if (op != Op::None)
+                break;
             // suffix?
             op = _tok.unary_post_op();
             if (op == Op::None || ops::prec(op) < min_prec)
