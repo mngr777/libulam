@@ -1,7 +1,19 @@
 #include <cassert>
 #include <libulam/semantic/ops.hpp>
+#include <map>
 
 namespace ulam::ops {
+namespace {
+
+auto make_fun_op_table() {
+    std::map<std::string_view, Op> table;
+#define FUN_OP(name, op) table[name] = Op::op;
+#include <libulam/semantic/fun_ops.inc.hpp>
+#undef FUN_OP
+    return table;
+}
+
+} // namespace
 
 const char* str(Op op) {
 #define OP(str, op)                                                            \
@@ -13,6 +25,12 @@ const char* str(Op op) {
         assert(false);
     }
 #undef OP
+}
+
+Op fun_name_op(const std::string_view name) {
+    static auto table{make_fun_op_table()};
+    auto it = table.find(name);
+    return (it != table.end()) ? it->second : Op::None;
 }
 
 bool is_overloadable(Op op) {

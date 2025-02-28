@@ -282,9 +282,18 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
 bool Class::resolve_members(sema::Resolver& resolver) {
     for (auto [_, sym] : *scope()) {
         auto scope_version = sym->as_decl()->scope_version();
-        auto scope = param_scope()->view(scope_version);
-        if (!resolver.resolve(sym, ref(scope)))
+        auto scope_view = scope()->view(scope_version);
+        if (!resolver.resolve(sym, ref(scope_view)))
             return false;
+    }
+    // operators
+    for (auto& [_, fset] : ops()) {
+        for (auto fun : *fset) {
+            auto scope_version = fun->scope_version();
+            auto scope_view = scope()->view(scope_version);
+            if (!resolver.resolve(fun, ref(scope_view)))
+                return false;
+        }
     }
     return true;
 }
@@ -300,11 +309,16 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 
 void Class::merge_fsets() {
     for (auto parent : parents()) {
+        // methods
         for (auto [name_id, fset] : parent->cls()->fsets()) {
             auto sym = get(name_id);
             if (!sym || sym->is<FunSet>())
                 add_fset(name_id)->merge(fset);
         }
+        // operators
+        for (auto& [op, fset] : parent->cls()->ops())
+            add_fset(op)->merge(ref(fset));
+        // TODO: conversions
     }
 }
 

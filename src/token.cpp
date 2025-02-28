@@ -13,7 +13,7 @@ auto make_keyword_type_table() {
 #define TOK(str, type)                                                         \
     if (str && (*((char*)str) == '@' || detail::is_word(*(char*)str)))         \
         table[str ? str : "_dummy_"] = type;
-#include "libulam/token.inc.hpp"
+#include <libulam/token.inc.hpp>
 #undef TOK
     return table;
 }
@@ -25,7 +25,7 @@ const char* type_str(tok::Type type) {
 #define TOK(str, type)                                                         \
     case type:                                                                 \
         return str;
-#include "libulam/token.inc.hpp"
+#include <libulam/token.inc.hpp>
 #undef TOK
     default:
         assert(false && "Unknown token type");
@@ -37,7 +37,7 @@ const char* type_name(tok::Type type) {
 #define TOK(str, type)                                                         \
     case type:                                                                 \
         return #type;
-#include "libulam/token.inc.hpp"
+#include <libulam/token.inc.hpp>
 #undef TOK
     default:
         assert(false && "Unknown token type");
@@ -45,7 +45,7 @@ const char* type_name(tok::Type type) {
 }
 
 Type type_by_keyword(std::string_view str) {
-    static std::map<std::string_view, Type> table{make_keyword_type_table()};
+    static auto table{make_keyword_type_table()};
     assert(str[0] == '@' || detail::is_word(str[0]));
     auto it = table.find(str);
     if (it != table.end())

@@ -92,6 +92,7 @@ protected:
     virtual Ref<FunSet> add_fset(str_id_t name_id);
     virtual Ref<FunSet> add_fset(Op op);
 
+    auto& ops() { return _ops; }
 
 private:
     Ref<ast::ClassDef> _node;

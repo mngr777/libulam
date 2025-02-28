@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string_view>
 
 namespace ulam {
 
@@ -18,6 +19,8 @@ using Prec = std::int8_t;
 enum class Assoc { Left, Right };
 
 const char* str(Op op);
+
+Op fun_name_op(const std::string_view name);
 
 bool is_overloadable(Op op);
 

@@ -520,8 +520,11 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         consume();
     }
 
-    return tree<ast::FunDef>(
+    auto fun = tree<ast::FunDef>(
         name, std::move(ret_type), std::move(params), std::move(body));
+    // handle operator aliases, e.g. toInt
+    fun->set_op(ops::fun_name_op(_str_pool.get(fun->name_id())));
+    return fun;
 }
 
 Ptr<ast::FunDef> Parser::parse_op_fun_def_rest(
@@ -529,7 +532,7 @@ Ptr<ast::FunDef> Parser::parse_op_fun_def_rest(
     assert(tok::is_overloadable_op(op_tok_type));
 
     auto fun = parse_fun_def_rest(std::move(ret_type), name);
-    if (!fun)
+    if (!fun || fun->is_op())
         return fun;
 
     Op op = Op::None;
