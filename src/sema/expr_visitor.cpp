@@ -45,9 +45,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     auto name = node->name();
     auto sym = _scope->get(name.str_id());
     if (!sym) {
-        diag().emit(
-            Diag::Error, node->loc_id(), str(name.str_id()).size(),
-            "symbol not found");
+        diag().error(node, "symbol not found");
         return {ExprError::SymbolNotFound};
     }
 
@@ -84,7 +82,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     LValue lval;
     if (ops::is_assign(op)) {
         if (!left.value().is_lvalue()) {
-            diag().emit(Diag::Error, node->loc_id(), 1, "cannot modify");
+            diag().error(node, "cannot modify");
             return {ExprError::NotLvalue};
         }
         lval = left.value().lvalue();
@@ -96,7 +94,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
                       TypedValue&& tv) -> TypedValue {
         switch (error.status) {
         case TypeError::Incompatible:
-            diag().emit(Diag::Error, expr->loc_id(), 1, "incompatible type");
+            diag().error(expr, "incompatible type");
             return {};
         case TypeError::ExplCastRequired: {
             auto rval = tv.move_value().move_rvalue();
@@ -106,7 +104,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
                 (error.cast_bi_type_id != NoBuiltinTypeId)
                     ? std::string{builtin_type_str(error.cast_bi_type_id)}
                     : error.cast_type->name();
-            diag().emit(Diag::Error, expr->loc_id(), 1, message);
+            diag().error(expr, message);
             return {};
         }
         case TypeError::ImplCastRequired: {
@@ -163,7 +161,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     if (ops::is_inc_dec(op)) {
         // store lvalue
         if (!tv.value().is_lvalue()) {
-            diag().emit(Diag::Error, node->loc_id(), 1, "cannot modify");
+            diag().error(node, "cannot modify");
             return {ExprError::NotLvalue};
         }
         lval = tv.value().lvalue();
@@ -176,12 +174,12 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     auto error = unary_op_type_check(node->op(), tv.type());
     switch (error.status) {
     case TypeError::Incompatible:
-        diag().emit(Diag::Error, node->loc_id(), 1, "incompatible");
+        diag().error(node, "incompatible");
         return {ExprError::InvalidOperandType};
     case TypeError::ExplCastRequired:
         if (ops::is_inc_dec(op)) {
             // ??
-            diag().emit(Diag::Error, node->loc_id(), 1, "incompatible");
+            diag().error(node, "incompatible");
             return {ExprError::InvalidOperandType};
         }
         return {ExprError::CastRequired};
@@ -257,7 +255,6 @@ ExprRes ExprVisitor::visit(Ref<ast::StrLit> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     debug() << __FUNCTION__ << " FunCall\n";
-    auto loc_id = node->callable()->loc_id();
     auto callable = node->callable()->accept(*this);
     if (!callable)
         return {};
@@ -267,7 +264,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     assert(val.is_lvalue());
     auto lval = val.lvalue();
     if (!lval.is<BoundFunSet>()) {
-        diag().emit(Diag::Error, loc_id, 1, "is not a function");
+        diag().error(node->callable(), "is not a function");
         return {};
     }
     auto& bound_fset = lval.get<BoundFunSet>();
@@ -285,9 +282,9 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
         // success, one match found
         return funcall(node, *(match_res.begin()), self, std::move(arg_list));
     } else if (match_res.size() == 0) {
-        diag().emit(Diag::Error, loc_id, 1, "no matching function found");
+        diag().error(node->callable(), "no matching function found");
     } else {
-        diag().emit(Diag::Error, loc_id, 1, "ambiguous funcall");
+        diag().error(node->callable(), "ambiguous funcall");
     }
 
     return {};
@@ -304,7 +301,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     // is an object?
     if (!obj_res.type()->actual()->is_class()) {
-        diag().emit(Diag::Error, node->obj()->loc_id(), 1, "not a class");
+        diag().error(node->obj(), "not a class");
         return {ExprError::NotObject};
     }
 
@@ -315,8 +312,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     auto name = node->ident()->name();
     auto sym = cls->get(name.str_id());
     if (!sym) {
-        diag().emit(
-            Diag::Error, node->ident()->loc_id(), 1, "member not found");
+        diag().error(node->ident(), "member not found");
         return {ExprError::MemberNotFound};
     }
 
@@ -349,12 +345,13 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (!array_res.ok())
         return {ExprError::Error};
 
-    if (array_res.type()->actual()->is_class())
+    if (array_res.type()->actual()->is_class()) {
         assert(false); // not implemented
+    }
 
     // is an array?
     if (!array_res.type()->actual()->is_array()) {
-        diag().emit(Diag::Error, node->array()->loc_id(), 1, "not an array");
+        diag().error(node->array(), "not an array");
         return {ExprError::NotArray};
     }
 
@@ -370,9 +367,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (index == UnknownArrayIdx)
         return {ExprError::UnknownArrayIndex};
     if (index + 1 > array_type->array_size()) {
-        diag().emit(
-            Diag::Error, node->index()->loc_id(), 1,
-            "array index is out of range");
+        diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
     }
     return {item_type, array_val.array_access(item_type, index)};
@@ -401,7 +396,7 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
 
     auto int_val = cast_res.first.get<Integer>();
     if (int_val < 0) {
-        diag().emit(Diag::Error, expr->loc_id(), 1, "array index is < 0");
+        diag().error(expr, "array index is < 0");
         return UnknownArrayIdx;
     }
     return (array_idx_t)int_val;
@@ -411,7 +406,7 @@ ExprRes
 ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
     if (!val.is_lvalue()) {
-        diag().emit(Diag::Error, node->loc_id(), 1, "cannot assign to rvalue");
+        diag().error(node, "cannot assign to rvalue");
         return {ExprError::NotLvalue};
     }
     auto lval = val.lvalue();
@@ -431,7 +426,7 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
         return {do_cast(node, to, std::move(tv)), CastOk};
 
     if (!expl && from->is_expl_castable_to(to)) {
-        diag().emit(Diag::Error, node->loc_id(), 1, "suggest explicit cast");
+        diag().error(node, "suggest explicit cast");
     }
     return {RValue{}, CastError};
 }
@@ -453,7 +448,7 @@ RValue ExprVisitor::do_cast(
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
         if (!res.ok()) {
-            diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
+            diag().error(node, "conversion failed");
             return RValue{};
         }
         if (res.type()->is_same(to)) {
@@ -481,7 +476,7 @@ TypedValue ExprVisitor::do_cast(
         auto obj_val = tv.move_value();
         ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
         if (!res.ok()) {
-            diag().emit(Diag::Error, node->loc_id(), 1, "conversion failed");
+            diag().error(node, "conversion failed");
             return {}; // ??
         }
         assert(res.type()->is_prim());
