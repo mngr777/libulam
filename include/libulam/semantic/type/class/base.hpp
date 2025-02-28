@@ -41,6 +41,11 @@ public:
 public:
     ClassKind kind() const;
 
+    bool is_element() const { return kind() == ClassKind::Element; }
+    bool is_quark() const { return kind() == ClassKind::Quark; }
+    bool is_transient() const { return kind() == ClassKind::Transient; }
+    bool is_union() const { return kind() == ClassKind::Union; }
+
     bool has(str_id_t name_id) const { return _members.has(name_id); }
 
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
