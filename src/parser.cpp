@@ -522,7 +522,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
 
     auto fun = tree<ast::FunDef>(
         name, std::move(ret_type), std::move(params), std::move(body));
-    // handle operator aliases, e.g. toInt
+    // handle operator aliases, e.g. `aref`
     fun->set_op(ops::fun_name_op(_str_pool.get(fun->name_id())));
     return fun;
 }
