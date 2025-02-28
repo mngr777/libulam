@@ -108,7 +108,7 @@ private:
     bool _is_consteval;
 };
 
-class Value : public detail::NullableVariant<LValue, RValue> {
+class Value : public detail::Variant<LValue, RValue> {
 public:
     using RValueCb = std::function<void(RValue&)>;
     using RValueConstCb = std::function<void(const RValue&)>;
@@ -117,6 +117,8 @@ public:
 
     Value(Value&&) = default;
     Value& operator=(Value&&) = default;
+
+    bool empty() const;
 
     bool is_lvalue() const { return is<LValue>(); }
     bool is_rvalue() const { return is<RValue>(); }

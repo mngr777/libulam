@@ -3,6 +3,7 @@
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <string>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -17,6 +18,8 @@ class StringType : public PrimType {
 public:
     StringType(Builtins& builtins, TypeIdGen& id_gen):
         PrimType{builtins, &id_gen} {}
+
+    std::string name() const override { return "String"; }
 
     bitsize_t bitsize() const override { return 8; /* TMP placeholder */ }
 

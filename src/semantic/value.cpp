@@ -108,7 +108,7 @@ Value LValue::assign(RValue&& rval) {
             return Value{LValue{var}};
         },
         [&](ArrayAccess& array_access) {
-            array_access.store(rval.copy()); // TODO: try avoiding copying
+            array_access.store(rval.copy()); // TODO: try to avoid copying
             return Value{std::move(rval)};
         },
         [&](BoundProp& bound_prop) {
@@ -181,6 +181,10 @@ LValue RValue::self() {
 }
 
 // Value
+
+bool Value::empty() const {
+    return accept([&](auto& val) { return val.empty(); });
+}
 
 Ref<Class> Value::obj_cls() {
     return accept(

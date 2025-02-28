@@ -4,6 +4,7 @@
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <string>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -17,6 +18,8 @@ class VoidType : public PrimType {
 public:
     VoidType(Builtins& builtins, TypeIdGen& id_gen):
         PrimType{builtins, &id_gen} {}
+
+    std::string name() const override { return "Void"; }
 
     bitsize_t bitsize() const override { assert(false); }
 

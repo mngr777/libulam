@@ -22,6 +22,8 @@ ExprRes EvalExprVisitor::funcall(
     if (fun->is_native()) {
         diag().emit(
             Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
+        if (fun->ret_type()->canon()->is_ref())
+            return {fun->ret_type(), Value{LValue{}}};
         return {fun->ret_type(), Value{RValue{}}};
     }
     return _eval.funcall(fun, self, std::move(args));

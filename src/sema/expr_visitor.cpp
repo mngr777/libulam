@@ -143,8 +143,11 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     }
 
     // handle assignment
-    if (ops::is_assign(op))
+    if (ops::is_assign(op)) {
+        if (lval.empty() || r_tv.value().empty())
+            return {std::move(l_tv)};
         return assign(node, Value{lval}, std::move(r_tv));
+    }
     return {std::move(r_tv)};
 }
 
@@ -199,7 +202,8 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     }
 
     if (ops::is_inc_dec(op)) {
-        assign(node, Value{lval}, std::move(tv));
+        if (!lval.empty() && !tv.value().empty())
+            assign(node, Value{lval}, std::move(tv));
         if (ops::is_unary_pre_op(op))
             return {tv.type(), Value{lval}};
     }

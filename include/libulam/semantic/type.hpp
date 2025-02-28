@@ -177,6 +177,8 @@ class AliasType : public UserType {
 public:
     AliasType(Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node);
 
+    std::string name() const override;
+
     str_id_t name_id() const override;
 
     bitsize_t bitsize() const override;
@@ -224,6 +226,8 @@ public:
         Ref<Type> item_type,
         array_size_t size);
 
+    std::string name() const override;
+
     bitsize_t bitsize() const override;
 
     RValue construct() const override;
@@ -259,6 +263,8 @@ public:
         Type{builtins, id_gen},
         _refd{refd},
         _canon{refd->is_canon() ? this : refd->canon()->ref_type()} {}
+
+    std::string name() const override;
 
     bitsize_t bitsize() const override;
 

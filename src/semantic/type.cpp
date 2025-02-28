@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -145,6 +146,12 @@ AliasType::AliasType(
         node->set_alias_type(this);
 }
 
+// TODO: get name from program context when refactored
+std::string AliasType::name() const {
+    assert(_canon);
+    return std::string{"alias for "} + _canon->name();
+}
+
 str_id_t AliasType::name_id() const { return _node->alias_id(); }
 
 bitsize_t AliasType::bitsize() const {
@@ -203,6 +210,14 @@ ArrayType::ArrayType(
     assert(size != UnknownArraySize);
 }
 
+std::string ArrayType::name() const {
+    assert(_item_type);
+    std::string size_str;
+    if (_array_size != UnknownArraySize)
+        size_str = std::to_string(_array_size);
+    return _item_type->name() + "[" + size_str + "]";
+}
+
 bitsize_t ArrayType::bitsize() const {
     assert(_item_type);
     return _array_size * _item_type->bitsize();
@@ -231,6 +246,11 @@ void ArrayType::set_canon(Ref<ArrayType> canon) {
 }
 
 // RefType
+
+std::string RefType::name() const {
+    assert(_refd);
+    return _refd->name() + "&";
+}
 
 bitsize_t RefType::bitsize() const {
     assert(_refd);
