@@ -10,6 +10,7 @@
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
@@ -127,6 +128,7 @@ class FunDef : public Tuple<Stmt, FunRetType, ParamList, FunDefBody>,
                public DefNode {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Fun, fun)
+    ULAM_AST_SIMPLE_ATTR(Op, op, Op::None)
 public:
     FunDef(
         Str name,
@@ -139,6 +141,13 @@ public:
     ULAM_AST_TUPLE_PROP(ret_type, 0)
     ULAM_AST_TUPLE_PROP(params, 1)
     ULAM_AST_TUPLE_PROP(body, 2)
+
+    unsigned param_num() const {
+        assert(has_params());
+        return params()->child_num();
+    }
+
+    bool is_op() const { return op() != Op::None; }
 
     // NOTE: using [not] having a body as ground truth for being native
     bool is_native() const { return !body(); }

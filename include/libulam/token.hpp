@@ -23,10 +23,15 @@ tok::Type type_by_keyword(const std::string_view str);
 
 ClassKind class_kind(Type type);
 
+// TODO: shorten
+bool is_builtin_type_id(Type type);
 BuiltinTypeId builtin_type_id(Type type);
 
+bool is_type_op(Type type);
 TypeOp type_op(Type type);
 
+bool is_op(Type type);
+bool is_overloadable_op(Type type);
 Op bin_op(Type type);
 Op unary_pre_op(Type type);
 Op unary_post_op(Type type);
@@ -57,7 +62,11 @@ struct Token {
         return tok::builtin_type_id(orig_type);
     }
 
+    bool is_type_op() const { return tok::is_type_op(type); }
     TypeOp type_op() const { return tok::type_op(type); }
+
+    bool is_op() const { return tok::is_op(type); }
+    bool is_overloadable_op() const { return tok::is_overloadable_op(type); }
 
     Op bin_op() const { return tok::bin_op(type); }
     Op unary_pre_op() const { return tok::unary_pre_op(type); }

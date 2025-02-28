@@ -11,6 +11,12 @@ quark Q(B.C param1 = 0xff) {
   Int& bar(constant Int &b[1], Unsigned c = 1) {
     return a;
   }
+
+  Q operator++(Q other) {
+    Q res;
+    res.a = a + other.a;
+    return res;
+  }
 }
 
 element A {

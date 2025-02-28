@@ -45,17 +45,10 @@ Preproc& Preproc::operator>>(Token& token) {
             if (_stack.empty())
                 return *this;
             break;
-        case tok::IntT:
-        case tok::UnsignedT:
-        case tok::BoolT:
-        case tok::UnaryT:
-        case tok::BitsT:
-        case tok::AtomT:
-        case tok::VoidT:
-        case tok::StringT:
-            token.type = tok::BuiltinTypeIdent;
-            return *this;
         default:
+            if (tok::is_builtin_type_id(token.type)) {
+                token.type = tok::BuiltinTypeIdent;
+            }
             return *this;
         }
     }

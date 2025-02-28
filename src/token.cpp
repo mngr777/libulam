@@ -1,6 +1,6 @@
-#include "libulam/token.hpp"
 #include "src/detail/string.hpp"
 #include <cassert>
+#include <libulam/token.hpp>
 #include <map>
 
 namespace ulam::tok {
@@ -72,6 +72,10 @@ ClassKind class_kind(Type type) {
     }
 }
 
+bool is_builtin_type_id(Type type) {
+    return builtin_type_id(type) != NoBuiltinTypeId;
+}
+
 BuiltinTypeId builtin_type_id(Type type) {
     switch (type) {
     case IntT:
@@ -94,6 +98,8 @@ BuiltinTypeId builtin_type_id(Type type) {
         return NoBuiltinTypeId;
     }
 }
+
+bool is_type_op(Type type) { return type_op(type) != TypeOp::None; }
 
 TypeOp type_op(Type type) {
     switch (type) {
@@ -118,6 +124,15 @@ TypeOp type_op(Type type) {
     default:
         return TypeOp::None;
     }
+}
+
+bool is_op(Type type) {
+    return bin_op(type) != Op::None && unary_pre_op(type) != Op::None;
+}
+
+bool is_overloadable_op(Type type) {
+    return ops::is_overloadable(bin_op(type)) ||
+           ops::is_overloadable(unary_pre_op(type));
 }
 
 Op bin_op(Type type) {

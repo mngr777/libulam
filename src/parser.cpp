@@ -9,6 +9,7 @@
 #include <src/parser/string.hpp>
 #include <string>
 
+#define DEBUG_PARSER // TEST
 #ifdef DEBUG_PARSER
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::Parser] "
@@ -294,12 +295,24 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
         type = {};
     }
 
-    // [&] name
+    // &
     bool is_ref = parse_is_ref();
-    if (!match(tok::Ident))
+
+    // name/"operator"<op>
+    ast::Str name{};
+    tok::Type op_tok_type = tok::Eof;
+    bool is_op = _tok.is(tok::Operator);
+    if (is_op) {
+        std::tie(name, op_tok_type) = parse_op_fun_name();
+        if (name.empty())
+            return false;
+
+    } else if (match(tok::Ident)) {
+        name = tok_ast_str();
+        consume();
+    } else {
         return false;
-    auto name = tok_ast_str();
-    consume();
+    }
 
     if (_tok.is(tok::ParenL)) {
         // fun def (param list)
@@ -310,12 +323,21 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
                 make<ast::FunRetType>(std::move(type), std::move(array_dims));
         }
         ret_type->set_is_ref(is_ref);
-        auto fun = parse_fun_def_rest(std::move(ret_type), name);
+        auto fun =
+            is_op
+                ? parse_op_fun_def_rest(std::move(ret_type), name, op_tok_type)
+                : parse_fun_def_rest(std::move(ret_type), name);
         if (!fun)
             return false;
         node->add(std::move(fun));
 
     } else {
+        // force error if parsing an operator
+        if (is_op) {
+            expect(tok::ParenL);
+            return false;
+        }
+
         // var def list
         if (!type) {
             // `Type[..]` used instead of maybe `Type var[..]`
@@ -330,6 +352,30 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
         node->add(std::move(vars));
     }
     return true;
+}
+
+std::pair<ast::Str, tok::Type> Parser::parse_op_fun_name() {
+
+    auto name_loc_id = _tok.loc_id;
+    consume();
+    tok::Type op_tok_type = _tok.type;
+    if (_tok.is(tok::BracketL)) {
+        // operator[]
+        consume();
+        if (!expect(tok::BracketR))
+            return {{}, tok::Eof};
+
+        str_id_t name_id = _str_pool.put("operator[]");
+        return {{name_id, name_loc_id}, op_tok_type};
+
+    } else if (_tok.is_overloadable_op()) {
+        str_id_t name_id =
+            _str_pool.put(std::string{"operator"} + _tok.type_str());
+        consume();
+        return {{name_id, name_loc_id}, op_tok_type};
+    }
+    unexpected();
+    return {{}, tok::Eof};
 }
 
 Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
@@ -477,6 +523,28 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
 
     return tree<ast::FunDef>(
         name, std::move(ret_type), std::move(params), std::move(body));
+}
+
+Ptr<ast::FunDef> Parser::parse_op_fun_def_rest(
+    Ptr<ast::FunRetType>&& ret_type, ast::Str name, tok::Type op_tok_type) {
+    assert(tok::is_overloadable_op(op_tok_type));
+
+    auto fun = parse_fun_def_rest(std::move(ret_type), name);
+    if (!fun)
+        return fun;
+
+    Op op = Op::None;
+    if (fun->param_num() == 0) {
+        op = tok::unary_pre_op(op_tok_type);
+    } else {
+        op = tok::bin_op(op_tok_type);
+        if (op == Op::None)
+            op = tok::unary_post_op(op_tok_type);
+        // NOTE: parameter num/types to be checked later
+    }
+    assert(op != Op::None);
+    fun->set_op(op);
+    return fun;
 }
 
 Ptr<ast::Block> Parser::parse_block() {
@@ -740,8 +808,8 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec) {
     if (op != Op::None) {
         auto loc_id = _tok.loc_id;
         consume();
-        lhs = tree_loc<ast::UnaryOp>(
-            loc_id, op, parse_expr_climb(ops::prec(op)));
+        lhs =
+            tree_loc<ast::UnaryOp>(loc_id, op, parse_expr_climb(ops::prec(op)));
     } else {
         lhs = parse_expr_lhs();
     }

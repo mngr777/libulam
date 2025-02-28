@@ -115,4 +115,3 @@ TOK(nullptr, String)
 TOK(nullptr, InvalidAtKeyword)
 TOK(nullptr, UnexpectedChar)
 TOK(nullptr, Eof)
-

@@ -1,5 +1,5 @@
-#include <libulam/semantic/ops.hpp>
 #include <cassert>
+#include <libulam/semantic/ops.hpp>
 
 namespace ulam::ops {
 
@@ -13,6 +13,46 @@ const char* str(Op op) {
         assert(false);
     }
 #undef OP
+}
+
+bool is_overloadable(Op op) {
+    switch (op) {
+    case Op::Prod:
+    case Op::Quot:
+    case Op::Rem:
+    case Op::Sum:
+    case Op::Diff:
+    case Op::Less:
+    case Op::LessOrEq:
+    case Op::Greater:
+    case Op::GreaterOrEq:
+    case Op::PreInc:
+    case Op::PreDec:
+    case Op::PostInc:
+    case Op::PostDec:
+    case Op::AssignProd:
+    case Op::AssignQuot:
+    case Op::AssignRem:
+    case Op::AssignSum:
+    case Op::AssignDiff:
+    case Op::Negate:
+    case Op::And:
+    case Op::Or:
+    case Op::ShiftLeft:
+    case Op::ShiftRight:
+    case Op::BwNot:
+    case Op::BwAnd:
+    case Op::BwOr:
+    case Op::BwXor:
+    case Op::AssignShiftLeft:
+    case Op::AssignShiftRight:
+    case Op::AssignBwAnd:
+    case Op::AssignBwOr:
+    case Op::AssignBwXor:
+        return true;
+    default:
+        return false;
+    }
 }
 
 Kind kind(Op op) {

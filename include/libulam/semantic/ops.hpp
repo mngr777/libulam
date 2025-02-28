@@ -19,6 +19,8 @@ enum class Assoc { Left, Right };
 
 const char* str(Op op);
 
+bool is_overloadable(Op op);
+
 Kind kind(Op op);
 
 bool is_numeric(Op op);
