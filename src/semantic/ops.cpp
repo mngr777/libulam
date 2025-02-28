@@ -17,6 +17,7 @@ const char* str(Op op) {
 
 bool is_overloadable(Op op) {
     switch (op) {
+    case Op::ArrayAccess:
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:

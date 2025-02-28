@@ -1,4 +1,5 @@
 #include "libulam/ast/nodes/stmts.hpp"
+#include "libulam/semantic/ops.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -355,27 +356,25 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
 }
 
 std::pair<ast::Str, tok::Type> Parser::parse_op_fun_name() {
-
     auto name_loc_id = _tok.loc_id;
     consume();
     tok::Type op_tok_type = _tok.type;
-    if (_tok.is(tok::BracketL)) {
-        // operator[]
-        consume();
-        if (!expect(tok::BracketR))
-            return {{}, tok::Eof};
-
-        str_id_t name_id = _str_pool.put("operator[]");
-        return {{name_id, name_loc_id}, op_tok_type};
-
-    } else if (_tok.is_overloadable_op()) {
-        str_id_t name_id =
-            _str_pool.put(std::string{"operator"} + _tok.type_str());
-        consume();
-        return {{name_id, name_loc_id}, op_tok_type};
+    if (!_tok.is_overloadable_op()) {
+        unexpected();
+        return {{}, tok::Eof};
     }
-    unexpected();
-    return {{}, tok::Eof};
+    consume();
+
+    // [] closing bracket
+    if (op_tok_type == tok::BracketL && !expect(tok::BracketR))
+        return {{}, tok::Eof};
+
+    // make name str
+    std::string op_str{tok::type_str(op_tok_type)};
+    if (op_tok_type == tok::BracketL)
+        op_str = "[]";
+    str_id_t name_id = _str_pool.put(std::string{"operator"} + op_str);
+    return {{name_id, name_loc_id}, op_tok_type};
 }
 
 Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {

@@ -12,7 +12,9 @@ quark Q(B.C param1 = 0xff) {
     return a;
   }
 
-  Q operator++(Q other) {
+  Int operator[](Int i) { return i; }
+
+  Q operator+=(Q other) {
     Q res;
     res.a = a + other.a;
     return res;
