@@ -6,19 +6,21 @@
 
 namespace ulam {
 
-template <typename T> class _TypedValue {
-public:
-    _TypedValue(): _type{}, _value{} {}
+class Type;
 
-    _TypedValue(Ref<T> type, Value&& value):
+class TypedValue {
+public:
+    TypedValue(): _type{}, _value{} {}
+
+    TypedValue(Ref<Type> type, Value&& value):
         _type{type}, _value{std::move(value)} {}
 
-    _TypedValue(_TypedValue&&) = default;
-    _TypedValue& operator=(_TypedValue&&) = default;
+    TypedValue(TypedValue&&) = default;
+    TypedValue& operator=(TypedValue&&) = default;
 
     operator bool() { return _type; }
 
-    Ref<T> type() const { return _type; }
+    Ref<Type> type() const { return _type; }
 
     Value& value() { return _value; }
     const Value& value() const { return _value; }
@@ -32,15 +34,8 @@ public:
     std::pair<Ref<Type>, Value> move() { return {_type, move_value()}; }
 
 private:
-    Ref<T> _type;
+    Ref<Type> _type;
     Value _value;
-};
-
-class Type;
-
-class TypedValue : public _TypedValue<Type> {
-public:
-    using _TypedValue::_TypedValue;
 };
 
 using TypedValueList = std::list<TypedValue>;

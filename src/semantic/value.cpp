@@ -1,5 +1,3 @@
-#include "libulam/semantic/value/array.hpp"
-#include "libulam/semantic/value/bound.hpp"
 #include <libulam/detail/variant.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
@@ -47,7 +45,7 @@ RValue LValue::rvalue() const {
 }
 
 LValue LValue::array_access(Ref<Type> item_type, array_idx_t index) {
-    LValue lval{accept(
+    return derived(accept(
         [&](Ref<Var> var) {
             return ArrayAccess{var->array_view(), item_type, index};
         },
@@ -57,13 +55,11 @@ LValue LValue::array_access(Ref<Type> item_type, array_idx_t index) {
         [&](BoundProp& bound_prop) {
             return ArrayAccess{bound_prop.mem_array_view(), item_type, index};
         },
-        [&](auto& other) -> ArrayAccess { assert(false); })};
-    lval.set_scope_lvl(_scope_lvl);
-    return lval;
+        [&](auto& other) -> ArrayAccess { assert(false); }));
 }
 
 LValue LValue::bound_prop(Ref<Prop> prop) {
-    LValue lval{accept(
+    return derived(accept(
         [&](Ref<Var> var) { return BoundProp{var->obj_view(), prop}; },
         [&](ArrayAccess& array_access) {
             auto obj_view = array_access.item_object_view();
@@ -73,13 +69,11 @@ LValue LValue::bound_prop(Ref<Prop> prop) {
         [&](BoundProp& bound_prop) {
             return bound_prop.mem_obj_bound_prop(prop);
         },
-        [&](auto& other) -> BoundProp { assert(false); })};
-    lval.set_scope_lvl(_scope_lvl);
-    return lval;
+        [&](auto& other) -> BoundProp { assert(false); }));
 }
 
 LValue LValue::bound_fset(Ref<FunSet> fset) {
-    LValue lval{accept(
+    return derived(accept(
         [&](Ref<Var> var) { return BoundFunSet{var->obj_view(), fset}; },
         [&](ArrayAccess& array_access) {
             auto obj_view = array_access.item_object_view();
@@ -89,23 +83,21 @@ LValue LValue::bound_fset(Ref<FunSet> fset) {
         [&](BoundProp& bound_prop) {
             return bound_prop.mem_obj_bound_fset(fset);
         },
-        [&](auto& other) -> BoundFunSet { assert(false); })};
-    lval.set_scope_lvl(_scope_lvl);
-    return lval;
+        [&](auto& other) -> BoundFunSet { assert(false); }));
 }
 
 LValue LValue::bound_self() {
-    LValue lval{accept(
+    auto lval = derived(accept(
         [&](BoundFunSet& bound_fset) { return bound_fset.obj_view(); },
         [&](BoundProp& bound_prop) { return bound_prop.obj_view(); },
-        [&](auto& other) -> ObjectView { assert(false); })};
-    lval.set_scope_lvl(_scope_lvl);
+        [&](auto& other) -> ObjectView { assert(false); }));
+    lval.set_is_xvalue(false);
     return lval;
 }
 
 LValue LValue::self() {
-    LValue lval{obj_view()};
-    lval.set_scope_lvl(_scope_lvl);
+    auto lval = derived(obj_view());
+    lval.set_is_xvalue(false);
     return lval;
 }
 
@@ -184,6 +176,7 @@ LValue RValue::bound_fset(Ref<FunSet> fset) {
 LValue RValue::self() {
     LValue lval{obj_view()};
     lval.set_scope_lvl(AutoScopeLvl);
+    lval.set_is_xvalue(false);
     return lval;
 }
 

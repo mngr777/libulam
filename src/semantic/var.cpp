@@ -19,13 +19,12 @@ ObjectView Var::obj_view() {
 }
 
 LValue Var::lvalue() {
-    return _value.accept(
+    LValue lval = _value.accept(
         [&](LValue& lval) { return LValue{lval}; },
-        [&](auto& other) {
-            LValue lval(this);
-            lval.set_scope_lvl(_scope_lvl);
-            return lval;
-        });
+        [&](auto& other) { return LValue{this}; });
+    lval.set_scope_lvl(_scope_lvl);
+    lval.set_is_xvalue(false);
+    return lval;
 }
 
 RValue Var::rvalue() { return _value.copy_rvalue(); }

@@ -1,3 +1,4 @@
+#include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -267,27 +268,14 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
         diag().error(node->callable(), "is not a function");
         return {};
     }
-    auto& bound_fset = lval.get<BoundFunSet>();
-    auto self = lval.bound_self();
-    auto fset = bound_fset.mem();
 
     // eval args
-    auto [arg_list, success] = eval_args(node->args());
+    auto [args, success] = eval_args(node->args());
     if (!success)
         return {};
 
-    // find match
-    auto match_res = fset->find_match(arg_list);
-    if (match_res.size() == 1) {
-        // success, one match found
-        return funcall(node, *(match_res.begin()), self, std::move(arg_list));
-    } else if (match_res.size() == 0) {
-        diag().error(node->callable(), "no matching function found");
-    } else {
-        diag().error(node->callable(), "ambiguous funcall");
-    }
-
-    return {};
+    auto fset = lval.get<BoundFunSet>().mem();
+    return funcall(node->callable(), fset, lval.bound_self(), std::move(args));
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
@@ -345,8 +333,29 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (!array_res.ok())
         return {ExprError::Error};
 
+    // index
+    auto index = array_index(node->index());
+    if (index == UnknownArrayIdx)
+        return {ExprError::UnknownArrayIndex};
+
+    // is class?
     if (array_res.type()->actual()->is_class()) {
-        assert(false); // not implemented
+        auto cls = array_res.type()->actual()->as_class();
+        auto fset = cls->op(Op::ArrayAccess);
+        if (!fset)
+            return {ExprError::NoOperator};
+        bool is_tmp = array_res.value().is_rvalue() ||
+                      array_res.value().lvalue().is_xvalue();
+        TypedValueList args;
+        args.emplace_back(builtins().int_type(), Value{RValue{(Integer)index}});
+        ExprRes res =
+            funcall(node, fset, array_res.move_value().self(), std::move(args));
+        if (is_tmp && res.value().is_lvalue()) {
+            LValue lval = res.move_value().lvalue();
+            lval.set_is_xvalue(true);
+            return {res.type(), Value{std::move(lval)}};
+        }
+        return res;
     }
 
     // is an array?
@@ -362,10 +371,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     auto item_type = array_type->item_type();
     auto array_val = array_res.move_value();
 
-    // index
-    auto index = array_index(node->index());
-    if (index == UnknownArrayIdx)
-        return {ExprError::UnknownArrayIndex};
+    // check bounds
     if (index + 1 > array_type->array_size()) {
         diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
@@ -410,6 +416,10 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
         return {ExprError::NotLvalue};
     }
     auto lval = val.lvalue();
+    if (lval.is_xvalue()) {
+        diag().error(node, "cannot assign to xvalue");
+        return {ExprError::NotLvalue};
+    }
     auto [rval, _] = maybe_cast(node, lval.type(), std::move(tv));
     return {lval.type(), lval.assign(std::move(rval))};
 }
@@ -485,6 +495,19 @@ TypedValue ExprVisitor::do_cast(
         return {res.type()->actual()->as_prim(), res.move_value()};
     }
     assert(false);
+}
+
+ExprRes ExprVisitor::funcall(
+    Ref<ast::Expr> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
+    auto match_res = fset->find_match(args);
+    if (match_res.size() == 1) {
+        return funcall(node, *(match_res.begin()), self, std::move(args));
+    } else if (match_res.size() == 0) {
+        diag().error(node, "no matching function found");
+    } else {
+        diag().error(node, "ambiguous funcall");
+    }
+    return {};
 }
 
 ExprRes ExprVisitor::funcall(

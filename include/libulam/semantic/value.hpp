@@ -50,12 +50,24 @@ public:
 
     bool is_consteval() const { return false; } // TODO
 
+    bool is_xvalue() const { return _is_xvalue; }
+    void set_is_xvalue(bool is_xvalue) { _is_xvalue = is_xvalue; }
+
     bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
     bool has_auto_scope_lvl() const { return _scope_lvl == AutoScopeLvl; }
     scope_lvl_t scope_lvl() const { return _scope_lvl; }
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
+    template <typename T>
+    LValue derived(T&& value) {
+        LValue lval{std::forward<T>(value)};
+        lval._is_xvalue = _is_xvalue;
+        lval._scope_lvl = _scope_lvl;
+        return lval;
+    }
+
+    bool _is_xvalue{true};
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 

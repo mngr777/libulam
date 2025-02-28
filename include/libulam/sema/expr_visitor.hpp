@@ -62,9 +62,12 @@ protected:
 
     virtual ExprRes funcall(
         Ref<ast::Expr> node,
-        Ref<Fun> fun,
+        Ref<FunSet> fset,
         LValue self,
         TypedValueList&& args);
+
+    virtual ExprRes funcall(
+        Ref<ast::Expr> node, Ref<Fun> fun, LValue self, TypedValueList&& args);
 
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);

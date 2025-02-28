@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     if (case_num == 0) {
-        std::set<unsigned> skip = {82, 83, 85, 87, 88, 90 /* aref */};
+        std::set<unsigned> skip = {}; // {82, 83, 85, 87, 88, 90 /* aref */};
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(n) > 0)
                 continue;
