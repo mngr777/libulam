@@ -18,6 +18,10 @@ public:
     void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
         const override;
 
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+
+    RValue cast_to(Ref<const Type> type, RValue&& rval) override;
+
     RValue construct() const override;
 };
 

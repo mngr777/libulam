@@ -76,6 +76,7 @@ public:
     store(BitVectorView data, BitVector::size_t off, const RValue& rval) const;
 
     // canonical non-reference type, type of value
+    bool is_actual() const;
     Ref<Type> actual();
     Ref<const Type> actual() const;
 
@@ -116,6 +117,7 @@ public:
     virtual TypedValue type_op(TypeOp op);
 
     bool is_same(Ref<const Type> type) const;
+    bool is_same_actual(Ref<const Type> type) const;
 
     bool is_expl_castable_to(Ref<const Type> type) const;
     bool is_impl_castable_to(Ref<const Type> type) const;

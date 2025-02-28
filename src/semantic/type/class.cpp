@@ -170,7 +170,19 @@ void Class::store(
 // the error is to be catched when applying conversions
 
 bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
-    return !convs(type, expl).empty();
+    if (!convs(type, expl).empty())
+        return true;
+    auto actual = type->actual();
+    if (is_element() && actual->is(AtomId))
+        return true;
+    if (!actual->is_class())
+        return false;
+    auto cls = actual->as_class();
+    if (cls->is_base_of(this))
+        return true;
+    if (is_base_of(cls))
+        return expl;
+    return false;
 }
 
 bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {

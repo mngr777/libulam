@@ -46,9 +46,9 @@ check_type_match(Ref<const Type> type, const Value& val, BuiltinTypeId target) {
     return {TypeError::Incompatible};
 }
 
-TypeError check_type_match(
-    Ref<const Type> type, const Value& val, Ref<Type> target) {
-    if (type->is_same(target))
+TypeError
+check_type_match(Ref<const Type> type, const Value& val, Ref<Type> target) {
+    if (type->is_same_actual(target))
         return {TypeError::Ok};
     if (type->is_impl_castable_to(target, val))
         return {TypeError::ImplCastRequired, target};
@@ -113,8 +113,8 @@ TypeErrorPair numeric_prim_binary_op_type_check_class(
     return errors;
 }
 
-TypeErrorPair prim_binary_op_type_check(
-    Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
+TypeErrorPair
+prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
     auto r_type = r_tv.type()->actual();
     TypeErrorPair errors;
     switch (ops::kind(op)) {
@@ -142,23 +142,42 @@ TypeErrorPair prim_binary_op_type_check(
     } break;
     case ops::Kind::Bitwise: {
         errors.first = check_type_match(l_type, BitsId);
-        errors.second =
-            check_type_match(r_type, r_tv.value(), is_shift(op) ? UnsignedId : BitsId);
+        errors.second = check_type_match(
+            r_type, r_tv.value(), is_shift(op) ? UnsignedId : BitsId);
     } break;
     }
     return errors;
 }
 
-TypeErrorPair class_binary_op_type_check(
-    Op op, Ref<const Class> left, Ref<const Type> right) {
-    assert(right->actual() == right);
-    // TODO: class operators
+TypeErrorPair
+class_binary_op_type_check(Op op, Ref<Class> cls, Ref<const Type> r_type) {
+    assert(r_type->is_actual());
     TypeErrorPair errors;
-    if (op == Op::Assign && left->is_same(right))
+    if (op == Op::Assign) {
+        errors.second = check_type_match(r_type, Value{}, cls);
         return errors;
+    }
+    if (cls->has_op(op))
+        return errors;
+
     errors.first.status = TypeError::Incompatible;
     errors.second.status = TypeError::Incompatible;
     return errors;
+}
+
+TypeErrorPair
+atom_binary_op_type_check(Op op, Ref<Type> type, Ref<const Type> r_type) {
+    assert(type->is(AtomId));
+    TypeErrorPair errors;
+    switch (op) {
+    case Op::Assign:
+        errors.second = check_type_match(r_type, Value{}, type);
+        return errors;
+    default:
+        errors.first.status = TypeError::Incompatible;
+        errors.second.status = TypeError::Incompatible;
+        return errors;
+    }
 }
 
 } // namespace
@@ -197,11 +216,16 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
 
 TypeErrorPair
 binary_op_type_check(Op op, Ref<Type> l_type, const TypedValue& r_tv) {
-    if (l_type->actual()->is_prim())
-        return prim_binary_op_type_check(op, l_type->actual()->as_prim(), r_tv);
-    if (l_type->actual()->is_class())
+    auto l_actual = l_type->actual();
+    if (l_actual->is_prim())
+        return prim_binary_op_type_check(op, l_actual->as_prim(), r_tv);
+
+    if (l_actual->is_class())
         return class_binary_op_type_check(
-            op, l_type->actual()->as_class(), r_tv.type()->actual());
+            op, l_actual->as_class(), r_tv.type()->actual());
+
+    if (l_actual->is(AtomId))
+        return atom_binary_op_type_check(op, l_actual, r_tv.type());
 
     TypeErrorPair errors;
     if (op == Op::Assign && l_type->is_same(r_tv.type()))

@@ -51,6 +51,7 @@ public:
     Symbol* get(str_id_t name_id) { return _members.get(name_id); }
     const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
 
+    bool has_op(Op op) const;
     Ref<FunSet> op(Op op);
 
     Ref<Var> add_param(Ref<ast::Param> node);

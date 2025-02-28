@@ -16,6 +16,7 @@ public:
     ~Object();
 
     SPtr<Object> copy() const;
+    void cast(Ref<Type> type);
 
     ObjectView view();
     const ObjectView view() const;

@@ -33,6 +33,10 @@ void Type::store(
     assert(false);
 }
 
+bool Type::is_actual() const {
+    return actual() == this;
+}
+
 Ref<Type> Type::actual() {
     return canon()->deref();
 }
@@ -78,6 +82,10 @@ TypedValue Type::type_op(TypeOp op) {
 
 bool Type::is_same(Ref<const Type> type) const {
     return canon() == type->canon();
+}
+
+bool Type::is_same_actual(Ref<const Type> type) const {
+    return actual() == type->actual();
 }
 
 bool Type::is_expl_castable_to(Ref<const Type> type) const {

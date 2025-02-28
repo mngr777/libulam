@@ -16,6 +16,10 @@ ClassBase::ClassBase(
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
 
+bool ClassBase::has_op(Op op) const {
+    return _ops.count(op) > 0;
+}
+
 Ref<FunSet> ClassBase::op(Op op) {
     auto it = _ops.find(op);
     return (it != _ops.end()) ? ref(it->second) : Ref<FunSet>{};

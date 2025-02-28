@@ -23,6 +23,12 @@ SPtr<Object> Object::copy() const {
     return make_s<Object>(_type, bits().copy());
 }
 
+void Object::cast(Ref<Type> type) {
+    assert(type->is_object());
+    assert(_type->is_expl_castable_to(type));
+    _type = type;
+}
+
 ObjectView Object::view() { return ObjectView{_type, bits().view()}; }
 
 const ObjectView Object::view() const {
