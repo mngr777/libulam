@@ -27,6 +27,8 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     if (node->has_type_name()) {
         Resolver resolver{_program};
         auto type = resolver.resolve_type_name(node->type_name(), _scope);
+        if (!type)
+            return {ExprError::UnresolvableType};
         auto tv = type->actual()->type_op(node->op());
         if (!tv)
             return {ExprError::InvalidTypeOperator};
@@ -190,24 +192,48 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     case TypeError::ImplCastRequired:
         assert(!ops::is_inc_dec(op));
         tv = do_cast(node, error.cast_bi_type_id, std::move(tv));
-
+        break;
     case TypeError::Ok:
         break;
     }
 
-    if (tv.type()->actual()->is_prim()) {
-        tv = tv.type()->as_prim()->unary_op(op, tv.move_value().move_rvalue());
-    } else {
-        assert(false); // TODO
-    }
+    auto arg_type = tv.type()->actual();
+    if (arg_type->is_prim()) {
+        tv = arg_type->as_prim()->unary_op(op, tv.move_value().move_rvalue());
+        if (ops::is_inc_dec(op)) {
+            if (!lval.empty() && !tv.value().empty())
+                assign(node, Value{lval}, std::move(tv));
+            if (ops::is_unary_pre_op(op))
+                return {tv.type(), Value{lval}};
+        }
+        return {std::move(tv)};
 
-    if (ops::is_inc_dec(op)) {
-        if (!lval.empty() && !tv.value().empty())
-            assign(node, Value{lval}, std::move(tv));
-        if (ops::is_unary_pre_op(op))
-            return {tv.type(), Value{lval}};
+    } else if (arg_type->is_object()) {
+        if (op == Op::Is) {
+            Resolver resolver{_program};
+            auto type = resolver.resolve_type_name(node->type_name(), _scope);
+            if (!type)
+                return {ExprError::UnresolvableType};
+            type = type->canon();
+            if (!type->is_class() && !type->is(AtomId)) {
+                diag().error(node->type_name(), "not a class or Atom");
+                return {ExprError::NotObject};
+            }
+            assert(op == Op::Is);
+            assert(!tv.value().empty());
+            auto dyn_type = tv.value().obj_type()->actual();
+            bool is = dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
+            auto boolean = builtins().boolean();
+            return {boolean, Value{boolean->construct(is)}};
+
+        } else if (arg_type->is_class()) {
+            auto cls = arg_type->as_class();
+            auto fset = cls->op(op);
+            assert(fset);
+            return funcall(node, fset, tv.value().self(), {});
+        }
     }
-    return {std::move(tv)};
+    assert(false);
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
@@ -316,9 +342,10 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return {prop->type(), obj_val.bound_prop(prop)};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            auto obj_cls = obj_val.obj_cls();
-            if (fset->is_virtual() && obj_cls != cls) {
-                auto sym = obj_cls->get(name.str_id());
+            auto dyn_cls = obj_val.obj_type()->actual()->as_class();
+            assert(dyn_cls);
+            if (fset->is_virtual() && dyn_cls != cls) {
+                auto sym = dyn_cls->get(name.str_id());
                 if (sym->is<FunSet>())
                     fset = sym->get<FunSet>();
             }
@@ -479,8 +506,7 @@ TypedValue ExprVisitor::do_cast(
     auto actual = tv.type()->actual();
     assert(actual->is_expl_castable_to(builtin_type_id));
     if (actual->is_prim()) {
-        assert(tv.type()->actual()->is_prim());
-        return tv.type()->actual()->as_prim()->cast_to(
+        return actual->as_prim()->cast_to(
             builtin_type_id, tv.move_value().move_rvalue());
 
     } else if (actual->is_class()) {
@@ -494,9 +520,9 @@ TypedValue ExprVisitor::do_cast(
             return {}; // ??
         }
         assert(res.type()->is_prim());
-        if (!res.type()->actual()->as_prim()->is(builtin_type_id))
+        if (!res.type()->as_prim()->is(builtin_type_id))
             return do_cast(node, builtin_type_id, res.move_typed_value());
-        return {res.type()->actual()->as_prim(), res.move_value()};
+        return {res.type()->as_prim(), res.move_value()};
     }
     assert(false);
 }

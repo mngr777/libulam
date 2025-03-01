@@ -10,12 +10,7 @@ bitsize_t VarBase::bitsize() const {
     return _type->bitsize();
 }
 
-Ref<Type> VarBase::type() {
-    assert(_type);
-    return _type;
-}
-
-Ref<const Type> VarBase::type() const {
+Ref<Type> VarBase::type() const {
     assert(_type);
     return _type;
 }

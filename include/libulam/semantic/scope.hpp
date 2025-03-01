@@ -136,9 +136,9 @@ private:
  we cannot incrementally resolve class members by alterating between
  classes without skipping members.
 
-Here a scope version is associated with each  scope object (`ScopeObject`),
-so a scope state at the point of definition can  be later restored from any
-point, which allows to resolve dependencies recursively.
+ A scope version is associated with each scope object (`Decl`),
+ so a scope state at the point of definition can be later restored from any
+ point, which allows to resolve dependencies recursively.
 */
 
 class PersScopeIterator;

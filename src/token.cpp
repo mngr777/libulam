@@ -1,3 +1,4 @@
+#include "libulam/semantic/ops.hpp"
 #include "src/detail/string.hpp"
 #include <cassert>
 #include <libulam/token.hpp>
@@ -127,18 +128,18 @@ TypeOp type_op(Type type) {
 }
 
 bool is_op(Type type) {
-    return bin_op(type) != Op::None && unary_pre_op(type) != Op::None;
+    return bin_op(type) != Op::None || unary_pre_op(type) != Op::None ||
+           unary_post_op(type) != Op::None;
 }
 
 bool is_overloadable_op(Type type) {
     return ops::is_overloadable(bin_op(type)) ||
-           ops::is_overloadable(unary_pre_op(type));
+           ops::is_overloadable(unary_pre_op(type)) ||
+           ops::is_overloadable(unary_post_op(type));
 }
 
 Op bin_op(Type type) {
     switch (type) {
-    case Is:
-        return Op::Is;
     case ParenL:
         return Op::FunCall;
     case BracketL:
@@ -233,6 +234,8 @@ Op unary_post_op(Type type) {
         return Op::PostInc;
     case MinusMinus:
         return Op::PostDec;
+    case Is:
+        return Op::Is;
     default:
         return Op::None;
     }

@@ -12,7 +12,7 @@ enum class Op {
 
 namespace ops {
 
-enum class Kind { Assign, Equality, Numeric, Logical, Bitwise };
+enum class Kind { Assign, Equality, Numeric, Logical, Bitwise, Objective };
 
 using Prec = std::int8_t;
 

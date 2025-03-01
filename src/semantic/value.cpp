@@ -2,6 +2,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/semantic/var.hpp>
 
@@ -9,19 +10,14 @@ namespace ulam {
 
 // LValue
 
-Ref<Type> LValue::type() {
+Ref<Type> LValue::type() const {
     return accept(
-        [&](Ref<Var> var) { return var->type(); },
-        [&](ArrayAccess& array_access) { return array_access.type(); },
-        [&](ObjectView& obj_view) -> Ref<Type> { return obj_view.type(); },
-        [&](BoundProp& bound_prop) { return bound_prop.mem()->type(); },
-        [&](auto& other) -> Ref<Type> { assert(false); });
-}
-
-Ref<Class> LValue::obj_cls() {
-    auto type_ = type();
-    assert(type_->is_class());
-    return type_->as_class();
+        [&](Ref<const Var> var) { return var->type(); },
+        [&](const ArrayAccess& array_access) { return array_access.type(); },
+        [&](const ObjectView& obj_view) { return obj_view.type(); },
+        [&](const BoundProp& bound_prop) { return bound_prop.mem()->type(); },
+        [&](const BoundFunSet& bound_fset) -> Ref<Type> { assert(false); },
+        [&](const std::monostate&) -> Ref<Type> { assert(false); });
 }
 
 ObjectView LValue::obj_view() {
@@ -32,16 +28,18 @@ ObjectView LValue::obj_view() {
         },
         [&](ObjectView& obj_view) { return ObjectView{obj_view}; },
         [&](BoundProp& bound_prop) { return bound_prop.mem_obj_view(); },
-        [&](auto& other) -> ObjectView { assert(false); });
+        [&](BoundFunSet&) -> ObjectView { assert(false); },
+        [&](std::monostate&) -> ObjectView { assert(false); });
 }
 
 RValue LValue::rvalue() const {
     return accept(
-        [&](Ref<Var> var) { return var->rvalue(); },
+        [&](Ref<const Var> var) { return var->rvalue(); },
         [&](const ArrayAccess& array_access) { return array_access.load(); },
         [&](const ObjectView& obj_view) { return RValue{obj_view.copy()}; },
         [&](const BoundProp& bound_prop) { return bound_prop.load(); },
-        [&](auto&) -> RValue { assert(false); });
+        [&](const BoundFunSet&) -> RValue { assert(false); },
+        [&](const std::monostate&) -> RValue { assert(false); });
 }
 
 LValue LValue::array_access(Ref<Type> item_type, array_idx_t index) {
@@ -132,10 +130,10 @@ RValue RValue::copy() const {
         [&](auto value) { return RValue{value, is_consteval()}; });
 }
 
-Ref<Class> RValue::obj_cls() {
+Ref<Type> RValue::obj_type() const {
     return accept(
-        [&](SPtr<Object> obj) { return obj->cls(); },
-        [&](auto& other) -> Ref<Class> { assert(false); });
+        [&](SPtr<Object> obj) { return obj->type(); },
+        [&](auto& other) -> Ref<Type> { assert(false); });
 }
 
 ObjectView RValue::obj_view() {
@@ -186,50 +184,37 @@ bool Value::empty() const {
     return accept([&](auto& val) { return val.empty(); });
 }
 
-Ref<Class> Value::obj_cls() {
+Ref<Type> Value::obj_type() const {
     return accept(
-        [&](LValue& lval) { return lval.obj_cls(); },
-        [&](RValue& rval) { return rval.obj_cls(); },
-        [&](auto& other) -> Ref<Class> { assert(false); });
+        [&](const LValue& lval) {
+            auto type = lval.type();
+            return type->canon()->is_object() ? type : Ref<Type>{};
+        },
+        [&](const RValue& rval) {
+            return rval.is<SPtr<Object>>() ? rval.get<SPtr<Object>>()->type()
+                                           : Ref<Type>{};
+        });
 }
 
 ObjectView Value::obj_view() {
-    return accept(
-        [&](LValue& lval) { return lval.obj_view(); },
-        [&](RValue& rval) { return rval.obj_view(); },
-        [&](auto& other) -> ObjectView { assert(false); });
+    return accept([&](auto& val) { return val.obj_view(); });
 }
 
 Value Value::array_access(Ref<Type> item_type, array_idx_t index) {
     return accept(
-        [&](LValue& lval) {
-            return Value{lval.array_access(item_type, index)};
-        },
-        [&](RValue& rval) {
-            return Value{rval.array_access(item_type, index)};
-        },
-        [&](auto& other) -> Value { assert(false); });
+        [&](auto& val) { return Value{val.array_access(item_type, index)}; });
 }
 
 Value Value::bound_prop(Ref<Prop> prop) {
-    return accept(
-        [&](LValue& lval) { return Value{lval.bound_prop(prop)}; },
-        [&](RValue& rval) { return Value{rval.bound_prop(prop)}; },
-        [&](auto& other) -> Value { assert(false); });
+    return accept([&](auto& val) { return Value{val.bound_prop(prop)}; });
 }
 
 Value Value::bound_fset(Ref<FunSet> fset) {
-    return accept(
-        [&](LValue& lval) { return Value{lval.bound_fset(fset)}; },
-        [&](RValue& rval) { return Value{rval.bound_fset(fset)}; },
-        [&](auto& other) -> Value { assert(false); });
+    return accept([&](auto& val) { return Value{val.bound_fset(fset)}; });
 }
 
 LValue Value::self() {
-    return accept(
-        [&](LValue& lval) { return lval.self(); },
-        [&](RValue& rval) { return rval.self(); },
-        [&](auto& other) -> LValue { assert(false); });
+    return accept([&](auto& val) { return val.self(); });
 }
 
 RValue Value::copy_rvalue() const {
@@ -246,15 +231,11 @@ RValue Value::move_rvalue() {
             RValue res{};
             std::swap(res, rval);
             return res;
-        },
-        [&](const std::monostate& val) { return RValue{}; });
+        });
 }
 
 bool Value::is_consteval() const {
-    return accept(
-        [&](const LValue& lval) { return lval.is_consteval(); },
-        [&](const RValue& rval) { return rval.is_consteval(); },
-        [&](const std::monostate& val) { return false; });
+    return accept([&](const auto& val) { return val.is_consteval(); });
 }
 
 void Value::with_rvalue(std::function<void(const RValue&)> cb) const {
@@ -264,11 +245,7 @@ void Value::with_rvalue(std::function<void(const RValue&)> cb) const {
             auto rval = lval.rvalue();
             cb(rval);
         },
-        [&](const RValue& rval) { cb(rval); },
-        [&](const std::monostate&) {
-            RValue rval;
-            cb(rval);
-        });
+        [&](const RValue& rval) { cb(rval); });
 }
 
 } // namespace ulam

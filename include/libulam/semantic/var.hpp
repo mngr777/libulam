@@ -27,7 +27,7 @@ public:
     ObjectView obj_view();
 
     LValue lvalue();
-    RValue rvalue();
+    RValue rvalue() const;
 
     bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
     scope_lvl_t scope_lvl() const { return _scope_lvl; }

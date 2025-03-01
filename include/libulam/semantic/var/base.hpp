@@ -35,8 +35,7 @@ public:
     Ref<ast::VarDecl> node() { return _node; }
 
     bool has_type() const { return _type; }
-    Ref<Type> type();
-    Ref<const Type> type() const;
+    Ref<Type> type() const;
     void set_type(Ref<Type> type);
 
     bool is(Flag flags) const { return (_flags & flags) == flags; }

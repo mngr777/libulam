@@ -118,6 +118,8 @@ Kind kind(Op op) {
     case Op::AssignBwXor:
     case Op::AssignBwOr:
         return Kind::Bitwise;
+    case Op::Is:
+        return Kind::Objective;
     default:
         assert(false);
     }
@@ -198,6 +200,7 @@ bool is_unary_post_op(Op op) {
     switch (op) {
     case Op::PostInc:
     case Op::PostDec:
+    case Op::Is:
         return true;
     default:
         return false;

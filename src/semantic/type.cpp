@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>

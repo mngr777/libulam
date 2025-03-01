@@ -28,15 +28,14 @@ class LValue : public detail::NullableVariant<
                    Ref<Var>,
                    ArrayAccess,
                    ObjectView,
-                   BoundFunSet,
-                   BoundProp> {
+                   BoundProp,
+                   BoundFunSet> {
 public:
     using Variant::Variant;
 
     RValue rvalue() const;
 
-    Ref<Type> type();
-    Ref<Class> obj_cls();
+    Ref<Type> type() const;
     ObjectView obj_view();
 
     LValue array_access(Ref<Type> item_type, array_idx_t index);
@@ -59,8 +58,7 @@ public:
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
-    template <typename T>
-    LValue derived(T&& value) {
+    template <typename T> LValue derived(T&& value) {
         LValue lval{std::forward<T>(value)};
         lval._is_xvalue = _is_xvalue;
         lval._scope_lvl = _scope_lvl;
@@ -90,7 +88,7 @@ public:
 
     RValue copy() const;
 
-    Ref<Class> obj_cls();
+    Ref<Type> obj_type() const;
     ObjectView obj_view();
 
     RValue array_access(Ref<Type> item_type, array_idx_t index);
@@ -129,7 +127,7 @@ public:
     RValue& rvalue() { return get<RValue>(); }
     const RValue& rvalue() const { return get<RValue>(); }
 
-    Ref<Class> obj_cls();
+    Ref<Type> obj_type() const;
     ObjectView obj_view();
 
     Value array_access(Ref<Type> item_type, array_idx_t index);

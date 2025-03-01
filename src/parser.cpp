@@ -835,7 +835,13 @@ Parser::parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec) {
             if (op == Op::None || ops::prec(op) < min_prec)
                 break;
             consume();
-            lhs = tree<ast::UnaryOp>(op, std::move(lhs));
+            Ptr<ast::TypeName> type_name{};
+            if (op == Op::Is) {
+                type_name = parse_type_name();
+                if (!type_name)
+                    return {};
+            }
+            lhs = tree<ast::UnaryOp>(op, std::move(lhs), std::move(type_name));
             continue;
         }
         switch (op) {

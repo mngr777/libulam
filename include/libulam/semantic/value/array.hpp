@@ -33,8 +33,6 @@ public:
     ArrayView();
 };
 
-// TODO: operator[]
-
 class ArrayAccess {
 public:
     explicit ArrayAccess(
@@ -42,8 +40,7 @@ public:
     explicit ArrayAccess(Array& array, Ref<Type> type, array_idx_t index):
         ArrayAccess{array.view(), type, index} {}
 
-    Ref<Type> type() { return _type; }
-    Ref<const Type> type() const { return _type; }
+    Ref<Type> type() const { return _type; }
 
     array_idx_t index() const { return _index; }
 

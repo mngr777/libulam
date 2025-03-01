@@ -145,6 +145,9 @@ prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
         errors.second = check_type_match(
             r_type, r_tv.value(), is_shift(op) ? UnsignedId : BitsId);
     } break;
+    default:
+        errors.first = {TypeError::Incompatible};
+        errors.second = {TypeError::Incompatible};
     }
     return errors;
 }
@@ -209,6 +212,10 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
         return check_type_match(type, BitsId);
     case ops::Kind::Logical:
         return check_type_match(type, BoolId);
+    case ops::Kind::Objective:
+        if (!type->canon()->is_object())
+            return {TypeError::Incompatible};
+        return {};
     default:
         assert(false);
     }

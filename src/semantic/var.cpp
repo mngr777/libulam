@@ -27,6 +27,6 @@ LValue Var::lvalue() {
     return lval;
 }
 
-RValue Var::rvalue() { return _value.copy_rvalue(); }
+RValue Var::rvalue() const { return _value.copy_rvalue(); }
 
 } // namespace ulam
