@@ -63,7 +63,7 @@ private:
     Ptr<ast::Block> parse_block();
     void parse_as_block(Ref<ast::Block> node, bool implicit_braces = false);
     Ptr<ast::Stmt> parse_stmt();
-    Ptr<ast::If> parse_if();
+    Ptr<ast::Stmt> parse_if_or_as_if();
     Ptr<ast::For> parse_for();
     Ptr<ast::While> parse_while();
     Ptr<ast::Return> parse_return();

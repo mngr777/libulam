@@ -36,6 +36,7 @@ public:
     operator bool() const;
 
     SPtr<Object> copy() const;
+    void cast(Ref<Type> type);
 
     Ref<Type> type() const { return _type; }
     Ref<Class> cls() const;

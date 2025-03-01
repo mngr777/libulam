@@ -253,8 +253,32 @@ void Printer::visit(ulam::Ref<ulam::ast::Block> node) {
 void Printer::visit(ulam::Ref<ulam::ast::EmptyStmt> node) { _os << ";"; }
 
 void Printer::visit(ulam::Ref<ulam::ast::If> node) {
+    assert(node->has_cond());
+    assert(node->has_if_branch());
     _os << "if (";
     accept_me(node->cond());
+    _os << ")";
+    if (node->has_if_branch()) {
+        _os << " ";
+        accept_me(node->if_branch());
+    } else {
+        _os << ";";
+    }
+    if (node->has_else_branch()) {
+        _os << nl();
+        indent() << "else ";
+        accept_me(node->else_branch());
+    }
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::IfAs> node) {
+    assert(node->has_ident());
+    assert(node->has_type_name());
+    assert(node->has_if_branch());
+    _os << "if (";
+    accept_me(node->ident());
+    _os << " ";
+    accept_me(node->type_name());
     _os << ")";
     if (node->has_if_branch()) {
         _os << " ";

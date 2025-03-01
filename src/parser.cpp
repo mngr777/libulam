@@ -600,7 +600,7 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         consume();
         return parse_var_def_list(true);
     case tok::If:
-        return parse_if();
+        return parse_if_or_as_if();
     case tok::For:
         return parse_for();
     case tok::While:
@@ -626,13 +626,32 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
     }
 }
 
-Ptr<ast::If> Parser::parse_if() {
+Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
     assert(_tok.is(tok::If));
     // if
+    auto loc_id = _tok.loc_id;
     consume();
-    // (cond)
+    // (expr
     expect(tok::ParenL);
-    auto cond = parse_expr();
+    Ptr<ast::Expr> expr{};
+    Ptr<ast::Ident> ident{};
+    Ptr<ast::TypeName> type{};
+    if (_tok.is(tok::Ident)) {
+        ident = parse_ident();
+        if (_tok.is(tok::As)) {
+            consume();
+            // if (ident as Type
+            type = parse_type_name();
+            if (!type)
+                return {};
+        } else {
+            // if (expr
+            expr = parse_expr_climb_rest(std::move(ident), 0);
+        }
+    } else {
+        expr = parse_expr();
+    }
+    // )
     if (!expect(tok::ParenR)) {
         panic(tok::ParenR, tok::BraceL);
         consume_if(tok::ParenR);
@@ -645,8 +664,14 @@ Ptr<ast::If> Parser::parse_if() {
         consume();
         else_branch = parse_stmt();
     }
-    return tree<ast::If>(
-        std::move(cond), std::move(if_branch), std::move(else_branch));
+    if (type) {
+        assert(ident);
+        return tree_loc<ast::IfAs>(
+            loc_id, std::move(ident), std::move(type), std::move(if_branch),
+            std::move(else_branch));
+    }
+    return tree_loc<ast::If>(
+        loc_id, std::move(expr), std::move(if_branch), std::move(else_branch));
 }
 
 Ptr<ast::For> Parser::parse_for() {

@@ -4,6 +4,7 @@
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/expr_visitor.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/flags.hpp>
@@ -86,14 +87,62 @@ void EvalVisitor::visit(Ref<ast::FunDefBody> node) {
 void EvalVisitor::visit(Ref<ast::If> node) {
     debug() << __FUNCTION__ << " If\n";
     assert(node->has_cond());
+    assert(node->has_if_branch());
+
     if (eval_cond(node->cond())) {
         // if-branch
-        if (node->has_if_branch())
-            node->if_branch()->accept(*this);
+        node->if_branch()->accept(*this);
     } else {
         // else-branch
         if (node->has_else_branch())
             node->else_branch()->accept(*this);
+    }
+}
+
+void EvalVisitor::visit(Ref<ast::IfAs> node) {
+    debug() << __FUNCTION__ << " IfAs\n";
+    assert(node->has_ident());
+    assert(node->has_type_name());
+    assert(node->has_if_branch());
+
+    // eval ident
+    EvalExprVisitor ev{*this, scope()};
+    ExprRes res = node->ident()->accept(ev);
+    if (!res)
+        throw std::exception();
+    auto arg_type = res.type()->actual();
+    if (!arg_type->is_object()) {
+        diag().error(node->ident(), "not a class or Atom");
+        throw std::exception();
+    }
+
+    // resolve type
+    Resolver resolver{_program};
+    auto type = resolver.resolve_type_name(node->type_name(), scope());
+    if (!type)
+        throw std::exception();
+    type = type->canon();
+    if (!type->is_object()) {
+        diag().error(node->type_name(), "not a class or Atom");
+        throw std::exception();
+    }
+
+    assert(!res.value().empty());
+    auto dyn_type = res.value().obj_type()->actual();
+    if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
+        auto val = res.move_value();
+        auto obj_view = val.obj_view();
+        obj_view.cast(type);
+        auto def = make<ast::VarDef>(node->ident()->name());
+        auto var = make<Var>(node->type_name(), ref(def), TypedValue{type, Value{LValue{obj_view}}});
+        var->set_type(type);
+        var->set_scope_lvl(_scope_stack.size());
+        scope()->set(var->name_id(), std::move(var));
+
+        node->if_branch()->accept(*this);
+
+    } else if (node->has_else_branch()) {
+        node->else_branch()->accept(*this);
     }
 }
 
@@ -194,8 +243,7 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
-ExprRes
-EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
+ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
     assert(fun->params().size() == args.size());
 

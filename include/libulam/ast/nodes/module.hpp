@@ -158,6 +158,7 @@ class VarDef : public VarDecl {
 public:
     VarDef(Str name, Ptr<ExprList>&& array_dims, Ptr<Expr>&& expr):
         VarDecl{name, std::move(array_dims), std::move(expr)} {}
+    VarDef(Str name): VarDef{name, Ptr<ExprList>{}, Ptr<Expr>{}} {}
 };
 
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {

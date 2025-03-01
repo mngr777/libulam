@@ -49,6 +49,12 @@ SPtr<Object> ObjectView::copy() const {
     return make_s<Object>(_type, bits().copy());
 }
 
+void ObjectView::cast(Ref<Type> type) {
+    assert(type->is_object());
+    assert(_type->is_expl_castable_to(type));
+    _type = type;
+}
+
 ObjectView::operator bool() const {
     assert((bool)_type == (bits().len() == 0));
     return _type;

@@ -24,6 +24,7 @@ public:
     void visit(Ref<ast::Block> node) override;
     void visit(Ref<ast::FunDefBody>) override;
     void visit(Ref<ast::If> node) override;
+    void visit(Ref<ast::IfAs> node) override;
     void visit(Ref<ast::For> node) override;
     void visit(Ref<ast::While> node) override;
     void visit(Ref<ast::Return> node) override;
