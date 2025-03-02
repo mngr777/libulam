@@ -4,7 +4,8 @@
 #include <limits>
 
 // NOTE: keeping it simple for now
-// TODO: (maybe) optimize, see MFM::Bits impl, use variant<uint32_t,vector>
+// TODO: (maybe) optimize, see MFM::BitVector impl, use
+// variant<uint32_t,vector>, use small vector
 // TODO: naming: size/len, capitalize consts
 
 namespace ulam {

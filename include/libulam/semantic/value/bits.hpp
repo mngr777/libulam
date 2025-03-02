@@ -5,7 +5,7 @@
 
 namespace ulam {
 
-// Dynamically-sized simple version of MFM::Bits
+// Dynamically-sized simple version of MFM::BitVector
 
 class _Bits {
 public:
