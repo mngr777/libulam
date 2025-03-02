@@ -58,6 +58,8 @@ public:
 
     bool is_base_of(Ref<const Class> other) const;
 
+    bitsize_t base_off(Ref<const Class> base) const;
+
     auto& parents() { return _ancestry.parents(); }
     const auto& parents() const { return _ancestry.parents(); }
 

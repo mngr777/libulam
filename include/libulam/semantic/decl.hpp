@@ -23,8 +23,7 @@ public:
     bool state_is(State state) const { return _state == state; }
 
     bool has_cls() const;
-    Ref<Class> cls();
-    Ref<const Class> cls() const;
+    Ref<Class> cls() const;
     void set_cls(Ref<Class> cls);
 
     State state() const { return _state; }

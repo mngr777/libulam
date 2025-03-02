@@ -19,31 +19,21 @@ RValue Type::load(const Bits& data, bitsize_t off) const {
     return load(data.view(), off);
 }
 
-void Type::store(
-    Bits& data, bitsize_t off, const RValue& rval) const {
+void Type::store(Bits& data, bitsize_t off, const RValue& rval) const {
     store(data.view(), off, rval);
 }
 
-RValue Type::load(const BitsView data, bitsize_t off) const {
+RValue Type::load(const BitsView data, bitsize_t off) const { assert(false); }
+
+void Type::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(false);
 }
 
-void Type::store(
-    BitsView data, bitsize_t off, const RValue& rval) const {
-    assert(false);
-}
+bool Type::is_actual() const { return actual() == this; }
 
-bool Type::is_actual() const {
-    return actual() == this;
-}
+Ref<Type> Type::actual() { return canon()->deref(); }
 
-Ref<Type> Type::actual() {
-    return canon()->deref();
-}
-
-Ref<const Type> Type::actual() const {
-    return canon()->deref();
-}
+Ref<const Type> Type::actual() const { return canon()->deref(); }
 
 bool Type::is_canon() const { return canon() == this; }
 
@@ -52,7 +42,11 @@ bool Type::is(BuiltinTypeId id) const {
     return bi_type_id() == id;
 }
 
-bool Type::is_object() const { return is_class() || is(AtomId); }
+bool Type::is_object() const { return is(AtomId) || is_class(); }
+
+bool Type::is_atom() const {
+    return is(AtomId) || (is_class() && as_class()->is_element());
+}
 
 Ref<ArrayType> Type::array_type(array_size_t size) {
     auto it = _array_types.find(size);
@@ -231,8 +225,7 @@ RValue ArrayType::load(const BitsView data, bitsize_t off) const {
     return RValue{std::move(array)};
 }
 
-void ArrayType::store(
-    BitsView data, bitsize_t off, const RValue& rval) const {
+void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<Array>());
     data.write(off, rval.get<Array>().bits().view());
 }
@@ -242,6 +235,11 @@ void ArrayType::set_canon(Ref<ArrayType> canon) {
     assert(canon->item_type() == item_type()->canon());
     assert(canon->array_size() == array_size());
     _canon = canon;
+}
+
+bitsize_t ArrayType::item_off(array_idx_t idx) const {
+    assert(idx < _array_size);
+    return item_type()->bitsize() * idx;
 }
 
 // RefType

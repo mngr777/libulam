@@ -11,7 +11,6 @@
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
-#include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -130,6 +129,11 @@ bool Class::resolve(sema::Resolver& resolver) {
 
 bool Class::is_base_of(Ref<const Class> other) const {
     return other->_ancestry.is_base(this);
+}
+
+bitsize_t Class::base_off(Ref<const Class> base) const {
+    assert(base->is_base_of(this));
+    return _ancestry.data_off(base);
 }
 
 bitsize_t Class::bitsize() const {
@@ -332,9 +336,7 @@ void Class::merge_fsets() {
 }
 
 void Class::init_layout() {
-    cls::data_off_t off = 0;
-
-    // properties
+    bitsize_t off = 0;
     for (auto prop : props()) {
         prop->set_data_off(off);
         if (kind() == ClassKind::Union) {
@@ -343,8 +345,6 @@ void Class::init_layout() {
             off += prop->bitsize();
         }
     }
-
-    // TODO: ancestors
 }
 
 } // namespace ulam

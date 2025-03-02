@@ -27,4 +27,9 @@ bool Ancestry::is_base(Ref<const Class> cls) const {
     return _map.count(cls->id()) == 1;
 }
 
+bitsize_t Ancestry::data_off(Ref<const Class> cls) const {
+    assert(is_base(cls));
+    return _map.at(cls->id())->data_off();
+}
+
 } // namespace ulam::cls

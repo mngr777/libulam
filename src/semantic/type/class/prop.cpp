@@ -29,12 +29,19 @@ void Prop::store(ObjectView obj_view, const RValue& rval) {
     type()->canon()->store(obj_view.bits(), data_off(), rval);
 }
 
-cls::data_off_t Prop::data_off() const {
+bitsize_t Prop::data_off_in(Ref<Class> derived) const {
+    auto off = data_off();
+    if (derived != cls())
+        off += derived->base_off(cls());
+    return off;
+}
+
+bitsize_t Prop::data_off() const {
     assert(has_data_off());
     return _data_off;
 }
 
-void Prop::set_data_off(cls::data_off_t off) {
+void Prop::set_data_off(bitsize_t off) {
     assert(!has_data_off());
     _data_off = off;
 }

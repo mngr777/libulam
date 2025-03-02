@@ -7,14 +7,11 @@ bool Decl::has_cls() const {
     return _cls;
 }
 
-Ref<Class> Decl::cls() {
+Ref<Class> Decl::cls() const {
     assert(_cls);
     return _cls;
 }
-Ref<const Class> Decl::cls() const {
-    assert(_cls);
-    return _cls;
-}
+
 void Decl::set_cls(Ref<Class> cls) {
     assert(!_cls);
     assert(cls);

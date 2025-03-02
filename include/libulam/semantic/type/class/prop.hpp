@@ -1,10 +1,12 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/type/class/layout.hpp>
 #include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <libulam/semantic/var/base.hpp>
 
 namespace ulam {
+
+class Class;
 
 class Prop : public VarBase {
 public:
@@ -16,12 +18,14 @@ public:
     RValue load(const ObjectView obj_view) const;
     void store(ObjectView obj_view, const RValue& rval);
 
-    bool has_data_off() const { return _data_off != cls::NoDataOff; }
-    cls::data_off_t data_off() const;
-    void set_data_off(cls::data_off_t off);
+    bitsize_t data_off_in(Ref<Class> derived) const;
+
+    bool has_data_off() const { return _data_off != NoBitsize; }
+    bitsize_t data_off() const;
+    void set_data_off(bitsize_t off);
 
 private:
-    cls::data_off_t _data_off{cls::NoDataOff};
+    bitsize_t _data_off{NoBitsize};
 };
 
 } // namespace ulam

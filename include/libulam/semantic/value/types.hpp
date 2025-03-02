@@ -9,7 +9,7 @@
 namespace ulam {
 
 using bitsize_t = std::uint16_t;
-constexpr bitsize_t NoBitsize = 0;
+constexpr bitsize_t NoBitsize = -1;
 
 using array_idx_t = std::uint16_t;
 constexpr array_idx_t UnknownArrayIdx = -1;

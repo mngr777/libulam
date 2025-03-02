@@ -68,12 +68,10 @@ public:
     virtual RValue construct() const;
 
     RValue load(const Bits& data, bitsize_t off) const;
-    void
-    store(Bits& data, bitsize_t off, const RValue& rval) const;
+    void store(Bits& data, bitsize_t off, const RValue& rval) const;
 
     virtual RValue load(const BitsView data, bitsize_t off) const;
-    virtual void
-    store(BitsView data, bitsize_t off, const RValue& rval) const;
+    virtual void store(BitsView data, bitsize_t off, const RValue& rval) const;
 
     // canonical non-reference type, type of value
     bool is_actual() const;
@@ -89,6 +87,7 @@ public:
     virtual BuiltinTypeId bi_type_id() const { return NoBuiltinTypeId; }
 
     bool is_object() const;
+    bool is_atom() const;
 
     bool is_prim() const { return as_prim(); }
     bool is_class() const { return as_class(); }
@@ -233,8 +232,7 @@ public:
     RValue construct() const override;
 
     RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval)
-        const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
 
     Ref<ArrayType> as_array() override { return this; }
     Ref<const ArrayType> as_array() const override { return this; }
@@ -246,6 +244,8 @@ public:
     Ref<const Type> item_type() const { return _item_type; }
 
     array_size_t array_size() const { return _array_size; }
+
+    bitsize_t item_off(array_idx_t idx) const;
 
 private:
     void set_canon(Ref<ArrayType> canon);
