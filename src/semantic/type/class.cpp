@@ -10,11 +10,13 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 #define DEBUG_CLASS // TEST
@@ -83,6 +85,7 @@ Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto prop = ClassBase::add_prop(type_node, node);
     prop->set_cls(this);
     _props.push_back(prop);
+    _all_props.push_back(prop);
     return prop;
 }
 
@@ -156,20 +159,19 @@ bitsize_t Class::direct_bitsize() const {
 }
 
 RValue Class::construct() const {
-    // TODO
-    return RValue{make_s<Object>(const_cast<Class*>(this))};
+    // TMP?: const cast hack
+    return RValue{make_s<Data>(const_cast<Class*>(this))};
 }
 
 RValue Class::load(const BitsView data, bitsize_t off) const {
-    // TMP: const cast hack
-    return RValue{make_s<Object>(
+    // TMP?: const cast hack
+    return RValue{make_s<Data>(
         const_cast<Class*>(this), data.view(off, bitsize()).copy())};
 }
 
-void Class::store(
-    BitsView data, bitsize_t off, const RValue& rval) const {
-    assert(rval.is<SPtr<Object>>());
-    data.write(off, rval.get<SPtr<Object>>()->bits().view());
+void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
+    assert(rval.is<DataPtr>());
+    data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
 // NOTE: for ambiguous conversion truth is returned,
@@ -178,21 +180,51 @@ void Class::store(
 bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
     if (!convs(type, expl).empty())
         return true;
-    auto actual = type->actual();
-    if (is_element() && actual->is(AtomId))
-        return true;
-    if (!actual->is_class())
-        return false;
-    auto cls = actual->as_class();
-    if (cls->is_base_of(this))
-        return true;
-    if (is_base_of(cls))
-        return expl;
-    return false;
+    return is_castable_to_object_type(type);
 }
 
 bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
     return !convs(bi_type_id, expl).empty();
+}
+
+bool Class::is_castable_to_object_type(Ref<const Type> type) const {
+    type = type->canon();
+    assert(type->is_object());
+
+    // to Atom
+    if (type->is(AtomId))
+        return is_element();
+
+    // to base class
+    assert(type->is_class());
+    auto cls = type->as_class();
+    return cls->is_base_of(this);
+}
+
+RValue Class::cast_to_object_type(Ref<const Type> type, RValue&& rval) const {
+    assert(rval.is<DataPtr>());
+    auto obj = rval.get<DataPtr>();
+    assert(obj->type()->is_same(this));
+    assert(is_castable_to_object_type(type));
+
+    // ?? move bits?
+
+    // to Atom
+    if (type->is(AtomId)) {
+        // TODO
+        auto val = const_cast<Class*>(this)->builtins().atom_type()->construct(
+            obj->bits().copy());
+        return RValue{std::move(val)};
+    }
+
+    // to base class
+    assert(type->is_class());
+    auto cls = type->as_class();
+    auto new_rval = cls->construct();
+    auto new_obj = new_rval.get<DataPtr>();
+    for (auto prop : cls->all_props())
+        prop->store(new_obj, prop->load(obj));
+    return new_rval;
 }
 
 conv_cost_t Class::conv_cost(Ref<const Type> type, bool allow_cast) const {
@@ -314,10 +346,16 @@ bool Class::resolve_members(sema::Resolver& resolver) {
 void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
     if (!_ancestry.add(cls, node))
         return;
+
+    // import symbols
     for (auto& [name_id, sym] : cls->members()) {
         if (!sym.is<FunSet>()) // handled separately, see Class::merge_fsets
             members().import_sym(name_id, sym);
     }
+
+    // add inherited properties
+    for (auto prop : cls->all_props())
+        _all_props.push_back(prop);
 }
 
 void Class::merge_fsets() {

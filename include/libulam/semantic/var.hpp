@@ -2,6 +2,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/var/base.hpp>
 
 namespace ulam {
@@ -23,8 +24,7 @@ public:
     const Value& value() const { return _value; }
     void set_value(Value&& value);
 
-    ArrayView array_view();
-    ObjectView obj_view();
+    DataView data_view();
 
     LValue lvalue();
     RValue rvalue() const;

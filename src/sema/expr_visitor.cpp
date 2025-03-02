@@ -1,4 +1,3 @@
-#include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -10,7 +9,6 @@
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/value.hpp>
-#include <libulam/semantic/value/bound.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 #define DEBUG_EXPR_VISITOR // TEST
@@ -57,7 +55,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
             return {var->type(), Value{var->lvalue()}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), Value{_scope->self().bound_prop(prop)}};
+            return {prop->type(), Value{_scope->self().prop(prop)}};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
             return {
@@ -84,10 +82,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     Op op = node->op();
     LValue lval;
     if (ops::is_assign(op)) {
-        if (!left.value().is_lvalue()) {
-            diag().error(node, "cannot modify");
-            return {ExprError::NotLvalue};
-        }
+        if (!check_is_assignable(node, left.value()))
+            return {ExprError::NotAssignable};
         lval = left.value().lvalue();
     }
 
@@ -166,10 +162,8 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     RValue orig_rval;
     if (ops::is_inc_dec(op)) {
         // store lvalue
-        if (!tv.value().is_lvalue()) {
-            diag().error(node, "cannot modify");
-            return {ExprError::NotLvalue};
-        }
+        if (!check_is_assignable(node, tv.value()))
+            return {ExprError::NotAssignable};
         lval = tv.value().lvalue();
 
         // store original rvalue
@@ -215,14 +209,14 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
             if (!type)
                 return {ExprError::UnresolvableType};
             type = type->canon();
-            if (!type->is_class() && !type->is(AtomId)) {
-                diag().error(node->type_name(), "not a class or Atom");
+            if (!check_is_object(node, type))
                 return {ExprError::NotObject};
-            }
             assert(op == Op::Is);
             assert(!tv.value().empty());
-            auto dyn_type = tv.value().obj_type()->actual();
-            bool is = dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
+            // auto dyn_type = tv.value().obj_type()->actual(); // TMP
+            auto dyn_type = tv.type();
+            bool is =
+                dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
             auto boolean = builtins().boolean();
             return {boolean, Value{boolean->construct(is)}};
 
@@ -304,8 +298,8 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     if (!success)
         return {};
 
-    auto fset = lval.get<BoundFunSet>().mem();
-    return funcall(node->callable(), fset, lval.bound_self(), std::move(args));
+    auto fset = lval.get<BoundFunSet>().fset();
+    return funcall(node->callable(), fset, lval.self(), std::move(args));
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
@@ -318,12 +312,10 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::Error};
 
     // is an object?
-    if (!obj_res.type()->actual()->is_class()) {
-        diag().error(node->obj(), "not a class");
-        return {ExprError::NotObject};
-    }
+    if (!check_is_class(node, obj_res.type(), true))
+        return {ExprError::NotClass};
 
-    auto cls = obj_res.type()->as_class();
+    auto cls = obj_res.type()->actual()->as_class();
     auto obj_val = obj_res.move_value();
 
     // get symbol
@@ -339,10 +331,11 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return {var->type(), Value{var->lvalue()}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), obj_val.bound_prop(prop)};
+            return {prop->type(), obj_val.prop(prop)};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            auto dyn_cls = obj_val.obj_type()->actual()->as_class();
+            // auto dyn_cls = obj_val.obj_type()->actual()->as_class(); // TMP
+            auto dyn_cls = cls;
             assert(dyn_cls);
             if (fset->is_virtual() && dyn_cls != cls) {
                 auto sym = dyn_cls->get(name.str_id());
@@ -407,7 +400,40 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
     }
-    return {item_type, array_val.array_access(item_type, index)};
+    return {item_type, array_val.array_access(index)};
+}
+
+bool ExprVisitor::check_is_assignable(Ref<ast::Expr> node, const Value& value) {
+    if (value.is_rvalue()) {
+        diag().error(node, "cannot assign to rvalue");
+        return false;
+    }
+    if (value.lvalue().is_xvalue()) {
+        diag().error(node, "cannot assign to xvalue");
+        return false;
+    }
+    assert(value.is_lvalue() && !value.lvalue().is_xvalue());
+    return true;
+}
+
+bool ExprVisitor::check_is_object(
+    Ref<ast::Expr> node, Ref<const Type> type, bool deref) {
+    type = deref ? type->actual() : type->canon();
+    if (!type->is_object()) {
+        diag().error(node, "not a class or Atom");
+        return false;
+    }
+    return true;
+}
+
+bool ExprVisitor::check_is_class(
+    Ref<ast::Expr> node, Ref<const Type> type, bool deref) {
+    type = deref ? type->actual() : type->canon();
+    if (!type->is_object()) {
+        diag().error(node, "not a class");
+        return false;
+    }
+    return true;
 }
 
 ExprRes ExprVisitor::cast(
@@ -442,15 +468,9 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
 ExprRes
 ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
-    if (!val.is_lvalue()) {
-        diag().error(node, "cannot assign to rvalue");
-        return {ExprError::NotLvalue};
-    }
+    if (!check_is_assignable(node, val))
+        return {ExprError::NotAssignable};
     auto lval = val.lvalue();
-    if (lval.is_xvalue()) {
-        diag().error(node, "cannot assign to xvalue");
-        return {ExprError::NotLvalue};
-    }
     auto [rval, _] = maybe_cast(node, lval.type(), std::move(tv));
     return {lval.type(), lval.assign(std::move(rval))};
 }

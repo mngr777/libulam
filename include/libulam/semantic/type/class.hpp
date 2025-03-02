@@ -79,6 +79,10 @@ public:
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
+    bool is_castable_to_object_type(Ref<const Type> type) const;
+
+    RValue cast_to_object_type(Ref<const Type> type, RValue&& rval) const;
+
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
@@ -103,12 +107,14 @@ private:
     void init_layout();
 
     const auto& props() const { return _props; }
+    const auto& all_props() const { return _props; } // + inherited
     auto& fsets() { return _fsets; }
 
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
     std::list<Ref<Prop>> _props;
+    std::list<Ref<Prop>> _all_props;
     std::map<type_id_t, Ref<Fun>> _convs;
     std::map<str_id_t, Ref<FunSet>> _fsets;
 };

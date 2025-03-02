@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/data.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -5,7 +6,7 @@
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
-#include <libulam/semantic/value/array.hpp>
+#include <libulam/semantic/value/data.hpp>
 
 namespace ulam {
 
@@ -216,18 +217,19 @@ bitsize_t ArrayType::bitsize() const {
     return _array_size * _item_type->bitsize();
 }
 
-RValue ArrayType::construct() const { return RValue{Array{bitsize()}}; }
+RValue ArrayType::construct() const {
+    return RValue{make_s<Data>(const_cast<ArrayType*>(this))};
+}
 
-// TODO: use construct(), make it const
 RValue ArrayType::load(const BitsView data, bitsize_t off) const {
-    Array array{bitsize()};
-    array.bits().write(0, data.view(off, bitsize()));
-    return RValue{std::move(array)};
+    auto rval = construct();
+    rval.data_view().bits().write(0, data.view(off, bitsize()));
+    return rval;
 }
 
 void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) const {
-    assert(rval.is<Array>());
-    data.write(off, rval.get<Array>().bits().view());
+    assert(rval.is<DataPtr>());
+    data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
 void ArrayType::set_canon(Ref<ArrayType> canon) {
@@ -259,5 +261,9 @@ void RefType::set_canon(Ref<RefType> canon) {
     assert(canon->refd() == refd()->canon());
     _canon = canon;
 }
+
+Ptr<ArrayType> RefType::make_array_type(array_size_t size) { assert(false); }
+
+Ptr<RefType> RefType::make_ref_type() { assert(false); }
 
 } // namespace ulam

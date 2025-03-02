@@ -128,11 +128,12 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     }
 
     assert(!res.value().empty());
-    auto dyn_type = res.value().obj_type()->actual();
+    // auto dyn_type = res.value().obj_type()->actual(); // TMP
+    auto dyn_type = type;
     if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
         auto val = res.move_value();
-        auto obj_view = val.obj_view();
-        obj_view.cast(type);
+        auto obj_view = val.data_view();
+        // obj_view.cast(type);
         auto def = make<ast::VarDef>(node->ident()->name());
         auto var = make<Var>(
             node->type_name(), ref(def),

@@ -15,6 +15,8 @@ Data::Data(Ref<Type> type, Bits&& bits): _type{type}, _bits{std::move(bits)} {
 
 Data::Data(Ref<Type> type): Data{type, Bits{type->bitsize()}} {}
 
+DataPtr Data::copy() const { return make_s<Data>(_type, _bits.copy()); }
+
 DataView Data::view() { return {shared_from_this(), _type, 0}; }
 
 const DataView Data::view() const { return const_cast<Data*>(this)->view(); }
@@ -55,10 +57,12 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    _type->store(_storage->_bits, _off, std::move(rval));
+    _type->canon()->store(_storage->bits(), _off, std::move(rval));
 }
 
-RValue DataView::load() const { return _type->load(_storage->_bits, _off); }
+RValue DataView::load() const {
+    return _type->canon()->load(_storage->bits(), _off);
+}
 
 DataView DataView::array_item(array_idx_t idx) {
     assert(is_array());
@@ -86,5 +90,13 @@ bool DataView::is_array() const { return _type->canon()->is_array(); }
 bool DataView::is_object() const { return _type->canon()->is_object(); }
 
 bool DataView::is_class() const { return _type->canon()->is_class(); }
+
+BitsView DataView::bits() {
+    return _storage->bits().view(_off, _type->bitsize());
+}
+
+const BitsView DataView::bits() const {
+    return _storage->bits().view(_off, _type->bitsize());
+}
 
 } // namespace ulam

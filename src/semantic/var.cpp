@@ -4,18 +4,11 @@ namespace ulam {
 
 void Var::set_value(Value&& value) { std::swap(_value, value); }
 
-ArrayView Var::array_view() {
+DataView Var::data_view() {
     assert(_value.is_rvalue());
     return _value.rvalue().accept(
-        [&](Array& array) { return array.view(); },
-        [&](auto& other) -> ArrayView { assert(false); });
-}
-
-ObjectView Var::obj_view() {
-    assert(_value.is_rvalue());
-    return _value.rvalue().accept(
-        [&](SPtr<Object> obj) { return obj->view(); },
-        [&](auto& other) -> ObjectView { assert(false); });
+        [&](DataPtr data) { return data->view(); },
+        [&](auto& other) -> DataView { assert(false); });
 }
 
 LValue Var::lvalue() {

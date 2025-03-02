@@ -2,10 +2,9 @@
 #include <functional>
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/value/array.hpp>
 #include <libulam/semantic/value/bits.hpp>
-#include <libulam/semantic/value/bound.hpp>
-#include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/value/bound_fun_set.hpp>
+#include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
 
@@ -24,25 +23,19 @@ class Var;
 class RValue;
 class Value;
 
-class LValue : public detail::NullableVariant<
-                   Ref<Var>,
-                   ArrayAccess,
-                   ObjectView,
-                   BoundProp,
-                   BoundFunSet> {
+class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
 public:
     using Variant::Variant;
 
     RValue rvalue() const;
 
     Ref<Type> type() const;
-    ObjectView obj_view();
+    DataView data_view();
 
-    LValue array_access(Ref<Type> item_type, array_idx_t index);
-    LValue bound_prop(Ref<Prop> prop);
+    LValue array_access(array_idx_t idx);
+    LValue prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
 
-    LValue bound_self();
     LValue self();
 
     Value assign(RValue&& rval);
@@ -69,13 +62,8 @@ private:
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 
-class RValue : public detail::NullableVariant<
-                   Integer,
-                   Unsigned /* Unary, Bool*/,
-                   Bits,
-                   String,
-                   Array,
-                   SPtr<Object>> {
+class RValue
+    : public detail::NullableVariant<Integer, Unsigned, Bits, String, DataPtr> {
 public:
     template <typename T>
     explicit RValue(T&& value, bool is_consteval = false):
@@ -88,11 +76,10 @@ public:
 
     RValue copy() const;
 
-    Ref<Type> obj_type() const;
-    ObjectView obj_view();
+    DataView data_view();
 
-    RValue array_access(Ref<Type> item_type, array_idx_t index);
-    LValue bound_prop(Ref<Prop> prop);
+    LValue array_access(array_idx_t idx);
+    LValue prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
 
     LValue self();
@@ -127,11 +114,10 @@ public:
     RValue& rvalue() { return get<RValue>(); }
     const RValue& rvalue() const { return get<RValue>(); }
 
-    Ref<Type> obj_type() const;
-    ObjectView obj_view();
+    DataView data_view();
 
-    Value array_access(Ref<Type> item_type, array_idx_t index);
-    Value bound_prop(Ref<Prop> prop);
+    Value array_access(array_idx_t index);
+    Value prop(Ref<Prop> prop);
     Value bound_fset(Ref<FunSet> fset);
 
     LValue self();

@@ -282,6 +282,9 @@ public:
 
     Ref<RefType> ref_type() override { return this; }
 
+    Ptr<ArrayType> make_array_type(array_size_t size) override;
+    Ptr<RefType> make_ref_type() override;
+
 private:
     void set_canon(Ref<RefType> canon);
 

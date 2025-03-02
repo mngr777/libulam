@@ -15,6 +15,9 @@ public:
 
     bitsize_t bitsize() const override { return ULAM_ATOM_SIZE; }
 
+    RValue construct() const override;
+    RValue construct(Bits&& bits) const;
+
     BuiltinTypeId bi_type_id() const override { return AtomId; }
 
     RValue load(const BitsView data, bitsize_t off) const override;
@@ -25,7 +28,6 @@ public:
 
     RValue cast_to(Ref<const Type> type, RValue&& rval) override;
 
-    RValue construct() const override;
 };
 
 } // namespace ulam

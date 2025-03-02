@@ -16,11 +16,14 @@ class RValue;
 class Type;
 
 class Data : public std::enable_shared_from_this<Data> {
-    friend DataView;
-
 public:
     Data(Ref<Type> type, Bits&& bits);
     explicit Data(Ref<Type>);
+
+    Data(Data&&) = delete;
+    Data& operator=(Data&&) = delete;
+
+    DataPtr copy() const;
 
     DataView view();
     const DataView view() const;
@@ -36,6 +39,9 @@ public:
     bool is_class() const;
 
     Ref<Type> type() const { return _type; }
+
+    Bits& bits() { return _bits; }
+    const Bits& bits() const { return _bits; }
 
 private:
     Ref<Type> _type;
@@ -67,6 +73,9 @@ public:
     bool is_class() const;
 
     Ref<Type> type() const { return _type; }
+
+    BitsView bits();
+    const BitsView bits() const;
 
 private:
     DataPtr _storage;

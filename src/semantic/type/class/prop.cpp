@@ -1,32 +1,17 @@
 #include <cassert>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
-#include <libulam/semantic/value.hpp>
-#include <libulam/semantic/value/bits.hpp>
-#include <libulam/semantic/value/types.hpp>
 
 namespace ulam {
 
-ObjectView Prop::obj_view(ObjectView obj_view) {
-    assert(type()->canon()->is_class());
-    auto cls = type()->canon()->as_class();
-    auto bits = bits_view(obj_view);
-    assert(bits.len() == cls->bitsize());
-    return ObjectView{cls, bits};
+RValue Prop::load(DataPtr obj) const {
+    auto off = data_off_in(obj);
+    return type()->canon()->load(obj->bits(), off);
 }
 
-BitsView Prop::bits_view(ObjectView obj_view) {
-    auto bits = obj_view.bits();
-    assert(bits && bits.len() >= data_off() + type()->bitsize());
-    return bits.view(data_off(), type()->bitsize());
-}
-
-RValue Prop::load(ObjectView obj_view) const {
-    return type()->canon()->load(obj_view.bits(), data_off());
-}
-
-void Prop::store(ObjectView obj_view, const RValue& rval) {
-    type()->canon()->store(obj_view.bits(), data_off(), rval);
+void Prop::store(DataPtr obj, RValue&& rval) const {
+    auto off = data_off_in(obj);
+    type()->canon()->store(obj->bits(), off, std::move(rval));
 }
 
 bitsize_t Prop::data_off_in(Ref<Class> derived) const {
@@ -34,6 +19,13 @@ bitsize_t Prop::data_off_in(Ref<Class> derived) const {
     if (derived != cls())
         off += derived->base_off(cls());
     return off;
+}
+
+bitsize_t Prop::data_off_in(DataPtr obj) const {
+    assert(obj->is_class());
+    auto obj_cls = obj->type()->canon()->as_class();
+    assert(obj_cls == cls() || obj_cls->is_base_of(cls()));
+    return data_off_in(obj_cls);
 }
 
 bitsize_t Prop::data_off() const {

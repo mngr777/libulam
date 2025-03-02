@@ -43,6 +43,12 @@ public:
     virtual ExprRes visit(Ref<ast::MemberAccess> node) override;
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
+    virtual bool check_is_assignable(Ref<ast::Expr> node, const Value& value);
+    virtual bool check_is_object(
+        Ref<ast::Expr> node, Ref<const Type> type, bool deref = false);
+    virtual bool check_is_class(
+        Ref<ast::Expr> node, Ref<const Type> type, bool deref = false);
+
     virtual ExprRes
     cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 

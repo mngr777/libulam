@@ -2,7 +2,7 @@
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/value.hpp>
-#include <libulam/semantic/value/object.hpp>
+#include <libulam/semantic/value/data.hpp>
 
 namespace ulam {
 
@@ -10,14 +10,16 @@ RValue AtomType::load(const BitsView data, bitsize_t off) const {
     assert(false);
 }
 
-void AtomType::store(
-    BitsView data, bitsize_t off, const RValue& rval) const {
+void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(false);
 }
 
 RValue AtomType::construct() const {
-    // TODO
-    return RValue{make_s<Object>(const_cast<AtomType*>(this))};
+    return RValue{make_s<Data>(const_cast<AtomType*>(this))};
+}
+
+RValue AtomType::construct(Bits&& bits) const {
+    return RValue{make_s<Data>(const_cast<AtomType*>(this), std::move(bits))};
 }
 
 bool AtomType::is_castable_to(Ref<const Type> type, bool expl) const {
@@ -33,7 +35,7 @@ RValue AtomType::cast_to(Ref<const Type> type, RValue&& rval) {
     if (canon->is_class()) {
         if (rval.empty())
             return std::move(rval);
-        auto val = rval.get<SPtr<Object>>();
+        auto val = rval.get<DataPtr>();
         // val->cast(this); // TODO
         return RValue{val};
     }
