@@ -92,7 +92,7 @@ protected:
 
 private:
     bool resolve_params(sema::Resolver& resolver);
-    bool init_ancestors(sema::Resolver& resolver, bool resolve);
+    bool resolve_ancestors(sema::Resolver& resolver);
     bool resolve_members(sema::Resolver& resolver);
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);

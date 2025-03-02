@@ -277,7 +277,7 @@ void Printer::visit(ulam::Ref<ulam::ast::IfAs> node) {
     assert(node->has_if_branch());
     _os << "if (";
     accept_me(node->ident());
-    _os << " ";
+    _os << " as ";
     accept_me(node->type_name());
     _os << ")";
     if (node->has_if_branch()) {

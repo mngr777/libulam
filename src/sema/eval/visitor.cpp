@@ -134,8 +134,9 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
         auto obj_view = val.obj_view();
         obj_view.cast(type);
         auto def = make<ast::VarDef>(node->ident()->name());
-        auto var = make<Var>(node->type_name(), ref(def), TypedValue{type, Value{LValue{obj_view}}});
-        var->set_type(type);
+        auto var = make<Var>(
+            node->type_name(), ref(def),
+            TypedValue{type->ref_type(), Value{LValue{obj_view}}});
         var->set_scope_lvl(_scope_stack.size());
         scope()->set(var->name_id(), std::move(var));
 

@@ -99,7 +99,7 @@ bool Class::init(sema::Resolver& resolver) {
         set_state(Initializing);
     }
 
-    bool resolved = resolve_params(resolver) && init_ancestors(resolver, false);
+    bool resolved = resolve_params(resolver) && resolve_ancestors(resolver);
     set_state(resolved ? Initialized : Unresolvable);
     return resolved;
 }
@@ -114,10 +114,12 @@ bool Class::resolve(sema::Resolver& resolver) {
     case Unresolvable:
         return false;
     default:
+        assert(state() == NotResolved || state() == Initialized);
         set_state(Resolving);
     }
 
-    bool resolved = init_ancestors(resolver, true) && resolve_members(resolver);
+    bool resolved = resolve_params(resolver) && resolve_ancestors(resolver) &&
+                    resolve_members(resolver);
     if (resolved) {
         merge_fsets();
         init_layout();
@@ -275,15 +277,14 @@ bool Class::resolve_params(sema::Resolver& resolver) {
     return true;
 }
 
-bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
+bool Class::resolve_ancestors(sema::Resolver& resolver) {
     if (!node()->has_ancestors())
         return true;
 
     for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
         auto cls_name = node()->ancestors()->get(n);
         // TODO: check if element's ancestor is element or transient etc.
-        auto cls =
-            resolver.resolve_class_name(cls_name, param_scope(), resolve);
+        auto cls = resolver.resolve_class_name(cls_name, param_scope(), true);
         if (!cls)
             return false;
         add_ancestor(cls, cls_name);
@@ -300,12 +301,8 @@ bool Class::resolve_members(sema::Resolver& resolver) {
     }
     // operators
     for (auto& [_, fset] : ops()) {
-        for (auto fun : *fset) {
-            auto scope_version = fun->scope_version();
-            auto scope_view = scope()->view(scope_version);
-            if (!resolver.resolve(fun, ref(scope_view)))
-                return false;
-        }
+        if (!resolver.resolve(ref(fset), scope()))
+            return false;
     }
     return true;
 }

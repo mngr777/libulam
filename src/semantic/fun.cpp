@@ -96,7 +96,7 @@ std::string Fun::key() const {
     return mangler.mangled(param_types);
 }
 
-// FunSet
+// FunSet::Iterator
 
 FunSet::Iterator::Iterator(FunList::iterator it): _it{it} {}
 
@@ -118,6 +118,12 @@ bool FunSet::Iterator::operator!=(const Iterator& other) {
 FunSet::Iterator& FunSet::Iterator::operator++() {
     _it++;
     return *this;
+}
+
+// FunSet
+
+FunSet::FunSet() {
+    _map.emplace(); // empty map for empty set
 }
 
 FunSet::Matches FunSet::find_match(const TypedValueList& args) {
@@ -144,9 +150,15 @@ FunSet::Matches FunSet::find_match(const TypedValueList& args) {
     return matches;
 }
 
-void FunSet::add(Ptr<Fun>&& fun) { _funs.push_back(std::move(fun)); }
+void FunSet::add(Ptr<Fun>&& fun) {
+    _funs.push_back(std::move(fun));
+    _map.reset();
+}
 
-void FunSet::add(Ref<Fun> fun) { _funs.push_back(fun); }
+void FunSet::add(Ref<Fun> fun) {
+    _funs.push_back(fun);
+    _map.reset();
+}
 
 void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     // debug() << __FUNCTION__ << "\n";
