@@ -48,7 +48,7 @@ TypedValue UnaryType::cast_to(BuiltinTypeId id, RValue&& rval) {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
-        store(val.bits().view(), 0, rval);
+        store(val.view(), 0, rval);
         return {type, Value{RValue{std::move(val)}}};
     }
     default:
@@ -81,7 +81,7 @@ RValue UnaryType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     }
     case BitsId: {
         auto bits_rval = type->construct();
-        bits_rval.get<Bits>().bits().write_right(
+        bits_rval.get<Bits>().write_right(
             type->bitsize(), to_datum(rval));
         return bits_rval;
     }

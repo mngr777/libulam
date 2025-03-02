@@ -75,7 +75,7 @@ TypedValue IntType::cast_to(BuiltinTypeId id, RValue&& rval) {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
-        store(val.bits().view(), 0, rval);
+        store(val.view(), 0, rval);
         return {type, Value{RValue{std::move(val)}}};
     }
     default:
@@ -111,8 +111,7 @@ RValue IntType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     case BitsId: {
         auto bits_rval = type->construct();
         // TODO: adjust value?
-        bits_rval.get<Bits>().bits().write_right(
-            type->bitsize(), to_datum(rval));
+        bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
         return bits_rval;
     }
     default:
@@ -332,7 +331,8 @@ bool IntType::is_impl_castable_to_prim(
 
 bool IntType::is_impl_castable_to_prim(
     BuiltinTypeId bi_type_id, const Value& val) const {
-    if (bi_type_id != UnsignedId && bi_type_id != UnaryId && bi_type_id != BitsId)
+    if (bi_type_id != UnsignedId && bi_type_id != UnaryId &&
+        bi_type_id != BitsId)
         return is_castable_to_prim(bi_type_id, false);
 
     auto rval = val.copy_rvalue();

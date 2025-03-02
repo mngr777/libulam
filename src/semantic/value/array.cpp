@@ -19,7 +19,7 @@ bitsize_t offset(Ref<Type> type, array_idx_t index) {
 Array::Array(Ref<ArrayType> array_type): Array{array_type->bitsize()} {}
 
 Array::Array(Ref<Type> type, array_size_t size):
-    Array{(BitVector::size_t)(type->bitsize() * size)} {}
+    Array{(bitsize_t)(type->bitsize() * size)} {}
 
 ArrayView Array::view() { return ArrayView{bits().view()}; }
 
@@ -41,7 +41,7 @@ ArrayAccess::ArrayAccess(
     assert(_type->bitsize() * (_index + 1u) <= _array_view.bits().len());
 }
 
-BitVectorView ArrayAccess::item_bits_view() {
+BitsView ArrayAccess::item_bits_view() {
     return _array_view.bits().view(offset(_type, _index), _type->actual()->bitsize());
 }
 

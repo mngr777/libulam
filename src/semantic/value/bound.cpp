@@ -23,7 +23,7 @@ ArrayView BoundProp::mem_array_view() {
 
 ObjectView BoundProp::mem_obj_view() { return mem()->obj_view(obj_view()); }
 
-BitVectorView BoundProp::bits_view() { return mem()->bits_view(obj_view()); }
+BitsView BoundProp::bits_view() { return mem()->bits_view(obj_view()); }
 
 RValue BoundProp::load() const { return mem()->load(obj_view()); }
 

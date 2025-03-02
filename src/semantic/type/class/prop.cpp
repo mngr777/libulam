@@ -2,7 +2,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/value.hpp>
-#include <libulam/semantic/value/bit_vector.hpp>
+#include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 namespace ulam {
@@ -15,7 +15,7 @@ ObjectView Prop::obj_view(ObjectView obj_view) {
     return ObjectView{cls, bits};
 }
 
-BitVectorView Prop::bits_view(ObjectView obj_view) {
+BitsView Prop::bits_view(ObjectView obj_view) {
     auto bits = obj_view.bits();
     assert(bits && bits.len() >= data_off() + type()->bitsize());
     return bits.view(data_off(), type()->bitsize());

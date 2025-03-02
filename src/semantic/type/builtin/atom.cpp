@@ -6,12 +6,12 @@
 
 namespace ulam {
 
-RValue AtomType::load(const BitVectorView data, BitVector::size_t off) const {
+RValue AtomType::load(const BitsView data, bitsize_t off) const {
     assert(false);
 }
 
 void AtomType::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    BitsView data, bitsize_t off, const RValue& rval) const {
     assert(false);
 }
 
@@ -34,7 +34,7 @@ RValue AtomType::cast_to(Ref<const Type> type, RValue&& rval) {
         if (rval.empty())
             return std::move(rval);
         auto val = rval.get<SPtr<Object>>();
-        val->cast(this);
+        // val->cast(this); // TODO
         return RValue{val};
     }
     assert(false);

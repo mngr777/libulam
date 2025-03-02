@@ -69,8 +69,8 @@ public:
 
     RValue construct() const override;
 
-    RValue load(const BitVectorView data, BitVector::size_t off) const override;
-    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
+    RValue load(const BitsView data, bitsize_t off) const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval)
         const override;
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;

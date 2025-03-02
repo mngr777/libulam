@@ -30,9 +30,9 @@ public:
     Ref<PrimType> as_prim() override { return this; }
     Ref<const PrimType> as_prim() const override { return this; }
 
-    RValue load(const BitVectorView data, BitVector::size_t off) const override;
+    RValue load(const BitsView data, bitsize_t off) const override;
 
-    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
+    void store(BitsView data, bitsize_t off, const RValue& rval)
         const override;
 
     virtual RValue from_datum(Datum datum) const { assert(false); }

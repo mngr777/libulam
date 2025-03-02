@@ -52,7 +52,7 @@ public:
 
     ArrayView mem_array_view();
     ObjectView mem_obj_view();
-    BitVectorView bits_view();
+    BitsView bits_view();
 
     RValue load() const;
     void store(const RValue& rval);

@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bit_storage.hpp>
-#include <libulam/semantic/value/bit_vector.hpp>
+#include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 namespace ulam {
@@ -16,8 +16,8 @@ class Array : public _BitStorage {
 public:
     explicit Array(Ref<ArrayType> array_type);
     explicit Array(Ref<Type> type, array_size_t size);
-    explicit Array(BitVector::size_t bitsize): _BitStorage{bitsize} {}
-    explicit Array(BitVector&& bits): _BitStorage{std::move(bits)} {}
+    explicit Array(bitsize_t bitsize): _BitStorage{bitsize} {}
+    explicit Array(Bits&& bits): _BitStorage{std::move(bits)} {}
 
     Array copy() const { return Array{bits().copy()}; }
 
@@ -29,7 +29,7 @@ public:
 
 class ArrayView : public _BitStorageView {
 public:
-    explicit ArrayView(BitVectorView bits): _BitStorageView(bits) {}
+    explicit ArrayView(BitsView bits): _BitStorageView(bits) {}
     ArrayView();
 };
 
@@ -44,7 +44,7 @@ public:
 
     array_idx_t index() const { return _index; }
 
-    BitVectorView item_bits_view();
+    BitsView item_bits_view();
     ArrayAccess item_array_access(array_idx_t index);
     ArrayView item_array_view();
     ObjectView item_object_view();

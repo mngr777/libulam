@@ -1,26 +1,150 @@
 #pragma once
-#include <libulam/semantic/value/bit_vector.hpp>
+#include <functional>
+#include <libulam/semantic/value/types.hpp>
+#include <vector>
 
 namespace ulam {
 
-// TODO: optimization for shorter values
-class Bits {
+// Dynamically-sized simple version of MFM::Bits
+
+class _Bits {
 public:
-    explicit Bits(bitsize_t size): _bits{size} {}
-    explicit Bits(BitVector&& bits): _bits{std::move(bits)} {}
+    using size_t = bitsize_t;
+    using unit_t = Datum;
+    using unit_idx_t = bitsize_t;
 
-    Bits(Bits&&) = default;
-    Bits& operator=(Bits&&) = default;
+    static constexpr size_t UnitSize = sizeof(unit_t) * 8;
+    static constexpr Unsigned AtomSize = 96;
+    static constexpr Unsigned Size8k = 8162;
+};
 
-    Bits copy() const { return Bits{_bits.copy()}; }
+class Bits;
 
-    bitsize_t bitsize() const { return _bits.len(); }
+class BitsView : public _Bits {
+public:
+    explicit BitsView(Bits& data, size_t off, size_t len);
+    explicit BitsView(Bits& data);
+    BitsView() {}
 
-    BitVector& bits() { return _bits; }
-    const BitVector& bits() const { return _bits; }
+    BitsView view() { return *this; }
+    const BitsView view() const { return *this; }
+
+    BitsView view(size_t off, size_t len) {
+        return BitsView{data(), (size_t)(_off + off), len};
+    }
+    const BitsView view(size_t off, size_t len) const {
+        return BitsView{const_cast<Bits&>(data()), (size_t)(_off + off), len};
+    }
+
+    bool read_bit(size_t idx) const;
+    void write_bit(size_t idx, bool bit);
+
+    unit_t read(size_t idx, size_t len) const;
+    void write(size_t idx, size_t len, unit_t value);
+    void write(size_t idx, const BitsView other);
+
+    unit_t read_right(size_t len) const;
+    void write_right(size_t len, unit_t value);
+
+    size_t len() const { return _len; }
+
+    Bits copy() const;
+
+    operator bool() const { return _data; }
+
+    bool operator==(const BitsView& other);
+    bool operator!=(const BitsView& other);
+
+    BitsView& operator&=(const BitsView& other);
+    BitsView& operator|=(const BitsView& other);
+    BitsView& operator^=(const BitsView& other);
+
+    Bits operator&(const BitsView& other) const;
+    Bits operator|(const BitsView& other) const;
+    Bits operator^(const BitsView& other) const;
 
 private:
-    BitVector _bits;
+    using UnitBinOp = std::function<unit_t(unit_t, unit_t)>;
+
+    void bin_op(const BitsView& other, UnitBinOp op);
+
+    Bits& data();
+    const Bits& data() const;
+
+    Bits* _data{};
+    size_t _off;
+    size_t _len;
+};
+
+class Bits : public _Bits {
+public:
+    explicit Bits(size_t len):
+        _len{len}, _bits((len + UnitSize - 1) / UnitSize, 0) {}
+
+    Bits(Bits&& other) = default;
+    Bits& operator=(Bits&&) = default;
+
+    BitsView view() { return BitsView{*this}; }
+    const BitsView view() const {
+        return BitsView{const_cast<Bits&>(*this)};
+    }
+
+    BitsView view(size_t off, size_t len) {
+        return BitsView{*this, off, len};
+    }
+    const BitsView view(size_t off, size_t len) const {
+        return BitsView{const_cast<Bits&>(*this), off, len};
+    }
+
+    BitsView view_right(size_t len);
+    const BitsView view_right(size_t len) const;
+
+    Bits copy() const;
+
+    bool read_bit(size_t idx) const;
+    void write_bit(size_t idx, bool bit);
+
+    unit_t read(size_t idx, size_t len) const;
+    void write(size_t idx, size_t len, unit_t value);
+    void write(size_t idx, const BitsView view);
+
+    unit_t read_right(size_t len) const;
+    void write_right(size_t len, unit_t value);
+
+    size_t len() const { return _len; }
+
+    bool operator==(const Bits& other) const;
+    bool operator!=(const Bits& other) const;
+
+    Bits& operator&=(const Bits& other);
+    Bits& operator|=(const Bits& other);
+    Bits& operator^=(const Bits& other);
+    Bits& operator<<=(size_t shift);
+    Bits& operator>>=(size_t shift);
+
+    Bits operator&(const Bits& other) const;
+    Bits operator|(const Bits& other) const;
+    Bits operator^(const Bits& other) const;
+    Bits operator<<(size_t shift);
+    Bits operator>>(size_t shift);
+
+    Bits& operator&=(const BitsView other);
+    Bits& operator|=(const BitsView other);
+    Bits& operator^=(const BitsView other);
+
+    Bits operator&(const BitsView other) const;
+    Bits operator|(const BitsView other) const;
+    Bits operator^(const BitsView other) const;
+
+private:
+    unit_t read(unit_idx_t unit_idx, size_t start, size_t len) const;
+    void write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value);
+
+    void clear();
+    unit_t last_unit_mask() const;
+
+    size_t _len;
+    std::vector<unit_t> _bits;
 };
 
 } // namespace ulam

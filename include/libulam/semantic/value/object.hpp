@@ -11,12 +11,12 @@ class Type;
 class Object : public _BitStorage {
 public:
     explicit Object(Ref<Type> cls);
-    Object(Ref<Type> cls, BitVector&& bits);
+    Object(Ref<Type> cls, Bits&& bits);
 
     ~Object();
 
     SPtr<Object> copy() const;
-    void cast(Ref<Type> type);
+    // void cast(Ref<Type> type);
 
     ObjectView view();
     const ObjectView view() const;
@@ -30,7 +30,7 @@ private:
 
 class ObjectView : public _BitStorageView {
 public:
-    explicit ObjectView(Ref<Type> cls, BitVectorView bits);
+    explicit ObjectView(Ref<Type> cls, BitsView bits);
     ObjectView() {}
 
     operator bool() const;

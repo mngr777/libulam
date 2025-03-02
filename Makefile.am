@@ -65,7 +65,6 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/value.hpp \
 	include/libulam/semantic/value/array.hpp \
 	include/libulam/semantic/value/bit_storage.hpp \
-	include/libulam/semantic/value/bit_vector.hpp \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/bound.hpp \
 	include/libulam/semantic/value/object.hpp \
@@ -111,7 +110,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type_tpl.cpp \
 	src/semantic/value.cpp \
 	src/semantic/value/array.cpp \
-	src/semantic/value/bit_vector.cpp \
+	src/semantic/value/bits.cpp \
 	src/semantic/value/bound.cpp \
 	src/semantic/value/object.cpp \
 	src/semantic/var.cpp \

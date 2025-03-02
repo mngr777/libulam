@@ -6,15 +6,14 @@
 
 namespace ulam {
 
-RValue BitsType::load(const BitVectorView data, BitVector::size_t off) const {
+RValue BitsType::load(const BitsView data, bitsize_t off) const {
     Bits val{data.view(off, bitsize()).copy()};
     return RValue{std::move(val)};
 }
 
-void BitsType::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<Bits>());
-    data.write(off, rval.get<Bits>().bits().view());
+    data.write(off, rval.get<Bits>().view());
 }
 
 RValue BitsType::construct() const { return RValue{Bits{bitsize()}}; }
@@ -34,13 +33,12 @@ RValue BitsType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     case BoolId:
     case UnaryId: {
         // TODO: this is probably not how it works, to be caught by ULAM tests
-        auto datum =
-            bits.bits().read_right(std::min(bitsize(), type->bitsize()));
+        auto datum = bits.read_right(std::min(bitsize(), type->bitsize()));
         return RValue{type->from_datum(datum)};
     }
     case BitsId: {
         Bits copy{type->bitsize()};
-        copy.bits() |= bits.bits();
+        copy |= bits;
         return RValue{std::move(copy)};
     }
     default:
@@ -49,17 +47,13 @@ RValue BitsType::cast_to(Ref<const PrimType> type, RValue&& rval) {
 }
 
 TypedValue BitsType::binary_op(
-    Op op,
-    RValue&& l_rval,
-    Ref<const PrimType> r_type,
-    RValue&& r_rval) {
+    Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(BitsId) || r_type->is(UnsignedId));
     assert(l_rval.empty() || l_rval.is<Bits>());
     bool is_unknown = l_rval.empty() || r_rval.empty();
 
     // &, |, ^
-    using BinOp =
-        std::function<BitVector(const BitVectorView, const BitVectorView)>;
+    using BinOp = std::function<Bits(const BitsView, const BitsView)>;
     auto binop = [&](BinOp op, bool assign) -> TypedValue {
         auto type = this;
         if (assign)
@@ -68,10 +62,10 @@ TypedValue BitsType::binary_op(
             return {type, Value{RValue{}}};
         auto& l_bits = l_rval.get<Bits>();
         auto& r_bits = r_rval.get<Bits>();
-        auto l_view = l_bits.bits().view();
+        auto l_view = l_bits.view();
         auto r_view = (assign && bitsize() < r_type->bitsize())
-                              ? r_bits.bits().view_right(bitsize())
-                              : r_bits.bits().view();
+                          ? r_bits.view_right(bitsize())
+                          : r_bits.view();
         Bits bits{op(l_view, r_view)};
         return {type, Value{RValue{std::move(bits)}}};
     };
@@ -88,20 +82,20 @@ TypedValue BitsType::binary_op(
             return {boolean, Value{RValue{}}};
         auto& l_bits = l_rval.get<Bits>();
         auto& r_bits = l_rval.get<Bits>();
-        bool is_equal = (l_bits.bits() == r_bits.bits());
+        bool is_equal = (l_bits == r_bits);
         bool val = (is_equal == (op == Op::Equal));
         return {boolean, Value{boolean->construct(val)}};
     }
     case Op::AssignShiftLeft:
     case Op::ShiftLeft: {
         Unsigned shift = r_rval.get<Unsigned>();
-        Bits bits{l_rval.get<Bits>().bits() << shift};
+        Bits bits{l_rval.get<Bits>() << shift};
         return {this, Value{RValue{std::move(bits)}}};
     }
     case Op::AssignShiftRight:
     case Op::ShiftRight: {
         Unsigned shift = r_rval.get<Unsigned>();
-        Bits bits{l_rval.get<Bits>().bits() >> shift};
+        Bits bits{l_rval.get<Bits>() >> shift};
         return {this, Value{RValue{std::move(bits)}}};
     }
     case Op::AssignBwAnd:

@@ -20,11 +20,11 @@ std::string PrimType::name() const {
     return ss.str();
 }
 
-RValue PrimType::load(const BitVectorView data, BitVector::size_t off) const {
+RValue PrimType::load(const BitsView data, bitsize_t off) const {
     return from_datum(data.read(off, bitsize()));
 }
 void PrimType::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    BitsView data, bitsize_t off, const RValue& rval) const {
     data.write(off, bitsize(), to_datum(rval));
 }
 

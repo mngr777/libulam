@@ -6,7 +6,7 @@
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type_ops.hpp>
-#include <libulam/semantic/value/bit_vector.hpp>
+#include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
@@ -67,13 +67,13 @@ public:
 
     virtual RValue construct() const;
 
-    RValue load(const BitVector& data, BitVector::size_t off) const;
+    RValue load(const Bits& data, bitsize_t off) const;
     void
-    store(BitVector& data, BitVector::size_t off, const RValue& rval) const;
+    store(Bits& data, bitsize_t off, const RValue& rval) const;
 
-    virtual RValue load(const BitVectorView data, BitVector::size_t off) const;
+    virtual RValue load(const BitsView data, bitsize_t off) const;
     virtual void
-    store(BitVectorView data, BitVector::size_t off, const RValue& rval) const;
+    store(BitsView data, bitsize_t off, const RValue& rval) const;
 
     // canonical non-reference type, type of value
     bool is_actual() const;
@@ -232,8 +232,8 @@ public:
 
     RValue construct() const override;
 
-    RValue load(const BitVectorView data, BitVector::size_t off) const override;
-    void store(BitVectorView data, BitVector::size_t off, const RValue& rval)
+    RValue load(const BitsView data, bitsize_t off) const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval)
         const override;
 
     Ref<ArrayType> as_array() override { return this; }

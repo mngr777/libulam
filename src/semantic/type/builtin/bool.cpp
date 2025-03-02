@@ -74,7 +74,7 @@ RValue BoolType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     case BitsId: {
         auto bits_rval = type->construct();
         auto size = std::min(bitsize(), type->bitsize());
-        bits_rval.get<Bits>().bits().write_right(size, to_datum(rval));
+        bits_rval.get<Bits>().write_right(size, to_datum(rval));
         return bits_rval;
     }
     default:

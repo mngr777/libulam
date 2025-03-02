@@ -11,7 +11,7 @@ public:
     using VarBase::VarBase;
 
     ObjectView obj_view(ObjectView obj_view);
-    BitVectorView bits_view(ObjectView obj_view);
+    BitsView bits_view(ObjectView obj_view);
 
     RValue load(const ObjectView obj_view) const;
     void store(ObjectView obj_view, const RValue& rval);

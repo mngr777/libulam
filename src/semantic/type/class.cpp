@@ -156,14 +156,14 @@ RValue Class::construct() const {
     return RValue{make_s<Object>(const_cast<Class*>(this))};
 }
 
-RValue Class::load(const BitVectorView data, BitVector::size_t off) const {
+RValue Class::load(const BitsView data, bitsize_t off) const {
     // TMP: const cast hack
     return RValue{make_s<Object>(
         const_cast<Class*>(this), data.view(off, bitsize()).copy())};
 }
 
 void Class::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<SPtr<Object>>());
     data.write(off, rval.get<SPtr<Object>>()->bits().view());
 }

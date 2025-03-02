@@ -15,21 +15,21 @@ Type::~Type() {}
 
 RValue Type::construct() const { assert(false); }
 
-RValue Type::load(const BitVector& data, BitVector::size_t off) const {
+RValue Type::load(const Bits& data, bitsize_t off) const {
     return load(data.view(), off);
 }
 
 void Type::store(
-    BitVector& data, BitVector::size_t off, const RValue& rval) const {
+    Bits& data, bitsize_t off, const RValue& rval) const {
     store(data.view(), off, rval);
 }
 
-RValue Type::load(const BitVectorView data, BitVector::size_t off) const {
+RValue Type::load(const BitsView data, bitsize_t off) const {
     assert(false);
 }
 
 void Type::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    BitsView data, bitsize_t off, const RValue& rval) const {
     assert(false);
 }
 
@@ -225,14 +225,14 @@ bitsize_t ArrayType::bitsize() const {
 RValue ArrayType::construct() const { return RValue{Array{bitsize()}}; }
 
 // TODO: use construct(), make it const
-RValue ArrayType::load(const BitVectorView data, BitVector::size_t off) const {
+RValue ArrayType::load(const BitsView data, bitsize_t off) const {
     Array array{bitsize()};
     array.bits().write(0, data.view(off, bitsize()));
     return RValue{std::move(array)};
 }
 
 void ArrayType::store(
-    BitVectorView data, BitVector::size_t off, const RValue& rval) const {
+    BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<Array>());
     data.write(off, rval.get<Array>().bits().view());
 }

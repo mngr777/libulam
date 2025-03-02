@@ -11,7 +11,7 @@ Object::Object(Ref<Type> type): _BitStorage{type->bitsize()}, _type{type} {
     assert(type->is_object());
 }
 
-Object::Object(Ref<Type> type, BitVector&& bits_):
+Object::Object(Ref<Type> type, Bits&& bits_):
     _BitStorage{std::move(bits_)}, _type{type} {
     assert(_type && bits().len() == type->bitsize());
     assert(type->is_object());
@@ -23,11 +23,11 @@ SPtr<Object> Object::copy() const {
     return make_s<Object>(_type, bits().copy());
 }
 
-void Object::cast(Ref<Type> type) {
-    assert(type->is_object());
-    assert(_type->is_expl_castable_to(type));
-    _type = type;
-}
+// void Object::cast(Ref<Type> type) {
+//     assert(type->is_object());
+//     assert(_type->is_expl_castable_to(type));
+//     _type = type;
+// }
 
 ObjectView Object::view() { return ObjectView{_type, bits().view()}; }
 
@@ -41,7 +41,7 @@ Ref<Class> Object::cls() const {
 
 // ObjectView
 
-ObjectView::ObjectView(Ref<Type> type, BitVectorView bits_):
+ObjectView::ObjectView(Ref<Type> type, BitsView bits_):
     _BitStorageView{bits_}, _type{type} {
 }
 
