@@ -31,15 +31,15 @@ bool AtomType::is_castable_to(Ref<const Type> type, bool expl) const {
 
 RValue AtomType::cast_to(Ref<const Type> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    auto canon = type->canon();
-    if (canon->is_class()) {
-        if (rval.empty())
-            return std::move(rval);
-        auto val = rval.get<DataPtr>();
-        // val->cast(this); // TODO
-        return RValue{val};
-    }
-    assert(false);
+    assert(type->is_class() && type->as_class()->is_element());
+    if (rval.empty())
+        return std::move(rval);
+
+    assert(rval.is<DataPtr>());
+    auto& bits = rval.get<DataPtr>()->bits();
+    auto elt_rval = type->as_class()->construct();
+    elt_rval.get<DataPtr>()->bits().write(0, bits.view());
+    return elt_rval;
 }
 
 } // namespace ulam

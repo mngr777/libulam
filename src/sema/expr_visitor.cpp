@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -521,6 +522,9 @@ RValue ExprVisitor::do_cast(
             }
             return res.move_value().move_rvalue();
         }
+    } else if (from->is(AtomId)) {
+        assert(to->is_class() && to->as_class()->is_element());
+        return from->cast_to(to, tv.move_value().move_rvalue());
     }
     assert(false);
 }
