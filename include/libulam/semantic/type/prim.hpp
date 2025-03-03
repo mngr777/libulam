@@ -27,9 +27,6 @@ public:
 
     std::string name() const override;
 
-    Ref<PrimType> as_prim() override { return this; }
-    Ref<const PrimType> as_prim() const override { return this; }
-
     RValue load(const BitsView data, bitsize_t off) const override;
 
     void store(BitsView data, bitsize_t off, const RValue& rval)
@@ -72,6 +69,9 @@ public:
     };
 
 protected:
+    Ref<PrimType> _as_prim() override { return this; }
+    Ref<const PrimType> _as_prim() const override { return this; }
+
     virtual bool is_castable_to_prim(Ref<const PrimType> type, bool expl) const;
 
     virtual bool is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const;

@@ -89,26 +89,26 @@ public:
     bool is_object() const;
     bool is_atom() const;
 
-    bool is_prim() const { return as_prim(); }
-    bool is_class() const { return as_class(); }
-    bool is_alias() const { return as_alias(); }
-    bool is_array() const { return as_array(); }
-    bool is_ref() const { return as_ref(); }
+    bool is_prim() const { return _as_prim(); }
+    bool is_class() const { return _as_class(); }
+    bool is_alias() const { return _as_alias(); }
+    bool is_array() const { return _as_array(); }
+    bool is_ref() const { return _as_ref(); }
 
-    virtual Ref<PrimType> as_prim() { return {}; }
-    virtual Ref<const PrimType> as_prim() const { return {}; }
+    Ref<PrimType> as_prim();
+    Ref<const PrimType> as_prim() const;
 
-    virtual Ref<Class> as_class() { return {}; }
-    virtual Ref<const Class> as_class() const { return {}; }
+    Ref<Class> as_class();
+    Ref<const Class> as_class() const;
 
-    virtual Ref<AliasType> as_alias() { return {}; }
-    virtual Ref<const AliasType> as_alias() const { return {}; }
+    Ref<AliasType> as_alias();
+    Ref<const AliasType> as_alias() const;
 
-    virtual Ref<ArrayType> as_array() { return {}; }
-    virtual Ref<const ArrayType> as_array() const { return {}; }
+    Ref<ArrayType> as_array();
+    Ref<const ArrayType> as_array() const;
 
-    virtual Ref<RefType> as_ref() { return {}; }
-    virtual Ref<const RefType> as_ref() const { return {}; }
+    Ref<RefType> as_ref();
+    Ref<const RefType> as_ref() const;
 
     virtual Ref<Type> non_alias() { return this; }
     virtual Ref<const Type> non_alias() const { return this; }
@@ -146,6 +146,22 @@ public:
     virtual Ref<RefType> ref_type();
 
 protected:
+    virtual Ref<PrimType> _as_prim() { return {}; }
+    virtual Ref<const PrimType> _as_prim() const { return {}; }
+
+    virtual Ref<Class> _as_class() { return {}; }
+    virtual Ref<const Class> _as_class() const { return {}; }
+
+    virtual Ref<AliasType> _as_alias() { return {}; }
+    virtual Ref<const AliasType> _as_alias() const { return {}; }
+
+    virtual Ref<ArrayType> _as_array() { return {}; }
+    virtual Ref<const ArrayType> _as_array() const { return {}; }
+
+    virtual Ref<RefType> _as_ref() { return {}; }
+    virtual Ref<const RefType> _as_ref() const { return {}; }
+
+
     virtual Ptr<ArrayType> make_array_type(array_size_t size);
     virtual Ptr<RefType> make_ref_type();
 
@@ -182,9 +198,6 @@ public:
 
     bitsize_t bitsize() const override;
 
-    Ref<AliasType> as_alias() override { return this; }
-    Ref<const AliasType> as_alias() const override { return this; }
-
     Ref<ast::TypeDef> node() { return _node; }
     Ref<ast::TypeName> type_name();
     Ref<ast::TypeExpr> type_expr();
@@ -205,6 +218,9 @@ public:
     Ref<const Type> deref() const override;
 
 protected:
+    Ref<AliasType> _as_alias() override { return this; }
+    Ref<const AliasType> _as_alias() const override { return this; }
+
     Ptr<ArrayType> make_array_type(array_size_t size) override;
     Ptr<RefType> make_ref_type() override;
 
@@ -234,9 +250,6 @@ public:
     RValue load(const BitsView data, bitsize_t off) const override;
     void store(BitsView data, bitsize_t off, const RValue& rval) const override;
 
-    Ref<ArrayType> as_array() override { return this; }
-    Ref<const ArrayType> as_array() const override { return this; }
-
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
 
@@ -246,6 +259,10 @@ public:
     array_size_t array_size() const { return _array_size; }
 
     bitsize_t item_off(array_idx_t idx) const;
+
+protected:
+    Ref<ArrayType> _as_array() override { return this; }
+    Ref<const ArrayType> _as_array() const override { return this; }
 
 private:
     void set_canon(Ref<ArrayType> canon);
@@ -268,9 +285,6 @@ public:
 
     bitsize_t bitsize() const override;
 
-    Ref<RefType> as_ref() override { return this; }
-    Ref<const RefType> as_ref() const override { return this; }
-
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
 
@@ -284,6 +298,10 @@ public:
 
     Ptr<ArrayType> make_array_type(array_size_t size) override;
     Ptr<RefType> make_ref_type() override;
+
+protected:
+    Ref<RefType> _as_ref() override { return this; }
+    Ref<const RefType> _as_ref() const override { return this; }
 
 private:
     void set_canon(Ref<RefType> canon);

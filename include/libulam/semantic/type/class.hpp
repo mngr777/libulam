@@ -66,9 +66,6 @@ public:
     bitsize_t bitsize() const override;
     bitsize_t direct_bitsize() const;
 
-    Ref<Class> as_class() override { return this; }
-    Ref<const Class> as_class() const override { return this; }
-
     RValue construct() const override;
 
     RValue load(const BitsView data, bitsize_t off) const override;
@@ -93,6 +90,9 @@ public:
     void add_conv(Ref<Fun> fun);
 
 protected:
+    Ref<Class> _as_class() override { return this; }
+    Ref<const Class> _as_class() const override { return this; }
+
     Ref<FunSet> add_fset(str_id_t name_id) override;
     Ref<FunSet> add_fset(Op op) override;
 

@@ -49,6 +49,65 @@ bool Type::is_atom() const {
     return is(AtomId) || (is_class() && as_class()->is_element());
 }
 
+Ref<PrimType> Type::as_prim() {
+    assert(_as_prim());
+    return _as_prim();
+}
+
+Ref<const PrimType> Type::as_prim() const {
+    assert(_as_prim());
+    return _as_prim();
+}
+
+Ref<Class> Type::as_class() {
+    assert(_as_class());
+    return _as_class();
+}
+
+Ref<const Class> Type::as_class() const {
+    assert(_as_class());
+    return _as_class();
+}
+
+Ref<AliasType> Type::as_alias() {
+    assert(_as_alias());
+    return _as_alias();
+}
+
+Ref<const AliasType> Type::as_alias() const {
+    assert(_as_alias());
+    return _as_alias();
+}
+
+Ref<ArrayType> Type::as_array() {
+    assert(_as_array());
+    return _as_array();
+}
+Ref<const ArrayType> Type::as_array() const {
+    assert(_as_array());
+    return _as_array();
+}
+
+Ref<RefType> Type::as_ref() {
+    assert(_as_ref());
+    return _as_ref();
+}
+
+Ref<const RefType> Type::as_ref() const {
+    assert(_as_ref());
+    return _as_ref();
+}
+
+TypedValue Type::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::SizeOf:
+        return TypedValue{
+            builtins().type(UnsignedId), Value{RValue{(Unsigned)bitsize()}}};
+    default:
+        return {};
+    }
+}
+
 Ref<ArrayType> Type::array_type(array_size_t size) {
     auto it = _array_types.find(size);
     if (it != _array_types.end())
@@ -63,16 +122,6 @@ Ref<RefType> Type::ref_type() {
     if (!_ref_type)
         _ref_type = make_ref_type();
     return ref(_ref_type);
-}
-
-TypedValue Type::type_op(TypeOp op) {
-    switch (op) {
-    case TypeOp::SizeOf:
-        return TypedValue{
-            builtins().type(UnsignedId), Value{RValue{(Unsigned)bitsize()}}};
-    default:
-        return {};
-    }
 }
 
 bool Type::is_same(Ref<const Type> type) const {
