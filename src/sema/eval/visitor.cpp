@@ -271,7 +271,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         args.pop_front();
         auto type = arg.type();
         assert(param->type());
-        if (type != param->type()) {
+        if (!type->is_same(param->type())) {
             assert(type->is_impl_castable_to(param->type()));
             auto rval =
                 type->cast_to(param->type(), arg.move_value().move_rvalue());
