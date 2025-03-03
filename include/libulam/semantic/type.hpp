@@ -49,6 +49,7 @@ class RefType;
 
 class Type {
     friend AliasType;
+
 public:
     explicit Type(Builtins& builtins, TypeIdGen* id_gen):
         _builtins{builtins},
@@ -162,7 +163,6 @@ protected:
     virtual Ref<RefType> _as_ref() { return {}; }
     virtual Ref<const RefType> _as_ref() const { return {}; }
 
-
     virtual Ptr<ArrayType> make_array_type(array_size_t size);
     virtual Ptr<RefType> make_ref_type();
 
@@ -199,12 +199,29 @@ public:
 
     bitsize_t bitsize() const override;
 
-    Ref<ast::TypeDef> node() { return _node; }
-    Ref<ast::TypeName> type_name();
-    Ref<ast::TypeExpr> type_expr();
+    RValue construct() const override;
+
+    RValue load(const BitsView data, bitsize_t off) const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval)
+        const override;
 
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
+
+    BuiltinTypeId bi_type_id() const override;
+
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+
+    bool
+    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
+
+    bool
+    is_impl_castable_to(Ref<const Type> type, const Value& val) const override;
+
+    bool is_impl_castable_to(
+        BuiltinTypeId bi_type_id, const Value& val) const override;
+
+    RValue cast_to(Ref<const Type> type, RValue&& rval) override;
 
     Ref<Type> non_alias() override { return _non_alias; }
     Ref<const Type> non_alias() const override { return _non_alias; }
@@ -216,6 +233,10 @@ public:
 
     Ref<Type> deref() override;
     Ref<const Type> deref() const override;
+
+    Ref<ast::TypeDef> node() { return _node; }
+    Ref<ast::TypeName> type_name();
+    Ref<ast::TypeExpr> type_expr();
 
 protected:
     Ref<AliasType> _as_alias() override { return this; }

@@ -184,7 +184,7 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
 bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
     if (!convs(type, expl).empty())
         return true;
-    return is_castable_to_object_type(type);
+    return type->is_object() && is_castable_to_object_type(type);
 }
 
 bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
@@ -192,7 +192,6 @@ bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 }
 
 bool Class::is_castable_to_object_type(Ref<const Type> type) const {
-    type = type->canon();
     assert(type->is_object());
 
     // to Atom

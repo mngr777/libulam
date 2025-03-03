@@ -202,14 +202,42 @@ bitsize_t AliasType::bitsize() const {
     return _canon->bitsize();
 }
 
-Ref<ast::TypeName> AliasType::type_name() {
-    assert(_node->type_name());
-    return _node->type_name();
+RValue AliasType::construct() const {
+    return non_alias()->construct();
 }
 
-Ref<ast::TypeExpr> AliasType::type_expr() {
-    assert(_node->type_expr());
-    return _node->type_expr();
+RValue AliasType::load(const BitsView data, bitsize_t off) const {
+    return non_alias()->load(data, off);
+}
+
+void AliasType::store(BitsView data, bitsize_t off, const RValue& rval) const {
+    non_alias()->store(data, off, std::move(rval));
+}
+
+BuiltinTypeId AliasType::bi_type_id() const {
+    return non_alias()->bi_type_id();
+}
+
+bool AliasType::is_castable_to(Ref<const Type> type, bool expl) const {
+    return non_alias()->is_castable_to(type, expl);
+}
+
+bool AliasType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
+    return non_alias()->is_castable_to(bi_type_id, expl);
+}
+
+bool AliasType::is_impl_castable_to(
+    Ref<const Type> type, const Value& val) const {
+    return non_alias()->is_impl_castable_to(type, val);
+}
+
+bool AliasType::is_impl_castable_to(
+    BuiltinTypeId bi_type_id, const Value& val) const {
+    return non_alias()->is_impl_castable_to(bi_type_id, val);
+}
+
+RValue AliasType::cast_to(Ref<const Type> type, RValue&& rval) {
+    return non_alias()->cast_to(type, std::move(rval));
 }
 
 void AliasType::set_aliased(Ref<Type> type) {
@@ -220,21 +248,36 @@ void AliasType::set_aliased(Ref<Type> type) {
     _non_alias = type->non_alias();
 }
 
+Ref<ast::TypeName> AliasType::type_name() {
+    assert(_node->type_name());
+    return _node->type_name();
+}
+
+Ref<ast::TypeExpr> AliasType::type_expr() {
+    assert(_node->type_expr());
+    return _node->type_expr();
+}
+
 Ref<Type> AliasType::deref() { return non_alias()->deref(); }
 Ref<const Type> AliasType::deref() const { return non_alias()->deref(); }
 
 Ref<PrimType> AliasType::_as_prim() { return non_alias()->_as_prim(); }
-Ref<const PrimType> AliasType::_as_prim() const { return non_alias()->_as_prim(); }
+Ref<const PrimType> AliasType::_as_prim() const {
+    return non_alias()->_as_prim();
+}
 
 Ref<Class> AliasType::_as_class() { return non_alias()->_as_class(); }
-Ref<const Class> AliasType::_as_class() const { return non_alias()->_as_class(); }
+Ref<const Class> AliasType::_as_class() const {
+    return non_alias()->_as_class();
+}
 
 Ref<ArrayType> AliasType::_as_array() { return non_alias()->_as_array(); }
-Ref<const ArrayType> AliasType::_as_array() const { return non_alias()->_as_array(); }
+Ref<const ArrayType> AliasType::_as_array() const {
+    return non_alias()->_as_array();
+}
 
 Ref<RefType> AliasType::_as_ref() { return non_alias()->_as_ref(); }
 Ref<const RefType> AliasType::_as_ref() const { return non_alias()->_as_ref(); }
-
 
 Ptr<ArrayType> AliasType::make_array_type(array_size_t size) {
     assert(_canon);
