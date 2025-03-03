@@ -129,6 +129,9 @@ class FunDef : public Tuple<Stmt, FunRetType, ParamList, FunDefBody>,
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Fun, fun)
     ULAM_AST_SIMPLE_ATTR(Op, op, Op::None)
+    // NOTE: function can be virtual, but not marked as such
+    ULAM_AST_SIMPLE_ATTR(bool, is_marked_virtual, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_marked_override, false)
 public:
     FunDef(
         Str name,

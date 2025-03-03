@@ -21,8 +21,9 @@ namespace ulam {
 // Fun
 
 Fun::Fun(Ref<ast::FunDef> node): _node{node} {
-    assert(!node->fun());
-    node->set_fun(this);
+    assert(node);
+    if (node->is_marked_virtual())
+        set_is_virtual(true);
 }
 
 Fun::~Fun() {}
@@ -32,6 +33,8 @@ str_id_t Fun::name_id() const { return _node->name_id(); }
 bool Fun::is_op() const { return _node->is_op(); }
 
 Op Fun::op() const { return _node->op(); }
+
+bool Fun::is_marked_virtual() const { return node()->is_marked_virtual(); }
 
 bool Fun::is_native() const { return _node->is_native(); }
 
@@ -76,6 +79,11 @@ Fun::MatchRes Fun::match(const TypedValueList& args) {
     return {status, max_conv_cost};
 }
 
+Ref<Fun> Fun::find_override(Ref<const Class> cls) {
+    auto it = _overrides.find(cls->id());
+    return (it != _overrides.end()) ? it->second : Ref<Fun>{};
+}
+
 Ref<ast::FunRetType> Fun::ret_type_node() const {
     assert(_node->has_ret_type());
     return _node->ret_type();
@@ -87,6 +95,17 @@ Ref<ast::ParamList> Fun::params_node() const {
 }
 
 Ref<ast::FunDefBody> Fun::body_node() const { return _node->body(); }
+
+void Fun::add_override(Ref<Fun> fun) {
+    assert(is_virtual());        // must be already marked as virtual
+    assert(fun->key() == key()); // parameters must match
+    assert(_overrides.count(fun->cls()->id()) == 0); // one override per class
+    assert(!fun->_overridden);
+
+    fun->set_is_virtual(true);
+    fun->_overridden = this;
+    _overrides[fun->cls()->id()] = fun;
+}
 
 std::string Fun::key() const {
     TypeList param_types;
@@ -124,6 +143,17 @@ FunSet::Iterator& FunSet::Iterator::operator++() {
 
 FunSet::FunSet() {
     _map.emplace(); // empty map for empty set
+}
+
+FunSet::Matches
+FunSet::find_match(Ref<const Class> dyn_cls, const TypedValueList& args) {
+    FunSet::Matches overrides{};
+    auto matches = find_match(args);
+    for (auto match : matches) {
+        auto overrd = match->find_override(dyn_cls);
+        overrides.insert(overrd ? overrd : match);
+    }
+    return overrides;
 }
 
 FunSet::Matches FunSet::find_match(const TypedValueList& args) {
@@ -196,8 +226,12 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
 
 void FunSet::merge(Ref<FunSet> other) {
     assert(_map.has_value());
-    for (auto fun : *other)
-        _map.value().emplace(fun->key(), fun); // silently fail on duplicates
+    for (auto fun : *other) {
+        auto [it, added] = _map.value().emplace(fun->key(), fun);
+        if (added || !fun->is_virtual() || it->second->_overridden)
+            continue;
+        fun->add_override(it->second);
+    }
 }
 
 } // namespace ulam

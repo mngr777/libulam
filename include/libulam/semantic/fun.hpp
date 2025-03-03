@@ -3,10 +3,12 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
+#include <map>
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
@@ -21,6 +23,7 @@ class ParamList;
 
 namespace ulam {
 
+class Class;
 class Diag;
 class FunSet;
 class Scope;
@@ -43,6 +46,11 @@ public:
     bool is_op() const;
     Op op() const;
 
+    bool is_virtual() const { return _is_virtual; }
+    void set_is_virtual(bool is_virtual) { _is_virtual = is_virtual; }
+
+    bool is_marked_virtual() const;
+
     bool is_native() const;
 
     Ref<Type> ret_type() { return _ret_type; }
@@ -61,6 +69,8 @@ public:
 
     MatchRes match(const TypedValueList& args);
 
+    Ref<Fun> find_override(Ref<const Class> cls);
+
     Ref<Scope> scope();
 
     Ref<ast::FunDef> node() const { return _node; }
@@ -69,11 +79,16 @@ public:
     Ref<ast::FunDefBody> body_node() const;
 
 private:
+    void add_override(Ref<Fun> fun);
+
     std::string key() const;
 
     Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
-    Params _params;
+    Params _params{};
+    bool _is_virtual{false};
+    Ref<Fun> _overridden{};
+    std::map<type_id_t, Ref<Fun>> _overrides;
 };
 
 class FunSet : public Decl {
@@ -108,8 +123,7 @@ public:
 
     FunSet();
 
-    bool is_virtual() const { return false; } // TODO
-
+    Matches find_match(Ref<const Class> dyn_cls, const TypedValueList& args);
     Matches find_match(const TypedValueList& args);
 
     void add(Ptr<Fun>&& fun);

@@ -333,12 +333,6 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return {prop->type(), obj_val.prop(prop)};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            auto dyn_cls = !obj_val.empty() ? obj_val.dyn_cls() : cls;
-            if (fset->is_virtual() && dyn_cls && dyn_cls != cls) {
-                auto sym = dyn_cls->get(name.str_id());
-                if (sym->is<FunSet>())
-                    fset = sym->get<FunSet>();
-            }
             return {builtins().type(FunId), obj_val.bound_fset(fset)};
         },
         [&](auto other) -> ExprRes { assert(false); });
@@ -546,7 +540,7 @@ TypedValue ExprVisitor::do_cast(
 
 ExprRes ExprVisitor::funcall(
     Ref<ast::Expr> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
-    auto match_res = fset->find_match(args);
+    auto match_res = fset->find_match(self.dyn_cls(), args);
     if (match_res.size() == 1) {
         return funcall(node, *(match_res.begin()), self, std::move(args));
     } else if (match_res.size() == 0) {

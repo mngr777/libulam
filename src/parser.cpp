@@ -275,7 +275,23 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
 }
 
 bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
-    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
+    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent, tok::Virtual, tok::Override));
+
+    // virtual/@Override
+    bool is_virtual = false;
+    bool is_override = false;
+    while (_tok.in(tok::Virtual, tok::Override)) {
+        if (_tok.is(tok::Virtual)) {
+            if (is_virtual)
+                diag(_tok, "duplicate `virtual' keyword");
+            is_virtual = true;
+        } else {
+            assert(_tok.is(tok::Override));
+            if (is_override)
+                diag(_tok, "duplicate `@Override' keyword");
+            is_override = true;
+        }
+    }
 
     // type
     Ptr<ast::FunRetType> ret_type{}; // maybe return type
@@ -330,11 +346,14 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
                 : parse_fun_def_rest(std::move(ret_type), name);
         if (!fun)
             return false;
+        // virtual/@Override
+        fun->set_is_marked_virtual(is_virtual);
+        fun->set_is_marked_override(is_override);
         node->add(std::move(fun));
 
     } else {
-        // force error if parsing an operator
-        if (is_op) {
+        // force error if parsing an operator or virtual/@Override is present
+        if (is_op || is_virtual || is_override) {
             expect(tok::ParenL);
             return false;
         }
