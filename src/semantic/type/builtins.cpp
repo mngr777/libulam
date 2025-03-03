@@ -1,5 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
-#include "libulam/semantic/value/types.hpp"
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
@@ -12,6 +10,16 @@
 #include <libulam/semantic/type/builtins.hpp>
 
 namespace ulam {
+
+namespace {
+
+template <typename T> bitsize_t prim_size(bitsize_t size) {
+    return (size == NoBitsize)
+        ? T::DefaultSize
+        : std::min(std::max(size, T::MinSize), T::MaxSize);
+}
+
+} // namespace
 
 Builtins::Builtins(TypeIdGen& id_gen) {
     _int_tpl = make<IntTypeTpl>(*this, id_gen);
@@ -93,66 +101,39 @@ Ref<Type> Builtins::type(BuiltinTypeId id, bitsize_t size) {
 }
 
 Ref<IntType> Builtins::int_type(bitsize_t size) {
-    if (size == NoBitsize)
-        size = IntType::DefaultSize;
-    return _int_tpl->exact_type(size);
+    return _int_tpl->exact_type(prim_size<IntType>(size));
 }
 
-Ref<IntTypeTpl> Builtins::int_tpl() {
-    return ref(_int_tpl);
-}
+Ref<IntTypeTpl> Builtins::int_tpl() { return ref(_int_tpl); }
 
 Ref<UnsignedType> Builtins::unsigned_type(bitsize_t size) {
-    if (size == NoBitsize)
-        size = UnsignedType::DefaultSize;
-    return _unsigned_tpl->exact_type(size);
+    return _unsigned_tpl->exact_type(prim_size<UnsignedType>(size));
 }
 
-Ref<UnsignedTypeTpl> Builtins::unsigned_tpl() {
-    return ref(_unsigned_tpl);
-}
+Ref<UnsignedTypeTpl> Builtins::unsigned_tpl() { return ref(_unsigned_tpl); }
 
 Ref<UnaryType> Builtins::unary_type(bitsize_t size) {
-    if (size == NoBitsize)
-        size = UnaryType::DefaultSize;
-    return _unary_tpl->exact_type(size);
+    return _unary_tpl->exact_type(prim_size<UnaryType>(size));
 }
 
-Ref<UnaryTypeTpl> Builtins::unary_tpl() {
-    return ref(_unary_tpl);
-}
+Ref<UnaryTypeTpl> Builtins::unary_tpl() { return ref(_unary_tpl); }
 
 Ref<BitsType> Builtins::bits_type(bitsize_t size) {
-    if (size == NoBitsize)
-        size = BitsType::DefaultSize;
-    return _bits_tpl->exact_type(size);
+    return _bits_tpl->exact_type(prim_size<BitsType>(size));
 }
 
-Ref<BitsTypeTpl> Builtins::bits_tpl() {
-    return ref(_bits_tpl);
-}
+Ref<BitsTypeTpl> Builtins::bits_tpl() { return ref(_bits_tpl); }
 
 Ref<BoolType> Builtins::bool_type(bitsize_t size) {
-    if (size == NoBitsize)
-        size = BoolType::DefaultSize;
-    return _bool_tpl->exact_type(size);
+    return _bool_tpl->exact_type(prim_size<BoolType>(size));
 }
 
-Ref<BoolTypeTpl> Builtins::bool_tpl() {
-    return ref(_bool_tpl);
-}
+Ref<BoolTypeTpl> Builtins::bool_tpl() { return ref(_bool_tpl); }
 
-Ref<AtomType> Builtins::atom_type() {
-    return ref(_atom_type);
-}
+Ref<AtomType> Builtins::atom_type() { return ref(_atom_type); }
 
-Ref<StringType> Builtins::string_type() {
-    return ref(_string_type);
-}
+Ref<StringType> Builtins::string_type() { return ref(_string_type); }
 
-Ref<VoidType> Builtins::void_type() {
-    return ref(_void_type);
-}
-
+Ref<VoidType> Builtins::void_type() { return ref(_void_type); }
 
 } // namespace ulam

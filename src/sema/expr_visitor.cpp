@@ -452,7 +452,7 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
         return UnknownArrayIdx;
 
     // Cast to default Int
-    auto int_type = builtins().prim_type(IntId, IntType::DefaultSize);
+    auto int_type = builtins().int_type();
     auto cast_res = maybe_cast(expr, int_type, res.move_typed_value());
     if (cast_res.second == CastError)
         return UnknownArrayIdx;

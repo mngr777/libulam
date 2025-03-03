@@ -96,8 +96,7 @@ RValue UnsignedType::cast_to(Ref<const PrimType> type, RValue&& rval) {
     }
     case BitsId: {
         auto bits_rval = type->construct();
-        bits_rval.get<Bits>().write_right(
-            type->bitsize(), to_datum(rval));
+        bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
         return bits_rval;
     }
     default:
@@ -254,7 +253,7 @@ bool UnsignedType::is_castable_to_prim(
     Ref<const PrimType> type, bool expl) const {
     switch (type->bi_type_id()) {
     case IntId:
-        return expl;
+        return expl || type->bitsize() == ULAM_MAX_INT_SIZE ||type->bitsize() > bitsize();
     case UnsignedId:
         return expl || type->bitsize() >= bitsize();
     case BoolId:

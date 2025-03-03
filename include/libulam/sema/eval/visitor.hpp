@@ -31,6 +31,8 @@ public:
     void visit(Ref<ast::Break> node) override;
     void visit(Ref<ast::Continue> node) override;
     void visit(Ref<ast::ExprStmt> node) override;
+    void visit(Ref<ast::UnaryOp> node) override;
+    void visit(Ref<ast::BinaryOp> node) override;
     void visit(Ref<ast::FunCall> node) override;
     void visit(Ref<ast::ArrayAccess> node) override;
     void visit(Ref<ast::MemberAccess> node) override;

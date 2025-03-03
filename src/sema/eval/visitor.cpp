@@ -234,6 +234,12 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     }
 }
 
+// TODO: refactoring
+
+void EvalVisitor::visit(Ref<ast::UnaryOp> node) { eval_expr(node); }
+
+void EvalVisitor::visit(Ref<ast::BinaryOp> node) { eval_expr(node); }
+
 void EvalVisitor::visit(Ref<ast::FunCall> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::ArrayAccess> node) { eval_expr(node); }
