@@ -71,6 +71,8 @@ struct Token {
     Op bin_op() const { return tok::bin_op(type); }
     Op unary_pre_op() const { return tok::unary_pre_op(type); }
     Op unary_post_op() const { return tok::unary_post_op(type); }
+
+    bool is_self() const { return orig_type == tok::Self; }
 };
 
 } // namespace ulam

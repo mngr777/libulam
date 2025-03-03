@@ -34,6 +34,8 @@ TOK("local", Local)
 TOK("true", True)
 TOK("false", False)
 
+TOK("self", Self)
+
 TOK("#", Sharp)
 TOK("$", Dollar)
 TOK("(", ParenL)

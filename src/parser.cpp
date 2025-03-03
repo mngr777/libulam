@@ -666,7 +666,7 @@ Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
     Ptr<ast::Ident> ident{};
     Ptr<ast::TypeName> type{};
     if (_tok.is(tok::Ident)) {
-        ident = parse_ident();
+        ident = parse_ident(true);
         if (_tok.is(tok::As)) {
             consume();
             // if (ident as Type
@@ -943,7 +943,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs() {
     case tok::TypeIdent:
         return parse_type_op();
     case tok::Ident:
-        return parse_ident();
+        return parse_ident(true);
     case tok::True:
     case tok::False:
         return parse_bool_lit();
@@ -1159,11 +1159,17 @@ Ptr<ast::TypeIdent> Parser::parse_type_ident() {
     return tree<ast::TypeIdent>(str);
 }
 
-Ptr<ast::Ident> Parser::parse_ident() {
+Ptr<ast::Ident> Parser::parse_ident(bool allow_self) {
     assert(_tok.is(tok::Ident));
     auto str = tok_ast_str();
+    bool is_self = _tok.is_self();
     consume();
-    return tree_loc<ast::Ident>(str.loc_id(), str);
+    if (is_self && !allow_self) {
+        // TODO: check in other cases
+        diag(str.loc_id(), 1, "`self' is not allowed in this context");
+        return {};
+    }
+    return tree_loc<ast::Ident>(str.loc_id(), str, is_self);
 }
 
 bool Parser::parse_is_ref() {

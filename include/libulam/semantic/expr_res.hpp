@@ -9,6 +9,7 @@ namespace ulam {
 enum class ExprError {
     Ok,
     Error,
+    NoSelf,
     SymbolNotFound,
     MemberNotFound,
     UnresolvableType,

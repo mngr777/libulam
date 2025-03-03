@@ -4,6 +4,14 @@
 #include <libulam/src_mngr.hpp>
 #include <libulam/token.hpp>
 
+#define DEBUG_PREPROC // TEST
+#ifdef DEBUG_PREPROC
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::Preproc] "
+#endif
+#include "src/debug.hpp"
+
+
 namespace ulam {
 
 void Preproc::main_file(std::filesystem::path path) {
@@ -40,6 +48,9 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::MlComment:
             // ignore comments
             break;
+        case tok::Self:
+            token.type = tok::Ident;
+            return *this;
         case tok::Eof:
             _stack.pop();
             if (_stack.empty())

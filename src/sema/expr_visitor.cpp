@@ -44,6 +44,15 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
 ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     debug() << __FUNCTION__ << " Ident `" << str(node->name().str_id())
             << "`\n";
+    if (node->is_self()) {
+        auto lval = _scope->self();
+        if (lval.empty()) {
+            diag().error(node, "cannot use `self' without class context");
+            return {ExprError::NoSelf};
+        }
+        return {lval.type(), Value{lval}};
+    }
+
     auto name = node->name();
     auto sym = _scope->get(name.str_id());
     if (!sym) {
@@ -496,18 +505,22 @@ RValue ExprVisitor::do_cast(
     } else if (from->is_class()) {
         auto cls = from->as_class();
         auto convs = cls->convs(to, true);
-        assert(convs.size() == 1);
-        auto obj_val = tv.move_value();
-        ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
-        if (!res.ok()) {
-            diag().error(node, "conversion failed");
-            return RValue{};
+        if (convs.size() == 0) {
+            return cls->cast_to_object_type(to, tv.move_value().move_rvalue());
+
+        } else {
+            auto obj_val = tv.move_value();
+            ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
+            if (!res.ok()) {
+                diag().error(node, "conversion failed");
+                return RValue{};
+            }
+            if (res.type()->is_same(to)) {
+                assert(res.type()->is_expl_castable_to(to));
+                return do_cast(node, type, res.move_typed_value());
+            }
+            return res.move_value().move_rvalue();
         }
-        if (res.type()->is_same(to)) {
-            assert(res.type()->is_expl_castable_to(to));
-            return do_cast(node, type, res.move_typed_value());
-        }
-        return res.move_value().move_rvalue();
     }
     assert(false);
 }
