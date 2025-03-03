@@ -220,9 +220,21 @@ void AliasType::set_aliased(Ref<Type> type) {
     _non_alias = type->non_alias();
 }
 
-Ref<Type> AliasType::deref() { assert(false); }
+Ref<Type> AliasType::deref() { return non_alias()->deref(); }
+Ref<const Type> AliasType::deref() const { return non_alias()->deref(); }
 
-Ref<const Type> AliasType::deref() const { assert(false); }
+Ref<PrimType> AliasType::_as_prim() { return non_alias()->_as_prim(); }
+Ref<const PrimType> AliasType::_as_prim() const { return non_alias()->_as_prim(); }
+
+Ref<Class> AliasType::_as_class() { return non_alias()->_as_class(); }
+Ref<const Class> AliasType::_as_class() const { return non_alias()->_as_class(); }
+
+Ref<ArrayType> AliasType::_as_array() { return non_alias()->_as_array(); }
+Ref<const ArrayType> AliasType::_as_array() const { return non_alias()->_as_array(); }
+
+Ref<RefType> AliasType::_as_ref() { return non_alias()->_as_ref(); }
+Ref<const RefType> AliasType::_as_ref() const { return non_alias()->_as_ref(); }
+
 
 Ptr<ArrayType> AliasType::make_array_type(array_size_t size) {
     assert(_canon);

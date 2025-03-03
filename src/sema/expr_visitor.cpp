@@ -6,6 +6,7 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/value.hpp>
@@ -191,7 +192,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
         break;
     }
 
-    auto arg_type = tv.type()->actual();
+    auto arg_type = tv.type()->deref();
     if (arg_type->is_prim()) {
         tv = arg_type->as_prim()->unary_op(op, tv.move_value().move_rvalue());
         if (ops::is_inc_dec(op)) {
@@ -208,7 +209,6 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
             auto type = resolver.resolve_type_name(node->type_name(), _scope);
             if (!type)
                 return {ExprError::UnresolvableType};
-            type = type->canon();
             if (!check_is_object(node, type))
                 return {ExprError::NotObject};
             assert(op == Op::Is);
@@ -262,18 +262,18 @@ ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
     const auto& number = node->value();
     if (number.is_signed()) {
         // Int(n)
-        auto type = builtins().prim_type(IntId, number.bitsize());
+        auto type = builtins().int_type(number.bitsize());
         return {type, Value{RValue{number.value<Integer>(), true}}};
     } else {
         // Unsigned(n)
-        auto type = builtins().prim_type(UnsignedId, number.bitsize());
+        auto type = builtins().unsigned_type(number.bitsize());
         return {type, Value{RValue{number.value<Unsigned>(), true}}};
     }
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::StrLit> node) {
     debug() << __FUNCTION__ << " StrLit\n";
-    auto type = builtins().prim_type(StringId);
+    auto type = builtins().type(StringId);
     return {type, Value{RValue{node->value()}}};
 }
 

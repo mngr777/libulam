@@ -48,6 +48,7 @@ class ArrayType;
 class RefType;
 
 class Type {
+    friend AliasType;
 public:
     explicit Type(Builtins& builtins, TypeIdGen* id_gen):
         _builtins{builtins},
@@ -213,13 +214,24 @@ public:
 
     void set_aliased(Ref<Type> type);
 
-    // NOTE: do not call on alias, use `canon()` then deref canon type
     Ref<Type> deref() override;
     Ref<const Type> deref() const override;
 
 protected:
     Ref<AliasType> _as_alias() override { return this; }
     Ref<const AliasType> _as_alias() const override { return this; }
+
+    Ref<PrimType> _as_prim() override;
+    Ref<const PrimType> _as_prim() const override;
+
+    Ref<Class> _as_class() override;
+    Ref<const Class> _as_class() const override;
+
+    Ref<ArrayType> _as_array() override;
+    Ref<const ArrayType> _as_array() const override;
+
+    Ref<RefType> _as_ref() override;
+    Ref<const RefType> _as_ref() const override;
 
     Ptr<ArrayType> make_array_type(array_size_t size) override;
     Ptr<RefType> make_ref_type() override;
