@@ -1,3 +1,5 @@
+#include "libulam/semantic/ops.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -79,13 +81,18 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
     if (is_numeric(l_type) || is_numeric(l_type)) {
         // same type?
         if (l_type->is(r_type->bi_type_id())) {
-            // suggest casting Unary ot Unsigned
+            // suggest casting Unary to Unsigned
             if (l_type->is(UnaryId)) {
                 errors.first = check_type_match(l_type, UnsignedId);
                 errors.second = check_type_match(r_type, r_val, UnsignedId);
             }
             return errors;
         }
+
+        // suggest casting to Unsigned for assignment ops if left is Unsigned
+        if (ops::is_assign(op) && l_type->is(UnsignedId) && suggest(UnsignedId))
+            return errors;
+
         // suggest casting to Int or Unsigned
         if (suggest(IntId) || suggest(UnsignedId))
             return errors;
