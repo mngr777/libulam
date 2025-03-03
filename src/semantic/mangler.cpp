@@ -68,6 +68,8 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
                 write_mangled(os, rval);
             });
         }
+    } else if (type->is_atom()) {
+        os << "a";
     } else {
         assert(type->is_prim());
         detail::write_leximited(os, builtin_type_code(type->bi_type_id()));
