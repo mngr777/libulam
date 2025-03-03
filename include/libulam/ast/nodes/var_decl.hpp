@@ -10,6 +10,8 @@
 
 namespace ulam::ast {
 
+class InitList : public List<Stmt, ExprList> {};
+
 class VarDecl : public Tuple<Stmt, ExprList, Expr>,
                 public Named,
                 public DefNode {
