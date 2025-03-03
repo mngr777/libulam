@@ -24,6 +24,32 @@ DataView LValue::data_view() {
         [&](std::monostate&) -> DataView { assert(false); });
 }
 
+const DataView LValue::data_view() const {
+    return const_cast<LValue*>(this)->data_view();
+}
+
+Ref<Class> LValue::dyn_cls() const {
+    auto data = data_view();
+    return data.is_class() ? data.type()->canon()->as_class() : Ref<Class>{};
+}
+
+Ref<Type> LValue::dyn_obj_type() const {
+    auto data = data_view();
+    assert(data.is_object());
+    return data.type();
+}
+
+LValue LValue::self() {
+    LValue lval{derived(accept(
+        [&](Ref<Var> var) { return var->data_view(); },
+        [&](DataView& data) { return data; },
+        [&](BoundFunSet& bfset) { return bfset.self(); },
+        [&](std::monostate&) -> DataView { assert(false); }))};
+    lval.set_scope_lvl(AutoScopeLvl);
+    lval.set_is_xvalue(false);
+    return lval;
+}
+
 RValue LValue::rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->rvalue(); },
@@ -40,17 +66,6 @@ LValue LValue::prop(Ref<Prop> prop) { return derived(data_view().prop(prop)); }
 
 LValue LValue::bound_fset(Ref<FunSet> fset) {
     return derived(BoundFunSet{data_view(), fset});
-}
-
-LValue LValue::self() {
-    LValue lval{derived(accept(
-        [&](Ref<Var> var) { return var->data_view(); },
-        [&](DataView& data) { return data; },
-        [&](BoundFunSet& bfset) { return bfset.self(); },
-        [&](std::monostate&) -> DataView { assert(false); }))};
-    lval.set_scope_lvl(AutoScopeLvl);
-    lval.set_is_xvalue(false);
-    return lval;
 }
 
 Value LValue::assign(RValue&& rval) {
@@ -85,6 +100,30 @@ DataView RValue::data_view() {
         [&](auto& other) -> DataView { assert(false); });
 }
 
+const DataView RValue::data_view() const {
+    return const_cast<RValue*>(this)->data_view();
+}
+
+Ref<Class> RValue::dyn_cls() const {
+    auto data = data_view();
+    return data.is_class() ? data.type()->canon()->as_class() : Ref<Class>{};
+}
+
+Ref<Type> RValue::dyn_obj_type() const {
+    auto data = data_view();
+    assert(data.is_object());
+    return data.type();
+}
+
+LValue RValue::self() {
+    LValue lval{accept(
+        [&](DataPtr& data) { return data->view(); },
+        [&](auto& other) -> DataView { assert(false); })};
+    lval.set_scope_lvl(AutoScopeLvl);
+    lval.set_is_xvalue(false);
+    return lval;
+}
+
 LValue RValue::array_access(array_idx_t idx) {
     return accept(
         [&](DataPtr& data) { return LValue{data->array_item(idx)}; },
@@ -103,15 +142,6 @@ LValue RValue::bound_fset(Ref<FunSet> fset) {
         [&](auto& other) -> LValue { assert(false); });
 }
 
-LValue RValue::self() {
-    LValue lval{accept(
-        [&](DataPtr& data) { return data->view(); },
-        [&](auto& other) -> DataView { assert(false); })};
-    lval.set_scope_lvl(AutoScopeLvl);
-    lval.set_is_xvalue(false);
-    return lval;
-}
-
 // Value
 
 bool Value::empty() const {
@@ -120,6 +150,22 @@ bool Value::empty() const {
 
 DataView Value::data_view() {
     return accept([&](auto& val) { return val.data_view(); });
+}
+
+const DataView Value::data_view() const {
+    return accept([&](const auto& val) { return val.data_view(); });
+}
+
+Ref<Class> Value::dyn_cls() const {
+    return accept([&](const auto& val) { return val.dyn_cls(); });
+}
+
+Ref<Type> Value::dyn_obj_type() const {
+    return accept([&](const auto& val) { return val.dyn_obj_type(); });
+}
+
+LValue Value::self() {
+    return accept([&](auto& val) { return val.self(); });
 }
 
 Value Value::array_access(array_idx_t idx) {
@@ -132,10 +178,6 @@ Value Value::prop(Ref<Prop> prop) {
 
 Value Value::bound_fset(Ref<FunSet> fset) {
     return accept([&](auto& val) { return Value{val.bound_fset(fset)}; });
-}
-
-LValue Value::self() {
-    return accept([&](auto& val) { return val.self(); });
 }
 
 RValue Value::copy_rvalue() const {

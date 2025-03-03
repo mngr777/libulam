@@ -213,8 +213,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
                 return {ExprError::NotObject};
             assert(op == Op::Is);
             assert(!tv.value().empty());
-            // auto dyn_type = tv.value().obj_type()->actual(); // TMP
-            auto dyn_type = tv.type();
+            auto dyn_type = tv.value().dyn_obj_type();
             bool is =
                 dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
             auto boolean = builtins().boolean();
@@ -334,10 +333,8 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return {prop->type(), obj_val.prop(prop)};
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            // auto dyn_cls = obj_val.obj_type()->actual()->as_class(); // TMP
-            auto dyn_cls = cls;
-            assert(dyn_cls);
-            if (fset->is_virtual() && dyn_cls != cls) {
+            auto dyn_cls = !obj_val.empty() ? obj_val.dyn_cls() : cls;
+            if (fset->is_virtual() && dyn_cls && dyn_cls != cls) {
                 auto sym = dyn_cls->get(name.str_id());
                 if (sym->is<FunSet>())
                     fset = sym->get<FunSet>();

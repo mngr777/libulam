@@ -14,6 +14,7 @@ using scope_lvl_t = std::uint16_t;
 constexpr scope_lvl_t NoScopeLvl = -1;
 constexpr scope_lvl_t AutoScopeLvl = -2;
 
+class Class;
 class FunSet;
 class Prop;
 class Type;
@@ -30,13 +31,18 @@ public:
     RValue rvalue() const;
 
     Ref<Type> type() const;
+
     DataView data_view();
+    const DataView data_view() const;
+
+    Ref<Class> dyn_cls() const;
+    Ref<Type> dyn_obj_type() const;
+
+    LValue self();
 
     LValue array_access(array_idx_t idx);
     LValue prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
-
-    LValue self();
 
     Value assign(RValue&& rval);
 
@@ -77,12 +83,16 @@ public:
     RValue copy() const;
 
     DataView data_view();
+    const DataView data_view() const;
+
+    Ref<Class> dyn_cls() const;
+    Ref<Type> dyn_obj_type() const;
+
+    LValue self();
 
     LValue array_access(array_idx_t idx);
     LValue prop(Ref<Prop> prop);
     LValue bound_fset(Ref<FunSet> fset);
-
-    LValue self();
 
     bool is_consteval() const { return _is_consteval; }
     void set_is_consteval(bool is_consteval) {
@@ -115,12 +125,16 @@ public:
     const RValue& rvalue() const { return get<RValue>(); }
 
     DataView data_view();
+    const DataView data_view() const;
+
+    Ref<Class> dyn_cls() const;
+    Ref<Type> dyn_obj_type() const;
+
+    LValue self();
 
     Value array_access(array_idx_t index);
     Value prop(Ref<Prop> prop);
     Value bound_fset(Ref<FunSet> fset);
-
-    LValue self();
 
     RValue copy_rvalue() const;
     RValue move_rvalue();
