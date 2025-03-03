@@ -53,6 +53,8 @@ public:
 
     bool is_native() const;
 
+    bool has_ellipsis() const;
+
     Ref<Type> ret_type() { return _ret_type; }
     Ref<const Type> ret_type() const { return _ret_type; }
 

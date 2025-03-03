@@ -275,7 +275,8 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
 }
 
 bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
-    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent, tok::Virtual, tok::Override));
+    assert(_tok.in(
+        tok::BuiltinTypeIdent, tok::TypeIdent, tok::Virtual, tok::Override));
 
     // virtual/@Override
     bool is_virtual = false;
@@ -503,7 +504,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
     assert(ret_type);
 
     // params
-    auto params = parse_param_list();
+    auto params = parse_param_list(true);
     if (!params)
         panic(tok::BraceL, tok::BraceR, tok::Semicol);
 
@@ -522,6 +523,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
             return {};
     }
 
+    // body
     Ptr<ast::FunDefBody> body;
     if (_tok.is(tok::BraceL)) {
         // body
@@ -537,6 +539,14 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         }
         assert(_tok.is(tok::Semicol));
         consume();
+    }
+    is_native = !body;
+
+    if (params->has_ellipsis() && !is_native) {
+        diag(
+            params->ellipsis_loc_id(), 1,
+            "only native functions can have ellipsis parameter");
+        params->set_ellipsis_loc_id(NoLocId);
     }
 
     auto fun = tree<ast::FunDef>(
@@ -762,7 +772,7 @@ Ptr<ast::Continue> Parser::parse_continue() {
     return tree_loc<ast::Continue>(loc_id);
 }
 
-Ptr<ast::ParamList> Parser::parse_param_list() {
+Ptr<ast::ParamList> Parser::parse_param_list(bool allow_ellipsis) {
     assert(_tok.is(tok::ParenL));
     // (
     auto node = tree<ast::ParamList>();
@@ -771,6 +781,22 @@ Ptr<ast::ParamList> Parser::parse_param_list() {
     bool requires_value = false;
     Ref<ast::Param> prev{};
     while (!_tok.in(tok::ParenR, tok::Eof)) {
+        // ellipsis
+        if (_tok.is(tok::Ellipsis)) {
+            auto loc_id = _tok.loc_id;
+            consume();
+            if (allow_ellipsis) {
+                if (node->has_ellipsis())
+                    diag(_tok, "duplicate ellipsis");
+                node->set_ellipsis_loc_id(loc_id);
+                if (!_tok.is(tok::ParenR))
+                    diag(loc_id, 1, "ellipsis must be the last parameter");
+            } else {
+                diag(loc_id, 1, "ellipsis is not allowed in this context");
+            }
+            continue;
+        }
+
         // param
         auto param = parse_param(requires_value);
         if (!param)

@@ -29,6 +29,9 @@ public:
 
 class ParamList : public List<Node, Param> {
     ULAM_AST_NODE
+    ULAM_AST_SIMPLE_ATTR(loc_id_t, ellipsis_loc_id, NoLocId)
+public:
+    bool has_ellipsis() const { return ellipsis_loc_id() != NoLocId; }
 };
 
 class ArgList : public List<Node, Expr> {

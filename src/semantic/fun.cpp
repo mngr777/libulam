@@ -38,6 +38,8 @@ bool Fun::is_marked_virtual() const { return node()->is_marked_virtual(); }
 
 bool Fun::is_native() const { return _node->is_native(); }
 
+bool Fun::has_ellipsis() const { return _node->params()->has_ellipsis(); }
+
 void Fun::add_param(Ptr<Var>&& param) {
     assert(params_node());
     assert(_params.size() < params_node()->child_num());
@@ -60,13 +62,19 @@ unsigned Fun::min_param_num() const {
 }
 
 Fun::MatchRes Fun::match(const TypedValueList& args) {
-    if (min_param_num() > args.size() || args.size() > param_num())
+    if (min_param_num() > args.size())
+        return {NoMatch, MaxConvCost};
+    if (args.size() > param_num() && !has_ellipsis())
         return {NoMatch, MaxConvCost};
 
     conv_cost_t max_conv_cost = 0;
     auto arg_it = args.begin();
     auto param_it = _params.begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
+        if (param_it == _params.end()) {
+            assert(has_ellipsis());
+            break;
+        }
         auto arg_type = arg_it->type();
         auto param_type = (*param_it)->type();
         max_conv_cost =
@@ -112,7 +120,10 @@ std::string Fun::key() const {
     for (const auto& param : _params)
         param_types.push_back(param->type());
     Mangler mangler;
-    return mangler.mangled(param_types);
+    auto key = mangler.mangled(param_types);
+    if (has_ellipsis())
+        key += "..."; // TMP
+    return key;
 }
 
 // FunSet::Iterator
