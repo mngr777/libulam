@@ -57,6 +57,7 @@ public:
     bool resolve(sema::Resolver& resolver);
 
     bool is_base_of(Ref<const Class> other) const;
+    bool is_same_or_base_of(Ref<const Class> other) const;
 
     bitsize_t base_off(Ref<const Class> base) const;
 
@@ -79,6 +80,8 @@ public:
     bool is_castable_to_object_type(Ref<const Type> type) const;
 
     RValue cast_to_object_type(Ref<const Type> type, RValue&& rval) const;
+
+    // TODO void write_base_data();
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;

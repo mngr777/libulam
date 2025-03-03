@@ -134,6 +134,10 @@ bool Class::is_base_of(Ref<const Class> other) const {
     return other->_ancestry.is_base(this);
 }
 
+bool Class::is_same_or_base_of(Ref<const Class> other) const {
+    return other == this || is_base_of(other);
+}
+
 bitsize_t Class::base_off(Ref<const Class> base) const {
     assert(base->is_base_of(this));
     return _ancestry.data_off(base);

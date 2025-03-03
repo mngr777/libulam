@@ -28,6 +28,9 @@ public:
     DataView view();
     const DataView view() const;
 
+    DataView as(Ref<Type> type);
+    const DataView as(Ref<Type> type) const;
+
     DataView array_item(array_idx_t idx);
     const DataView array_item(array_idx_t idx) const;
 
@@ -54,6 +57,7 @@ public:
         DataPtr storage,
         Ref<Type> type,
         bitsize_t off,
+        Ref<Type> view_type = Ref<Type>{},
         bitsize_t atom_off = NoBitsize);
 
     void store(RValue&& rval);
@@ -61,6 +65,9 @@ public:
 
     DataPtr storage() { return _storage; }
     ConstDataPtr storage() const { return _storage; }
+
+    DataView as(Ref<Type> type);
+    const DataView as(Ref<Type> type) const;
 
     DataView array_item(array_idx_t idx);
     const DataView array_item(array_idx_t idx) const;
@@ -72,7 +79,7 @@ public:
     bool is_object() const;
     bool is_class() const;
 
-    Ref<Type> type() const { return _type; }
+    Ref<Type> type() const { return _view_type; }
 
     BitsView bits();
     const BitsView bits() const;
@@ -81,6 +88,7 @@ private:
     DataPtr _storage;
     Ref<Type> _type;
     bitsize_t _off;
+    Ref<Type> _view_type;
     bitsize_t _atom_off;
 };
 

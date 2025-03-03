@@ -128,12 +128,11 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     }
 
     assert(!res.value().empty());
-    // auto dyn_type = res.value().obj_type()->actual(); // TMP
-    auto dyn_type = type;
-    if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
+    auto dyn_type = res.value().dyn_obj_type()->actual();
+    if (dyn_type->is_same(type) || type->is_impl_castable_to(dyn_type)) {
+        auto scope_raii{_scope_stack.raii(scp::NoFlags)};
         auto val = res.move_value();
-        auto obj_view = val.data_view();
-        // obj_view.cast(type);
+        auto obj_view = val.data_view().as(type);
         auto def = make<ast::VarDef>(node->ident()->name());
         auto var = make<Var>(
             node->type_name(), ref(def),
