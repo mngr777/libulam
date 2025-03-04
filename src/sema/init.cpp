@@ -155,16 +155,19 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
 }
 
 bool Init::do_visit(Ref<ast::TypeName> node) {
+    // NOTE: type name nodes can have embedded type names in parameters, e.g.
+    // `Foo(Bar.maxof)` so we still need to go deeper
+
     auto type_spec = node->first();
     if (type_spec->is_builtin())
-        return false;
+        return true;
 
     // add unresolved name to module dependencies
     assert(type_spec->has_ident());
     auto name_id = type_spec->ident()->name_id();
     if (!scope()->has(name_id))
         module()->add_dep(name_id);
-    return false;
+    return true;
 }
 
 void Init::export_classes() {
