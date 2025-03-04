@@ -67,6 +67,7 @@ public:
     bitsize_t bitsize() const override;
     bitsize_t direct_bitsize() const;
 
+    bool is_constructible() const override { return true; }
     RValue construct() const override;
 
     RValue load(const BitsView data, bitsize_t off) const override;

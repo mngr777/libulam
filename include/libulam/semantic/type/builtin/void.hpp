@@ -21,6 +21,8 @@ public:
 
     std::string name() const override { return "Void"; }
 
+    bool is_constructible() const override { return false; }
+
     bitsize_t bitsize() const override { return 0; }
 
     BuiltinTypeId bi_type_id() const override { return VoidId; }

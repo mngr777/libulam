@@ -66,7 +66,7 @@ TOK("classidof", ClassIdOf)
 TOK("constantof", ConstantOf)
 TOK("positionof", PositionOf)
 TOK("atomof", AtomOf)
-TOK("InstanceOf", InstanceOf)
+TOK("instanceof", InstanceOf)
 
 TOK("is", Is)
 TOK("as", As)

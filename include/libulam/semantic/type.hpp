@@ -67,6 +67,7 @@ public:
 
     virtual bitsize_t bitsize() const = 0;
 
+    virtual bool is_constructible() const { return false; }
     virtual RValue construct() const;
 
     RValue load(const Bits& data, bitsize_t off) const;
@@ -199,11 +200,11 @@ public:
 
     bitsize_t bitsize() const override;
 
+    bool is_constructible() const override;
     RValue construct() const override;
 
     RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval)
-        const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
 
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
@@ -278,6 +279,7 @@ public:
 
     bitsize_t bitsize() const override;
 
+    bool is_constructible() const override { return true; }
     RValue construct() const override;
 
     RValue load(const BitsView data, bitsize_t off) const override;

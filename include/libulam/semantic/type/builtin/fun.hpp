@@ -11,6 +11,8 @@ public:
 
     std::string name() const override { return "Fun"; }
 
+    bool is_constructible() const override { return false; }
+
     bitsize_t bitsize() const override { assert(false); }
 
     BuiltinTypeId bi_type_id() const override { return FunId; }

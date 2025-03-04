@@ -15,6 +15,7 @@ public:
 
     bitsize_t bitsize() const override { return ULAM_ATOM_SIZE; }
 
+    bool is_constructible() const override { return true; }
     RValue construct() const override;
     RValue construct(Bits&& bits) const;
 

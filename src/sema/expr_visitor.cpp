@@ -35,6 +35,9 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     }
     assert(node->has_expr());
     auto expr_res = node->expr()->accept(*this);
+    if (!expr_res.ok())
+        return expr_res;
+    assert(expr_res.type());
     auto tv = expr_res.type()->actual()->type_op(node->op());
     if (!tv)
         return {ExprError::InvalidTypeOperator};
@@ -429,7 +432,7 @@ bool ExprVisitor::check_is_object(
 bool ExprVisitor::check_is_class(
     Ref<ast::Expr> node, Ref<const Type> type, bool deref) {
     type = deref ? type->actual() : type->canon();
-    if (!type->is_object()) {
+    if (!type->is_class()) {
         diag().error(node, "not a class");
         return false;
     }

@@ -100,10 +100,18 @@ Ref<const RefType> Type::as_ref() const {
 
 TypedValue Type::type_op(TypeOp op) {
     switch (op) {
-    case TypeOp::SizeOf:
+    case TypeOp::SizeOf: {
         return TypedValue{
             builtins().type(UnsignedId),
             Value{RValue{(Unsigned)bitsize(), true}}};
+    }
+    case TypeOp::InstanceOf: {
+        if (!is_constructible())
+            return {};
+        auto rval = construct();
+        rval.set_is_consteval(true);
+        return {this, Value{std::move(rval)}};
+    }
     default:
         return {};
     }
@@ -198,6 +206,8 @@ bitsize_t AliasType::bitsize() const {
     assert(_canon);
     return _canon->bitsize();
 }
+
+bool AliasType::is_constructible() const { return non_alias()->is_constructible(); }
 
 RValue AliasType::construct() const { return non_alias()->construct(); }
 
