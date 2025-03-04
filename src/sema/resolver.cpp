@@ -93,7 +93,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
 
     // type
     if (!var->has_type()) {
-        auto type = resolve_var_decl_type(type_name, node, scope);
+        auto type = resolve_var_decl_type(type_name, node, scope, true);
         if (type)
             var->set_type(type);
         is_resolved = type && is_resolved;
@@ -343,17 +343,6 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     // if (type_spec->type())
     //     return type_spec->type();
 
-    // Self?
-    if (type_spec->has_ident() && type_spec->ident()->is_self()) {
-        assert(!type_spec->has_args());
-        auto self_cls = scope->self_cls();
-        if (!self_cls) {
-            diag().error(
-                type_spec->ident(), "`Self' can only be used in class context");
-        }
-        return self_cls;
-    }
-
     // builtin type?
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();
@@ -371,8 +360,19 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         }
         return _program->builtins().prim_type(bi_type_id, size);
     }
-
     assert(type_spec->has_ident());
+
+    // Self?
+    if (type_spec->ident()->is_self()) {
+        assert(!type_spec->has_args());
+        auto self_cls = scope->self_cls();
+        if (!self_cls) {
+            diag().error(
+                type_spec->ident(), "`Self' can only be used in class context");
+        }
+        return self_cls;
+    }
+
     auto name_id = type_spec->ident()->name_id();
     auto sym = scope->get(name_id);
     if (!sym) {
@@ -391,43 +391,6 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();
-
-    // if (type_spec->type_tpl()) {
-    //     // non-class tpl
-    //     ParamEval pe{_program};
-    //     auto [args, success] = pe.eval(type_spec->args(), scope);
-    //     auto type = type_spec->type_tpl()->type(
-    //         diag(), type_spec->args(), std::move(args));
-    //     type_spec->set_type(type);
-    //     return type;
-    // }
-
-    // // class tpl?
-    // if (type_spec->cls_tpl()) {
-    //     // class tpl
-    //     if (!resolve(type_spec->cls_tpl()))
-    //         return {};
-    //     ParamEval pe{_program};
-    //     auto [args, success] = pe.eval(type_spec->args(), scope);
-    //     auto type = type_spec->cls_tpl()->type(
-    //         diag(), type_spec->args(), std::move(args));
-    //     if (!type)
-    //         return {};
-    //     assert(type->is_class());
-    //     if (!init(type->as_class()))
-    //         return {};
-    //     return type;
-    // }
-
-    // // search in scope
-    // auto name_id = type_spec->ident()->name().str_id();
-    // auto sym = scope->get(name_id);
-    // if (!sym) {
-    //     diag().error(type_spec, "type not found");
-    //     return {};
-    // }
-    // assert(sym->is<UserType>());
-    // return sym->get<UserType>();
 }
 
 bool Resolver::resolve_cls_deps(Ref<Type> type) {

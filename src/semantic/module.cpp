@@ -65,7 +65,6 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
 
 Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     assert(node->params()->child_num() > 0);
-    assert(node->kind() != ClassKind::Element);
 
     auto name_id = node->name_id();
     auto tpl = make<ClassTpl>(node, this);
