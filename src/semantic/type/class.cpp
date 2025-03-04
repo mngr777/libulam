@@ -34,14 +34,18 @@ Class::Class(std::string_view name, Ref<ClassTpl> tpl):
         &tpl->module()->program()->type_id_gen()},
     ClassBase{tpl->node(), tpl->module(), scp::Class},
     _name{name},
-    _tpl{tpl} {}
+    _tpl{tpl} {
+    scope()->set_self_cls(this);
+}
 
 Class::Class(
     std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module):
     UserType{module->program()->builtins(), &module->program()->type_id_gen()},
     ClassBase{node, module, scp::Class},
     _name{name},
-    _tpl{} {}
+    _tpl{} {
+    scope()->set_self_cls(this);
+}
 
 Class::~Class() {}
 

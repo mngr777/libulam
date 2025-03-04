@@ -5,6 +5,17 @@
 
 namespace ulam {
 
+TypedValue BoolType::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::MinOf:
+        return {this, Value{construct(false)}};
+    case TypeOp::MaxOf:
+        return {this, Value{construct(true)}};
+    default:
+        return _PrimType::type_op(op);
+    }
+}
+
 RValue BoolType::construct(bool value) const {
     return RValue{value ? detail::ones(bitsize()) : 0};
 }

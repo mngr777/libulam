@@ -8,6 +8,8 @@
 
 namespace ulam {
 
+// ScopeBase
+
 LValue ScopeBase::self() {
     return (!_self.empty() || !parent()) ? _self : parent()->self();
 }
@@ -15,6 +17,15 @@ LValue ScopeBase::self() {
 void ScopeBase::set_self(LValue self) {
     assert(_self.empty());
     _self = self;
+}
+
+Ref<Class> ScopeBase::self_cls() {
+    return (_self_cls || !parent()) ? _self_cls : parent()->self_cls();
+}
+
+void ScopeBase::set_self_cls(Ref<Class> cls) {
+    assert(!_self_cls);
+    _self_cls = cls;
 }
 
 // BasicScope

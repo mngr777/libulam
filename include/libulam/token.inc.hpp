@@ -35,6 +35,7 @@ TOK("true", True)
 TOK("false", False)
 
 TOK("self", Self)
+TOK("Self", SelfClass)
 
 TOK("#", Sharp)
 TOK("$", Dollar)

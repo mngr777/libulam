@@ -24,7 +24,7 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct() const override { return RValue{Unsigned{}}; }
+    RValue construct() const override;
 
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;

@@ -52,6 +52,9 @@ public:
     virtual LValue self() { assert(false); }
     virtual void set_self(LValue self) { assert(false); }
 
+    virtual Ref<Class> self_cls() { assert(false); }
+    virtual void set_self_cls(Ref<Class> cls) { assert(false); }
+
     bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
     bool in(ScopeFlags flags_) {
         return is(flags_) || (parent() && parent()->is(flags_));
@@ -88,10 +91,14 @@ public:
     LValue self() override;
     void set_self(LValue self) override;
 
+    Ref<Class> self_cls() override;
+    void set_self_cls(Ref<Class> cls) override;
+
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
     LValue _self;
+    Ref<Class> _self_cls{};
 };
 
 // Transient

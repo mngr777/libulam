@@ -52,18 +52,6 @@ constexpr Unsigned count_ones(Unsigned value) {
 #endif
 }
 
-constexpr bitsize_t bitsize(Unsigned value) {
-    return log2(value) + 1;
-}
-
-inline bitsize_t unary_unsigned_bitsize(bitsize_t size) {
-    return bitsize((Unsigned)size);
-}
-
-inline bitsize_t bitsize(Integer value) {
-    return bitsize(abs(value)) + 1;
-}
-
 constexpr Unsigned unsigned_max(bitsize_t size) {
     assert(0 < size && size <= sizeof(Unsigned) * 8);
     return (size == (sizeof(Unsigned) * 8)) ? max<Unsigned>() : (1 << size) - 1;
@@ -77,6 +65,23 @@ constexpr Integer integer_min(bitsize_t size) {
 constexpr Integer integer_max(bitsize_t size) {
     assert(1 < size && size <= sizeof(Integer) * 8);
     return unsigned_max(size - 1);
+}
+
+constexpr bitsize_t bitsize(Unsigned value) {
+    return log2(value) + 1;
+}
+
+inline bitsize_t unary_unsigned_bitsize(bitsize_t size) {
+    return bitsize((Unsigned)size);
+}
+
+inline bitsize_t bitsize(Integer value) {
+    auto size = bitsize(abs(value));
+    if (size < 2)
+        return 2;
+    if (size > 2 && value == integer_min(size - 1))
+        return size - 1;
+    return size;
 }
 
 constexpr Unsigned truncate(Unsigned value, bitsize_t size) {

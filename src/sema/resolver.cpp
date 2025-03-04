@@ -270,11 +270,11 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
 Ref<Class> Resolver::resolve_class_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     auto type = resolve_type_name(type_name, scope, resolve_class);
-    if (!type->canon()->is_class()) {
+    if (!type->is_class()) {
         diag().error(type_name, "not a class");
         return Ref<Class>{};
     }
-    return type->canon()->as_class();
+    return type->as_class();
 }
 
 Ref<Type> Resolver::resolve_type_name(
@@ -327,19 +327,17 @@ Ref<Type> Resolver::resolve_type_name(
         }
 
         // in A(x).B.C, A(x) and A(x).B must resolve to classes
-        assert(type->canon());
-        auto canon = type->canon();
-        if (!canon->is_class()) {
+        if (!type->is_class()) {
             diag().error(ident, "not a class");
             return {};
         }
-        auto cls = canon->as_class();
+        auto cls = type->as_class();
 
         // move to class member
         // can it be same class? e.g.
         // `quark A { typedef Int B; typedef A.B C; }`
         ident = type_name->ident(n);
-        name_id = ident->name().str_id();
+        name_id = ident->name_id();
         if (!cls->get(name_id)) {
             diag().error(ident, "name not found in class");
             return {};
@@ -355,6 +353,17 @@ Ref<Type>
 Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     if (type_spec->type())
         return type_spec->type();
+
+    // Self
+    if (type_spec->has_ident() && type_spec->ident()->is_self()) {
+        assert(!type_spec->has_args());
+        auto self_cls = scope->self_cls();
+        if (!self_cls) {
+            diag().error(
+                type_spec->ident(), "`Self' can only be used in class context");
+        }
+        return self_cls;
+    }
 
     // builtin type tpl?
     if (type_spec->type_tpl()) {

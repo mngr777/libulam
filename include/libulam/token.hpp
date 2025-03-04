@@ -73,6 +73,7 @@ struct Token {
     Op unary_post_op() const { return tok::unary_post_op(type); }
 
     bool is_self() const { return orig_type == tok::Self; }
+    bool is_self_class() const { return orig_type == tok::SelfClass; }
 };
 
 } // namespace ulam

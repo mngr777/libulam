@@ -90,7 +90,7 @@ private:
     Ptr<ast::MemberAccess>
     parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
-    Ptr<ast::TypeIdent> parse_type_ident();
+    Ptr<ast::TypeIdent> parse_type_ident(bool allow_self = false);
     Ptr<ast::Ident> parse_ident(bool allow_self = false);
     bool parse_is_ref();
     Ptr<ast::BoolLit> parse_bool_lit();

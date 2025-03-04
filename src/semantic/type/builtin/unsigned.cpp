@@ -18,6 +18,8 @@ TypedValue UnsignedType::type_op(TypeOp op) {
     }
 }
 
+RValue UnsignedType::construct() const { return RValue{Unsigned{}}; }
+
 RValue UnsignedType::from_datum(Datum datum) const {
     return RValue{(Unsigned)datum};
 }

@@ -1083,11 +1083,18 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
         builtin_type_id = _tok.builtin_type_id();
         consume();
     } else {
-        ident = parse_type_ident();
+        ident = parse_type_ident(true);
+        if (!ident)
+            return {};
     }
     Ptr<ast::ArgList> args{};
-    if (_tok.is(tok::ParenL))
+    if (_tok.is(tok::ParenL)) {
         args = parse_arg_list();
+        if (ident && ident->is_self()) {
+            diag(args->loc_id(), 1, "`Self' cannot have class parameters");
+            args = {};
+        }
+    }
     auto node = (builtin_type_id == NoBuiltinTypeId)
                     ? tree<ast::TypeSpec>(std::move(ident), std::move(args))
                     : tree<ast::TypeSpec>(builtin_type_id, std::move(args));
@@ -1152,11 +1159,16 @@ Parser::parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
         op_loc_id, std::move(obj), parse_ident());
 }
 
-Ptr<ast::TypeIdent> Parser::parse_type_ident() {
+Ptr<ast::TypeIdent> Parser::parse_type_ident(bool allow_self) {
     assert(_tok.is(tok::TypeIdent));
     auto str = tok_ast_str();
+    bool is_self = _tok.is_self_class();
     consume();
-    return tree<ast::TypeIdent>(str);
+    if (is_self && !allow_self) {
+        diag(str.loc_id(), 1, "`Self' is not allowed in this context");
+        return {};
+    }
+    return tree<ast::TypeIdent>(str, is_self);
 }
 
 Ptr<ast::Ident> Parser::parse_ident(bool allow_self) {

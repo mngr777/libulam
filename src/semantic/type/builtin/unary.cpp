@@ -6,6 +6,19 @@
 
 namespace ulam {
 
+TypedValue UnaryType::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::MinOf:
+        return {this, Value{RValue{(Unsigned)0}}};
+    case TypeOp::MaxOf:
+        return {this, Value{RValue{(Unsigned)bitsize()}}};
+    default:
+        return _PrimType::type_op(op);
+    }
+}
+
+RValue UnaryType::construct() const { return RValue{Unsigned{}}; }
+
 RValue UnaryType::from_datum(Datum datum) const {
     return RValue{(Unsigned)datum};
 }

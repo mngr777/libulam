@@ -51,6 +51,9 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::Self:
             token.type = tok::Ident;
             return *this;
+        case tok::SelfClass:
+            token.type = tok::TypeIdent;
+            return *this;
         case tok::Eof:
             _stack.pop();
             if (_stack.empty())

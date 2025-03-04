@@ -1,5 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
-#include "libulam/semantic/value/types.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -23,6 +21,8 @@ TypedValue IntType::type_op(TypeOp op) {
         return _PrimType::type_op(op);
     }
 }
+
+RValue IntType::construct() const { return RValue{Integer{}}; }
 
 RValue IntType::from_datum(Datum datum) const {
     int shift = sizeof(datum) * 8 - bitsize();

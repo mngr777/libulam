@@ -29,7 +29,7 @@ ExprRes EvalExprVisitor::funcall(
         }
         return {fun->ret_type(), Value{RValue{}}};
     }
-    return _eval.funcall(fun, self, std::move(args));
+    return _eval.funcall(fun, self.self(), std::move(args));
 }
 
 } // namespace ulam::sema
