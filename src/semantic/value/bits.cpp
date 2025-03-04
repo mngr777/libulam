@@ -226,7 +226,7 @@ void Bits::write(size_t idx, size_t len, unit_t value) {
     const size_t len_1 = UnitSize - off;
     const size_t len_2 = len - len_1;
     write(unit_idx, off, len_1, value >> len_2);
-    write(unit_idx + 1, 0, len_2, value << len_1);
+    write(unit_idx + 1, 0, len_2, value);
 }
 
 void Bits::write(size_t idx, const BitsView view_) { view().write(idx, view_); }

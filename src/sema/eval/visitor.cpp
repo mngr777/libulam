@@ -155,7 +155,7 @@ void EvalVisitor::visit(Ref<ast::For> node) {
         node->init()->accept(*this);
     unsigned loop_count = 0;
     while (!node->has_cond() || eval_cond(node->cond())) {
-        if (loop_count++ == 1000) // TODO: max loops option
+        if (loop_count++ == 100) // TODO: max loops option
             throw std::exception();
 
         if (node->has_body()) {
@@ -218,7 +218,7 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     auto scope_raii{_scope_stack.raii(scp::Break | scp::Continue)};
     unsigned loop_count = 0;
     while (eval_cond(node->cond())) {
-        if (loop_count++ == 1000) // TODO: max loops option
+        if (loop_count++ == 100) // TODO: max loops option
             throw std::exception();
 
         if (node->has_body()) {
