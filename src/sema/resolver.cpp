@@ -37,15 +37,20 @@ void Resolver::resolve() {
 }
 
 bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
+    debug() << "resolving template " << str(cls_tpl->name_id()) << "\n";
     return cls_tpl->resolve(*this);
 }
 
 bool Resolver::init(Ref<Class> cls) {
+    debug() << "initializing " << cls->name() << "\n";
     _classes.insert(cls);
     return cls->init(*this);
 }
 
-bool Resolver::resolve(Ref<Class> cls) { return cls->resolve(*this); }
+bool Resolver::resolve(Ref<Class> cls) {
+    debug() << "resolving " << cls->name() << "\n";
+    return cls->resolve(*this);
+}
 
 bool Resolver::resolve(Scope::Symbol* sym, Ref<Scope> scope) {
     return sym->accept(
@@ -60,7 +65,6 @@ bool Resolver::resolve(Scope::Symbol* sym, Ref<Scope> scope) {
 }
 
 bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
-    assert(scope);
     CHECK_STATE(alias);
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
@@ -107,7 +111,8 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             if (!res.ok())
                 RET_UPD_STATE(var, false);
             // impl. cast to var type
-            res = ev.cast(node->default_value(), var->type(), std::move(res), false);
+            res = ev.cast(
+                node->default_value(), var->type(), std::move(res), false);
             if (!res.ok())
                 RET_UPD_STATE(var, false);
             auto tv = res.move_typed_value();
@@ -291,21 +296,8 @@ Ref<Type> Resolver::resolve_type_name(
     while (true) {
         auto ident = type_name->ident(n);
         auto name_id = ident->name().str_id();
-        // recursively resolve aliases
-        if (type->is_alias()) {
-            if (!resolve(type->as_alias(), scope)) {
-                diag().error(
-                    ident->loc_id(), str(name_id).size(), "cannot resolve");
-                return {};
-            }
-        }
         // done?
         if (++n == type_name->child_num()) {
-            // init class
-            if (type->is_class() && !init(type->as_class())) {
-                diag().error(ident, "cannot resolve");
-                return {};
-            }
             // resolve class dependencies
             if (resolve_class && !resolve_cls_deps(type)) {
                 diag().error(ident, "cannot resolve");
@@ -320,6 +312,7 @@ Ref<Type> Resolver::resolve_type_name(
             return {};
         }
         auto cls = type->as_class();
+        init(cls);
 
         // move to class member
         // can it be same class? e.g.
@@ -339,9 +332,6 @@ Ref<Type> Resolver::resolve_type_name(
 
 Ref<Type>
 Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
-    // if (type_spec->type())
-    //     return type_spec->type();
-
     // builtin type?
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();

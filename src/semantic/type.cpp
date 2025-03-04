@@ -184,11 +184,7 @@ Ptr<RefType> Type::make_ref_type() {
 
 AliasType::AliasType(
     Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node):
-    UserType{builtins, id_gen}, _node(node) {
-    assert(!node->alias_type());
-    if (has_id())
-        node->set_alias_type(this);
-}
+    UserType{builtins, id_gen}, _node(node) {}
 
 // TODO: get name from program context when refactored
 std::string AliasType::name() const {

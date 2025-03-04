@@ -89,7 +89,6 @@ public:
 
 class TypeDef : public Tuple<Stmt, TypeName, TypeExpr>, public DefNode {
     ULAM_AST_NODE
-    ULAM_AST_REF_ATTR(AliasType, alias_type)
 public:
     TypeDef(Ptr<TypeName>&& type_name, Ptr<TypeExpr>&& type_expr):
         Tuple{std::move(type_name), std::move(type_expr)} {}

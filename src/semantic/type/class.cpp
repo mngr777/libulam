@@ -105,9 +105,10 @@ bool Class::init(sema::Resolver& resolver) {
         set_state(Initializing);
     }
 
-    bool resolved = resolve_params(resolver) && resolve_ancestors(resolver);
-    set_state(resolved ? Initialized : Unresolvable);
-    return resolved;
+    bool ok = resolve_params(resolver) && init_ancestors(resolver, false) &&
+              resolve_type_defs(resolver);
+    set_state(ok ? Initialized : Unresolvable);
+    return ok;
 }
 
 bool Class::resolve(sema::Resolver& resolver) {
@@ -124,14 +125,14 @@ bool Class::resolve(sema::Resolver& resolver) {
         set_state(Resolving);
     }
 
-    bool resolved = resolve_params(resolver) && resolve_ancestors(resolver) &&
-                    resolve_members(resolver);
-    if (resolved) {
+    bool ok = resolve_params(resolver) && init_ancestors(resolver, true) &&
+              resolve_members(resolver);
+    if (ok) {
         merge_fsets();
         init_layout();
     }
-    set_state(resolved ? Resolved : Unresolvable);
-    return resolved;
+    set_state(ok ? Resolved : Unresolvable);
+    return ok;
 }
 
 bool Class::is_base_of(Ref<const Class> other) const {
@@ -320,17 +321,32 @@ bool Class::resolve_params(sema::Resolver& resolver) {
     return true;
 }
 
-bool Class::resolve_ancestors(sema::Resolver& resolver) {
+bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     if (!node()->has_ancestors())
         return true;
 
     for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
         auto cls_name = node()->ancestors()->get(n);
         // TODO: check if element's ancestor is element or transient etc.
-        auto cls = resolver.resolve_class_name(cls_name, param_scope(), true);
+        auto cls = resolver.resolve_class_name(cls_name, param_scope(), resolve);
         if (!cls)
             return false;
-        add_ancestor(cls, cls_name);
+        if (resolve)
+            add_ancestor(cls, cls_name);
+    }
+    return true;
+}
+
+bool Class::resolve_type_defs(sema::Resolver& resolver) {
+    for (auto [_, sym] : *scope()) {
+        if (!sym->is<UserType>())
+            continue;
+        auto type = sym->get<UserType>();
+        assert(type->is_alias());
+        auto scope_version = type->scope_version();
+        auto scope_view = scope()->view(scope_version);
+        if (!resolver.resolve(type->as_alias(), ref(scope_view)))
+            return false;
     }
     return true;
 }

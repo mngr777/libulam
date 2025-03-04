@@ -63,10 +63,8 @@ Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
     scope()->set(name_id, ref);
     set(name_id, std::move(type));
 
-    if (!node->has_scope_version()) {
-        node->set_alias_type(ref);
+    if (!node->has_scope_version())
         node->set_scope_version(scope()->version());
-    }
     return ref;
 }
 
