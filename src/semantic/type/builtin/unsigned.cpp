@@ -10,9 +10,9 @@ namespace ulam {
 TypedValue UnsignedType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::MinOf:
-        return {this, Value{RValue{(Unsigned)0}}};
+        return {this, Value{RValue{(Unsigned)0, true}}};
     case TypeOp::MaxOf:
-        return {this, Value{RValue{detail::unsigned_max(bitsize())}}};
+        return {this, Value{RValue{detail::unsigned_max(bitsize()), true}}};
     default:
         return _PrimType::type_op(op);
     }
@@ -255,7 +255,8 @@ bool UnsignedType::is_castable_to_prim(
     Ref<const PrimType> type, bool expl) const {
     switch (type->bi_type_id()) {
     case IntId:
-        return expl || type->bitsize() == ULAM_MAX_INT_SIZE ||type->bitsize() > bitsize();
+        return expl || type->bitsize() == ULAM_MAX_INT_SIZE ||
+               type->bitsize() > bitsize();
     case UnsignedId:
         return expl || type->bitsize() >= bitsize();
     case BoolId:
@@ -295,6 +296,25 @@ bool UnsignedType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case VoidId:
     default:
         assert(false);
+    }
+}
+
+bool UnsignedType::is_impl_castable_to_prim(
+    Ref<const PrimType> type, const Value& val) const {
+    auto rval = val.copy_rvalue();
+    if (rval.empty() || !rval.is_consteval())
+        return is_castable_to_prim(type, false);
+
+    assert(rval.is<Unsigned>());
+    auto uns_val = rval.get<Unsigned>();
+
+    switch (type->bi_type_id()) {
+    case UnsignedId:
+        return detail::bitsize(uns_val) <= type->bitsize();
+    case UnaryId:
+        return uns_val <= type->bitsize();
+    default:
+        return is_castable_to_prim(type, false);
     }
 }
 

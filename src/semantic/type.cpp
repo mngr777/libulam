@@ -102,7 +102,8 @@ TypedValue Type::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::SizeOf:
         return TypedValue{
-            builtins().type(UnsignedId), Value{RValue{(Unsigned)bitsize()}}};
+            builtins().type(UnsignedId),
+            Value{RValue{(Unsigned)bitsize(), true}}};
     default:
         return {};
     }
@@ -202,9 +203,7 @@ bitsize_t AliasType::bitsize() const {
     return _canon->bitsize();
 }
 
-RValue AliasType::construct() const {
-    return non_alias()->construct();
-}
+RValue AliasType::construct() const { return non_alias()->construct(); }
 
 RValue AliasType::load(const BitsView data, bitsize_t off) const {
     return non_alias()->load(data, off);

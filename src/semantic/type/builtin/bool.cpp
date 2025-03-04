@@ -7,10 +7,16 @@ namespace ulam {
 
 TypedValue BoolType::type_op(TypeOp op) {
     switch (op) {
-    case TypeOp::MinOf:
-        return {this, Value{construct(false)}};
-    case TypeOp::MaxOf:
-        return {this, Value{construct(true)}};
+    case TypeOp::MinOf: {
+        auto rval = construct(false);
+        rval.set_is_consteval(true);
+        return {this, Value{std::move(rval)}};
+    }
+    case TypeOp::MaxOf: {
+        auto rval = construct(true);
+        rval.set_is_consteval(true);
+        return {this, Value{std::move(rval)}};
+    }
     default:
         return _PrimType::type_op(op);
     }

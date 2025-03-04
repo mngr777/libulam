@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -14,9 +15,9 @@ namespace ulam {
 TypedValue IntType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::MinOf:
-        return {this, Value{RValue{detail::integer_min(bitsize())}}};
+        return {this, Value{RValue{detail::integer_min(bitsize()), true}}};
     case TypeOp::MaxOf:
-        return {this, Value{RValue{detail::integer_max(bitsize())}}};
+        return {this, Value{RValue{detail::integer_max(bitsize()), true}}};
     default:
         return _PrimType::type_op(op);
     }
@@ -311,22 +312,24 @@ bool IntType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
 
 bool IntType::is_impl_castable_to_prim(
     Ref<const PrimType> type, const Value& val) const {
-    if (!type->is(UnsignedId) && !type->is(UnaryId) && !type->is(BitsId))
-        return is_castable_to_prim(type, false);
-
     auto rval = val.copy_rvalue();
     if (rval.empty() || !rval.is_consteval())
         return is_castable_to_prim(type, false);
 
     assert(rval.is<Integer>());
     auto int_val = rval.get<Integer>();
-    if (int_val < 0)
-        return false;
 
-    auto uns_val = (Unsigned)int_val;
-    if (type->is(UnaryId))
-        return type->bitsize() >= uns_val;
-    return type->bitsize() >= detail::bitsize(uns_val);
+    switch (type->bi_type_id()) {
+    case IntId:
+        return detail::bitsize(int_val) <= type->bitsize();
+    case UnsignedId:
+    case BitsId:
+        return int_val >= 0 && detail::bitsize((Unsigned)int_val) <= type->bitsize();
+    case UnaryId:
+        return int_val >= 0 && (Unsigned)int_val <= type->bitsize();
+    default:
+        return is_castable_to_prim(type, false);
+    }
 }
 
 bool IntType::is_impl_castable_to_prim(

@@ -9,9 +9,9 @@ namespace ulam {
 TypedValue UnaryType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::MinOf:
-        return {this, Value{RValue{(Unsigned)0}}};
+        return {this, Value{RValue{(Unsigned)0, true}}};
     case TypeOp::MaxOf:
-        return {this, Value{RValue{(Unsigned)bitsize()}}};
+        return {this, Value{RValue{(Unsigned)bitsize(), true}}};
     default:
         return _PrimType::type_op(op);
     }
