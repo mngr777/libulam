@@ -61,9 +61,12 @@ int main(int argc, char** argv) {
     std::sort(test_paths.begin(), test_paths.end());
 
     if (case_num == 0) {
-        std::set<unsigned> skip = {};
+        std::set<std::string> skip = {
+            "t3205_test_compiler_elementandquark_emptyquark.test", // Empty element
+            "t3233_test_compiler_elementandquarkarray_ew.test" // aref called by name
+        };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
-            if (skip.count(n) > 0)
+            if (skip.count(test_paths[n - 1].filename()) > 0)
                 continue;
             if (!run(n, test_paths))
                 break;

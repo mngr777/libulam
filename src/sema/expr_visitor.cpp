@@ -542,10 +542,12 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
     if (to->is_same(from))
         return {tv.value().move_rvalue(), NoCast};
 
-    if (from->is_castable_to(to, expl))
+    if (!expl && from->is_impl_castable_to(to, tv.value()))
         return {do_cast(node, to, std::move(tv)), CastOk};
 
-    if (!expl && from->is_expl_castable_to(to)) {
+    if (from->is_expl_castable_to(to)) {
+        if (expl)
+            return {do_cast(node, to, std::move(tv)), CastOk};
         diag().error(node, "suggest explicit cast");
     }
     return {RValue{}, CastError};

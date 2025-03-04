@@ -64,10 +64,21 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
         auto def_node = node->def(n);
         auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
         var->set_scope_lvl(_scope_stack.size());
-        if (_resolver.resolve(ref(var), scope())) {
-            var->set_value(Value{var->type()->canon()->construct()});
-            scope()->set(var->name_id(), std::move(var));
+        if (!_resolver.resolve(ref(var), scope()))
+            continue;
+        if (var->value().empty()) {
+            if (def_node->has_default_value()) {
+                EvalExprVisitor ev{*this, scope()};
+                ExprRes res = def_node->default_value()->accept(ev);
+                res = ev.cast(def_node->default_value(), var->type(), std::move(res), false);
+                if (!res.ok())
+                    throw std::exception();
+                var->set_value(res.move_value());
+            } else {
+                var->set_value(Value{var->type()->construct()});
+            }
         }
+        scope()->set(var->name_id(), std::move(var));
     }
 }
 

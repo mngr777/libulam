@@ -55,7 +55,7 @@ RValue LValue::rvalue() const {
         [&](Ref<const Var> var) { return var->rvalue(); },
         [&](const DataView& data) { return data.load(); },
         [&](const BoundFunSet&) -> RValue { assert(false); },
-        [&](const std::monostate&) -> RValue { assert(false); });
+        [&](const std::monostate&) { return RValue{}; });
 }
 
 LValue LValue::array_access(array_idx_t idx) {

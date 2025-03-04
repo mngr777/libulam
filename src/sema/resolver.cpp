@@ -42,7 +42,7 @@ bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
 }
 
 bool Resolver::init(Ref<Class> cls) {
-    debug() << "initializing " << cls->name() << "\n";
+    debug() << "initializiing " << cls->name() << "\n";
     _classes.insert(cls);
     return cls->init(*this);
 }
