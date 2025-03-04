@@ -8,7 +8,7 @@
 namespace ulam {
 
 class IntType
-    : public _PrimType<IntId, 2, ULAM_MAX_INT_SIZE, ULAM_MAX_INT_SIZE> {
+    : public _PrimType<IntId, 1, ULAM_MAX_INT_SIZE, ULAM_MAX_INT_SIZE> {
 public:
     IntType(
         Builtins& builtins,
