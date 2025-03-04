@@ -104,14 +104,13 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
         if (node->has_default_value()) {
             ExprVisitor ev{_program, scope};
             ExprRes res = node->default_value()->accept(ev);
-            // impl. cast to var type
-            if (res.type() && var->type() != res.type()) {
-                res = ev.cast(
-                    node->default_value(), var->type(), std::move(res), false);
+            if (!res.ok())
                 RET_UPD_STATE(var, false);
-            }
+            // impl. cast to var type
+            res = ev.cast(node->default_value(), var->type(), std::move(res), false);
+            if (!res.ok())
+                RET_UPD_STATE(var, false);
             auto tv = res.move_typed_value();
-            // TODO: conversion/type error, check if const
             var->set_value(tv.move_value());
             if (var->value().empty()) {
                 auto name = node->name();
