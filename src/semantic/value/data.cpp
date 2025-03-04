@@ -67,7 +67,7 @@ DataView::DataView(
     assert(
         _view_type->is_same(_type) ||
         (_type->is_object() && _view_type->is_object() &&
-         _view_type->is_impl_castable_to(_type)));
+         _type->is_impl_castable_to(_view_type)));
 
     if (_atom_off == NoBitsize && _view_type->is_atom())
         _atom_off = off;
@@ -111,7 +111,7 @@ DataView DataView::prop(Ref<Prop> prop_) {
     Ref<Class> cls{};
     if (_type->is_class()) {
         cls = _type->as_class();
-        assert(cls->is_same_or_base_of(_view_type->as_class()));
+        assert(_view_type->as_class()->is_same_or_base_of(_type->as_class()));
     } else {
         assert(_type->is(AtomId));
         cls = _view_type->as_class();

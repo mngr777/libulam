@@ -129,7 +129,7 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
 
     assert(!res.value().empty());
     auto dyn_type = res.value().dyn_obj_type()->actual();
-    if (dyn_type->is_same(type) || type->is_impl_castable_to(dyn_type)) {
+    if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
         auto scope_raii{_scope_stack.raii(scp::NoFlags)};
         auto val = res.move_value();
         auto obj_view = val.data_view().as(type);
