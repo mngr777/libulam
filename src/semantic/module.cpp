@@ -1,8 +1,10 @@
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 
 namespace ulam {
 
@@ -112,6 +114,34 @@ void Module::add_import(
     assert(module != this);
     _imports.emplace(name_id, Import{module, type_tpl});
     _env_scope->set(name_id, type_tpl);
+}
+
+bool Module::resolve(sema::Resolver& resolver) {
+    bool ok = true;
+    for (auto [_, sym] : *scope()) {
+        bool resolved = sym->accept(
+            [&](Ref<UserType> type) {
+                if (type->is_alias()) {
+                    assert(type->is_alias());
+                    auto scope_version = type->as_alias()->scope_version();
+                    auto scope_view = scope()->view(scope_version);
+                    return resolver.resolve(
+                               type->as_alias(), ref(scope_view)) &&
+                           ok;
+                } else {
+                    return resolver.init(type->as_class());
+                }
+            },
+            [&](Ref<ClassTpl> tpl) { return resolver.resolve(tpl); },
+            [&](Ref<Var> var) {
+                auto scope_version = var->scope_version();
+                auto scope_view = scope()->view(scope_version);
+                return resolver.resolve(var, ref(scope_view));
+            },
+            [&](auto) -> bool { assert(false); });
+        ok = ok && resolved;
+    }
+    return ok;
 }
 
 } // namespace ulam

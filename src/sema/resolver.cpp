@@ -30,22 +30,10 @@ namespace ulam::sema {
 
 void Resolver::resolve() {
     for (auto& module : _program->modules())
-        resolve(ref(module));
+        module->resolve(*this);
     for (auto cls : _classes)
         resolve(cls);
     _classes.clear();
-}
-
-void Resolver::resolve(Ref<Module> module) {
-    for (auto& pair : *module) {
-        auto& [name_id, sym] = pair;
-        if (sym.is<Class>()) {
-            init(sym.get<Class>());
-        } else {
-            assert(sym.is<ClassTpl>());
-            resolve(sym.get<ClassTpl>());
-        }
-    }
 }
 
 bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
@@ -57,9 +45,7 @@ bool Resolver::init(Ref<Class> cls) {
     return cls->init(*this);
 }
 
-bool Resolver::resolve(Ref<Class> cls) {
-    return cls->resolve(*this);
-}
+bool Resolver::resolve(Ref<Class> cls) { return cls->resolve(*this); }
 
 bool Resolver::resolve(Scope::Symbol* sym, Ref<Scope> scope) {
     return sym->accept(
@@ -270,6 +256,9 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
 Ref<Class> Resolver::resolve_class_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     auto type = resolve_type_name(type_name, scope, resolve_class);
+    if (!type)
+        return Ref<Class>{};
+
     if (!type->is_class()) {
         diag().error(type_name, "not a class");
         return Ref<Class>{};
@@ -351,10 +340,10 @@ Ref<Type> Resolver::resolve_type_name(
 
 Ref<Type>
 Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
-    if (type_spec->type())
-        return type_spec->type();
+    // if (type_spec->type())
+    //     return type_spec->type();
 
-    // Self
+    // Self?
     if (type_spec->has_ident() && type_spec->ident()->is_self()) {
         assert(!type_spec->has_args());
         auto self_cls = scope->self_cls();
@@ -365,43 +354,80 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         return self_cls;
     }
 
-    // builtin type tpl?
-    if (type_spec->type_tpl()) {
-        // non-class tpl
-        ParamEval pe{_program};
-        auto [args, success] = pe.eval(type_spec->args(), scope);
-        auto type = type_spec->type_tpl()->type(
-            diag(), type_spec->args(), std::move(args));
-        type_spec->set_type(type);
-        return type;
+    // builtin type?
+    if (type_spec->is_builtin()) {
+        auto bi_type_id = type_spec->builtin_type_id();
+        if (!type_spec->has_args())
+            return _program->builtins().type(bi_type_id);
+        auto args = type_spec->args();
+        assert(args->child_num() > 0);
+        ExprVisitor ev{_program, scope};
+        bitsize_t size = ev.bitsize_for(args->get(0), bi_type_id);
+        if (size == NoBitsize)
+            return {};
+        if (args->child_num() > 1) {
+            diag().error(args->child(1), "too many arguments");
+            return {};
+        }
+        return _program->builtins().prim_type(bi_type_id, size);
     }
 
-    // class tpl?
-    if (type_spec->cls_tpl()) {
-        // class tpl
-        if (!resolve(type_spec->cls_tpl()))
-            return {};
-        ParamEval pe{_program};
-        auto [args, success] = pe.eval(type_spec->args(), scope);
-        auto type = type_spec->cls_tpl()->type(
-            diag(), type_spec->args(), std::move(args));
-        if (!type)
-            return {};
-        assert(type->is_class());
-        if (!init(type->as_class()))
-            return {};
-        return type;
-    }
-
-    // search in scope
-    auto name_id = type_spec->ident()->name().str_id();
+    assert(type_spec->has_ident());
+    auto name_id = type_spec->ident()->name_id();
     auto sym = scope->get(name_id);
     if (!sym) {
-        diag().error(type_spec, "type not found");
+        diag().error(
+            type_spec->ident(), std::string{str(name_id)} + " type not found");
         return {};
+    }
+
+    // template?
+    if (sym->is<ClassTpl>()) {
+        auto tpl = sym->get<ClassTpl>();
+        assert(type_spec->has_args()); // TODO: default
+        ExprVisitor ev{_program, scope};
+        auto [args, success] = ev.eval_args(type_spec->args());
+        return tpl->type(_program->diag(), type_spec->args(), std::move(args));
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();
+
+    // if (type_spec->type_tpl()) {
+    //     // non-class tpl
+    //     ParamEval pe{_program};
+    //     auto [args, success] = pe.eval(type_spec->args(), scope);
+    //     auto type = type_spec->type_tpl()->type(
+    //         diag(), type_spec->args(), std::move(args));
+    //     type_spec->set_type(type);
+    //     return type;
+    // }
+
+    // // class tpl?
+    // if (type_spec->cls_tpl()) {
+    //     // class tpl
+    //     if (!resolve(type_spec->cls_tpl()))
+    //         return {};
+    //     ParamEval pe{_program};
+    //     auto [args, success] = pe.eval(type_spec->args(), scope);
+    //     auto type = type_spec->cls_tpl()->type(
+    //         diag(), type_spec->args(), std::move(args));
+    //     if (!type)
+    //         return {};
+    //     assert(type->is_class());
+    //     if (!init(type->as_class()))
+    //         return {};
+    //     return type;
+    // }
+
+    // // search in scope
+    // auto name_id = type_spec->ident()->name().str_id();
+    // auto sym = scope->get(name_id);
+    // if (!sym) {
+    //     diag().error(type_spec, "type not found");
+    //     return {};
+    // }
+    // assert(sym->is<UserType>());
+    // return sym->get<UserType>();
 }
 
 bool Resolver::resolve_cls_deps(Ref<Type> type) {

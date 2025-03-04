@@ -19,7 +19,6 @@ public:
 
     void resolve();
 
-    void resolve(Ref<Module> module);
     bool resolve(Ref<ClassTpl> cls_tpl);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);

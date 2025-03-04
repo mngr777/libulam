@@ -15,6 +15,10 @@ class VarDef;
 class VarDefList;
 } // namespace ulam::ast
 
+namespace ulam::sema {
+class Resolver;
+}
+
 namespace ulam {
 
 class Program;
@@ -89,6 +93,8 @@ public:
     void add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type);
     void
     add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
+
+    bool resolve(sema::Resolver& resolver);
 
 private:
     Ref<Program> _program;

@@ -11,8 +11,8 @@ ClassBase::ClassBase(
     _node{node},
     _module{module},
     _inh_scope{make<PersScope>(module->scope())},
-    _param_scope{make<PersScope>(ref(_param_scope))},
-    _scope{make<PersScope>(ref(_inh_scope), scope_flags)} {}
+    _param_scope{make<PersScope>(ref(_inh_scope))},
+    _scope{make<PersScope>(ref(_param_scope), scope_flags)} {}
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
 

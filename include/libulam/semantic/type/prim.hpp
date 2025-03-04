@@ -136,6 +136,9 @@ public:
 
     virtual Ref<PrimType> type(bitsize_t bitsize) = 0;
 
+    virtual bitsize_t min_bitsize() const = 0;
+    virtual bitsize_t max_bitsize() const = 0;
+
 protected:
     Builtins& _builtins;
 };
@@ -146,6 +149,9 @@ template <typename T> class _PrimTypeTpl : public PrimTypeTpl {
 public:
     _PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen):
         PrimTypeTpl{builtins, id_gen} {}
+
+    bitsize_t min_bitsize() const override { return T::MinSize; }
+    bitsize_t max_bitsize() const override { return T::MaxSize; }
 
     // TODO: this should probably be implemented at higher level ??
     Ref<Type> type(

@@ -52,7 +52,12 @@ public:
     virtual ExprRes
     cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 
+    virtual bitsize_t bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
+
     virtual array_idx_t array_index(Ref<ast::Expr> expr);
+
+    // TODO: return type, refactoring
+    virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
 
 protected:
     virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
@@ -76,9 +81,6 @@ protected:
 
     virtual ExprRes funcall(
         Ref<ast::Expr> node, Ref<Fun> fun, LValue self, TypedValueList&& args);
-
-    // TODO: return type, refactoring
-    virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
 
     Diag& diag();
     Builtins& builtins();

@@ -104,7 +104,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
         auto def = node->def(n);
         auto name_id = def->name_id();
 
-        // visit value expr for possible `TypeName`s
+        // visit for potential type names
         if (def->has_default_value())
             def->default_value()->accept(*this);
 
@@ -154,43 +154,16 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     return true;
 }
 
-// TODO: do not set type/tpl, do it in resolver?
 bool Init::do_visit(Ref<ast::TypeName> node) {
-    // set type/tpl TypeSpec attr
-    // NOTE: any name not in scope has to be imported and
-    // imported names can be later unambigously resolved without scope
     auto type_spec = node->first();
-    if (type_spec->is_builtin()) {
-        // builtin type/tpl
-        BuiltinTypeId id = type_spec->builtin_type_id();
-        assert(id != NoBuiltinTypeId);
-        assert(id != FunId);
-        if (has_bitsize(id)) {
-            type_spec->set_type_tpl(program()->builtins().prim_type_tpl(id));
-        } else {
-            type_spec->set_type(program()->builtins().type(id));
-        }
+    if (type_spec->is_builtin())
         return false;
-    }
-    auto name_id = type_spec->ident()->name().str_id();
-    if (scope()->has(name_id)) {
-        // set type/tpl
-        auto sym = scope()->get(name_id);
-        if (sym->is<UserType>()) {
-            auto type = sym->get<UserType>();
-            if (type->has_id()) // avoid setting fun-local aliases
-                type_spec->set_type(type);
-        } else {
-            assert(sym->is<ClassTpl>());
-            type_spec->set_cls_tpl(sym->get<ClassTpl>());
-        }
-    } else {
-        // add external dependency
+
+    // add unresolved name to module dependencies
+    assert(type_spec->has_ident());
+    auto name_id = type_spec->ident()->name_id();
+    if (!scope()->has(name_id))
         module()->add_dep(name_id);
-        // postpone until all exports are known (store module ID to avoid
-        // importing from itself)
-        _unresolved.push_back({module()->id(), node});
-    }
     return false;
 }
 
@@ -243,33 +216,10 @@ void Init::export_classes() {
                 assert(sym);
                 sym->accept([&](auto cls_or_tpl) {
                     mod->add_import(name_id, exporter, cls_or_tpl);
+                    assert(mod->scope()->has(name_id));
                 });
             }
         }
-    }
-    // resolve (first ident of) posponed TypeName's
-    for (auto item : _unresolved) {
-        assert(!item.node->first()->is_builtin());
-        auto type_spec = item.node->first();
-        auto name_id = type_spec->ident()->name().str_id();
-        auto it = exporting.find(name_id);
-        if (it != exporting.end()) {
-            auto& exporter = *it->second.begin();
-            auto sym = exporter->get(name_id);
-            assert(sym);
-            // set type/tpl
-            // don't use symbols from same module (disabled)
-            if (true || exporter->id() != item.module_id) {
-                sym->accept(
-                    [&](Ref<Class> cls) { type_spec->set_type(cls); },
-                    [&](Ref<ClassTpl> cls_tpl) {
-                        type_spec->set_type_tpl(cls_tpl);
-                    });
-                continue; // success
-            }
-        }
-        diag().error(
-            item.node->loc_id(), str(name_id).size(), "failed to resolve");
     }
 }
 

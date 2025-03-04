@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -446,13 +445,57 @@ ExprRes ExprVisitor::cast(
     return {type, Value{std::move(cast_res.first)}};
 }
 
+bitsize_t
+ExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
+    debug() << __FUNCTION__ << "\n";
+    assert(bi_type_id != NoBuiltinTypeId);
+
+    // can have bitsize?
+    if (!has_bitsize(bi_type_id)) {
+        diag().error(
+            expr, std::string{builtin_type_str(bi_type_id)} +
+                      " does not have bitsize parameter");
+        return NoBitsize;
+    }
+
+    // eval
+    ExprRes res = expr->accept(*this);
+    if (!res.ok())
+        return NoBitsize;
+
+    // cast to default Unsigned
+    auto uns_type = builtins().unsigned_type();
+    auto cast_res = maybe_cast(expr, uns_type, res.move_typed_value(), true);
+    if (cast_res.second == CastError)
+        return NoBitsize;
+    auto size = cast_res.first.get<Unsigned>();
+
+    // check range
+    auto tpl = builtins().prim_type_tpl(bi_type_id);
+    if (size < tpl->min_bitsize()) {
+        auto message = std::string{"min size for "} +
+                       std::string{builtin_type_str(bi_type_id)} + " is " +
+                       std::to_string(tpl->min_bitsize());
+        diag().error(expr, message);
+        return NoBitsize;
+    }
+    if (size > tpl->max_bitsize()) {
+        auto message = std::string{"max size for "} +
+                       std::string{builtin_type_str(bi_type_id)} + " is " +
+                       std::to_string(tpl->max_bitsize());
+        diag().error(expr, message);
+        return NoBitsize;
+    }
+    return size;
+}
+
 array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
     ExprRes res = expr->accept(*this);
     if (!res.ok())
         return UnknownArrayIdx;
 
-    // Cast to default Int
+    // cast to default Int
     auto int_type = builtins().int_type();
     auto cast_res = maybe_cast(expr, int_type, res.move_typed_value());
     if (cast_res.second == CastError)
@@ -464,6 +507,21 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
         return UnknownArrayIdx;
     }
     return (array_idx_t)int_val;
+}
+
+std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
+    debug() << __FUNCTION__ << "\n";
+    std::pair<TypedValueList, bool> res;
+    res.second = true;
+    for (unsigned n = 0; n < args->child_num(); ++n) {
+        ExprRes arg_res = args->get(n)->accept(*this);
+        if (!arg_res) {
+            res.second = false;
+            break;
+        }
+        res.first.push_back(arg_res.move_typed_value());
+    }
+    return res;
 }
 
 ExprRes
@@ -572,21 +630,6 @@ ExprRes ExprVisitor::funcall(
     Ref<ast::Expr> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " " << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
-}
-
-std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
-    debug() << __FUNCTION__ << "\n";
-    std::pair<TypedValueList, bool> res;
-    res.second = true;
-    for (unsigned n = 0; n < args->child_num(); ++n) {
-        ExprRes arg_res = args->get(n)->accept(*this);
-        if (!arg_res) {
-            res.second = false;
-            break;
-        }
-        res.first.push_back(arg_res.move_typed_value());
-    }
-    return res;
 }
 
 Diag& ExprVisitor::diag() { return _program->diag(); }
