@@ -963,6 +963,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs() {
 
 Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
     assert(_tok.is(tok::ParenL));
+    auto loc_id = _tok.loc_id;
     consume();
     Ptr<ast::Expr> inner{};
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
@@ -988,7 +989,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
         inner = parse_expr();
     }
     expect(tok::ParenR);
-    return tree<ast::ParenExpr>(std::move(inner));
+    return tree_loc<ast::ParenExpr>(loc_id, std::move(inner));
 }
 
 Ptr<ast::TypeOpExpr> Parser::parse_type_op() {
