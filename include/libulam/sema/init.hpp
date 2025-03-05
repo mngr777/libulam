@@ -3,6 +3,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
+#include <libulam/src_mngr.hpp>
 
 namespace ulam::sema {
 
@@ -12,7 +13,8 @@ class Init : public RecVisitor {
     using RecVisitor::visit;
 
 public:
-    Init(Diag& diag, Ref<ast::Root> ast): RecVisitor{diag, ast} {}
+    Init(Diag& diag, SrcMngr& src_mngr, Ref<ast::Root> ast):
+        RecVisitor{diag, ast}, _src_mngr{src_mngr} {}
 
     void visit(Ref<ast::Root> node) override;
     void visit(Ref<ast::ModuleDef> node) override;
@@ -24,6 +26,8 @@ public:
 
 private:
     void export_classes();
+
+    SrcMngr& _src_mngr;
 };
 
 } // namespace ulam::sema

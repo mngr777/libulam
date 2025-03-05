@@ -16,7 +16,7 @@ analyze(const std::string& text, const std::string& module_name) {
     if (module)
         ast->add(std::move(module));
 
-    ulam::Sema sema{ctx.diag()};
+    ulam::Sema sema{ctx.diag(), ctx.sm()};
     sema.analyze(ulam::ref(ast));
 
     return ast;

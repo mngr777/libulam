@@ -15,13 +15,14 @@ class Sema {
     friend sema::RecVisitor;
 
 public:
-    explicit Sema(Diag& diag);
+    explicit Sema(Diag& diag, SrcMngr& src_mngr);
     ~Sema();
 
     void analyze(Ref<ast::Root> ast);
 
 private:
     Diag& _diag;
+    SrcMngr& _src_mngr;
 };
 
 } // namespace ulam

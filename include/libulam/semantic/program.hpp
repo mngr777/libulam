@@ -4,6 +4,7 @@
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/src_mngr.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 #include <map>
@@ -19,11 +20,12 @@ class Program {
 public:
     using ModuleList = std::list<Ref<Module>>;
 
-    Program(Diag& diag, UniqStrPool& str_pool);
+    Program(Diag& diag, UniqStrPool& str_pool, SrcMngr& src_mngr);
     ~Program();
 
     Diag& diag() { return _diag; }
     UniqStrPool& str_pool() { return _str_pool; }
+    SrcMngr& src_mngr() { return _src_mngr; }
     auto& builtins() { return _builtins; }
 
     const ModuleList& modules() { return _module_refs; }
@@ -38,6 +40,7 @@ public:
 private:
     Diag& _diag;
     UniqStrPool& _str_pool;
+    SrcMngr& _src_mngr;
     Builtins _builtins;
     TypeIdGen _type_id_gen;
     std::list<Ptr<Module>> _modules;
