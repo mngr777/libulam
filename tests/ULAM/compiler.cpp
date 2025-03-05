@@ -3,13 +3,20 @@
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
+#include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class_tpl.hpp>
+#include <stdexcept>
 #include <utility>
 
 void Compiler::parse_module_str(
     const std::string& text, const std::string& name) {
     auto module = _parser.parse_module_str(text, name);
-    if (module)
-        _ast->add(std::move(module));
+    if (module) {
+        if (_ast->has_module(module->name_id()))
+            throw std::invalid_argument{
+                std::string{"duplicate module name "} + name};
+        _ast->add_module(std::move(module));
+    }
 }
 
 ulam::Ref<ulam::Program> Compiler::analyze() {
@@ -22,8 +29,21 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
     return _ast->program();
 }
 
-void Compiler::compile(std::ostream& out, const std::string_view main_name) {
+void Compiler::compile(std::ostream& out) {
     ulam::sema::Eval eval{_ctx, ulam::ref(_ast)};
-    auto text = std::string{main_name} + " foo; foo.test();";
-    eval.eval(text);
+    for (auto module : _ast->program()->modules()) {
+        auto sym = module->get(module->name_id());
+        if (!sym) {
+            throw std::invalid_argument(
+                std::string{"no main class in module "} +
+                std::string{module->name()});
+        }
+        if (sym->is<ulam::Class>()) {
+            auto cls = sym->get<ulam::Class>();
+            if (cls->has_fun("test")) {
+                auto text = std::string{module->name()} + " foo; foo.test();";
+                eval.eval(text);
+            }
+        }
+    }
 }

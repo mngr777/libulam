@@ -25,14 +25,14 @@ Ptr<ast::ModuleDef>
 Parser::parse_module_file(const std::filesystem::path& path) {
     _pp.main_file(path);
     consume();
-    return parse_module();
+    return parse_module(path.stem().string());
 }
 
 Ptr<ast::ModuleDef>
-Parser::parse_module_str(std::string text, std::string name) {
+Parser::parse_module_str(const std::string& text, const std::string& name) {
     _pp.main_string(text, name);
     consume();
-    return parse_module();
+    return parse_module(name);
 }
 
 Ptr<ast::Block> Parser::parse_stmts(std::string text) {
@@ -89,8 +89,9 @@ void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
     _ctx.diag().emit(Diag::Error, loc_id, size, text);
 }
 
-Ptr<ast::ModuleDef> Parser::parse_module() {
+Ptr<ast::ModuleDef> Parser::parse_module(const std::string_view name) {
     auto node = tree_loc<ast::ModuleDef>(_tok.loc_id);
+    node->set_name_id(_str_pool.put(name));
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
         case tok::Local:

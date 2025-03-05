@@ -6,6 +6,7 @@
 #include <libulam/str_pool.hpp>
 #include <set>
 #include <unordered_map>
+#include <string_view>
 
 namespace ulam::ast {
 class ModuleDef;
@@ -22,9 +23,6 @@ class Resolver;
 namespace ulam {
 
 class Program;
-
-using module_id_t = std::uint16_t;
-constexpr module_id_t NoModuleId = 0;
 
 class Module;
 
@@ -53,20 +51,22 @@ public:
     using SymbolTable = _SymbolTable<Class, ClassTpl>;
     using Symbol = SymbolTable::Symbol;
 
-    Module(Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node);
+    Module(Ref<Program> program, Ref<ast::ModuleDef> node);
     ~Module();
 
     Module(Module&&) = default;
     Module& operator=(Module&&) = default;
 
-    bool operator==(const Module& other) const { return id() == other.id(); }
+    bool operator==(const Module& other) const { return name_id() == other.name_id(); }
     bool operator!=(const Module& other) const { return !operator==(other); }
 
     Ref<Program> program() { return _program; }
 
-    module_id_t id() const { return _id; }
+    str_id_t name_id() const;
+    const std::string_view name() const;
 
     Ref<ast::ModuleDef> node() { return _node; }
+    Ref<const ast::ModuleDef> node() const { return _node; }
 
     Ref<AliasType> add_type_def(Ref<ast::TypeDef> node);
     void add_const_list(Ref<ast::VarDefList> node);
@@ -81,7 +81,11 @@ public:
 
     Ref<PersScope> scope() { return ref(_scope); }
 
-    Symbol* get(str_id_t name_id) { return _symbols.get(name_id); }
+    Symbol* get(const std::string_view name);
+    const Symbol* get(const std::string_view name) const;
+
+    Symbol* get(str_id_t name_id);
+    const Symbol* get(str_id_t name_id) const ;
 
     template <typename T> void set(str_id_t name_id, Ptr<T>&& value) {
         _symbols.set(name_id, std::move(value));
@@ -98,7 +102,6 @@ public:
 
 private:
     Ref<Program> _program;
-    module_id_t _id;
     Ref<ast::ModuleDef> _node;
     Ptr<PersScope> _env_scope;
     Ptr<PersScope> _scope;

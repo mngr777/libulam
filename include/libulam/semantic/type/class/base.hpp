@@ -10,6 +10,7 @@
 #include <libulam/semantic/var.hpp>
 #include <list>
 #include <map>
+#include <string_view>
 
 namespace ulam::ast {
 class ClassDef;
@@ -46,10 +47,16 @@ public:
     bool is_transient() const { return kind() == ClassKind::Transient; }
     bool is_union() const { return kind() == ClassKind::Union; }
 
-    bool has(str_id_t name_id) const { return _members.has(name_id); }
+    bool has(str_id_t name_id) const;
 
-    Symbol* get(str_id_t name_id) { return _members.get(name_id); }
-    const Symbol* get(str_id_t name_id) const { return _members.get(name_id); }
+    bool has_fun(str_id_t name_id) const;
+    bool has_fun(const std::string_view name) const;
+
+    Symbol* get(const std::string_view name);
+    const Symbol* get(const std::string_view name) const;
+
+    Symbol* get(str_id_t name_id);
+    const Symbol* get(str_id_t name_id) const;
 
     bool has_op(Op op) const;
     Ref<FunSet> op(Op op);

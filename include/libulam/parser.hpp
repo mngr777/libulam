@@ -19,7 +19,8 @@ public:
         _ctx{ctx}, _str_pool{str_pool}, _pp{ctx} {}
 
     Ptr<ast::ModuleDef> parse_module_file(const std::filesystem::path& path);
-    Ptr<ast::ModuleDef> parse_module_str(std::string text, std::string name);
+    Ptr<ast::ModuleDef>
+    parse_module_str(const std::string& text, const std::string& name);
 
     Ptr<ast::Block> parse_stmts(std::string text);
 
@@ -35,7 +36,7 @@ private:
     void diag(loc_id_t loc_id, std::size_t size, std::string text);
     template <typename... Ts> void panic(Ts... stop);
 
-    Ptr<ast::ModuleDef> parse_module();
+    Ptr<ast::ModuleDef> parse_module(const std::string_view name);
     void parse_module_var_or_type_def(Ref<ast::ModuleDef> node);
     Ptr<ast::TypeDef> parse_module_type_def(bool is_marked_local);
     Ptr<ast::ClassDef> parse_class_def();

@@ -19,6 +19,9 @@ public:
     Context& ctx() { return _ctx; }
     const Context& ctx() const { return _ctx; }
 
+    bool has_module(str_id_t name_id) const;
+    void add_module(Ptr<ModuleDef>&& mod);
+
 private:
     Context _ctx;
     NameIdMap<ModuleDef> _name_id_map;

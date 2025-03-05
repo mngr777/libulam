@@ -67,14 +67,6 @@ int main(int argc, char** argv) {
             "t3357_test_compiler_elementandquarkswclassargs_lhsconstantcompare.test", // behave()
             "t3358_test_compiler_elementandquarkswclassargs_lhsconstantlogicaland.test", // behave()
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
-            "t3373_test_compiler_unseenclassesholdertypedefs.test", // test() not in main
-            "t3374_test_compiler_unseenclassesholdertypedefswarrays.test", // test() not in main
-            "t3375_test_compiler_unseenclassesholdertypedefswarrays.test", // test() not in main
-            "t3376_test_compiler_unseenclassesholdervardecl.test", // test() not in main
-            "t3377_test_compiler_unseenclassesholderdatamember.test", // test() not in main
-            "t3378_test_compiler_unseenclassesholdertypedef_class.test", // test() not in main
-            "t3379_test_compiler_unseenclassesholdertypedef_classwargs.test", // test() not in main
-            "t3382_test_compiler_twoarrayswithsameunknownkeys_issue.test"  // test() not in main
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

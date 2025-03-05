@@ -35,6 +35,7 @@ class VarDefList;
 class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Module, module)
+    ULAM_AST_SIMPLE_ATTR(str_id_t, name_id, NoStrId)
 };
 
 class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {

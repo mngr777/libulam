@@ -5,7 +5,8 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/str_pool.hpp>
-#include <vector>
+#include <list>
+#include <map>
 
 namespace ulam::ast {
 class Root;
@@ -16,6 +17,8 @@ namespace ulam {
 
 class Program {
 public:
+    using ModuleList = std::list<Ref<Module>>;
+
     Program(Diag& diag, UniqStrPool& str_pool);
     ~Program();
 
@@ -23,8 +26,11 @@ public:
     UniqStrPool& str_pool() { return _str_pool; }
     auto& builtins() { return _builtins; }
 
-    auto& modules() { return _modules; }
-    Ref<Module> module(module_id_t id);
+    const ModuleList& modules() { return _module_refs; }
+
+    Ref<Module> module(const std::string_view name);
+    Ref<Module> module(str_id_t name_id);
+
     Ref<Module> add_module(Ref<ast::ModuleDef> node);
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
@@ -34,7 +40,9 @@ private:
     UniqStrPool& _str_pool;
     Builtins _builtins;
     TypeIdGen _type_id_gen;
-    std::vector<Ptr<Module>> _modules;
+    std::list<Ptr<Module>> _modules;
+    std::list<Ref<Module>> _module_refs;
+    std::map<str_id_t, Ref<Module>> _modules_by_name_id;
 };
 
 } // namespace ulam

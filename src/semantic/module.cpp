@@ -8,14 +8,19 @@
 
 namespace ulam {
 
-Module::Module(Ref<Program> program, module_id_t id, Ref<ast::ModuleDef> node):
+Module::Module(Ref<Program> program, Ref<ast::ModuleDef> node):
     _program{program},
-    _id{id},
     _node{node},
     _env_scope{make<PersScope>(Ref<Scope>{}, scp::ModuleEnv)},
     _scope{make<PersScope>(ref(_env_scope), scp::Module)} {}
 
 Module::~Module() {}
+
+str_id_t Module::name_id() const { return node()->name_id(); }
+
+const std::string_view Module::name() const {
+    return _program->str_pool().get(name_id());
+}
 
 Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
@@ -98,6 +103,24 @@ void Module::export_symbols(Ref<Scope> scope) {
             scope->set<ClassTpl>(name_id, sym.get<ClassTpl>());
         }
     }
+}
+
+Module::Symbol* Module::get(const std::string_view name) {
+    return const_cast<Module::Symbol*>(
+        const_cast<const Module*>(this)->get(name));
+}
+
+const Module::Symbol* Module::get(const std::string_view name) const {
+    auto name_id = _program->str_pool().id(name);
+    if (name_id == NoStrId)
+        return {};
+    return get(name_id);
+}
+
+Module::Symbol* Module::get(str_id_t name_id) { return _symbols.get(name_id); }
+
+const Module::Symbol* Module::get(str_id_t name_id) const {
+    return _symbols.get(name_id);
 }
 
 void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type) {

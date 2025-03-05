@@ -180,7 +180,7 @@ void Init::export_classes() {
             auto& [name_id, sym] = pair;
             auto [it, inserted] = exporting.emplace(name_id, ModuleSet{});
             assert(sym.is<Class>() || sym.is<ClassTpl>());
-            it->second.insert(ref(mod));
+            it->second.insert(mod);
         }
     }
 

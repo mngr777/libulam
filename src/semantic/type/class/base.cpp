@@ -3,6 +3,7 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/class/base.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam {
 
@@ -16,9 +17,38 @@ ClassBase::ClassBase(
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
 
-bool ClassBase::has_op(Op op) const {
-    return _ops.count(op) > 0;
+bool ClassBase::has(str_id_t name_id) const { return _members.has(name_id); }
+
+bool ClassBase::has_fun(str_id_t name_id) const {
+    auto sym = get(name_id);
+    return sym && sym->is<FunSet>();
 }
+
+bool ClassBase::has_fun(const std::string_view name) const {
+    auto sym = get(name);
+    return sym && sym->is<FunSet>();
+}
+
+ClassBase::Symbol* ClassBase::get(const std::string_view name) {
+    return const_cast<Symbol*>(const_cast<const ClassBase*>(this)->get(name));
+}
+
+const ClassBase::Symbol* ClassBase::get(const std::string_view name) const {
+    auto name_id = _module->program()->str_pool().id(name);
+    if (name_id == NoStrId)
+        return {};
+    return get(name_id);
+}
+
+ClassBase::Symbol* ClassBase::get(str_id_t name_id) {
+    return _members.get(name_id);
+}
+
+const ClassBase::Symbol* ClassBase::get(str_id_t name_id) const {
+    return _members.get(name_id);
+}
+
+bool ClassBase::has_op(Op op) const { return _ops.count(op) > 0; }
 
 Ref<FunSet> ClassBase::op(Op op) {
     auto it = _ops.find(op);

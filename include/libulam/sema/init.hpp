@@ -3,7 +3,6 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
-#include <list>
 
 namespace ulam::sema {
 
@@ -24,14 +23,7 @@ public:
     bool do_visit(Ref<ast::TypeName> node) override;
 
 private:
-    struct ModuleTypeName {
-        module_id_t module_id;
-        Ref<ast::TypeName> node;
-    };
-
     void export_classes();
-
-    std::list<ModuleTypeName> _unresolved;
 };
 
 } // namespace ulam::sema
