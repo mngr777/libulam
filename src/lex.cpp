@@ -55,7 +55,7 @@ void Lex::lex(Token& token) {
         }
         break;
     case '\'':
-        lex_str('\'');
+        lex_chr();
         break;
     case '(':
         complete(tok::ParenL);
@@ -395,6 +395,11 @@ void Lex::lex_ml_comment() {
             advance();
         }
     }
+}
+
+void Lex::lex_chr() {
+    assert(_tok_start);
+    assert(false); // TODO
 }
 
 void Lex::lex_number() {

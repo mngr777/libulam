@@ -610,6 +610,8 @@ Value ExprVisitor::do_cast(
         auto cls = from->as_class();
         auto convs = cls->convs(to, true);
         if (convs.size() == 0) {
+            assert(to->is_object());
+            assert(cls->is_castable_to_object_type(to));
             return cls->cast_to_object_type(to, tv.move_value());
 
         } else {
@@ -619,7 +621,7 @@ Value ExprVisitor::do_cast(
                 diag().error(node, "conversion failed");
                 return Value{};
             }
-            if (res.type()->is_same(to)) {
+            if (!res.type()->is_same(to)) {
                 assert(res.type()->is_expl_castable_to(to));
                 return do_cast(node, type, res.move_typed_value());
             }

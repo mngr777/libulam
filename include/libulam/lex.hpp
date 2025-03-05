@@ -37,6 +37,7 @@ private:
     void lex_str(char closing);
     void lex_comment(); // TODO: structured comments
     void lex_ml_comment();
+    void lex_chr();
     void lex_number();
     void lex_word();
 

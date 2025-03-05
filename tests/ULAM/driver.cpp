@@ -68,7 +68,11 @@ int main(int argc, char** argv) {
             "t3358_test_compiler_elementandquarkswclassargs_lhsconstantlogicaland.test", // behave()
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
             "t3400_test_compiler_arraysizeof_lengthzeroelement.test", // Empty
-            "t3401_test_compiler_unaryminofmaxofconstant_issue.test"
+            "t3418_test_compiler_namedconstant_unsignedchar.test", // char
+            "t3422_test_compiler_namedconstant_specialchars.test", // char
+            "t3423_test_compiler_namedconstant_octal.test", // char
+            "t3424_test_compiler_namedconstant_hex.test", // char
+            "t3449_test_compiler_bitwisefunccallreturns.test", // char
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
