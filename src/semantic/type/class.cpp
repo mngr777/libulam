@@ -389,10 +389,11 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
             continue;
         if (members().import_sym(name_id, sym)) {
             auto name_id_ = name_id; // C++17 cannot capture struct-d bindings
+            // TEST
             debug() << "importing " << cls->name() << "."
                     << module()->program()->str_pool().get(name_id) << " into "
                     << name() << "\n";
-            sym.accept([&](auto mem) { scope()->set(name_id_, mem); });
+            sym.accept([&](auto mem) { inh_scope()->set(name_id_, mem); });
         }
     }
 
