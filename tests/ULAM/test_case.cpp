@@ -124,6 +124,7 @@ void TestCase::parse() {
     // answer mark
     move_to("#!");
     skip("#!\n");
+    skip_comments();
 
     // "Exit status: <status>\n"
     skip("Exit status:");
