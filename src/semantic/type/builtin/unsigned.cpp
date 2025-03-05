@@ -1,5 +1,6 @@
 #include "src/semantic/detail/integer.hpp"
 #include <cassert>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>

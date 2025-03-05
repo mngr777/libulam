@@ -221,6 +221,8 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
                 assign(node, Value{lval}, std::move(tv));
             if (ops::is_unary_pre_op(op))
                 return {tv.type(), Value{lval}};
+            assert(ops::is_unary_post_op(op));
+            return {tv.type(), Value{std::move(orig_rval)}};
         }
         return {std::move(tv)};
 
