@@ -39,17 +39,18 @@ conv_cost_t AtomType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return MaxConvCost;
 }
 
-RValue AtomType::cast_to(Ref<const Type> type, RValue&& rval) {
+Value AtomType::cast_to(Ref<const Type> type, Value&& val) {
     assert(is_expl_castable_to(type));
     assert(type->is_class() && type->as_class()->is_element());
-    if (rval.empty())
-        return std::move(rval);
+    if (val.empty())
+        return std::move(val);
 
+    auto rval = val.move_rvalue();
     assert(rval.is<DataPtr>());
     auto& bits = rval.get<DataPtr>()->bits();
     auto elt_rval = type->as_class()->construct();
     elt_rval.get<DataPtr>()->bits().write(0, bits.view());
-    return elt_rval;
+    return Value{std::move(elt_rval)};
 }
 
 } // namespace ulam

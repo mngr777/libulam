@@ -22,7 +22,7 @@ namespace ulam::sema {
 class ExprVisitor : public ast::ExprVisitor {
 public:
     enum CastStatus { CastOk, CastError, NoCast };
-    using CastRes = std::pair<RValue, CastStatus>;
+    using CastRes = std::pair<Value, CastStatus>;
 
     ExprVisitor(Ref<Program> program, Ref<Scope> scope):
         _program{program}, _scope{scope} {}
@@ -72,7 +72,7 @@ protected:
         TypedValue&& tv,
         bool expl = false);
 
-    RValue do_cast(Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv);
+    Value do_cast(Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv);
 
     TypedValue do_cast(
         Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv);

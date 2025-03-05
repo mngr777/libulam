@@ -28,81 +28,6 @@ Datum UnaryType::to_datum(const RValue& rval) const {
     return rval.get<Unsigned>();
 }
 
-TypedValue UnaryType::cast_to(BuiltinTypeId id, RValue&& rval) {
-    assert(is_expl_castable_to(id));
-    assert(!rval.empty());
-    assert(rval.is<Unsigned>());
-
-    auto uns_val = detail::count_ones(rval.get<Unsigned>());
-    switch (id) {
-    case IntId: {
-        auto size = std::min(
-            (bitsize_t)ULAM_MAX_INT_SIZE,
-            (bitsize_t)(detail::bitsize(uns_val) + 1));
-        Integer val = std::min((Unsigned)detail::integer_max(size), uns_val);
-        auto type = builtins().prim_type(IntId, size);
-        return {type, Value{RValue{val}}};
-    }
-    case UnsignedId: {
-        auto size = detail::bitsize(uns_val);
-        auto type = builtins().prim_type(UnsignedId, size);
-        return {type, Value{RValue{uns_val}}};
-    }
-    case BoolId: {
-        assert(bitsize() == 1);
-        auto boolean = builtins().boolean();
-        return {boolean, Value{boolean->construct(uns_val > 0)}};
-    }
-    case UnaryId: {
-        assert(false);
-        return {this, Value{std::move(rval)}};
-    }
-    case BitsId: {
-        auto size = bitsize();
-        auto type = builtins().prim_type(BitsId, size);
-        Bits val{size};
-        store(val.view(), 0, rval);
-        return {type, Value{RValue{std::move(val)}}};
-    }
-    default:
-        assert(false);
-    }
-}
-
-RValue UnaryType::cast_to(Ref<const PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
-    assert(rval.is<Unsigned>());
-
-    Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
-    switch (type->bi_type_id()) {
-    case IntId: {
-        Unsigned int_max = detail::integer_max(type->bitsize());
-        Integer val = std::min(int_max, uns_val);
-        return RValue{val};
-    }
-    case UnsignedId: {
-        uns_val = std::min(detail::unsigned_max(type->bitsize()), uns_val);
-        return RValue{uns_val};
-    }
-    case BoolId: {
-        assert(bitsize() == 1);
-        return builtins().bool_type(type->bitsize())->construct(uns_val > 0);
-    }
-    case UnaryId: {
-        uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
-        return RValue{detail::ones(uns_val)};
-    }
-    case BitsId: {
-        auto bits_rval = type->construct();
-        bits_rval.get<Bits>().write_right(
-            type->bitsize(), to_datum(rval));
-        return bits_rval;
-    }
-    default:
-        assert(false);
-    }
-}
-
 TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
     assert(false); // not implemented
 }
@@ -183,6 +108,81 @@ bool UnaryType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
         return false;
     case FunId:
     case VoidId:
+    default:
+        assert(false);
+    }
+}
+
+TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
+    assert(is_expl_castable_to(id));
+    assert(!rval.empty());
+    assert(rval.is<Unsigned>());
+
+    auto uns_val = detail::count_ones(rval.get<Unsigned>());
+    switch (id) {
+    case IntId: {
+        auto size = std::min(
+            (bitsize_t)ULAM_MAX_INT_SIZE,
+            (bitsize_t)(detail::bitsize(uns_val) + 1));
+        Integer val = std::min((Unsigned)detail::integer_max(size), uns_val);
+        auto type = builtins().prim_type(IntId, size);
+        return {type, Value{RValue{val}}};
+    }
+    case UnsignedId: {
+        auto size = detail::bitsize(uns_val);
+        auto type = builtins().prim_type(UnsignedId, size);
+        return {type, Value{RValue{uns_val}}};
+    }
+    case BoolId: {
+        assert(bitsize() == 1);
+        auto boolean = builtins().boolean();
+        return {boolean, Value{boolean->construct(uns_val > 0)}};
+    }
+    case UnaryId: {
+        assert(false);
+        return {this, Value{std::move(rval)}};
+    }
+    case BitsId: {
+        auto size = bitsize();
+        auto type = builtins().prim_type(BitsId, size);
+        Bits val{size};
+        store(val.view(), 0, rval);
+        return {type, Value{RValue{std::move(val)}}};
+    }
+    default:
+        assert(false);
+    }
+}
+
+RValue UnaryType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+    assert(is_expl_castable_to(type));
+    assert(rval.is<Unsigned>());
+
+    Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
+    switch (type->bi_type_id()) {
+    case IntId: {
+        Unsigned int_max = detail::integer_max(type->bitsize());
+        Integer val = std::min(int_max, uns_val);
+        return RValue{val};
+    }
+    case UnsignedId: {
+        uns_val = std::min(detail::unsigned_max(type->bitsize()), uns_val);
+        return RValue{uns_val};
+    }
+    case BoolId: {
+        assert(bitsize() == 1);
+        return builtins().bool_type(type->bitsize())->construct(uns_val > 0);
+    }
+    case UnaryId: {
+        uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
+        return RValue{detail::ones(uns_val)};
+    }
+    case BitsId: {
+        auto bits_rval = type->construct();
+        bits_rval.get<Bits>().write_right(
+            type->bitsize(), to_datum(rval));
+        return bits_rval;
+    }
     default:
         assert(false);
     }

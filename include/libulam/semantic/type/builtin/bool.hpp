@@ -29,9 +29,6 @@ public:
     RValue from_datum(Datum datum) const override;
     Datum to_datum(const RValue& rval) const override;
 
-    TypedValue cast_to(BuiltinTypeId id, RValue&& value) override;
-    RValue cast_to(Ref<const PrimType> type, RValue&& value) override;
-
     TypedValue unary_op(Op op, RValue&& rval) override;
 
     TypedValue binary_op(
@@ -43,8 +40,10 @@ public:
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;
-
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
+
+    TypedValue cast_to_prim(BuiltinTypeId id, RValue&& value) override;
+    RValue cast_to_prim(Ref<const PrimType> type, RValue&& value) override;
 };
 
 class BoolTypeTpl : public _PrimTypeTpl<BoolType> {

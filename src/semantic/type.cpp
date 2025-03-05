@@ -178,7 +178,7 @@ conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return is_same(type) ? 0 : MaxConvCost;
 }
 
-RValue Type::cast_to(Ref<const Type> type, RValue&& rval) { assert(false); }
+Value Type::cast_to(Ref<const Type> type, Value&& val) { assert(false); }
 
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
     return make<ArrayType>(_builtins, _id_gen, this, size);
@@ -241,8 +241,8 @@ bool AliasType::is_impl_castable_to(
     return non_alias()->is_impl_castable_to(bi_type_id, val);
 }
 
-RValue AliasType::cast_to(Ref<const Type> type, RValue&& rval) {
-    return non_alias()->cast_to(type, std::move(rval));
+Value AliasType::cast_to(Ref<const Type> type, Value&& val) {
+    return non_alias()->cast_to(type, std::move(val));
 }
 
 void AliasType::set_aliased(Ref<Type> type) {

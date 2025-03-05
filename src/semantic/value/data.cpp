@@ -75,16 +75,18 @@ DataView::DataView(
 
 void DataView::store(RValue&& rval) {
     if (!_view_type->is_same(_type)) {
-        // TODO
+        assert(false); // TODO
     }
     _type->store(_storage->bits(), _off, std::move(rval));
 }
 
 RValue DataView::load() const {
     auto rval = _type->load(_storage->bits(), _off);
-    if (!_view_type->is_same(_type))
-        rval = _type->cast_to(_view_type, std::move(rval));
-    return rval;
+    if (_view_type->is_same(_type))
+        return rval;
+
+    auto val = _type->cast_to(_view_type, Value{std::move(rval)});
+    return val.move_rvalue();
 }
 
 DataView DataView::as(Ref<Type> type) {

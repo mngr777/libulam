@@ -197,6 +197,7 @@ bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 }
 
 bool Class::is_castable_to_object_type(Ref<const Type> type) const {
+    assert(!is_same(type));
     assert(type->is_object());
 
     // to Atom
@@ -209,8 +210,12 @@ bool Class::is_castable_to_object_type(Ref<const Type> type) const {
     return cls->is_base_of(this);
 }
 
-RValue Class::cast_to_object_type(Ref<const Type> type, RValue&& rval) const {
+Value Class::cast_to_object_type(Ref<const Type> type, Value&& val) const {
+    assert(!is_same(type));
+
+    auto rval = val.move_rvalue();
     assert(rval.is<DataPtr>());
+
     auto obj = rval.get<DataPtr>();
     assert(obj->type()->is_same(this));
     assert(is_castable_to_object_type(type));
@@ -220,9 +225,9 @@ RValue Class::cast_to_object_type(Ref<const Type> type, RValue&& rval) const {
     // to Atom
     if (type->is(AtomId)) {
         // TODO
-        auto val = const_cast<Class*>(this)->builtins().atom_type()->construct(
+        auto atom = const_cast<Class*>(this)->builtins().atom_type()->construct(
             obj->bits().copy());
-        return RValue{std::move(val)};
+        return Value{std::move(atom)};
     }
 
     // to base class
@@ -232,7 +237,7 @@ RValue Class::cast_to_object_type(Ref<const Type> type, RValue&& rval) const {
     auto new_obj = new_rval.get<DataPtr>();
     for (auto prop : cls->all_props())
         prop->store(new_obj, prop->load(obj));
-    return new_rval;
+    return Value{std::move(new_rval)};
 }
 
 conv_cost_t Class::conv_cost(Ref<const Type> type, bool allow_cast) const {

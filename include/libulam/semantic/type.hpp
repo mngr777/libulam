@@ -140,7 +140,7 @@ public:
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;
 
-    virtual RValue cast_to(Ref<const Type> type, RValue&& rval);
+    virtual Value cast_to(Ref<const Type> type, Value&& val);
 
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }
@@ -222,7 +222,7 @@ public:
     bool is_impl_castable_to(
         BuiltinTypeId bi_type_id, const Value& val) const override;
 
-    RValue cast_to(Ref<const Type> type, RValue&& rval) override;
+    Value cast_to(Ref<const Type> type, Value&& val) override;
 
     Ref<Type> non_alias() override { return _non_alias; }
     Ref<const Type> non_alias() const override { return _non_alias; }

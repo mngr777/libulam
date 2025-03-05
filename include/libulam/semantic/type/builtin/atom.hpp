@@ -30,7 +30,7 @@ public:
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
-    RValue cast_to(Ref<const Type> type, RValue&& rval) override;
+    Value cast_to(Ref<const Type> type, Value&& val) override;
 
 };
 

@@ -80,7 +80,7 @@ public:
 
     bool is_castable_to_object_type(Ref<const Type> type) const;
 
-    RValue cast_to_object_type(Ref<const Type> type, RValue&& rval) const;
+    Value cast_to_object_type(Ref<const Type> type, Value&& val) const;
 
     // TODO void write_base_data();
 

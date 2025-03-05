@@ -18,34 +18,6 @@ void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) const {
 
 RValue BitsType::construct() const { return RValue{Bits{bitsize()}}; }
 
-TypedValue BitsType::cast_to(BuiltinTypeId id, RValue&& rval) {
-    assert(false && "Bits is not implicitly castable to other types");
-}
-
-RValue BitsType::cast_to(Ref<const PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
-    assert(rval.is<Bits>());
-
-    auto& bits = rval.get<Bits>();
-    switch (type->bi_type_id()) {
-    case IntId:
-    case UnsignedId:
-    case BoolId:
-    case UnaryId: {
-        // TODO: this is probably not how it works, to be caught by ULAM tests
-        auto datum = bits.read_right(std::min(bitsize(), type->bitsize()));
-        return RValue{type->from_datum(datum)};
-    }
-    case BitsId: {
-        Bits copy{type->bitsize()};
-        copy |= bits;
-        return RValue{std::move(copy)};
-    }
-    default:
-        assert(false);
-    }
-}
-
 TypedValue BitsType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(BitsId) || r_type->is(UnsignedId));
@@ -160,6 +132,34 @@ bool BitsType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
         return expl;
     case FunId:
     case VoidId:
+    default:
+        assert(false);
+    }
+}
+
+TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
+    assert(false && "Bits is not implicitly castable to other types");
+}
+
+RValue BitsType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+    assert(is_expl_castable_to(type));
+    assert(rval.is<Bits>());
+
+    auto& bits = rval.get<Bits>();
+    switch (type->bi_type_id()) {
+    case IntId:
+    case UnsignedId:
+    case BoolId:
+    case UnaryId: {
+        // TODO: this is probably not how it works, to be caught by ULAM tests
+        auto datum = bits.read_right(std::min(bitsize(), type->bitsize()));
+        return RValue{type->from_datum(datum)};
+    }
+    case BitsId: {
+        Bits copy{type->bitsize()};
+        copy |= bits;
+        return RValue{std::move(copy)};
+    }
     default:
         assert(false);
     }

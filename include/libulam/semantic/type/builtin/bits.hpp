@@ -26,9 +26,6 @@ public:
 
     RValue construct() const override;
 
-    TypedValue cast_to(BuiltinTypeId id, RValue&& rval) override;
-    RValue cast_to(Ref<const PrimType> type, RValue&& rval) override;
-
     TypedValue binary_op(
         Op op,
         RValue&& l_rval,
@@ -38,8 +35,10 @@ public:
 protected:
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;
-
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
+
+    TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
+    RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) override;
 };
 
 class BitsTypeTpl : public _PrimTypeTpl<BitsType> {

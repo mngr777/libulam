@@ -70,7 +70,9 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
             if (def_node->has_default_value()) {
                 EvalExprVisitor ev{*this, scope()};
                 ExprRes res = def_node->default_value()->accept(ev);
-                res = ev.cast(def_node->default_value(), var->type(), std::move(res), false);
+                res = ev.cast(
+                    def_node->default_value(), var->type(), std::move(res),
+                    false);
                 if (!res.ok())
                     throw std::exception();
                 var->set_value(res.move_value());
@@ -284,9 +286,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         assert(param->type());
         if (!type->is_same(param->type())) {
             assert(type->is_impl_castable_to(param->type()));
-            auto rval =
-                type->cast_to(param->type(), arg.move_value().move_rvalue());
-            arg = {param->type(), Value{std::move(rval)}};
+            arg = {
+                param->type(), type->cast_to(param->type(), arg.move_value())};
         }
         auto var = make<Var>(
             param->type_node(), param->node(), param->type(), param->flags());

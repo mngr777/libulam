@@ -51,14 +51,8 @@ public:
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
-    RValue cast_to(Ref<const Type> type, RValue&& rval) override;
-
-    virtual TypedValue cast_to(BuiltinTypeId id, RValue&& value) {
-        assert(false);
-    }
-    virtual RValue cast_to(Ref<const PrimType> type, RValue&& value) {
-        assert(false);
-    }
+    Value cast_to(Ref<const Type> type, Value&& val) override;
+    TypedValue cast_to(BuiltinTypeId bi_type_id, Value&& val);
 
     virtual TypedValue unary_op(Op op, RValue&& rval) { assert(false); }
 
@@ -71,9 +65,6 @@ public:
     };
 
 protected:
-    Ref<PrimType> _as_prim() override { return this; }
-    Ref<const PrimType> _as_prim() const override { return this; }
-
     virtual bool is_castable_to_prim(Ref<const PrimType> type, bool expl) const;
 
     virtual bool is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const;
@@ -84,6 +75,16 @@ protected:
     virtual bool is_impl_castable_to_prim(
         BuiltinTypeId bi_type_id, const Value& val) const;
 
+    // TODO: make pure virtual
+    virtual TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) {
+        assert(false);
+    }
+    virtual RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+        assert(false);
+    }
+
+    Ref<PrimType> _as_prim() override { return this; }
+    Ref<const PrimType> _as_prim() const override { return this; }
 };
 
 class PrimTypeTpl;

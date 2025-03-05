@@ -124,8 +124,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
             if (error.cast_bi_type_id != NoBuiltinTypeId)
                 return do_cast(expr, error.cast_bi_type_id, std::move(tv));
             assert(error.cast_type);
-            RValue rval = do_cast(expr, error.cast_type, std::move(tv));
-            return {error.cast_type, Value{std::move(rval)}};
+            return {
+                error.cast_type, do_cast(expr, error.cast_type, std::move(tv))};
         }
         case TypeError::Ok:
             return std::move(tv);
@@ -472,7 +472,8 @@ ExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     auto cast_res = maybe_cast(expr, uns_type, res.move_typed_value(), true);
     if (cast_res.second == CastError)
         return NoBitsize;
-    auto size = cast_res.first.get<Unsigned>();
+    auto rval = cast_res.first.move_rvalue();
+    auto size = rval.get<Unsigned>();
 
     // check range
     auto tpl = builtins().prim_type_tpl(bi_type_id);
@@ -505,7 +506,11 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
     if (cast_res.second == CastError)
         return UnknownArrayIdx;
 
-    auto int_val = cast_res.first.get<Integer>();
+    auto rval = cast_res.first.move_rvalue();
+    if (rval.empty())
+        return UnknownArrayIdx;
+
+    auto int_val = rval.get<Integer>();
     if (int_val < 0) {
         diag().error(expr, "array index is < 0");
         return UnknownArrayIdx;
@@ -565,8 +570,10 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     if (!check_is_assignable(node, val))
         return {ExprError::NotAssignable};
     auto lval = val.lvalue();
-    auto [rval, _] = maybe_cast(node, lval.type(), std::move(tv));
-    return {lval.type(), lval.assign(std::move(rval))};
+    auto cast_res = maybe_cast(node, lval.type(), std::move(tv));
+    if (cast_res.second == CastError)
+        return {ExprError::InvalidCast};
+    return {lval.type(), lval.assign(cast_res.first.move_rvalue())};
 }
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
@@ -575,7 +582,7 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
     auto from = tv.type()->actual();
 
     if (to->is_same(from))
-        return {tv.value().move_rvalue(), NoCast};
+        return {tv.move_value(), NoCast};
 
     if (!expl && from->is_impl_castable_to(to, tv.value()))
         return {do_cast(node, to, std::move(tv)), CastOk};
@@ -585,10 +592,10 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
             return {do_cast(node, to, std::move(tv)), CastOk};
         diag().error(node, "suggest explicit cast");
     }
-    return {RValue{}, CastError};
+    return {Value{}, CastError};
 }
 
-RValue ExprVisitor::do_cast(
+Value ExprVisitor::do_cast(
     Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv) {
     auto to = type->actual();
     auto from = tv.type()->actual();
@@ -596,44 +603,42 @@ RValue ExprVisitor::do_cast(
     assert(from->is_expl_castable_to(to));
     if (from->is_prim()) {
         assert(to->is_prim());
-        return from->as_prim()->cast_to(to, tv.move_value().move_rvalue());
+        return from->as_prim()->cast_to(to, tv.move_value());
 
     } else if (from->is_class()) {
         auto cls = from->as_class();
         auto convs = cls->convs(to, true);
         if (convs.size() == 0) {
-            return cls->cast_to_object_type(to, tv.move_value().move_rvalue());
+            return cls->cast_to_object_type(to, tv.move_value());
 
         } else {
             auto obj_val = tv.move_value();
             ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
             if (!res.ok()) {
                 diag().error(node, "conversion failed");
-                return RValue{};
+                return Value{};
             }
             if (res.type()->is_same(to)) {
                 assert(res.type()->is_expl_castable_to(to));
                 return do_cast(node, type, res.move_typed_value());
             }
-            return res.move_value().move_rvalue();
+            return res.move_value();
         }
     } else if (from->is(AtomId)) {
-        assert(to->is_class() && to->as_class()->is_element());
-        return from->cast_to(to, tv.move_value().move_rvalue());
+        return from->cast_to(to, tv.move_value());
     }
     assert(false);
 }
 
 TypedValue ExprVisitor::do_cast(
     Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv) {
-    auto actual = tv.type()->actual();
-    assert(actual->is_expl_castable_to(builtin_type_id));
-    if (actual->is_prim()) {
-        return actual->as_prim()->cast_to(
-            builtin_type_id, tv.move_value().move_rvalue());
+    auto type = tv.type()->actual();
+    assert(type->is_expl_castable_to(builtin_type_id));
+    if (type->is_prim()) {
+        return type->as_prim()->cast_to(builtin_type_id, tv.move_value());
 
-    } else if (actual->is_class()) {
-        auto cls = actual->as_class();
+    } else if (type->is_class()) {
+        auto cls = type->as_class();
         auto convs = cls->convs(builtin_type_id, true);
         assert(convs.size() == 1);
         auto obj_val = tv.move_value();

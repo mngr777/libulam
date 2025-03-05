@@ -41,64 +41,6 @@ Datum BoolType::to_datum(const RValue& rval) const {
     return rval.get<Unsigned>(); // ??
 }
 
-TypedValue BoolType::cast_to(BuiltinTypeId id, RValue&& rval) {
-    assert(is_expl_castable_to(id));
-    switch (id) {
-    case IntId: {
-        auto type = builtins().prim_type(IntId, 2);
-        return {type, Value{cast_to(type, std::move(rval))}};
-    }
-    case UnsignedId: {
-        auto type = builtins().prim_type(UnsignedId, 1);
-        return {type, Value{cast_to(type, std::move(rval))}};
-    }
-    case UnaryId: {
-        auto type = builtins().prim_type(UnaryId, 1);
-        return {type, Value{cast_to(type, std::move(rval))}};
-    }
-    case BoolId: {
-        assert(false);
-        return {this, Value{std::move(rval)}};
-    }
-    case BitsId: {
-        auto type = builtins().prim_type(BitsId, bitsize());
-        return {type, Value{cast_to(type, std::move(rval))}};
-    }
-    default:
-        assert(false);
-    }
-}
-
-RValue BoolType::cast_to(Ref<const PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
-    assert(rval.is<Unsigned>());
-
-    bool is_truth = is_true(rval);
-    rval = construct(is_truth);
-    switch (type->bi_type_id()) {
-    case IntId: {
-        return RValue{(Integer)(is_truth ? 1 : 0)};
-    }
-    case UnsignedId: {
-        return RValue{(Unsigned)(is_truth ? 1 : 0)};
-    }
-    case UnaryId: {
-        return RValue{(Unsigned)(is_truth ? 1 : 0)};
-    }
-    case BoolId: {
-        return RValue{(Unsigned)(is_truth ? detail::ones(type->bitsize()) : 0)};
-    }
-    case BitsId: {
-        auto bits_rval = type->construct();
-        auto size = std::min(bitsize(), type->bitsize());
-        bits_rval.get<Bits>().write_right(size, to_datum(rval));
-        return bits_rval;
-    }
-    default:
-        assert(false);
-    }
-}
-
 TypedValue BoolType::unary_op(Op op, RValue&& rval) {
     switch (op) {
     case Op::Negate:
@@ -163,6 +105,64 @@ bool BoolType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
         return false;
     case FunId:
     case VoidId:
+    default:
+        assert(false);
+    }
+}
+
+TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
+    assert(is_expl_castable_to(id));
+    switch (id) {
+    case IntId: {
+        auto type = builtins().prim_type(IntId, 2);
+        return {type, Value{cast_to_prim(type, std::move(rval))}};
+    }
+    case UnsignedId: {
+        auto type = builtins().prim_type(UnsignedId, 1);
+        return {type, Value{cast_to_prim(type, std::move(rval))}};
+    }
+    case UnaryId: {
+        auto type = builtins().prim_type(UnaryId, 1);
+        return {type, Value{cast_to_prim(type, std::move(rval))}};
+    }
+    case BoolId: {
+        assert(false);
+        return {this, Value{std::move(rval)}};
+    }
+    case BitsId: {
+        auto type = builtins().prim_type(BitsId, bitsize());
+        return {type, Value{cast_to_prim(type, std::move(rval))}};
+    }
+    default:
+        assert(false);
+    }
+}
+
+RValue BoolType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+    assert(is_expl_castable_to(type));
+    assert(rval.is<Unsigned>());
+
+    bool is_truth = is_true(rval);
+    rval = construct(is_truth);
+    switch (type->bi_type_id()) {
+    case IntId: {
+        return RValue{(Integer)(is_truth ? 1 : 0)};
+    }
+    case UnsignedId: {
+        return RValue{(Unsigned)(is_truth ? 1 : 0)};
+    }
+    case UnaryId: {
+        return RValue{(Unsigned)(is_truth ? 1 : 0)};
+    }
+    case BoolId: {
+        return RValue{(Unsigned)(is_truth ? detail::ones(type->bitsize()) : 0)};
+    }
+    case BitsId: {
+        auto bits_rval = type->construct();
+        auto size = std::min(bitsize(), type->bitsize());
+        bits_rval.get<Bits>().write_right(size, to_datum(rval));
+        return bits_rval;
+    }
     default:
         assert(false);
     }

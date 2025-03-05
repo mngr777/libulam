@@ -56,10 +56,12 @@ bool PrimType::is_impl_castable_to(
     return is_impl_castable_to_prim(bi_type_id, val);
 }
 
-RValue PrimType::cast_to(Ref<const Type> type, RValue&& rval) {
-    auto canon = type->canon();
-    assert(canon->is_prim());
-    return cast_to(canon->as_prim(), std::move(rval));
+Value PrimType::cast_to(Ref<const Type> type, Value&& val) {
+    return Value{cast_to_prim(type->as_prim(), val.move_rvalue())};
+}
+
+TypedValue PrimType::cast_to(BuiltinTypeId bi_type_id, Value&& val) {
+    return cast_to_prim(bi_type_id, val.move_rvalue());
 }
 
 conv_cost_t PrimType::conv_cost(Ref<const Type> type, bool allow_cast) const {

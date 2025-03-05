@@ -108,7 +108,9 @@ public:
     using RValueCb = std::function<void(RValue&)>;
     using RValueConstCb = std::function<void(const RValue&)>;
 
-    using Variant::Variant;
+    explicit Value(LValue lval): Variant{std::move(lval)} {}
+    explicit Value(RValue&& rval): Variant{std::move(rval)} {}
+    Value(): Value{RValue{}} {}
 
     Value(Value&&) = default;
     Value& operator=(Value&&) = default;
