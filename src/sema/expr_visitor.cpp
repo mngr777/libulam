@@ -20,10 +20,13 @@
 #endif
 #include "src/debug.hpp"
 
+#define DBG_LINE(node) debug() << _program->sm().line_at(node->loc_id())
+
 namespace ulam::sema {
 
 ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n";
+    DBG_LINE(node);
     if (node->has_type_name()) {
         Resolver resolver{_program};
         auto type = resolver.resolve_type_name(node->type_name(), _scope);
@@ -49,6 +52,7 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
 ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     debug() << __FUNCTION__ << " Ident `" << str(node->name().str_id())
             << "`\n";
+    DBG_LINE(node);
     if (node->is_self()) {
         auto lval = _scope->self();
         if (lval.empty()) {
@@ -81,11 +85,13 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::ParenExpr> node) {
     debug() << __FUNCTION__ << " ParenExpr\n";
+    DBG_LINE(node);
     return node->inner()->accept(*this);
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     debug() << __FUNCTION__ << " BinaryOp\n";
+    DBG_LINE(node);
     assert(node->has_lhs() && node->has_rhs());
 
     // TODO: special case for short-circuiting
@@ -166,6 +172,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
     debug() << __FUNCTION__ << " UnaryOp\n";
+    DBG_LINE(node);
     auto res = node->arg()->accept(*this);
     if (!res.ok())
         return res;
@@ -245,6 +252,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     debug() << __FUNCTION__ << " Cast\n";
+    DBG_LINE(node);
     // eval expr
     auto res = node->expr()->accept(*this);
     if (!res.ok())
@@ -264,6 +272,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
     debug() << __FUNCTION__ << " BoolLit\n";
+    DBG_LINE(node);
     // Bool(1)
     auto type = builtins().boolean();
     auto rval = type->construct(node->value());
@@ -273,6 +282,7 @@ ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
     debug() << __FUNCTION__ << " NumLit\n";
+    DBG_LINE(node);
     const auto& number = node->value();
     if (number.is_signed()) {
         // Int(n)
@@ -287,12 +297,14 @@ ExprRes ExprVisitor::visit(Ref<ast::NumLit> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::StrLit> node) {
     debug() << __FUNCTION__ << " StrLit\n";
+    DBG_LINE(node);
     auto type = builtins().type(StringId);
     return {type, Value{RValue{node->value()}}};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     debug() << __FUNCTION__ << " FunCall\n";
+    DBG_LINE(node);
     auto callable = node->callable()->accept(*this);
     if (!callable)
         return callable;
@@ -317,6 +329,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     debug() << __FUNCTION__ << " MemberAccess\n";
+    DBG_LINE(node);
     assert(node->has_obj());
 
     // eval object expr
@@ -354,6 +367,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     debug() << __FUNCTION__ << " ArrayAccess\n";
+    DBG_LINE(node);
     assert(node->has_array());
     assert(node->has_index());
 
@@ -444,6 +458,7 @@ bool ExprVisitor::check_is_class(
 ExprRes ExprVisitor::cast(
     Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl) {
     debug() << __FUNCTION__ << "\n";
+    DBG_LINE(node);
     auto cast_res = maybe_cast(node, type, res.move_typed_value(), expl);
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
@@ -453,6 +468,7 @@ ExprRes ExprVisitor::cast(
 bitsize_t
 ExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     debug() << __FUNCTION__ << "\n";
+    DBG_LINE(expr);
     assert(bi_type_id != NoBuiltinTypeId);
 
     // can have bitsize?
@@ -497,6 +513,7 @@ ExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
 
 array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
+    DBG_LINE(expr);
     ExprRes res = expr->accept(*this);
     if (!res.ok())
         return UnknownArrayIdx;
@@ -521,6 +538,7 @@ array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
 
 std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     debug() << __FUNCTION__ << "\n";
+    DBG_LINE(args);
     std::pair<TypedValueList, bool> res;
     res.second = true;
     for (unsigned n = 0; n < args->child_num(); ++n) {
@@ -537,6 +555,7 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
 std::pair<TypedValueList, bool>
 ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n";
+    DBG_LINE(args);
     std::pair<TypedValueList, bool> res;
     res.second = true;
     unsigned n = 0;
@@ -568,6 +587,7 @@ ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 ExprRes
 ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
+    DBG_LINE(node);
     if (!check_is_assignable(node, val))
         return {ExprError::NotAssignable};
     auto lval = val.lvalue();

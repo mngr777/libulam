@@ -13,8 +13,8 @@ class Init : public RecVisitor {
     using RecVisitor::visit;
 
 public:
-    Init(Diag& diag, SrcMngr& src_mngr, Ref<ast::Root> ast):
-        RecVisitor{diag, ast}, _src_mngr{src_mngr} {}
+    Init(Diag& diag, SrcMngr& sm, Ref<ast::Root> ast):
+        RecVisitor{diag, ast}, _sm{sm} {}
 
     void visit(Ref<ast::Root> node) override;
     void visit(Ref<ast::ModuleDef> node) override;
@@ -27,7 +27,7 @@ public:
 private:
     void export_classes();
 
-    SrcMngr& _src_mngr;
+    SrcMngr& _sm;
 };
 
 } // namespace ulam::sema

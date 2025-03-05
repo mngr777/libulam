@@ -10,12 +10,12 @@
 
 namespace ulam {
 
-Sema::Sema(Diag& diag, SrcMngr& src_mngr): _diag{diag}, _src_mngr{src_mngr} {}
+Sema::Sema(Diag& diag, SrcMngr& sm): _diag{diag}, _sm{sm} {}
 
 Sema::~Sema() {}
 
 void Sema::analyze(Ref<ast::Root> ast) {
-    sema::Init init{_diag, _src_mngr, ast};
+    sema::Init init{_diag, _sm, ast};
     init.analyze();
     assert(ast->program());
 

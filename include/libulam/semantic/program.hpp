@@ -20,12 +20,12 @@ class Program {
 public:
     using ModuleList = std::list<Ref<Module>>;
 
-    Program(Diag& diag, UniqStrPool& str_pool, SrcMngr& src_mngr);
+    Program(Diag& diag, UniqStrPool& str_pool, SrcMngr& sm);
     ~Program();
 
     Diag& diag() { return _diag; }
     UniqStrPool& str_pool() { return _str_pool; }
-    SrcMngr& src_mngr() { return _src_mngr; }
+    SrcMngr& sm() { return _sm; }
     auto& builtins() { return _builtins; }
 
     const ModuleList& modules() { return _module_refs; }
@@ -40,7 +40,7 @@ public:
 private:
     Diag& _diag;
     UniqStrPool& _str_pool;
-    SrcMngr& _src_mngr;
+    SrcMngr& _sm;
     Builtins _builtins;
     TypeIdGen _type_id_gen;
     std::list<Ptr<Module>> _modules;
