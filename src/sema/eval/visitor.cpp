@@ -391,8 +391,12 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
                 diag().error(ret.node(), "invalid return type");
                 return {ExprError::InvalidReturnType};
             }
-            // TODO: use expr visitor
-            val = type->actual()->cast_to(ret_type, std::move(val));
+            EvalExprVisitor ev{*this, scope()};
+            assert(ret.node()->has_expr());
+            res = ev.cast(
+                ret.node()->expr(), ret_type->actual(),
+                {type->actual(), std::move(val)}, false);
+            return res;
         }
         return {ret_type, std::move(val)};
     }
