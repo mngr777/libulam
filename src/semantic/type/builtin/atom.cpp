@@ -8,11 +8,12 @@
 namespace ulam {
 
 RValue AtomType::load(const BitsView data, bitsize_t off) const {
-    assert(false);
+    return construct(data.view(off, bitsize()).copy());
 }
 
 void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) const {
-    assert(false);
+    assert(rval.is<DataPtr>());
+    data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
 RValue AtomType::construct() const {
