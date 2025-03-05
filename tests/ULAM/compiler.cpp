@@ -42,7 +42,7 @@ void Compiler::compile(std::ostream& out) {
         if (sym->is<ulam::Class>()) {
             auto cls = sym->get<ulam::Class>();
             if (cls->has_fun("test")) {
-                auto text = std::string{module->name()} + " foo; foo.test();";
+                auto text = std::string{module->name()} + " foo; foo.test();\n";
                 try {
                     eval.eval(text);
                 } catch (ulam::EvalExceptError& e) {

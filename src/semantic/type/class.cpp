@@ -337,9 +337,10 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
             resolver.resolve_class_name(cls_name, param_scope(), resolve);
         if (!cls)
             return false;
-        if (resolve)
-            add_ancestor(cls, cls_name);
+        add_ancestor(cls, cls_name);
     }
+    if (resolve)
+        _ancestry.init();
     return true;
 }
 
@@ -388,6 +389,9 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
             continue;
         if (members().import_sym(name_id, sym)) {
             auto name_id_ = name_id; // C++17 cannot capture struct-d bindings
+            debug() << "importing " << cls->name() << "."
+                    << module()->program()->str_pool().get(name_id) << " into "
+                    << name() << "\n";
             sym.accept([&](auto mem) { scope()->set(name_id_, mem); });
         }
     }

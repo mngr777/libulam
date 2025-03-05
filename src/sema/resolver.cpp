@@ -261,12 +261,14 @@ Ref<Class> Resolver::resolve_class_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     auto type = resolve_type_name(type_name, scope, resolve_class);
     if (!type)
-        return Ref<Class>{};
+        return {};
 
     if (!type->is_class()) {
         diag().error(type_name, "not a class");
-        return Ref<Class>{};
+        return {};
     }
+    if (!init(type->as_class()))
+        return {};
     return type->as_class();
 }
 
