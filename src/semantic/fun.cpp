@@ -75,8 +75,8 @@ Fun::MatchRes Fun::match(const TypedValueList& args) {
             assert(has_ellipsis());
             break;
         }
-        auto arg_type = arg_it->type();
-        auto param_type = (*param_it)->type();
+        auto arg_type = arg_it->type()->actual();
+        auto param_type = (*param_it)->type()->actual();
         max_conv_cost =
             std::max(max_conv_cost, arg_type->conv_cost(param_type));
         if (max_conv_cost == MaxConvCost)

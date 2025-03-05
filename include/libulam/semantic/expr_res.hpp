@@ -15,6 +15,7 @@ enum class ExprError {
     UnresolvableType,
     NotAssignable,
     NotImplemented,
+    NotFunction,
     NotArray,
     TypeMismatch,
     UnknownArrayIndex,
@@ -25,7 +26,8 @@ enum class ExprError {
     InvalidTypeOperator,
     InvalidOperandType,
     CastRequired,
-    InvalidCast
+    InvalidCast,
+    ArgsEvalError // TMP
 };
 
 class Type;

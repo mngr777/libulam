@@ -1,6 +1,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>
 
@@ -23,10 +24,19 @@ RValue AtomType::construct(Bits&& bits) const {
 }
 
 bool AtomType::is_castable_to(Ref<const Type> type, bool expl) const {
-    auto canon = type->canon();
-    if (canon->is_class())
-        return canon->as_class()->is_element() && expl;
+    if (type->is_class())
+        return type->as_class()->is_element() && expl; // only to element?
     return false;
+}
+
+conv_cost_t AtomType::conv_cost(Ref<const Type> type, bool allow_cast) const {
+    if (type->is(AtomId))
+        return 0;
+    if (is_impl_castable_to(type))
+        return AtomToElementConvCost;
+    if (allow_cast && is_expl_castable_to(type))
+        return CastCost;
+    return MaxConvCost;
 }
 
 RValue AtomType::cast_to(Ref<const Type> type, RValue&& rval) {

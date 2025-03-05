@@ -27,6 +27,9 @@ public:
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
+    conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
     RValue cast_to(Ref<const Type> type, RValue&& rval) override;
 
 };

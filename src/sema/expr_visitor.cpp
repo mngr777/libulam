@@ -1,3 +1,4 @@
+#include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -293,7 +294,7 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     debug() << __FUNCTION__ << " FunCall\n";
     auto callable = node->callable()->accept(*this);
     if (!callable)
-        return {};
+        return callable;
 
     // get fun set
     auto val = callable.move_value();
@@ -301,13 +302,13 @@ ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
     auto lval = val.lvalue();
     if (!lval.is<BoundFunSet>()) {
         diag().error(node->callable(), "is not a function");
-        return {};
+        return {ExprError::NotFunction};
     }
 
     // eval args
     auto [args, success] = eval_args(node->args());
     if (!success)
-        return {};
+        return {ExprError::ArgsEvalError};
 
     auto fset = lval.get<BoundFunSet>().fset();
     return funcall(node->callable(), fset, lval.self(), std::move(args));
