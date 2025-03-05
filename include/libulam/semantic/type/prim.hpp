@@ -128,14 +128,6 @@ class PrimTypeTpl : public TypeTpl {
 public:
     PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen);
 
-    Ref<Type> type(
-        Diag& diag,
-        Ref<ast::ArgList> args_node,
-        TypedValueList&& args) override = 0;
-
-    virtual Ref<PrimType>
-    type(Diag& diag, Ref<ast::Node> node, bitsize_t bitsize) = 0;
-
     virtual Ref<PrimType> type(bitsize_t bitsize) = 0;
 
     virtual bitsize_t min_bitsize() const = 0;
@@ -154,60 +146,6 @@ public:
 
     bitsize_t min_bitsize() const override { return T::MinSize; }
     bitsize_t max_bitsize() const override { return T::MaxSize; }
-
-    // TODO: this should probably be implemented at higher level ??
-    Ref<Type> type(
-        Diag& diag,
-        Ref<ast::ArgList> args_node,
-        TypedValueList&& args) override {
-        // NOTE: args_node can be null
-        bitsize_t size = 0;
-        if (args.size() == 0) {
-            size = T::DefaultSize;
-        } else {
-            if (args.size() > 1) {
-                diag.emit(
-                    Diag::Error, args_node->loc_id(), 1,
-                    std::string("too many arguments for ") + type_str());
-                // continue
-            }
-            // get first arg
-            auto& arg = args.front();
-            auto rval = arg.value().move_rvalue();
-            assert(!rval.empty());
-            if (rval.is<Integer>()) {
-                auto int_val = rval.get<Integer>();
-                size = (int_val < 0) ? 0 : static_cast<Unsigned>(int_val);
-            } else if (rval.is<Unsigned>()) {
-                size = rval.get<Unsigned>();
-            } else {
-                diag.emit(
-                    Diag::Error, args_node->loc_id(), 1,
-                    "cannot convert to bit size");
-                return {};
-            }
-        }
-        return type(diag, args_node, size);
-    }
-
-    Ref<PrimType>
-    type(Diag& diag, Ref<ast::Node> node, bitsize_t size) override {
-        // check, adjust and continue on error
-        if (size < T::MinSize) {
-            diag.emit(
-                Diag::Error, node->loc_id(), 1,
-                std::string("bit size argument must be at least ") +
-                    std::to_string(T::MinSize));
-            size = T::MinSize;
-        } else if (size > T::MaxSize) {
-            diag.emit(
-                Diag::Error, node->loc_id(), 1,
-                std::string("bit size argument must be at most ") +
-                    std::to_string(T::MaxSize));
-            size = T::MaxSize;
-        }
-        return get(size);
-    }
 
     Ref<PrimType> type(bitsize_t size) override { return get(size); }
 

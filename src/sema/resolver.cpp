@@ -373,10 +373,14 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     // template?
     if (sym->is<ClassTpl>()) {
         auto tpl = sym->get<ClassTpl>();
-        assert(type_spec->has_args()); // TODO: default
+        if (!resolve(tpl))
+            return {};
+        assert(type_spec->has_args());
         ExprVisitor ev{_program, scope};
-        auto [args, success] = ev.eval_args(type_spec->args());
-        return tpl->type(_program->diag(), type_spec->args(), std::move(args));
+        auto [args, success] = ev.eval_tpl_args(type_spec->args(), tpl);
+        if (!success)
+            return {};
+        return tpl->type(std::move(args));
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();

@@ -4,21 +4,14 @@
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/typed_value.hpp>
 
-namespace ulam::ast {
-class ArgList;
-}
-
 namespace ulam {
 
-class Diag;
 class TypeIdGen;
 
+// TODO: remove?
 class TypeTpl {
 public:
     TypeTpl(TypeIdGen& id_gen): _id_gen{id_gen} {}
-
-    virtual Ref<Type>
-    type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) = 0;
 
 protected:
     TypeIdGen& id_gen() { return _id_gen; }

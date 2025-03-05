@@ -52,12 +52,16 @@ public:
     virtual ExprRes
     cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 
-    virtual bitsize_t bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
+    virtual bitsize_t
+    bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 
     virtual array_idx_t array_index(Ref<ast::Expr> expr);
 
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
+
+    virtual std::pair<TypedValueList, bool>
+    eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
 
 protected:
     virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);

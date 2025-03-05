@@ -54,17 +54,14 @@ public:
 
     bool resolve(sema::Resolver& resolver);
 
-    Ref<Type> type(
-        Diag& diag,
-        Ref<ast::ArgList> args_node,
-        TypedValueList&& args) override;
+    Ref<Type> type(TypedValueList&& args);
 
 private:
     using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
 
     bool resolve_params(sema::Resolver& resolver);
 
-    Ptr<Class> inst(Ref<ast::ArgList> args_node, TypedValueList&& args);
+    Ptr<Class> inst(TypedValueList&& args);
 
     // TMP
     std::string type_args_str(const TypedValueList& args);

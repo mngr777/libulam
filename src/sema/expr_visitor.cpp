@@ -527,6 +527,37 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     return res;
 }
 
+std::pair<TypedValueList, bool>
+ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
+    debug() << __FUNCTION__ << "\n";
+    std::pair<TypedValueList, bool> res;
+    res.second = true;
+    unsigned n = 0;
+    for (auto param : tpl->params()) {
+        Ref<ast::Expr> arg = param->node()->default_value();
+        if (n < args->child_num())
+            arg = args->get(n);
+        ++n;
+        if (!arg) {
+            diag().error(args, "not enough arguments");
+            res.second = false;
+            break;
+        }
+        ExprRes arg_res = arg->accept(*this);
+        if (!arg_res) {
+            res.second = false;
+            break;
+        }
+        arg_res = cast(arg, param->type(), arg_res.move_typed_value(), false);
+        if (!arg_res) {
+            res.second = false;
+            break;
+        }
+        res.first.push_back(arg_res.move_typed_value());
+    }
+    return res;
+}
+
 ExprRes
 ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";

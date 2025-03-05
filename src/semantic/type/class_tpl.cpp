@@ -73,12 +73,12 @@ bool ClassTpl::resolve(sema::Resolver& resolver) {
 }
 
 Ref<Type>
-ClassTpl::type(Diag& diag, Ref<ast::ArgList> args_node, TypedValueList&& args) {
+ClassTpl::type(TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _classes.find(key);
     if (it != _classes.end())
         return ref(it->second);
-    auto cls = inst(args_node, std::move(args));
+    auto cls = inst(std::move(args));
     auto cls_ref = ref(cls);
     _classes.emplace(key, std::move(cls));
     return cls_ref;
@@ -94,7 +94,7 @@ bool ClassTpl::resolve_params(sema::Resolver& resolver) {
     return true;
 }
 
-Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
+Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
     auto& str_pool = module()->program()->str_pool();
     auto cls = make<Class>(str_pool.get(name_id()), this);
 
@@ -105,7 +105,7 @@ Ptr<Class> ClassTpl::inst(Ref<ast::ArgList> args_node, TypedValueList&& args) {
         std::swap(tv, args.front());
         args.pop_front();
 
-        // assert(tv.type()->is_same(var->type())); // TODO
+        assert(tv.type()->is_same(var->type()));
         cls->add_param(var->type_node(), var->node(), tv.move_value());
     }
 
