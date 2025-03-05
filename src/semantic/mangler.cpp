@@ -56,7 +56,8 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
     }
 
     // bitsize
-    detail::write_leximited(os, (Unsigned)type->bitsize());
+    if (type->is_prim() && has_bitsize(type->bi_type_id()))
+        detail::write_leximited(os, (Unsigned)type->bitsize());
 
     // type name/code
     if (type->is_class()) {
