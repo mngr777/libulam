@@ -72,8 +72,7 @@ bool ClassTpl::resolve(sema::Resolver& resolver) {
     return resolved;
 }
 
-Ref<Type>
-ClassTpl::type(TypedValueList&& args) {
+Ref<Class> ClassTpl::type(TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _classes.find(key);
     if (it != _classes.end())

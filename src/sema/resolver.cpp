@@ -380,7 +380,10 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         auto [args, success] = ev.eval_tpl_args(type_spec->args(), tpl);
         if (!success)
             return {};
-        return tpl->type(std::move(args));
+        auto cls = tpl->type(std::move(args));
+        if (!init(cls))
+            return {};
+        return cls;
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();

@@ -54,7 +54,7 @@ public:
 
     bool resolve(sema::Resolver& resolver);
 
-    Ref<Type> type(TypedValueList&& args);
+    Ref<Class> type(TypedValueList&& args);
 
 private:
     using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
