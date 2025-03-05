@@ -50,6 +50,8 @@ LValue LValue::self() {
     return lval;
 }
 
+LValue LValue::as(Ref<Type> type) { return derived(data_view().as(type)); }
+
 RValue LValue::rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->rvalue(); },

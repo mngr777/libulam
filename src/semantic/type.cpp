@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/data.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -207,7 +206,9 @@ bitsize_t AliasType::bitsize() const {
     return _canon->bitsize();
 }
 
-bool AliasType::is_constructible() const { return non_alias()->is_constructible(); }
+bool AliasType::is_constructible() const {
+    return non_alias()->is_constructible();
+}
 
 RValue AliasType::construct() const { return non_alias()->construct(); }
 
@@ -239,6 +240,10 @@ bool AliasType::is_impl_castable_to(
 bool AliasType::is_impl_castable_to(
     BuiltinTypeId bi_type_id, const Value& val) const {
     return non_alias()->is_impl_castable_to(bi_type_id, val);
+}
+
+conv_cost_t AliasType::conv_cost(Ref<const Type> type, bool allow_cast) const {
+    return non_alias()->conv_cost(type->non_alias());
 }
 
 Value AliasType::cast_to(Ref<const Type> type, Value&& val) {
@@ -369,6 +374,71 @@ void RefType::set_canon(Ref<RefType> canon) {
     assert(canon);
     assert(canon->refd() == refd()->canon());
     _canon = canon;
+}
+
+bool RefType::is_castable_to(Ref<const Type> type, bool expl) const {
+    assert(!is_same_actual(type)); // ??
+
+    if (!type->is_ref())
+        return refd()->is_castable_to(type);
+
+    type = type->deref();
+
+    // Element& to Atom&
+    if (type->is(AtomId)) {
+        assert(!refd()->is(AtomId));
+        return refd()->is_class() && refd()->as_class()->is_element();
+    }
+
+    // Atom& to Element&
+    if (refd()->is(AtomId)) {
+        assert(!type->is(AtomId));
+        return expl && type->is_class() && type->as_class()->is_element();
+    }
+
+    // class to class
+    if (type->is_class() && refd()->is_class()) {
+        // downcast
+        if (type->as_class()->is_base_of(refd()->as_class()))
+            return true;
+        // upcast
+        if (expl && refd()->as_class()->is_base_of(type->as_class()))
+            return true;
+    }
+    return false;
+}
+
+bool RefType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
+    return refd()->is_castable_to(bi_type_id, expl);
+}
+
+bool RefType::is_impl_castable_to(
+    Ref<const Type> type, const Value& val) const {
+    assert(val.is_lvalue());
+    if (!type->is_ref())
+        return refd()->is_impl_castable_to(type, val);
+    return is_castable_to(type, false);
+}
+
+bool RefType::is_impl_castable_to(
+    BuiltinTypeId bi_type_id, const Value& val) const {
+    assert(val.is_lvalue());
+    return refd()->is_impl_castable_to(bi_type_id, val);
+}
+
+conv_cost_t RefType::conv_cost(Ref<const Type> type, bool allow_cast) const {
+    if (is_same_actual(type))
+        return 0;
+    return refd()->conv_cost(type->actual()); // ??
+}
+
+Value RefType::cast_to(Ref<const Type> type, Value&& val) {
+    assert(val.is_lvalue());
+    if (!type->is_ref())
+        return refd()->cast_to(type, std::move(val));
+    assert(is_expl_castable_to(type));
+    // TODO: remove const cast
+    return Value{val.lvalue().as(const_cast<Ref<Type>>(type))};
 }
 
 Ptr<ArrayType> RefType::make_array_type(array_size_t size) { assert(false); }

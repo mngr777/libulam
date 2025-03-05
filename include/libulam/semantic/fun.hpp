@@ -34,7 +34,7 @@ class Fun : public Decl {
     friend FunSet;
 
 public:
-    using Params = std::list<Ptr<Var>>;
+    using Params = std::list<Ptr<Var>>; // TODO: add list of refs
     enum MatchStatus { NoMatch, IsMatch, ExactMatch };
     using MatchRes = std::pair<MatchStatus, conv_cost_t>;
 
@@ -60,7 +60,6 @@ public:
 
     void set_ret_type(Ref<Type> ret_type) { _ret_type = ret_type; }
 
-    // TMP?
     Params& params() { return _params; }
     const Params& param() const { return _params; }
     void add_param(Ptr<Var>&& param); // TODO: remove

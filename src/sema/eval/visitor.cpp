@@ -145,7 +145,8 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
         auto scope_raii{_scope_stack.raii(scp::NoFlags)};
         auto val = res.move_value();
-        auto obj_view = val.data_view().as(type);
+        assert(val.is_lvalue());
+        auto obj_view = val.lvalue().as(type);
         auto def = make<ast::VarDef>(node->ident()->name());
         auto var = make<Var>(
             node->type_name(), ref(def),
@@ -269,30 +270,67 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
 
     // push fun scope
     scope_lvl_t scope_lvl = _scope_stack.size();
-    auto sr =
-        _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
+    auto sr_params = _scope_stack.raii(
+        make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind `self`
-    scope()->set_self(self);
+    scope()->set_self(self.as(fun->cls()));
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(scope_lvl);
 
     // bind params
+    std::list<Ptr<ast::VarDef>> tmp_var_defs{}; // TODO: refactoring
     for (const auto& param : fun->params()) {
         assert(args.size() >= 0);
-        auto arg = std::move(args.front());
+
+        auto type = args.front().type();
+        auto val = args.front().move_value();
         args.pop_front();
-        auto type = arg.type();
-        assert(param->type());
+
+        // not exact match?
         if (!type->is_same(param->type())) {
-            assert(type->is_impl_castable_to(param->type()));
-            arg = {
-                param->type(), type->cast_to(param->type(), arg.move_value())};
+            if (param->type()->is_ref()) {
+                // bind to reference param
+                if (val.is_rvalue()) {
+                    // rvalue to const reference
+                    assert(!type->is_ref());
+                    assert(param->is_const());
+                    // maybe cast to value type
+                    if (!type->is_same_actual(param->type())) {
+                        assert(type->is_impl_castable_to(
+                            param->type()->deref(), val));
+                        val = type->cast_to(
+                            param->type()->deref(), std::move(val));
+                    }
+                    // create tmp var
+                    tmp_var_defs.push_back(
+                        make<ast::VarDef>(param->node()->name()));
+                    auto def = ref(tmp_var_defs.back());
+                    auto var = make<Var>(
+                        param->type_node(), def,
+                        TypedValue{param->type()->deref(), std::move(val)});
+                    val = Value{var->lvalue()};
+                } else {
+                    // lvalue to reference
+                    assert(param->is_const() || !val.lvalue().is_xvalue());
+                    val.lvalue().set_is_xvalue(false);
+                    // cast ref type
+                    if (!type->is_same_actual(param->type())) {
+                        assert(type->ref_type()->is_impl_castable_to(
+                            param->type(), val));
+                        val = type->ref_type()->cast_to(
+                            param->type(), std::move(val));
+                    }
+                }
+            } else {
+                // non-reference param, must be convertible
+                assert(type->is_impl_castable_to(param->type(), val));
+                val = type->cast_to(param->type(), std::move(val));
+            }
         }
         auto var = make<Var>(
             param->type_node(), param->node(), param->type(), param->flags());
-        assert(!param->type()->is_ref()); // not handling references just yet
-        var->set_value(Value{arg.move_value().move_rvalue()});
+        var->set_value(std::move(val));
         scope()->set(var->name_id(), std::move(var));
     }
 

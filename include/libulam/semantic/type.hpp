@@ -222,6 +222,9 @@ public:
     bool is_impl_castable_to(
         BuiltinTypeId bi_type_id, const Value& val) const override;
 
+    conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
     Value cast_to(Ref<const Type> type, Value&& val) override;
 
     Ref<Type> non_alias() override { return _non_alias; }
@@ -330,6 +333,20 @@ public:
     Ref<const Type> deref() const override { return refd(); }
 
     Ref<RefType> ref_type() override { return this; }
+
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool
+    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
+
+    bool
+    is_impl_castable_to(Ref<const Type> type, const Value& val) const override;
+    bool is_impl_castable_to(
+        BuiltinTypeId bi_type_id, const Value& val) const override;
+
+    conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
+    Value cast_to(Ref<const Type> type, Value&& val) override;
 
     Ptr<ArrayType> make_array_type(array_size_t size) override;
     Ptr<RefType> make_ref_type() override;

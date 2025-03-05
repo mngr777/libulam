@@ -39,6 +39,7 @@ public:
     Ref<Type> dyn_obj_type() const;
 
     LValue self();
+    LValue as(Ref<Type> type);
 
     LValue array_access(array_idx_t idx);
     LValue prop(Ref<Prop> prop);
@@ -119,6 +120,10 @@ public:
 
     bool is_lvalue() const { return is<LValue>(); }
     bool is_rvalue() const { return is<RValue>(); }
+
+    bool is_tmp() const {
+        return is_rvalue() || (is_lvalue() && lvalue().is_xvalue());
+    }
 
     LValue& lvalue() { return get<LValue>(); }
     const LValue& lvalue() const { return get<LValue>(); }

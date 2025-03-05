@@ -75,8 +75,20 @@ Fun::MatchRes Fun::match(const TypedValueList& args) {
             assert(has_ellipsis());
             break;
         }
-        auto arg_type = arg_it->type()->actual();
-        auto param_type = (*param_it)->type()->actual();
+        auto& param = (*param_it);
+        auto& arg = (*arg_it);
+
+        auto param_type = param->type();
+        auto arg_type = arg.type();
+
+        if (param_type->is_ref()) {
+            // rvalue or xvalue lvalue cannot bind to non-const reference param
+            if (!param->is_const() && arg.value().is_tmp())
+                return {NoMatch, MaxConvCost};
+            // bindable, pretend arg is a reference
+            arg_type = arg_type->ref_type();
+        }
+
         max_conv_cost =
             std::max(max_conv_cost, arg_type->conv_cost(param_type));
         if (max_conv_cost == MaxConvCost)
