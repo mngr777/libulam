@@ -45,7 +45,8 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
             block->get(n)->accept(*this);
         }
     } catch (EvalExceptError& e) {
-        // TODO
+        // TODO: return status
+        throw e;
     }
     return {_program->builtins().type(VoidId), Value{RValue{}}};
 }
@@ -73,8 +74,8 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
                 res = ev.cast(
                     def_node->default_value(), var->type(), std::move(res),
                     false);
-                if (!res.ok())
-                    throw std::exception();
+                if (!res)
+                    throw EvalExceptError("init var value cast failed");
                 var->set_value(res.move_value());
             } else {
                 var->set_value(Value{var->type()->construct()});
@@ -122,11 +123,11 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     EvalExprVisitor ev{*this, scope()};
     ExprRes res = node->ident()->accept(ev);
     if (!res)
-        throw std::exception();
+        throw EvalExceptError("failed to eval if-as ident");
     auto arg_type = res.type()->actual();
     if (!arg_type->is_object()) {
         diag().error(node->ident(), "not a class or Atom");
-        throw std::exception();
+        throw EvalExceptError("if-as var is not an object");
     }
 
     // resolve type
@@ -137,7 +138,7 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     type = type->canon();
     if (!type->is_object()) {
         diag().error(node->type_name(), "not a class or Atom");
-        throw std::exception();
+        throw EvalExceptError("if-as type is not class or Atom");
     }
 
     assert(!res.value().empty());
@@ -170,7 +171,7 @@ void EvalVisitor::visit(Ref<ast::For> node) {
     unsigned loop_count = 0;
     while (!node->has_cond() || eval_cond(node->cond())) {
         if (loop_count++ == 100) // TODO: max loops option
-            throw std::exception();
+            throw EvalExceptError("for loop limit exceeded");
 
         if (node->has_body()) {
             try {
@@ -196,9 +197,7 @@ void EvalVisitor::visit(Ref<ast::Return> node) {
     } else {
         res = {_program->builtins().type(VoidId), Value{RValue{}}};
     }
-    if (res.ok())
-        res = {res.type(), Value{res.move_value().move_rvalue()}};
-    throw EvalExceptReturn(std::move(res));
+    throw EvalExceptReturn(node, std::move(res));
 }
 
 void EvalVisitor::visit(Ref<ast::Break> node) {
@@ -233,7 +232,7 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     unsigned loop_count = 0;
     while (eval_cond(node->cond())) {
         if (loop_count++ == 100) // TODO: max loops option
-            throw std::exception();
+            throw EvalExceptError("for loop limit exceeded");
 
         if (node->has_body()) {
             try {
@@ -270,8 +269,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
 
     // push fun scope
     scope_lvl_t scope_lvl = _scope_stack.size();
-    auto sr_params = _scope_stack.raii(
-        make<BasicScope>(fun->cls()->scope(), scp::Fun));
+    auto sr_params =
+        _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind `self`
     scope()->set_self(self.as(fun->cls()));
@@ -339,18 +338,76 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         fun->body_node()->accept(*this);
     } catch (EvalExceptReturn& ret) {
         debug() << "}\n";
-        return ret.move_res();
+
+        ExprRes res = ret.move_res();
+        auto ret_type = fun->ret_type();
+        if (!res)
+            return res;
+
+        auto type = res.type();
+        auto val = res.move_value();
+
+        // Void ret type
+        if (ret_type->is(VoidId)) {
+            if (!res.type()->is(VoidId)) {
+                diag().error(
+                    ret.node(), "return value in function returning Void");
+                return {ExprError::NonVoidReturn};
+            }
+            return {ret_type, Value{RValue{}}};
+
+        } else if (type->is(VoidId)) {
+            diag().error(ret.node(), "no return value");
+            return {ExprError::NoReturnValue};
+        }
+
+        // Reference ret type
+        if (ret_type->is_ref()) {
+            if (!val.is_lvalue()) {
+                diag().error(ret.node(), "not a reference");
+                return {ExprError::NotReference};
+            }
+            // TODO: test
+            if (val.lvalue().has_scope_lvl() &&
+                val.lvalue().scope_lvl() >= _scope_stack.size()) {
+                diag().error(ret.node(), "reference to local");
+                return {ExprError::ReferenceToLocal};
+            }
+            if (!type->is_same_actual(ret_type)) {
+                // TODO: use expr visitor
+                if (!type->ref_type()->is_impl_castable_to(ret_type, val)) {
+                    diag().error(ret.node(), "invalid reference type cast");
+                    return {ExprError::InvalidCast};
+                }
+                val = type->ref_type()->cast_to(ret_type, std::move(val));
+            }
+            return {ret_type, std::move(val)};
+        }
+
+        // Non-reference ret type
+        val = Value{val.move_rvalue()};
+        if (!type->is_same_actual(ret_type)) {
+            if (!type->actual()->is_impl_castable_to(ret_type, val)) {
+                diag().error(ret.node(), "invalid return type");
+                return {ExprError::InvalidReturnType};
+            }
+            // TODO: use expr visitor
+            val = type->actual()->cast_to(ret_type, std::move(val));
+        }
+        return {ret_type, std::move(val)};
     }
     debug() << "}\n";
-    return {_program->builtins().type(VoidId), Value{RValue{}}};
+    if (!fun->ret_type()->is(VoidId))
+        return {ExprError::NoReturn};
+    return {fun->ret_type(), Value{RValue{}}};
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
     EvalExprVisitor ev{*this, scope()};
     ExprRes res = expr->accept(ev);
-    if (!res.ok())
-        throw std::exception(); // TODO
+    if (!res)
+        throw EvalExceptError("failed to eval expression"); // TODO
     return res;
 }
 
@@ -361,8 +418,8 @@ bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
     auto boolean = _program->builtins().boolean();
     EvalExprVisitor ev{*this, scope()};
     res = ev.cast(expr, boolean, std::move(res), false);
-    if (!res.ok())
-        throw std::exception();
+    if (!res)
+        throw EvalExceptError("failed to eval condition"); // TODO
     return boolean->is_true(res.move_value().move_rvalue());
 }
 

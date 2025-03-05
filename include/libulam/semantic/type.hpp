@@ -117,6 +117,7 @@ public:
     virtual Ref<const Type> non_alias() const { return this; }
 
     virtual TypedValue type_op(TypeOp op);
+    virtual TypedValue type_op(TypeOp op, Value& val);
 
     bool is_same(Ref<const Type> type) const;
     bool is_same_actual(Ref<const Type> type) const;

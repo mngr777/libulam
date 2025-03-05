@@ -40,6 +40,7 @@ public:
 
     LValue self();
     LValue as(Ref<Type> type);
+    LValue atom_of();
 
     LValue array_access(array_idx_t idx);
     LValue prop(Ref<Prop> prop);

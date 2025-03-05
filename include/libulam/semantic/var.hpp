@@ -34,7 +34,7 @@ public:
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
-    Value _value;
+    Value _value{RValue{}};
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 

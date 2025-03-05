@@ -5,10 +5,11 @@ namespace ulam {
 void Var::set_value(Value&& value) { std::swap(_value, value); }
 
 DataView Var::data_view() {
-    assert(_value.is_rvalue());
+    if (_value.is_lvalue())
+        return _value.lvalue().data_view(); // ??
     return _value.rvalue().accept(
         [&](DataPtr data) { return data->view(); },
-        [&](auto& other) -> DataView { assert(false); });
+        [&](auto& other) { return DataView{}; });
 }
 
 LValue Var::lvalue() {

@@ -59,7 +59,6 @@ private:
     Ref<Program> _program;
     Resolver _resolver;
     ScopeStack _scope_stack;
-    Value _ret_value;
 };
 
 } // namespace ulam::sema

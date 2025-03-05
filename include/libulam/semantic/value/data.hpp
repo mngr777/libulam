@@ -37,8 +37,12 @@ public:
     DataView prop(Ref<Prop> prop_);
     const DataView prop(Ref<Prop> prop_) const;
 
+    DataView atom_of();
+    const DataView atom_of() const;
+
     bool is_array() const;
     bool is_object() const;
+    bool is_atom() const;
     bool is_class() const;
 
     Ref<Type> type() const { return _type; }
@@ -57,8 +61,11 @@ public:
         DataPtr storage,
         Ref<Type> type,
         bitsize_t off,
-        Ref<Type> view_type = Ref<Type>{},
-        bitsize_t atom_off = NoBitsize);
+        Ref<Type> view_type = Ref<Type>{});
+
+    DataView() {}
+
+    operator bool() { return _storage.get(); }
 
     void store(RValue&& rval);
     RValue load() const;
@@ -75,8 +82,12 @@ public:
     DataView prop(Ref<Prop> prop_);
     const DataView prop(Ref<Prop> prop_) const;
 
+    DataView atom_of();
+    const DataView atom_of() const;
+
     bool is_array() const;
     bool is_object() const;
+    bool is_atom() const;
     bool is_class() const;
 
     Ref<Type> type() const { return _view_type; }
@@ -85,11 +96,14 @@ public:
     const BitsView bits() const;
 
 private:
-    DataPtr _storage;
-    Ref<Type> _type;
-    bitsize_t _off;
-    Ref<Type> _view_type;
-    bitsize_t _atom_off;
+    DataPtr _storage{};
+    Ref<Type> _type{};
+    bitsize_t _off{};
+    Ref<Type> _view_type{};
+    struct {
+        bitsize_t off{NoBitsize};
+        Ref<Type> type{};
+    } _atom;
 };
 
 } // namespace ulam

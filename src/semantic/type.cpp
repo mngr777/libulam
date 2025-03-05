@@ -2,6 +2,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
@@ -113,6 +114,22 @@ TypedValue Type::type_op(TypeOp op) {
     }
     default:
         return {};
+    }
+}
+
+TypedValue Type::type_op(TypeOp op, Value& val) {
+    switch (op) {
+    case TypeOp::AtomOf: {
+        auto atom_type = builtins().atom_type();
+        if (val.empty() || val.is_rvalue())
+            return {};
+        auto lval = val.lvalue().atom_of();
+        if (lval.empty())
+            return {};
+        return {atom_type, Value{lval.as(atom_type)}};
+    }
+    default:
+        return type_op(op);
     }
 }
 

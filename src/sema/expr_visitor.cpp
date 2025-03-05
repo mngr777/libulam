@@ -39,7 +39,8 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     if (!expr_res.ok())
         return expr_res;
     assert(expr_res.type());
-    auto tv = expr_res.type()->actual()->type_op(node->op());
+    auto val = expr_res.move_value();
+    auto tv = expr_res.type()->actual()->type_op(node->op(), val);
     if (!tv)
         return {ExprError::InvalidTypeOperator};
     return tv;

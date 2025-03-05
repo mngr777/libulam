@@ -18,7 +18,11 @@ Ref<Type> LValue::type() const {
 
 DataView LValue::data_view() {
     return accept(
-        [&](Ref<Var> var) { return var->data_view(); },
+        [&](Ref<Var> var) {
+            auto data = var->data_view();
+            assert(data);
+            return data;
+        },
         [&](DataView& data) { return data; },
         [&](BoundFunSet&) -> DataView { assert(false); },
         [&](std::monostate&) -> DataView { assert(false); });
@@ -51,6 +55,17 @@ LValue LValue::self() {
 }
 
 LValue LValue::as(Ref<Type> type) { return derived(data_view().as(type)); }
+
+LValue LValue::atom_of() {
+    auto data_view = accept(
+        [&](Ref<Var> var) { return var->data_view(); },
+        [&](DataView& data) { return data; },
+        [&](BoundFunSet& bfset) { return DataView{}; },
+        [&](std::monostate&) { return DataView{}; });
+    if (!data_view)
+        return LValue{};
+    return derived(data_view);
+}
 
 RValue LValue::rvalue() const {
     return accept(
@@ -90,6 +105,8 @@ Value LValue::assign(RValue&& rval) {
 // RValue
 
 RValue RValue::copy() const {
+    if (empty())
+        return RValue{};
     return accept(
         [&](const Bits& bits) { return RValue{bits.copy(), is_consteval()}; },
         [&](DataPtr data) { return RValue{data->copy(), is_consteval()}; },
@@ -185,8 +202,7 @@ Value Value::bound_fset(Ref<FunSet> fset) {
 RValue Value::copy_rvalue() const {
     return accept(
         [&](const LValue& lval) { return lval.rvalue(); },
-        [&](const RValue& rval) { return rval.copy(); },
-        [&](const std::monostate& val) { return RValue{}; });
+        [&](const RValue& rval) { return rval.copy(); });
 }
 
 RValue Value::move_rvalue() {

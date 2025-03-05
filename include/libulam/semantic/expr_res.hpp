@@ -27,6 +27,12 @@ enum class ExprError {
     InvalidOperandType,
     CastRequired,
     InvalidCast,
+    NonVoidReturn,
+    NoReturn,
+    NoReturnValue,
+    NotReference,
+    ReferenceToLocal,
+    InvalidReturnType,
     ArgsEvalError // TMP
 };
 

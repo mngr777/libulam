@@ -1,4 +1,5 @@
 #include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -44,11 +45,18 @@ const DataView Data::prop(Ref<Prop> prop_) const {
     return const_cast<Data*>(this)->prop(prop_);
 }
 
+DataView Data::atom_of() {
+    return is_atom() ? view() : DataView{};
+}
+
+const DataView Data::atom_of() const {
+    return const_cast<Data*>(this)->atom_of();
+}
+
 bool Data::is_array() const { return _type->is_array(); }
-
 bool Data::is_object() const { return _type->is_object(); }
-
-bool Data::is_class() const { return _type->is_class(); }
+bool Data::is_atom() const { return _type->is_atom(); }
+Bool Data::is_class() const { return _type->is_class(); }
 
 // DataView
 
@@ -56,21 +64,21 @@ DataView::DataView(
     DataPtr storage,
     Ref<Type> type,
     bitsize_t off,
-    Ref<Type> view_type,
-    bitsize_t atom_off):
+    Ref<Type> view_type):
     _storage{storage},
     _type{type},
     _off{off},
-    _view_type{view_type ? view_type : type},
-    _atom_off{atom_off} {
+    _view_type{view_type ? view_type : type} {
 
     assert(
         _view_type->is_same(_type) ||
         (_type->is_object() && _view_type->is_object() &&
          _type->is_impl_castable_to(_view_type)));
 
-    if (_atom_off == NoBitsize && _view_type->is_atom())
-        _atom_off = off;
+    if (_atom.off == NoBitsize && _view_type->is_atom()) {
+        _atom.off = off;
+        _atom.type = _view_type;
+    }
 }
 
 void DataView::store(RValue&& rval) {
@@ -91,7 +99,9 @@ RValue DataView::load() const {
 
 DataView DataView::as(Ref<Type> type) {
     assert(type);
-    return {_storage, _type, _off, type, _atom_off};
+    DataView view{_storage, _type, _off, type};
+    view._atom = _atom;
+    return view;
 }
 
 const DataView DataView::as(Ref<Type> type) const {
@@ -102,7 +112,9 @@ DataView DataView::array_item(array_idx_t idx) {
     assert(is_array());
     auto array = _view_type->as_array();
     bitsize_t off = _off + array->item_off(idx);
-    return {_storage, array->item_type(), off, Ref<Type>{}, _atom_off};
+    DataView view{_storage, array->item_type(), off, Ref<Type>{}};
+    view._atom = _atom;
+    return view;
 }
 
 const DataView DataView::array_item(array_idx_t idx) const {
@@ -118,18 +130,31 @@ DataView DataView::prop(Ref<Prop> prop_) {
         assert(_type->is(AtomId));
         cls = _view_type->as_class();
     }
-    return {_storage, prop_->type(), prop_->data_off_in(cls)};
+    DataView view{_storage, prop_->type(), prop_->data_off_in(cls)};
+    view._atom = _atom;
+    return view;
 }
 
 const DataView DataView::prop(Ref<Prop> prop_) const {
     return const_cast<DataView*>(this)->prop(prop_);
 }
 
+DataView DataView::atom_of() {
+    if (_atom.off == NoBitsize)
+        return {};
+    DataView view{_storage, _type, _off, _view_type};
+    view._atom = _atom;
+    return view;
+}
+
+const DataView DataView::atom_of() const {
+    return const_cast<DataView*>(this)->atom_of();
+}
+
 bool DataView::is_array() const { return _view_type->is_array(); }
-
 bool DataView::is_object() const { return _view_type->is_object(); }
-
-bool DataView::is_class() const { return _view_type->is_class(); }
+bool DataView::is_atom() const { return _view_type->is_atom(); }
+Bool DataView::is_class() const { return _view_type->is_class(); }
 
 BitsView DataView::bits() {
     return _storage->bits().view(_off, _type->bitsize());

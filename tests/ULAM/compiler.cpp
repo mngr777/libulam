@@ -3,6 +3,7 @@
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
+#include <libulam/sema/eval/except.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <stdexcept>
@@ -42,7 +43,11 @@ void Compiler::compile(std::ostream& out) {
             auto cls = sym->get<ulam::Class>();
             if (cls->has_fun("test")) {
                 auto text = std::string{module->name()} + " foo; foo.test();";
-                eval.eval(text);
+                try {
+                    eval.eval(text);
+                } catch (ulam::EvalExceptError& e) {
+                    std::cerr << "eval error: " << e.message() << "\n";
+                }
             }
         }
     }
