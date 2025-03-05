@@ -98,7 +98,7 @@ protected:
     Ref<const Class> _as_class() const override { return this; }
 
     Ref<FunSet> add_fset(str_id_t name_id) override;
-    Ref<FunSet> add_fset(Op op) override;
+    Ref<FunSet> add_op_fset(Op op) override;
 
 private:
     bool resolve_params(sema::Resolver& resolver);

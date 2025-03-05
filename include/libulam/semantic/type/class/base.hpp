@@ -100,10 +100,10 @@ protected:
     auto& members() { return _members; }
 
     Ref<FunSet> find_fset(str_id_t name_id);
-    Ref<FunSet> find_fset(Op op);
+    Ref<FunSet> find_op_fset(Op op);
 
     virtual Ref<FunSet> add_fset(str_id_t name_id);
-    virtual Ref<FunSet> add_fset(Op op);
+    virtual Ref<FunSet> add_op_fset(Op op);
 
     auto& ops() { return _ops; }
 

@@ -124,6 +124,9 @@ public:
 
     FunSet();
 
+    FunSet(FunSet&&) = default;
+    FunSet& operator=(FunSet&&) = default;
+
     Matches find_match(Ref<const Class> dyn_cls, const TypedValueList& args);
     Matches find_match(const TypedValueList& args);
 

@@ -310,8 +310,8 @@ Ref<FunSet> Class::add_fset(str_id_t name_id) {
     return fset;
 }
 
-Ref<FunSet> Class::add_fset(Op op) {
-    auto fset = ClassBase::add_fset(op);
+Ref<FunSet> Class::add_op_fset(Op op) {
+    auto fset = ClassBase::add_op_fset(op);
     fset->set_cls(this);
     return fset;
 }
@@ -403,11 +403,11 @@ void Class::merge_fsets() {
         for (auto [name_id, fset] : parent->cls()->fsets()) {
             auto sym = get(name_id);
             if (!sym || sym->is<FunSet>())
-                add_fset(name_id)->merge(fset);
+                find_fset(name_id)->merge(fset);
         }
         // operators
         for (auto& [op, fset] : parent->cls()->ops())
-            add_fset(op)->merge(ref(fset));
+            find_op_fset(op)->merge(ref(fset));
         // TODO: conversions
     }
 }
