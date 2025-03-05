@@ -20,6 +20,8 @@ public:
     Ref<Scope> parent() override;
     Ref<const Scope> parent() const override;
 
+    Ref<Class> self_cls() override;
+
     operator bool() const { return _scope; }
 
     ScopeFlags flags() const override;

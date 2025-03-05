@@ -45,14 +45,17 @@ public:
     const auto end() const { return _symbols.end(); }
 
     template <typename... Ts>
-    void import_sym(str_id_t name_id, _Symbol<Ts...>& sym, bool overwrite = false) {
-        sym.accept([&](auto&& value) {
+    bool import_sym(str_id_t name_id, _Symbol<Ts...>& sym, bool overwrite = false) {
+        return sym.accept([&](auto&& value) {
             using T = typename std::remove_pointer<
                 std::decay_t<decltype(value)>>::type;
             static_assert((std::is_same_v<T, Ss> || ...));
             // import as Ref<T>
-            if (overwrite || !has(name_id))
+            if (overwrite || !has(name_id)) {
                 set(name_id, value);
+                return true;
+            }
+            return false;
         });
     }
 

@@ -384,8 +384,12 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 
     // import symbols
     for (auto& [name_id, sym] : cls->members()) {
-        if (!sym.is<FunSet>()) // handled separately, see Class::merge_fsets
-            members().import_sym(name_id, sym);
+        if (sym.is<FunSet>()) // handled separately, see Class::merge_fsets
+            continue;
+        if (members().import_sym(name_id, sym)) {
+            auto name_id_ = name_id; // C++17 cannot capture struct-d bindings
+            sym.accept([&](auto mem) { scope()->set(name_id_, mem); });
+        }
     }
 
     // add inherited properties

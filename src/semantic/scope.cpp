@@ -10,6 +10,7 @@ namespace ulam {
 
 // ScopeBase
 
+// TODO: PersScope doesn't need `self'
 LValue ScopeBase::self() {
     return (!_self.empty() || !parent()) ? _self : parent()->self();
 }

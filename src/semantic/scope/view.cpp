@@ -22,6 +22,8 @@ Ref<Scope> PersScopeView::parent() { return scope()->parent(); }
 
 Ref<const Scope> PersScopeView::parent() const { return scope()->parent(); }
 
+Ref<Class> PersScopeView::self_cls() { return scope()->self_cls(); }
+
 ScopeFlags PersScopeView::flags() const { return scope()->flags(); }
 
 Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
