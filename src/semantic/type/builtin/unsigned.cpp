@@ -264,7 +264,7 @@ bool UnsignedType::is_castable_to_prim(
     case UnaryId:
         return expl || detail::unsigned_max(bitsize()) <= type->bitsize();
     case BitsId:
-        return expl;
+        return expl || type->bitsize() >= bitsize();
     case AtomId:
         return false;
     case StringId:
