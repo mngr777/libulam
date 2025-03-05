@@ -142,11 +142,13 @@ constexpr std::pair<Integer, Integer> safe_diff(Integer left, Integer right) {
 
 // max save 2nd factor
 constexpr Unsigned safe_prod_max(Unsigned left) {
-    return std::numeric_limits<Unsigned>::max() / left;
+    return (left == 0) ? 0 : std::numeric_limits<Unsigned>::max() / left;
 }
 
 // {max safe 2nd factor, max(Unsigned) - left * right}
 constexpr std::pair<Unsigned, Unsigned> safe_prod_max_rem(Unsigned left) {
+    if (left == 0)
+        return {0, 0};
     constexpr auto max = std::numeric_limits<Unsigned>::max();
     auto max_right = max / left;
     return {max_right, max - left * max_right};
@@ -154,6 +156,8 @@ constexpr std::pair<Unsigned, Unsigned> safe_prod_max_rem(Unsigned left) {
 
 // {min(max(Unsigned), left * right), truncated?}
 constexpr std::pair<Unsigned, bool> safe_prod(Unsigned left, Unsigned right) {
+    if (left == 0)
+        return {0, false};
     auto max_right = safe_prod_max(left);
     auto is_truncated = (right > max_right);
     return {
