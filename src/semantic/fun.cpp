@@ -239,9 +239,11 @@ void FunSet::merge(Ref<FunSet> other) {
     assert(_map.has_value());
     for (auto fun : *other) {
         auto [it, added] = _map.value().emplace(fun->key(), fun);
-        if (added || !fun->is_virtual() || it->second->_overridden)
-            continue;
-        fun->add_override(it->second);
+        if (added) {
+            _funs.push_back(fun);
+        } else if (fun->is_virtual() && !it->second->_overridden) {
+            fun->add_override(it->second);
+        }
     }
 }
 
