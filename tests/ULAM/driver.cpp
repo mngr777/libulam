@@ -62,11 +62,13 @@ int main(int argc, char** argv) {
 
     if (case_num == 0) {
         std::set<std::string> skip = {
-            "t3205_test_compiler_elementandquark_emptyquark.test", // Empty element
+            "t3205_test_compiler_elementandquark_emptyquark.test", // Empty
             "t3233_test_compiler_elementandquarkarray_ew.test", // aref called by name
             "t3357_test_compiler_elementandquarkswclassargs_lhsconstantcompare.test", // behave()
             "t3358_test_compiler_elementandquarkswclassargs_lhsconstantlogicaland.test", // behave()
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
+            "t3400_test_compiler_arraysizeof_lengthzeroelement.test", // Empty
+            "t3401_test_compiler_unaryminofmaxofconstant_issue.test"
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

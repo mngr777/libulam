@@ -122,7 +122,7 @@ RValue IntType::cast_to(Ref<const PrimType> type, RValue&& rval) {
 
 TypedValue IntType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
-        return {this, Value{RValue{}}};
+        return {this, Value{std::move(rval)}};
 
     auto int_val = rval.get<Integer>();
     switch (op) {
@@ -145,7 +145,8 @@ TypedValue IntType::unary_op(Op op, RValue&& rval) {
     default:
         assert(false);
     }
-    return {this, Value{RValue{int_val}}};
+    bool is_consteval = rval.is_consteval() && !ops::is_assign(op);
+    return {this, Value{RValue{int_val, is_consteval}}};
 }
 
 TypedValue IntType::binary_op(
@@ -324,7 +325,8 @@ bool IntType::is_impl_castable_to_prim(
         return detail::bitsize(int_val) <= type->bitsize();
     case UnsignedId:
     case BitsId:
-        return int_val >= 0 && detail::bitsize((Unsigned)int_val) <= type->bitsize();
+        return int_val >= 0 &&
+               detail::bitsize((Unsigned)int_val) <= type->bitsize();
     case UnaryId:
         return int_val >= 0 && (Unsigned)int_val <= type->bitsize();
     default:

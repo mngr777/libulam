@@ -106,7 +106,7 @@ bool Class::init(sema::Resolver& resolver) {
     }
 
     bool ok = resolve_params(resolver) && init_ancestors(resolver, false) &&
-              resolve_type_defs(resolver);
+              resolve_type_defs_and_consts(resolver);
     set_state(ok ? Initialized : Unresolvable);
     return ok;
 }
@@ -328,7 +328,8 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
         auto cls_name = node()->ancestors()->get(n);
         // TODO: check if element's ancestor is element or transient etc.
-        auto cls = resolver.resolve_class_name(cls_name, param_scope(), resolve);
+        auto cls =
+            resolver.resolve_class_name(cls_name, param_scope(), resolve);
         if (!cls)
             return false;
         if (resolve)
@@ -337,15 +338,21 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     return true;
 }
 
-bool Class::resolve_type_defs(sema::Resolver& resolver) {
+bool Class::resolve_type_defs_and_consts(sema::Resolver& resolver) {
     for (auto [_, sym] : *scope()) {
-        if (!sym->is<UserType>())
+        if (!sym->is<UserType>() && !sym->is<Var>())
             continue;
-        auto type = sym->get<UserType>();
-        assert(type->is_alias());
-        auto scope_version = type->scope_version();
+        auto scope_version = sym->as_decl()->scope_version();
         auto scope_view = scope()->view(scope_version);
-        if (!resolver.resolve(type->as_alias(), ref(scope_view)))
+        bool ok = sym->accept(
+            [&](Ref<UserType> type) {
+                return resolver.resolve(type->as_alias(), ref(scope_view));
+            },
+            [&](Ref<Var> var) {
+                return resolver.resolve(var, ref(scope_view));
+            },
+            [&](auto other) -> bool { assert(false); });
+        if (!ok)
             return false;
     }
     return true;
