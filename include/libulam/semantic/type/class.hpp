@@ -54,6 +54,7 @@ public:
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
     bool init(sema::Resolver& resolver);
+    Ref<AliasType> init_type_def(sema::Resolver& resolver, str_id_t name_id);
     bool resolve(sema::Resolver& resolver);
 
     bool is_base_of(Ref<const Class> other) const;
@@ -103,7 +104,6 @@ protected:
 private:
     bool resolve_params(sema::Resolver& resolver);
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
-    bool resolve_type_defs_and_consts(sema::Resolver& resolver);
     bool resolve_members(sema::Resolver& resolver);
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);

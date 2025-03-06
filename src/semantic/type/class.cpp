@@ -105,10 +105,21 @@ bool Class::init(sema::Resolver& resolver) {
         set_state(Initializing);
     }
 
-    bool ok = resolve_params(resolver) && init_ancestors(resolver, false) &&
-              resolve_type_defs_and_consts(resolver);
+    bool ok = resolve_params(resolver) && init_ancestors(resolver, false);
     set_state(ok ? Initialized : Unresolvable);
     return ok;
+}
+
+Ref<AliasType>
+Class::init_type_def(sema::Resolver& resolver, str_id_t name_id) {
+    auto sym = get(name_id);
+    if (!sym)
+        return {};
+    auto alias = sym->get<UserType>()->as_alias();
+    auto scope = alias->cls()->scope();
+    auto scope_view = scope->view(alias->scope_version());
+    resolver.resolve(alias, ref(scope_view));
+    return alias;
 }
 
 bool Class::resolve(sema::Resolver& resolver) {
@@ -344,30 +355,10 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     return true;
 }
 
-bool Class::resolve_type_defs_and_consts(sema::Resolver& resolver) {
-    for (auto [_, sym] : *scope()) {
-        if (!sym->is<UserType>() && !sym->is<Var>())
-            continue;
-        auto scope_version = sym->as_decl()->scope_version();
-        auto scope_view = scope()->view(scope_version);
-        bool ok = sym->accept(
-            [&](Ref<UserType> type) {
-                return resolver.resolve(type->as_alias(), ref(scope_view));
-            },
-            [&](Ref<Var> var) {
-                return resolver.resolve(var, ref(scope_view));
-            },
-            [&](auto other) -> bool { assert(false); });
-        if (!ok)
-            return false;
-    }
-    return true;
-}
-
 bool Class::resolve_members(sema::Resolver& resolver) {
     for (auto [_, sym] : *scope()) {
-        auto scope_version = sym->as_decl()->scope_version();
-        auto scope_view = scope()->view(scope_version);
+        auto def = sym->as_decl();
+        auto scope_view = def->cls()->scope()->view(def->scope_version());
         if (!resolver.resolve(sym, ref(scope_view)))
             return false;
     }

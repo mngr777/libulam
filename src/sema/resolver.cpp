@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/type.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -272,6 +273,7 @@ Ref<Class> Resolver::resolve_class_name(
     return type->as_class();
 }
 
+// TODO: refactor diag calls
 Ref<Type> Resolver::resolve_type_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     assert(scope);
@@ -293,43 +295,55 @@ Ref<Type> Resolver::resolve_type_name(
         return type;
     }
 
-    // follow rest of type idents, resolve aliases along the way
-    unsigned n = 0;
-    while (true) {
-        auto ident = type_name->ident(n);
-        auto name_id = ident->name().str_id();
-        // done?
-        if (++n == type_name->child_num()) {
-            // resolve class dependencies
-            if (resolve_class && !resolve_cls_deps(type)) {
-                diag().error(ident, "cannot resolve");
-                return {};
-            }
-            return type;
-        }
+    // resolve first alias in current scope
+    if (type->is_alias())
+        resolve(type->as_alias(), scope);
 
-        // in A(x).B.C, A(x) and A(x).B must resolve to classes
+    // follow rest of type idents, resolve aliases along the way
+    // e.g. in `A(x).B.C`, `A(x)` and `A(x).B` must resolve to classes,
+    // `A(x).B` and `A(x).B.C` must be typedefs
+    auto ident = type_name->ident(0);
+    for (unsigned n = 1; n < type_name->child_num(); ++n) {
+        // init next class
         if (!type->is_class()) {
             diag().error(ident, "not a class");
             return {};
         }
         auto cls = type->as_class();
-        init(cls);
-
-        // move to class member
-        // can it be same class? e.g.
-        // `quark A { typedef Int B; typedef A.B C; }`
-        ident = type_name->ident(n);
-        name_id = ident->name_id();
-        if (!cls->get(name_id)) {
-            diag().error(ident, "name not found in class");
+        if (!init(cls)) {
+            diag().error(ident, "cannot resolve");
             return {};
         }
-        auto sym = cls->get(name_id);
-        assert(sym->is<UserType>());
-        type = sym->get<UserType>();
-        // ok so far, loop back to alias resolution
+
+        // resolve typedef
+        ident = type_name->ident(n);
+        type = cls->init_type_def(*this, ident->name_id());
+        // not found ?
+        if (!type) {
+            diag().error(ident, "type name not found in class");
+            return {};
+        }
+        // resolved?
+        if (!type->as_alias()->is_ready())
+            return {};
     }
+
+    if (resolve_class) {
+        // fully resolve class or class dependencies, e.g. array type ClassName[2]
+        // depends on class ClassName
+        if (!resolve_cls_deps(type)) {
+            diag().error(ident, "cannot resolve");
+            return {};
+        }
+    } else if (type->is_class()) {
+        // just init if class
+        if (!init(type->as_class())) {
+            diag().error(ident, "cannot resolve");
+            return {};
+        }
+    }
+
+    return type;
 }
 
 Ref<Type>
@@ -382,10 +396,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         auto [args, success] = ev.eval_tpl_args(type_spec->args(), tpl);
         if (!success)
             return {};
-        auto cls = tpl->type(std::move(args));
-        if (!init(cls))
-            return {};
-        return cls;
+        return tpl->type(std::move(args));
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();
