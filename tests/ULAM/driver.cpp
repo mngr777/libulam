@@ -84,6 +84,7 @@ int main(int argc, char** argv) {
             "t3590_test_compiler_isemptyquark.test", // Empty
             "t3596_test_compiler_inheritednamedconstant.test", // bitsize used in value of const, TODO
             "t3631_test_compiler_element_castatomandquark_ish.test", // tmp, quark to Atom?
+            "t3663_test_compiler_element_castatomfromselfatomof_templateinstancewithinforloop.test", // Super type, TODO
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

@@ -112,6 +112,10 @@ TypedValue Type::type_op(TypeOp op) {
         rval.set_is_consteval(true);
         return {this, Value{std::move(rval)}};
     }
+    case TypeOp::ClassIdOf: {
+        Unsigned id = is_class() ? as_class()->id() : NoTypeId;
+        return TypedValue{builtins().type(UnsignedId), Value{RValue{id, true}}};
+    }
     default:
         return {};
     }
@@ -268,7 +272,8 @@ conv_cost_t AliasType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return non_alias()->conv_cost(type->non_alias(), allow_cast);
 }
 
-conv_cost_t AliasType::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
+conv_cost_t AliasType::conv_cost(
+    Ref<const Type> type, const Value& val, bool allow_cast) const {
     return non_alias()->conv_cost(type->non_alias(), val, allow_cast);
 }
 

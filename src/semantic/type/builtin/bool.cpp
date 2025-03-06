@@ -79,7 +79,9 @@ TypedValue BoolType::binary_op(
 }
 
 bool BoolType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
-    switch (type->id()) {
+    switch (type->bi_type_id()) {
+    case BoolId:
+        return true;
     case BitsId:
         return type->bitsize() >= bitsize();
     default:
