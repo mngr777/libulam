@@ -105,7 +105,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
         args.pop_front();
 
         assert(tv.type()->is_same(var->type()));
-        cls->add_param(var->type_node(), var->node(), tv.move_value());
+        cls->add_param(var->type_node(), var->node(), Value{tv.move_value().move_rvalue()});
     }
 
     // create other members

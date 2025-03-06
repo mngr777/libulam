@@ -96,7 +96,7 @@ constexpr std::pair<Unsigned, Unsigned>
 safe_sum(Unsigned left, Unsigned right) {
     constexpr auto Max = max<Unsigned>();
     auto max_right = Max - right;
-    if (Max > max_right)
+    if (right > max_right)
         return {Max, right - max_right};
     return {left + right, 0};
 }

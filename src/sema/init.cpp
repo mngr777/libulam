@@ -223,6 +223,9 @@ void Init::export_classes() {
                 auto sym = exporter->get(name_id);
                 assert(sym);
                 sym->accept([&](auto cls_or_tpl) {
+                    debug()
+                        << "importing " << str(name_id) << " into "
+                        << mod->name() << " from " << exporter->name() << "\n";
                     mod->add_import(name_id, exporter, cls_or_tpl);
                     assert(mod->scope()->has(name_id));
                 });

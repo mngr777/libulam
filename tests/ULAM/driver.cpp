@@ -77,6 +77,7 @@ int main(int argc, char** argv) {
             "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // string
             "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // Empty
             "t3485_test_compiler_voidfuncreturnscastedatom.test", // return (Void) a; ??
+            "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

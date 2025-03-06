@@ -483,7 +483,7 @@ ExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
 
     // eval
     ExprRes res = expr->accept(*this);
-    if (!res.ok())
+    if (!res)
         return NoBitsize;
 
     // cast to default Unsigned
@@ -581,7 +581,8 @@ ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             res.second = false;
             break;
         }
-        res.first.push_back(arg_res.move_typed_value());
+        auto val = arg_res.move_value();
+        res.first.emplace_back(arg_res.type(), Value{val.move_rvalue()});
     }
     return res;
 }
