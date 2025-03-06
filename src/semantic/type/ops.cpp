@@ -208,6 +208,7 @@ TypeError::TypeError(Status status, BuiltinTypeId cast_bi_type_id):
 }
 
 TypeError unary_op_type_check(Op op, Ref<Type> type) {
+    type = type->actual();
     switch (ops::kind(op)) {
     case ops::Kind::Numeric:
         if (!type->is_prim() || !is_numeric(type->as_prim()))
@@ -220,7 +221,7 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
     case ops::Kind::Logical:
         return check_type_match(type, BoolId);
     case ops::Kind::Objective:
-        if (!type->canon()->is_object())
+        if (!type->is_object())
             return {TypeError::Incompatible};
         return {};
     default:
