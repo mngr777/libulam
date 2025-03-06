@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
             "t3358_test_compiler_elementandquarkswclassargs_lhsconstantlogicaland.test", // behave()
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
             "t3400_test_compiler_arraysizeof_lengthzeroelement.test", // Empty
+            "t3401_test_compiler_unaryminofmaxofconstant_issue.test", // Empty
             "t3418_test_compiler_namedconstant_unsignedchar.test", // char
             "t3422_test_compiler_namedconstant_specialchars.test", // char
             "t3423_test_compiler_namedconstant_octal.test", // char

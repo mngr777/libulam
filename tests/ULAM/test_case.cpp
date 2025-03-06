@@ -134,24 +134,39 @@ void TestCase::parse() {
 
     // answer
     _answer = read_until("#");
-    // skip_comments();
+    skip_comments();
 
-    // main file
-    move_to("#>");
-    skip("#>");
+    // NOTE: main file is marked with #>, but is not necessarily #:
+    // do we need to know which is main?
+
+    // move_to("#>");
+    // skip("#>");
+    move_to("#");
+    if (text[pos] == '#' && (text[pos + 1] == ':' || text[pos + 1] == '>')) {
+        pos += 2;
+    } else {
+        error("not at `#:' or `#>'");
+    }
     skip_spaces();
     while (true) {
         auto name = read_file_name();
         skip_spaces();
         skip("\n");
-        auto src = read_until("#");
+        auto src = read_until("\n#");
+        ++pos;
         _srcs.emplace_back(name, src);
         skip_comments();
         if (text[pos] == '#' && text[pos + 1] == '.')
             break; // #.
         // next file
-        move_to("#:");
-        skip("#:");
+        // move_to("#:");
+        // skip("#:");
+        move_to("#");
+        if (text[pos] == '#' && (text[pos + 1] == ':' || text[pos + 1] == '>')) {
+            pos += 2;
+        } else {
+            error("not at `#:' or `#>'");
+        }
         skip_spaces();
     }
 }

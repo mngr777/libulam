@@ -165,8 +165,11 @@ bool Init::do_visit(Ref<ast::TypeName> node) {
     // add unresolved name to module dependencies
     assert(type_spec->has_ident());
     auto name_id = type_spec->ident()->name_id();
-    if (!scope()->has(name_id))
+    if (!scope()->has(name_id)) {
+        debug() << "module " << module()->name() << " depends on "
+                << str(name_id) << "\n";
         module()->add_dep(name_id);
+    }
     return true;
 }
 
@@ -176,8 +179,10 @@ void Init::export_classes() {
     using ModuleSet = std::unordered_set<Ref<Module>>;
     std::unordered_map<str_id_t, ModuleSet> exporting;
     for (auto& mod : program()->modules()) {
-        for (auto& pair : *mod) {
-            auto& [name_id, sym] = pair;
+        debug() << "exporting symbols from module " << mod->name() << "\n";
+        for (auto& [name_id, sym] : *mod) {
+            debug() << "module " << mod->name() << " exports " << str(name_id)
+                    << "\n";
             auto [it, inserted] = exporting.emplace(name_id, ModuleSet{});
             assert(sym.is<Class>() || sym.is<ClassTpl>());
             it->second.insert(mod);

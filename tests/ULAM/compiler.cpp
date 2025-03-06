@@ -12,6 +12,7 @@
 void Compiler::parse_module_str(
     const std::string& text, const std::string& name) {
     auto module = _parser.parse_module_str(text, name);
+    std::cerr << "parsing module " << name << "\n";
     if (module) {
         if (_ast->has_module(module->name_id()))
             throw std::invalid_argument{
@@ -47,6 +48,7 @@ void Compiler::compile(std::ostream& out) {
                     eval.eval(text);
                 } catch (ulam::EvalExceptError& e) {
                     std::cerr << "eval error: " << e.message() << "\n";
+                    throw e;
                 }
             }
         }
