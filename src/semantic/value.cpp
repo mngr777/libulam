@@ -227,6 +227,10 @@ RValue Value::move_rvalue() {
         });
 }
 
+Value Value::deref() {
+    return Value{move_rvalue()};
+}
+
 bool Value::is_consteval() const {
     return accept([&](const auto& val) { return val.is_consteval(); });
 }

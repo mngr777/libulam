@@ -624,33 +624,72 @@ ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
 }
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
-    Ref<ast::Expr> node, Ref<Type> type, TypedValue&& tv, bool expl) {
-    auto to = type->actual();
-    auto from = tv.type()->actual();
+    Ref<ast::Expr> node, Ref<Type> to, TypedValue&& tv, bool expl) {
+    auto from = tv.type();
+    auto val = tv.move_value();
+
+    if (to->is_ref()) {
+        // taking or casting a reference
+        if (val.is_rvalue()) {
+            diag().error(node, "cannot take a reference of rvalue");
+            return {Value{LValue{}}, CastError};
+        }
+        if (val.lvalue().is_xvalue()) {
+            diag().error(node, "cannot take a reference to xvalue");
+            return {Value{LValue{}}, CastError};
+        }
+        from = from->ref_type();
+
+    } else if (from->is_ref()) {
+        // copy value from reference
+        assert(val.is_lvalue());
+        from = from->deref();
+        val = val.deref();
+    }
 
     if (to->is_same(from))
-        return {tv.move_value(), NoCast};
+        return {std::move(val), NoCast};
 
-    if (!expl && from->is_impl_castable_to(to, tv.value()))
-        return {do_cast(node, to, std::move(tv)), CastOk};
+    if (!expl && from->is_impl_castable_to(to, val)) {
+        val = do_cast(node, to, {from, std::move(val)});
+        assert(!val.empty());
+        return {std::move(val), CastOk};
+    }
 
     if (from->is_expl_castable_to(to)) {
-        if (expl)
-            return {do_cast(node, to, std::move(tv)), CastOk};
+        if (expl) {
+            val = do_cast(node, to, {from, std::move(val)});
+            assert(!val.empty());
+            return {std::move(val), CastOk};
+        }
         diag().error(node, "suggest explicit cast");
     }
-    return {Value{}, CastError};
+    return {Value{RValue{}}, CastError};
 }
 
 Value ExprVisitor::do_cast(
-    Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv) {
-    auto to = type->actual();
-    auto from = tv.type()->actual();
+    Ref<ast::Expr> node, Ref<const Type> to, TypedValue&& tv) {
+    auto from = tv.type();
+    auto val = tv.move_value();
 
+    if (to->is_ref()) {
+        // takin or casting a reference
+        assert(!val.is_tmp());
+        from = from->ref_type();
+
+    } else if (from->is_ref()) {
+        // copy value from reference
+        assert(val.is_lvalue());
+        from = from->deref();
+        val = val.deref();
+    }
+
+    assert(!to->is_same(from));
     assert(from->is_expl_castable_to(to));
+
     if (from->is_prim()) {
         assert(to->is_prim());
-        return from->as_prim()->cast_to(to, tv.move_value());
+        return from->as_prim()->cast_to(to, std::move(val));
 
     } else if (from->is_class()) {
         auto cls = from->as_class();
@@ -658,49 +697,57 @@ Value ExprVisitor::do_cast(
         if (convs.size() == 0) {
             assert(to->is_object());
             assert(cls->is_castable_to_object_type(to));
-            return cls->cast_to_object_type(to, tv.move_value());
+            return cls->cast_to_object_type(to, std::move(val));
 
         } else {
-            auto obj_val = tv.move_value();
-            ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
+            ExprRes res = funcall(node, *convs.begin(), val.self(), {});
             if (!res.ok()) {
                 diag().error(node, "conversion failed");
-                return Value{};
+                return Value{}; // ??
             }
             if (!res.type()->is_same(to)) {
                 assert(res.type()->is_expl_castable_to(to));
-                return do_cast(node, type, res.move_typed_value());
+                return do_cast(node, to, res.move_typed_value());
             }
             return res.move_value();
         }
     } else if (from->is(AtomId)) {
-        return from->cast_to(to, tv.move_value());
+        return from->cast_to(to, std::move(val));
+
+    } else if (from->is_ref()) {
+        assert(to->is_ref());
+        return from->cast_to(to, std::move(val));
     }
+
     assert(false);
 }
 
 TypedValue ExprVisitor::do_cast(
     Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv) {
     auto type = tv.type()->actual();
-    assert(type->is_expl_castable_to(builtin_type_id));
-    if (type->is_prim()) {
-        return type->as_prim()->cast_to(builtin_type_id, tv.move_value());
 
-    } else if (type->is_class()) {
+    if (type->is_class()) {
+        // class conversion
         auto cls = type->as_class();
         auto convs = cls->convs(builtin_type_id, true);
         assert(convs.size() == 1);
-        auto obj_val = tv.move_value();
-        ExprRes res = funcall(node, *convs.begin(), obj_val.self(), {});
-        if (!res.ok()) {
+        auto self = tv.move_value().self();
+        ExprRes res = funcall(node, *convs.begin(), self, {});
+        if (!res) {
             diag().error(node, "conversion failed");
             return {}; // ??
         }
         assert(res.type()->is_prim());
-        if (!res.type()->as_prim()->is(builtin_type_id))
+        if (!res.type()->is(builtin_type_id))
             return do_cast(node, builtin_type_id, res.move_typed_value());
         return {res.type()->as_prim(), res.move_value()};
     }
+
+    // primitive to builtin
+    auto val = tv.move_value().deref();
+    if (type->is_prim())
+        return type->as_prim()->cast_to(builtin_type_id, std::move(val));
+
     assert(false);
 }
 

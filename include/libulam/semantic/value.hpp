@@ -147,6 +147,8 @@ public:
     RValue copy_rvalue() const;
     RValue move_rvalue();
 
+    Value deref();
+
     bool is_consteval() const;
 
     void with_rvalue(std::function<void(const RValue&)> cb) const;

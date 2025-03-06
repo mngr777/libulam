@@ -22,7 +22,7 @@ ExprRes EvalExprVisitor::funcall(
     if (fun->is_native()) {
         diag().emit(
             Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
-        if (fun->ret_type()->canon()->is_ref()) {
+        if (fun->ret_type()->is_ref()) {
             LValue lval;
             lval.set_is_xvalue(false);
             return {fun->ret_type(), Value{lval}};
