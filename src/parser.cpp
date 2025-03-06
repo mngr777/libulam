@@ -1212,9 +1212,10 @@ Ptr<ast::NumLit> Parser::parse_num_lit() {
 
 Ptr<ast::StrLit> Parser::parse_str_lit() {
     assert(_tok.is(tok::String));
+    auto loc_id = _tok.loc_id;
     auto str = detail::parse_str(_ctx.diag(), _tok.loc_id, tok_str());
     consume();
-    return tree<ast::StrLit>(std::move(str));
+    return tree_loc<ast::StrLit>(loc_id, std::move(str));
 }
 
 template <typename N, typename... Args> Ptr<N> Parser::tree(Args&&... args) {

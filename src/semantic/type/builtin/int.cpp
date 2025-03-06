@@ -1,4 +1,5 @@
 #include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/typed_value.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -79,10 +80,7 @@ TypedValue IntType::unary_op(Op op, RValue&& rval) {
 }
 
 TypedValue IntType::binary_op(
-    Op op,
-    RValue&& l_rval,
-    Ref<const PrimType> r_type,
-    RValue&& r_rval) {
+    Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(IntId));
     assert(l_rval.empty() || l_rval.is<Integer>());
     assert(r_rval.empty() || r_rval.is<Integer>());
@@ -91,22 +89,34 @@ TypedValue IntType::binary_op(
     Integer l_int = l_rval.empty() ? 0 : l_rval.get<Integer>();
     Integer r_int = r_rval.empty() ? 0 : r_rval.get<Integer>();
 
-    bool is_wider = (bitsize() > DefaultSize || r_type->bitsize() > DefaultSize);
+    bool is_wider =
+        (bitsize() > DefaultSize || r_type->bitsize() > DefaultSize);
     bitsize_t max_size = is_wider ? MaxSize : DefaultSize;
+
+    bool is_consteval =
+        !ops::is_assign(op) && l_rval.is_consteval() && r_rval.is_consteval();
+
+    auto make_res = [&](Ref<Type> type, RValue&& rval) -> TypedValue {
+        rval.set_is_consteval(is_consteval);
+        return {type, Value{std::move(rval)}};
+    };
+    auto make_empty = [&](Ref<Type> type) -> TypedValue {
+        return {type, Value{RValue{}}};
+    };
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
-        return {type, Value{type->construct(l_int == r_int)}};
+        return make_res(type, type->construct(l_int == r_int));
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
-        return {type, Value{type->construct(l_int != r_int)}};
+        return make_res(type, type->construct(l_int != r_int));
     }
     case Op::AssignProd: {
         // (Int(a) += Int(b)) == Int(a)
         auto [val, _] = detail::safe_prod(l_int, r_int);
-        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
+        return make_res(this, RValue{detail::truncate(val, bitsize())});
     }
     case Op::Prod: {
         // Int(a) * Int(b) = Int(a + b)
@@ -114,33 +124,31 @@ TypedValue IntType::binary_op(
             std::min<bitsize_t>(max_size, bitsize() + r_type->bitsize());
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return make_empty(type);
         auto [val, _] = detail::safe_prod(l_int, r_int);
-        return {type, Value{RValue{detail::truncate(val, size)}}};
+        return make_res(type, RValue{detail::truncate(val, size)});
     }
     case Op::AssignQuot:
     case Op::Quot: {
         // Int(a) / Int(b) = Int(a) NOTE: does not match
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
-            return {this, Value{RValue{}}};
-        auto val = detail::safe_quot(l_int, r_int);
-        return {this, Value{RValue{val}}};
+            return make_empty(this);
+        return make_res(this, RValue{detail::safe_quot(l_int, r_int)});
     }
     case Op::AssignRem:
     case Op::Rem: {
         // Int(a) % Int(b) = Int(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
-        auto val = detail::safe_rem(l_int, r_int);
-        return {this, Value{RValue{val}}};
+            return make_empty(this);
+        return make_res(this, RValue{detail::safe_rem(l_int, r_int)});
     }
     case Op::AssignSum: {
         // (Int(a) += Int(b)) = Int(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return make_empty(this);
         auto [val, _] = detail::safe_sum(l_int, r_int);
-        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
+        return make_res(this, RValue{detail::truncate(val, bitsize())});
     }
     case Op::Sum: {
         // Int(a) + Int(b) = Int(max(a, b) + 1)
@@ -148,16 +156,16 @@ TypedValue IntType::binary_op(
         size = std::min(size, max_size);
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return make_empty(type);
         auto [val, _] = detail::safe_sum(l_int, r_int);
-        return {type, Value{RValue{val}}};
+        return make_res(type, RValue{val});
     }
     case Op::AssignDiff: {
         // (Int(a) -= Int(b)) = Int(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return make_empty(this);
         auto [val, _] = detail::safe_diff(l_int, r_int);
-        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
+        return make_res(this, RValue{detail::truncate(val, bitsize())});
     }
     case Op::Diff: {
         // Int(a) - Int(b) = Int(max(a, b) + 1)
@@ -165,33 +173,33 @@ TypedValue IntType::binary_op(
         size = std::min(size, max_size);
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return make_empty(type);
         auto [val, _] = detail::safe_diff(l_int, r_int);
-        return {type, Value{RValue{val}}};
+        return make_res(type, RValue{val});
     }
     case Op::Less: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_int < r_int)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_int < r_int));
     }
     case Op::LessOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_int <= r_int)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_int <= r_int));
     }
     case Op::Greater: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return make_empty(type);
         return {type, Value{type->construct(l_int > r_int)}};
     }
     case Op::GreaterOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value(type->construct(l_int >= r_int))};
+            return make_empty(type);
+        return make_res(type, type->construct(l_int >= r_int));
     }
     default:
         assert(false);

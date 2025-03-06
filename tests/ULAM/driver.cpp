@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
             "t3423_test_compiler_namedconstant_octal.test", // char
             "t3424_test_compiler_namedconstant_hex.test", // char
             "t3449_test_compiler_bitwisefunccallreturns.test", // char
+            "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // string
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
