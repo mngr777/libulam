@@ -11,7 +11,7 @@ class BinaryOp;
 
 namespace ulam {
 
-class BitsType : public _PrimType<BitsId, 1, 4096, ULAM_MAX_INT_SIZE> {
+class BitsType : public _PrimType<BitsId, 1, 4096, 32> {
 public:
     BitsType(
         Builtins& builtins,

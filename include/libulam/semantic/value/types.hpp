@@ -3,7 +3,7 @@
 #include <string>
 
 #define ULAM_MAX_INT_SIZE (sizeof(Integer) * 8)
-#define ULAM_INT_64 0
+#define ULAM_INT_64 1
 #define ULAM_ATOM_SIZE 96
 
 namespace ulam {

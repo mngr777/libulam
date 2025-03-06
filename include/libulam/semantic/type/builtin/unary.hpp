@@ -15,7 +15,7 @@ namespace ulam {
 class Value;
 
 class UnaryType
-    : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, ULAM_MAX_INT_SIZE> {
+    : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, 32> {
 public:
     UnaryType(
         Builtins& builtins,

@@ -16,7 +16,9 @@ static constexpr Bits::unit_t UnitMax =
 static constexpr Bits::unit_t MSB = UnitMax & ~(UnitMax >> 1);
 
 Bits::unit_t make_mask(Bits::size_t len, Bits::size_t shift) {
-    return ((len < Bits::UnitSize) ? (1u << len) - 1 : -1) << shift;
+    return ((len < Bits::UnitSize) ? ((Bits::unit_t)1 << len) - 1
+                                   : (Bits::unit_t)-1)
+           << shift;
 }
 
 Bits::unit_idx_t to_unit_idx(Bits::size_t idx) { return idx / Bits::UnitSize; }

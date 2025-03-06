@@ -32,7 +32,7 @@ constexpr Unsigned log2(Unsigned value) {
     if (value == 0)
         return 0;
 #if ULAM_INT_64
-    return 63 - __builtin_clsll(value);
+    return 63 - __builtin_clzll(value);
 #else
     return 31 - __builtin_clz(value);
 #endif
@@ -54,7 +54,8 @@ constexpr Unsigned count_ones(Unsigned value) {
 
 constexpr Unsigned unsigned_max(bitsize_t size) {
     assert(0 < size && size <= sizeof(Unsigned) * 8);
-    return (size == (sizeof(Unsigned) * 8)) ? max<Unsigned>() : (1 << size) - 1;
+    return (size == (sizeof(Unsigned) * 8)) ? max<Unsigned>()
+                                            : ((Unsigned)1 << size) - 1;
 }
 
 constexpr Integer integer_min(bitsize_t size) {
@@ -67,9 +68,7 @@ constexpr Integer integer_max(bitsize_t size) {
     return unsigned_max(size - 1);
 }
 
-constexpr bitsize_t bitsize(Unsigned value) {
-    return log2(value) + 1;
-}
+constexpr bitsize_t bitsize(Unsigned value) { return log2(value) + 1; }
 
 inline bitsize_t unary_unsigned_bitsize(bitsize_t size) {
     return bitsize((Unsigned)size);

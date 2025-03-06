@@ -388,7 +388,10 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         val = Value{val.move_rvalue()};
         if (!type->is_same_actual(ret_type)) {
             if (!type->actual()->is_impl_castable_to(ret_type, val)) {
-                diag().error(ret.node(), "invalid return type");
+                auto message = std::string{"cannot convert "} +
+                               type->deref()->name() + " to " +
+                               ret_type->name();
+                diag().error(ret.node(), message);
                 return {ExprError::InvalidReturnType};
             }
             EvalExprVisitor ev{*this, scope()};
