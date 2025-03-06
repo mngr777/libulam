@@ -375,13 +375,19 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
 
     // eval array expr
     auto array_res = node->array()->accept(*this);
-    if (!array_res.ok())
+    if (!array_res)
         return {ExprError::Error};
 
     // index
-    auto index = array_index(node->index());
-    if (index == UnknownArrayIdx)
+    auto index_res = node->index()->accept(*this);
+    if (!index_res)
         return {ExprError::UnknownArrayIndex};
+    // cast to default Int
+    auto int_type = builtins().int_type();
+    auto idx_cast_res = maybe_cast(node->index(), int_type, index_res.move_typed_value());
+    if (idx_cast_res.second == CastError)
+        return {ExprError::InvalidCast};
+    auto index_val = std::move(idx_cast_res.first);
 
     // is class?
     if (array_res.type()->actual()->is_class()) {
@@ -392,7 +398,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         bool is_tmp = array_res.value().is_rvalue() ||
                       array_res.value().lvalue().is_xvalue();
         TypedValueList args;
-        args.emplace_back(builtins().int_type(), Value{RValue{(Integer)index}});
+        args.emplace_back(int_type, std::move(index_val));
         ExprRes res =
             funcall(node, fset, array_res.move_value().self(), std::move(args));
         if (is_tmp && res.value().is_lvalue()) {
@@ -417,6 +423,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     auto array_val = array_res.move_value();
 
     // check bounds
+    auto index = index_val.move_rvalue().get<Integer>();
     if (index + 1 > array_type->array_size()) {
         diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
@@ -513,29 +520,30 @@ ExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     return size;
 }
 
-array_idx_t ExprVisitor::array_index(Ref<ast::Expr> expr) {
+array_size_t ExprVisitor::array_size(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
     DBG_LINE(expr);
     ExprRes res = expr->accept(*this);
     if (!res.ok())
-        return UnknownArrayIdx;
+        return UnknownArraySize;
 
     // cast to default Int
     auto int_type = builtins().int_type();
     auto cast_res = maybe_cast(expr, int_type, res.move_typed_value());
     if (cast_res.second == CastError)
-        return UnknownArrayIdx;
+        return UnknownArraySize;
 
     auto rval = cast_res.first.move_rvalue();
     if (rval.empty())
-        return UnknownArrayIdx;
+        return UnknownArraySize;
+    assert(rval.is_consteval());
 
     auto int_val = rval.get<Integer>();
     if (int_val < 0) {
         diag().error(expr, "array index is < 0");
-        return UnknownArrayIdx;
+        return UnknownArraySize;
     }
-    return (array_idx_t)int_val;
+    return (array_size_t)int_val;
 }
 
 std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {

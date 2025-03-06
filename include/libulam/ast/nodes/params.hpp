@@ -25,6 +25,16 @@ public:
             std::move(value)} {}
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
+
+    unsigned child_num() const override { return VarDecl::child_num() + 1; }
+
+    Ref<Node> child(unsigned n) override {
+        return (n == 0) ? Tuple::child(0) : VarDecl::child(n - 1);
+    }
+
+    Ref<const Node> child(unsigned n) const override {
+        return (n == 0) ? Tuple::child(0) : VarDecl::child(n - 1);
+    }
 };
 
 class ParamList : public List<Node, Param> {

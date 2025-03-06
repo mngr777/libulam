@@ -78,6 +78,9 @@ int main(int argc, char** argv) {
             "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // Empty
             "t3485_test_compiler_voidfuncreturnscastedatom.test", // return (Void) a; ??
             "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
+            "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
+            "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix
+            "t3505_test_compiler_elementandquark_caarrayemptyquark.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

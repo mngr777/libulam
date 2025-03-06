@@ -175,11 +175,11 @@ public:
     Ref<VarDef> def(unsigned n) { return List::get(n); }
     const Ref<VarDef> def(unsigned n) const { return List::get(n); }
 
+    ULAM_AST_TUPLE_PROP(type_name, 0);
+
     unsigned child_num() const override {
         return Tuple::child_num() + List::child_num();
     }
-
-    ULAM_AST_TUPLE_PROP(type_name, 0);
 
     Ref<Node> child(unsigned n) override {
         return (n == 0) ? Tuple::child(0) : List::child(n - 1);

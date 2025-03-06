@@ -418,7 +418,7 @@ Ref<Type> Resolver::apply_array_dims(
     assert(dims && dims->child_num() > 0);
     ExprVisitor ev{_program, scope};
     for (unsigned n = 0; n < dims->child_num(); ++n) {
-        array_idx_t size = ev.array_index(dims->get(n));
+        array_size_t size = ev.array_size(dims->get(n));
         if (size == UnknownArraySize)
             return {};
         type = type->array_type(size);

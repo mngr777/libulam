@@ -55,7 +55,7 @@ public:
     virtual bitsize_t
     bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 
-    virtual array_idx_t array_index(Ref<ast::Expr> expr);
+    virtual array_size_t array_size(Ref<ast::Expr> expr);
 
     // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
