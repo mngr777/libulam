@@ -356,7 +356,8 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
 }
 
 bool Class::resolve_members(sema::Resolver& resolver) {
-    for (auto [_, sym] : *scope()) {
+    for (auto [name_id, sym] : *scope()) {
+        debug() << "resolving " << name() << "." << module()->program()->str_pool().get(name_id) << "\n";
         auto def = sym->as_decl();
         auto scope_view = def->cls()->scope()->view(def->scope_version());
         if (!resolver.resolve(sym, ref(scope_view)))

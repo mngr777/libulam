@@ -76,15 +76,12 @@ str_id_t PersScope::last_change(Version version) const {
 }
 
 Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
-    auto version_ = version();
     auto [it, _] = _symbols.emplace(name_id, SymbolVersionList{});
     SymbolVersionList& vsyms = it->second;
     assert(vsyms.size() == 0 || vsyms.front().version <= _version);
     vsyms.emplace_front(_version++, std::move(symbol));
     _changes.push_back(name_id);
-    auto sym = &vsyms.front().symbol;
-    sym->as_decl()->set_scope_version(version_);
-    return sym;
+    return &vsyms.front().symbol;
 }
 
 } // namespace ulam
