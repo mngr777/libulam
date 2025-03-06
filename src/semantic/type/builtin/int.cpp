@@ -52,8 +52,9 @@ Datum IntType::to_datum(const RValue& rval) const {
 
 TypedValue IntType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
-        return {this, Value{std::move(rval)}};
+        return {this, Value{RValue{}}};
 
+    bool is_consteval = rval.is_consteval();
     auto int_val = rval.get<Integer>();
     switch (op) {
     case Op::UnaryMinus:
@@ -64,18 +65,19 @@ TypedValue IntType::unary_op(Op op, RValue&& rval) {
         break;
     case Op::PreInc:
     case Op::PostInc:
+        is_consteval = false;
         if (int_val < detail::integer_max(bitsize()))
             ++int_val;
         break;
     case Op::PreDec:
     case Op::PostDec:
+        is_consteval = false;
         if (int_val > detail::integer_min(bitsize()))
             --int_val;
         break;
     default:
         assert(false);
     }
-    bool is_consteval = rval.is_consteval() && !ops::is_assign(op);
     return {this, Value{RValue{int_val, is_consteval}}};
 }
 
@@ -93,8 +95,8 @@ TypedValue IntType::binary_op(
         (bitsize() > DefaultSize || r_type->bitsize() > DefaultSize);
     bitsize_t max_size = is_wider ? MaxSize : DefaultSize;
 
-    bool is_consteval =
-        !ops::is_assign(op) && l_rval.is_consteval() && r_rval.is_consteval();
+    bool is_consteval = !ops::is_assign(op) && !is_unknown &&
+                        l_rval.is_consteval() && r_rval.is_consteval();
 
     auto make_res = [&](Ref<Type> type, RValue&& rval) -> TypedValue {
         rval.set_is_consteval(is_consteval);

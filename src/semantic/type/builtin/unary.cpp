@@ -33,33 +33,37 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
 }
 
 TypedValue UnaryType::binary_op(
-    Op op,
-    RValue&& left_rval,
-    Ref<const PrimType> right_type,
-    RValue&& right_rval) {
-    assert(right_type->is(UnaryId));
-    assert(left_rval.empty() || left_rval.is<Unsigned>());
-    assert(right_rval.empty() || right_rval.is<Unsigned>());
+    Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
+    assert(r_type->is(UnaryId));
+    assert(l_rval.empty() || l_rval.is<Unsigned>());
+    assert(r_rval.empty() || r_rval.is<Unsigned>());
 
-    bool is_unknown = left_rval.empty() || right_rval.empty();
+    bool is_unknown = l_rval.empty() || r_rval.empty();
 
-    Unsigned left_uns =
-        left_rval.empty() ? 0 : detail::count_ones(left_rval.get<Unsigned>());
-    Unsigned right_uns =
-        right_rval.empty() ? 0 : detail::count_ones(right_rval.get<Unsigned>());
+    Unsigned l_uns =
+        l_rval.empty() ? 0 : detail::count_ones(l_rval.get<Unsigned>());
+    Unsigned r_uns =
+        r_rval.empty() ? 0 : detail::count_ones(r_rval.get<Unsigned>());
+
+    bool is_consteval =
+        !is_unknown && l_rval.is_consteval() && r_rval.is_consteval();
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns == right_uns)}};
+        auto rval = type->construct(l_uns == r_uns);
+        rval.set_is_consteval(is_consteval);
+        return {type, Value{std::move(rval)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
         if (is_unknown)
             return {type, Value{RValue{}}};
-        return {type, Value{type->construct(left_uns != right_uns)}};
+        auto rval = type->construct(l_uns != r_uns);
+        rval.set_is_consteval(is_consteval);
+        return {type, Value{std::move(rval)}};
     }
     default:
         assert(false);
@@ -179,8 +183,7 @@ RValue UnaryType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     }
     case BitsId: {
         auto bits_rval = type->construct();
-        bits_rval.get<Bits>().write_right(
-            type->bitsize(), to_datum(rval));
+        bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
         return bits_rval;
     }
     default:

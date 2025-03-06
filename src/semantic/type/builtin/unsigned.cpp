@@ -36,6 +36,7 @@ TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
         return {this, Value{RValue{}}};
 
+    bool is_consteval = rval.is_consteval();
     auto uns_val = rval.get<Unsigned>();
     switch (op) {
     case Op::UnaryMinus: {
@@ -43,17 +44,19 @@ TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
         Integer int_val =
             std::max<Integer>(detail::integer_min(size), -uns_val);
         auto type = builtins().prim_type(IntId, size);
-        return {type, Value{RValue{int_val}}};
+        return {type, Value{RValue{int_val, is_consteval}}};
     }
     case Op::UnaryPlus:
         break;
     case Op::PreInc:
     case Op::PostInc:
+        is_consteval = false;
         if (uns_val < detail::unsigned_max(bitsize()))
             ++uns_val;
         break;
     case Op::PreDec:
     case Op::PostDec:
+        is_consteval = false;
         if (uns_val > 0)
             --uns_val;
         break;
@@ -77,8 +80,8 @@ TypedValue UnsignedType::binary_op(
         (bitsize() > DefaultSize || r_type->bitsize() > DefaultSize);
     bitsize_t max_size = is_wider ? MaxSize : DefaultSize;
 
-    bool is_consteval =
-        !ops::is_assign(op) && l_rval.is_consteval() && r_rval.is_consteval();
+    bool is_consteval = !ops::is_assign(op) && !is_unknown &&
+                        l_rval.is_consteval() && r_rval.is_consteval();
 
     auto make_res = [&](Ref<Type> type, RValue&& rval) -> TypedValue {
         rval.set_is_consteval(is_consteval);

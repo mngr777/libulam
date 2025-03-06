@@ -14,8 +14,7 @@ namespace ulam {
 
 class Value;
 
-class UnaryType
-    : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, 32> {
+class UnaryType : public _PrimType<UnaryId, 1, ULAM_MAX_INT_SIZE, 32> {
 public:
     UnaryType(
         Builtins& builtins,
@@ -35,9 +34,9 @@ public:
 
     TypedValue binary_op(
         Op op,
-        RValue&& left_rval,
-        Ref<const PrimType> right_type,
-        RValue&& right_rval) override;
+        RValue&& l_rval,
+        Ref<const PrimType> r_type,
+        RValue&& r_rval) override;
 
 protected:
     bool is_castable_to_prim(
