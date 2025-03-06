@@ -1,12 +1,14 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
+#include <sstream>
 #include <utility>
 
 namespace ulam {
@@ -105,7 +107,9 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
         args.pop_front();
 
         assert(tv.type()->is_same(var->type()));
-        cls->add_param(var->type_node(), var->node(), Value{tv.move_value().move_rvalue()});
+        cls->add_param(
+            var->type_node(), var->node(),
+            Value{tv.move_value().move_rvalue()});
     }
 
     // create other members
@@ -125,29 +129,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
 }
 
 std::string ClassTpl::type_args_str(const TypedValueList& args) {
-    // TMP
-    std::string str;
-    for (auto& arg : args) {
-        // TODO: visit RValue instead to avoid copying
-        auto rval = arg.value().copy_rvalue();
-        assert(!rval.empty());
-        if (!str.empty())
-            str += "_";
-        if (rval.is<Integer>()) {
-            str += std::to_string(rval.get<Integer>());
-        } else if (rval.is<Unsigned>()) {
-            str += std::to_string(rval.get<Unsigned>());
-            // } else if (rval.is<Bool>()) {
-            //     str += (rval.get<Bool>() ? "t" : "f");
-        } else if (rval.is<String>()) {
-            // str += std::to_string(
-            //     program()->ast()->ctx().str_id(rval.get<String>()));
-            return rval.get<String>();
-        } else {
-            assert(false);
-        }
-    }
-    return str;
+    return Mangler{}.mangled(args);
 }
 
 } // namespace ulam

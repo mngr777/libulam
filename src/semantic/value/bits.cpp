@@ -7,6 +7,7 @@
 // TODO: (maybe) optimize, see MFM::BitVector impl, use
 // variant<uint32_t,vector>, use small vector
 // TODO: naming: size/len, capitalize consts
+// TODO: byte order
 
 namespace ulam {
 namespace {
@@ -393,6 +394,37 @@ Bits Bits::operator>>(size_t shift) {
     auto bv = copy();
     bv >>= shift;
     return bv;
+}
+
+void Bits::hex_str(std::ostream& out) const {
+    out << "0x";
+    if (_len == 0) {
+        out << "0";
+        return;
+    }
+    const size_t pad = _len % 4; // left padding
+    const unit_t Mask = make_mask(pad, 0);
+    const size_t rem = (_len + pad) % UnitSize;
+    unit_t prev = 0;
+    for (size_t n = 0; n < _bits.size(); ++n) {
+        unit_t unit = _bits[n];
+        if (pad > 0) {
+            // pad right, prepend with bits from prev unit
+            unit_t next_prev = (unit & Mask) << (UnitSize - pad);
+            unit = (unit >> pad) | prev;
+            prev = next_prev;
+        }
+        auto bytes = (std::uint8_t*)&unit;
+        size_t nibble_num = sizeof(unit) * 2;
+        if (rem > 0 && (n + 1u == _bits.size()))
+            nibble_num = rem / 4;
+        for (size_t i = 0; i < nibble_num * 2; ++i) {
+            std::uint8_t byte = bytes[i / 2];
+            std::uint8_t nibble = (i % 2 == 0) ? byte >> 4 : byte & 0xf;
+            char ch = (nibble < 0xA) ? '0' + nibble : 'a' + (nibble - 0xA);
+            out << ch;
+        }
+    }
 }
 
 void Bits::clear() { std::fill(_bits.begin(), _bits.end(), 0); }

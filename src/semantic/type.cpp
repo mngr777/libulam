@@ -469,7 +469,7 @@ Value RefType::cast_to(Ref<const Type> type, Value&& val) {
         return refd()->cast_to(type, std::move(val));
     assert(is_expl_castable_to(type));
     // TODO: remove const cast
-    return Value{val.lvalue().as(const_cast<Ref<Type>>(type))};
+    return Value{val.lvalue().as(const_cast<Ref<Type>>(type->deref()))};
 }
 
 Ptr<ArrayType> RefType::make_array_type(array_size_t size) { assert(false); }

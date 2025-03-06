@@ -5,6 +5,14 @@
 #include <libulam/semantic/type/class.hpp>
 #include <sstream>
 
+#define DEBUG_MANGLER // TEST
+#ifdef DEBUG_MANGLER
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::Mangler] "
+#endif
+#include "src/debug.hpp"
+
+
 namespace ulam {
 
 // see ULAM SymbolClassNameTemplate::formatAnInstancesArgValuesAsAString
@@ -12,6 +20,7 @@ std::string Mangler::mangled(const TypedValueList& values) {
     std::stringstream ss;
     for (const auto& tv : values)
         write_mangled(ss, tv);
+    debug() << ss.str() << "\n";
     return ss.str();
 }
 
@@ -65,9 +74,8 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         detail::write_leximited(os, cls->name());
         for (auto var : cls->params()) {
             write_mangled(os, var->type());
-            var->value().with_rvalue([&](const RValue& rval) {
-                write_mangled(os, rval);
-            });
+            var->value().with_rvalue(
+                [&](const RValue& rval) { write_mangled(os, rval); });
         }
     } else if (type->is_builtin()) {
         os << builtin_type_code(type->bi_type_id());
@@ -80,16 +88,11 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
 }
 
 void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
-    assert(!rval.empty());
-    if (rval.is<Unsigned>()) {
-        detail::write_leximited(os, rval.get<Unsigned>());
-    } else if (rval.is<Integer>()){
-        detail::write_leximited(os, rval.get<Integer>());
-    } else if (rval.is<String>()) {
-        detail::write_leximited(os, rval.get<String>());
-    } else {
-        assert(false); // TODO
-    }
+    rval.accept(
+        [&](const auto& val) { detail::write_leximited(os, val); },
+        [&](const Bits& val) { val.hex_str(os); },
+        [&](const DataPtr) { assert(false); }, // TODO
+        [&](const std::monostate&) { assert(false); });
 }
 
 } // namespace ulam

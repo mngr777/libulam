@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <libulam/semantic/value/types.hpp>
+#include <ostream>
 #include <vector>
 
 namespace ulam {
@@ -135,6 +136,8 @@ public:
     Bits operator&(const BitsView other) const;
     Bits operator|(const BitsView other) const;
     Bits operator^(const BitsView other) const;
+
+    void hex_str(std::ostream& out) const;
 
 private:
     unit_t read(unit_idx_t unit_idx, size_t start, size_t len) const;
