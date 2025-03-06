@@ -363,13 +363,15 @@ RValue ArrayType::construct() const {
 
 RValue ArrayType::load(const BitsView data, bitsize_t off) const {
     auto rval = construct();
-    rval.data_view().bits().write(0, data.view(off, bitsize()));
+    if (bitsize() > 0)
+        rval.data_view().bits().write(0, data.view(off, bitsize()));
     return rval;
 }
 
 void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<DataPtr>());
-    data.write(off, rval.get<DataPtr>()->bits().view());
+    if (bitsize() > 0)
+        data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
 void ArrayType::set_canon(Ref<ArrayType> canon) {

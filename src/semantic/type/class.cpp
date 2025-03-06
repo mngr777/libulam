@@ -191,7 +191,8 @@ RValue Class::load(const BitsView data, bitsize_t off) const {
 
 void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<DataPtr>());
-    data.write(off, rval.get<DataPtr>()->bits().view());
+    if (bitsize() > 0)
+        data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
 // NOTE: for ambiguous conversion truth is returned,
@@ -231,13 +232,11 @@ Value Class::cast_to_object_type(Ref<const Type> type, Value&& val) const {
     assert(obj->type()->is_same(this));
     assert(is_castable_to_object_type(type));
 
-    // ?? move bits?
-
     // to Atom
     if (type->is(AtomId)) {
-        // TODO
+        // TODO: const_cast
         auto atom = const_cast<Class*>(this)->builtins().atom_type()->construct(
-            obj->bits().copy());
+            std::move(obj->bits()));
         return Value{std::move(atom)};
     }
 
@@ -357,7 +356,8 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
 
 bool Class::resolve_members(sema::Resolver& resolver) {
     for (auto [name_id, sym] : *scope()) {
-        debug() << "resolving " << name() << "." << module()->program()->str_pool().get(name_id) << "\n";
+        debug() << "resolving " << name() << "."
+                << module()->program()->str_pool().get(name_id) << "\n";
         auto def = sym->as_decl();
         auto scope_view = def->cls()->scope()->view(def->scope_version());
         if (!resolver.resolve(sym, ref(scope_view)))
