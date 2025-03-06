@@ -159,7 +159,7 @@ bool Init::do_visit(Ref<ast::TypeName> node) {
     // `Foo(Bar.maxof)` so we still need to go deeper
 
     auto type_spec = node->first();
-    if (type_spec->is_builtin())
+    if (type_spec->is_builtin() || type_spec->ident()->is_self())
         return true;
 
     // add unresolved name to module dependencies

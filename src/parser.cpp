@@ -972,8 +972,8 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
     Ptr<ast::Expr> inner{};
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
         // cast or type op
-        auto type_name = parse_type_name(true /* maybe type op */);
-        if (!type_name)
+        auto full_type_name = parse_full_type_name(true /* maybe type op */);
+        if (!full_type_name)
             return {};
         if (_tok.is(tok::ParenR)) {
             // cast
@@ -981,11 +981,13 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast() {
             auto expr = parse_expr_climb(ops::prec(Op::Cast));
             if (!expr)
                 return {};
-            return tree_loc<ast::Cast>(loc_id, std::move(type_name), std::move(expr));
+            return tree_loc<ast::Cast>(
+                loc_id, std::move(full_type_name), std::move(expr));
         }
         // type op
         if (_tok.type_op() == TypeOp::None)
             return {};
+        auto type_name = full_type_name->replace_type_name({});
         inner = parse_type_op_rest(std::move(type_name), {});
         assert(inner);
         inner = parse_expr_climb_rest(std::move(inner), 0);
@@ -1062,6 +1064,30 @@ Ptr<ast::ExprList> Parser::parse_array_dims() {
     return {};
 }
 
+Ptr<ast::FullTypeName> Parser::parse_full_type_name(bool maybe_type_op) {
+    auto type_name = parse_type_name(maybe_type_op);
+    if (!type_name)
+        return {};
+
+    Ptr<ast::ExprList> array_dims{};
+    bool is_ref = false;
+    if (!maybe_type_op || _tok.type_op() == TypeOp::None) {
+        // []
+        if (_tok.is(tok::BracketL)) {
+            array_dims = parse_array_dims();
+            if (!array_dims)
+                return {};
+        }
+
+        // &
+        is_ref = parse_is_ref();
+    }
+    auto node = tree_loc<ast::FullTypeName>(
+        type_name->loc_id(), std::move(type_name), std::move(array_dims));
+    node->set_is_ref(is_ref);
+    return node;
+}
+
 Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op) {
     if (!_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
         unexpected();
@@ -1073,8 +1099,10 @@ Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op) {
         consume();
         if (maybe_type_op && _tok.type_op() != TypeOp::None)
             break; // NOTE: '.' consumed
-        if (!match(tok::TypeIdent))
+        if (!_tok.is(tok::TypeIdent) || _tok.is_self_class()) {
+            unexpected();
             return {};
+        }
         node->add(parse_type_ident());
     }
     return node;

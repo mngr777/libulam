@@ -219,6 +219,15 @@ void Printer::visit(ulam::Ref<ulam::ast::TypeSpec> node) {
         visit(node->args());
 }
 
+void Printer::visit(ulam::Ref<ulam::ast::FullTypeName> node) {
+    assert(node->has_type_name());
+    accept_me(node->type_name());
+    if (node->has_array_dims())
+        print_array_dims(node->array_dims());
+    if (node->is_ref())
+        _os << "&";
+}
+
 void Printer::visit(ulam::Ref<ulam::ast::ParamList> node) {
     _os << "(";
     if (do_visit(node))
@@ -346,11 +355,11 @@ void Printer::visit(ulam::Ref<ulam::ast::ParenExpr> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Cast> node) {
-    assert(node->has_type_name());
+    assert(node->has_full_type_name());
     assert(node->expr());
     paren_l();
     _os << "(";
-    accept_me(node->type_name());
+    accept_me(node->full_type_name());
     _os << ") ";
     accept_me(node->expr());
     paren_r();

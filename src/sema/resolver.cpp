@@ -273,11 +273,33 @@ Ref<Class> Resolver::resolve_class_name(
     return type->as_class();
 }
 
+Ref<Type> Resolver::resolve_full_type_name(
+    Ref<ast::FullTypeName> full_type_name,
+    Ref<Scope> scope,
+    bool resolve_class) {
+
+    // type
+    auto type =
+        resolve_type_name(full_type_name->type_name(), scope, resolve_class);
+    if (!type)
+        return {};
+
+    // []
+    if (full_type_name->has_array_dims())
+        type = apply_array_dims(type, full_type_name->array_dims(), scope);
+    if (!type)
+        return {};
+
+    // &
+    if (full_type_name->is_ref())
+        type = type->ref_type();
+
+    return type;
+}
+
 // TODO: refactor diag calls
 Ref<Type> Resolver::resolve_type_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
-    assert(scope);
-
     auto type_spec = type_name->first();
     auto type = resolve_type_spec(type_spec, scope);
     if (!type)
@@ -329,8 +351,8 @@ Ref<Type> Resolver::resolve_type_name(
     }
 
     if (resolve_class) {
-        // fully resolve class or class dependencies, e.g. array type ClassName[2]
-        // depends on class ClassName
+        // fully resolve class or class dependencies, e.g. array type
+        // ClassName[2] depends on class ClassName
         if (!resolve_cls_deps(type)) {
             diag().error(ident, "cannot resolve");
             return {};

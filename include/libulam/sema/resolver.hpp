@@ -13,6 +13,8 @@
 
 namespace ulam::sema {
 
+// TODO: better diagnostics, trace type/value resolution somehow
+
 class Resolver {
 public:
     Resolver(Ref<Program> program): _program{program} {}
@@ -39,6 +41,11 @@ public:
 
     Ref<Class> resolve_class_name(
         Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class = false);
+
+    Ref<Type> resolve_full_type_name(
+        Ref<ast::FullTypeName> full_type_name,
+        Ref<Scope> scope,
+        bool resolve_class = false);
 
     Ref<Type> resolve_type_name(
         Ref<ast::TypeName> type_name,

@@ -82,6 +82,7 @@ private:
     parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr);
     Ptr<ast::TypeExpr> parse_type_expr();
     Ptr<ast::ExprList> parse_array_dims();
+    Ptr<ast::FullTypeName> parse_full_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeSpec> parse_type_spec();
     Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& callable);

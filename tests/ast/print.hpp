@@ -94,6 +94,7 @@ protected:
 
     void visit(ulam::Ref<ulam::ast::TypeSpec> node) override;
     void visit(ulam::Ref<ulam::ast::TypeExpr> node) override;
+    void visit(ulam::Ref<ulam::ast::FullTypeName> node) override;
     void visit(ulam::Ref<ulam::ast::ParamList> node) override;
     void visit(ulam::Ref<ulam::ast::Param> node) override;
     void visit(ulam::Ref<ulam::ast::ArgList> node) override;

@@ -262,7 +262,8 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
 
     // resolve target type
     Resolver resolver{_program};
-    auto cast_type = resolver.resolve_type_name(node->type_name(), _scope);
+    auto cast_type =
+        resolver.resolve_full_type_name(node->full_type_name(), _scope);
     if (!cast_type)
         return {ExprError::InvalidCast};
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/node.hpp"
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 
@@ -75,6 +76,20 @@ public:
 
 class TypeNameList : public List<Node, TypeName> {
     ULAM_AST_NODE
+};
+
+// TypeName[2][4]&
+class FullTypeName : public Tuple<Stmt, TypeName, ExprList> {
+    ULAM_AST_NODE
+    ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
+public:
+    FullTypeName(Ptr<TypeName>&& type_name, Ptr<ExprList>&& array_dims):
+        Tuple{std::move(type_name), std::move(array_dims)} {}
+
+    ULAM_AST_TUPLE_PROP(type_name, 0)
+    ULAM_AST_TUPLE_PROP(array_dims, 1)
+
+    bool is_array() { return has_array_dims(); }
 };
 
 } // namespace ulam::ast

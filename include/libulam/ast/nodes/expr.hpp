@@ -98,13 +98,13 @@ public:
     ULAM_AST_TUPLE_PROP(type_name, 1);
 };
 
-class Cast : public Tuple<Expr, TypeName, Expr> {
+class Cast : public Tuple<Expr, FullTypeName, Expr> {
     ULAM_AST_EXPR
 public:
-    Cast(Ptr<TypeName>&& type_name, Ptr<Expr>&& expr):
-        Tuple{std::move(type_name), std::move(expr)} {}
+    Cast(Ptr<FullTypeName>&& full_type_name, Ptr<Expr>&& expr):
+        Tuple{std::move(full_type_name), std::move(expr)} {}
 
-    ULAM_AST_TUPLE_PROP(type_name, 0)
+    ULAM_AST_TUPLE_PROP(full_type_name, 0)
     ULAM_AST_TUPLE_PROP(expr, 1)
 };
 
