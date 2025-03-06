@@ -297,6 +297,7 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(rval.is<Integer>());
 
     auto int_val = rval.get<Integer>();
+    bool is_consteval = rval.is_consteval();
     switch (id) {
     case IntId: {
         assert(false);
@@ -306,20 +307,20 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         int_val = std::max((Integer)0, int_val);
         auto size = detail::bitsize(int_val);
         auto type = builtins().prim_type(UnsignedId, size);
-        return {type, Value{RValue{(Unsigned)int_val}}};
+        return {type, Value{RValue{(Unsigned)int_val, is_consteval}}};
     }
     case UnaryId: {
         Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)ULAM_MAX_INT_SIZE, detail::ones(val));
         auto type = builtins().prim_type(UnaryId, val);
-        return {type, Value{RValue{val}}};
+        return {type, Value{RValue{val, is_consteval}}};
     }
     case BitsId: {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
         store(val.view(), 0, rval);
-        return {type, Value{RValue{std::move(val)}}};
+        return {type, Value{RValue{std::move(val), is_consteval}}};
     }
     default:
         assert(false);
@@ -331,6 +332,7 @@ RValue IntType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     assert(rval.is<Integer>());
 
     auto int_val = rval.get<Integer>();
+    bool is_consteval = rval.is_consteval();
     switch (type->bi_type_id()) {
     case IntId: {
         auto int_min = detail::integer_min(type->bitsize());
@@ -338,23 +340,24 @@ RValue IntType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
             return RValue{int_min};
         auto int_max = detail::integer_max(type->bitsize());
         if (int_val > int_max)
-            return RValue{int_max};
+            return RValue{int_max, is_consteval};
         return std::move(rval);
     }
     case UnsignedId: {
         Unsigned val = std::max((Integer)0, int_val);
         val = std::min(detail::unsigned_max(type->bitsize()), val);
-        return RValue{val};
+        return RValue{val, is_consteval};
     }
     case UnaryId: {
         Unsigned val = std::max((Integer)0, int_val);
         val = std::min((Unsigned)type->bitsize(), detail::ones(val));
-        return RValue{val};
+        return RValue{val, is_consteval};
     }
     case BitsId: {
         auto bits_rval = type->construct();
         // TODO: adjust value?
         bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
+        bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }
     default:

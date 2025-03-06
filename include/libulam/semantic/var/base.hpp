@@ -19,7 +19,8 @@ public:
     static constexpr Flag Const = 1;
     static constexpr Flag ClassParam = 1 << 1;
     static constexpr Flag FunParam = 1 << 2;
-    static constexpr Flag Tpl = 1 << 3;
+    static constexpr Flag TmpFunParam = 1 << 3;
+    static constexpr Flag Tpl = 1 << 4;
 
     VarBase(
         Ref<ast::TypeName> type_node,

@@ -29,6 +29,10 @@ public:
     LValue lvalue();
     RValue rvalue() const;
 
+    bool is_consteval() const {
+        return _value.is_consteval() && !is(FunParam);
+    }
+
     bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
     scope_lvl_t scope_lvl() const { return _scope_lvl; }
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }

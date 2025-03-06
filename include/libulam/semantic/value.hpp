@@ -48,7 +48,7 @@ public:
 
     Value assign(RValue&& rval);
 
-    bool is_consteval() const { return false; } // TODO
+    bool is_consteval() const;
 
     bool is_xvalue() const { return _is_xvalue; }
     void set_is_xvalue(bool is_xvalue) { _is_xvalue = is_xvalue; }

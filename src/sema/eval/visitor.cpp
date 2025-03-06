@@ -307,7 +307,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
                     auto def = ref(tmp_var_defs.back());
                     auto var = make<Var>(
                         param->type_node(), def,
-                        TypedValue{param->type()->deref(), std::move(val)});
+                        TypedValue{param->type()->deref(), std::move(val)},
+                        param->flags() | Var::TmpFunParam);
                     val = Value{var->lvalue()};
                 } else {
                     // lvalue to reference

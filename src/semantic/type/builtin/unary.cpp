@@ -123,6 +123,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(rval.is<Unsigned>());
 
     auto uns_val = detail::count_ones(rval.get<Unsigned>());
+    bool is_consteval = rval.is_consteval();
     switch (id) {
     case IntId: {
         auto size = std::min(
@@ -130,17 +131,19 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
             (bitsize_t)(detail::bitsize(uns_val) + 1));
         Integer val = std::min((Unsigned)detail::integer_max(size), uns_val);
         auto type = builtins().prim_type(IntId, size);
-        return {type, Value{RValue{val}}};
+        return {type, Value{RValue{val, is_consteval}}};
     }
     case UnsignedId: {
         auto size = detail::bitsize(uns_val);
         auto type = builtins().prim_type(UnsignedId, size);
-        return {type, Value{RValue{uns_val}}};
+        return {type, Value{RValue{uns_val, is_consteval}}};
     }
     case BoolId: {
         assert(bitsize() == 1);
         auto boolean = builtins().boolean();
-        return {boolean, Value{boolean->construct(uns_val > 0)}};
+        auto rval = boolean->construct(uns_val > 0);
+        rval.set_is_consteval(is_consteval);
+        return {boolean, Value{std::move(rval)}};
     }
     case UnaryId: {
         assert(false);
@@ -151,7 +154,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         auto type = builtins().prim_type(BitsId, size);
         Bits val{size};
         store(val.view(), 0, rval);
-        return {type, Value{RValue{std::move(val)}}};
+        return {type, Value{RValue{std::move(val), is_consteval}}};
     }
     default:
         assert(false);
@@ -163,27 +166,31 @@ RValue UnaryType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     assert(rval.is<Unsigned>());
 
     Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
+    bool is_consteval = rval.is_consteval();
     switch (type->bi_type_id()) {
     case IntId: {
         Unsigned int_max = detail::integer_max(type->bitsize());
         Integer val = std::min(int_max, uns_val);
-        return RValue{val};
+        return RValue{val, is_consteval};
     }
     case UnsignedId: {
         uns_val = std::min(detail::unsigned_max(type->bitsize()), uns_val);
-        return RValue{uns_val};
+        return RValue{uns_val, is_consteval};
     }
     case BoolId: {
         assert(bitsize() == 1);
-        return builtins().bool_type(type->bitsize())->construct(uns_val > 0);
+        auto rval = builtins().bool_type(type->bitsize())->construct(uns_val > 0);
+        rval.set_is_consteval(is_consteval);
+        return rval;
     }
     case UnaryId: {
         uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
-        return RValue{detail::ones(uns_val)};
+        return RValue{detail::ones(uns_val), is_consteval};
     }
     case BitsId: {
         auto bits_rval = type->construct();
         bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
+        bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }
     default:

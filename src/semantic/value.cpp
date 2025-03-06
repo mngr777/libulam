@@ -102,6 +102,18 @@ Value LValue::assign(RValue&& rval) {
         });
 }
 
+bool LValue::is_consteval() const {
+    return accept(
+        [&](Ref<const Var> var) { return var->is_consteval(); },
+        [&](const DataView& data) {
+            return false; // TODO
+        },
+        [&](const BoundFunSet&) {
+            return true; // ??
+        },
+        [&](const std::monostate&) { return false; });
+}
+
 // RValue
 
 RValue RValue::copy() const {
