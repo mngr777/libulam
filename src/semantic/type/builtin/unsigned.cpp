@@ -77,25 +77,36 @@ TypedValue UnsignedType::binary_op(
         (bitsize() > DefaultSize || r_type->bitsize() > DefaultSize);
     bitsize_t max_size = is_wider ? MaxSize : DefaultSize;
 
+    bool is_consteval =
+        !ops::is_assign(op) && l_rval.is_consteval() && r_rval.is_consteval();
+
+    auto make_res = [&](Ref<Type> type, RValue&& rval) -> TypedValue {
+        rval.set_is_consteval(is_consteval);
+        return {type, Value{std::move(rval)}};
+    };
+    auto make_empty = [&](Ref<Type> type) -> TypedValue {
+        return {type, Value{RValue{}}};
+    };
+
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_uns == r_uns)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_uns == r_uns));
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_uns != r_uns)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_uns != r_uns));
     }
     case Op::AssignProd: {
         // (Unsigned(a) *= Unsigned(b)) = Unsigned(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return make_empty(this);
         auto [val, _] = detail::safe_prod(l_uns, r_uns);
-        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
+        return make_res(this, RValue{detail::truncate(val, bitsize())});
     }
     case Op::Prod: {
         // Unsigned(a) * Unsigned(b) = Unsigned(a + b)
@@ -103,33 +114,32 @@ TypedValue UnsignedType::binary_op(
             std::min<bitsize_t>(max_size, bitsize() + r_type->bitsize());
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return make_empty(type);
         auto [val, _] = detail::safe_prod(l_uns, r_uns);
-        return {this, Value{RValue{val}}};
+        return make_res(type, RValue{val});
     }
     case Op::AssignQuot:
     case Op::Quot: {
         // Unsigned(a) / Unsigned(b) = Int(a) NOTE: does not match
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return make_empty(this);
         auto val = detail::safe_quot(l_uns, r_uns);
-        return {this, Value{RValue{val}}};
+        return make_res(this, RValue{val});
     }
     case Op::AssignRem:
     case Op::Rem: {
         // Unsigned(a) % Unsigned(b) = Unsigned(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
-        auto val = detail::safe_rem(l_uns, r_uns);
-        return {this, Value{RValue{val}}};
+            return make_empty(this);
+        return make_res(this, RValue{detail::safe_rem(l_uns, r_uns)});
     }
     case Op::AssignSum: {
         // (Unsigned(a) += Unsigned(b)) = Unsigned(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return make_empty(this);
         auto [val, _] = detail::safe_sum(l_uns, r_uns);
-        return {this, Value{RValue{detail::truncate(val, bitsize())}}};
+        return make_res(this, RValue{detail::truncate(val, bitsize())});
     }
     case Op::Sum: {
         // Unsigned(a) + Unsigned(b) = Unsigned(max(a, b) + 1)
@@ -137,41 +147,41 @@ TypedValue UnsignedType::binary_op(
         size = std::min(size, max_size);
         auto type = tpl()->type(size);
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return make_empty(type);
         auto [val, _] = detail::safe_sum(l_uns, r_uns);
-        return {type, Value{RValue{val}}};
+        return make_res(type, RValue{val});
     }
     case Op::AssignDiff:
     case Op::Diff: {
         // Unsigned(a) - Unsigned(b) = Unsigned(a)
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return make_empty(this);
         Unsigned val = (l_uns > r_uns) ? l_uns - r_uns : 0;
-        return {this, Value{RValue{val}}};
+        return make_res(this, RValue{val});
     }
     case Op::Less: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_uns < r_uns)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_uns < r_uns));
     }
     case Op::LessOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_uns <= r_uns)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_uns <= r_uns));
     }
     case Op::Greater: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value{type->construct(l_uns > r_uns)}};
+            return make_empty(type);
+        return make_res(type, type->construct(l_uns > r_uns));
     }
     case Op::GreaterOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        return {type, Value(type->construct(l_uns >= r_uns))};
+            return make_empty(type);
+        return make_res(type, type->construct(l_uns >= r_uns));
     }
     default:
         assert(false);
