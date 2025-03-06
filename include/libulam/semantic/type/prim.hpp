@@ -31,8 +31,7 @@ public:
 
     RValue load(const BitsView data, bitsize_t off) const override;
 
-    void store(BitsView data, bitsize_t off, const RValue& rval)
-        const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
 
     virtual RValue from_datum(Datum datum) const { assert(false); }
     virtual Datum to_datum(const RValue& rval) const { assert(false); }
@@ -50,6 +49,11 @@ public:
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
+    conv_cost_t conv_cost(
+        Ref<const Type> type,
+        const Value& val,
+        bool allow_cast = false) const override;
 
     Value cast_to(Ref<const Type> type, Value&& val) override;
     TypedValue cast_to(BuiltinTypeId bi_type_id, Value&& val);
@@ -69,11 +73,11 @@ protected:
 
     virtual bool is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const;
 
-    virtual bool is_impl_castable_to_prim(
-        Ref<const PrimType> type, const Value& val) const;
+    virtual bool
+    is_impl_castable_to_prim(Ref<const PrimType> type, const Value& val) const;
 
-    virtual bool is_impl_castable_to_prim(
-        BuiltinTypeId bi_type_id, const Value& val) const;
+    virtual bool
+    is_impl_castable_to_prim(BuiltinTypeId bi_type_id, const Value& val) const;
 
     // TODO: make pure virtual
     virtual TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) {

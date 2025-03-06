@@ -89,8 +89,8 @@ Fun::MatchRes Fun::match(const TypedValueList& args) {
             arg_type = arg_type->ref_type();
         }
 
-        max_conv_cost =
-            std::max(max_conv_cost, arg_type->conv_cost(param_type));
+        max_conv_cost = std::max(
+            max_conv_cost, arg_type->conv_cost(param_type, arg.value()));
         if (max_conv_cost == MaxConvCost)
             return {NoMatch, MaxConvCost};
     }

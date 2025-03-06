@@ -42,6 +42,7 @@ private:
 
 conv_cost_t
 prim_conv_cost(Ref<const PrimType> type, Ref<const PrimType> target);
+
 conv_cost_t
 prim_cast_cost(Ref<const PrimType> type, Ref<const PrimType> target);
 

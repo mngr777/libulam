@@ -140,6 +140,8 @@ public:
 
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;
+    virtual conv_cost_t conv_cost(
+        Ref<const Type> type, const Value& val, bool allow_cast = false) const;
 
     virtual Value cast_to(Ref<const Type> type, Value&& val);
 
@@ -225,6 +227,11 @@ public:
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
+    conv_cost_t conv_cost(
+        Ref<const Type> type,
+        const Value& val,
+        bool allow_cast = false) const override;
 
     Value cast_to(Ref<const Type> type, Value&& val) override;
 
@@ -346,6 +353,11 @@ public:
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
+
+    conv_cost_t conv_cost(
+        Ref<const Type> type,
+        const Value& val,
+        bool allow_cast = false) const override;
 
     Value cast_to(Ref<const Type> type, Value&& val) override;
 

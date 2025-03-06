@@ -67,10 +67,21 @@ TypedValue PrimType::cast_to(BuiltinTypeId bi_type_id, Value&& val) {
 conv_cost_t PrimType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     if (is_same(type))
         return 0;
-    if (!is_castable_to(type, allow_cast))
-        return MaxConvCost;
-    assert(canon()->is_prim() && type->canon()->is_prim());
-    return prim_conv_cost(canon()->as_prim(), type->canon()->as_prim());
+    if (is_impl_castable_to(type))
+        return prim_conv_cost(this, type->as_prim());
+    if (allow_cast && is_expl_castable_to(type))
+        return prim_cast_cost(this, type->as_prim());
+    return MaxConvCost;
+}
+
+conv_cost_t PrimType::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
+    if (is_same(type))
+        return 0;
+    if (is_impl_castable_to(type, val))
+        return prim_conv_cost(this, type->as_prim());
+    if (allow_cast && is_expl_castable_to(type))
+        return prim_cast_cost(this, type->as_prim());;
+    return MaxConvCost;
 }
 
 bool PrimType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {

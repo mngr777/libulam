@@ -75,6 +75,7 @@ int main(int argc, char** argv) {
             "t3424_test_compiler_namedconstant_hex.test", // char
             "t3449_test_compiler_bitwisefunccallreturns.test", // char
             "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // string
+            "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

@@ -194,6 +194,11 @@ conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return is_same(type) ? 0 : MaxConvCost;
 }
 
+conv_cost_t
+Type::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
+    return conv_cost(type, allow_cast);
+}
+
 Value Type::cast_to(Ref<const Type> type, Value&& val) { assert(false); }
 
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
@@ -260,7 +265,11 @@ bool AliasType::is_impl_castable_to(
 }
 
 conv_cost_t AliasType::conv_cost(Ref<const Type> type, bool allow_cast) const {
-    return non_alias()->conv_cost(type->non_alias());
+    return non_alias()->conv_cost(type->non_alias(), allow_cast);
+}
+
+conv_cost_t AliasType::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
+    return non_alias()->conv_cost(type->non_alias(), val, allow_cast);
 }
 
 Value AliasType::cast_to(Ref<const Type> type, Value&& val) {
@@ -444,9 +453,12 @@ bool RefType::is_impl_castable_to(
 }
 
 conv_cost_t RefType::conv_cost(Ref<const Type> type, bool allow_cast) const {
-    if (is_same_actual(type))
-        return 0;
-    return refd()->conv_cost(type->actual()); // ??
+    return refd()->conv_cost(type->actual(), allow_cast); // ??
+}
+
+conv_cost_t RefType::conv_cost(
+    Ref<const Type> type, const Value& val, bool allow_cast) const {
+    return refd()->conv_cost(type->actual(), val, allow_cast); // ??
 }
 
 Value RefType::cast_to(Ref<const Type> type, Value&& val) {
