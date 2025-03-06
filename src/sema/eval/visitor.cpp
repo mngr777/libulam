@@ -370,6 +370,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
             }
             // TODO: test
             if (val.lvalue().has_scope_lvl() &&
+                !val.lvalue().has_auto_scope_lvl() &&
                 val.lvalue().scope_lvl() >= _scope_stack.size()) {
                 diag().error(ret.node(), "reference to local");
                 return {ExprError::ReferenceToLocal};

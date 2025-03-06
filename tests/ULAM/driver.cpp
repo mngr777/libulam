@@ -81,6 +81,7 @@ int main(int argc, char** argv) {
             "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
             "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix
             "t3505_test_compiler_elementandquark_caarrayemptyquark.test", // Empty
+            "t3590_test_compiler_isemptyquark.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
