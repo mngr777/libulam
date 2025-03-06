@@ -67,7 +67,7 @@ ClassBase::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var =
         make<Var>(type_node, node, Ref<Type>{}, Var::ClassParam | Var::Const);
     auto ref = ulam::ref(var);
-    var->set_scope_version(scope()->version());
+    var->set_scope_version(param_scope()->version());
 
     param_scope()->set(name_id, ref);
     set(name_id, std::move(var));
