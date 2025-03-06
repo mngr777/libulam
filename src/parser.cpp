@@ -231,7 +231,9 @@ void Parser::parse_class_def_body(Ref<ast::ClassDef> node) {
             }
         } break;
         case tok::BuiltinTypeIdent:
-        case tok::TypeIdent: {
+        case tok::TypeIdent:
+        case tok::Virtual:
+        case tok::Override: {
             ok = parse_class_var_or_fun_def(node->body());
         } break;
         case tok::Constant: {
@@ -293,6 +295,7 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
                 diag(_tok, "duplicate `@Override' keyword");
             is_override = true;
         }
+        consume();
     }
 
     // type

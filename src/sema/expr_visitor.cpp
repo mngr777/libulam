@@ -1,10 +1,10 @@
-#include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
@@ -29,7 +29,7 @@ ExprRes ExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     DBG_LINE(node);
     if (node->has_type_name()) {
         Resolver resolver{_program};
-        auto type = resolver.resolve_type_name(node->type_name(), _scope);
+        auto type = resolver.resolve_type_name(node->type_name(), _scope, true);
         if (!type)
             return {ExprError::UnresolvableType};
         auto tv = type->actual()->type_op(node->op());
@@ -384,7 +384,8 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return {ExprError::UnknownArrayIndex};
     // cast to default Int
     auto int_type = builtins().int_type();
-    auto idx_cast_res = maybe_cast(node->index(), int_type, index_res.move_typed_value());
+    auto idx_cast_res =
+        maybe_cast(node->index(), int_type, index_res.move_typed_value());
     if (idx_cast_res.second == CastError)
         return {ExprError::InvalidCast};
     auto index_val = std::move(idx_cast_res.first);
@@ -571,15 +572,28 @@ ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     unsigned n = 0;
     for (auto param : tpl->params()) {
         Ref<ast::Expr> arg = param->node()->default_value();
-        if (n < args->child_num())
+        bool is_default = true;
+        if (n < args->child_num()) {
+            is_default = false;
             arg = args->get(n);
+        }
         ++n;
         if (!arg) {
             diag().error(args, "not enough arguments");
             res.second = false;
             break;
         }
-        ExprRes arg_res = arg->accept(*this);
+
+        ExprRes arg_res;
+        if (is_default) {
+            // eval in tpl param scope
+            auto scope_view = tpl->param_scope()->view(param->scope_version());
+            ExprVisitor ev{_program, ref(scope_view)};
+            arg_res = arg->accept(ev);
+        } else {
+            // eval in current scope
+            arg_res = arg->accept(*this);
+        }
         if (!arg_res) {
             res.second = false;
             break;

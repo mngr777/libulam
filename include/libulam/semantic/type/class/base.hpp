@@ -80,6 +80,7 @@ public:
     Ref<ast::ClassDef> node() { return _node; }
     Ref<const ast::ClassDef> node() const { return _node; }
 
+    Ref<PersScope> param_scope() { return ref(_param_scope); }
     Ref<PersScope> scope() { return ref(_scope); }
 
 protected:
@@ -94,7 +95,6 @@ protected:
     Ref<Module> module() { return _module; }
     Ref<const Module> module() const { return _module; }
 
-    Ref<PersScope> param_scope() { return ref(_param_scope); }
     Ref<PersScope> inh_scope() { return ref(_inh_scope); }
 
     auto& members() { return _members; }
