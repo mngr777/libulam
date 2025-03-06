@@ -59,7 +59,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
             diag().error(node, "cannot use `self' without class context");
             return {ExprError::NoSelf};
         }
-        return {lval.type(), Value{lval}};
+        return {_scope->self_cls(), Value{lval}};
     }
 
     auto name = node->name();
