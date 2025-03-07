@@ -109,6 +109,16 @@ void TestCase::parse() {
         return sign * value;
     };
 
+    auto move_to_file_name = [&]() {
+        move_to("#");
+        if (text[pos] == '#' &&
+            (text[pos + 1] == ':' || text[pos + 1] == '>')) {
+            pos += 2;
+        } else {
+            error("not at `#:' or `#>'");
+        }
+    };
+
     // NOTE: ModuleName.ulam without extension
     auto read_file_name = [&]() -> std::string_view {
         if (!is_upper())
@@ -127,6 +137,7 @@ void TestCase::parse() {
     skip_comments();
 
     // "Exit status: <status>\n"
+    move_to("Exit status:");
     skip("Exit status:");
     skip_spaces();
     _exit_status = read_int();
@@ -136,17 +147,10 @@ void TestCase::parse() {
     _answer = read_until("#");
     skip_comments();
 
-    // NOTE: main file is marked with #>, but is not necessarily #:
+    // NOTE: main file is marked with #>, but is not necessarily the first one
     // do we need to know which is main?
 
-    // move_to("#>");
-    // skip("#>");
-    move_to("#");
-    if (text[pos] == '#' && (text[pos + 1] == ':' || text[pos + 1] == '>')) {
-        pos += 2;
-    } else {
-        error("not at `#:' or `#>'");
-    }
+    move_to_file_name();
     skip_spaces();
     while (true) {
         auto name = read_file_name();
@@ -159,14 +163,7 @@ void TestCase::parse() {
         if (text[pos] == '#' && text[pos + 1] == '.')
             break; // #.
         // next file
-        // move_to("#:");
-        // skip("#:");
-        move_to("#");
-        if (text[pos] == '#' && (text[pos + 1] == ':' || text[pos + 1] == '>')) {
-            pos += 2;
-        } else {
-            error("not at `#:' or `#>'");
-        }
+        move_to_file_name();
         skip_spaces();
     }
 }
