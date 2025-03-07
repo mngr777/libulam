@@ -74,6 +74,9 @@ struct Token {
 
     bool is_self() const { return orig_type == tok::Self; }
     bool is_self_class() const { return orig_type == tok::SelfClass; }
+
+    bool is_super() const { return orig_type == tok::Super; }
+    bool is_super_class() const { return orig_type == tok::SuperClass; }
 };
 
 } // namespace ulam

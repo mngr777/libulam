@@ -13,11 +13,9 @@ namespace ulam::ast {
 class TypeIdent : public Stmt, public Named {
     ULAM_AST_NODE
     ULAM_AST_SIMPLE_ATTR(bool, is_self, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_super, false)
 public:
-    explicit TypeIdent(Str name, bool is_self = false): Named{name} {
-        set_loc_id(name.loc_id());
-        set_is_self(is_self);
-    }
+    explicit TypeIdent(Str name): Named{name} { set_loc_id(name.loc_id()); }
 };
 
 class ArgList;

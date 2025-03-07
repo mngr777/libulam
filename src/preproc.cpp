@@ -49,10 +49,22 @@ Preproc& Preproc::operator>>(Token& token) {
             // ignore comments
             break;
         case tok::Self:
+        case tok::Super:
             token.type = tok::Ident;
             return *this;
         case tok::SelfClass:
+        case tok::SuperClass:
             token.type = tok::TypeIdent;
+            return *this;
+        case tok::IntT:
+        case tok::UnsignedT:
+        case tok::BoolT:
+        case tok::UnaryT:
+        case tok::BitsT:
+        case tok::AtomT:
+        case tok::VoidT:
+        case tok::StringT:
+            token.type = tok::BuiltinTypeIdent;
             return *this;
         case tok::Eof:
             _stack.pop();
@@ -60,9 +72,6 @@ Preproc& Preproc::operator>>(Token& token) {
                 return *this;
             break;
         default:
-            if (tok::is_builtin_type_id(token.type)) {
-                token.type = tok::BuiltinTypeIdent;
-            }
             return *this;
         }
     }

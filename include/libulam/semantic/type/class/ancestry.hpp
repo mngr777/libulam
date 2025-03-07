@@ -19,8 +19,7 @@ public:
     Ancestor(Ref<Class> cls, Ref<ast::TypeName> node):
         _cls{cls}, _node{node}, _data_off{NoBitsize} {}
 
-    Ref<Class> cls() { return _cls; }
-    Ref<const Class> cls() const { return _cls; }
+    Ref<Class> cls() const { return _cls; }
 
     Ref<ast::TypeName> node() { return _node; }
     Ref<const ast::TypeName> node() const { return _node; }

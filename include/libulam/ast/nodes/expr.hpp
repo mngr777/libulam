@@ -56,8 +56,9 @@ private:
 class Ident : public Expr, public Named {
     ULAM_AST_EXPR
     ULAM_AST_SIMPLE_ATTR(bool, is_self, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_super, false)
 public:
-    Ident(Str name, bool is_self = false): Named{name} { set_is_self(is_self); }
+    Ident(Str name): Named{name} {}
 };
 
 class ParenExpr : public Tuple<Expr, Expr> {

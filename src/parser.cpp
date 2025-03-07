@@ -1197,25 +1197,40 @@ Ptr<ast::TypeIdent> Parser::parse_type_ident(bool allow_self) {
     assert(_tok.is(tok::TypeIdent));
     auto str = tok_ast_str();
     bool is_self = _tok.is_self_class();
+    bool is_super = _tok.is_super_class();
     consume();
-    if (is_self && !allow_self) {
+    if (!allow_self && is_self) {
         diag(str.loc_id(), 1, "`Self' is not allowed in this context");
         return {};
     }
-    return tree<ast::TypeIdent>(str, is_self);
+    if (!allow_self && is_super) {
+        diag(str.loc_id(), 1, "`Super' is not allowed in this context");
+        return {};
+    }
+    auto ident = tree<ast::TypeIdent>(str);
+    ident->set_is_self(is_self);
+    ident->set_is_super(is_super);
+    return ident;
 }
 
 Ptr<ast::Ident> Parser::parse_ident(bool allow_self) {
     assert(_tok.is(tok::Ident));
     auto str = tok_ast_str();
     bool is_self = _tok.is_self();
+    bool is_super = _tok.is_super();
     consume();
     if (is_self && !allow_self) {
-        // TODO: check in other cases
         diag(str.loc_id(), 1, "`self' is not allowed in this context");
         return {};
     }
-    return tree_loc<ast::Ident>(str.loc_id(), str, is_self);
+    if (is_super && !allow_self) {
+        diag(str.loc_id(), 1, "`super' is not allowed in this context");
+        return {};
+    }
+    auto ident = tree_loc<ast::Ident>(str.loc_id(), str);
+    ident->set_is_self(is_self);
+    ident->set_is_super(is_super);
+    return ident;
 }
 
 bool Parser::parse_is_ref() {

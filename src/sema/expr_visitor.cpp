@@ -54,13 +54,23 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     debug() << __FUNCTION__ << " Ident `" << str(node->name().str_id())
             << "`\n";
     DBG_LINE(node);
+
+    // self
     if (node->is_self()) {
-        auto lval = _scope->self();
-        if (lval.empty()) {
-            diag().error(node, "cannot use `self' without class context");
-            return {ExprError::NoSelf};
+        auto self = _scope->self();
+        return {_scope->self_cls(), Value{self}};
+    }
+
+    // super
+    if (node->is_super()) {
+        auto self_cls = _scope->self_cls();
+        if (!self_cls->has_super()) {
+            auto message = std::string{"class "} + self_cls->name() + " does not have a superclass";
+            diag().error(node, message);
+            return {ExprError::NoSuper};
         }
-        return {_scope->self_cls(), Value{lval}};
+        auto self = _scope->self();
+        return {self_cls->super(), Value{self.as(self_cls->super())}};
     }
 
     auto name = node->name();

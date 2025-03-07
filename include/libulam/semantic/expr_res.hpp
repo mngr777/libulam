@@ -10,6 +10,8 @@ enum class ExprError {
     Ok,
     Error,
     NoSelf,
+    NoSuper,
+    NoSuperClass,
     SymbolNotFound,
     MemberNotFound,
     UnresolvableType,

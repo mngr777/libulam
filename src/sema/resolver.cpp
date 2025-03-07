@@ -388,23 +388,34 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         return _program->builtins().prim_type(bi_type_id, size);
     }
     assert(type_spec->has_ident());
+    auto ident = type_spec->ident();
 
-    // Self?
-    if (type_spec->ident()->is_self()) {
+    // Self or Super?
+    if (ident->is_self() || ident->is_super()) {
         assert(!type_spec->has_args());
         auto self_cls = scope->self_cls();
         if (!self_cls) {
-            diag().error(
-                type_spec->ident(), "`Self' can only be used in class context");
+            std::string name{ident->is_self() ? "Self" : "Super"};
+            diag().error(ident, name + " can only be used in class context");
+            return {};
         }
-        return self_cls;
+        // Self
+        if (ident->is_self())
+            return self_cls;
+
+        // Super
+        if (!self_cls->has_super()) {
+            diag().error(
+                ident, self_cls->name() + " does not have a superclass");
+            return {};
+        }
+        return self_cls->super();
     }
 
-    auto name_id = type_spec->ident()->name_id();
+    auto name_id = ident->name_id();
     auto sym = scope->get(name_id);
     if (!sym) {
-        diag().error(
-            type_spec->ident(), std::string{str(name_id)} + " type not found");
+        diag().error(ident, std::string{str(name_id)} + " type not found");
         return {};
     }
 

@@ -155,6 +155,15 @@ bool Class::is_same_or_base_of(Ref<const Class> other) const {
     return other == this || is_base_of(other);
 }
 
+bool Class::has_super() const {
+    return !_ancestry.parents().empty();
+}
+
+Ref<Class> Class::super() {
+    assert(!_ancestry.parents().empty());
+    return (*_ancestry.parents().begin())->cls();
+}
+
 bitsize_t Class::base_off(Ref<const Class> base) const {
     assert(base->is_base_of(this));
     return _ancestry.data_off(base);

@@ -60,6 +60,9 @@ public:
     bool is_base_of(Ref<const Class> other) const;
     bool is_same_or_base_of(Ref<const Class> other) const;
 
+    bool has_super() const;
+    Ref<Class> super();
+
     bitsize_t base_off(Ref<const Class> base) const;
 
     auto& parents() { return _ancestry.parents(); }
