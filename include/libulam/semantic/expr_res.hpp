@@ -33,7 +33,9 @@ enum class ExprError {
     NotReference,
     ReferenceToLocal,
     InvalidReturnType,
-    ArgsEvalError // TMP
+    ArgsEvalError, // TMP
+    NoMatchingFunction,
+    AmbiguousFunctionCall
 };
 
 class Type;

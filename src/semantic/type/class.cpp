@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/conv.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
@@ -212,6 +213,8 @@ bool Class::is_castable_to_object_type(Ref<const Type> type) const {
     assert(!is_same(type));
     assert(type->is_object());
 
+    // TODO: upcast
+
     // to Atom
     if (type->is(AtomId))
         return is_element();
@@ -251,7 +254,15 @@ Value Class::cast_to_object_type(Ref<const Type> type, Value&& val) const {
 }
 
 conv_cost_t Class::conv_cost(Ref<const Type> type, bool allow_cast) const {
-    return is_same(type) ? 0 : convs(type, allow_cast).cost();
+    if (is_same(type))
+        return 0;
+    auto cost = convs(type, allow_cast).cost();
+    if (cost != MaxConvCost)
+        return cost;
+    // TODO: upcast
+    if (type->is_object() && is_castable_to_object_type(type))
+        return type->is(AtomId) ? ElementToAtomConvCost : ClassToBaseConvCost;
+    return MaxConvCost;
 }
 
 ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {

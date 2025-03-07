@@ -1,3 +1,4 @@
+#include "libulam/semantic/value.hpp"
 #include <cassert>
 #include <exception>
 #include <libulam/sema/eval/except.hpp>
@@ -279,59 +280,32 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         self.set_scope_lvl(scope_lvl);
 
     // bind params
-    std::list<Ptr<ast::VarDef>> tmp_var_defs{}; // TODO: refactoring
+    std::list<Ptr<ast::VarDef>> tmp_var_defs{};
+    std::list<Ptr<Var>> tmp_vars{};
     for (const auto& param : fun->params()) {
-        assert(args.size() >= 0);
+        assert(!args.empty());
 
-        auto type = args.front().type();
-        auto val = args.front().move_value();
+        auto arg = std::move(args.front());
         args.pop_front();
 
-        // not exact match?
-        if (!type->is_same(param->type())) {
-            if (param->type()->is_ref()) {
-                // bind to reference param
-                if (val.is_rvalue()) {
-                    // rvalue to const reference
-                    assert(!type->is_ref());
-                    assert(param->is_const());
-                    // maybe cast to value type
-                    if (!type->is_same_actual(param->type())) {
-                        assert(type->is_impl_castable_to(
-                            param->type()->deref(), val));
-                        val = type->cast_to(
-                            param->type()->deref(), std::move(val));
-                    }
-                    // create tmp var
-                    tmp_var_defs.push_back(
-                        make<ast::VarDef>(param->node()->name()));
-                    auto def = ref(tmp_var_defs.back());
-                    auto var = make<Var>(
-                        param->type_node(), def,
-                        TypedValue{param->type()->deref(), std::move(val)},
-                        param->flags() | Var::TmpFunParam);
-                    val = Value{var->lvalue()};
-                } else {
-                    // lvalue to reference
-                    assert(param->is_const() || !val.lvalue().is_xvalue());
-                    val.lvalue().set_is_xvalue(false);
-                    // cast ref type
-                    if (!type->is_same_actual(param->type())) {
-                        assert(type->ref_type()->is_impl_castable_to(
-                            param->type(), val));
-                        val = type->ref_type()->cast_to(
-                            param->type(), std::move(val));
-                    }
-                }
-            } else {
-                // non-reference param, must be convertible
-                assert(type->is_impl_castable_to(param->type(), val));
-                val = type->cast_to(param->type(), std::move(val));
-            }
+        // binding rvalue or xvalue lvalue to const ref via tmp variable
+        if (param->type()->is_ref() && arg.value().is_tmp()) {
+            assert(param->is_const());
+            // create tmp vardef
+            auto var_def = make<ast::VarDef>(param->node()->name());
+            auto var = make<Var>(
+                param->type_node(), ref(var_def),
+                TypedValue{param->type()->deref(), arg.move_value().deref()},
+                param->flags() | Var::TmpFunParam);
+            arg = {param->type(), Value{LValue{ref(var)}}};
+            tmp_var_defs.push_back(std::move(var_def));
+            tmp_vars.push_back(std::move(var));
         }
+        assert(arg.type()->is_same(param->type()));
+
         auto var = make<Var>(
             param->type_node(), param->node(), param->type(), param->flags());
-        var->set_value(std::move(val));
+        var->set_value(arg.move_value());
         scope()->set(var->name_id(), std::move(var));
     }
 

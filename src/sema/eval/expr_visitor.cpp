@@ -20,6 +20,7 @@ ExprRes EvalExprVisitor::funcall(
     TypedValueList&& args) {
     debug() << __FUNCTION__ << "\n";
     if (fun->is_native()) {
+        // can't eval, return empty value
         diag().emit(
             Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
         if (fun->ret_type()->is_ref()) {

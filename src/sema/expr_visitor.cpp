@@ -1,3 +1,4 @@
+#include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -554,6 +555,7 @@ std::pair<TypedValueList, bool> ExprVisitor::eval_args(Ref<ast::ArgList> args) {
     std::pair<TypedValueList, bool> res;
     res.second = true;
     for (unsigned n = 0; n < args->child_num(); ++n) {
+        // TODO: default arguments
         ExprRes arg_res = args->get(n)->accept(*this);
         if (!arg_res) {
             res.second = false;
@@ -754,14 +756,35 @@ TypedValue ExprVisitor::do_cast(
 ExprRes ExprVisitor::funcall(
     Ref<ast::Expr> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
     auto match_res = fset->find_match(self.dyn_cls(), args);
-    if (match_res.size() == 1) {
-        return funcall(node, *(match_res.begin()), self, std::move(args));
-    } else if (match_res.size() == 0) {
-        diag().error(node, "no matching function found");
-    } else {
-        diag().error(node, "ambiguous funcall");
+    if (match_res.empty()) {
+        diag().error(node, "no matching functions found");
+        return {ExprError::NoMatchingFunction};
+    } else if (match_res.size() > 1) {
+        diag().error(node, "ambiguous function call");
+        return {ExprError::AmbiguousFunctionCall};
     }
-    return {};
+
+    TypedValueList call_args{};
+    auto fun = *match_res.begin();
+    for (auto& param : fun->params()) {
+        assert(!args.empty());
+
+        auto arg = std::move(args.front());
+        args.pop_front();
+
+        auto param_type = param->type();
+
+        // binding rvalue or xvalue lvalue to const ref
+        if (param_type->is_ref() && arg.value().is_tmp()) {
+            assert(param->is_const());
+            param_type = param_type->deref(); // cast to non-ref type if casting
+        }
+
+        auto cast_res = maybe_cast(node, param_type, std::move(arg), false);
+        assert(cast_res.second != CastError);
+        call_args.emplace_back(param_type, std::move(cast_res.first));
+    }
+    return funcall(node, fun, self, std::move(call_args));
 }
 
 ExprRes ExprVisitor::funcall(
