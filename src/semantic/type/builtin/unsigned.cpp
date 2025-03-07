@@ -254,8 +254,12 @@ bool UnsignedType::is_impl_castable_to_prim(
 
     switch (type->bi_type_id()) {
     case IntId:
+        if (uns_val == 0)
+            return true;
         return detail::bitsize(uns_val) <= detail::integer_max(type->bitsize());
     case UnsignedId:
+        if (uns_val == 0)
+            return true;
         return detail::bitsize(uns_val) <= type->bitsize();
     case UnaryId:
         return uns_val <= type->bitsize();
