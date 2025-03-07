@@ -45,9 +45,7 @@ const DataView Data::prop(Ref<Prop> prop_) const {
     return const_cast<Data*>(this)->prop(prop_);
 }
 
-DataView Data::atom_of() {
-    return is_atom() ? view() : DataView{};
-}
+DataView Data::atom_of() { return is_atom() ? view() : DataView{}; }
 
 const DataView Data::atom_of() const {
     return const_cast<Data*>(this)->atom_of();
@@ -61,10 +59,7 @@ Bool Data::is_class() const { return _type->is_class(); }
 // DataView
 
 DataView::DataView(
-    DataPtr storage,
-    Ref<Type> type,
-    bitsize_t off,
-    Ref<Type> view_type):
+    DataPtr storage, Ref<Type> type, bitsize_t off, Ref<Type> view_type):
     _storage{storage},
     _type{type},
     _off{off},
@@ -72,8 +67,12 @@ DataView::DataView(
 
     assert(
         _view_type->is_same(_type) ||
-        (_type->is_object() && _view_type->is_object() &&
-         _type->is_impl_castable_to(_view_type)));
+        (_type->is(AtomId) && _view_type->is_class() &&
+         _view_type->as_class()->is_element()) ||
+        (_type->is_class() && _type->as_class()->is_element() &&
+         _view_type->is(AtomId)) ||
+        (_type->is_class() && _view_type->is_class() &&
+         _view_type->as_class()->is_base_of(_type->as_class())));
 
     if (_atom.off == NoBitsize && _view_type->is_atom()) {
         _atom.off = off;
@@ -89,12 +88,7 @@ void DataView::store(RValue&& rval) {
 }
 
 RValue DataView::load() const {
-    auto rval = _type->load(_storage->bits(), _off);
-    return rval; // TODO
-    // if (_view_type->is_same(_type))
-    //     return rval;
-    // auto val = _type->cast_to(_view_type, Value{std::move(rval)});
-    // return val.move_rvalue();
+    return _type->load(_storage->bits(), _off);
 }
 
 DataView DataView::as(Ref<Type> type) {
