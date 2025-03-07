@@ -59,13 +59,13 @@ constexpr Unsigned unsigned_max(bitsize_t size) {
 }
 
 constexpr Integer integer_min(bitsize_t size) {
-    assert(1 < size && size <= sizeof(Integer) * 8);
-    return -unsigned_max(size - 1) - 1;
+    assert(0 < size && size <= sizeof(Integer) * 8);
+    return (size == 1) ? -1 : -unsigned_max(size - 1) - 1;
 }
 
 constexpr Integer integer_max(bitsize_t size) {
-    assert(1 < size && size <= sizeof(Integer) * 8);
-    return unsigned_max(size - 1);
+    assert(0 < size && size <= sizeof(Integer) * 8);
+    return (size == 1) ? 0 : unsigned_max(size - 1);
 }
 
 constexpr bitsize_t bitsize(Unsigned value) { return log2(value) + 1; }

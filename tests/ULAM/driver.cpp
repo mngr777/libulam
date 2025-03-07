@@ -85,6 +85,8 @@ int main(int argc, char** argv) {
             "t3596_test_compiler_inheritednamedconstant.test", // bitsize used in value of const, TODO
             "t3631_test_compiler_element_castatomandquark_ish.test", // tmp, quark to Atom?
             "t3663_test_compiler_element_castatomfromselfatomof_templateinstancewithinforloop.test", // Super type, TODO
+            "t3697_test_compiler_elementandquark_castreftoatom.test", // casting quark ref back to Atom: use .atomof instead?
+            "t3701_test_compiler_elementandquark_castclassreftoatomref.test", // casting quark ref to Atom&
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
