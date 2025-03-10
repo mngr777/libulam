@@ -50,6 +50,7 @@ check_type_match(Ref<const Type> type, const Value& val, BuiltinTypeId target) {
 
 TypeError
 check_type_match(Ref<const Type> type, const Value& val, Ref<Type> target) {
+    type = type->actual();
     if (type->is_same_actual(target))
         return {TypeError::Ok};
     if (type->is_impl_castable_to(target, val))
@@ -240,7 +241,7 @@ binary_op_type_check(Op op, Ref<Type> l_type, const TypedValue& r_tv) {
             op, l_actual->as_class(), r_tv.type()->actual());
 
     if (l_actual->is(AtomId))
-        return atom_binary_op_type_check(op, l_actual, r_tv.type());
+        return atom_binary_op_type_check(op, l_actual, r_tv.type()->deref());
 
     TypeErrorPair errors;
     if (op == Op::Assign && l_type->is_same(r_tv.type()))
