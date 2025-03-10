@@ -1,12 +1,7 @@
 #pragma once
-#include "libulam/ast/node.hpp"
+#include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
-
-namespace ulam {
-class Type;
-class TypeTpl;
-} // namespace ulam
 
 namespace ulam::ast {
 

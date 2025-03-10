@@ -14,10 +14,14 @@ class TypeName;
 
 namespace ulam::cls {
 
+class Ancestry;
+
 class Ancestor {
+    friend Ancestry;
+
 public:
     Ancestor(Ref<Class> cls, Ref<ast::TypeName> node):
-        _cls{cls}, _node{node}, _data_off{NoBitsize} {}
+        _cls{cls}, _node{node}, _data_off{NoBitsize}, _size_added{NoBitsize} {}
 
     Ref<Class> cls() const { return _cls; }
 
@@ -26,11 +30,22 @@ public:
 
     bool has_data_off() const;
     bitsize_t data_off() const;
-    void set_data_off(bitsize_t data_off);
 
-private : Ref<Class> _cls;
+    bool has_size_added() const;
+    bitsize_t size_added() const;
+
+private:
+    void set_data_off(bitsize_t data_off);
+    void set_size_added(bitsize_t size);
+    void add_dep_added(Ref<Ancestor> anc);
+
+    Ref<Class> _cls;
     Ref<ast::TypeName> _node;
-    bitsize_t _data_off;
+    bitsize_t _data_off; // NOTE: offset is relative to start of inherited data
+                         // section
+    bitsize_t _size_added;
+    // dependencies pulled in first time by current ancestor,
+    std::list<Ref<Ancestor>> _deps_added;
 };
 
 class Ancestry {
@@ -49,6 +64,9 @@ public:
     const auto& ancestors() const { return _ancestors; }
 
 private:
+    std::pair<Ref<Ancestor>, bool>
+    do_add(Ref<Class> cls, Ref<ast::TypeName> node);
+
     std::map<type_id_t, Ref<Ancestor>> _map;
     std::vector<Ref<Ancestor>> _parents;
     std::vector<Ptr<Ancestor>> _ancestors;

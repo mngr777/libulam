@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/class/ancestry.hpp"
 #include "libulam/semantic/type/conv.hpp"
 #include <algorithm>
 #include <cassert>
@@ -155,9 +156,7 @@ bool Class::is_same_or_base_of(Ref<const Class> other) const {
     return other == this || is_base_of(other);
 }
 
-bool Class::has_super() const {
-    return !_ancestry.parents().empty();
-}
+bool Class::has_super() const { return !_ancestry.parents().empty(); }
 
 Ref<Class> Class::super() {
     assert(!_ancestry.parents().empty());
@@ -166,11 +165,23 @@ Ref<Class> Class::super() {
 
 bitsize_t Class::base_off(Ref<const Class> base) const {
     assert(base->is_base_of(this));
-    return _ancestry.data_off(base);
+    return direct_bitsize() + _ancestry.data_off(base);
 }
 
 bitsize_t Class::bitsize() const {
-    bitsize_t size = direct_bitsize();
+    auto required = required_bitsize();
+    switch (kind()) {
+    case ClassKind::Element:
+        return ULAM_ATOM_SIZE;
+    case ClassKind::Transient:
+        return required;
+    default:
+        return std::min<bitsize_t>(ULAM_ATOM_SIZE, required);
+    }
+}
+
+bitsize_t Class::required_bitsize() const {
+    auto size = direct_bitsize();
     for (const auto& anc : _ancestry.ancestors())
         size += anc->cls()->direct_bitsize();
     return size;
@@ -186,6 +197,30 @@ bitsize_t Class::direct_bitsize() const {
         }
     }
     return total;
+}
+
+Ref<cls::Ancestor> Class::first_parent_over_max_bitsize() {
+    if (is_transient())
+        return {};
+    bitsize_t size = direct_bitsize();
+    for (auto parent : parents()) {
+        size += parent->size_added();
+        if (size > ULAM_ATOM_SIZE)
+            return parent;
+    }
+    return {};
+}
+
+Ref<Prop> Class::first_prop_over_max_bitsize() {
+    if (is_transient())
+        return {};
+    bitsize_t size = direct_bitsize();
+    for (auto prop : _props) {
+        size += prop->type()->bitsize();
+        if (size > ULAM_ATOM_SIZE)
+            return prop;
+    }
+    return {};
 }
 
 RValue Class::construct() const {

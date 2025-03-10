@@ -1,4 +1,5 @@
 #include "libulam/ast/nodes/type.hpp"
+#include "libulam/semantic/decl.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -50,7 +51,24 @@ bool Resolver::init(Ref<Class> cls) {
 
 bool Resolver::resolve(Ref<Class> cls) {
     debug() << "resolving " << cls->name() << "\n";
-    return cls->resolve(*this);
+    bool ok = cls->resolve(*this);
+
+    // check if size limit is exceeded
+    if (ok && cls->required_bitsize() > cls->bitsize()) {
+        cls->set_state(Decl::Unresolvable);
+        auto prop = cls->first_prop_over_max_bitsize();
+        if (prop) {
+            diag().error(prop->node(), "size limit exceeded");
+            return false;
+        }
+        auto parent = cls->first_parent_over_max_bitsize();
+        if (parent) {
+            diag().error(parent->node(), "size limit exceeded");
+            return false;
+        }
+        assert(false);
+    }
+    return ok;
 }
 
 bool Resolver::resolve(Scope::Symbol* sym, Ref<Scope> scope) {

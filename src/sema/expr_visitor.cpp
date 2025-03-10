@@ -408,8 +408,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         auto fset = cls->op(Op::ArrayAccess);
         if (!fset)
             return {ExprError::NoOperator};
-        bool is_tmp = array_res.value().is_rvalue() ||
-                      array_res.value().lvalue().is_xvalue();
+        bool is_tmp = array_res.value().is_tmp();
         TypedValueList args;
         args.emplace_back(int_type, std::move(index_val));
         ExprRes res =

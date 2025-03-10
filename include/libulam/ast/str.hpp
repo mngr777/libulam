@@ -8,7 +8,7 @@ namespace ulam::ast {
 // TODO: add length
 // NOTE: loc_id/length are for error reporting purposes and do not have to match
 // the string, e.g. function name string for operator can be "operator+=" while
-// loc_id/length point to "operator +=" in program text
+// loc_id/length point to "operator +=" (with a space) in program text
 
 class Str {
 public:

@@ -69,7 +69,11 @@ public:
     const auto& parents() const { return _ancestry.parents(); }
 
     bitsize_t bitsize() const override;
+    bitsize_t required_bitsize() const;
     bitsize_t direct_bitsize() const;
+
+    Ref<cls::Ancestor> first_parent_over_max_bitsize();
+    Ref<Prop> first_prop_over_max_bitsize();
 
     bool is_constructible() const override { return true; }
     RValue construct() const override;

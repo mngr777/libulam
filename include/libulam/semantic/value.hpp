@@ -107,9 +107,6 @@ private:
 
 class Value : public detail::Variant<LValue, RValue> {
 public:
-    using RValueCb = std::function<void(RValue&)>;
-    using RValueConstCb = std::function<void(const RValue&)>;
-
     explicit Value(LValue lval): Variant{std::move(lval)} {}
     explicit Value(RValue&& rval): Variant{std::move(rval)} {}
     Value(): Value{RValue{}} {}

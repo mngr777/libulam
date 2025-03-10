@@ -84,7 +84,7 @@ public:
     str_id_t name_id() const { return name().str_id(); }
 };
 
-// Version number of persistent scope before definition
+// Version number of persistent scope after definition
 class DefNode {
     ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
 public:
