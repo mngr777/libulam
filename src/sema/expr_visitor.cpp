@@ -65,13 +65,11 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     // super
     if (node->is_super()) {
         auto self_cls = _scope->self_cls();
-        if (!self_cls->has_super()) {
-            auto message = std::string{"class "} + self_cls->name() + " does not have a superclass";
-            diag().error(node, message);
+        auto sup = class_super(node, self_cls);
+        if (!sup)
             return {ExprError::NoSuper};
-        }
         auto self = _scope->self();
-        return {self_cls->super(), Value{self.as(self_cls->super())}};
+        return {sup, Value{self.as(sup)}};
     }
 
     auto name = node->name();
@@ -359,6 +357,17 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     auto cls = obj_res.type()->actual()->as_class();
     auto obj_val = obj_res.move_value();
 
+    // foo.Base.bar?
+    if (node->has_base()) {
+        cls = class_base(node, cls, node->base());
+        if (!cls) {
+            auto error = node->base()->is_super() ? ExprError::NoSuper
+                                                  : ExprError::BaseNotFound;
+            return {error};
+        }
+        obj_val = Value{obj_val.as(cls)};
+    }
+
     // get symbol
     auto name = node->ident()->name();
     auto sym = cls->get(name.str_id());
@@ -502,6 +511,25 @@ bool ExprVisitor::check_is_class(
         return false;
     }
     return true;
+}
+
+Ref<Class> ExprVisitor::class_super(Ref<ast::Expr> node, Ref<Class> cls) {
+    if (!cls->has_super()) {
+        diag().error(node, "class does not have a superclass");
+        return {};
+    }
+    return cls->super();
+}
+
+Ref<Class> ExprVisitor::class_base(
+    Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident) {
+    if (ident->is_super())
+        return class_super(node, cls);
+    assert(!ident->is_self());
+    auto base = cls->base(ident->name_id());
+    if (!base)
+        diag().error(node, "class does not have a base with this name");
+    return base;
 }
 
 ExprRes ExprVisitor::cast(

@@ -11,7 +11,7 @@ enum class ExprError {
     Error,
     NoSelf,
     NoSuper,
-    NoSuperClass,
+    BaseNotFound,
     SymbolNotFound,
     MemberNotFound,
     UnresolvableType,

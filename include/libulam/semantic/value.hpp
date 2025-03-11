@@ -91,6 +91,7 @@ public:
     Ref<Type> dyn_obj_type() const;
 
     LValue self();
+    LValue as(Ref<Type> type);
 
     LValue array_access(array_idx_t idx);
     LValue prop(Ref<Prop> prop);
@@ -136,6 +137,7 @@ public:
     Ref<Type> dyn_obj_type() const;
 
     LValue self();
+    LValue as(Ref<Type> type);
 
     Value array_access(array_idx_t index);
     Value prop(Ref<Prop> prop);

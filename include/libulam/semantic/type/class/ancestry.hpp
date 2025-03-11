@@ -55,6 +55,8 @@ public:
 
     bool is_base(Ref<const Class> cls) const;
 
+    Ref<Ancestor> base(str_id_t name_id);
+
     bitsize_t data_off(Ref<const Class> cls) const;
 
     auto& parents() { return _parents; }
@@ -68,6 +70,7 @@ private:
     do_add(Ref<Class> cls, Ref<ast::TypeName> node);
 
     std::map<type_id_t, Ref<Ancestor>> _map;
+    std::map<str_id_t, Ref<Ancestor>> _name_id_map;
     std::vector<Ref<Ancestor>> _parents;
     std::vector<Ptr<Ancestor>> _ancestors;
 };

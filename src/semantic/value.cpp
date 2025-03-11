@@ -155,6 +155,14 @@ LValue RValue::self() {
     return lval;
 }
 
+LValue RValue::as(Ref<Type> type) {
+    LValue lval{accept(
+        [&](DataPtr& data) { return data->view(); },
+        [&](auto& other) -> DataView { assert(false); })};
+    lval.set_scope_lvl(AutoScopeLvl);
+    return lval;
+}
+
 LValue RValue::array_access(array_idx_t idx) {
     return accept(
         [&](DataPtr& data) { return LValue{data->array_item(idx)}; },
@@ -197,6 +205,10 @@ Ref<Type> Value::dyn_obj_type() const {
 
 LValue Value::self() {
     return accept([&](auto& val) { return val.self(); });
+}
+
+LValue Value::as(Ref<Type> type) {
+    return accept([&](auto& val) { return val.as(type); });
 }
 
 Value Value::array_access(array_idx_t idx) {

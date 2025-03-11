@@ -60,6 +60,8 @@ public:
     bool is_base_of(Ref<const Class> other) const;
     bool is_same_or_base_of(Ref<const Class> other) const;
 
+    Ref<Class> base(str_id_t name_id);
+
     bool has_super() const;
     Ref<Class> super();
 

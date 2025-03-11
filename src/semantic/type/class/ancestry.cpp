@@ -56,6 +56,7 @@ Ancestry::do_add(Ref<Class> cls, Ref<ast::TypeName> node) {
     auto ref = ulam::ref(anc);
     _parents.push_back(ref);
     _map[cls->id()] = ref;
+    _name_id_map[cls->name_id()] = ref;
     _ancestors.push_back(std::move(anc));
 
     // add grandparents
@@ -92,6 +93,11 @@ void Ancestry::init() {
 bool Ancestry::is_base(Ref<const Class> cls) const {
     assert(cls->id() != NoTypeId);
     return _map.count(cls->id()) == 1;
+}
+
+Ref<Ancestor> Ancestry::base(str_id_t name_id) {
+    auto it = _name_id_map.find(name_id);
+    return (it != _name_id_map.end()) ? it->second : Ref<Ancestor>{};
 }
 
 bitsize_t Ancestry::data_off(Ref<const Class> cls) const {

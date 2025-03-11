@@ -50,6 +50,10 @@ public:
     virtual bool check_is_class(
         Ref<ast::Expr> node, Ref<const Type> type, bool deref = false);
 
+    virtual Ref<Class> class_super(Ref<ast::Expr> node, Ref<Class> cls);
+    virtual Ref<Class>
+    class_base(Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident);
+
     virtual ExprRes
     cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 

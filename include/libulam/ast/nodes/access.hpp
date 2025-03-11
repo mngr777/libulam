@@ -16,14 +16,18 @@ public:
     ULAM_AST_TUPLE_PROP(args, 1)
 };
 
-class MemberAccess : public Tuple<OpExpr, Expr, Ident> {
+class MemberAccess : public Tuple<OpExpr, Expr, Ident, TypeIdent> {
     ULAM_AST_EXPR
 public:
-    MemberAccess(Ptr<Expr>&& obj, Ptr<Ident>&& ident):
-        Tuple{std::move(obj), std::move(ident), Op::MemberAccess} {}
+    MemberAccess(
+        Ptr<Expr>&& obj, Ptr<Ident>&& ident, Ptr<TypeIdent>&& base = {}):
+        Tuple{
+            std::move(obj), std::move(ident), std::move(base),
+            Op::MemberAccess} {}
 
     ULAM_AST_TUPLE_PROP(obj, 0);
     ULAM_AST_TUPLE_PROP(ident, 1);
+    ULAM_AST_TUPLE_PROP(base, 2);
 };
 
 class ClassConstAccess : public Tuple<OpExpr, TypeName, Ident> {

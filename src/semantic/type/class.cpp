@@ -156,6 +156,11 @@ bool Class::is_same_or_base_of(Ref<const Class> other) const {
     return other == this || is_base_of(other);
 }
 
+Ref<Class> Class::base(str_id_t name_id) {
+    auto anc = _ancestry.base(name_id);
+    return anc ? anc->cls() : Ref<Class>{};
+}
+
 bool Class::has_super() const { return !_ancestry.parents().empty(); }
 
 Ref<Class> Class::super() {

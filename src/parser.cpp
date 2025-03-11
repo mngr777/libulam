@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/type.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -1315,10 +1316,9 @@ Ptr<ast::Expr> Parser::parse_member_access_or_type_op(Ptr<ast::Expr>&& obj) {
     assert(_tok.is(tok::Period));
     auto op_loc_id = _tok.loc_id;
     consume();
-    if (_tok.is(tok::Ident))
+    if (_tok.in(tok::Ident, tok::TypeIdent))
         return parse_member_access_rest(std::move(obj), op_loc_id);
-    auto type_op = _tok.type_op();
-    if (type_op != TypeOp::None)
+    if (_tok.is_type_op())
         return parse_type_op_rest({}, std::move(obj));
     unexpected();
     return {};
@@ -1326,9 +1326,25 @@ Ptr<ast::Expr> Parser::parse_member_access_or_type_op(Ptr<ast::Expr>&& obj) {
 
 Ptr<ast::MemberAccess>
 Parser::parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
-    assert(_tok.is(tok::Ident));
+    assert(_tok.in(tok::Ident, tok::TypeIdent));
+
+    // foo.Base.bar
+    Ptr<ast::TypeIdent> base{};
+    if (_tok.is(tok::TypeIdent)) {
+        base = parse_type_ident(TypeAllowSuper);
+        if (!base)
+            return {};
+        expect(tok::Period);
+    }
+
+    if (!match(tok::Ident))
+        return {};
+    auto ident = parse_ident();
+    if (!ident)
+        return {};
+
     return tree_loc<ast::MemberAccess>(
-        op_loc_id, std::move(obj), parse_ident());
+        op_loc_id, std::move(obj), std::move(ident), std::move(base));
 }
 
 Ptr<ast::ClassConstAccess>
