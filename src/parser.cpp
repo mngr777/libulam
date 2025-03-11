@@ -1,5 +1,3 @@
-#include "libulam/ast/nodes/stmts.hpp"
-#include "libulam/semantic/ops.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -824,11 +822,20 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         return parse_type_def();
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent: {
-        auto type = parse_type_name();
+        auto type_name = parse_type_name(true);
         if (_tok.is(tok::Period)) {
-            // FIXME: there is also e.g. class var access
             consume();
-            auto expr = parse_type_op_rest(std::move(type), {});
+            Ptr<ast::Expr> expr{};
+            if (_tok.is(tok::Ident)) {
+                // Type.<ident>
+                expr = parse_class_const_access_rest(std::move(type_name));
+            } else if (_tok.is_type_op()) {
+                // Type.<type-op>
+                expr = parse_type_op_rest(std::move(type_name), {});
+            } else {
+                unexpected();
+                return {};
+            }
             return tree<ast::ExprStmt>(std::move(expr));
         } else if (_tok.in(tok::Ident, tok::Amp)) {
             // [&] first name
@@ -836,7 +843,7 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
             auto first_name = tok_ast_str();
             consume();
             return parse_var_def_list_rest(
-                std::move(type), false, first_name, first_is_ref);
+                std::move(type_name), false, first_name, first_is_ref);
         } else {
             unexpected();
             panic(tok::Semicol);
@@ -1070,7 +1077,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
     switch (_tok.type) {
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
-        return parse_type_op();
+        return parse_class_const_access_or_type_op();
     case tok::Ident:
         return parse_ident(true);
     case tok::True:
@@ -1123,11 +1130,12 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(expr_flags_t flags) {
     return tree_loc<ast::ParenExpr>(loc_id, std::move(inner));
 }
 
-Ptr<ast::TypeOpExpr> Parser::parse_type_op() {
+Ptr<ast::Expr> Parser::parse_class_const_access_or_type_op() {
     assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
-    auto type = parse_type_name(true /* maybe type op */);
-    assert(type);
-    return parse_type_op_rest(std::move(type), {});
+    auto type_name = parse_type_name(true);
+    if (_tok.is(tok::Ident))
+        return parse_class_const_access_rest(std::move(type_name));
+    return parse_type_op_rest(std::move(type_name), {});
 }
 
 Ptr<ast::TypeOpExpr>
@@ -1215,7 +1223,7 @@ Ptr<ast::FullTypeName> Parser::parse_full_type_name(bool maybe_type_op) {
     return node;
 }
 
-Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op) {
+Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
     if (!_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
         unexpected();
         return {};
@@ -1224,8 +1232,11 @@ Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op) {
     auto node = tree_loc<ast::TypeName>(loc_id, parse_type_spec());
     while (_tok.is(tok::Period)) {
         consume();
-        if (maybe_type_op && _tok.type_op() != TypeOp::None)
-            break; // NOTE: '.' consumed
+        if (maybe_type_op_or_const &&
+            (_tok.is(tok::Ident) || _tok.is_type_op())) {
+            // either Type.<const-var-ident> or Type.<typeop>
+            break; // NOTE: '.' consumed,
+        }
         if (!_tok.is(tok::TypeIdent) || _tok.is_self_class()) {
             unexpected();
             return {};
@@ -1318,6 +1329,17 @@ Parser::parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
     assert(_tok.is(tok::Ident));
     return tree_loc<ast::MemberAccess>(
         op_loc_id, std::move(obj), parse_ident());
+}
+
+Ptr<ast::ClassConstAccess>
+Parser::parse_class_const_access_rest(Ptr<ast::TypeName> type_name) {
+    assert(_tok.is(tok::Ident));
+    auto ident = parse_ident();
+    if (!ident)
+        return {};
+    auto loc_id = ident->loc_id();
+    return tree_loc<ast::ClassConstAccess>(
+        loc_id, std::move(type_name), std::move(ident));
 }
 
 Ptr<ast::TypeIdent> Parser::parse_type_ident(bool allow_self) {

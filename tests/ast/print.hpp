@@ -1,11 +1,12 @@
 #pragma once
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
 #include <libulam/ast.hpp>
+#include <libulam/ast/nodes/access.hpp>
+#include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
+#include <libulam/ast/nodes/root.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -115,6 +116,7 @@ protected:
     void visit(ulam::Ref<ulam::ast::UnaryOp> node) override;
     void visit(ulam::Ref<ulam::ast::ArrayAccess> node) override;
     void visit(ulam::Ref<ulam::ast::MemberAccess> node) override;
+    void visit(ulam::Ref<ulam::ast::ClassConstAccess> node) override;
 
     bool do_visit(ulam::Ref<ulam::ast::ModuleDef> node) override;
     void traverse(ulam::Ref<ulam::ast::VarDefList> node) override;

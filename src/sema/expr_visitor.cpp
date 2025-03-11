@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/access.hpp"
 #include "libulam/semantic/expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
@@ -377,6 +378,33 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return {builtins().type(FunId), obj_val.bound_fset(fset)};
         },
         [&](auto other) -> ExprRes { assert(false); });
+}
+
+ExprRes ExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
+    debug() << __FUNCTION__ << "ClassConstAccess";
+    DBG_LINE(node);
+    Resolver resolver{_program};
+    auto type = resolver.resolve_class_name(node->type_name(), _scope, false);
+    if (!type)
+        return {ExprError::UnresolvableType};
+
+    auto cls = type->as_class();
+    auto sym = cls->get(node->ident()->name_id());
+    if (!sym) {
+        diag().error(node->ident(), "class member not found");
+        return {ExprError::MemberNotFound};
+    }
+    if (!sym->is<Var>()) {
+        diag().error(node->ident(), "not a class constant");
+        return {ExprError::NotClassConst};
+    }
+    // TODO: move resolution to class
+    auto var = sym->get<Var>();
+    auto scope = cls->scope();
+    auto scope_view = scope->view(var->scope_version());
+    if (!resolver.resolve(var, ref(scope_view)))
+        return {ExprError::UnresolvableClassConst};
+    return {var->type(), Value{var->rvalue()}};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {

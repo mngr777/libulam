@@ -14,6 +14,7 @@ class NumLit;
 class StrLit;
 class FunCall;
 class MemberAccess;
+class ClassConstAccess;
 class ArrayAccess;
 
 class ExprVisitor {
@@ -29,6 +30,7 @@ public:
     virtual ExprRes visit(Ref<ast::StrLit> node) = 0;
     virtual ExprRes visit(Ref<ast::FunCall> node) = 0;
     virtual ExprRes visit(Ref<ast::MemberAccess> node) = 0;
+    virtual ExprRes visit(Ref<ast::ClassConstAccess> node) = 0;
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) = 0;
 };
 

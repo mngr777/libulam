@@ -408,6 +408,16 @@ void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
     paren_r();
 }
 
+void Printer::visit(ulam::Ref<ulam::ast::ClassConstAccess> node) {
+    assert(node->has_type_name());
+    assert(node->has_ident());
+    paren_l();
+    accept_me(node->type_name());
+    _os << ".";
+    accept_me(node->ident());
+    paren_r();
+}
+
 bool Printer::do_visit(ulam::Ref<ulam::ast::ModuleDef> node) {
     // _os << "/* module */\n";
     return true;

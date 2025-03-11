@@ -41,6 +41,7 @@ public:
     virtual ExprRes visit(Ref<ast::StrLit> node) override;
     virtual ExprRes visit(Ref<ast::FunCall> node) override;
     virtual ExprRes visit(Ref<ast::MemberAccess> node) override;
+    virtual ExprRes visit(Ref<ast::ClassConstAccess> node) override;
     virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
     virtual bool check_is_assignable(Ref<ast::Expr> node, const Value& value);

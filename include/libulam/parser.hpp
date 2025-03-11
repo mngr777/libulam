@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/access.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
@@ -90,12 +91,13 @@ private:
         expr_flags_t flags = ExprNoFlags);
     Ptr<ast::Expr> parse_expr_lhs(expr_flags_t flags = ExprNoFlags);
     Ptr<ast::Expr> parse_paren_expr_or_cast(expr_flags_t flags = ExprNoFlags);
-    Ptr<ast::TypeOpExpr> parse_type_op();
+    Ptr<ast::Expr> parse_class_const_access_or_type_op();
     Ptr<ast::TypeOpExpr>
     parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr);
     Ptr<ast::TypeExpr> parse_type_expr();
     Ptr<ast::ExprList> parse_array_dims(bool allow_empty = false);
-    Ptr<ast::FullTypeName> parse_full_type_name(bool maybe_type_op = false);
+    Ptr<ast::FullTypeName>
+    parse_full_type_name(bool maybe_type_op_or_const = false);
     Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeSpec> parse_type_spec();
     Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& callable);
@@ -104,6 +106,8 @@ private:
     Ptr<ast::Expr> parse_member_access_or_type_op(Ptr<ast::Expr>&& obj);
     Ptr<ast::MemberAccess>
     parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
+    Ptr<ast::ClassConstAccess>
+    parse_class_const_access_rest(Ptr<ast::TypeName> type_name);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
     Ptr<ast::TypeIdent> parse_type_ident(bool allow_self = false);
     Ptr<ast::Ident> parse_ident(bool allow_self = false);
