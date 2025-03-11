@@ -58,7 +58,9 @@ bool Resolver::resolve(Ref<Class> cls) {
         cls->set_state(Decl::Unresolvable);
         auto prop = cls->first_prop_over_max_bitsize();
         if (prop) {
-            diag().error(prop->node(), "size limit exceeded");
+            auto message = std::string{"size limit of "} +
+                           std::to_string(cls->bitsize()) + " bits exceeded";
+            diag().error(prop->node(), std::move(message));
             return false;
         }
         auto parent = cls->first_parent_over_max_bitsize();
@@ -485,7 +487,7 @@ Ref<Type> Resolver::apply_array_dims(
                            std::to_string(num) +
                            " dimensions while initializer list has " +
                            std::to_string(depth);
-            diag().error(node, message);
+            diag().error(node, std::move(message));
             return {};
         }
     }
@@ -508,7 +510,7 @@ Ref<Type> Resolver::apply_array_dims(
                                    std::to_string(size) +
                                    " does not match initializer list (" +
                                    std::to_string(init_list->child_num()) + ")";
-                    diag().error(expr, message);
+                    diag().error(expr, std::move(message));
                     return {};
                 }
             }

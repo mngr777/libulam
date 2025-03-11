@@ -10,7 +10,7 @@ class BinaryOp;
 
 namespace ulam {
 
-class BoolType : public _PrimType<BoolId, 1, ULAM_MAX_INT_SIZE, 3> {
+class BoolType : public _PrimType<BoolId, 1, ULAM_MAX_INT_SIZE, 1> {
 public:
     BoolType(
         Builtins& builtins,

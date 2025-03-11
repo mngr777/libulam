@@ -654,8 +654,10 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
     } else if (from->is_ref()) {
         // copy value from reference
         assert(val.is_lvalue());
-        from = from->deref();
         val = val.deref();
+        from = from->deref();
+        if (from->is_class())
+            from = val.dyn_obj_type();
     }
 
     if (to->is_same(from))
@@ -707,7 +709,7 @@ Value ExprVisitor::do_cast(
         auto convs = cls->convs(to, true);
         if (convs.size() == 0) {
             assert(to->is_object());
-            assert(cls->is_castable_to_object_type(to));
+            assert(cls->is_castable_to_object_type(to, true));
             return cls->cast_to_object_type(to, std::move(val));
 
         } else {

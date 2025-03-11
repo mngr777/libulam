@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
             "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
             "t3756_test_compiler_elementandquark_assignreftosub_toint_issue.test", // casts, TODO
             "t3757_test_compiler_elementandquark_assignreftosubref_issue.test", // casts, TODO
+            "t3788_test_compiler_localtransientcallsfuncswrefargwithself_issue.test", // UrSelf
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

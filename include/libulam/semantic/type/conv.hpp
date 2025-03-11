@@ -14,11 +14,12 @@ using conv_cost_t = std::uint8_t;
 static constexpr conv_cost_t SamePrimTypeConvCost = 1;
 static constexpr conv_cost_t DiffPrimTypeConvCost = 2;
 static constexpr conv_cost_t AtomToElementConvCost = 2;
-static constexpr conv_cost_t ElementToAtomConvCost = 2;
-static constexpr conv_cost_t ClassToBaseConvCost = 1;
 static constexpr conv_cost_t ClassConvCost = 3;
 static constexpr conv_cost_t CastCost =
     ClassConvCost + DiffPrimTypeConvCost + 1;
+static constexpr conv_cost_t ElementToAtomConvCost = 2;
+static constexpr conv_cost_t ClassDowncastCost = 1;
+static constexpr conv_cost_t ClassUpcastCost = CastCost;
 static constexpr conv_cost_t MaxConvCost = -1;
 
 class ConvList {
