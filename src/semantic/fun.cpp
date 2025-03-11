@@ -54,7 +54,7 @@ void Fun::add_param(Ref<ast::Param> node) {
 unsigned Fun::min_param_num() const {
     unsigned num = param_num();
     for (auto it = _params.rbegin(); it != _params.rend(); ++it) {
-        if (!(*it)->node()->has_default_value())
+        if (!(*it)->node()->has_init_value())
             break;
         --num;
     }

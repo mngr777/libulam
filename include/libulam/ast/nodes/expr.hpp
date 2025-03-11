@@ -28,6 +28,15 @@ public:
 
 class ExprList : public List<Node, Expr> {
     ULAM_AST_NODE
+    ULAM_AST_SIMPLE_ATTR(bool, has_empty, false)
+public:
+    ExprList(): List{} {}
+
+    void add(Ptr<Expr>&& expr) {
+        if (!expr)
+            set_has_empty(true);
+        List::add(std::move(expr));
+    }
 };
 
 // NOTE: type operators can work on both expressions and types, e.g.

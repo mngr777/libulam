@@ -31,16 +31,10 @@ public:
     bool resolve(Ref<FunSet> fset, Ref<Scope> scope);
     bool resolve(Ref<Fun> fun, Ref<Scope> scope);
 
-    Ref<Type> resolve_var_decl_type(
+    Ref<Class> resolve_class_name(
         Ref<ast::TypeName> type_name,
-        Ref<ast::VarDecl> node,
         Ref<Scope> scope,
         bool resolve_class = false);
-
-    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
-
-    Ref<Class> resolve_class_name(
-        Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class = false);
 
     Ref<Type> resolve_full_type_name(
         Ref<ast::FullTypeName> full_type_name,
@@ -57,8 +51,24 @@ public:
 private:
     bool resolve_cls_deps(Ref<Type> type);
 
-    Ref<Type>
-    apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope);
+    Ref<Type> resolve_var_decl_type(
+        Ref<ast::TypeName> type_name,
+        Ref<ast::VarDecl> node,
+        Ref<Scope> scope,
+        bool resolve_class = false);
+
+    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
+
+    Ref<Type> apply_array_dims(
+        Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
+        return apply_array_dims(type, dims, Ref<ast::InitList>{}, scope);
+    }
+
+    Ref<Type> apply_array_dims(
+        Ref<Type> type,
+        Ref<ast::ExprList> dims,
+        Ref<ast::InitList> init_list,
+        Ref<Scope> scope);
 
     std::optional<bool> check_state(Ref<Decl> decl);
     void update_state(Ref<Decl> decl, bool is_resolved);

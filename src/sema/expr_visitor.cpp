@@ -583,7 +583,7 @@ ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     res.second = true;
     unsigned n = 0;
     for (auto param : tpl->params()) {
-        Ref<ast::Expr> arg = param->node()->default_value();
+        Ref<ast::Expr> arg = param->node()->init_value();
         bool is_default = true;
         if (n < args->child_num()) {
             is_default = false;

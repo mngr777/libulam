@@ -84,9 +84,9 @@ void PrinterBase::print_var_decl(ulam::Ref<ulam::ast::VarDecl> node) {
     if (node->has_array_dims())
         print_array_dims(node->array_dims());
     // = value
-    if (node->has_default_value()) {
+    if (node->has_init_value()) {
         _os << " = ";
-        accept_me(node->default_value());
+        accept_me(node->init_value());
     }
 }
 

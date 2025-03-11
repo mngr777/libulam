@@ -105,8 +105,8 @@ void Init::visit(Ref<ast::VarDefList> node) {
         auto name_id = def->name_id();
 
         // visit for potential type names
-        if (def->has_default_value())
-            def->default_value()->accept(*this);
+        if (def->has_init_value())
+            def->init_value()->accept(*this);
 
         // already in current scope?
         if (scope()->has(name_id, true)) {

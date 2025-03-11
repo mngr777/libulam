@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/preproc.hpp>
@@ -25,6 +26,10 @@ public:
     Ptr<ast::Block> parse_stmts(std::string text);
 
 private:
+    using expr_flags_t = std::uint8_t;
+    static constexpr expr_flags_t ExprNoFlags = 0;
+    static constexpr expr_flags_t ExprStopAtComma = 1;
+
     void consume();
     void consume_if(tok::Type type);
 
@@ -61,6 +66,11 @@ private:
     Ptr<ast::ParamList> parse_param_list(bool allow_ellipsis = false);
     Ptr<ast::Param> parse_param(bool requires_value);
 
+    std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>>
+    parse_init_value_or_list(bool is_required, Ref<ast::ExprList> array_dims);
+    Ptr<ast::InitList> parse_init_list();
+    bool validate_init_list(Ref<ast::InitList> list);
+
     Ptr<ast::Block> parse_block();
     void parse_as_block(Ref<ast::Block> node, bool implicit_braces = false);
     Ptr<ast::Stmt> parse_stmt();
@@ -71,17 +81,20 @@ private:
     Ptr<ast::Break> parse_break();
     Ptr<ast::Continue> parse_continue();
 
-    Ptr<ast::Expr> parse_expr();
-    Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec);
+    Ptr<ast::Expr> parse_expr(expr_flags_t flags = ExprNoFlags);
     Ptr<ast::Expr>
-    parse_expr_climb_rest(Ptr<ast::Expr>&& lhs, ops::Prec min_prec);
-    Ptr<ast::Expr> parse_expr_lhs();
-    Ptr<ast::Expr> parse_paren_expr_or_cast();
+    parse_expr_climb(ops::Prec min_prec, expr_flags_t flags = ExprNoFlags);
+    Ptr<ast::Expr> parse_expr_climb_rest(
+        Ptr<ast::Expr>&& lhs,
+        ops::Prec min_prec,
+        expr_flags_t flags = ExprNoFlags);
+    Ptr<ast::Expr> parse_expr_lhs(expr_flags_t flags = ExprNoFlags);
+    Ptr<ast::Expr> parse_paren_expr_or_cast(expr_flags_t flags = ExprNoFlags);
     Ptr<ast::TypeOpExpr> parse_type_op();
     Ptr<ast::TypeOpExpr>
     parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr);
     Ptr<ast::TypeExpr> parse_type_expr();
-    Ptr<ast::ExprList> parse_array_dims();
+    Ptr<ast::ExprList> parse_array_dims(bool allow_empty = false);
     Ptr<ast::FullTypeName> parse_full_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeSpec> parse_type_spec();

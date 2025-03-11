@@ -71,8 +71,8 @@ public:
 
     virtual unsigned child_num() const { return 0; }
 
-    virtual Ref<Node> child(unsigned n) { return nullptr; }
-    virtual Ref<const Node> child(unsigned n) const { return nullptr; }
+    virtual Ref<Node> child(unsigned n) { return {}; }
+    virtual Ref<const Node> child(unsigned n) const { return {}; }
 };
 
 // Named node trait

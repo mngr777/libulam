@@ -124,14 +124,14 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
 
     // value
     if (var->is_const() && var->value().empty()) {
-        if (node->has_default_value()) {
+        if (node->has_init_value()) {
             ExprVisitor ev{_program, scope};
-            ExprRes res = node->default_value()->accept(ev);
+            ExprRes res = node->init_value()->accept(ev);
             if (!res.ok())
                 RET_UPD_STATE(var, false);
             // impl. cast to var type
-            res = ev.cast(
-                node->default_value(), var->type(), std::move(res), false);
+            res =
+                ev.cast(node->init_value(), var->type(), std::move(res), false);
             if (!res.ok())
                 RET_UPD_STATE(var, false);
             auto tv = res.move_typed_value();
@@ -231,49 +231,6 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
     }
 
     RET_UPD_STATE(fun, is_resolved);
-}
-
-Ref<Type> Resolver::resolve_var_decl_type(
-    Ref<ast::TypeName> type_name,
-    Ref<ast::VarDecl> node,
-    Ref<Scope> scope,
-    bool resolve_class) {
-    assert(scope);
-
-    // base type
-    auto type = resolve_type_name(type_name, scope, resolve_class);
-    if (!type)
-        return {};
-
-    // []
-    if (node->has_array_dims())
-        type = apply_array_dims(type, node->array_dims(), scope);
-
-    // &
-    if (node->is_ref())
-        type = type->ref_type();
-
-    return type;
-}
-
-Ref<Type>
-Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
-    assert(scope);
-
-    // base type
-    auto type = resolve_type_name(node->type_name(), scope);
-    if (!type)
-        return {};
-
-    // []
-    if (node->has_array_dims())
-        type = apply_array_dims(type, node->array_dims(), scope);
-
-    // &
-    if (node->is_ref())
-        type = type->ref_type();
-
-    return type;
 }
 
 Ref<Class> Resolver::resolve_class_name(
@@ -463,16 +420,116 @@ bool Resolver::resolve_cls_deps(Ref<Type> type) {
     return true;
 }
 
+Ref<Type> Resolver::resolve_var_decl_type(
+    Ref<ast::TypeName> type_name,
+    Ref<ast::VarDecl> node,
+    Ref<Scope> scope,
+    bool resolve_class) {
+    assert(scope);
+
+    // base type
+    auto type = resolve_type_name(type_name, scope, resolve_class);
+    if (!type)
+        return {};
+
+    // []
+    if (node->has_array_dims())
+        type = apply_array_dims(
+            type, node->array_dims(), node->init_list(), scope);
+
+    // &
+    if (node->is_ref())
+        type = type->ref_type();
+
+    return type;
+}
+
+Ref<Type>
+Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
+    assert(scope);
+
+    // base type
+    auto type = resolve_type_name(node->type_name(), scope);
+    if (!type)
+        return {};
+
+    // []
+    if (node->has_array_dims())
+        type = apply_array_dims(type, node->array_dims(), scope);
+
+    // &
+    if (node->is_ref())
+        type = type->ref_type();
+
+    return type;
+}
+
 Ref<Type> Resolver::apply_array_dims(
-    Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
+    Ref<Type> type,
+    Ref<ast::ExprList> dims,
+    Ref<ast::InitList> init_list,
+    Ref<Scope> scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
-    ExprVisitor ev{_program, scope};
-    for (unsigned n = 0; n < dims->child_num(); ++n) {
-        array_size_t size = ev.array_size(dims->get(n));
-        if (size == UnknownArraySize)
+    assert(!dims->has_empty() || init_list);
+
+    auto num = dims->child_num();
+    if (init_list) {
+        // does the number of dimensions match init list's?
+        auto depth = init_list->depth();
+        if (num != depth) {
+            assert(num > 0);
+            Ref<ast::Node> node =
+                (num < depth) ? dims->child(num - 1) : dims->child(depth);
+            auto message = std::string{"array type has "} +
+                           std::to_string(num) +
+                           " dimensions while initializer list has " +
+                           std::to_string(depth);
+            diag().error(node, message);
             return {};
-        type = type->array_type(size);
+        }
+    }
+
+    ExprVisitor ev{_program, scope};
+    for (unsigned n = 0; n < num; ++n) {
+        auto expr = dims->get(n);
+        if (expr) {
+            // eval array size expr
+            array_size_t size = ev.array_size(dims->get(n));
+            if (size == UnknownArraySize)
+                return {};
+
+            // matches init list?
+            // (one-dimensional lists are allowed to have less elements)
+            if (init_list) {
+                if ((num > 1 && size > init_list->child_num()) ||
+                    size < init_list->child_num()) {
+                    auto message = std::string{"array size "} +
+                                   std::to_string(size) +
+                                   " does not match initializer list (" +
+                                   std::to_string(init_list->child_num()) + ")";
+                    diag().error(expr, message);
+                    return {};
+                }
+            }
+            type = type->array_type(size);
+
+        } else {
+            // use size from init list
+            if (!init_list) {
+                diag().error(
+                    dims, "array size must be set explicitly unless "
+                          "initializer list is provided");
+                return {};
+            }
+            type = type->array_type(init_list->child_num());
+        }
+
+        if (init_list && n + 1 < num) {
+            // move to first sublist
+            init_list = init_list->sublist(0);
+            assert(init_list);
+        }
     }
     return type;
 }

@@ -148,9 +148,9 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
                 flags |= Var::Const;
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
             if (resolver.resolve(ref(var), scope())) {
-                if (def->has_default_value()) {
+                if (def->has_init_value()) {
                     ExprVisitor ev{program(), scope()};
-                    ExprRes res = def->default_value()->accept(ev);
+                    ExprRes res = def->init_value()->accept(ev);
                     if (res.ok()) {
                         // TODO: conversion/type error
                         auto tv = res.move_typed_value();
