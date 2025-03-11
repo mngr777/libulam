@@ -88,9 +88,9 @@ int main(int argc, char** argv) {
             "t3697_test_compiler_elementandquark_castreftoatom.test", // quark ref to Atom: use .atomof instead?
             "t3701_test_compiler_elementandquark_castclassreftoatomref.test", // quark ref to Atom&
             "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
-            "t3756_test_compiler_elementandquark_assignreftosub_toint_issue.test", // casts, TODO
-            "t3757_test_compiler_elementandquark_assignreftosubref_issue.test", // casts, TODO
             "t3788_test_compiler_localtransientcallsfuncswrefargwithself_issue.test", // UrSelf
+            "t3794_test_compiler_localtransientcallsfuncswrefargwithrefcast.test", // UrSelf
+            "t3795_test_compiler_localtransientcallsfuncswrefargbutnotref.test", // UrSelf
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
