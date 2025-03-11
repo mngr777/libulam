@@ -495,8 +495,8 @@ Ptr<ast::VarDef> Parser::parse_var_def_rest(ast::Str name, bool is_ref) {
     if (!ok)
         return {};
 
-    auto node = tree<ast::VarDef>(
-        name, std::move(array_dims), std::move(init_value),
+    auto node = tree_loc<ast::VarDef>(
+        name.loc_id(), name, std::move(array_dims), std::move(init_value),
         std::move(init_list));
     node->set_is_ref(is_ref);
     return node;
@@ -668,9 +668,9 @@ Ptr<ast::Param> Parser::parse_param(bool requires_value) {
     if (!ok)
         return {};
 
-    auto node = tree<ast::Param>(
-        name, std::move(type), std::move(array_dims), std::move(init_value),
-        std::move(init_list));
+    auto node = tree_loc<ast::Param>(
+        name.loc_id(), name, std::move(type), std::move(array_dims),
+        std::move(init_value), std::move(init_list));
     node->set_is_const(is_const);
     node->set_is_ref(is_ref);
     return node;
