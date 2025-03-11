@@ -1,5 +1,3 @@
-#include "libulam/ast/nodes/type.hpp"
-#include "libulam/semantic/decl.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -316,14 +314,23 @@ Ref<Type> Resolver::resolve_type_name(
 
         // resolve typedef
         ident = type_name->ident(n);
-        type = cls->init_type_def(*this, ident->name_id());
+        if (ident->is_super()) {
+            if (!cls->has_super()) {
+                diag().error(ident, "class doesn't have a superclass");
+                return {};
+            }
+            type = cls->super();
+        } else {
+            assert(!ident->is_self());
+            type = cls->init_type_def(*this, ident->name_id());
+        }
         // not found ?
         if (!type) {
             diag().error(ident, "type name not found in class");
             return {};
         }
         // resolved?
-        if (!type->as_alias()->is_ready())
+        if (type->is_alias() && !type->as_alias()->is_ready())
             return {};
     }
 

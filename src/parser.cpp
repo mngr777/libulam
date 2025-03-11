@@ -1241,7 +1241,7 @@ Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
             unexpected();
             return {};
         }
-        node->add(parse_type_ident());
+        node->add(parse_type_ident(TypeAllowSuper));
     }
     return node;
 }
@@ -1255,7 +1255,7 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
         builtin_type_id = _tok.builtin_type_id();
         consume();
     } else {
-        ident = parse_type_ident(true);
+        ident = parse_type_ident(TypeAllowSelf | TypeAllowSuper);
         if (!ident)
             return {};
     }
@@ -1342,17 +1342,17 @@ Parser::parse_class_const_access_rest(Ptr<ast::TypeName> type_name) {
         loc_id, std::move(type_name), std::move(ident));
 }
 
-Ptr<ast::TypeIdent> Parser::parse_type_ident(bool allow_self) {
+Ptr<ast::TypeIdent> Parser::parse_type_ident(type_flags_t flags) {
     assert(_tok.is(tok::TypeIdent));
     auto str = tok_ast_str();
     bool is_self = _tok.is_self_class();
     bool is_super = _tok.is_super_class();
     consume();
-    if (!allow_self && is_self) {
+    if (!(flags & TypeAllowSelf) && is_self) {
         diag(str.loc_id(), 1, "`Self' is not allowed in this context");
         return {};
     }
-    if (!allow_self && is_super) {
+    if (!(flags & TypeAllowSuper) && is_super) {
         diag(str.loc_id(), 1, "`Super' is not allowed in this context");
         return {};
     }

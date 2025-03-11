@@ -28,8 +28,13 @@ public:
 
 private:
     using expr_flags_t = std::uint8_t;
-    static constexpr expr_flags_t ExprNoFlags = 0;
+    static constexpr expr_flags_t NoExprFlags = 0;
     static constexpr expr_flags_t ExprStopAtComma = 1;
+
+    using type_flags_t = std::uint8_t;
+    static constexpr type_flags_t NoTypeFlags = 0;
+    static constexpr type_flags_t TypeAllowSelf = 1;
+    static constexpr type_flags_t TypeAllowSuper = 1 << 1;
 
     void consume();
     void consume_if(tok::Type type);
@@ -82,15 +87,15 @@ private:
     Ptr<ast::Break> parse_break();
     Ptr<ast::Continue> parse_continue();
 
-    Ptr<ast::Expr> parse_expr(expr_flags_t flags = ExprNoFlags);
+    Ptr<ast::Expr> parse_expr(expr_flags_t flags = NoExprFlags);
     Ptr<ast::Expr>
-    parse_expr_climb(ops::Prec min_prec, expr_flags_t flags = ExprNoFlags);
+    parse_expr_climb(ops::Prec min_prec, expr_flags_t flags = NoExprFlags);
     Ptr<ast::Expr> parse_expr_climb_rest(
         Ptr<ast::Expr>&& lhs,
         ops::Prec min_prec,
-        expr_flags_t flags = ExprNoFlags);
-    Ptr<ast::Expr> parse_expr_lhs(expr_flags_t flags = ExprNoFlags);
-    Ptr<ast::Expr> parse_paren_expr_or_cast(expr_flags_t flags = ExprNoFlags);
+        expr_flags_t flags = NoExprFlags);
+    Ptr<ast::Expr> parse_expr_lhs(expr_flags_t flags = NoExprFlags);
+    Ptr<ast::Expr> parse_paren_expr_or_cast(expr_flags_t flags = NoExprFlags);
     Ptr<ast::Expr> parse_class_const_access_or_type_op();
     Ptr<ast::TypeOpExpr>
     parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr);
@@ -109,7 +114,7 @@ private:
     Ptr<ast::ClassConstAccess>
     parse_class_const_access_rest(Ptr<ast::TypeName> type_name);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
-    Ptr<ast::TypeIdent> parse_type_ident(bool allow_self = false);
+    Ptr<ast::TypeIdent> parse_type_ident(type_flags_t = NoTypeFlags);
     Ptr<ast::Ident> parse_ident(bool allow_self = false);
     bool parse_is_ref();
     Ptr<ast::BoolLit> parse_bool_lit();
