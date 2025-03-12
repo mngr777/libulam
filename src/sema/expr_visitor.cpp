@@ -79,8 +79,12 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
         return {ExprError::SymbolNotFound};
     }
 
+    Resolver resolver{_program};
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
+            // TODO: add `module' to Decl, use module scope to resolve
+            if (var->has_cls() && !resolver.resolve(var))
+                return {ExprError::UnresolvableVar};
             return {var->type(), Value{var->lvalue()}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
@@ -253,8 +257,9 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
             return {boolean, Value{boolean->construct(is)}};
 
         } else if (arg_type->is_class()) {
+            Resolver resolver{_program};
             auto cls = arg_type->as_class();
-            auto fset = cls->op(op);
+            auto fset = cls->resolved_op(op, resolver);
             assert(fset);
             return funcall(node, fset, tv.value().self(), {});
         }
@@ -280,7 +285,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     auto cast_res = maybe_cast(node, cast_type, res.move_typed_value(), true);
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
-    return {cast_type, Value{std::move(cast_res.first)}};
+    return {cast_type, std::move(cast_res.first)};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
@@ -369,6 +374,7 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
     }
 
     // get symbol
+    assert(cls->is_ready());
     auto name = node->ident()->name();
     auto sym = cls->get(name.str_id());
     if (!sym) {
@@ -378,6 +384,9 @@ ExprRes ExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
+            Resolver resolver{_program};
+            if (!resolver.resolve(var))
+                return {ExprError::UnresolvableVar};
             return {var->type(), Value{var->lvalue()}};
         },
         [&](Ref<Prop> prop) -> ExprRes {
@@ -539,7 +548,7 @@ ExprRes ExprVisitor::cast(
     auto cast_res = maybe_cast(node, type, res.move_typed_value(), expl);
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
-    return {type, Value{std::move(cast_res.first)}};
+    return {type, std::move(cast_res.first)};
 }
 
 bitsize_t
@@ -705,6 +714,8 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
             diag().error(node, "cannot take a reference to xvalue");
             return {Value{LValue{}}, CastError};
         }
+        if (from->deref()->is_class())
+            from = val.dyn_obj_type()->ref_type();
         from = from->ref_type();
 
     } else if (from->is_ref()) {
@@ -733,6 +744,7 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
         }
         diag().error(node, "suggest explicit cast");
     }
+    diag().error(node, "invalid cast");
     return {Value{RValue{}}, CastError};
 }
 

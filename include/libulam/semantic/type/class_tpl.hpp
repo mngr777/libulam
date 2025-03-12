@@ -59,8 +59,6 @@ public:
 private:
     using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
 
-    bool resolve_params(sema::Resolver& resolver);
-
     Ptr<Class> inst(TypedValueList&& args);
 
     // TMP

@@ -85,16 +85,6 @@ Ref<Class> ClassTpl::type(TypedValueList&& args) {
     return cls_ref;
 }
 
-bool ClassTpl::resolve_params(sema::Resolver& resolver) {
-    for (auto [_, sym] : *param_scope()) {
-        auto scope_version = sym->as_decl()->scope_version();
-        auto scope = param_scope()->view(scope_version);
-        if (!resolver.resolve(sym, ref(scope)))
-            return false;
-    }
-    return true;
-}
-
 Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
     auto& str_pool = module()->program()->str_pool();
     auto cls = make<Class>(str_pool.get(name_id()), this);

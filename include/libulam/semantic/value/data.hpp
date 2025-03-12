@@ -90,7 +90,9 @@ public:
     bool is_atom() const;
     bool is_class() const;
 
-    Ref<Type> type() const { return _view_type; }
+    Ref<Type> type(bool real = false) const {
+        return real ? _type : _view_type;
+    }
 
     BitsView bits();
     const BitsView bits() const;

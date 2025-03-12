@@ -57,6 +57,10 @@ public:
     Ref<AliasType> init_type_def(sema::Resolver& resolver, str_id_t name_id);
     bool resolve(sema::Resolver& resolver);
 
+    // NOTE: check existence with `has()/has_op()` first
+    Symbol* get_resolved(str_id_t name_id, sema::Resolver& resolver);
+    Ref<FunSet> resolved_op(Op op, sema::Resolver& resolver);
+
     bool is_base_of(Ref<const Class> other) const;
     bool is_same_or_base_of(Ref<const Class> other) const;
 
@@ -111,9 +115,10 @@ protected:
     Ref<FunSet> add_op_fset(Op op) override;
 
 private:
-    bool resolve_params(sema::Resolver& resolver);
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
-    bool resolve_members(sema::Resolver& resolver);
+    // bool resolve_members(sema::Resolver& resolver);
+    bool resolve_props(sema::Resolver& resolver);
+    bool resolve_funs(sema::Resolver& resolver);
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
 

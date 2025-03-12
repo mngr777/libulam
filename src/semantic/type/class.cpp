@@ -139,13 +139,32 @@ bool Class::resolve(sema::Resolver& resolver) {
     }
 
     bool ok = resolve_params(resolver) && init_ancestors(resolver, true) &&
-              resolve_members(resolver);
+              resolve_props(resolver) && resolve_funs(resolver);
     if (ok) {
         merge_fsets();
         init_layout();
     }
     set_state(ok ? Resolved : Unresolvable);
     return ok;
+}
+
+Class::Symbol* Class::get_resolved(str_id_t name_id, sema::Resolver& resolver) {
+    auto sym = get(name_id);
+    assert(sym);
+    auto is_resolved = sym->accept(
+        [&](Ref<UserType> type) { return resolver.resolve(type->as_alias()); },
+        [&](auto decl) { return resolver.resolve(decl); });
+    if (!is_resolved)
+        return {};
+    return sym;
+}
+
+Ref<FunSet> Class::resolved_op(Op op, sema::Resolver& resolver) {
+    auto fset = Class::op(op);
+    assert(fset);
+    if (!resolver.resolve(fset))
+        return {};
+    return fset;
 }
 
 bool Class::is_base_of(Ref<const Class> other) const {
@@ -414,16 +433,6 @@ Ref<FunSet> Class::add_op_fset(Op op) {
     return fset;
 }
 
-bool Class::resolve_params(sema::Resolver& resolver) {
-    for (auto [_, sym] : *param_scope()) {
-        auto scope_version = sym->as_decl()->scope_version();
-        auto scope = param_scope()->view(scope_version);
-        if (!resolver.resolve(sym, ref(scope)))
-            return false;
-    }
-    return true;
-}
-
 bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     if (!node()->has_ancestors())
         return true;
@@ -442,20 +451,24 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     return true;
 }
 
-bool Class::resolve_members(sema::Resolver& resolver) {
-    for (auto [name_id, sym] : *scope()) {
-        debug() << "resolving " << name() << "."
-                << module()->program()->str_pool().get(name_id) << "\n";
-        auto def = sym->as_decl();
-        auto scope_view = def->cls()->scope()->view(def->scope_version());
-        if (!resolver.resolve(sym, ref(scope_view)))
+bool Class::resolve_props(sema::Resolver& resolver) {
+    for (auto prop : _all_props) {
+        if (!resolver.resolve(prop))
             return false;
     }
-    // operators
-    for (auto& [_, fset] : ops()) {
-        if (!resolver.resolve(ref(fset), scope()))
+    return true;
+}
+
+bool Class::resolve_funs(sema::Resolver& resolver) {
+    for (auto [_, fset] : _fsets)
+        if (!resolver.resolve(fset))
             return false;
-    }
+    for (auto [_, fset] : _convs)
+        if (!resolver.resolve(fset))
+            return false;
+    for (auto& [_, fset] : ops())
+        if (!resolver.resolve(ref(fset)))
+            return false;
     return true;
 }
 

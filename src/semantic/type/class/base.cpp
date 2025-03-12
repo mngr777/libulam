@@ -1,7 +1,9 @@
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/str_pool.hpp>
 
@@ -157,6 +159,16 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
         node->set_scope_version(scope()->version());
     }
     return ref;
+}
+
+bool ClassBase::resolve_params(sema::Resolver& resolver) {
+    auto scope = param_scope();
+    for (auto param : _params) {
+        auto scope_view = scope->view(param->scope_version());
+        if (!resolver.resolve(param, ref(scope_view)))
+            return false;
+    }
+    return true;
 }
 
 Ref<FunSet> ClassBase::find_fset(str_id_t name_id) {

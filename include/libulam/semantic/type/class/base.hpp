@@ -22,6 +22,10 @@ class VarDef;
 class VarDefList;
 } // namespace ulam::ast
 
+namespace ulam::sema {
+class Resolver;
+}
+
 namespace ulam {
 
 class Module;
@@ -91,6 +95,8 @@ protected:
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
         return _members.set(name_id, value);
     }
+
+    bool resolve_params(sema::Resolver& resolver);
 
     Ref<Module> module() { return _module; }
     Ref<const Module> module() const { return _module; }

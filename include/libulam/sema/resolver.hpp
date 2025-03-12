@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/scope/view.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
@@ -24,12 +25,13 @@ public:
     bool resolve(Ref<ClassTpl> cls_tpl);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
-    bool resolve(Scope::Symbol* sym, Ref<Scope> scope);
     bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
     bool resolve(Ref<Var> var, Ref<Scope> scope);
-    bool resolve(Ref<Prop> prop, Ref<Scope> scope);
-    bool resolve(Ref<FunSet> fset, Ref<Scope> scope);
-    bool resolve(Ref<Fun> fun, Ref<Scope> scope);
+    bool resolve(Ref<AliasType> alias);
+    bool resolve(Ref<Var> var);
+    bool resolve(Ref<Prop> prop);
+    bool resolve(Ref<FunSet> fset);
+    bool resolve(Ref<Fun> fun);
 
     Ref<Class> resolve_class_name(
         Ref<ast::TypeName> type_name,
@@ -49,7 +51,9 @@ public:
     Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
 
 private:
-    bool resolve_cls_deps(Ref<Type> type);
+    Ptr<PersScopeView> class_decl_scope_view(Ref<Decl> decl);
+
+    bool resolve_class_deps(Ref<Type> type);
 
     Ref<Type> resolve_var_decl_type(
         Ref<ast::TypeName> type_name,

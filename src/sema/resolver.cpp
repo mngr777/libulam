@@ -71,18 +71,6 @@ bool Resolver::resolve(Ref<Class> cls) {
     return ok;
 }
 
-bool Resolver::resolve(Scope::Symbol* sym, Ref<Scope> scope) {
-    return sym->accept(
-        [&](Ref<UserType> type) {
-            if (type->is_alias())
-                return resolve(type->as_alias(), scope);
-            assert(type->is_class());
-            return resolve(type->as_class());
-        },
-        [&](Ref<ClassTpl> cls_tpl) { return resolve(cls_tpl); },
-        [&](auto&& other) { return resolve(other, scope); });
-}
-
 bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
     CHECK_STATE(alias);
     auto type_name = alias->node()->type_name();
@@ -155,13 +143,23 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     RET_UPD_STATE(var, is_resolved);
 }
 
-bool Resolver::resolve(Ref<Prop> prop, Ref<Scope> scope) {
-    assert(scope);
+bool Resolver::resolve(Ref<AliasType> alias) {
+    auto scope_view = class_decl_scope_view(alias);
+    return resolve(alias, ref(scope_view));
+}
+
+bool Resolver::resolve(Ref<Var> var) {
+    auto scope_view = class_decl_scope_view(var);
+    return resolve(var, ref(scope_view));
+}
+
+bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
     bool is_resolved = true;
     if (!prop->has_type()) {
-        auto type =
-            resolve_var_decl_type(prop->type_node(), prop->node(), scope, true);
+        auto scope_view = class_decl_scope_view(prop);
+        auto type = resolve_var_decl_type(
+            prop->type_node(), prop->node(), ref(scope_view), true);
         if (type)
             prop->set_type(type);
         is_resolved = type && is_resolved;
@@ -169,13 +167,12 @@ bool Resolver::resolve(Ref<Prop> prop, Ref<Scope> scope) {
     RET_UPD_STATE(prop, is_resolved);
 }
 
-bool Resolver::resolve(Ref<FunSet> fset, Ref<Scope> scope) {
+bool Resolver::resolve(Ref<FunSet> fset) {
     CHECK_STATE(fset);
 
     bool is_resolved = true;
     for (auto fun : *fset) {
-        auto scope_view = scope->view(fun->scope_version());
-        is_resolved = resolve(fun, ref(scope_view)) && is_resolved;
+        is_resolved = resolve(fun) && is_resolved;
 
         // TODO: move to Class to handle inherited conversion functions
 
@@ -204,14 +201,15 @@ bool Resolver::resolve(Ref<FunSet> fset, Ref<Scope> scope) {
     RET_UPD_STATE(fset, is_resolved);
 }
 
-bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
-    assert(scope);
+bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
+    auto scope_view = class_decl_scope_view(fun);
+
     // return type
     auto ret_type_node = fun->ret_type_node();
-    auto ret_type = resolve_fun_ret_type(ret_type_node, scope);
+    auto ret_type = resolve_fun_ret_type(ret_type_node, ref(scope_view));
     if (ret_type) {
         fun->set_ret_type(ret_type);
     } else {
@@ -221,8 +219,8 @@ bool Resolver::resolve(Ref<Fun> fun, Ref<Scope> scope) {
 
     // params
     for (auto& param : fun->params()) {
-        auto type =
-            resolve_var_decl_type(param->type_node(), param->node(), scope);
+        auto type = resolve_var_decl_type(
+            param->type_node(), param->node(), ref(scope_view));
         if (!type) {
             is_resolved = false;
             continue;
@@ -337,7 +335,7 @@ Ref<Type> Resolver::resolve_type_name(
     if (resolve_class) {
         // fully resolve class or class dependencies, e.g. array type
         // ClassName[2] depends on class ClassName
-        if (!resolve_cls_deps(type)) {
+        if (!resolve_class_deps(type)) {
             diag().error(ident, "cannot resolve");
             return {};
         }
@@ -419,12 +417,17 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     return sym->get<UserType>();
 }
 
-bool Resolver::resolve_cls_deps(Ref<Type> type) {
+Ptr<PersScopeView> Resolver::class_decl_scope_view(Ref<Decl> decl) {
+    auto scope = decl->cls()->scope();
+    return scope->view(decl->scope_version());
+}
+
+bool Resolver::resolve_class_deps(Ref<Type> type) {
     type = type->canon();
     if (type->is_class())
         return resolve(type->as_class());
     if (type->is_array())
-        return resolve_cls_deps(type->as_array()->item_type());
+        return resolve_class_deps(type->as_array()->item_type());
     // NOTE: not resolving referenced classes
     return true;
 }
