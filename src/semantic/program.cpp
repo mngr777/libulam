@@ -8,7 +8,11 @@
 namespace ulam {
 
 Program::Program(Diag& diag, UniqStrPool& str_pool, SrcMngr& sm):
-    _diag{diag}, _str_pool{str_pool}, _sm{sm}, _builtins{_type_id_gen} {}
+    _diag{diag},
+    _str_pool{str_pool},
+    _sm{sm},
+    _type_id_gen{},
+    _builtins{_type_id_gen} {}
 
 Program::~Program() {}
 

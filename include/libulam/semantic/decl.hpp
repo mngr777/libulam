@@ -5,6 +5,7 @@
 namespace ulam {
 
 class Class;
+class Module;
 
 class Decl {
 public:
@@ -17,10 +18,16 @@ public:
         Unresolvable
     };
 
+    Decl() {}
+
     bool is_ready() const { return _state == Resolved; }
     bool is_resolving() const { return _state == Resolving; };
 
     bool state_is(State state) const { return _state == state; }
+
+    bool has_module() const;
+    Ref<Module> module() const;
+    void set_module(Ref<Module> module);
 
     bool has_cls() const;
     Ref<Class> cls() const;
@@ -33,6 +40,7 @@ public:
     void set_scope_version(ScopeVersion version);
 
 private:
+    Ref<Module> _module{};
     Ref<Class> _cls{};
     State _state{NotResolved};
     ScopeVersion _scope_version{NoScopeVersion};

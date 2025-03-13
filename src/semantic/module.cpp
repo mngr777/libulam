@@ -27,6 +27,7 @@ Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type =
         make<AliasType>(program()->builtins(), &program()->type_id_gen(), node);
     auto ref = ulam::ref(type)->as_alias();
+    type->set_module(this);
     type->set_scope_version(scope()->version());
     scope()->set(name_id, std::move(type));
 
@@ -44,6 +45,7 @@ Ref<Var>
 Module::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node) {
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
+    var->set_module(this);
     var->set_scope_version(scope()->version());
     scope()->set(var->name_id(), std::move(var));
 
@@ -125,7 +127,7 @@ const Module::Symbol* Module::get(str_id_t name_id) const {
 
 void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type) {
     assert(_imports.count(name_id) == 0);
-    assert(module != this);
+    // assert(module != this);
     _imports.emplace(name_id, Import{module, type});
     _env_scope->set(name_id, type);
 }
@@ -133,7 +135,7 @@ void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type) {
 void Module::add_import(
     str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl) {
     assert(_imports.count(name_id) == 0);
-    assert(module != this);
+    // assert(module != this);
     _imports.emplace(name_id, Import{module, type_tpl});
     _env_scope->set(name_id, type_tpl);
 }

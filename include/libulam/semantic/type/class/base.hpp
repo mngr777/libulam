@@ -98,9 +98,6 @@ protected:
 
     bool resolve_params(sema::Resolver& resolver);
 
-    Ref<Module> module() { return _module; }
-    Ref<const Module> module() const { return _module; }
-
     Ref<PersScope> inh_scope() { return ref(_inh_scope); }
 
     auto& members() { return _members; }

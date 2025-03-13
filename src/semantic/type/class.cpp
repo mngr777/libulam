@@ -37,6 +37,7 @@ Class::Class(std::string_view name, Ref<ClassTpl> tpl):
     ClassBase{tpl->node(), tpl->module(), scp::Class},
     _name{name},
     _tpl{tpl} {
+    set_module(tpl->module());
     scope()->set_self_cls(this);
 }
 
@@ -46,6 +47,7 @@ Class::Class(
     ClassBase{node, module, scp::Class},
     _name{name},
     _tpl{} {
+    set_module(module);
     scope()->set_self_cls(this);
 }
 

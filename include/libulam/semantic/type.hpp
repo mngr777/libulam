@@ -187,15 +187,16 @@ using TypeSet = std::set<Ref<Type>>;
 
 class UserType : public Type, public Decl {
 public:
-    explicit UserType(Builtins& builtins, TypeIdGen* id_gen):
-        Type{builtins, id_gen} {}
+    UserType(Builtins& builtins, TypeIdGen* id_gen):
+        Type{builtins, id_gen}, Decl{} {}
 
     virtual str_id_t name_id() const = 0;
 };
 
 class AliasType : public UserType {
 public:
-    AliasType(Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node);
+    AliasType(Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node):
+        UserType{builtins, id_gen}, _node{node} {}
 
     std::string name() const override;
 

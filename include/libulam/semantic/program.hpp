@@ -41,8 +41,8 @@ private:
     Diag& _diag;
     UniqStrPool& _str_pool;
     SrcMngr& _sm;
-    Builtins _builtins;
     TypeIdGen _type_id_gen;
+    Builtins _builtins;
     std::list<Ptr<Module>> _modules;
     std::list<Ref<Module>> _module_refs;
     std::map<str_id_t, Ref<Module>> _modules_by_name_id;

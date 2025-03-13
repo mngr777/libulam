@@ -8,14 +8,15 @@
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
-#include <sstream>
 #include <utility>
 
 namespace ulam {
 
 ClassTpl::ClassTpl(Ref<ast::ClassDef> node, Ref<Module> module):
     TypeTpl{module->program()->type_id_gen()},
-    ClassBase{node, module, scp::ClassTpl} {}
+    ClassBase{node, module, scp::ClassTpl} {
+    set_module(module);
+}
 
 ClassTpl::~ClassTpl() {}
 

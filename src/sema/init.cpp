@@ -219,7 +219,7 @@ void Init::export_classes() {
                 continue;
             assert(it->second.size() == 1);
             auto& exporter = *it->second.begin();
-            if (*exporter != *mod) {
+            if (true || *exporter != *mod) {
                 auto sym = exporter->get(name_id);
                 assert(sym);
                 sym->accept([&](auto cls_or_tpl) {

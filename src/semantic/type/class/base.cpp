@@ -84,7 +84,7 @@ ClassBase::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
 Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
-    auto program = module()->program();
+    auto program = _module->program();
     assert(!has(name_id));
 
     Ptr<UserType> type =
@@ -126,7 +126,7 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
 Ref<Var>
 ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
-    assert(!scope()->has(name_id));
+    assert(!scope()->has(name_id, true));
 
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);

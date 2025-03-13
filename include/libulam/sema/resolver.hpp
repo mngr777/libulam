@@ -51,7 +51,7 @@ public:
     Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
 
 private:
-    Ptr<PersScopeView> class_decl_scope_view(Ref<Decl> decl);
+    Ptr<PersScopeView> decl_scope_view(Ref<Decl> decl);
 
     bool resolve_class_deps(Ref<Type> type);
 

@@ -76,6 +76,13 @@ bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
+    Ptr<PersScopeView> scope_view{};
+    if (alias->has_module()) {
+        scope_view = decl_scope_view(alias);
+        scope = ref(scope_view);
+    }
+    assert(scope);
+
     // type
     auto type = resolve_type_name(type_name, scope);
     if (!type)
@@ -96,11 +103,17 @@ bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
 }
 
 bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
-    assert(scope);
     CHECK_STATE(var);
     bool is_resolved = true;
     auto node = var->node();
     auto type_name = var->type_node();
+
+    Ptr<PersScopeView> scope_view{};
+    if (var->has_module()) {
+        scope_view = decl_scope_view(var);
+        scope = ref(scope_view);
+    }
+    assert(scope);
 
     // type
     if (!var->has_type()) {
@@ -144,20 +157,18 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
 }
 
 bool Resolver::resolve(Ref<AliasType> alias) {
-    auto scope_view = class_decl_scope_view(alias);
-    return resolve(alias, ref(scope_view));
+    return resolve(alias, {});
 }
 
 bool Resolver::resolve(Ref<Var> var) {
-    auto scope_view = class_decl_scope_view(var);
-    return resolve(var, ref(scope_view));
+    return resolve(var, {});
 }
 
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
     bool is_resolved = true;
     if (!prop->has_type()) {
-        auto scope_view = class_decl_scope_view(prop);
+        auto scope_view = decl_scope_view(prop);
         auto type = resolve_var_decl_type(
             prop->type_node(), prop->node(), ref(scope_view), true);
         if (type)
@@ -205,7 +216,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
-    auto scope_view = class_decl_scope_view(fun);
+    auto scope_view = decl_scope_view(fun);
 
     // return type
     auto ret_type_node = fun->ret_type_node();
@@ -270,7 +281,6 @@ Ref<Type> Resolver::resolve_full_type_name(
     return type;
 }
 
-// TODO: refactor diag calls
 Ref<Type> Resolver::resolve_type_name(
     Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
     auto type_spec = type_name->first();
@@ -291,8 +301,10 @@ Ref<Type> Resolver::resolve_type_name(
     }
 
     // resolve first alias in current scope
-    if (type->is_alias())
-        resolve(type->as_alias(), scope);
+    if (type->is_alias()) {
+        if (!resolve(type->as_alias(), scope))
+            return {};
+    }
 
     // follow rest of type idents, resolve aliases along the way
     // e.g. in `A(x).B.C`, `A(x)` and `A(x).B` must resolve to classes,
@@ -417,8 +429,10 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     return sym->get<UserType>();
 }
 
-Ptr<PersScopeView> Resolver::class_decl_scope_view(Ref<Decl> decl) {
-    auto scope = decl->cls()->scope();
+Ptr<PersScopeView> Resolver::decl_scope_view(Ref<Decl> decl) {
+    assert(decl->has_cls() || decl->has_module());
+    auto scope =
+        decl->has_cls() ? decl->cls()->scope() : decl->module()->scope();
     return scope->view(decl->scope_version());
 }
 

@@ -26,6 +26,9 @@ public:
     Builtins(TypeIdGen& id_gen);
     ~Builtins();
 
+    Builtins(Builtins&&) = default;
+    Builtins& operator=(Builtins&&) = default;
+
     Ref<IntType> int_type(bitsize_t size = NoBitsize);
     Ref<IntTypeTpl> int_tpl();
 
