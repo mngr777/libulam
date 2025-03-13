@@ -722,6 +722,7 @@ Parser::parse_init_value_or_list(
 }
 
 Ptr<ast::InitList> Parser::parse_init_list() {
+    debug() << __FUNCTION__ << "\n";
     assert(_tok.is(tok::BraceL));
     // {
     auto node = tree_loc<ast::InitList>(_tok.loc_id);

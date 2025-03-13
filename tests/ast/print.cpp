@@ -84,9 +84,13 @@ void PrinterBase::print_var_decl(ulam::Ref<ulam::ast::VarDecl> node) {
     if (node->has_array_dims())
         print_array_dims(node->array_dims());
     // = value
-    if (node->has_init_value()) {
+    if (node->has_init_value() || node->has_init_list()) {
         _os << " = ";
-        accept_me(node->init_value());
+        if (node->has_init_value()) {
+            accept_me(node->init_value());
+        } else {
+            accept_me(node->init_list());
+        }
     }
 }
 
@@ -94,7 +98,9 @@ void PrinterBase::print_array_dims(ulam::Ref<ulam::ast::ExprList> exprs) {
     assert(exprs->child_num() > 0);
     for (unsigned n = 0; n < exprs->child_num(); ++n) {
         _os << "[";
-        accept_me(exprs->get(n));
+        auto expr = exprs->get(n);
+        if (expr)
+            accept_me(expr);
         _os << "]";
     }
 }
@@ -247,6 +253,13 @@ void Printer::visit(ulam::Ref<ulam::ast::ArgList> node) {
     if (do_visit(node))
         traverse_list(node);
     _os << ")";
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::InitList> node) {
+    _os << "{";
+    if (do_visit(node))
+        traverse_list(node);
+    _os << "}";
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Block> node) {

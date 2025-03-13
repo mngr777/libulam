@@ -17,6 +17,7 @@ class InitList;
 class InitList2 : public List<Stmt, InitList> {};
 
 class InitList : public Tuple<Stmt, InitList2, ExprList> {
+    ULAM_AST_NODE
 public:
     InitList(): Tuple{make<InitList2>(), make<ExprList>()} {}
 
