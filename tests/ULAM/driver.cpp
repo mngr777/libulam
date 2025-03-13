@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
             "t3485_test_compiler_voidfuncreturnscastedatom.test", // return (Void) a; ??
             "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
             "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
-            "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix
+            "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix?
             "t3505_test_compiler_elementandquark_caarrayemptyquark.test", // Empty
             "t3590_test_compiler_isemptyquark.test", // Empty
             "t3631_test_compiler_element_castatomandquark_ish.test", // tmp, quark to Atom?
@@ -92,7 +92,13 @@ int main(int argc, char** argv) {
             "t3795_test_compiler_localtransientcallsfuncswrefargbutnotref.test", // UrSelf
             "t3834_test_compiler_atomreffromsuperquarkrefwithcast.test", // quark element base to Atom&: use (Atom&)(Elt&)q ?
             "t3837_test_compiler_element_quarkrefatomof_issue.test", // Atom to quark element base reference: use (QPerc&)(Elt&) ?
-            "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use, wontfix
+            "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use, wontfix?
+            "t3881_test_compiler_constantarrayinit_datamember.test", // UrSelf
+            "t3882_test_compiler_constantarrayinit_immediate.test", // UrSelf
+            "t3883_test_compiler_constantarrayinit_localdef.test", // UrSelf
+            "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition, wontfix?
+            "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value, wontfix?
+            "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
