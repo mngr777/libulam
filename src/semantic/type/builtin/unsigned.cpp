@@ -40,7 +40,9 @@ TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
     auto uns_val = rval.get<Unsigned>();
     switch (op) {
     case Op::UnaryMinus: {
-        bitsize_t size = std::min<bitsize_t>(bitsize() + 1, ULAM_MAX_INT_SIZE);
+        bitsize_t max_size = (bitsize() > DefaultSize) ? ULAM_MAX_INT_SIZE
+                                                       : IntType::DefaultSize;
+        bitsize_t size = std::min<bitsize_t>(bitsize() + 1, max_size);
         Integer int_val =
             std::max<Integer>(detail::integer_min(size), -uns_val);
         auto type = builtins().prim_type(IntId, size);
@@ -63,7 +65,7 @@ TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
     default:
         assert(false);
     }
-    return {this, Value{RValue{uns_val}}};
+    return {this, Value{RValue{uns_val, is_consteval}}};
 }
 
 TypedValue UnsignedType::binary_op(

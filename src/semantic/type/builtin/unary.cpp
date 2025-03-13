@@ -1,5 +1,6 @@
 #include "src/semantic/detail/integer.hpp"
 #include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
@@ -29,7 +30,37 @@ Datum UnaryType::to_datum(const RValue& rval) const {
 }
 
 TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
-    assert(false); // not implemented
+    if (rval.empty())
+        return {this, Value{RValue{}}};
+
+    bool is_consteval = rval.is_consteval();
+    Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
+    switch (op) {
+    case Op::UnaryMinus: {
+        bitsize_t size = detail::bitsize(uns_val);
+        assert(size <= IntType::DefaultSize);
+        return {
+            builtins().int_type(size),
+            Value{RValue{(-(Integer)uns_val), is_consteval}}};
+    }
+    case Op::UnaryPlus:
+        break;
+    case Op::PreInc:
+    case Op::PostInc:
+        is_consteval = false;
+        if (uns_val < bitsize())
+            ++uns_val;
+        break;
+    case Op::PreDec:
+    case Op::PostDec:
+        is_consteval = false;
+        if (uns_val > 0)
+            --uns_val;
+        break;
+    default:
+        assert(false);
+    }
+    return {this, Value{RValue(detail::ones(uns_val), is_consteval)}};
 }
 
 TypedValue UnaryType::binary_op(
@@ -179,7 +210,8 @@ RValue UnaryType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     }
     case BoolId: {
         assert(bitsize() == 1);
-        auto rval = builtins().bool_type(type->bitsize())->construct(uns_val > 0);
+        auto rval =
+            builtins().bool_type(type->bitsize())->construct(uns_val > 0);
         rval.set_is_consteval(is_consteval);
         return rval;
     }
