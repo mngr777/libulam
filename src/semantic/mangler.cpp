@@ -12,7 +12,6 @@
 #endif
 #include "src/debug.hpp"
 
-
 namespace ulam {
 
 // see ULAM SymbolClassNameTemplate::formatAnInstancesArgValuesAsAString
@@ -91,7 +90,7 @@ void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
     rval.accept(
         [&](const auto& val) { detail::write_leximited(os, val); },
         [&](const Bits& val) { val.hex_str(os); },
-        [&](const DataPtr) { assert(false); }, // TODO
+        [&](const DataPtr& val) { val->bits().hex_str(os); },
         [&](const std::monostate&) { assert(false); });
 }
 
