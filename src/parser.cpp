@@ -244,6 +244,7 @@ void Parser::parse_class_def_body(Ref<ast::ClassDef> node) {
                 ok = true;
             }
         } break;
+        case tok::Local:
         case tok::BuiltinTypeIdent:
         case tok::TypeIdent:
         case tok::Virtual:
@@ -293,7 +294,8 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
 
 bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
     assert(_tok.in(
-        tok::BuiltinTypeIdent, tok::TypeIdent, tok::Virtual, tok::Override));
+        tok::Local, tok::BuiltinTypeIdent, tok::TypeIdent, tok::Virtual,
+        tok::Override));
 
     // virtual/@Override
     bool is_virtual = false;
@@ -836,37 +838,11 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
     switch (_tok.type) {
     case tok::Typedef:
         return parse_type_def();
+    case tok::Local:
+        return parse_stmt_local();
     case tok::BuiltinTypeIdent:
-    case tok::TypeIdent: {
-        auto type_name = parse_type_name(true);
-        if (_tok.is(tok::Period)) {
-            consume();
-            Ptr<ast::Expr> expr{};
-            if (_tok.is(tok::Ident)) {
-                // Type.<ident>
-                expr = parse_class_const_access_rest(std::move(type_name));
-            } else if (_tok.is_type_op()) {
-                // Type.<type-op>
-                expr = parse_type_op_rest(std::move(type_name), {});
-            } else {
-                unexpected();
-                return {};
-            }
-            return tree<ast::ExprStmt>(std::move(expr));
-        } else if (_tok.in(tok::Ident, tok::Amp)) {
-            // [&] first name
-            bool first_is_ref = parse_is_ref();
-            auto first_name = tok_ast_str();
-            consume();
-            return parse_var_def_list_rest(
-                std::move(type_name), false, first_name, first_is_ref);
-        } else {
-            unexpected();
-            panic(tok::Semicol);
-        }
-        expect(tok::Semicol);
-        return tree<ast::EmptyStmt>();
-    }
+    case tok::TypeIdent:
+        return parse_stmt_type();
     case tok::Constant:
         consume();
         return parse_var_def_list(true);
@@ -888,13 +864,77 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         consume();
         return tree<ast::EmptyStmt>();
     default:
-        auto expr = parse_expr();
-        if (!expect(tok::Semicol))
-            panic(tok::Semicol, tok::BraceL, tok::BraceR);
-        if (!expr)
-            return {};
-        return tree<ast::ExprStmt>(std::move(expr));
+        return parse_expr_stmt();
     }
+}
+
+Ptr<ast::Stmt> Parser::parse_stmt_local() {
+    assert(_tok.is(tok::Local));
+    // local
+    auto local = _tok;
+    consume();
+
+    // .
+    if (!match(tok::Period))
+        return {};
+    auto period = _tok;
+    consume();
+
+    // Type/ident
+    switch (_tok.type) {
+    case tok::BuiltinTypeIdent:
+    case tok::TypeIdent:
+        putback(period);
+        putback(local);
+        return parse_stmt_type();
+    case tok::Ident:
+        putback(period);
+        putback(local);
+        return parse_expr_stmt();
+    default:
+        unexpected();
+        return {};
+    }
+}
+
+Ptr<ast::Stmt> Parser::parse_stmt_type() {
+    auto type_name = parse_type_name(true);
+    if (_tok.is(tok::Period)) {
+        consume();
+        Ptr<ast::Expr> expr{};
+        if (_tok.is(tok::Ident)) {
+            // Type.<ident>
+            expr = parse_class_const_access_rest(std::move(type_name));
+        } else if (_tok.is_type_op()) {
+            // Type.<type-op>
+            expr = parse_type_op_rest(std::move(type_name), {});
+        } else {
+            unexpected();
+            return {};
+        }
+        return tree<ast::ExprStmt>(std::move(expr));
+    } else if (_tok.in(tok::Ident, tok::Amp)) {
+        // [&] first name
+        bool first_is_ref = parse_is_ref();
+        auto first_name = tok_ast_str();
+        consume();
+        return parse_var_def_list_rest(
+            std::move(type_name), false, first_name, first_is_ref);
+    } else {
+        unexpected();
+        panic(tok::Semicol);
+    }
+    expect(tok::Semicol);
+    return tree<ast::EmptyStmt>();
+}
+
+Ptr<ast::ExprStmt> Parser::parse_expr_stmt() {
+    auto expr = parse_expr();
+    if (!expect(tok::Semicol))
+        panic(tok::Semicol, tok::BraceL, tok::BraceR);
+    if (!expr)
+        return {};
+    return tree<ast::ExprStmt>(std::move(expr));
 }
 
 Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
@@ -1129,8 +1169,6 @@ Ptr<ast::Expr> Parser::parse_expr_lhs_local(expr_flags_t flags) {
     // Type/ident
     switch (_tok.type) {
     case tok::BuiltinTypeIdent:
-        diag(local, "builtin-in type cannot be module-local");
-        return parse_class_const_access_or_type_op();
     case tok::TypeIdent:
         putback(period);
         putback(local);
