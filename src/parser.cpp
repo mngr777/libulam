@@ -42,7 +42,19 @@ Ptr<ast::Block> Parser::parse_stmts(std::string text) {
     return block;
 }
 
-void Parser::consume() { _pp >> _tok; }
+void Parser::consume() {
+    if (_back.empty()) {
+        _pp >> _tok;
+    } else {
+        _tok = _back.top();
+        _back.pop();
+    }
+}
+
+void Parser::putback(Token token) {
+    _back.push(_tok);
+    _tok = token;
+}
 
 void Parser::consume_if(tok::Type type) {
     if (_tok.is(type))
@@ -109,7 +121,10 @@ Ptr<ast::ModuleDef> Parser::parse_module(const std::string_view name) {
         } break;
         default:
             unexpected();
-            panic(tok::Semicol);
+            panic(
+                tok::Semicol, tok::Local, tok::Typedef, tok::Constant,
+                tok::TypeIdent, tok::Element, tok::Quark, tok::Transient,
+                tok::Union);
             consume_if(tok::Semicol);
         }
     }
@@ -893,7 +908,7 @@ Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
     Ptr<ast::Ident> ident{};
     Ptr<ast::TypeName> type{};
     if (_tok.is(tok::Ident)) {
-        ident = parse_ident(true);
+        ident = parse_ident(IdentAllowSelfOrSuper);
         if (_tok.is(tok::As)) {
             consume();
             // if (ident as Type
@@ -1076,11 +1091,13 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
 Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
     Ptr<ast::Expr> expr{};
     switch (_tok.type) {
+    case tok::Local:
+        return parse_expr_lhs_local(flags);
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
         return parse_class_const_access_or_type_op();
     case tok::Ident:
-        return parse_ident(true);
+        return parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
     case tok::True:
     case tok::False:
         return parse_bool_lit();
@@ -1093,6 +1110,37 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
     default:
         unexpected();
         panic(tok::Semicol);
+        return {};
+    }
+}
+
+Ptr<ast::Expr> Parser::parse_expr_lhs_local(expr_flags_t flags) {
+    assert(_tok.is(tok::Local));
+    // local
+    auto local = _tok;
+    consume();
+
+    // .
+    if (!match(tok::Period))
+        return {};
+    auto period = _tok;
+    consume();
+
+    // Type/ident
+    switch (_tok.type) {
+    case tok::BuiltinTypeIdent:
+        diag(local, "builtin-in type cannot be module-local");
+        return parse_class_const_access_or_type_op();
+    case tok::TypeIdent:
+        putback(period);
+        putback(local);
+        return parse_class_const_access_or_type_op();
+    case tok::Ident:
+        putback(period);
+        putback(local);
+        return parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
+    default:
+        unexpected();
         return {};
     }
 }
@@ -1132,7 +1180,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(expr_flags_t flags) {
 }
 
 Ptr<ast::Expr> Parser::parse_class_const_access_or_type_op() {
-    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
+    assert(_tok.in(tok::Local, tok::BuiltinTypeIdent, tok::TypeIdent));
     auto type_name = parse_type_name(true);
     if (_tok.is(tok::Ident))
         return parse_class_const_access_rest(std::move(type_name));
@@ -1225,7 +1273,7 @@ Ptr<ast::FullTypeName> Parser::parse_full_type_name(bool maybe_type_op) {
 }
 
 Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
-    if (!_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
+    if (!_tok.in(tok::Local, tok::BuiltinTypeIdent, tok::TypeIdent)) {
         unexpected();
         return {};
     }
@@ -1248,7 +1296,8 @@ Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
 }
 
 Ptr<ast::TypeSpec> Parser::parse_type_spec() {
-    assert(_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent));
+    assert(_tok.in(tok::Local, tok::BuiltinTypeIdent, tok::TypeIdent));
+
     Ptr<ast::TypeIdent> ident{};
     BuiltinTypeId builtin_type_id = NoBuiltinTypeId;
     auto loc_id = _tok.loc_id;
@@ -1256,7 +1305,8 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
         builtin_type_id = _tok.builtin_type_id();
         consume();
     } else {
-        ident = parse_type_ident(TypeAllowSelf | TypeAllowSuper);
+        ident =
+            parse_type_ident(TypeAllowSelf | TypeAllowSuper | TypeAllowLocal);
         if (!ident)
             return {};
     }
@@ -1265,6 +1315,10 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
         args = parse_arg_list();
         if (ident && ident->is_self()) {
             diag(args->loc_id(), 1, "`Self' cannot have class parameters");
+            args = {};
+        }
+        if (ident && ident->is_super()) {
+            diag(args->loc_id(), 1, "`Super' cannot have class parameters");
             args = {};
         }
     }
@@ -1336,9 +1390,9 @@ Parser::parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
             return {};
         expect(tok::Period);
     }
-
     if (!match(tok::Ident))
         return {};
+
     auto ident = parse_ident();
     if (!ident)
         return {};
@@ -1359,42 +1413,90 @@ Parser::parse_class_const_access_rest(Ptr<ast::TypeName> type_name) {
 }
 
 Ptr<ast::TypeIdent> Parser::parse_type_ident(type_flags_t flags) {
-    assert(_tok.is(tok::TypeIdent));
+    assert(_tok.in(tok::Local, tok::TypeIdent));
+
+    // local
+    bool is_local = false;
+    if (_tok.is(tok::Local)) {
+        if (flags & TypeAllowLocal) {
+            is_local = true;
+        } else {
+            diag("`local' is not allowed in this context");
+        }
+        consume();
+        // .Type
+        expect(tok::Period);
+        if (!match(tok::TypeIdent))
+            return {};
+    }
+
+    // Self/Super?
     auto str = tok_ast_str();
     bool is_self = _tok.is_self_class();
     bool is_super = _tok.is_super_class();
     consume();
-    if (!(flags & TypeAllowSelf) && is_self) {
-        diag(str.loc_id(), 1, "`Self' is not allowed in this context");
-        return {};
+    if (is_self) {
+        if (!(flags & TypeAllowSelf)) {
+            diag(str.loc_id(), 1, "`Self' is not allowed in this context");
+            return {};
+        }
+        if (is_local) {
+            diag(str.loc_id(), 1, "`Self' cannot be module-local");
+            return {};
+        }
+    } else if (is_super) {
+        if (!(flags & TypeAllowSuper)) {
+            diag(str.loc_id(), 1, "`Super' is not allowed in this context");
+            return {};
+        }
+        if (is_local) {
+            diag(str.loc_id(), 1, "`Super' cannot be module-local");
+            return {};
+        }
     }
-    if (!(flags & TypeAllowSuper) && is_super) {
-        diag(str.loc_id(), 1, "`Super' is not allowed in this context");
-        return {};
-    }
+
     auto ident = tree<ast::TypeIdent>(str);
     ident->set_is_self(is_self);
     ident->set_is_super(is_super);
+    ident->set_is_local(is_local);
     return ident;
 }
 
-Ptr<ast::Ident> Parser::parse_ident(bool allow_self) {
-    assert(_tok.is(tok::Ident));
+Ptr<ast::Ident> Parser::parse_ident(ident_flags_t flags) {
+    assert(_tok.in(tok::Ident, tok::Local));
+
+    // local
+    bool is_local = false;
+    if (_tok.is(tok::Local)) {
+        if (flags & IdentAllowLocal) {
+            is_local = true;
+        } else {
+            diag("`local' is not allowed in this context");
+        }
+        consume();
+        // .ident
+        expect(tok::Period);
+        if (!match(tok::Ident))
+            return {};
+    }
+
+    // ident
     auto str = tok_ast_str();
     bool is_self = _tok.is_self();
     bool is_super = _tok.is_super();
     consume();
-    if (is_self && !allow_self) {
+    if (is_self && !(flags & IdentAllowSelfOrSuper)) {
         diag(str.loc_id(), 1, "`self' is not allowed in this context");
         return {};
     }
-    if (is_super && !allow_self) {
+    if (is_super && !(flags & IdentAllowSelfOrSuper)) {
         diag(str.loc_id(), 1, "`super' is not allowed in this context");
         return {};
     }
     auto ident = tree_loc<ast::Ident>(str.loc_id(), str);
     ident->set_is_self(is_self);
     ident->set_is_super(is_super);
+    ident->set_is_local(is_local);
     return ident;
 }
 

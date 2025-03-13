@@ -66,6 +66,7 @@ class Ident : public Expr, public Named {
     ULAM_AST_EXPR
     ULAM_AST_SIMPLE_ATTR(bool, is_self, false)
     ULAM_AST_SIMPLE_ATTR(bool, is_super, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_local, false)
 public:
     Ident(Str name): Named{name} {}
 };

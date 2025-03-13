@@ -9,6 +9,7 @@ class TypeIdent : public Stmt, public Named {
     ULAM_AST_NODE
     ULAM_AST_SIMPLE_ATTR(bool, is_self, false)
     ULAM_AST_SIMPLE_ATTR(bool, is_super, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_local, false)
 public:
     explicit TypeIdent(Str name): Named{name} { set_loc_id(name.loc_id()); }
 };
