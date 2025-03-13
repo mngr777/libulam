@@ -686,6 +686,52 @@ ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     return res;
 }
 
+std::pair<Value, bool>
+ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
+    if (!type->is_array()) {
+        // TODO: class constructors
+        diag().error(list, "type is not an array");
+        return {Value{RValue{}}, false};
+    }
+
+    auto fill = [&](auto& self, LValue cur,
+                    Ref<ast::InitList> list) -> std::pair<bool, bool> {
+        auto type = cur.type();
+        auto item_type = type->as_array()->item_type();
+        assert(type->as_array()->array_size() == list->child_num());
+        bool all_consteval = true;
+        if (list->is_flat()) {
+            for (unsigned n = 0; n < list->child_num(); ++n) {
+                auto expr = list->expr(n);
+                ExprRes res = expr->accept(*this);
+                if (res)
+                    res = cast(expr, item_type, std::move(res), false);
+                if (!res)
+                    return {false, false};
+                auto rval = res.move_value().move_rvalue();
+                all_consteval = all_consteval && rval.is_consteval();
+                cur.array_access(n).assign(std::move(rval));
+            }
+        } else {
+            bool all_consteval = true;
+            for (unsigned n = 0; n < list->child_num(); ++n) {
+                auto [ok, is_consteval] =
+                    self(self, cur.array_access(n), list->sublist(n));
+                if (!ok)
+                    return {false, false};
+                all_consteval = all_consteval && is_consteval;
+            }
+        }
+        return {true, all_consteval};
+    };
+
+    Value val{type->actual()->construct()};
+    auto [ok, is_consteval] = fill(fill, LValue{val.data_view()}, list);
+    if (ok && is_consteval)
+        val.rvalue().set_is_consteval(is_consteval);
+    return {std::move(val), ok};
+}
+
 ExprRes
 ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";

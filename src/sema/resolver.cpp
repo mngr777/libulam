@@ -126,24 +126,26 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     // value
     if (var->is_const() && var->value().empty()) {
         if (node->has_init_value()) {
+            // single expr value
             ExprVisitor ev{_program, scope};
             ExprRes res = node->init_value()->accept(ev);
-            if (!res.ok())
+            if (!res)
                 RET_UPD_STATE(var, false);
-            // impl. cast to var type
+            // conv to var type
             res =
                 ev.cast(node->init_value(), var->type(), std::move(res), false);
-            if (!res.ok())
+            if (!res)
                 RET_UPD_STATE(var, false);
-            auto tv = res.move_typed_value();
-            var->set_value(tv.move_value());
-            if (var->value().empty()) {
-                auto name = node->name();
-                diag().error(
-                    name.loc_id(), str(name.str_id()).size(),
-                    "cannot calculate constant value");
-                is_resolved = false;
-            }
+            var->set_value(res.move_value());
+
+        } else if (node->has_init_list()) {
+            // init list
+            ExprVisitor ev{_program, scope};
+            auto [val, ok] = ev.eval_init_list(var->type(), node->init_list());
+            if (!ok)
+                RET_UPD_STATE(var, false);
+            var->set_value(std::move(val));
+
         } else if (var->requires_value()) {
             auto name = node->name();
             diag().error(

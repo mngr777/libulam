@@ -68,6 +68,9 @@ public:
     virtual std::pair<TypedValueList, bool>
     eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
 
+    virtual std::pair<Value, bool>
+    eval_init_list(Ref<Type> type, Ref<ast::InitList> list);
+
 protected:
     virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
 
