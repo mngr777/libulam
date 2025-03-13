@@ -696,19 +696,32 @@ ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
 
     auto fill = [&](auto& self, LValue cur,
                     Ref<ast::InitList> list) -> std::pair<bool, bool> {
-        auto type = cur.type();
-        auto item_type = type->as_array()->item_type();
-        assert(type->as_array()->array_size() == list->child_num());
+        auto array_type = cur.type()->as_array();
+        auto array_size = array_type->array_size();
+        auto item_type = array_type->item_type();
+        assert(array_type->array_size() >= list->child_num());
+        assert(list->child_num() > 0);
+
         bool all_consteval = true;
         if (list->is_flat()) {
-            for (unsigned n = 0; n < list->child_num(); ++n) {
-                auto expr = list->expr(n);
-                ExprRes res = expr->accept(*this);
-                if (res)
-                    res = cast(expr, item_type, std::move(res), false);
-                if (!res)
-                    return {false, false};
-                auto rval = res.move_value().move_rvalue();
+            unsigned last_expr_idx = list->child_num() - 1;
+            RValue last_rval;
+            for (unsigned n = 0; n < array_size; ++n) {
+                bool is_last = (n + 1 == array_size);
+                RValue rval;
+                if (n <= last_expr_idx) {
+                    auto expr = list->expr(n);
+                    ExprRes res = expr->accept(*this);
+                    if (res)
+                        res = cast(expr, item_type, std::move(res), false);
+                    if (!res)
+                        return {false, false};
+                    rval = res.move_value().move_rvalue();
+                    if (n == last_expr_idx && !is_last)
+                        last_rval = rval.copy();
+                } else {
+                    rval = is_last ? std::move(last_rval) : last_rval.copy();
+                }
                 all_consteval = all_consteval && rval.is_consteval();
                 cur.array_access(n).assign(std::move(rval));
             }
