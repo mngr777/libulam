@@ -72,8 +72,9 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
         return {sup, Value{self.as(sup)}};
     }
 
-    auto name = node->name();
-    auto sym = _scope->get(name.str_id());
+    auto name_id = node->name().str_id();
+    auto sym =
+        node->is_local() ? _scope->get_local(name_id) : _scope->get(name_id);
     if (!sym) {
         diag().error(node, "symbol not found");
         return {ExprError::SymbolNotFound};
@@ -82,8 +83,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     Resolver resolver{_program};
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
-            // TODO: add `module' to Decl, use module scope to resolve
-            if (var->has_cls() && !resolver.resolve(var))
+            if (!resolver.resolve(var, _scope))
                 return {ExprError::UnresolvableVar};
             return {var->type(), Value{var->lvalue()}};
         },

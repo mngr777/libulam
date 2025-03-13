@@ -8,7 +8,30 @@
 
 namespace ulam {
 
+// Scope
+
+Scope::Symbol* Scope::get_local(str_id_t name_id) {
+    if (is(scp::Module))
+        return get(name_id);
+    auto scope = parent(scp::Module);
+    if (scope)
+        return scope->get(name_id);
+    return {};
+}
+
 // ScopeBase
+
+Ref<Scope> ScopeBase::parent(ScopeFlags flags) {
+    return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
+               ? _parent
+               : _parent->parent(flags);
+}
+
+Ref<const Scope> ScopeBase::parent(ScopeFlags flags) const {
+    return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
+               ? _parent
+               : _parent->parent(flags);
+}
 
 // TODO: PersScope doesn't need `self'
 LValue ScopeBase::self() {

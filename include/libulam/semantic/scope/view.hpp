@@ -17,8 +17,8 @@ public:
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
-    Ref<Scope> parent() override;
-    Ref<const Scope> parent() const override;
+    Ref<Scope> parent(ScopeFlags flags = scp::NoFlags) override;
+    Ref<const Scope> parent(ScopeFlags flags = scp::NoFlags) const override;
 
     Ref<Class> self_cls() override;
 

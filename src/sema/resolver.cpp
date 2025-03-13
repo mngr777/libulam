@@ -156,13 +156,9 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     RET_UPD_STATE(var, is_resolved);
 }
 
-bool Resolver::resolve(Ref<AliasType> alias) {
-    return resolve(alias, {});
-}
+bool Resolver::resolve(Ref<AliasType> alias) { return resolve(alias, {}); }
 
-bool Resolver::resolve(Ref<Var> var) {
-    return resolve(var, {});
-}
+bool Resolver::resolve(Ref<Var> var) { return resolve(var, {}); }
 
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
@@ -407,7 +403,8 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     }
 
     auto name_id = ident->name_id();
-    auto sym = scope->get(name_id);
+    auto sym =
+        ident->is_local() ? scope->get_local(name_id) : scope->get(name_id);
     if (!sym) {
         diag().error(ident, std::string{str(name_id)} + " type not found");
         return {};

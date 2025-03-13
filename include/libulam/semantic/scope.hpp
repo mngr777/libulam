@@ -36,8 +36,9 @@ public:
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
-    virtual Ref<Scope> parent() = 0;
-    virtual Ref<const Scope> parent() const = 0;
+    virtual Ref<Scope> parent(ScopeFlags flags = scp::NoFlags) = 0;
+    // TODO: remove const version
+    virtual Ref<const Scope> parent(ScopeFlags flags = scp::NoFlags) const = 0;
 
     bool has_version() const { return version() != NoScopeVersion; }
     virtual ScopeVersion version() const { return NoScopeVersion; }
@@ -66,6 +67,8 @@ public:
 
     virtual Symbol* get(str_id_t name_id, bool current = false) = 0;
 
+    Symbol* get_local(str_id_t name_id);
+
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return do_set(name_id, Symbol{std::move(value)});
     }
@@ -83,8 +86,8 @@ public:
     ScopeBase(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
         Scope{}, _parent{parent}, _flags{flags}, _self{} {}
 
-    Ref<Scope> parent() override { return _parent; }
-    Ref<const Scope> parent() const override { return _parent; }
+    Ref<Scope> parent(ScopeFlags flags = scp::NoFlags) override;
+    Ref<const Scope> parent(ScopeFlags flags = scp::NoFlags) const override;
 
     ScopeFlags flags() const override { return _flags; }
 

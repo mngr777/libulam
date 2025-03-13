@@ -1,5 +1,5 @@
-#include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
+#include <libulam/semantic/scope/view.hpp>
 
 namespace ulam {
 
@@ -18,9 +18,13 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     return {name_id, get(name_id)};
 }
 
-Ref<Scope> PersScopeView::parent() { return scope()->parent(); }
+Ref<Scope> PersScopeView::parent(ScopeFlags flags) {
+    return scope()->parent(flags);
+}
 
-Ref<const Scope> PersScopeView::parent() const { return scope()->parent(); }
+Ref<const Scope> PersScopeView::parent(ScopeFlags flags) const {
+    return scope()->parent(flags);
+}
 
 Ref<Class> PersScopeView::self_cls() { return scope()->self_cls(); }
 
@@ -56,9 +60,7 @@ PersScopeIterator PersScopeView::begin() {
     return PersScopeIterator(PersScopeView{_scope, 0});
 }
 
-PersScopeIterator PersScopeView::end() {
-    return PersScopeIterator();
-}
+PersScopeIterator PersScopeView::end() { return PersScopeIterator(); }
 
 bool PersScopeView::operator==(const PersScopeView& other) const {
     return _scope == other._scope && _version == other._version;
