@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
             "t3795_test_compiler_localtransientcallsfuncswrefargbutnotref.test", // UrSelf
             "t3834_test_compiler_atomreffromsuperquarkrefwithcast.test", // quark element base to Atom&: use (Atom&)(Elt&)q ?
             "t3837_test_compiler_element_quarkrefatomof_issue.test", // Atom to quark element base reference: use (QPerc&)(Elt&) ?
+            "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use, wontfix
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

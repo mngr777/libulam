@@ -75,6 +75,8 @@ inline bitsize_t unary_unsigned_bitsize(bitsize_t size) {
 }
 
 inline bitsize_t bitsize(Integer value) {
+    if (value == 0)
+        return 1;
     auto size = bitsize(abs(value));
     if (size < 2)
         return 2;

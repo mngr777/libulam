@@ -219,7 +219,7 @@ bool IntType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case UnaryId:
         return expl;
     case BitsId:
-        return expl;
+        return expl || type->bitsize() >= bitsize();
     case AtomId:
         return false;
         return false;
@@ -266,9 +266,10 @@ bool IntType::is_impl_castable_to_prim(
     case IntId:
         return detail::bitsize(int_val) <= type->bitsize();
     case UnsignedId:
-    case BitsId:
         return int_val >= 0 &&
                detail::bitsize((Unsigned)int_val) <= type->bitsize();
+    case BitsId:
+        return detail::bitsize(int_val) <= type->bitsize();
     case UnaryId:
         return int_val >= 0 && (Unsigned)int_val <= type->bitsize();
     default:
