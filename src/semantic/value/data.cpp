@@ -59,18 +59,27 @@ Bool Data::is_class() const { return _type->is_class(); }
 // DataView
 
 DataView::DataView(
-    DataPtr storage, Ref<Type> type, bitsize_t off, Ref<Type> view_type):
+    DataPtr storage,
+    Ref<Type> type,
+    bitsize_t off,
+    Ref<Type> view_type,
+    bitsize_t atom_off,
+    Ref<Type> atom_type):
     _storage{storage},
     _type{type},
     _off{off},
-    _view_type{view_type ? view_type : type} {
+    _view_type{view_type ? view_type : type},
+    _atom{atom_off, atom_type} {
 
     assert(
         _view_type->is_same(_type) ||
+        /* viewing Atom as element */
         (_type->is(AtomId) && _view_type->is_class() &&
          _view_type->as_class()->is_element()) ||
+        /* viewing element as Atom */
         (_type->is_class() && _type->as_class()->is_element() &&
          _view_type->is(AtomId)) ||
+        /* viewing class as base */
         (_type->is_class() && _view_type->is_class() &&
          _view_type->as_class()->is_base_of(_type->as_class())));
 
@@ -87,15 +96,11 @@ void DataView::store(RValue&& rval) {
     _type->store(_storage->bits(), _off, std::move(rval));
 }
 
-RValue DataView::load() const {
-    return _type->load(_storage->bits(), _off);
-}
+RValue DataView::load() const { return _type->load(_storage->bits(), _off); }
 
 DataView DataView::as(Ref<Type> type) {
     assert(type);
-    DataView view{_storage, _type, _off, type};
-    view._atom = _atom;
-    return view;
+    return {_storage, _type, _off, type, _atom.off, _atom.type};
 }
 
 const DataView DataView::as(Ref<Type> type) const {
@@ -106,9 +111,8 @@ DataView DataView::array_item(array_idx_t idx) {
     assert(is_array());
     auto array = _view_type->as_array();
     bitsize_t off = _off + array->item_off(idx);
-    DataView view{_storage, array->item_type(), off, Ref<Type>{}};
-    view._atom = _atom;
-    return view;
+    return {_storage,    array->item_type(), off,
+            Ref<Type>{}, _atom.off,          _atom.type};
 }
 
 const DataView DataView::array_item(array_idx_t idx) const {
@@ -124,9 +128,8 @@ DataView DataView::prop(Ref<Prop> prop_) {
         assert(_type->is(AtomId));
         cls = _view_type->as_class();
     }
-    DataView view{_storage, prop_->type(), prop_->data_off_in(cls)};
-    view._atom = _atom;
-    return view;
+    return {_storage,      prop_->type(), prop_->data_off_in(cls),
+            prop_->type(), _atom.off,     _atom.type};
 }
 
 const DataView DataView::prop(Ref<Prop> prop_) const {
@@ -136,9 +139,8 @@ const DataView DataView::prop(Ref<Prop> prop_) const {
 DataView DataView::atom_of() {
     if (_atom.off == NoBitsize)
         return {};
-    DataView view{_storage, _type, _off, _view_type};
-    view._atom = _atom;
-    return view;
+    assert(_atom.type);
+    return {_storage, _atom.type, _atom.off, _atom.type, _atom.off, _atom.type};
 }
 
 const DataView DataView::atom_of() const {

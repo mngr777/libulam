@@ -59,7 +59,7 @@ LValue LValue::as(Ref<Type> type) { return derived(data_view().as(type)); }
 LValue LValue::atom_of() {
     auto data_view = accept(
         [&](Ref<Var> var) { return var->data_view(); },
-        [&](DataView& data) { return data; },
+        [&](DataView& data) { return data.atom_of(); },
         [&](BoundFunSet& bfset) { return DataView{}; },
         [&](std::monostate&) { return DataView{}; });
     if (!data_view)

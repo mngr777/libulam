@@ -61,7 +61,9 @@ public:
         DataPtr storage,
         Ref<Type> type,
         bitsize_t off,
-        Ref<Type> view_type = Ref<Type>{});
+        Ref<Type> view_type = Ref<Type>{},
+        bitsize_t atom_off = NoBitsize,
+        Ref<Type> atom_type = Ref<Type>{});
 
     DataView() {}
 
