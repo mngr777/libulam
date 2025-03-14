@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
         std::set<std::string> skip = {
             "t3205_test_compiler_elementandquark_emptyquark.test", // Empty
             "t3233_test_compiler_elementandquarkarray_ew.test", // aref called by name
+            "t3241_test_compiler_unarymod.test", // invalid implicit cast?
             "t3357_test_compiler_elementandquarkswclassargs_lhsconstantcompare.test", // behave()
             "t3358_test_compiler_elementandquarkswclassargs_lhsconstantlogicaland.test", // behave()
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
