@@ -105,6 +105,11 @@ int main(int argc, char** argv) {
             "t3899_test_compiler_constantarrayinit_datamember_dmandlocalvarinitvals.test", // UrSelf
             "t3920_test_compiler_elementandquark_conditionalis_resbehave_issue.test", // Empty
             "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
+            "t3927_test_compiler_string_assign.test", // String
+            "t3930_test_compiler_string_ascii.test", // char
+            "t3931_test_compiler_stringuninitialized_sizeof.test", // String
+            "t3933_test_compiler_string_lengthof.test", // String
+            "t3936_test_compiler_arraylengthof_lengthzeroelement.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

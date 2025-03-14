@@ -3,6 +3,7 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
+#include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
@@ -373,6 +374,18 @@ void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<DataPtr>());
     if (bitsize() > 0)
         data.write(off, rval.get<DataPtr>()->bits().view());
+}
+
+TypedValue ArrayType::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::LengthOf: {
+        auto type = builtins().unsigned_type();
+        RValue rval{(Unsigned)array_size(), true};
+        return {type, Value{std::move(rval)}};
+    }
+    default:
+        return Type::type_op(op);
+    }
 }
 
 void ArrayType::set_canon(Ref<ArrayType> canon) {

@@ -297,6 +297,8 @@ public:
     RValue load(const BitsView data, bitsize_t off) const override;
     void store(BitsView data, bitsize_t off, const RValue& rval) const override;
 
+    TypedValue type_op(TypeOp op) override;
+
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
 
