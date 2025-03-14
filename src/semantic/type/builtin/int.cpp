@@ -1,5 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
-#include "libulam/semantic/typed_value.hpp"
 #include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
@@ -8,6 +6,8 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/unary.hpp>
+#include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/value.hpp>
 
@@ -294,31 +294,55 @@ bool IntType::is_impl_castable_to_prim(
 
 TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
-    assert(!rval.empty());
-    assert(rval.is<Integer>());
 
-    auto int_val = rval.get<Integer>();
-    bool is_consteval = rval.is_consteval();
+    bool is_unknown = rval.empty();
+    bool is_wider = bitsize() > DefaultSize;
+    bool is_consteval = !is_unknown && rval.is_consteval();
+    auto int_val = is_unknown ? 0 : rval.get<Integer>();
+
     switch (id) {
     case IntId: {
         assert(false);
         return {this, Value{std::move(rval)}};
     }
     case UnsignedId: {
-        int_val = std::max((Integer)0, int_val);
-        auto size = detail::bitsize(int_val);
-        auto type = builtins().prim_type(UnsignedId, size);
-        return {type, Value{RValue{(Unsigned)int_val, is_consteval}}};
+        Unsigned uns_val = std::max<Integer>(0, int_val);
+        if (is_consteval) {
+            auto size = detail::bitsize(uns_val);
+            auto type = builtins().unsigned_type(size);
+            return {type, Value{RValue{uns_val, true}}};
+        } else {
+            auto size = std::max<bitsize_t>(1, bitsize() - 1);
+            auto type = builtins().unsigned_type(size);
+            Value val{!is_unknown ? RValue{uns_val} : RValue{}};
+            return {type, std::move(val)};
+        }
     }
     case UnaryId: {
-        Unsigned val = std::max((Integer)0, int_val);
-        val = std::min((Unsigned)ULAM_MAX_INT_SIZE, detail::ones(val));
-        auto type = builtins().prim_type(UnaryId, val);
-        return {type, Value{RValue{val, is_consteval}}};
+        bitsize_t max_size =
+            is_wider ? UnaryType::MaxSize : UnaryType::DefaultSize;
+        Unsigned uns_val = std::max<Integer>(0, int_val);
+        if (is_consteval) {
+            uns_val = std::min<Unsigned>(uns_val, max_size);
+            auto type = builtins().unary_type(uns_val);
+            return {type, Value{RValue{detail::ones(uns_val), true}}};
+        } else {
+            auto size = max_size;
+            if (bitsize() - 1 < max_size) {
+                size = (1 << (bitsize() - 1)) - 1;
+                size = std::min<bitsize_t>(size, max_size);
+            }
+            uns_val = std::min<Unsigned>(uns_val, size);
+            auto type = builtins().unary_type(size);
+            Value val{!is_unknown ? RValue{detail::ones(uns_val)} : RValue{}};
+            return {type, std::move(val)};
+        }
     }
     case BitsId: {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
+        if (is_unknown)
+            return {type, Value{RValue{}}};
         Bits val{size};
         store(val.view(), 0, rval);
         return {type, Value{RValue{std::move(val), is_consteval}}};
@@ -330,7 +354,8 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue IntType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    assert(rval.is<Integer>());
+    if (rval.empty())
+        return std::move(rval);
 
     auto int_val = rval.get<Integer>();
     bool is_consteval = rval.is_consteval();

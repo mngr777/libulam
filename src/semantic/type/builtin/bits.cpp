@@ -143,9 +143,12 @@ TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue BitsType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    assert(rval.is<Bits>());
+    if (rval.empty())
+        return std::move(rval);
 
+    bool is_consteval = rval.is_consteval();
     auto& bits = rval.get<Bits>();
+
     switch (type->bi_type_id()) {
     case IntId:
     case UnsignedId:
@@ -153,12 +156,14 @@ RValue BitsType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     case UnaryId: {
         // TODO: this is probably not how it works, to be caught by ULAM tests
         auto datum = bits.read_right(std::min(bitsize(), type->bitsize()));
-        return RValue{type->from_datum(datum)};
+        rval = type->from_datum(datum);
+        rval.set_is_consteval(is_consteval);
+        return std::move(rval);
     }
     case BitsId: {
         Bits copy{type->bitsize()};
         copy |= bits;
-        return RValue{std::move(copy)};
+        return RValue{std::move(copy), is_consteval};
     }
     default:
         assert(false);

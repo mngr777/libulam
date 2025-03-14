@@ -1,6 +1,4 @@
 #pragma once
-#include "libulam/ast/nodes/var_decl.hpp"
-#include "libulam/semantic/var/base.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -12,8 +10,6 @@
 #include <libulam/str_pool.hpp>
 #include <string_view>
 #include <utility>
-
-// TODO: option for allowing/disallowing empty (unknown) values
 
 namespace ulam {
 class Program;
@@ -87,7 +83,7 @@ protected:
     Value do_cast(Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv);
 
     TypedValue do_cast(
-        Ref<ast::Expr> node, BuiltinTypeId builtin_type_id, TypedValue&& tv);
+        Ref<ast::Expr> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
 
     virtual ExprRes funcall(
         Ref<ast::Expr> node,

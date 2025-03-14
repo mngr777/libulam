@@ -150,28 +150,40 @@ bool UnaryType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
 
 TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
-    assert(!rval.empty());
-    assert(rval.is<Unsigned>());
 
-    auto uns_val = detail::count_ones(rval.get<Unsigned>());
+    bool is_unknown = rval.empty();
     bool is_consteval = rval.is_consteval();
+    auto uns_val = is_unknown ? 0 : detail::count_ones(rval.get<Unsigned>());
+
     switch (id) {
     case IntId: {
-        auto size = std::min(
-            (bitsize_t)ULAM_MAX_INT_SIZE,
-            (bitsize_t)(detail::bitsize(uns_val) + 1));
-        Integer val = std::min((Unsigned)detail::integer_max(size), uns_val);
-        auto type = builtins().prim_type(IntId, size);
-        return {type, Value{RValue{val, is_consteval}}};
+        Integer int_val = uns_val;
+        if (is_consteval) {
+            auto size = detail::bitsize(int_val);
+            auto type = builtins().int_type(size);
+            return {type, Value{RValue{int_val, true}}};
+        } else {
+            auto size = detail::bitsize((Integer)bitsize());
+            auto type = builtins().int_type(size);
+            return {type, Value{!is_unknown ? RValue{int_val} : RValue{}}};
+        }
     }
     case UnsignedId: {
-        auto size = detail::bitsize(uns_val);
-        auto type = builtins().prim_type(UnsignedId, size);
-        return {type, Value{RValue{uns_val, is_consteval}}};
+        if (is_consteval) {
+            auto size = detail::bitsize(uns_val);
+            auto type = builtins().unsigned_type(size);
+            return {type, Value{RValue{uns_val, true}}};
+        } else {
+            auto size = detail::bitsize((Unsigned)bitsize());
+            auto type = builtins().unsigned_type(size);
+            return {type, Value{!is_unknown ? RValue{uns_val} : RValue{}}};
+        }
     }
     case BoolId: {
         assert(bitsize() == 1);
         auto boolean = builtins().boolean();
+        if (is_unknown)
+            return {boolean, Value{RValue{}}};
         auto rval = boolean->construct(uns_val > 0);
         rval.set_is_consteval(is_consteval);
         return {boolean, Value{std::move(rval)}};
@@ -183,6 +195,8 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     case BitsId: {
         auto size = bitsize();
         auto type = builtins().prim_type(BitsId, size);
+        if (is_unknown)
+            return {type, Value{RValue{}}};
         Bits val{size};
         store(val.view(), 0, rval);
         return {type, Value{RValue{std::move(val), is_consteval}}};
@@ -194,7 +208,8 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue UnaryType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    assert(rval.is<Unsigned>());
+    if (rval.empty())
+        return std::move(rval);
 
     Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
     bool is_consteval = rval.is_consteval();

@@ -3,6 +3,7 @@
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/semantic/var.hpp>
+#include <variant>
 
 namespace ulam {
 
@@ -18,14 +19,10 @@ Ref<Type> LValue::type() const {
 
 DataView LValue::data_view() {
     return accept(
-        [&](Ref<Var> var) {
-            auto data = var->data_view();
-            // assert(data);
-            return data;
-        },
+        [&](Ref<Var> var) { return var->data_view(); },
         [&](DataView& data) { return data; },
         [&](BoundFunSet&) -> DataView { assert(false); },
-        [&](std::monostate&) -> DataView { assert(false); });
+        [&](std::monostate&) { return DataView{}; });
 }
 
 const DataView LValue::data_view() const {
@@ -34,7 +31,8 @@ const DataView LValue::data_view() const {
 
 Ref<Class> LValue::dyn_cls(bool real) const {
     auto data = data_view();
-    return data.is_class() ? data.type(real)->canon()->as_class() : Ref<Class>{};
+    return data.is_class() ? data.type(real)->canon()->as_class()
+                           : Ref<Class>{};
 }
 
 Ref<Type> LValue::dyn_obj_type(bool real) const {
@@ -54,7 +52,12 @@ LValue LValue::self() {
     return lval;
 }
 
-LValue LValue::as(Ref<Type> type) { return derived(data_view().as(type)); }
+LValue LValue::as(Ref<Type> type) {
+    auto data = data_view();
+    if (data)
+        data = data.as(type);
+    return derived(data);
+}
 
 LValue LValue::atom_of() {
     auto data_view = accept(
@@ -76,10 +79,18 @@ RValue LValue::rvalue() const {
 }
 
 LValue LValue::array_access(array_idx_t idx) {
-    return derived(data_view().array_item(idx));
+    auto data = data_view();
+    if (!data)
+        return derived(std::monostate{});
+    return derived(data.array_item(idx));
 }
 
-LValue LValue::prop(Ref<Prop> prop) { return derived(data_view().prop(prop)); }
+LValue LValue::prop(Ref<Prop> prop) {
+    auto data = data_view();
+    if (!data)
+        return derived(std::monostate{});
+    return derived(data_view().prop(prop));
+}
 
 LValue LValue::bound_fset(Ref<FunSet> fset) {
     return derived(BoundFunSet{data_view(), fset});
@@ -137,7 +148,8 @@ const DataView RValue::data_view() const {
 
 Ref<Class> RValue::dyn_cls(bool real) const {
     auto data = data_view();
-    return data.is_class() ? data.type(real)->canon()->as_class() : Ref<Class>{};
+    return data.is_class() ? data.type(real)->canon()->as_class()
+                           : Ref<Class>{};
 }
 
 Ref<Type> RValue::dyn_obj_type(bool real) const {
@@ -239,9 +251,7 @@ RValue Value::move_rvalue() {
         });
 }
 
-Value Value::deref() {
-    return Value{move_rvalue()};
-}
+Value Value::deref() { return Value{move_rvalue()}; }
 
 bool Value::is_consteval() const {
     return accept([&](const auto& val) { return val.is_consteval(); });

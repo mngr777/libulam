@@ -1,6 +1,9 @@
-#include "libulam/semantic/ops.hpp"
 #include "src/semantic/detail/integer.hpp"
+#include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/unary.hpp>
+#include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 
 namespace ulam {
@@ -114,17 +117,18 @@ bool BoolType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
 
 TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
+
     switch (id) {
     case IntId: {
-        auto type = builtins().prim_type(IntId, 2);
+        auto type = builtins().int_type(2);
         return {type, Value{cast_to_prim(type, std::move(rval))}};
     }
     case UnsignedId: {
-        auto type = builtins().prim_type(UnsignedId, 1);
+        auto type = builtins().unsigned_type(1);
         return {type, Value{cast_to_prim(type, std::move(rval))}};
     }
     case UnaryId: {
-        auto type = builtins().prim_type(UnaryId, 1);
+        auto type = builtins().unary_type(1);
         return {type, Value{cast_to_prim(type, std::move(rval))}};
     }
     case BoolId: {
@@ -132,7 +136,7 @@ TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {this, Value{std::move(rval)}};
     }
     case BitsId: {
-        auto type = builtins().prim_type(BitsId, bitsize());
+        auto type = builtins().bits_type(bitsize());
         return {type, Value{cast_to_prim(type, std::move(rval))}};
     }
     default:
@@ -142,27 +146,31 @@ TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue BoolType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    assert(rval.is<Unsigned>());
+    if (rval.empty())
+        return std::move(rval);
 
+    bool is_consteval = rval.is_consteval();
     bool is_truth = is_true(rval);
-    rval = construct(is_truth);
+
     switch (type->bi_type_id()) {
     case IntId: {
-        return RValue{(Integer)(is_truth ? 1 : 0)};
+        return RValue{(Integer)(is_truth ? 1 : 0), is_consteval};
     }
     case UnsignedId: {
-        return RValue{(Unsigned)(is_truth ? 1 : 0)};
+        return RValue{(Unsigned)(is_truth ? 1 : 0), is_consteval};
     }
     case UnaryId: {
-        return RValue{(Unsigned)(is_truth ? 1 : 0)};
+        return RValue{(Unsigned)(is_truth ? 1 : 0), is_consteval};
     }
     case BoolId: {
-        return RValue{(Unsigned)(is_truth ? detail::ones(type->bitsize()) : 0)};
+        Unsigned uns_val = is_truth ? detail::ones(type->bitsize()) : 0;
+        return RValue{uns_val, is_consteval};
     }
     case BitsId: {
         auto bits_rval = type->construct();
         auto size = std::min(bitsize(), type->bitsize());
         bits_rval.get<Bits>().write_right(size, to_datum(rval));
+        bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }
     default:

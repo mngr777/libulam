@@ -139,8 +139,9 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
         throw EvalExceptError("if-as type is not class or Atom");
     }
 
-    assert(!res.value().empty());
-    auto dyn_type = res.value().dyn_obj_type()->actual();
+    Ref<Type> dyn_type = res.type();
+    if (!res.value().empty())
+        dyn_type = res.value().dyn_obj_type()->actual();
     if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
         auto scope_raii{_scope_stack.raii(scp::NoFlags)};
         auto val = res.move_value();
