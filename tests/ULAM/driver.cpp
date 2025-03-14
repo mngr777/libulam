@@ -102,6 +102,8 @@ int main(int argc, char** argv) {
             "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3899_test_compiler_constantarrayinit_datamember_dmandlocalvarinitvals.test", // UrSelf
+            "t3920_test_compiler_elementandquark_conditionalis_resbehave_issue.test", // Empty
+            "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

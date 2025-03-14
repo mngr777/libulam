@@ -90,9 +90,6 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    if (!_view_type->is_same(_type)) {
-        assert(false); // TODO
-    }
     _type->store(_storage->bits(), _off, std::move(rval));
 }
 

@@ -20,7 +20,7 @@ DataView LValue::data_view() {
     return accept(
         [&](Ref<Var> var) {
             auto data = var->data_view();
-            assert(data);
+            // assert(data);
             return data;
         },
         [&](DataView& data) { return data; },

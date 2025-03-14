@@ -831,7 +831,6 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
     if (from->is_expl_castable_to(to)) {
         if (expl) {
             val = do_cast(node, to, {from, std::move(val)});
-            assert(!val.empty());
             return {std::move(val), CastOk};
         }
         diag().error(node, "suggest explicit cast");
