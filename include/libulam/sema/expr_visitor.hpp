@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/nodes/var_decl.hpp"
+#include "libulam/semantic/var/base.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -67,6 +69,8 @@ public:
 
     virtual std::pair<TypedValueList, bool>
     eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
+
+    virtual std::pair<Value, bool> eval_init(Ref<ast::VarDecl> node, Ref<Type> type);
 
     virtual std::pair<Value, bool>
     eval_init_list(Ref<Type> type, Ref<ast::InitList> list);

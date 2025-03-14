@@ -13,12 +13,19 @@ public:
 
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
+        Ref<Type> type,
+        Value&& val,
+        Flag flags = NoFlags):
+        VarBase{type_node, node, type, flags}, _value{std::move(val)} {}
+
+    Var(Ref<ast::TypeName> type_node,
+        Ref<ast::VarDecl> node,
         TypedValue&& tv,
         Flag flags = NoFlags):
-        VarBase{type_node, node, tv.type(), flags}, _value{tv.move_value()} {}
+        Var{type_node, node, tv.type(), tv.move_value(), flags} {}
 
     bool requires_value() const {
-        return is_const() && !(is(Tpl) && is(ClassParam)) && !is(FunParam);
+        return is_const() && !is(Tpl) && !is(ClassParam);
     }
 
     const Value& value() const { return _value; }
@@ -29,9 +36,9 @@ public:
     LValue lvalue();
     RValue rvalue() const;
 
-    bool is_consteval() const {
-        return _value.is_consteval() && !is(FunParam);
-    }
+    Value move_value();
+
+    bool is_consteval() const { return _value.is_consteval() && !is(FunParam); }
 
     bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
     scope_lvl_t scope_lvl() const { return _scope_lvl; }

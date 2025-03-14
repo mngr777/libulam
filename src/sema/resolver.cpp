@@ -124,29 +124,15 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     }
 
     // value
-    if (var->is_const() && var->value().empty()) {
-        if (node->has_init_value()) {
-            // single expr value
+    if (var->requires_value()) {
+        if (node->has_init()) {
             ExprVisitor ev{_program, scope};
-            ExprRes res = node->init_value()->accept(ev);
-            if (!res)
-                RET_UPD_STATE(var, false);
-            // conv to var type
-            res =
-                ev.cast(node->init_value(), var->type(), std::move(res), false);
-            if (!res)
-                RET_UPD_STATE(var, false);
-            var->set_value(res.move_value());
+            auto [val, ok] = ev.eval_init(var->node(), var->type());
+            if (ok)
+                var->set_value(std::move(val));
+            is_resolved = is_resolved && ok;
 
-        } else if (node->has_init_list()) {
-            // init list
-            ExprVisitor ev{_program, scope};
-            auto [val, ok] = ev.eval_init_list(var->type(), node->init_list());
-            if (!ok)
-                RET_UPD_STATE(var, false);
-            var->set_value(std::move(val));
-
-        } else if (var->requires_value()) {
+        } else {
             auto name = node->name();
             diag().error(
                 name.loc_id(), str(name.str_id()).size(),
@@ -154,7 +140,6 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             is_resolved = false;
         }
     }
-
     RET_UPD_STATE(var, is_resolved);
 }
 

@@ -1,5 +1,4 @@
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/semantic/expr_res.hpp"
+#include "libulam/ast/nodes/var_decl.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -644,44 +643,78 @@ std::pair<TypedValueList, bool>
 ExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n";
     DBG_LINE(args);
+
+    // tmp param eval scope
+    auto param_scope_view = tpl->param_scope()->view(0);
+    auto scope = make<BasicScope>(ref(param_scope_view));
+    std::list<Ref<Var>> cls_params;
+
     std::pair<TypedValueList, bool> res;
-    res.second = true;
+    res.second = false;
     unsigned n = 0;
     for (auto param : tpl->params()) {
-        Ref<ast::Expr> arg = param->node()->init_value();
-        bool is_default = true;
+        // param type
+        Resolver resolver{_program};
+        auto type = resolver.resolve_type_name(param->type_node(), ref(scope));
+        if (!type)
+            return res;
+
+        // value
+        Value val{RValue{}};
         if (n < args->child_num()) {
-            is_default = false;
-            arg = args->get(n);
+            // argument provided
+            auto arg = args->get(n);
+            auto arg_res = arg->accept(*this);
+            if (arg_res)
+                arg_res = cast(arg, type, std::move(arg_res), false);
+            if (!arg_res)
+                return res;
+            val = arg_res.move_value();
+
+        } else if (param->node()->has_init()) {
+            // default argument
+            ExprVisitor ev{_program, ref(scope)};
+            bool ok = false;
+            std::tie(val, ok) = ev.eval_init(param->node(), type);
+            if (!ok)
+                return res;
+
+        } else {
+            diag().error(args, "not enough arguments");
+            return res;
         }
         ++n;
-        if (!arg) {
-            diag().error(args, "not enough arguments");
-            res.second = false;
-            break;
-        }
 
-        ExprRes arg_res;
-        if (is_default) {
-            // eval in tpl param scope
-            auto scope_view = tpl->param_scope()->view(param->scope_version());
-            ExprVisitor ev{_program, ref(scope_view)};
-            arg_res = arg->accept(ev);
-        } else {
-            // eval in current scope
-            arg_res = arg->accept(*this);
-        }
-        if (!arg_res) {
-            res.second = false;
-            break;
-        }
-        arg_res = cast(arg, param->type(), arg_res.move_typed_value(), false);
-        if (!arg_res) {
-            res.second = false;
-            break;
-        }
-        auto val = arg_res.move_value();
-        res.first.emplace_back(arg_res.type(), Value{val.move_rvalue()});
+        // create var in tmp scope
+        auto var =
+            make<Var>(param->type_node(), param->node(), type, std::move(val));
+        cls_params.push_back(ref(var)); // add to list
+        scope->set(param->name_id(), std::move(var));
+    }
+    res.second = true;
+
+    for (auto param : cls_params)
+        res.first.emplace_back(param->type(), param->move_value());
+    return res;
+}
+
+std::pair<Value, bool> ExprVisitor::eval_init(Ref<ast::VarDecl> node, Ref<Type> type) {
+    std::pair<Value, bool> res{RValue{}, false};
+    if (node->has_init_value()) {
+        // single expr
+        ExprRes init_res = node->init_value()->accept(*this);
+        if (init_res)
+            init_res = cast(
+                node->init_value(), type, std::move(init_res),
+                false);
+        if (init_res)
+            res = {init_res.move_value(), true};
+
+    } else if (node->has_init_list()) {
+        // init list
+        auto [val, ok] = eval_init_list(type, node->init_list());
+        if (ok)
+            res = {std::move(val), ok};
     }
     return res;
 }

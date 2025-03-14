@@ -102,6 +102,8 @@ public:
     ULAM_AST_TUPLE_PROP(array_dims, 0)
     ULAM_AST_TUPLE_PROP(init_value, 1)
     ULAM_AST_TUPLE_PROP(init_list, 2)
+
+    bool has_init() const { return has_init_value() || has_init_list(); }
 };
 
 } // namespace ulam::ast

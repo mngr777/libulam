@@ -23,4 +23,10 @@ LValue Var::lvalue() {
 
 RValue Var::rvalue() const { return _value.copy_rvalue(); }
 
+Value Var::move_value() {
+    auto val = _value.is_lvalue() ? Value{LValue{}} : Value{RValue{}};
+    std::swap(val, _value);
+    return val;
+}
+
 } // namespace ulam

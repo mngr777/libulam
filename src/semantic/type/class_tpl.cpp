@@ -25,7 +25,7 @@ str_id_t ClassTpl::name_id() const { return node()->name().str_id(); }
 Ref<Var>
 ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = ClassBase::add_param(type_node, node);
-    var->set_flag(Var::Tpl);
+    var->set_flag(Var::Tpl | Var::ClassParam);
     return var;
 }
 
@@ -70,7 +70,7 @@ bool ClassTpl::resolve(sema::Resolver& resolver) {
         set_state(Resolving);
     }
 
-    bool resolved = resolve_params(resolver);
+    bool resolved = true; // resolve_params(resolver);
     set_state(resolved ? Resolved : Unresolvable);
     return resolved;
 }
@@ -92,14 +92,13 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
 
     // create params
     TypedValue tv;
-    for (auto var : params()) {
+    for (auto param : params()) {
         assert(args.size() > 0);
         std::swap(tv, args.front());
         args.pop_front();
 
-        assert(tv.type()->is_same(var->type()));
         cls->add_param(
-            var->type_node(), var->node(),
+            param->type_node(), param->node(),
             Value{tv.move_value().move_rvalue()});
     }
 

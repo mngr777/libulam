@@ -69,16 +69,12 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
         if (!_resolver.resolve(ref(var), scope()))
             continue;
         if (var->value().empty()) {
-            if (def_node->has_init_value()) {
+            if (def_node->has_init()) {
                 EvalExprVisitor ev{*this, scope()};
-                ExprRes res = def_node->init_value()->accept(ev);
-                if (!res)
+                auto [val, ok] = ev.eval_init(def_node, var->type());
+                if (!ok)
                     throw EvalExceptError("failed to eval init value");
-                res = ev.cast(
-                    def_node->init_value(), var->type(), std::move(res), false);
-                if (!res)
-                    throw EvalExceptError("init var value cast failed");
-                var->set_value(res.move_value());
+                var->set_value(std::move(val));
             } else {
                 var->set_value(Value{var->type()->construct()});
             }
