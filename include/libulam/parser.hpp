@@ -131,6 +131,7 @@ private:
     bool parse_is_ref();
     Ptr<ast::BoolLit> parse_bool_lit();
     Ptr<ast::NumLit> parse_num_lit();
+    Ptr<ast::NumLit> parse_char_lit();
     Ptr<ast::StrLit> parse_str_lit();
 
     template <typename N, typename... Args> Ptr<N> tree(Args&&... args);

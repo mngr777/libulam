@@ -1143,6 +1143,8 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
         return parse_bool_lit();
     case tok::Number:
         return parse_num_lit();
+    case tok::Char:
+        return parse_char_lit();
     case tok::String:
         return parse_str_lit();
     case tok::ParenL:
@@ -1561,6 +1563,14 @@ Ptr<ast::NumLit> Parser::parse_num_lit() {
     return tree_loc<ast::NumLit>(loc_id, std::move(number));
 }
 
+Ptr<ast::NumLit> Parser::parse_char_lit() {
+    assert(_tok.is(tok::Char));
+    auto loc_id = _tok.loc_id;
+    auto number = detail::parse_char_str(_ctx.diag(), _tok.loc_id, tok_str());
+    consume();
+    return tree_loc<ast::NumLit>(loc_id, std::move(number));
+}
+
 Ptr<ast::StrLit> Parser::parse_str_lit() {
     assert(_tok.is(tok::String));
     auto loc_id = _tok.loc_id;
@@ -1581,7 +1591,8 @@ Ptr<N> Parser::tree_loc(loc_id_t loc_id, Args&&... args) {
 }
 
 std::string_view Parser::tok_str() {
-    assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Number, tok::String));
+    assert(_tok.in(
+        tok::Ident, tok::TypeIdent, tok::Number, tok::Char, tok::String));
     return _ctx.sm().str_at(_tok.loc_id, _tok.size);
 }
 

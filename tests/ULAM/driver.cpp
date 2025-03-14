@@ -70,11 +70,6 @@ int main(int argc, char** argv) {
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
             "t3400_test_compiler_arraysizeof_lengthzeroelement.test", // Empty
             "t3401_test_compiler_unaryminofmaxofconstant_issue.test", // Empty
-            "t3418_test_compiler_namedconstant_unsignedchar.test", // char
-            "t3422_test_compiler_namedconstant_specialchars.test", // char
-            "t3423_test_compiler_namedconstant_octal.test", // char
-            "t3424_test_compiler_namedconstant_hex.test", // char
-            "t3449_test_compiler_bitwisefunccallreturns.test", // char
             "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // string
             "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // Empty
             "t3485_test_compiler_voidfuncreturnscastedatom.test", // return (Void) a; ??
@@ -106,7 +101,7 @@ int main(int argc, char** argv) {
             "t3920_test_compiler_elementandquark_conditionalis_resbehave_issue.test", // Empty
             "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
             "t3927_test_compiler_string_assign.test", // String
-            "t3930_test_compiler_string_ascii.test", // char
+            "t3930_test_compiler_string_ascii.test", // ASCII type
             "t3931_test_compiler_stringuninitialized_sizeof.test", // String
             "t3933_test_compiler_string_lengthof.test", // String
             "t3936_test_compiler_arraylengthof_lengthzeroelement.test", // Empty

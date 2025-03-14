@@ -46,9 +46,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             cur += 2;
             // are there any digits after prefix?
             if (cur == str.size() || !is_digit(str[cur])) {
-                diag.emit(
-                    Diag::Error, loc_id, str.size(),
-                    "incomplete binary number");
+                diag.error(loc_id, str.size(), "incomplete binary number");
                 return {radix, (Integer)0};
             }
             break;
@@ -58,9 +56,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             cur += 2;
             // are there any hex digits after prefix?
             if (cur == str.size() || !is_xdigit(str[cur])) {
-                diag.emit(
-                    Diag::Error, loc_id, str.size(),
-                    "incomplete hexadecimal number");
+                diag.error(loc_id, str.size(), "incomplete hexadecimal number");
                 return {radix, (Integer)0};
             }
             break;
@@ -87,10 +83,9 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             break;
         // is valid for radix?
         if (dv + 1 > radix_to_int(radix)) {
-            diag.emit(
-                Diag::Error, loc_id, cur, 1,
-                std::string("invalid digit in ") + radix_to_str(radix) +
-                    " number");
+            auto message = std::string{"invalid digit in "} +
+                           radix_to_str(radix) + " number";
+            diag.error(loc_id, cur, 1, std::move(message));
             return {radix, (Integer)0};
         }
         // already overflown?
@@ -112,23 +107,86 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             is_signed = false;
             ++cur;
         }
-        if (cur < str.size()) {
-            diag.emit(
-                Diag::Error, loc_id, cur, str.size() - cur,
-                "invalid number suffix");
-        }
+        if (cur < str.size())
+            diag.error(loc_id, cur, str.size() - cur, "invalid number suffix");
     }
 
     // Overflow?
     overflow = overflow || (is_signed && value > MaxSigned);
     if (overflow) {
-        diag.emit(Diag::Error, loc_id, str.size(), "number overflow");
+        diag.error(loc_id, str.size(), "number overflow");
         if (is_signed)
             value = MaxSigned;
     }
 
     // Done
     return is_signed ? Number{radix, (Integer)value} : Number{radix, value};
+}
+
+Number parse_char_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
+    assert(str[0] == '\'');
+
+    Unsigned value = 0;
+    Radix radix = Radix::Decimal;
+
+    if (str.size() < 2) {
+        diag.error(loc_id, 1, "unterminated char literal");
+        return Number{radix, value};
+    }
+
+    auto check_closed_after = [&](std::size_t pos) {
+        assert(str.size() > 0);
+        if (str[str.size() - 1] != '\'') {
+            diag.error(loc_id, pos, 1, "unterminated char literal");
+        } else if (str.size() > pos + 2) {
+            diag.error(loc_id, pos + 1, 1, "invalid char literal");
+        }
+    };
+
+    if (str[1] != '\\') {
+        value = str[1];
+        check_closed_after(1);
+        return Number{radix, value};
+    }
+
+    std::size_t cur = 2;
+    if (str[cur] == 'x') {
+        radix = Radix::Hexadecimal;
+        ++cur;
+    } else if (is_digit(str[cur])) {
+        radix = Radix::Octal;
+    } else {
+        value = escaped(str[cur]);
+        check_closed_after(cur);
+        return Number{radix, value};
+    }
+
+    const Unsigned Max = 255;
+    for (; cur < str.size() && str[cur] != '\''; ++cur) {
+        std::uint8_t dv = digit_value(str[cur]);
+        // is digit?
+        if (dv == NotDigit) {
+            diag.error(loc_id, cur, 1, "unexpected character in char literal");
+            return Number{radix, (Unsigned)0};
+        }
+        // is valid for radix?
+        if (dv + 1 > radix_to_int(radix)) {
+            auto message = std::string{"invalid digit in "} +
+                           radix_to_str(radix) + " number";
+            diag.error(loc_id, cur, 1, std::move(message));
+            return Number{radix, (Unsigned)0};
+        }
+        // update value
+        value = value * radix_to_int(radix) + dv;
+        // overflown?
+        if (value > Max) {
+            diag.error(loc_id, cur, 1, "value is too large");
+            return Number{radix, (Unsigned)0};
+        }
+    }
+    if (cur == str.size())
+        diag.error(loc_id, cur, "unterminated char literal");
+    return Number{radix, value};
 }
 
 } // namespace ulam::detail

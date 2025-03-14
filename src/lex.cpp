@@ -286,7 +286,7 @@ void Lex::lex_str(char closing) {
     while (true) {
         switch (_cur[0]) {
         case '\0':
-            goto Done;
+            goto Done; // unterminated
         case '\r':
             if (_cur[1] == '\n') {
                 newline(2);
@@ -398,8 +398,42 @@ void Lex::lex_ml_comment() {
 }
 
 void Lex::lex_chr() {
-    assert(_tok_start);
-    assert(false); // TODO
+    bool esc = false;
+    while (true) {
+        switch (_cur[0]) {
+        case '\0':
+            goto Done; // unterminated
+        case '\r':
+            if (_cur[1] == '\n') {
+                newline(2);
+                if (!esc)
+                    goto Done; // unterminated
+            } else {
+                advance();
+            }
+            break;
+        case '\n':
+            newline(1);
+            if (!esc)
+                goto Done; // unterminated
+            break;
+        case '\'':
+            advance();
+            goto Done;
+        case '\\':
+            advance();
+            if (!esc) {
+                esc = true;
+                continue;
+            }
+            break;
+        default:
+            advance();
+        }
+        esc = false;
+    }
+Done:
+    complete(tok::Char);
 }
 
 void Lex::lex_number() {
