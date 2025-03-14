@@ -79,7 +79,6 @@ int main(int argc, char** argv) {
             "t3505_test_compiler_elementandquark_caarrayemptyquark.test", // Empty
             "t3590_test_compiler_isemptyquark.test", // Empty
             "t3631_test_compiler_element_castatomandquark_ish.test", // tmp, quark to Atom?
-            "t3663_test_compiler_element_castatomfromselfatomof_templateinstancewithinforloop.test", // Super type, TODO
             "t3697_test_compiler_elementandquark_castreftoatom.test", // quark ref to Atom: use .atomof instead?
             "t3701_test_compiler_elementandquark_castclassreftoatomref.test", // quark ref to Atom&
             "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
