@@ -99,6 +99,7 @@ int main(int argc, char** argv) {
             "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
             "t3930_test_compiler_string_ascii.test", // ASCII
             "t3936_test_compiler_arraylengthof_lengthzeroelement.test", // Empty
+            "t3939_test_compiler_caarraylengthof.test", // alengthof, TODO
             "t3941_test_compiler_stringitem_novar.test", // ASCII
             "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // ASCII
             "t3951_test_compiler_stringascii_constant.test", // ASCII
@@ -106,9 +107,7 @@ int main(int argc, char** argv) {
             "t3953_test_compiler_stringascii_constantarray_lengthof.test", // ASCII
             "t3955_test_compiler_stringascii_octal_issue.test", // ASCII
             "t3957_test_compiler_stringascii_dbldigitlength_reflengthof_cast.test", // ASCII
-            "t3939_test_compiler_caarraylengthof.test", // tmp
             "t3954_test_compiler_stringascii_constantarray_filescope.test", // ASCII
-            "t3958_test_compiler_stringasciiarray_toobig_issue.test", // tmp
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

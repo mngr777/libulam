@@ -110,12 +110,14 @@ void TestCase::parse() {
     };
 
     auto move_to_file_name = [&]() {
-        move_to("#");
-        if (text[pos] == '#' &&
-            (text[pos + 1] == ':' || text[pos + 1] == '>')) {
-            pos += 2;
-        } else {
-            error("not at `#:' or `#>'");
+        while (true) {
+            move_to("#");
+            if (text[pos] == '#' &&
+                (text[pos + 1] == ':' || text[pos + 1] == '>')) {
+                pos += 2;
+                break;
+            }
+            skip("#");
         }
     };
 
