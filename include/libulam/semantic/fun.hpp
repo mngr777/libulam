@@ -50,6 +50,8 @@ public:
     bool is_virtual() const { return _is_virtual; }
     void set_is_virtual(bool is_virtual) { _is_virtual = is_virtual; }
 
+    bool is_pure_virtual() const;
+
     bool is_marked_virtual() const;
 
     bool is_native() const;

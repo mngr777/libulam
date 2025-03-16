@@ -195,6 +195,7 @@ TESTS = \
 	test_sema_simple_inheritance \
 	test_sema_class_member \
 	test_sema_expr \
+	test_eval_virtual \
 	test_ulam
 check_PROGRAMS = $(TESTS)
 
@@ -232,6 +233,9 @@ test_sema_class_member_LDADD = $(TEST_LIBS)
 
 test_sema_expr_SOURCES = tests/sema/expr.cpp $(TEST_SEMA_SOURCE_FILES)
 test_sema_expr_LDADD = $(TEST_LIBS)
+
+test_eval_virtual_SOURCES = tests/eval/virtual.cpp $(TEST_SEMA_SOURCE_FILES)
+test_eval_virtual_LDADD = $(TEST_LIBS)
 
 test_ulam_SOURCES = \
 	tests/ast/print.hpp \

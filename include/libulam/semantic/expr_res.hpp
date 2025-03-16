@@ -43,6 +43,7 @@ enum class ExprError {
     InvalidReturnType,
     ArgsEvalError, // TMP
     NoMatchingFunction,
+    FunctionIsPureVirtual,
     AmbiguousFunctionCall
 };
 

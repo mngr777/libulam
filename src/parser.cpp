@@ -529,7 +529,6 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         panic(tok::BraceL, tok::BraceR, tok::Semicol);
 
     // marked as native?
-    // NOTE: actually being native is defined by not having a body
     bool is_native = false;
     if (_tok.is(tok::Native)) {
         is_native = true;
@@ -553,14 +552,10 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         body = make<ast::FunDefBody>();
         parse_as_block(ref(body));
     } else {
-        // no body
-        if (!is_native) {
-            diag("function without a body must be marked as native");
-        }
+        // no body (must be either native or pure virtual)
         assert(_tok.is(tok::Semicol));
         consume();
     }
-    is_native = !body;
 
     if (params->has_ellipsis() && !is_native) {
         diag(
@@ -573,6 +568,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         name, std::move(ret_type), std::move(params), std::move(body));
     // handle operator aliases, e.g. `aref`
     fun->set_op(ops::fun_name_op(_str_pool.get(fun->name_id())));
+    fun->set_is_native(is_native);
     return fun;
 }
 

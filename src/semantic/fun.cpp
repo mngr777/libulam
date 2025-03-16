@@ -37,6 +37,10 @@ Op Fun::op() const { return _node->op(); }
 
 bool Fun::is_marked_virtual() const { return node()->is_marked_virtual(); }
 
+bool Fun::is_pure_virtual() const {
+    return is_virtual() && !_node->has_body();
+}
+
 bool Fun::is_native() const { return _node->is_native(); }
 
 bool Fun::has_ellipsis() const { return _node->params()->has_ellipsis(); }
@@ -121,11 +125,14 @@ void Fun::add_override(Ref<Fun> fun) {
     assert(is_virtual());        // must be already marked as virtual
     assert(fun->key() == key()); // parameters must match
     assert(_overrides.count(fun->cls()->id()) == 0); // one override per class
-    assert(!fun->_overridden);
 
     fun->set_is_virtual(true);
-    fun->_overridden = this;
+    if (!fun->_overridden)
+        fun->_overridden = this;
     _overrides[fun->cls()->id()] = fun;
+
+    if (_overridden)
+        _overridden->add_override(fun);
 }
 
 std::string Fun::key() const {

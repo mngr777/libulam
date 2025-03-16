@@ -132,6 +132,7 @@ class FunDef : public Tuple<Stmt, FunRetType, ParamList, FunDefBody>,
     // NOTE: function can be virtual, but not marked as such
     ULAM_AST_SIMPLE_ATTR(bool, is_marked_virtual, false)
     ULAM_AST_SIMPLE_ATTR(bool, is_marked_override, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_native, false)
 public:
     FunDef(
         Str name,
@@ -151,9 +152,6 @@ public:
     }
 
     bool is_op() const { return op() != Op::None; }
-
-    // NOTE: using [not] having a body as ground truth for being native
-    bool is_native() const { return !body(); }
 };
 
 class VarDef : public VarDecl {

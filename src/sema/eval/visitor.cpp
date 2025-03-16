@@ -269,8 +269,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind `self`, set `Self`
-    scope()->set_self(self);
-    scope()->set_self_cls(self.dyn_cls());
+    scope()->set_self(self.as(fun->cls()));
+    scope()->set_self_cls(fun->cls());
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(scope_lvl);
 

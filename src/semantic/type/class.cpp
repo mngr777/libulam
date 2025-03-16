@@ -262,8 +262,28 @@ RValue Class::load(const BitsView data, bitsize_t off) const {
 
 void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<DataPtr>());
-    if (bitsize() > 0)
-        data.write(off, rval.get<DataPtr>()->bits().view());
+    auto obj_data = rval.get<DataPtr>();
+    auto cls = obj_data->type()->as_class();
+
+    // same type
+    if (cls->is_same(this)) {
+        if (bitsize() > 0)
+            data.write(off, obj_data->bits().view());
+        return;
+    }
+
+    if (is_base_of(cls)) {
+        for (auto prop: all_props()) {
+            auto prop_off = prop->data_off();
+            prop->type()->store(data, off + prop_off, prop->load(obj_data));
+        }
+    } else {
+        assert(cls->is_base_of(this));
+        for (auto prop: cls->all_props()) {
+            auto prop_off = prop->data_off_in(const_cast<Class*>(this));
+            prop->type()->store(data, off + prop_off, prop->load(obj_data));
+        }
+    }
 }
 
 // NOTE: for ambiguous conversion truth is returned,

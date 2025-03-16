@@ -327,7 +327,7 @@ ExprRes ExprVisitor::visit(Ref<ast::StrLit> node) {
     debug() << __FUNCTION__ << " StrLit\n";
     DBG_LINE(node);
     auto type = builtins().type(StringId);
-    return {type, Value{RValue{node->value()}}};
+    return {type, Value{RValue{node->value(), true}}};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::FunCall> node) {
@@ -951,7 +951,8 @@ TypedValue ExprVisitor::do_cast(
 
 ExprRes ExprVisitor::funcall(
     Ref<ast::Expr> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
-    auto match_res = fset->find_match(self.dyn_cls(), args);
+    auto dyn_cls = self.dyn_cls(true);
+    auto match_res = fset->find_match(dyn_cls, args);
     if (match_res.empty()) {
         diag().error(node, "no matching functions found");
         return {ExprError::NoMatchingFunction};

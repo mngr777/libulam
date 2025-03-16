@@ -21,15 +21,19 @@ ExprRes EvalExprVisitor::funcall(
     debug() << __FUNCTION__ << "\n";
     if (fun->is_native()) {
         // can't eval, return empty value
-        diag().emit(
-            Diag::Notice, node->loc_id(), 1, "cannot evaluate native function");
+        diag().notice(node, "cannot evaluate native function");
         if (fun->ret_type()->is_ref()) {
             LValue lval;
             lval.set_is_xvalue(false);
             return {fun->ret_type(), Value{lval}};
         }
         return {fun->ret_type(), Value{RValue{}}};
+
+    } else if (fun->is_pure_virtual()) {
+        diag().error(node, "function is pure virtual");
+        return {ExprError::FunctionIsPureVirtual};
     }
+    assert(fun->node()->has_body());
     return _eval.funcall(fun, self.self(), std::move(args));
 }
 
