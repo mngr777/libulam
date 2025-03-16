@@ -19,7 +19,7 @@ Eval::Eval(Context& ctx, Ref<ast::Root> ast):
 }
 
 void Eval::eval(const std::string& text) {
-    Parser parser{_ctx, _ast->ctx().str_pool()};
+    Parser parser{_ctx, _ast->ctx().str_pool(), _ast->ctx().text_pool()};
     auto block = parser.parse_stmts(text);
     _eval.eval(ref(block));
 }

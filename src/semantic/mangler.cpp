@@ -89,6 +89,9 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
 void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
     rval.accept(
         [&](const auto& val) { detail::write_leximited(os, val); },
+        [&](const String& str) {
+            detail::write_leximited(os, _text_pool.get(str.id));
+        },
         [&](const Bits& val) { val.hex_str(os); },
         [&](const DataPtr& val) { val->bits().hex_str(os); },
         [&](const std::monostate&) { assert(false); });

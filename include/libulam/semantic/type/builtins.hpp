@@ -1,5 +1,5 @@
 #pragma once
-#include "libulam/semantic/value/types.hpp"
+#include <libulam/str_pool.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -23,7 +23,7 @@ class VoidType;
 
 class Builtins {
 public:
-    Builtins(TypeIdGen& id_gen);
+    Builtins(TypeIdGen& id_gen, UniqStrPool& text_pool);
     ~Builtins();
 
     Builtins(Builtins&&) = default;

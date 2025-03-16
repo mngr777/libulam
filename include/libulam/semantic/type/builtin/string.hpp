@@ -1,8 +1,10 @@
 #pragma once
+#include <libulam/str_pool.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <string>
 
 namespace ulam::ast {
@@ -16,16 +18,35 @@ class Value;
 
 class StringType : public PrimType {
 public:
-    StringType(Builtins& builtins, TypeIdGen& id_gen):
-        PrimType{builtins, &id_gen} {}
+    StringType(Builtins& builtins, TypeIdGen& id_gen, UniqStrPool& text_pool):
+        PrimType{builtins, &id_gen}, _text_pool{text_pool} {}
 
     std::string name() const override { return "String"; }
 
-    bitsize_t bitsize() const override { return 8; /* TMP placeholder */ }
+    bitsize_t bitsize() const override;
 
-    // RValue construct() override { return ...; }
+    TypedValue type_op(TypeOp op, Value& val) override;
+
+    RValue construct() const override;
+
+    RValue from_datum(Datum datum) const override;
+    Datum to_datum(const RValue& rval) const override;
+
+    str_len_t len(const Value& val) const;
+    std::uint8_t chr(const Value& val, array_idx_t idx) const;
+
+    std::string_view text(const Value& val) const;
+
+    TypedValue binary_op(
+        Op op,
+        RValue&& l_rval,
+        Ref<const PrimType> r_type,
+        RValue&& r_rval) override;
 
     BuiltinTypeId bi_type_id() const override { return StringId; }
+
+private:
+    UniqStrPool& _text_pool;
 };
 
 } // namespace ulam

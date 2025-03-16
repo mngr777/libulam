@@ -1,4 +1,3 @@
-#include "libulam/ast/nodes/var_decl.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -8,6 +7,7 @@
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/ops.hpp>
@@ -451,8 +451,9 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (idx_cast_res.second == CastError)
         return {ExprError::InvalidCast};
     auto index_val = std::move(idx_cast_res.first);
+    auto index = index_val.move_rvalue().get<Integer>();
 
-    // is class?
+    // class?
     if (array_res.type()->actual()->is_class()) {
         auto cls = array_res.type()->actual()->as_class();
         auto fset = cls->op(Op::ArrayAccess);
@@ -471,7 +472,22 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return res;
     }
 
-    // is an array?
+    // string?
+    if (array_res.type()->actual()->is(StringId)) {
+        auto type = builtins().string_type();
+        auto len = type->len(array_res.value());
+        if (index < 0 || index + 1 > len) {
+            diag().error(node->index(), "char index is out of range");
+            return {ExprError::CharIndexOutOfRange};
+        }
+        auto chr = type->chr(array_res.value(), index);
+        bool is_consteval = array_res.value().is_consteval();
+        return {
+            builtins().unsigned_type(8),
+            Value{RValue{(Unsigned)chr, is_consteval}}};
+    }
+
+    // array?
     if (!array_res.type()->actual()->is_array()) {
         diag().error(node->array(), "not an array");
         return {ExprError::NotArray};
@@ -485,8 +501,7 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     auto array_val = array_res.move_value();
 
     // check bounds
-    auto index = index_val.move_rvalue().get<Integer>();
-    if (index + 1 > array_type->array_size()) {
+    if (index < 0 || index + 1 > array_type->array_size()) {
         diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
     }

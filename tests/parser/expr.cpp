@@ -1,8 +1,8 @@
 #include "tests/ast/print.hpp"
 #include <iostream>
+#include <libulam/ast.hpp>
 #include <libulam/context.hpp>
 #include <libulam/parser.hpp>
-#include <libulam/ast.hpp>
 
 static const char* Program = R"END(
 quark Q(B.C param1 = 0xff) {
@@ -41,7 +41,7 @@ element A {
 int main() {
     ulam::Context ctx;
     auto ast = ulam::make<ulam::ast::Root>();
-    ulam::Parser parser{ctx, ast->ctx().str_pool()};
+    ulam::Parser parser{ctx, ast->ctx().str_pool(), ast->ctx().text_pool()};
 
     std::string text{Program};
     ast->add(parser.parse_module_str(text, "A"));

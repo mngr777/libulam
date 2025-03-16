@@ -47,11 +47,6 @@ void write_leximited(std::ostream& os, Unsigned value) {
     os << value;
 }
 
-void write_leximited(std::ostream& os, const String& value) {
-    write_header(os, value.size());
-    os << value;
-}
-
 void write_leximited(std::ostream& os, std::string_view value) {
     write_header(os, value.size());
     os << value;

@@ -5,7 +5,7 @@
 
 namespace ulam {
 
-using str_id_t = std::uint32_t;
+using str_id_t = std::uint16_t;
 constexpr str_id_t NoStrId = -1;
 
 class StrPoolBase {

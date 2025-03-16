@@ -119,7 +119,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
 }
 
 std::string ClassTpl::type_args_str(const TypedValueList& args) {
-    return Mangler{}.mangled(args);
+    return module()->program()->mangler().mangled(args);
 }
 
 } // namespace ulam

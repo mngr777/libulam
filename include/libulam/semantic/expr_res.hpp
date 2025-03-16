@@ -27,6 +27,7 @@ enum class ExprError {
     TypeMismatch,
     UnknownArrayIndex,
     ArrayIndexOutOfRange,
+    CharIndexOutOfRange,
     NotObject,
     NotClass,
     NoOperator,

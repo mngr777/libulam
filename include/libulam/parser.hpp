@@ -18,8 +18,8 @@ class Preproc;
 
 class Parser {
 public:
-    explicit Parser(Context& ctx, UniqStrPool& str_pool):
-        _ctx{ctx}, _str_pool{str_pool}, _pp{ctx} {}
+    Parser(Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
+        _ctx{ctx}, _str_pool{str_pool}, _text_pool{text_pool}, _pp{ctx} {}
 
     Ptr<ast::ModuleDef> parse_module_file(const std::filesystem::path& path);
     Ptr<ast::ModuleDef>
@@ -144,6 +144,7 @@ private:
 
     Context& _ctx;
     UniqStrPool& _str_pool;
+    UniqStrPool& _text_pool;
     Preproc _pp;
     Token _tok;
     std::stack<Token> _back;

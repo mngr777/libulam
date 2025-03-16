@@ -4,8 +4,8 @@
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type_ops.hpp>
 
 namespace test::ast {
 
@@ -135,8 +135,7 @@ const char* PrinterBase::paren_r() { return options.expl_parens ? "(" : ""; }
 
 const char* PrinterBase::nl() { return _no_newline ? "" : "\n"; }
 
-const std::string_view
-PrinterBase::name(ulam::Ref<ulam::ast::Named> node) {
+const std::string_view PrinterBase::name(ulam::Ref<ulam::ast::Named> node) {
     return str(node->name().str_id());
 }
 
@@ -192,9 +191,7 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
     indent() << "}" << nl();
 }
 
-void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) {
-    print_var_decl(node);
-}
+void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) { print_var_decl(node); }
 
 void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
     // ret type
@@ -501,12 +498,18 @@ bool Printer::do_visit(ulam::Ref<ulam::ast::NumLit> node) {
 }
 
 bool Printer::do_visit(ulam::Ref<ulam::ast::StrLit> node) {
-    _os << '"' << node->value() << '"';
+    std::string_view text{"<no value>"};
+    ulam::str_id_t str_id = node->value().id;
+    if (str_id != ulam::NoStrId) {
+        auto& text_pool = ast()->ctx().text_pool();
+        text = text_pool.get(node->value().id);
+    }
+    // TODO: escape
+    _os << '"' << text << '"';
     return false;
 }
 
-void Printer::traverse_list(
-    ulam::Ref<ulam::ast::Node> node, std::string sep) {
+void Printer::traverse_list(ulam::Ref<ulam::ast::Node> node, std::string sep) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         if (n > 0)
             _os << sep;

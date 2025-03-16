@@ -7,12 +7,15 @@
 
 namespace ulam {
 
-Program::Program(Diag& diag, UniqStrPool& str_pool, SrcMngr& sm):
+Program::Program(
+    Diag& diag, UniqStrPool& str_pool, UniqStrPool& text_pool, SrcMngr& sm):
     _diag{diag},
     _str_pool{str_pool},
+    _text_pool{text_pool},
     _sm{sm},
     _type_id_gen{},
-    _builtins{_type_id_gen} {}
+    _builtins{_type_id_gen, text_pool},
+    _mangler{_text_pool} {}
 
 Program::~Program() {}
 

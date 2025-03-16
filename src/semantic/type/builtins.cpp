@@ -21,14 +21,14 @@ template <typename T> bitsize_t prim_size(bitsize_t size) {
 
 } // namespace
 
-Builtins::Builtins(TypeIdGen& id_gen) {
+Builtins::Builtins(TypeIdGen& id_gen, UniqStrPool& text_pool) {
     _int_tpl = make<IntTypeTpl>(*this, id_gen);
     _unsigned_tpl = make<UnsignedTypeTpl>(*this, id_gen);
     _unary_tpl = make<UnaryTypeTpl>(*this, id_gen);
     _bits_tpl = make<BitsTypeTpl>(*this, id_gen);
     _bool_tpl = make<BoolTypeTpl>(*this, id_gen);
     _atom_type = make<AtomType>(*this, id_gen);
-    _string_type = make<StringType>(*this, id_gen);
+    _string_type = make<StringType>(*this, id_gen, text_pool);
     _void_type = make<VoidType>(*this, id_gen);
     _fun_type = make<FunType>(*this, id_gen);
 }

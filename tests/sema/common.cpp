@@ -11,7 +11,7 @@ analyze(const std::string& text, const std::string& module_name) {
     ulam::Context ctx;
     auto ast = ulam::make<ulam::ast::Root>();
 
-    ulam::Parser parser{ctx, ast->ctx().str_pool()};
+    ulam::Parser parser{ctx, ast->ctx().str_pool(), ast->ctx().text_pool()};
     auto module = parser.parse_module_str(text, module_name);
     if (module)
         ast->add(std::move(module));

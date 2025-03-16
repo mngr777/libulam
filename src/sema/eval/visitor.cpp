@@ -1,4 +1,3 @@
-#include "libulam/semantic/value.hpp"
 #include <cassert>
 #include <exception>
 #include <libulam/sema/eval/except.hpp>
@@ -204,7 +203,7 @@ void EvalVisitor::visit(Ref<ast::Break> node) {
     if (scope()->in(scp::Break)) {
         throw EvalExceptBreak();
     } else {
-        diag().emit(Diag::Error, node->loc_id(), 1, "unexpected break");
+        diag().error(node, "unexpected break");
     }
 }
 
@@ -213,7 +212,7 @@ void EvalVisitor::visit(Ref<ast::Continue> node) {
     if (scope()->in(scp::Continue)) {
         throw EvalExceptContinue();
     } else {
-        diag().emit(Diag::Error, node->loc_id(), 1, "unexpected continue");
+        diag().error(node, "unexpected continue");
     }
 }
 

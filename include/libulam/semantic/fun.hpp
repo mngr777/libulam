@@ -26,6 +26,7 @@ namespace ulam {
 class Class;
 class Diag;
 class FunSet;
+class Mangler;
 class Scope;
 class Type;
 class Var;
@@ -38,7 +39,7 @@ public:
     enum MatchStatus { NoMatch, IsMatch, ExactMatch };
     using MatchRes = std::pair<MatchStatus, conv_cost_t>;
 
-    Fun(Ref<ast::FunDef> node);
+    Fun(Mangler& mangler, Ref<ast::FunDef> node);
     ~Fun();
 
     str_id_t name_id() const;
@@ -84,6 +85,7 @@ private:
 
     std::string key() const;
 
+    Mangler& _mangler;
     Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
     Params _params{};

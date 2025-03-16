@@ -6,7 +6,7 @@
 namespace ulam::detail {
 
 // TODO: support hex/oct escape sequences
-String parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
+std::string parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     assert(str.size() > 0);
     std::string parsed;
     parsed.reserve(str.size());

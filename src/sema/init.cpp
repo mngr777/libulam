@@ -28,7 +28,8 @@ namespace ulam::sema {
 
 void Init::visit(Ref<ast::Root> node) {
     assert(!node->program());
-    node->set_program(make<Program>(diag(), node->ctx().str_pool(), _sm));
+    node->set_program(make<Program>(
+        diag(), node->ctx().str_pool(), node->ctx().text_pool(), _sm));
     RecVisitor::visit(node);
     export_classes();
 }

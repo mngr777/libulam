@@ -20,7 +20,8 @@ namespace ulam {
 
 // Fun
 
-Fun::Fun(Ref<ast::FunDef> node): _node{node} {
+Fun::Fun(Mangler& mangler, Ref<ast::FunDef> node):
+    _mangler{mangler}, _node{node} {
     assert(node);
     if (node->is_marked_virtual())
         set_is_virtual(true);
@@ -131,8 +132,7 @@ std::string Fun::key() const {
     TypeList param_types;
     for (const auto& param : _params)
         param_types.push_back(param->type());
-    Mangler mangler;
-    auto key = mangler.mangled(param_types);
+    auto key = _mangler.mangled(param_types);
     if (has_ellipsis())
         key += "..."; // TMP
     return key;
