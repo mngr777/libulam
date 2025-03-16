@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -9,6 +10,7 @@
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
+#include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/value.hpp>
@@ -286,6 +288,10 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     if (!cast_type)
         return {ExprError::InvalidCast};
 
+    // (Void) expr
+    if (cast_type->is(VoidId))
+        return {builtins().void_type(), Value{RValue{}}};
+
     auto cast_res = maybe_cast(node, cast_type, res.move_typed_value(), true);
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
@@ -451,7 +457,6 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     if (idx_cast_res.second == CastError)
         return {ExprError::InvalidCast};
     auto index_val = std::move(idx_cast_res.first);
-    auto index = index_val.move_rvalue().get<Integer>();
 
     // class?
     if (array_res.type()->actual()->is_class()) {
@@ -471,6 +476,8 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         }
         return res;
     }
+
+    auto index = index_val.move_rvalue().get<Integer>();
 
     // string?
     if (array_res.type()->actual()->is(StringId)) {

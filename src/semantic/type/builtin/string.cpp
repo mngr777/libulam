@@ -9,6 +9,15 @@ namespace ulam {
 
 bitsize_t StringType::bitsize() const { return sizeof(String::id) * 8; }
 
+TypedValue StringType::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::LengthOf:
+        return Type::type_op(TypeOp::SizeOf);
+    default:
+        return Type::type_op(op);
+    }
+}
+
 TypedValue StringType::type_op(TypeOp op, Value& val) {
     switch (op) {
     case TypeOp::LengthOf: {

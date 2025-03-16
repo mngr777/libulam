@@ -25,6 +25,7 @@ public:
 
     bitsize_t bitsize() const override;
 
+    TypedValue type_op(TypeOp op) override;
     TypedValue type_op(TypeOp op, Value& val) override;
 
     RValue construct() const override;

@@ -71,7 +71,6 @@ int main(int argc, char** argv) {
             "t3400_test_compiler_arraysizeof_lengthzeroelement.test", // Empty
             "t3401_test_compiler_unaryminofmaxofconstant_issue.test", // Empty
             "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // Empty
-            "t3485_test_compiler_voidfuncreturnscastedatom.test", // return (Void) a; ??
             "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
             "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
             "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix?
@@ -108,6 +107,7 @@ int main(int argc, char** argv) {
             "t3955_test_compiler_stringascii_octal_issue.test", // ASCII
             "t3957_test_compiler_stringascii_dbldigitlength_reflengthof_cast.test", // ASCII
             "t3939_test_compiler_caarraylengthof.test", // tmp
+            "t3954_test_compiler_stringascii_constantarray_filescope.test", // ASCII
             "t3958_test_compiler_stringasciiarray_toobig_issue.test", // tmp
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
