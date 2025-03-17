@@ -321,7 +321,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
             return res;
 
         auto type = res.type();
-        auto val = res.move_value();
+        // auto val = res.move_value();
 
         // Void ret type
         if (ret_type->is(VoidId)) {
@@ -339,46 +339,22 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
 
         // Reference ret type
         if (ret_type->is_ref()) {
-            if (!val.is_lvalue()) {
+            if (!res.value().is_lvalue()) {
                 diag().error(ret.node(), "not a reference");
                 return {ExprError::NotReference};
             }
             // TODO: test
-            if (val.lvalue().has_scope_lvl() &&
-                !val.lvalue().has_auto_scope_lvl() &&
-                val.lvalue().scope_lvl() >= _scope_stack.size()) {
+            const LValue lval = res.value().lvalue();
+            if (lval.has_scope_lvl() &&
+                !lval.has_auto_scope_lvl() &&
+                lval.scope_lvl() >= _scope_stack.size()) {
                 diag().error(ret.node(), "reference to local");
                 return {ExprError::ReferenceToLocal};
             }
-            if (!type->is_same_actual(ret_type)) {
-                // TODO: use expr visitor
-                if (!type->ref_type()->is_impl_castable_to(ret_type, val)) {
-                    diag().error(ret.node(), "invalid reference type cast");
-                    return {ExprError::InvalidCast};
-                }
-                val = type->ref_type()->cast_to(ret_type, std::move(val));
-            }
-            return {ret_type, std::move(val)};
         }
-
-        // Non-reference ret type
-        val = Value{val.move_rvalue()};
-        if (!type->is_same_actual(ret_type)) {
-            if (!type->actual()->is_impl_castable_to(ret_type, val)) {
-                auto message = std::string{"cannot convert "} +
-                               type->deref()->name() + " to " +
-                               ret_type->name();
-                diag().error(ret.node(), message);
-                return {ExprError::InvalidReturnType};
-            }
-            EvalExprVisitor ev{*this, scope()};
-            assert(ret.node()->has_expr());
-            res = ev.cast(
-                ret.node()->expr(), ret_type->actual(),
-                {type->actual(), std::move(val)}, false);
-            return res;
-        }
-        return {ret_type, std::move(val)};
+        EvalExprVisitor ev{*this, scope()};
+        res = ev.cast(ret.node()->expr(), ret_type, std::move(res), false);
+        return res;
     }
     debug() << "}\n";
     if (!fun->ret_type()->is(VoidId))

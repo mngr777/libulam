@@ -838,7 +838,7 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
             from = val.dyn_obj_type()->ref_type();
         from = from->ref_type();
 
-    } else if (from->is_ref()) {
+    } else if (from->is_ref() || val.is_lvalue()) {
         // copy value from reference
         assert(val.is_lvalue());
         val = val.deref();
