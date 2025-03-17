@@ -39,7 +39,10 @@ void Ancestor::add_dep_added(Ref<Ancestor> anc) {
 // Ancestry
 
 bool Ancestry::add(Ref<Class> cls, Ref<ast::TypeName> node) {
-    return do_add(cls, node).second;
+    auto [anc, added] = do_add(cls, node);
+    if (added)
+        _parents.push_back(anc);
+    return added;
 }
 
 std::pair<Ref<Ancestor>, bool>
@@ -54,7 +57,6 @@ Ancestry::do_add(Ref<Class> cls, Ref<ast::TypeName> node) {
     // add immediate base
     auto anc = make<Ancestor>(cls, node);
     auto ref = ulam::ref(anc);
-    _parents.push_back(ref);
     _map[cls->id()] = ref;
     _name_id_map[cls->name_id()] = ref;
     _ancestors.push_back(std::move(anc));
