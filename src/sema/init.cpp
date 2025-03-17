@@ -81,7 +81,7 @@ void Init::visit(Ref<ast::TypeDef> node) {
     if (scope()->is(scp::Persistent)) {
         if (scope()->is(scp::Module)) {
             module()->add_type_def(node);
-        } else if (scope()->is(scp::Class) || scope()->is(scp::ClassTpl)) {
+        } else if (scope()->is(scp::Class | scp::ClassTpl)) {
             auto class_base = class_def()->cls_or_tpl();
             assert(class_base);
             class_base->add_type_def(node);
@@ -121,7 +121,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
         // add to module/class/tpl
         if (scope()->is(scp::Module)) {
             module()->add_const(node->type_name(), def);
-        } else if (scope()->is(scp::Class) || scope()->is(scp::ClassTpl)) {
+        } else if (scope()->is(scp::Class | scp::ClassTpl)) {
             auto cls_base = class_def()->cls_or_tpl();
             assert(cls_base);
             if (node->is_const()) {
@@ -135,7 +135,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
 }
 
 bool Init::do_visit(Ref<ast::FunDef> node) {
-    assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
+    assert(scope()->is(scp::Class | scp::ClassTpl));
 
     // get class/tpl, name
     auto cls_base = class_def()->cls_or_tpl();

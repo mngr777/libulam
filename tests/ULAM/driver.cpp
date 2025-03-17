@@ -118,6 +118,7 @@ int main(int argc, char** argv) {
             "t3972_test_compiler_string_dminit.test", // ASCII
             "t3973_test_compiler_stringarray_dminit_lengthof.test", // ASCII
             "t3974_test_compiler_stringarray_localinit_lengthof.test", // ASCII
+            "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

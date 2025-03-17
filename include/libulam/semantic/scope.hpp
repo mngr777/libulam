@@ -58,9 +58,9 @@ public:
     virtual Ref<Class> self_cls() { assert(false); }
     virtual void set_self_cls(Ref<Class> cls) { assert(false); }
 
-    bool is(ScopeFlags flags_) { return (flags() & flags_) == flags_; }
+    bool is(ScopeFlags flags_) { return flags() & flags_; }
     bool in(ScopeFlags flags_) {
-        return is(flags_) || (parent() && parent()->is(flags_));
+        return is(flags_) || (parent() && parent()->in(flags_));
     }
 
     virtual bool has(str_id_t name_id, bool current = false) {
