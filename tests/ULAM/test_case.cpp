@@ -6,7 +6,8 @@
 #include <sstream>
 #include <stdexcept>
 
-TestCase::TestCase(const std::filesystem::path& path) {
+TestCase::TestCase(const Path& stdlib_dir, const Path& path):
+    _stdlib_dir{stdlib_dir} {
     load(path);
     parse();
 }
@@ -15,6 +16,9 @@ void TestCase::run() {
     assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
+    // stdlib
+    compiler.parse_module_file(_stdlib_dir / "UrSelf.ulam");
+    // test srcs
     for (auto pair : _srcs) {
         auto [name, text] = pair;
         compiler.parse_module_str(std::string{text}, std::string{name});

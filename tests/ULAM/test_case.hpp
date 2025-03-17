@@ -4,14 +4,17 @@
 
 class TestCase {
 public:
-    TestCase(const std::filesystem::path& path);
+    using Path = std::filesystem::path;
+
+    TestCase(const Path& stdlib_dir, const Path& path);
 
     void run();
 
 private:
-    void load(const std::filesystem::path& path);
+    void load(const Path& path);
     void parse();
 
+    Path _stdlib_dir;
     std::string _text;
     std::string_view _answer;
     int _exit_status{0};

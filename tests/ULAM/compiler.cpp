@@ -9,6 +9,15 @@
 #include <stdexcept>
 #include <utility>
 
+void Compiler::parse_module_file(const Path& path) {
+    auto module = _parser.parse_module_file(path);
+    std::cerr << "parsing " << path.filename() << "\n";
+    if (module) {
+        assert(!_ast->has_module(module->name_id()));
+        _ast->add_module(std::move(module));
+    }
+}
+
 void Compiler::parse_module_str(
     const std::string& text, const std::string& name) {
     auto module = _parser.parse_module_str(text, name);
