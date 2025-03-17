@@ -72,6 +72,29 @@ public:
     ULAM_AST_TUPLE_PROP(body, 1)
 };
 
+class WhichCase : public Tuple<Stmt, Expr, Stmt> {
+    ULAM_AST_NODE
+public:
+    WhichCase(Ptr<Expr>&& expr, Ptr<Stmt>&& branch):
+        Tuple{std::move(expr), std::move(branch)} {}
+
+    ULAM_AST_TUPLE_PROP(expr, 0)
+    ULAM_AST_TUPLE_PROP(branch, 1)
+};
+
+class WhichCaseList : public List<Stmt, WhichCase> {
+    ULAM_AST_NODE
+};
+
+class Which : public Tuple<Stmt, Expr, WhichCaseList> {
+    ULAM_AST_NODE
+public:
+    Which(Ptr<Expr>&& expr): Tuple{std::move(expr), make<WhichCaseList>()} {}
+
+    ULAM_AST_TUPLE_PROP(expr, 0)
+    ULAM_AST_TUPLE_PROP(case_list, 1)
+};
+
 class Return : public Tuple<Stmt, Expr> {
     ULAM_AST_NODE
 public:
