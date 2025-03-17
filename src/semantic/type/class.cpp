@@ -470,18 +470,35 @@ Ref<FunSet> Class::add_op_fset(Op op) {
 }
 
 bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
-    if (!node()->has_ancestors())
-        return true;
-
-    for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
-        auto cls_name = node()->ancestors()->get(n);
-        // TODO: check if element's ancestor is element or transient etc.
-        auto cls =
-            resolver.resolve_class_name(cls_name, param_scope(), resolve);
-        if (!cls)
-            return false;
-        add_ancestor(cls, cls_name);
+    if (node()->has_ancestors()) {
+        for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
+            auto cls_name = node()->ancestors()->get(n);
+            // TODO: check if element's ancestor is element or transient etc.
+            auto cls =
+                resolver.resolve_class_name(cls_name, param_scope(), resolve);
+            if (!cls)
+                return false;
+            add_ancestor(cls, cls_name);
+        }
     }
+
+    // TODO: refactoring
+    {
+        auto name_id = module()->program()->str_pool().put("UrSelf");
+        auto sym = module()->scope()->get(name_id);
+        if (sym && sym->is<UserType>()) {
+            auto type = sym->get<UserType>();
+            if (type->is_class()) {
+                auto cls = type->as_class();
+                if (cls != this) {
+                    add_ancestor(cls, {});
+                    if (resolve)
+                        resolver.resolve(cls);
+                }
+            }
+        }
+    }
+
     if (resolve)
         _ancestry.init();
     return true;

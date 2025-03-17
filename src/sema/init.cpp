@@ -62,6 +62,7 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
     } else {
         module()->add_class(node);
     }
+    module()->add_dep(ast()->ctx().str_pool().put("UrSelf")); // TODO: option
     sync_scope(node);
     return true;
 }

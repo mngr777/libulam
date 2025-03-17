@@ -89,38 +89,18 @@ int main(int argc, char** argv) {
             "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit, TODO
             "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
             "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
-            "t3788_test_compiler_localtransientcallsfuncswrefargwithself_issue.test", // UrSelf
-            "t3794_test_compiler_localtransientcallsfuncswrefargwithrefcast.test", // UrSelf
-            "t3795_test_compiler_localtransientcallsfuncswrefargbutnotref.test", // UrSelf
             "t3834_test_compiler_atomreffromsuperquarkrefwithcast.test", // quark element base to Atom&: use (Atom&)(Elt&)q ?
             "t3837_test_compiler_element_quarkrefatomof_issue.test", // Atom to quark element base reference: use (QPerc&)(Elt&) ?
             "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use, wontfix?
-            "t3881_test_compiler_constantarrayinit_datamember.test", // UrSelf
-            "t3882_test_compiler_constantarrayinit_immediate.test", // UrSelf
-            "t3883_test_compiler_constantarrayinit_localdef.test", // UrSelf
             "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition, wontfix?
             "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value, wontfix?
             "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
             "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
-            "t3899_test_compiler_constantarrayinit_datamember_dmandlocalvarinitvals.test", // UrSelf
             "t3920_test_compiler_elementandquark_conditionalis_resbehave_issue.test", // Empty
             "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
-            "t3930_test_compiler_string_ascii.test", // ASCII
             "t3936_test_compiler_arraylengthof_lengthzeroelement.test", // Empty
             "t3939_test_compiler_caarraylengthof.test", // alengthof, TODO
-            "t3941_test_compiler_stringitem_novar.test", // ASCII
-            "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // ASCII
-            "t3951_test_compiler_stringascii_constant.test", // ASCII
-            "t3952_test_compiler_stringascii_filescope.test", // ASCII
-            "t3953_test_compiler_stringascii_constantarray_lengthof.test", // ASCII
-            "t3955_test_compiler_stringascii_octal_issue.test", // ASCII
-            "t3957_test_compiler_stringascii_dbldigitlength_reflengthof_cast.test", // ASCII
-            "t3954_test_compiler_stringascii_constantarray_filescope.test", // ASCII
-            "t3967_test_compiler_inheritedtransientdmcastasref_issue.test", // ASCII
-            "t3972_test_compiler_string_dminit.test", // ASCII
-            "t3973_test_compiler_stringarray_dminit_lengthof.test", // ASCII
-            "t3974_test_compiler_stringarray_localinit_lengthof.test", // ASCII
             "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
