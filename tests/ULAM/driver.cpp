@@ -101,6 +101,9 @@ int main(int argc, char** argv) {
             "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
             "t3936_test_compiler_arraylengthof_lengthzeroelement.test", // Empty
             "t3939_test_compiler_caarraylengthof.test", // alengthof, TODO
+            "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // TODO: object initialization
+            "t3972_test_compiler_string_dminit.test", // -"-
+            "t3973_test_compiler_stringarray_dminit_lengthof.test", // -"-
             "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {

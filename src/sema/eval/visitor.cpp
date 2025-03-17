@@ -75,7 +75,8 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
                     throw EvalExceptError("failed to eval init value");
                 var->set_value(std::move(val));
             } else {
-                var->set_value(Value{var->type()->construct()});
+                auto rval = var->type()->construct();
+                var->set_value(Value{std::move(rval)});
             }
         }
         scope()->set(var->name_id(), std::move(var));
