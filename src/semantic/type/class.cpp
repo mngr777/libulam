@@ -263,23 +263,37 @@ RValue Class::load(const BitsView data, bitsize_t off) const {
 void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
     assert(rval.is<DataPtr>());
     auto obj_data = rval.get<DataPtr>();
+    auto type = obj_data->type();
+
+    // element data to Atom
+    if (type->is(AtomId)) {
+        assert(is_element());
+        data.write(off, obj_data->bits().view());
+        return;
+    }
+
+    assert(type->is_class());
     auto cls = obj_data->type()->as_class();
 
-    // same type
-    if (cls->is_same(this)) {
+    // same class
+    if (is_same(cls)) {
         if (bitsize() > 0)
             data.write(off, obj_data->bits().view());
         return;
     }
 
     if (is_base_of(cls)) {
-        for (auto prop: all_props()) {
+        // base to derived
+        for (auto prop : all_props()) {
             auto prop_off = prop->data_off();
             prop->type()->store(data, off + prop_off, prop->load(obj_data));
         }
     } else {
+        // derived to base:
+        // e.g. `Base a = self` where `Self` is Base and `self` dynamic class is
+        // derived from Base
         assert(cls->is_base_of(this));
-        for (auto prop: cls->all_props()) {
+        for (auto prop : cls->all_props()) {
             auto prop_off = prop->data_off_in(const_cast<Class*>(this));
             prop->type()->store(data, off + prop_off, prop->load(obj_data));
         }
