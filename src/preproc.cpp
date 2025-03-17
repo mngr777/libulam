@@ -79,6 +79,7 @@ Preproc& Preproc::operator>>(Token& token) {
 
 void Preproc::push(Src* src) {
     assert(src);
+    assert(src->content().start());
     _stack.emplace(src, Lex{*this, _ctx.sm(), src->id(), src->content()});
 }
 

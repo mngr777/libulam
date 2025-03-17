@@ -18,6 +18,7 @@ void TestCase::run() {
     Compiler compiler;
     // stdlib
     compiler.parse_module_file(_stdlib_dir / "UrSelf.ulam");
+    compiler.parse_module_file(_stdlib_dir / "Empty.ulam");
     // test srcs
     for (auto pair : _srcs) {
         auto [name, text] = pair;

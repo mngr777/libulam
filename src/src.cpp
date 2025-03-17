@@ -7,16 +7,18 @@ namespace ulam {
 
 namespace {
 
-// TODO: report errors
 mem::Buf file_content(const std::filesystem::path& path) {
     auto fd = std::fopen(path.c_str(), "r");
-    if (!fd)
+    if (!fd) {
+        perror("failed to read input file");
         return {};
+    }
     std::fseek(fd, 0, SEEK_END);
     std::size_t size = std::ftell(fd);
     std::rewind(fd);
     mem::Buf buf{size + 1};
     std::size_t num_read = std::fread(buf.start(), 1, size, fd);
+    fclose(fd);
     *(buf.start() + num_read) = '\0';
     return buf;
 }
