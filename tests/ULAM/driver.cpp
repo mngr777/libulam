@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
             "t3955_test_compiler_stringascii_octal_issue.test", // ASCII
             "t3957_test_compiler_stringascii_dbldigitlength_reflengthof_cast.test", // ASCII
             "t3954_test_compiler_stringascii_constantarray_filescope.test", // ASCII
-            
+            "t3967_test_compiler_inheritedtransientdmcastasref_issue.test", // ASCII
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

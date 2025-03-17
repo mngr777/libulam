@@ -222,6 +222,7 @@ bool IntType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
         return expl || type->bitsize() >= bitsize();
     case AtomId:
         return false;
+    case StringId:
         return false;
     case FunId:
     case VoidId:
