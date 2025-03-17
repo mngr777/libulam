@@ -73,12 +73,6 @@ DataView::DataView(
 
     assert(
         _view_type->is_same(_type) ||
-        /* viewing Atom as element */
-        (_type->is(AtomId) && _view_type->is_class() &&
-         _view_type->as_class()->is_element()) ||
-        /* viewing element as Atom */
-        (_type->is_class() && _type->as_class()->is_element() &&
-         _view_type->is(AtomId)) ||
         /* viewing class as base */
         (_type->is_class() && _view_type->is_class() &&
          _view_type->as_class()->is_base_of(_type->as_class())));
@@ -95,9 +89,16 @@ void DataView::store(RValue&& rval) {
 
 RValue DataView::load() const { return _type->load(_storage->bits(), _off); }
 
-DataView DataView::as(Ref<Type> type) {
-    assert(type);
-    return {_storage, _type, _off, type, _atom.off, _atom.type};
+DataView DataView::as(Ref<Type> view_type) {
+    assert(view_type);
+    auto type = _type;
+    /*
+      viewing Atom as element or vice versa, or element as other element;
+      there's no no need to keep the original type in this case
+     */
+    if (view_type->is_atom() && type->is_atom())
+        type = view_type;
+    return {_storage, type, _off, view_type, _atom.off, _atom.type};
 }
 
 const DataView DataView::as(Ref<Type> type) const {

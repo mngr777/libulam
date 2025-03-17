@@ -96,6 +96,7 @@ int main(int argc, char** argv) {
             "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // TODO: object initialization
             "t3972_test_compiler_string_dminit.test", // -"-
             "t3973_test_compiler_stringarray_dminit_lengthof.test", // -"-
+            "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Atom& to quark ref cast
             "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // Atom& to quark ref cast
             "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
             "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-

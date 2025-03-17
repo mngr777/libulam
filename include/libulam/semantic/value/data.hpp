@@ -75,8 +75,8 @@ public:
     DataPtr storage() { return _storage; }
     ConstDataPtr storage() const { return _storage; }
 
-    DataView as(Ref<Type> type);
-    const DataView as(Ref<Type> type) const;
+    DataView as(Ref<Type> view_type);
+    const DataView as(Ref<Type> view_type) const;
 
     DataView array_item(array_idx_t idx);
     const DataView array_item(array_idx_t idx) const;
