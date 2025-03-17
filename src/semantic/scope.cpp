@@ -33,14 +33,22 @@ Ref<const Scope> ScopeBase::parent(ScopeFlags flags) const {
                : _parent->parent(flags);
 }
 
+bool ScopeBase::has_self() const { return !_self.lval.empty(); }
+
 // TODO: PersScope doesn't need `self'
 LValue ScopeBase::self() {
-    return (!_self.empty() || !parent()) ? _self : parent()->self();
+    return (has_self() || !parent()) ? _self.lval : parent()->self();
 }
 
-void ScopeBase::set_self(LValue self) {
-    assert(_self.empty());
-    _self = self;
+Ref<Class> ScopeBase::eff_self_cls() {
+    auto eff_cls =
+        (has_self() || !parent()) ? _self.cls : parent()->eff_self_cls();
+    return eff_cls ? eff_cls : self_cls();
+}
+
+void ScopeBase::set_self(LValue self, Ref<Class> cls) {
+    assert(_self.lval.empty());
+    _self = {self, cls};
 }
 
 Ref<Class> ScopeBase::self_cls() {

@@ -50,8 +50,10 @@ public:
 
     virtual ScopeFlags flags() const = 0;
 
+    virtual bool has_self() const { assert(false); }
     virtual LValue self() { assert(false); }
-    virtual void set_self(LValue self) { assert(false); }
+    virtual void set_self(LValue self, Ref<Class> cls = {}) { assert(false); }
+    virtual Ref<Class> eff_self_cls() { assert(false); }
 
     virtual Ref<Class> self_cls() { assert(false); }
     virtual void set_self_cls(Ref<Class> cls) { assert(false); }
@@ -91,8 +93,10 @@ public:
 
     ScopeFlags flags() const override { return _flags; }
 
+    bool has_self() const override;
     LValue self() override;
-    void set_self(LValue self) override;
+    void set_self(LValue self, Ref<Class> cls = {}) override;
+    Ref<Class> eff_self_cls() override;
 
     Ref<Class> self_cls() override;
     void set_self_cls(Ref<Class> cls) override;
@@ -100,8 +104,11 @@ public:
 private:
     Ref<Scope> _parent;
     ScopeFlags _flags;
-    LValue _self;
-    Ref<Class> _self_cls{};
+    struct {
+        LValue lval;
+        Ref<Class> cls{}; // effective self class for `if (self as Class) {}`
+    } _self;
+    Ref<Class> _self_cls{}; // Self
 };
 
 // Transient

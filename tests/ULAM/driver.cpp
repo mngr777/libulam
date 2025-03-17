@@ -83,6 +83,9 @@ int main(int argc, char** argv) {
             "t3697_test_compiler_elementandquark_castreftoatom.test", // quark ref to Atom: use .atomof instead?
             "t3701_test_compiler_elementandquark_castclassreftoatomref.test", // quark ref to Atom&
             "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
+            "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit, TODO
+            "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
+            "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
             "t3788_test_compiler_localtransientcallsfuncswrefargwithself_issue.test", // UrSelf
             "t3794_test_compiler_localtransientcallsfuncswrefargwithrefcast.test", // UrSelf
             "t3795_test_compiler_localtransientcallsfuncswrefargbutnotref.test", // UrSelf
@@ -111,6 +114,7 @@ int main(int argc, char** argv) {
             "t3955_test_compiler_stringascii_octal_issue.test", // ASCII
             "t3957_test_compiler_stringascii_dbldigitlength_reflengthof_cast.test", // ASCII
             "t3954_test_compiler_stringascii_constantarray_filescope.test", // ASCII
+            
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

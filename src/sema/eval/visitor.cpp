@@ -145,13 +145,17 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
         auto scope_raii{_scope_stack.raii(scp::NoFlags)};
         auto val = res.move_value();
         assert(val.is_lvalue());
-        auto obj_view = val.lvalue().as(type);
-        auto def = make<ast::VarDef>(node->ident()->name());
-        auto var = make<Var>(
-            node->type_name(), ref(def),
-            TypedValue{type->ref_type(), Value{LValue{obj_view}}});
-        var->set_scope_lvl(_scope_stack.size());
-        scope()->set(var->name_id(), std::move(var));
+        if (node->ident()->is_self()) {
+            scope()->set_self(val.lvalue().self().as(type), type->as_class());
+        } else {
+            auto obj_view = val.lvalue().as(type);
+            auto def = make<ast::VarDef>(node->ident()->name());
+            auto var = make<Var>(
+                node->type_name(), ref(def),
+                TypedValue{type->ref_type(), Value{LValue{obj_view}}});
+            var->set_scope_lvl(_scope_stack.size());
+            scope()->set(var->name_id(), std::move(var));
+        }
 
         node->if_branch()->accept(*this);
 
@@ -269,7 +273,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind `self`, set `Self`
-    scope()->set_self(self.as(fun->cls()));
+    // scope()->set_self(self.as(fun->cls()));
+    scope()->set_self(self);
     scope()->set_self_cls(fun->cls());
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(scope_lvl);

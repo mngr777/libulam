@@ -72,7 +72,7 @@ public:
     eval_init_list(Ref<Type> type, Ref<ast::InitList> list);
 
 protected:
-    virtual ExprRes assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv);
+    virtual ExprRes assign(Ref<ast::OpExpr> node, TypedValue&& to, TypedValue&& tv);
 
     virtual CastRes maybe_cast(
         Ref<ast::Expr> node,

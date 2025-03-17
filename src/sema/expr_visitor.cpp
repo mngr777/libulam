@@ -60,7 +60,7 @@ ExprRes ExprVisitor::visit(Ref<ast::Ident> node) {
     // self
     if (node->is_self()) {
         auto self = _scope->self();
-        return {_scope->self_cls(), Value{self}};
+        return {_scope->eff_self_cls(), Value{self}};
     }
 
     // super
@@ -185,7 +185,8 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     if (ops::is_assign(op)) {
         if (lval.empty() || r_tv.value().empty())
             return {std::move(l_tv)};
-        return assign(node, Value{lval}, std::move(r_tv));
+        return assign(
+            node, TypedValue{l_tv.type(), Value{lval}}, std::move(r_tv));
     }
     return {std::move(r_tv)};
 }
@@ -238,7 +239,7 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
         tv = arg_type->as_prim()->unary_op(op, tv.move_value().move_rvalue());
         if (ops::is_inc_dec(op)) {
             if (!lval.empty() && !tv.value().empty())
-                assign(node, Value{lval}, std::move(tv));
+                assign(node, TypedValue{tv.type(), Value{lval}}, std::move(tv));
             if (ops::is_unary_pre_op(op))
                 return {tv.type(), Value{lval}};
             assert(ops::is_unary_post_op(op));
@@ -806,16 +807,16 @@ ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
 }
 
 ExprRes
-ExprVisitor::assign(Ref<ast::OpExpr> node, Value&& val, TypedValue&& tv) {
+ExprVisitor::assign(Ref<ast::OpExpr> node, TypedValue&& to, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
     DBG_LINE(node);
-    if (!check_is_assignable(node, val))
+    if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
-    auto lval = val.lvalue();
-    auto cast_res = maybe_cast(node, lval.type(), std::move(tv));
+    auto cast_res = maybe_cast(node, to.type()->deref(), std::move(tv));
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
-    return {lval.type(), lval.assign(cast_res.first.move_rvalue())};
+    auto lval = to.move_value().lvalue();
+    return {to.type(), lval.assign(cast_res.first.move_rvalue())};
 }
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
@@ -848,6 +849,14 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
 
     if (to->is_same(from))
         return {std::move(val), NoCast};
+
+    // implicit cast to base class
+    if (!expl && to->is_ref() && to->actual()->is_class() && from->actual()->is_class()) {
+        auto to_cls = to->actual()->as_class();
+        auto from_cls = from->actual()->as_class();
+        if (to_cls->is_base_of(from_cls))
+            return {std::move(val), NoCast};
+    }
 
     if (!expl && from->is_impl_castable_to(to, val)) {
         val = do_cast(node, to, {from, std::move(val)});
@@ -951,7 +960,7 @@ TypedValue ExprVisitor::do_cast(
 
 ExprRes ExprVisitor::funcall(
     Ref<ast::Expr> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
-    auto dyn_cls = self.dyn_cls(true);
+    auto dyn_cls = self.dyn_cls();
     auto match_res = fset->find_match(dyn_cls, args);
     if (match_res.empty()) {
         diag().error(node, "no matching functions found");
