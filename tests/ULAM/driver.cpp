@@ -65,20 +65,15 @@ int main(int argc, char** argv) {
 
     if (case_num == 0) {
         std::set<std::string> skip = {
-            "t3205_test_compiler_elementandquark_emptyquark.test", // Empty
             "t3233_test_compiler_elementandquarkarray_ew.test", // aref called by name
             "t3241_test_compiler_unarymod.test", // invalid implicit cast?
             "t3357_test_compiler_elementandquarkswclassargs_lhsconstantcompare.test", // behave()
             "t3358_test_compiler_elementandquarkswclassargs_lhsconstantlogicaland.test", // behave()
             "t3361_test_compiler_elementandquarkswclassargs_memberconstantasfunccallarg.test", // behave()
-            "t3400_test_compiler_arraysizeof_lengthzeroelement.test", // Empty
-            "t3401_test_compiler_unaryminofmaxofconstant_issue.test", // Empty
-            "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // Empty
+            "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // TODO: aref can have overloads
             "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
             "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
             "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix?
-            "t3505_test_compiler_elementandquark_caarrayemptyquark.test", // Empty
-            "t3590_test_compiler_isemptyquark.test", // Empty
             "t3631_test_compiler_element_castatomandquark_ish.test", // tmp, quark to Atom?
             "t3675_test_compiler_elementandquark_Selfatomoffordefaultelement.test", // quark self to Atoms
             "t3692_test_compiler_atomcasttoquarkselfref.test", // quark Self to Atom
@@ -97,18 +92,13 @@ int main(int argc, char** argv) {
             "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
             "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
-            "t3920_test_compiler_elementandquark_conditionalis_resbehave_issue.test", // Empty
-            "t3921_test_compiler_elementandquark_conditionalis_qswitch4wallportqportcell_issue.test", // Empty
-            "t3936_test_compiler_arraylengthof_lengthzeroelement.test", // Empty
             "t3939_test_compiler_caarraylengthof.test", // alengthof, TODO
             "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // TODO: object initialization
             "t3972_test_compiler_string_dminit.test", // -"-
             "t3973_test_compiler_stringarray_dminit_lengthof.test", // -"-
-            "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Empty
             "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // Atom& to quark ref cast
             "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
             "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
-            "t41014_test_compiler_logicalorandprecedence_issue.test", // Empty
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

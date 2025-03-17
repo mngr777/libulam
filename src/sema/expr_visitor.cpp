@@ -256,6 +256,8 @@ ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
             if (!check_is_object(node, type))
                 return {ExprError::NotObject};
             assert(op == Op::Is);
+            if (tv.value().empty())
+                return {builtins().boolean(), Value{RValue{}}};
             assert(!tv.value().empty());
             auto dyn_type = tv.value().dyn_obj_type();
             bool is =

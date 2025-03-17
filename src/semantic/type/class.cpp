@@ -272,8 +272,15 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
         return;
     }
 
+    // not Atom, must be a class
     assert(type->is_class());
     auto cls = obj_data->type()->as_class();
+
+    // element data to other element (via Atom&, see t3986)
+    if (is_element() && cls->is_element()) {
+        data.write(off, obj_data->bits().view());
+        return;
+    }
 
     // same class
     if (is_same(cls)) {
@@ -290,8 +297,8 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
         }
     } else {
         // derived to base:
-        // e.g. `Base a = self` where `Self` is Base and `self` dynamic class is
-        // derived from Base
+        // e.g. `Base a = self` where `Self` is Base and dynamic class of `self`
+        // is derived from Base
         assert(cls->is_base_of(this));
         for (auto prop : cls->all_props()) {
             auto prop_off = prop->data_off_in(const_cast<Class*>(this));
