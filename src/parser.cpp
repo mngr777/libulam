@@ -1,4 +1,3 @@
-#include "libulam/ast/nodes/type.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -903,6 +902,8 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         return parse_for();
     case tok::While:
         return parse_while();
+    case tok::Which:
+        return parse_which();
     case tok::Return:
         return parse_return();
     case tok::Break:
@@ -1100,7 +1101,7 @@ Ptr<ast::While> Parser::parse_while() {
     consume();
     bool ok = true;
 
-    // (
+    // (cond
     if (!expect(tok::ParenL))
         return {};
     auto cond = parse_expr();
@@ -1121,6 +1122,85 @@ Ptr<ast::While> Parser::parse_while() {
         return {};
 
     return tree<ast::While>(std::move(cond), std::move(body));
+}
+
+Ptr<ast::Which> Parser::parse_which() {
+    assert(_tok.is(tok::Which));
+    // which
+    auto loc_id = _tok.loc_id;
+    consume();
+    bool ok = true;
+
+    // (expr
+    if (!expect(tok::ParenL))
+        return {};
+    auto expr = parse_expr();
+    ok = ok && expr;
+
+    // )
+    if (!expect(tok::ParenR)) {
+        ok = false;
+        panic(tok::ParenR);
+        consume_if(tok::ParenR);
+    }
+
+    Ptr<ast::Which> node{};
+    if (ok)
+        node = tree_loc<ast::Which>(loc_id, std::move(expr));
+
+    // case list
+    // {
+    if (!expect(tok::BraceL))
+        return {};
+    while (!_tok.in(tok::BraceR, tok::Eof)) {
+        Ptr<ast::WhichCase> case_{};
+        if (_tok.in(tok::Case, tok::Otherwise))
+            case_ = parse_which_case();
+
+        if (!case_) {
+            panic(tok::BraceR);
+            consume_if(tok::BraceR);
+            return {};
+        }
+
+        if (node)
+            node->add(std::move(case_));
+    }
+    // }
+    if (!expect(tok::BraceR)) {
+        assert(_tok.is(tok::Eof));
+        return {};
+    }
+    return node;
+}
+
+Ptr<ast::WhichCase> Parser::parse_which_case() {
+    assert(_tok.in(tok::Case, tok::Otherwise));
+
+    bool is_default = _tok.is(tok::Otherwise);
+
+    // case/otherwise
+    auto loc_id = _tok.loc_id;
+    consume();
+
+    // expr
+    Ptr<ast::Expr> expr{};
+    if (!is_default) {
+        expr = parse_expr();
+        if (!expr)
+            return {};
+    }
+
+    // :
+    if (!expect(tok::Colon))
+        return {};
+
+    // stmt
+    auto stmt = parse_stmt();
+    if (!stmt)
+        return {};
+
+    return tree_loc<ast::WhichCase>(loc_id, std::move(expr), std::move(stmt));
 }
 
 Ptr<ast::Return> Parser::parse_return() {

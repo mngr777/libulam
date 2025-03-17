@@ -80,19 +80,33 @@ public:
 
     ULAM_AST_TUPLE_PROP(expr, 0)
     ULAM_AST_TUPLE_PROP(branch, 1)
+
+    bool is_default() const { return !has_expr(); }
 };
 
-class WhichCaseList : public List<Stmt, WhichCase> {
-    ULAM_AST_NODE
-};
-
-class Which : public Tuple<Stmt, Expr, WhichCaseList> {
+class Which : public Tuple<List<Stmt, WhichCase>, Expr> {
     ULAM_AST_NODE
 public:
-    Which(Ptr<Expr>&& expr): Tuple{std::move(expr), make<WhichCaseList>()} {}
+    Which(Ptr<Expr>&& expr): Tuple{std::move(expr)} {}
+
+    unsigned case_num() const { return List::child_num(); }
+
+    Ref<WhichCase> case_(unsigned n) { return List::get(n); }
+    Ref<const WhichCase> case_(unsigned n) const { return List::get(n); }
 
     ULAM_AST_TUPLE_PROP(expr, 0)
-    ULAM_AST_TUPLE_PROP(case_list, 1)
+
+    unsigned child_num() const override {
+        return Tuple::child_num() + List::child_num();
+    }
+
+    Ref<Node> child(unsigned n) override {
+        return (n == 0) ? Tuple::child(0) : List::child(n - 1);
+    }
+
+    Ref<const Node> child(unsigned n) const override {
+        return (n == 0) ? Tuple::child(0) : List::child(n - 1);
+    }
 };
 
 class Return : public Tuple<Stmt, Expr> {

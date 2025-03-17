@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/access.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
@@ -94,6 +95,8 @@ private:
     Ptr<ast::Stmt> parse_if_or_as_if();
     Ptr<ast::For> parse_for();
     Ptr<ast::While> parse_while();
+    Ptr<ast::Which> parse_which();
+    Ptr<ast::WhichCase> parse_which_case();
     Ptr<ast::Return> parse_return();
     Ptr<ast::Break> parse_break();
     Ptr<ast::Continue> parse_continue();

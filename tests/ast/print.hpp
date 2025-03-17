@@ -107,7 +107,11 @@ protected:
     void visit(ulam::Ref<ulam::ast::IfAs> node) override;
     void visit(ulam::Ref<ulam::ast::For> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
+    void visit(ulam::Ref<ulam::ast::Which> node) override;
+    void visit(ulam::Ref<ulam::ast::WhichCase> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
+    void visit(ulam::Ref<ulam::ast::Continue> node) override;
+    void visit(ulam::Ref<ulam::ast::Break> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
 
     void visit(ulam::Ref<ulam::ast::TypeOpExpr> node) override;

@@ -329,6 +329,7 @@ void Printer::visit(ulam::Ref<ulam::ast::For> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::While> node) {
+    assert(node->has_cond());
     _os << "while (";
     accept_me(node->cond());
     _os << ")";
@@ -340,11 +341,42 @@ void Printer::visit(ulam::Ref<ulam::ast::While> node) {
     }
 }
 
+void Printer::visit(ulam::Ref<ulam::ast::Which> node) {
+    assert(node->has_expr());
+    _os << "which (";
+    accept_me(node->expr());
+    _os << ") {\n";
+    for (unsigned n = 0; n < node->case_num(); ++n)
+        accept_me(node->case_(n));
+    _os << "}";
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
+    assert(node->has_branch());
+    if (node->is_default()) {
+        indent() << "otherwise";
+    } else {
+        indent() << "case ";
+        accept_me(node->expr());
+    }
+    _os << ": ";
+    accept_me(node->branch());
+    _os << nl();
+}
+
 void Printer::visit(ulam::Ref<ulam::ast::Return> node) {
     _os << "return ";
     if (node->has_expr())
         accept_me(node->expr());
     _os << ";";
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::Continue> node) {
+    _os << "continue;";
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::Break> node) {
+    _os << "break;";
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::TypeOpExpr> node) {
