@@ -100,6 +100,12 @@ int main(int argc, char** argv) {
             "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // Atom& to quark ref cast
             "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
             "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
+            "t41043_test_compiler_forascond.test", // for (; (a as Type); ) {...}, TODO?
+            "t41046_test_compiler_switchascondcases.test", // which() as cond
+            "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
+            "t41051_test_compiler_element_castatomreffuncreturnvalue_issue.test", // Atom& to quark ref cast
+            "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
+            "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
