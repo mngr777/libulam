@@ -146,6 +146,8 @@ Op bin_op(Type type) {
         return Op::ArrayAccess;
     case Period:
         return Op::MemberAccess;
+    case Quest:
+        return Op::Ternary;
     case Plus:
         return Op::Sum;
     case Minus:

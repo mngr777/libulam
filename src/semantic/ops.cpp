@@ -229,40 +229,42 @@ Prec prec(Op op) {
     case Op::PreDec:
     case Op::Negate:
     case Op::BwNot:
-        return 13;
+        return 14;
     case Op::Cast:
     case Op::UnaryMinus:
     case Op::UnaryPlus:
     case Op::PostInc:
     case Op::PostDec:
-        return 12;
+        return 13;
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:
-        return 11;
+        return 12;
     case Op::Sum:
     case Op::Diff:
-        return 10;
+        return 11;
     case Op::ShiftLeft:
     case Op::ShiftRight:
-        return 9;
+        return 10;
     case Op::Less:
     case Op::LessOrEq:
     case Op::Greater:
     case Op::GreaterOrEq:
-        return 8;
+        return 9;
     case Op::Equal:
     case Op::NotEqual:
-        return 7;
+        return 8;
     case Op::BwAnd:
-        return 6;
+        return 7;
     case Op::BwXor:
-        return 5;
+        return 6;
     case Op::BwOr:
-        return 4;
+        return 5;
     case Op::And:
-        return 3;
+        return 4;
     case Op::Or:
+        return 3;
+    case Op::Ternary:
         return 2;
     case Op::Assign:
     case Op::AssignSum:
@@ -309,6 +311,7 @@ Assoc assoc(Op op) {
     case Op::Or:
     case Op::PostInc:
     case Op::PostDec:
+    case Op::Ternary:
     case Op::Comma:
         return Assoc::Left;
     case Op::UnaryMinus:

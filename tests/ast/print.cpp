@@ -407,6 +407,19 @@ void Printer::visit(ulam::Ref<ulam::ast::Cast> node) {
     paren_r();
 }
 
+void Printer::visit(ulam::Ref<ulam::ast::Ternary> node) {
+    assert(node->has_cond());
+    assert(node->has_if_true());
+    assert(node->has_if_false());
+    paren_l();
+    accept_me(node->cond());
+    _os << " ? ";
+    accept_me(node->if_true());
+    _os << " : ";
+    accept_me(node->if_false());
+    paren_r();
+}
+
 void Printer::visit(ulam::Ref<ulam::ast::BinaryOp> node) {
     assert(node->has_lhs());
     assert(node->has_rhs());

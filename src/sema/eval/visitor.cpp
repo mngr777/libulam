@@ -406,19 +406,19 @@ ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
     EvalExprVisitor ev{*this, scope()};
     ExprRes res = expr->accept(ev);
     if (!res)
-        throw EvalExceptError("failed to eval expression"); // TODO
+        throw EvalExceptError("failed to eval expression");
     return res;
 }
 
 bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
-    auto res = eval_expr(expr);
+    EvalExprVisitor ev{*this, scope()};
+    auto res = ev.eval_cond(expr);
+    if (!res)
+        throw EvalExceptError("failed to eval condition");
 
     auto boolean = _program->builtins().boolean();
-    EvalExprVisitor ev{*this, scope()};
-    res = ev.cast(expr, boolean, std::move(res), false);
-    if (!res)
-        throw EvalExceptError("failed to eval condition"); // TODO
+    assert(res.type() == boolean);
     return boolean->is_true(res.move_value().move_rvalue());
 }
 

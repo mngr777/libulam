@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/expr.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -1317,6 +1318,9 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
         case Op::MemberAccess:
             lhs = parse_member_access_or_type_op(std::move(lhs));
             break;
+        case Op::Ternary:
+            lhs = parse_ternary(std::move(lhs));
+            break;
         default:
             consume();
             lhs = tree_loc<ast::BinaryOp>(
@@ -1672,6 +1676,27 @@ Parser::parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
 
     return tree_loc<ast::MemberAccess>(
         op_loc_id, std::move(obj), std::move(ident), std::move(base));
+}
+
+Ptr<ast::Ternary> Parser::parse_ternary(Ptr<ast::Expr>&& cond) {
+    assert(_tok.is(tok::Quest));
+    // ?
+    auto loc_id = _tok.loc_id;
+    consume();
+
+    auto if_true = parse_expr();
+
+    // :
+    if (!expect(tok::Colon))
+        return {};
+
+    auto if_false = parse_expr();
+
+    if (!if_true || !if_false)
+        return {};
+
+    return tree_loc<ast::Ternary>(
+        loc_id, std::move(cond), std::move(if_true), std::move(if_false));
 }
 
 Ptr<ast::ClassConstAccess>

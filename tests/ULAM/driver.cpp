@@ -103,6 +103,7 @@ int main(int argc, char** argv) {
             "t41051_test_compiler_element_castatomreffuncreturnvalue_issue.test", // Atom& to quark ref cast
             "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
+            "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

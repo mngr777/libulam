@@ -9,6 +9,7 @@ class ParenExpr;
 class BinaryOp;
 class UnaryOp;
 class Cast;
+class Ternary;
 class BoolLit;
 class NumLit;
 class StrLit;
@@ -25,6 +26,7 @@ public:
     virtual ExprRes visit(Ref<ast::UnaryOp> node) = 0;
     virtual ExprRes visit(Ref<ast::BinaryOp> node) = 0;
     virtual ExprRes visit(Ref<ast::Cast> node) = 0;
+    virtual ExprRes visit(Ref<ast::Ternary> node) = 0;
     virtual ExprRes visit(Ref<ast::BoolLit> node) = 0;
     virtual ExprRes visit(Ref<ast::NumLit> node) = 0;
     virtual ExprRes visit(Ref<ast::StrLit> node) = 0;

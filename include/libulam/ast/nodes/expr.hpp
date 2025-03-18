@@ -119,6 +119,17 @@ public:
     ULAM_AST_TUPLE_PROP(expr, 1)
 };
 
+class Ternary : public Tuple<Expr, Expr, Expr, Expr> {
+    ULAM_AST_EXPR
+public:
+    Ternary(Ptr<Expr>&& cond, Ptr<Expr>&& if_true, Ptr<Expr>&& if_false):
+        Tuple{std::move(cond), std::move(if_true), std::move(if_false)} {}
+
+    ULAM_AST_TUPLE_PROP(cond, 0)
+    ULAM_AST_TUPLE_PROP(if_true, 1)
+    ULAM_AST_TUPLE_PROP(if_false, 2)
+};
+
 template <typename T> class _Literal : public Expr {
 public:
     _Literal(T&& value): _value{std::forward<T>(value)} {}

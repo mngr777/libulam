@@ -1,3 +1,4 @@
+#include "libulam/semantic/expr_res.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
@@ -228,6 +229,20 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     if (status == CastError)
         return {ExprError::InvalidCast};
     return {cast_type, std::move(val)};
+}
+
+ExprRes ExprVisitor::visit(Ref<ast::Ternary> node) {
+    debug() << __FUNCTION__ << " Ternary\n";
+    DBG_LINE(node);
+    ExprRes cond_res = eval_cond(node->cond());
+    if (!cond_res)
+        return cond_res;
+
+    auto boolean = builtins().boolean();
+    assert(cond_res.type() == boolean);
+    if (boolean->is_true(cond_res.move_value().move_rvalue()))
+        return node->if_true()->accept(*this);
+    return node->if_false()->accept(*this);
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
@@ -506,6 +521,15 @@ ExprRes ExprVisitor::cast(
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
     return {type, std::move(cast_res.first)};
+}
+
+ExprRes ExprVisitor::eval_cond(Ref<ast::Expr> node) {
+    debug() << __FUNCTION__ << "\n";
+    DBG_LINE(node);
+    ExprRes res = node->accept(*this);
+    if (res)
+        res = cast(node, builtins().boolean(), std::move(res), false);
+    return res;
 }
 
 std::pair<bool, bool>

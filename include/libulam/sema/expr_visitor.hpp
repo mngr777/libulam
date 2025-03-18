@@ -34,6 +34,7 @@ public:
     virtual ExprRes visit(Ref<ast::BinaryOp> node) override;
     virtual ExprRes visit(Ref<ast::UnaryOp> node) override;
     virtual ExprRes visit(Ref<ast::Cast> node) override;
+    virtual ExprRes visit(Ref<ast::Ternary> node) override;
     virtual ExprRes visit(Ref<ast::BoolLit> node) override;
     virtual ExprRes visit(Ref<ast::NumLit> node) override;
     virtual ExprRes visit(Ref<ast::StrLit> node) override;
@@ -55,7 +56,9 @@ public:
     virtual ExprRes
     cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 
-    // {res, success}
+    virtual ExprRes eval_cond(Ref<ast::Expr> node);
+
+    // {res, ok}
     virtual std::pair<bool, bool>
     match(Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr);
 

@@ -126,6 +126,7 @@ private:
     Ptr<ast::Expr> parse_member_access_or_type_op(Ptr<ast::Expr>&& obj);
     Ptr<ast::MemberAccess>
     parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
+    Ptr<ast::Ternary> parse_ternary(Ptr<ast::Expr>&& cond);
     Ptr<ast::ClassConstAccess>
     parse_class_const_access_rest(Ptr<ast::TypeName> type_name);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
