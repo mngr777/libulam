@@ -170,7 +170,7 @@ void Parser::parse_module_var_or_type_def(Ref<ast::ModuleDef> node) {
         } else {
             diag("module variables must be constants");
         }
-        auto var_def_list = parse_var_def_list(true);
+        auto var_def_list = parse_var_def_list(VarIsConst);
         if (var_def_list)
             node->add(std::move(var_def_list));
     }
@@ -267,7 +267,7 @@ void Parser::parse_class_def_body(Ref<ast::ClassDef> node) {
         } break;
         case tok::Constant: {
             consume();
-            auto vars = parse_var_def_list(true);
+            auto vars = parse_var_def_list(VarIsConst);
             if (vars) {
                 node->body()->add(std::move(vars));
                 ok = true;
@@ -415,8 +415,7 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
             diag(brace_loc_id, 1, "invalid variable definition syntax");
             return false;
         }
-        auto vars =
-            parse_var_def_list_rest(std::move(type), false, name, is_ref);
+        auto vars = parse_var_def_list_rest(std::move(type), name, is_ref);
         if (!vars)
             return false;
         node->add(std::move(vars));
@@ -446,7 +445,7 @@ std::pair<ast::Str, tok::Type> Parser::parse_op_fun_name() {
     return {{name_id, name_loc_id}, op_tok_type};
 }
 
-Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
+Ptr<ast::VarDefList> Parser::parse_var_def_list(var_flags_t flags) {
     // type
     auto type = parse_type_name();
     if (!type) {
@@ -464,19 +463,20 @@ Ptr<ast::VarDefList> Parser::parse_var_def_list(bool is_const) {
     auto first_name = tok_ast_str();
     consume();
     return parse_var_def_list_rest(
-        std::move(type), is_const, first_name, first_is_ref);
+        std::move(type), first_name, first_is_ref, flags);
 }
 
 Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     Ptr<ast::TypeName>&& type,
-    bool is_const,
     ast::Str first_name,
-    bool first_is_ref) {
+    bool first_is_ref,
+    var_flags_t flags) {
+    bool is_const = flags & VarIsConst;
     auto node = tree<ast::VarDefList>(std::move(type));
     node->set_is_const(is_const);
 
     // first var
-    auto first = parse_var_def_rest(first_name, first_is_ref);
+    auto first = parse_var_def_rest(first_name, first_is_ref, flags);
     if (!first)
         return {};
     node->set_is_const(is_const);
@@ -510,7 +510,7 @@ Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     return node;
 }
 
-Ptr<ast::VarDef> Parser::parse_var_def() {
+Ptr<ast::VarDef> Parser::parse_var_def(var_flags_t flags) {
     // [&] name
     bool is_ref = parse_is_ref();
     if (!match(tok::Ident))
@@ -520,7 +520,8 @@ Ptr<ast::VarDef> Parser::parse_var_def() {
     return parse_var_def_rest(name, is_ref);
 }
 
-Ptr<ast::VarDef> Parser::parse_var_def_rest(ast::Str name, bool is_ref) {
+Ptr<ast::VarDef>
+Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
     // []
     Ptr<ast::ExprList> array_dims{};
     if (_tok.is(tok::BracketL)) {
@@ -531,7 +532,7 @@ Ptr<ast::VarDef> Parser::parse_var_def_rest(ast::Str name, bool is_ref) {
 
     // value
     auto [ok, init_value, init_list] =
-        parse_init_value_or_list(false, ref(array_dims));
+        parse_init(false, ref(array_dims), flags);
     if (!ok)
         return {};
 
@@ -717,7 +718,7 @@ Ptr<ast::Param> Parser::parse_param(bool requires_value) {
 
     // value
     auto [ok, init_value, init_list] =
-        parse_init_value_or_list(requires_value, ref(array_dims));
+        parse_init(requires_value, ref(array_dims));
     if (!ok)
         return {};
 
@@ -729,20 +730,36 @@ Ptr<ast::Param> Parser::parse_param(bool requires_value) {
     return node;
 }
 
-// NOTE: stats at `='
-std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>>
-Parser::parse_init_value_or_list(
-    bool is_required, Ref<ast::ExprList> array_dims) {
+// NOTE: starts at `=' or `(' for constructor call
+std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>> Parser::parse_init(
+    bool is_required, Ref<ast::ExprList> array_dims, var_flags_t flags) {
+
     bool is_array = (bool)array_dims;
+    bool allow_constr = !is_array && flags & VarAllowConstructorInit;
+
     Ptr<ast::Expr> value{};
     Ptr<ast::InitList> list{};
-    if (_tok.is(tok::Equal)) {
+
+    bool has_equal = _tok.is(tok::Equal);
+    if (has_equal) {
+        allow_constr = false; // not constructor init syntax
         consume();
+    }
+
+    if (allow_constr && _tok.is(tok::ParenL)) {
+        // Type var(...)
+        list = parse_init_list();
+        if (!list)
+            return {false, std::move(value), std::move(list)};
+
+    } else if (has_equal) {
         if (_tok.is(tok::BraceL)) {
+            // Type var = {...}
             list = parse_init_list();
             if (!list)
                 return {false, std::move(value), std::move(list)};
         } else {
+            // Type var = <value>;
             if (is_array) {
                 diag("use initializer list to set array value");
                 return {};
@@ -754,17 +771,18 @@ Parser::parse_init_value_or_list(
     } else if (is_array && array_dims->has_empty()) {
         diag("array value is required to fill array dimensions");
     } else if (is_required) {
-        diag("missing default value");
+        diag("missing init value");
     }
     return {true, std::move(value), std::move(list)};
 }
 
 Ptr<ast::InitList> Parser::parse_init_list() {
-    assert(_tok.is(tok::BraceL));
-    // {
+    assert(_tok.in(tok::BraceL, tok::ParenL));
+    // { or (
     auto node = tree_loc<ast::InitList>(_tok.loc_id);
+    tok::Type closing = _tok.is(tok::BraceL) ? tok::BraceR : tok::ParenR;
     consume();
-    while (!_tok.is(tok::BraceR)) {
+    while (!_tok.is(closing)) {
         if (_tok.is(tok::BraceL)) {
             // sublist
             // non-empty flat list?
@@ -792,11 +810,11 @@ Ptr<ast::InitList> Parser::parse_init_list() {
             node->add(std::move(expr));
         }
         // ,
-        if (!_tok.is(tok::BraceR))
+        if (!_tok.is(closing))
             expect(tok::Comma);
     }
-    // }
-    if (!expect(tok::BraceR))
+    // } or )
+    if (!expect(closing))
         goto Panic;
 
     if (!validate_init_list(ref(node)))
@@ -804,8 +822,8 @@ Ptr<ast::InitList> Parser::parse_init_list() {
     return node;
 
 Panic:
-    panic(tok::BraceR);
-    consume_if(tok::BraceR);
+    panic(closing);
+    consume_if(closing);
     return {};
 }
 
@@ -896,7 +914,7 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         return parse_stmt_type();
     case tok::Constant:
         consume();
-        return parse_var_def_list(true);
+        return parse_var_def_list(VarIsConst | VarAllowConstructorInit);
     case tok::If:
         return parse_if_or_as_if();
     case tok::For:
@@ -972,7 +990,8 @@ Ptr<ast::Stmt> Parser::parse_stmt_type() {
         auto first_name = tok_ast_str();
         consume();
         return parse_var_def_list_rest(
-            std::move(type_name), false, first_name, first_is_ref);
+            std::move(type_name), first_name, first_is_ref,
+            VarAllowConstructorInit);
     } else {
         unexpected();
         return {};

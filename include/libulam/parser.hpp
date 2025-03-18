@@ -1,5 +1,6 @@
 #pragma once
 #include "libulam/ast/nodes/access.hpp"
+#include "libulam/ast/nodes/params.hpp"
 #include "libulam/ast/nodes/stmts.hpp"
 #include <cstdint>
 #include <filesystem>
@@ -29,6 +30,11 @@ public:
     Ptr<ast::Block> parse_stmts(std::string text);
 
 private:
+    using var_flags_t = std::uint8_t;
+    static constexpr var_flags_t NoVarFlags = 0;
+    static constexpr var_flags_t VarIsConst = 1;
+    static constexpr var_flags_t VarAllowConstructorInit = 2;
+
     using expr_flags_t = std::uint8_t;
     static constexpr expr_flags_t NoExprFlags = 0;
     static constexpr expr_flags_t ExprStopAtComma = 1;
@@ -66,14 +72,15 @@ private:
     Ptr<ast::TypeDef> parse_type_def();
     bool parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node);
     std::pair<ast::Str, tok::Type> parse_op_fun_name();
-    Ptr<ast::VarDefList> parse_var_def_list(bool is_const);
+    Ptr<ast::VarDefList> parse_var_def_list(var_flags_t flags = NoVarFlags);
     Ptr<ast::VarDefList> parse_var_def_list_rest(
         Ptr<ast::TypeName>&& base_type,
-        bool is_const,
         ast::Str first_name,
-        bool first_is_ref);
-    Ptr<ast::VarDef> parse_var_def();
-    Ptr<ast::VarDef> parse_var_def_rest(ast::Str name, bool is_ref);
+        bool first_is_ref,
+        var_flags_t flags = NoVarFlags);
+    Ptr<ast::VarDef> parse_var_def(var_flags_t flags = NoVarFlags);
+    Ptr<ast::VarDef> parse_var_def_rest(
+        ast::Str name, bool is_ref, var_flags_t flags = NoVarFlags);
     Ptr<ast::FunDef>
     parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name);
     Ptr<ast::FunDef> parse_op_fun_def_rest(
@@ -82,7 +89,10 @@ private:
     Ptr<ast::Param> parse_param(bool requires_value);
 
     std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>>
-    parse_init_value_or_list(bool is_required, Ref<ast::ExprList> array_dims);
+    parse_init(
+        bool is_required,
+        Ref<ast::ExprList> array_dims,
+        var_flags_t flags = NoVarFlags);
     Ptr<ast::InitList> parse_init_list();
     bool validate_init_list(Ref<ast::InitList> list);
 
