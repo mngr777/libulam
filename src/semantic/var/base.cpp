@@ -3,12 +3,33 @@
 
 namespace ulam {
 
-str_id_t VarBase::name_id() const { return _node->name().str_id(); }
+bool VarBase::has_name() const { return has_node(); }
+
+str_id_t VarBase::name_id() const {
+    assert(has_name());
+    return _node->name().str_id();
+}
 
 bitsize_t VarBase::bitsize() const {
     assert(_type);
     return _type->bitsize();
 }
+
+bool VarBase::has_type_node() const { return _type_node; }
+
+Ref<ast::TypeName> VarBase::type_node() {
+    assert(_type_node);
+    return _type_node;
+}
+
+bool VarBase::has_node() const { return _node; }
+
+Ref<ast::VarDecl> VarBase::node() {
+    assert(_node);
+    return _node;
+}
+
+bool VarBase::has_type() const { return _type; }
 
 Ref<Type> VarBase::type() const {
     assert(_type);

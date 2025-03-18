@@ -115,80 +115,9 @@ ExprRes ExprVisitor::visit(Ref<ast::BinaryOp> node) {
     if (!left || !right)
         return {ExprError::Error};
 
-    debug() << "left is " << (left.value().is_consteval() ? "" : "not ")
-            << "consteval\n";
-    debug() << "right is " << (right.value().is_consteval() ? "" : "not ")
-            << "consteval\n";
-
-    Op op = node->op();
-    LValue lval;
-    if (ops::is_assign(op)) {
-        if (!check_is_assignable(node, left.value()))
-            return {ExprError::NotAssignable};
-        lval = left.value().lvalue();
-    }
-
-    auto type_errors =
-        binary_op_type_check(op, left.type(), right.typed_value());
-    auto recast = [&](Ref<ast::Expr> expr, TypeError error,
-                      TypedValue&& tv) -> TypedValue {
-        switch (error.status) {
-        case TypeError::Incompatible:
-            diag().error(expr, "incompatible type");
-            return {};
-        case TypeError::ExplCastRequired: {
-            auto rval = tv.move_value().move_rvalue();
-            auto message =
-                std::string{"suggest casting "} + tv.type()->name() + " to ";
-            message +=
-                (error.cast_bi_type_id != NoBuiltinTypeId)
-                    ? std::string{builtin_type_str(error.cast_bi_type_id)}
-                    : error.cast_type->name();
-            diag().error(expr, message);
-            return {};
-        }
-        case TypeError::ImplCastRequired: {
-            if (error.cast_bi_type_id != NoBuiltinTypeId)
-                return do_cast(expr, error.cast_bi_type_id, std::move(tv));
-            assert(error.cast_type);
-            return {
-                error.cast_type, do_cast(expr, error.cast_type, std::move(tv))};
-        }
-        case TypeError::Ok:
-            return std::move(tv);
-        default:
-            assert(false);
-        };
-    };
-    auto l_tv = recast(node->lhs(), type_errors.first, left.move_typed_value());
-    auto r_tv =
-        recast(node->rhs(), type_errors.second, right.move_typed_value());
-    if (!l_tv || !r_tv)
-        return {ExprError::InvalidOperandType};
-
-    if (op != Op::Assign) {
-        if (l_tv.type()->actual()->is_prim()) {
-            assert(r_tv.type()->actual()->is_prim());
-            auto l_type = l_tv.type()->actual()->as_prim();
-            auto r_type = r_tv.type()->actual()->as_prim();
-            auto l_rval = l_tv.move_value().move_rvalue();
-            auto r_rval = r_tv.move_value().move_rvalue();
-            r_tv = l_type->binary_op(
-                op, std::move(l_rval), r_type, std::move(r_rval));
-        } else {
-            // TODO: class operators
-            assert(false);
-        }
-    }
-
-    // handle assignment
-    if (ops::is_assign(op)) {
-        if (lval.empty() || r_tv.value().empty())
-            return {std::move(l_tv)};
-        return assign(
-            node, TypedValue{l_tv.type(), Value{lval}}, std::move(r_tv));
-    }
-    return {std::move(r_tv)};
+    return binary_op(
+        node, node->op(), node->lhs(), std::move(left), node->rhs(),
+        std::move(right));
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::UnaryOp> node) {
@@ -295,10 +224,10 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     if (cast_type->is(VoidId))
         return {builtins().void_type(), Value{RValue{}}};
 
-    auto cast_res = maybe_cast(node, cast_type, res.move_typed_value(), true);
-    if (cast_res.second == CastError)
+    auto [val, status] = maybe_cast(node, cast_type, res.move_typed_value(), true);
+    if (status == CastError)
         return {ExprError::InvalidCast};
-    return {cast_type, std::move(cast_res.first)};
+    return {cast_type, std::move(val)};
 }
 
 ExprRes ExprVisitor::visit(Ref<ast::BoolLit> node) {
@@ -455,11 +384,10 @@ ExprRes ExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return {ExprError::UnknownArrayIndex};
     // cast to default Int
     auto int_type = builtins().int_type();
-    auto idx_cast_res =
+    auto [index_val, cast_status] =
         maybe_cast(node->index(), int_type, index_res.move_typed_value());
-    if (idx_cast_res.second == CastError)
+    if (cast_status == CastError)
         return {ExprError::InvalidCast};
-    auto index_val = std::move(idx_cast_res.first);
 
     // class?
     if (array_res.type()->actual()->is_class()) {
@@ -578,6 +506,28 @@ ExprRes ExprVisitor::cast(
     if (cast_res.second == CastError)
         return {ExprError::InvalidCast};
     return {type, std::move(cast_res.first)};
+}
+
+std::pair<bool, bool>
+ExprVisitor::match(Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr) {
+    ExprRes l_res{var->type(), Value{var->lvalue()}};
+    ExprRes r_res = expr->accept(*this);
+    if (!r_res)
+        return {false, false};
+
+    // apply == op
+    ExprRes res = binary_op(
+        expr, Op::Equal, var_expr, std::move(l_res), expr, std::move(r_res));
+    if (!res)
+        return {false, false};
+
+    // cast to Bool(1) just in case
+    auto boolean = builtins().boolean();
+    auto [val, status] = maybe_cast(expr, boolean, res.move_typed_value());
+    if (status == CastError)
+        return {false, false};
+
+    return {boolean->is_true(val.move_rvalue()), true};
 }
 
 bitsize_t
@@ -808,17 +758,96 @@ ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
     return {std::move(val), ok};
 }
 
+ExprRes ExprVisitor::binary_op(
+    Ref<ast::Expr> node,
+    Op op,
+    Ref<ast::Expr> l_node,
+    ExprRes&& left,
+    Ref<ast::Expr> r_node,
+    ExprRes&& right) {
+    debug() << __FUNCTION__ << "\n";
+    DBG_LINE(node);
+
+    LValue lval;
+    if (ops::is_assign(op)) {
+        if (!check_is_assignable(node, left.value()))
+            return {ExprError::NotAssignable};
+        lval = left.value().lvalue();
+    }
+
+    auto type_errors =
+        binary_op_type_check(op, left.type(), right.typed_value());
+    auto recast = [&](Ref<ast::Expr> expr, TypeError error,
+                      TypedValue&& tv) -> TypedValue {
+        switch (error.status) {
+        case TypeError::Incompatible:
+            diag().error(expr, "incompatible type");
+            return {};
+        case TypeError::ExplCastRequired: {
+            auto rval = tv.move_value().move_rvalue();
+            auto message =
+                std::string{"suggest casting "} + tv.type()->name() + " to ";
+            message +=
+                (error.cast_bi_type_id != NoBuiltinTypeId)
+                    ? std::string{builtin_type_str(error.cast_bi_type_id)}
+                    : error.cast_type->name();
+            diag().error(expr, message);
+            return {};
+        }
+        case TypeError::ImplCastRequired: {
+            if (error.cast_bi_type_id != NoBuiltinTypeId)
+                return do_cast(expr, error.cast_bi_type_id, std::move(tv));
+            assert(error.cast_type);
+            return {
+                error.cast_type, do_cast(expr, error.cast_type, std::move(tv))};
+        }
+        case TypeError::Ok:
+            return std::move(tv);
+        default:
+            assert(false);
+        };
+    };
+    auto l_tv = recast(l_node, type_errors.first, left.move_typed_value());
+    auto r_tv = recast(r_node, type_errors.second, right.move_typed_value());
+    if (!l_tv || !r_tv)
+        return {ExprError::InvalidOperandType};
+
+    if (op != Op::Assign) {
+        if (l_tv.type()->actual()->is_prim()) {
+            assert(r_tv.type()->actual()->is_prim());
+            auto l_type = l_tv.type()->actual()->as_prim();
+            auto r_type = r_tv.type()->actual()->as_prim();
+            auto l_rval = l_tv.move_value().move_rvalue();
+            auto r_rval = r_tv.move_value().move_rvalue();
+            r_tv = l_type->binary_op(
+                op, std::move(l_rval), r_type, std::move(r_rval));
+        } else {
+            // TODO: class operators
+            assert(false);
+        }
+    }
+
+    // handle assignment
+    if (ops::is_assign(op)) {
+        if (lval.empty() || r_tv.value().empty())
+            return {std::move(l_tv)};
+        return assign(
+            node, TypedValue{l_tv.type(), Value{lval}}, std::move(r_tv));
+    }
+    return {std::move(r_tv)};
+}
+
 ExprRes
-ExprVisitor::assign(Ref<ast::OpExpr> node, TypedValue&& to, TypedValue&& tv) {
+ExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
     debug() << __FUNCTION__ << "\n";
     DBG_LINE(node);
     if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
-    auto cast_res = maybe_cast(node, to.type()->deref(), std::move(tv));
-    if (cast_res.second == CastError)
+    auto [val, status] = maybe_cast(node, to.type()->deref(), std::move(tv));
+    if (status == CastError)
         return {ExprError::InvalidCast};
     auto lval = to.move_value().lvalue();
-    return {to.type(), lval.assign(cast_res.first.move_rvalue())};
+    return {to.type(), lval.assign(val.move_rvalue())};
 }
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
@@ -853,7 +882,8 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
         return {std::move(val), NoCast};
 
     // implicit cast to base class
-    if (!expl && to->is_ref() && to->actual()->is_class() && from->actual()->is_class()) {
+    if (!expl && to->is_ref() && to->actual()->is_class() &&
+        from->actual()->is_class()) {
         auto to_cls = to->actual()->as_class();
         auto from_cls = from->actual()->as_class();
         if (to_cls->is_base_of(from_cls))
@@ -988,9 +1018,9 @@ ExprRes ExprVisitor::funcall(
             param_type = param_type->deref(); // cast to non-ref type if casting
         }
 
-        auto cast_res = maybe_cast(node, param_type, std::move(arg), false);
-        assert(cast_res.second != CastError);
-        call_args.emplace_back(param_type, std::move(cast_res.first));
+        auto [val, status] = maybe_cast(node, param_type, std::move(arg), false);
+        assert(status != CastError);
+        call_args.emplace_back(param_type, std::move(val));
     }
     return funcall(node, fun, self, std::move(call_args));
 }

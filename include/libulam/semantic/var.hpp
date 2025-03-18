@@ -11,18 +11,20 @@ class Var : public VarBase {
 public:
     using VarBase::VarBase;
 
+    // tmp variables, type is required
+    Var(Ref<Type> type, Value&& value, Flag flags = NoFlags);
+    Var(TypedValue&& tv, Flag flags = NoFlags);
+
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
         Ref<Type> type,
         Value&& val,
-        Flag flags = NoFlags):
-        VarBase{type_node, node, type, flags}, _value{std::move(val)} {}
+        Flag flags = NoFlags);
 
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
         TypedValue&& tv,
-        Flag flags = NoFlags):
-        Var{type_node, node, tv.type(), tv.move_value(), flags} {}
+        Flag flags = NoFlags);
 
     bool requires_value() const {
         return is_const() && !is(Tpl) && !is(ClassParam);

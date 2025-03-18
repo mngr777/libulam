@@ -182,7 +182,7 @@ void EvalVisitor::visit(Ref<ast::For> node) {
             } catch (const EvalExceptContinue&) {
                 debug() << "continue\n";
             } catch (const EvalExceptBreak&) {
-                debug() << "break";
+                debug() << "break\n";
                 break;
             }
         }
@@ -241,12 +241,51 @@ void EvalVisitor::visit(Ref<ast::While> node) {
             try {
                 node->body()->accept(*this);
             } catch (const EvalExceptContinue&) {
-                debug() << "continue";
+                debug() << "continue\n";
             } catch (const EvalExceptBreak&) {
-                debug() << "break";
+                debug() << "break\n";
                 break;
             }
         }
+    }
+}
+
+void EvalVisitor::visit(Ref<ast::Which> node) {
+    debug() << __FUNCTION__ << "Which\n";
+    assert(node->has_expr());
+
+    auto scope_raii{_scope_stack.raii(scp::Break)};
+    bool matched = false;
+
+    // eval switch expr, store result in tmp var
+    EvalExprVisitor ev{*this, scope()};
+    Ptr<Var> var{};
+    {
+        ExprRes res = node->expr()->accept(ev);
+        if (!res)
+            throw EvalExceptError("cannot eval which expr");
+        var = make<Var>(res.move_typed_value());
+    }
+
+    try {
+        for (unsigned n = 0; n < node->case_num(); ++n) {
+            // does current case match (or previous fall through)?
+            auto case_ = node->case_(n);
+            matched = matched || !case_->is_default();
+            if (!matched) {
+                auto [is_match, ok] =
+                    ev.match(node->expr(), ref(var), case_->expr());
+                if (!ok)
+                    throw EvalExceptError("cannot eval case expr");
+                matched = is_match;
+            }
+
+            // eval case stmt
+            if (matched)
+                case_->branch()->accept(*this);
+        }
+    } catch (const EvalExceptBreak&) {
+        debug() << "break\n";
     }
 }
 
@@ -346,8 +385,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
             }
             // TODO: test
             const LValue lval = res.value().lvalue();
-            if (lval.has_scope_lvl() &&
-                !lval.has_auto_scope_lvl() &&
+            if (lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
                 lval.scope_lvl() >= _scope_stack.size()) {
                 diag().error(ret.node(), "reference to local");
                 return {ExprError::ReferenceToLocal};

@@ -55,24 +55,37 @@ public:
     virtual ExprRes
     cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
 
+    // {res, success}
+    virtual std::pair<bool, bool>
+    match(Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr);
+
     virtual bitsize_t
     bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 
     virtual array_size_t array_size(Ref<ast::Expr> expr);
 
-    // TODO: return type, refactoring
     virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
 
     virtual std::pair<TypedValueList, bool>
     eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
 
-    virtual std::pair<Value, bool> eval_init(Ref<ast::VarDecl> node, Ref<Type> type);
+    virtual std::pair<Value, bool>
+    eval_init(Ref<ast::VarDecl> node, Ref<Type> type);
 
     virtual std::pair<Value, bool>
     eval_init_list(Ref<Type> type, Ref<ast::InitList> list);
 
 protected:
-    virtual ExprRes assign(Ref<ast::OpExpr> node, TypedValue&& to, TypedValue&& tv);
+    virtual ExprRes binary_op(
+        Ref<ast::Expr> node,
+        Op op,
+        Ref<ast::Expr> l_node,
+        ExprRes&& left,
+        Ref<ast::Expr> r_node,
+        ExprRes&& right);
+
+    virtual ExprRes
+    assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
     virtual CastRes maybe_cast(
         Ref<ast::Expr> node,
@@ -82,8 +95,8 @@ protected:
 
     Value do_cast(Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv);
 
-    TypedValue do_cast(
-        Ref<ast::Expr> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
+    TypedValue
+    do_cast(Ref<ast::Expr> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
 
     virtual ExprRes funcall(
         Ref<ast::Expr> node,

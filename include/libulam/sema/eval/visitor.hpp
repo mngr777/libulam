@@ -27,6 +27,7 @@ public:
     void visit(Ref<ast::IfAs> node) override;
     void visit(Ref<ast::For> node) override;
     void visit(Ref<ast::While> node) override;
+    void visit(Ref<ast::Which> node) override;
     void visit(Ref<ast::Return> node) override;
     void visit(Ref<ast::Break> node) override;
     void visit(Ref<ast::Continue> node) override;

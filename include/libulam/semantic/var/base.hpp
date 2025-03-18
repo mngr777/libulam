@@ -29,13 +29,18 @@ public:
         Flag flags = NoFlags):
         _type_node{type_node}, _node{node}, _type{type}, _flags{flags} {}
 
+    bool has_name() const;
     str_id_t name_id() const;
+
     bitsize_t bitsize() const;
 
-    Ref<ast::TypeName> type_node() { return _type_node; }
-    Ref<ast::VarDecl> node() { return _node; }
+    bool has_type_node() const;
+    Ref<ast::TypeName> type_node();
 
-    bool has_type() const { return _type; }
+    bool has_node() const;
+    Ref<ast::VarDecl> node();
+
+    bool has_type() const;
     Ref<Type> type() const;
     void set_type(Ref<Type> type);
 
