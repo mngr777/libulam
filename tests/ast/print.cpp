@@ -348,11 +348,10 @@ void Printer::visit(ulam::Ref<ulam::ast::Which> node) {
     _os << ") {\n";
     for (unsigned n = 0; n < node->case_num(); ++n)
         accept_me(node->case_(n));
-    _os << "}";
+    indent() << "}";
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
-    assert(node->has_branch());
     if (node->is_default()) {
         indent() << "otherwise";
     } else {
@@ -360,7 +359,8 @@ void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
         accept_me(node->expr());
     }
     _os << ": ";
-    accept_me(node->branch());
+    if (node->has_branch())
+        accept_me(node->branch());
     _os << nl();
 }
 

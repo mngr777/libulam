@@ -271,7 +271,7 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
         for (unsigned n = 0; n < node->case_num(); ++n) {
             // does current case match (or previous fall through)?
             auto case_ = node->case_(n);
-            matched = matched || !case_->is_default();
+            matched = matched || case_->is_default();
             if (!matched) {
                 auto [is_match, ok] =
                     ev.match(node->expr(), ref(var), case_->expr());
@@ -281,7 +281,7 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
             }
 
             // eval case stmt
-            if (matched)
+            if (matched && case_->has_branch())
                 case_->branch()->accept(*this);
         }
     } catch (const EvalExceptBreak&) {

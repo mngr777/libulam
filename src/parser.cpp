@@ -1152,19 +1152,30 @@ Ptr<ast::Which> Parser::parse_which() {
     // {
     if (!expect(tok::BraceL))
         return {};
+    bool has_default = false;
     while (!_tok.in(tok::BraceR, tok::Eof)) {
+        // parse case
         Ptr<ast::WhichCase> case_{};
         if (_tok.in(tok::Case, tok::Otherwise))
             case_ = parse_which_case();
 
+        // success?
         if (!case_) {
             panic(tok::BraceR);
             consume_if(tok::BraceR);
             return {};
         }
 
-        if (node)
+        // duplicate `otherwise'?
+        if (case_->is_default()) {
+            if (has_default)
+                diag(case_->loc_id(), 1, "multiple default cases");
+            has_default = true;
+        }
+
+        if (node) {
             node->add(std::move(case_));
+        }
     }
     // }
     if (!expect(tok::BraceR)) {
@@ -1196,9 +1207,12 @@ Ptr<ast::WhichCase> Parser::parse_which_case() {
         return {};
 
     // stmt
-    auto stmt = parse_stmt();
-    if (!stmt)
-        return {};
+    Ptr<ast::Stmt> stmt{};
+    if (!_tok.in(tok::Case, tok::Otherwise)) {
+        stmt = parse_stmt();
+        if (!stmt)
+            return {};
+    }
 
     return tree_loc<ast::WhichCase>(loc_id, std::move(expr), std::move(stmt));
 }
