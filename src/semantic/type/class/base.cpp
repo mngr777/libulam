@@ -15,7 +15,8 @@ ClassBase::ClassBase(
     _module{module},
     _inh_scope{make<PersScope>(module->scope())},
     _param_scope{make<PersScope>(ref(_inh_scope))},
-    _scope{make<PersScope>(ref(_param_scope), scope_flags)} {}
+    _scope{make<PersScope>(ref(_param_scope), scope_flags)},
+    _constructors(make<FunSet>()) {}
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
 
@@ -113,7 +114,14 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
         fun->add_param(param_node);
     }
 
-    auto fset = node->is_op() ? find_op_fset(node->op()) : find_fset(name_id);
+    Ref<FunSet> fset{};
+    if (node->is_constructor()) {
+        fset = constructors();
+    } else if (node->is_op()) {
+        fset = find_op_fset(node->op());
+    } else {
+        fset = find_fset(name_id);
+    }
     fset->add(std::move(fun));
 
     if (!node->has_scope_version()) {
@@ -159,6 +167,15 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
         node->set_scope_version(scope()->version());
     }
     return ref;
+}
+
+bool ClassBase::has_constructors() const {
+    return (bool)_constructors;
+}
+
+Ref<FunSet> ClassBase::constructors() {
+    assert(_constructors);
+    return ref(_constructors);
 }
 
 bool ClassBase::resolve_params(sema::Resolver& resolver) {

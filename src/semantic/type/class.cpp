@@ -1,5 +1,3 @@
-#include "libulam/semantic/type/class/ancestry.hpp"
-#include "libulam/semantic/type/conv.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
@@ -520,6 +518,8 @@ bool Class::resolve_props(sema::Resolver& resolver) {
 }
 
 bool Class::resolve_funs(sema::Resolver& resolver) {
+    if (!resolver.resolve(constructors()))
+        return false;
     for (auto [_, fset] : _fsets)
         if (!resolver.resolve(fset))
             return false;
@@ -567,6 +567,7 @@ void Class::merge_fsets() {
         for (auto& [op, fset] : parent->cls()->ops())
             find_op_fset(op)->merge(ref(fset));
         // TODO: conversions
+        constructors()->merge(parent->cls()->constructors());
     }
 }
 

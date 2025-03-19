@@ -164,6 +164,8 @@ bool Resolver::resolve(Ref<Prop> prop) {
 
 bool Resolver::resolve(Ref<FunSet> fset) {
     CHECK_STATE(fset);
+    if (fset->empty())
+        RET_UPD_STATE(fset, true);
 
     bool is_resolved = true;
     for (auto fun : *fset) {

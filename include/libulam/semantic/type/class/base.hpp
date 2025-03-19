@@ -81,6 +81,9 @@ public:
 
     const auto& params() const { return _params; }
 
+    bool has_constructors() const;
+    Ref<FunSet> constructors();
+
     Ref<ast::ClassDef> node() { return _node; }
     Ref<const ast::ClassDef> node() const { return _node; }
 
@@ -118,6 +121,7 @@ private:
     Ptr<PersScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;
+    Ptr<FunSet> _constructors;
     std::map<Op, Ptr<FunSet>> _ops;
 };
 
