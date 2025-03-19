@@ -115,8 +115,8 @@ protected:
     Ref<FunSet> add_op_fset(Op op) override;
 
 private:
+    bool resolve_params(sema::Resolver& resolver);
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
-    // bool resolve_members(sema::Resolver& resolver);
     bool resolve_props(sema::Resolver& resolver);
     bool resolve_funs(sema::Resolver& resolver);
 

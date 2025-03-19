@@ -474,6 +474,16 @@ Ref<FunSet> Class::add_op_fset(Op op) {
     return fset;
 }
 
+bool Class::resolve_params(sema::Resolver& resolver) {
+    auto scope = param_scope();
+    for (auto param : params()) {
+        auto scope_view = scope->view(param->scope_version());
+        if (!resolver.resolve(param, ref(scope_view)))
+            return false;
+    }
+    return true;
+}
+
 bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     if (node()->has_ancestors()) {
         for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {

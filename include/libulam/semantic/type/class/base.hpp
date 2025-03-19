@@ -99,8 +99,6 @@ protected:
         return _members.set(name_id, value);
     }
 
-    bool resolve_params(sema::Resolver& resolver);
-
     Ref<PersScope> inh_scope() { return ref(_inh_scope); }
 
     auto& members() { return _members; }

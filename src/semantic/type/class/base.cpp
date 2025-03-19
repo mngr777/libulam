@@ -178,16 +178,6 @@ Ref<FunSet> ClassBase::constructors() {
     return ref(_constructors);
 }
 
-bool ClassBase::resolve_params(sema::Resolver& resolver) {
-    auto scope = param_scope();
-    for (auto param : _params) {
-        auto scope_view = scope->view(param->scope_version());
-        if (!resolver.resolve(param, ref(scope_view)))
-            return false;
-    }
-    return true;
-}
-
 Ref<FunSet> ClassBase::find_fset(str_id_t name_id) {
     auto sym = get(name_id);
     assert(!sym || sym->is<FunSet>());
