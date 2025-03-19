@@ -40,11 +40,12 @@ class TypeName : public Tuple<List<Stmt, TypeIdent>, TypeSpec> {
 public:
     explicit TypeName(Ptr<TypeSpec>&& spec): Tuple{std::move(spec)} {}
 
-    unsigned child_num() const override {
-        return Tuple::child_num() + List::child_num();
-    }
-
     ULAM_AST_TUPLE_PROP(first, 0)
+
+    bool is_self() const {
+        return child_num() == 1 && first()->has_ident() &&
+               first()->ident()->is_self();
+    }
 
     Ref<TypeIdent> ident(unsigned n) {
         return (n == 0) ? first()->ident() : List::get(n - 1);
@@ -57,6 +58,10 @@ public:
     Ptr<TypeIdent> replace_ident(unsigned n, Ptr<TypeIdent>&& repl) {
         return (n == 0) ? first()->replace_ident(std::move(repl))
                         : List::replace(n - 1, std::move(repl));
+    }
+
+    unsigned child_num() const override {
+        return Tuple::child_num() + List::child_num();
     }
 
     Ref<Node> child(unsigned n) override {

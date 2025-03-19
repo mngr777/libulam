@@ -31,6 +31,8 @@ Fun::~Fun() {}
 
 str_id_t Fun::name_id() const { return _node->name_id(); }
 
+bool Fun::is_constructor() const { return _node->is_constructor(); }
+
 bool Fun::is_op() const { return _node->is_op(); }
 
 Op Fun::op() const { return _node->op(); }

@@ -44,6 +44,8 @@ public:
 
     str_id_t name_id() const;
 
+    bool is_constructor() const;
+
     bool is_op() const;
     Op op() const;
 

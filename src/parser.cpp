@@ -219,7 +219,7 @@ Ptr<ast::TypeNameList> Parser::parse_class_ancestor_list() {
     auto loc_id = _tok.loc_id;
     consume();
 
-    // class Foo : <anc_1> + <anc_2>
+    // class Foo : <anc_1> + <anc_2> + ...
     auto node = make<ast::TypeNameList>();
     while (!_tok.in(tok::BraceL, tok::Eof)) {
         // type
@@ -325,16 +325,24 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
     // virtual/@Override
     bool is_virtual = false;
     bool is_override = false;
+    loc_id_t virtual_loc_id = NoLocId;
+    loc_id_t override_loc_id = NoLocId;
     while (_tok.in(tok::Virtual, tok::Override)) {
         if (_tok.is(tok::Virtual)) {
-            if (is_virtual)
+            if (is_virtual) {
                 diag(_tok, "duplicate `virtual' keyword");
+                continue;
+            }
             is_virtual = true;
+            virtual_loc_id = _tok.loc_id;
         } else {
             assert(_tok.is(tok::Override));
-            if (is_override)
+            if (is_override) {
                 diag(_tok, "duplicate `@Override' keyword");
+                continue;
+            }
             is_override = true;
+            override_loc_id = NoLocId;
         }
         consume();
     }
@@ -351,6 +359,23 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
     type = parse_type_name();
     if (!type)
         return false;
+
+    // constructor?
+    if (type->is_self() && _tok.is(tok::ParenL)) {
+        // check if marked virtual/@Override
+        if (is_virtual || is_override) {
+            auto loc_id = is_virtual ? virtual_loc_id : override_loc_id;
+            std::string_view kw{
+                tok::type_str(is_virtual ? tok::Virtual : tok::Override)};
+            diag(loc_id, kw.size(), "constructors cannot be virtual");
+        }
+        // parse
+        auto fun = parse_constructor_def_rest(type->first()->ident()->name());
+        if (!fun)
+            return false;
+        node->add(std::move(fun));
+        return true;
+    }
 
     // [] (return type only)
     auto brace_loc_id = NoLocId; // to complain if not a fun
@@ -546,7 +571,6 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
 Ptr<ast::FunDef>
 Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
     assert(_tok.type == tok::ParenL);
-    assert(ret_type);
 
     bool ok = true;
 
@@ -624,6 +648,20 @@ Ptr<ast::FunDef> Parser::parse_op_fun_def_rest(
     }
     assert(op != Op::None);
     fun->set_op(op);
+    return fun;
+}
+
+Ptr<ast::FunDef> Parser::parse_constructor_def_rest(ast::Str name) {
+    auto fun = parse_fun_def_rest({}, name);
+    if (!fun)
+        return {};
+    fun->set_is_constructor(true);
+
+    // cannot be default
+    if (fun->param_num() == 0) {
+        diag(fun->params()->loc_id(), 1, "default constructors are not allowed");
+        return {};
+    }
     return fun;
 }
 
@@ -1572,7 +1610,9 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
 
     // ident
     Ptr<ast::TypeIdent> ident{};
+    bool is_self_or_super = false;
     BuiltinTypeId builtin_type_id = NoBuiltinTypeId;
+
     auto loc_id = _tok.loc_id;
     if (_tok.is(tok::BuiltinTypeIdent)) {
         builtin_type_id = _tok.builtin_type_id();
@@ -1580,21 +1620,14 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     } else {
         ident =
             parse_type_ident(TypeAllowSelf | TypeAllowSuper | TypeAllowLocal);
+        is_self_or_super = ident->is_self() || ident->is_super();
         ok = ok && ident;
     }
 
     // args
     Ptr<ast::ArgList> args{};
-    if (_tok.is(tok::ParenL)) {
+    if (_tok.is(tok::ParenL) && !is_self_or_super) {
         args = parse_arg_list();
-        if (ident && ident->is_self()) {
-            diag(args->loc_id(), 1, "`Self' cannot have class parameters");
-            args = {};
-        }
-        if (ident && ident->is_super()) {
-            diag(args->loc_id(), 1, "`Super' cannot have class parameters");
-            args = {};
-        }
         ok = ok && args;
     }
 

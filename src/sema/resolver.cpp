@@ -5,6 +5,7 @@
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/void.hpp>
 
 #define DEBUG_SEMA_RESOLVER // TEST
 #ifdef DEBUG_SEMA_RESOLVER
@@ -202,13 +203,17 @@ bool Resolver::resolve(Ref<Fun> fun) {
     auto scope_view = decl_scope_view(fun);
 
     // return type
-    auto ret_type_node = fun->ret_type_node();
-    auto ret_type = resolve_fun_ret_type(ret_type_node, ref(scope_view));
-    if (ret_type) {
-        fun->set_ret_type(ret_type);
+    if (fun->is_constructor()) {
+        fun->set_ret_type(_program->builtins().void_type());
     } else {
-        diag().error(ret_type_node, "cannot resolve return type");
-        is_resolved = false;
+        auto ret_type_node = fun->ret_type_node();
+        auto ret_type = resolve_fun_ret_type(ret_type_node, ref(scope_view));
+        if (ret_type) {
+            fun->set_ret_type(ret_type);
+        } else {
+            diag().error(ret_type_node, "cannot resolve return type");
+            is_resolved = false;
+        }
     }
 
     // params

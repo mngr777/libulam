@@ -194,11 +194,14 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
 void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) { print_var_decl(node); }
 
 void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
-    // ret type
-    assert(node->has_ret_type());
-    visit(node->ret_type());
-    // name
-    _os << " " << name(node);
+    assert(node->has_ret_type() || node->is_constructor());
+    // ret type, name
+    if (node->is_constructor()) {
+        _os << name(node);
+    } else {
+        visit(node->ret_type());
+        _os << " " << name(node);
+    }
     // params
     assert(node->has_params());
     visit(node->params());

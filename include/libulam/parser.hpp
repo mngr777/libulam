@@ -85,6 +85,7 @@ private:
     parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name);
     Ptr<ast::FunDef> parse_op_fun_def_rest(
         Ptr<ast::FunRetType>&& ret_type, ast::Str name, tok::Type op_tok_type);
+    Ptr<ast::FunDef> parse_constructor_def_rest(ast::Str name);
     Ptr<ast::ParamList> parse_param_list(bool allow_ellipsis = false);
     Ptr<ast::Param> parse_param(bool requires_value);
 
