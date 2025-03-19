@@ -37,11 +37,6 @@ void Resolver::resolve() {
     _classes.clear();
 }
 
-bool Resolver::resolve(Ref<ClassTpl> cls_tpl) {
-    debug() << "resolving template " << str(cls_tpl->name_id()) << "\n";
-    return cls_tpl->resolve(*this);
-}
-
 bool Resolver::init(Ref<Class> cls) {
     debug() << "initializiing " << cls->name() << "\n";
     _classes.insert(cls);
@@ -407,9 +402,6 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     // template?
     if (sym->is<ClassTpl>()) {
         auto tpl = sym->get<ClassTpl>();
-        if (!resolve(tpl))
-            return {};
-        assert(type_spec->has_args());
         ExprVisitor ev{_program, scope};
         auto [args, success] = ev.eval_tpl_args(type_spec->args(), tpl);
         if (!success)

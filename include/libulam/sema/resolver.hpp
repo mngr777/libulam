@@ -22,7 +22,6 @@ public:
 
     void resolve();
 
-    bool resolve(Ref<ClassTpl> cls_tpl);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias, Ref<Scope> scope);

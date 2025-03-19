@@ -156,7 +156,7 @@ bool Module::resolve(sema::Resolver& resolver) {
                     return resolver.init(type->as_class());
                 }
             },
-            [&](Ref<ClassTpl> tpl) { return resolver.resolve(tpl); },
+            [&](Ref<ClassTpl> tpl) { return true; },
             [&](Ref<Var> var) {
                 auto scope_version = var->scope_version();
                 auto scope_view = scope()->view(scope_version);

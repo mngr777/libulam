@@ -52,8 +52,6 @@ public:
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
-    bool resolve(sema::Resolver& resolver);
-
     Ref<Class> type(TypedValueList&& args);
 
 private:
@@ -61,7 +59,6 @@ private:
 
     Ptr<Class> inst(TypedValueList&& args);
 
-    // TMP
     std::string type_args_str(const TypedValueList& args);
 
     Ref<ast::ClassDef> _node;

@@ -57,24 +57,6 @@ ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     return prop;
 }
 
-bool ClassTpl::resolve(sema::Resolver& resolver) {
-    switch (state()) {
-    case Resolved:
-        return true;
-    case Resolving:
-        set_state(Unresolvable);
-        return false;
-    case Unresolvable:
-        return false;
-    default:
-        set_state(Resolving);
-    }
-
-    bool resolved = true; // resolve_params(resolver);
-    set_state(resolved ? Resolved : Unresolvable);
-    return resolved;
-}
-
 Ref<Class> ClassTpl::type(TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _classes.find(key);
