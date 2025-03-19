@@ -736,7 +736,7 @@ ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
         auto array_type = cur.type()->as_array();
         auto array_size = array_type->array_size();
         auto item_type = array_type->item_type();
-        assert(array_type->array_size() >= list->child_num());
+        // assert(array_size >= list->child_num()); // see t3847, QW(0)
         assert(list->child_num() > 0);
 
         bool all_consteval = true;

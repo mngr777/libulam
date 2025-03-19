@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
@@ -119,6 +120,7 @@ private:
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
     bool resolve_props(sema::Resolver& resolver);
     bool resolve_funs(sema::Resolver& resolver);
+    void init_default_data(sema::Resolver& resolver);
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
 
@@ -136,6 +138,7 @@ private:
     std::list<Ref<Prop>> _all_props;
     std::map<type_id_t, Ref<Fun>> _convs;
     std::map<str_id_t, Ref<FunSet>> _fsets;
+    Bits _init_bits;
 };
 
 } // namespace ulam

@@ -1,5 +1,4 @@
 #pragma once
-#include "libulam/semantic/scope/view.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
@@ -29,6 +28,7 @@ public:
     bool resolve(Ref<AliasType> alias);
     bool resolve(Ref<Var> var);
     bool resolve(Ref<Prop> prop);
+    bool init_default_value(Ref<Prop> prop);
     bool resolve(Ref<FunSet> fset);
     bool resolve(Ref<Fun> fun);
 

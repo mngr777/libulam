@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
             "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3939_test_compiler_caarraylengthof.test", // alengthof, TODO
-            "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // TODO: object initialization
+            // "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // TODO: object initialization
             "t3972_test_compiler_string_dminit.test", // -"-
             "t3973_test_compiler_stringarray_dminit_lengthof.test", // -"-
             "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Atom& to quark ref cast

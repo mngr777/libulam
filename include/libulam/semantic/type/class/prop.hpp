@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/semantic/var/base.hpp>
@@ -23,8 +24,13 @@ public:
     bitsize_t data_off() const;
     void set_data_off(bitsize_t off);
 
+    bool has_default_value() const;
+    const RValue& default_value() const;
+    void set_default_value(RValue&& rval);
+
 private:
     bitsize_t _data_off{NoBitsize};
+    RValue _default_value{};
 };
 
 } // namespace ulam

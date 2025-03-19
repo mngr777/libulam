@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/visitor.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -145,16 +146,63 @@ bool Resolver::resolve(Ref<Var> var) { return resolve(var, {}); }
 
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
-    bool is_resolved = true;
-    if (!prop->has_type()) {
-        auto scope_view = decl_scope_view(prop);
-        auto type = resolve_var_decl_type(
-            prop->type_node(), prop->node(), ref(scope_view), true);
-        if (type)
-            prop->set_type(type);
-        is_resolved = type && is_resolved;
+
+    auto scope_view = decl_scope_view(prop);
+
+    // type
+    auto type = resolve_var_decl_type(
+        prop->type_node(), prop->node(), ref(scope_view), true);
+    if (!type)
+        RET_UPD_STATE(prop, false);
+    // TODO: more type checks, e.g. for Void
+    if (type->canon()->is_ref()) {
+        diag().error(
+            prop->type_node(), "property cannot have a reference type");
+        RET_UPD_STATE(prop, false);
     }
-    RET_UPD_STATE(prop, is_resolved);
+    prop->set_type(type);
+
+    RET_UPD_STATE(prop, true);
+}
+
+bool Resolver::init_default_value(Ref<Prop> prop) {
+    if (!resolve(prop))
+        return false;
+
+    if (prop->has_default_value())
+        return true;
+
+    auto type = prop->type();
+    auto node = prop->node();
+    auto scope_view = decl_scope_view(prop);
+
+    if (node->has_init()) {
+        if (type->is_class()) {
+            // no init values for objects
+            Ref<ast::Node> init_node{};
+            if (node->has_init_list()) {
+                init_node = node->init_list();
+            } else {
+                assert(node->has_init_value());
+                init_node = node->init_value();
+            }
+            diag().error(
+                init_node,
+                "default values for object properties are not supported");
+            assert(type->is_constructible());
+            prop->set_default_value(type->construct());
+        } else {
+            ExprVisitor ev{_program, ref(scope_view)};
+            auto [val, ok] = ev.eval_init(node, type);
+            if (!ok)
+                RET_UPD_STATE(prop, false);
+            prop->set_default_value(val.move_rvalue());
+        }
+    } else {
+        prop->set_default_value(type->construct());
+    }
+
+    return true;
 }
 
 bool Resolver::resolve(Ref<FunSet> fset) {

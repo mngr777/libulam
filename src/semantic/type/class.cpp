@@ -34,7 +34,8 @@ Class::Class(std::string_view name, Ref<ClassTpl> tpl):
         &tpl->module()->program()->type_id_gen()},
     ClassBase{tpl->node(), tpl->module(), scp::Class},
     _name{name},
-    _tpl{tpl} {
+    _tpl{tpl},
+    _init_bits{0} {
     set_module(tpl->module());
     scope()->set_self_cls(this);
 }
@@ -44,7 +45,8 @@ Class::Class(
     UserType{module->program()->builtins(), &module->program()->type_id_gen()},
     ClassBase{node, module, scp::Class},
     _name{name},
-    _tpl{} {
+    _tpl{},
+    _init_bits{0} {
     set_module(module);
     scope()->set_self_cls(this);
 }
@@ -140,11 +142,13 @@ bool Class::resolve(sema::Resolver& resolver) {
 
     bool ok = resolve_params(resolver) && init_ancestors(resolver, true) &&
               resolve_props(resolver) && resolve_funs(resolver);
+    set_state(ok ? Resolved : Unresolvable);
+
     if (ok) {
         merge_fsets();
         init_layout();
+        init_default_data(resolver);
     }
-    set_state(ok ? Resolved : Unresolvable);
     return ok;
 }
 
@@ -214,7 +218,7 @@ bitsize_t Class::required_bitsize() const {
 bitsize_t Class::direct_bitsize() const {
     bitsize_t total = 0;
     for (auto prop : props()) {
-        if (kind() == ClassKind::Union) {
+        if (is_union()) {
             total = std::max(total, prop->bitsize());
         } else {
             total += prop->bitsize();
@@ -249,7 +253,7 @@ Ref<Prop> Class::first_prop_over_max_bitsize() {
 
 RValue Class::construct() const {
     // TMP?: const cast hack
-    return RValue{make_s<Data>(const_cast<Class*>(this))};
+    return RValue{make_s<Data>(const_cast<Class*>(this), _init_bits.copy())};
 }
 
 RValue Class::load(const BitsView data, bitsize_t off) const {
@@ -497,6 +501,12 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
         }
     }
 
+    // add inherited properties
+    for (auto& anc : _ancestry.ancestors()) {
+        for (auto prop : anc->cls()->props())
+            _all_props.push_back(prop);
+    }
+
     // TODO: refactoring
     {
         auto name_id = module()->program()->str_pool().put("UrSelf");
@@ -520,7 +530,7 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
 }
 
 bool Class::resolve_props(sema::Resolver& resolver) {
-    for (auto prop : _all_props) {
+    for (auto prop : all_props()) {
         if (!resolver.resolve(prop))
             return false;
     }
@@ -542,6 +552,22 @@ bool Class::resolve_funs(sema::Resolver& resolver) {
     return true;
 }
 
+void Class::init_default_data(sema::Resolver& resolver) {
+    _init_bits = Bits(bitsize());
+    TypeIdSet unions; // initialized Unions
+    for (auto prop : all_props()) {
+        auto cls = prop->cls();
+        if (unions.count(cls->id()) > 0)
+            continue;
+
+        resolver.init_default_value(prop);
+        auto off = prop->data_off_in(this);
+        prop->type()->store(_init_bits, off, prop->default_value());
+        if (cls->is_union())
+            unions.insert(cls->id());
+    }
+}
+
 void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
     if (!_ancestry.add(cls, node))
         return;
@@ -559,10 +585,6 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
             sym.accept([&](auto mem) { inh_scope()->set(name_id_, mem); });
         }
     }
-
-    // add inherited properties
-    for (auto prop : cls->all_props())
-        _all_props.push_back(prop);
 }
 
 void Class::merge_fsets() {
@@ -585,11 +607,8 @@ void Class::init_layout() {
     bitsize_t off = 0;
     for (auto prop : props()) {
         prop->set_data_off(off);
-        if (kind() == ClassKind::Union) {
-            off = std::max<bitsize_t>(off, prop->bitsize());
-        } else {
+        if (!is_union())
             off += prop->bitsize();
-        }
     }
 }
 

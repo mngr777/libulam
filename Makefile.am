@@ -62,7 +62,6 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type_ops.inc.hpp \
 	include/libulam/semantic/type_tpl.hpp \
 	include/libulam/semantic/value.hpp \
-	include/libulam/semantic/value/bit_storage.hpp \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/bound_fun_set.hpp \
 	include/libulam/semantic/value/data.hpp \

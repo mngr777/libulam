@@ -38,4 +38,16 @@ void Prop::set_data_off(bitsize_t off) {
     _data_off = off;
 }
 
+bool Prop::has_default_value() const { return !_default_value.empty(); }
+
+const RValue& Prop::default_value() const {
+    assert(has_default_value());
+    return _default_value;
+}
+
+void Prop::set_default_value(RValue&& rval) {
+    assert(!has_default_value());
+    _default_value = std::move(rval);
+}
+
 } // namespace ulam

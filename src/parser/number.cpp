@@ -43,26 +43,29 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
         case 'B':
         case 'b':
             radix = Radix::Binary;
+            is_signed = false;
             cur += 2;
             // are there any digits after prefix?
             if (cur == str.size() || !is_digit(str[cur])) {
                 diag.error(loc_id, str.size(), "incomplete binary number");
-                return {radix, (Integer)0};
+                return {radix, (Unsigned)0};
             }
             break;
         case 'X':
         case 'x':
             radix = Radix::Hexadecimal;
+            is_signed = false;
             cur += 2;
             // are there any hex digits after prefix?
             if (cur == str.size() || !is_xdigit(str[cur])) {
                 diag.error(loc_id, str.size(), "incomplete hexadecimal number");
-                return {radix, (Integer)0};
+                return {radix, (Unsigned)0};
             }
             break;
         default:
             // NOTE: leave single '0' decimal
             if (is_digit(str[cur + 1])) {
+                is_signed = false;
                 radix = Radix::Octal;
                 cur += 1;
             }
@@ -86,7 +89,9 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             auto message = std::string{"invalid digit in "} +
                            radix_to_str(radix) + " number";
             diag.error(loc_id, cur, 1, std::move(message));
-            return {radix, (Integer)0};
+            if (is_signed)
+                return {radix, (Integer)0};
+            return {radix, (Unsigned)0};
         }
         // already overflown?
         if (overflow)
