@@ -1,6 +1,6 @@
 #include <cassert>
 #include <libulam/diag.hpp>
-#include <libulam/sema/expr_visitor.hpp>
+#include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
@@ -149,7 +149,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
             if (resolver.resolve(ref(var), scope())) {
                 if (def->has_init_value()) {
-                    ExprVisitor ev{program(), scope()};
+                    EvalExprVisitor ev{program(), scope()};
                     ExprRes res = def->init_value()->accept(ev);
                     if (res.ok()) {
                         // TODO: conversion/type error

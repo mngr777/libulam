@@ -118,10 +118,8 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/except.hpp \
 	include/libulam/sema/eval/expr_visitor.hpp \
 	include/libulam/sema/eval/visitor.hpp \
-	include/libulam/sema/expr_visitor.hpp \
 	include/libulam/sema/init.hpp \
 	include/libulam/sema/resolver.hpp \
-	include/libulam/sema/param_eval.hpp \
 	include/libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
@@ -130,12 +128,10 @@ SEMA_SOURCE_FILES = \
 	src/sema/eval/except.cpp \
 	src/sema/eval/expr_visitor.cpp \
 	src/sema/eval/visitor.cpp \
-	src/sema/expr_visitor.cpp \
 	src/sema/out.hpp \
 	src/sema/out.cpp \
 	src/sema/init.cpp \
 	src/sema/resolver.cpp \
-	src/sema/param_eval.cpp \
 	src/sema/visitor.cpp
 
 HEADER_FILES = \

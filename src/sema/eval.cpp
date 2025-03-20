@@ -2,7 +2,6 @@
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/sema/eval.hpp>
-#include <libulam/sema/param_eval.hpp>
 #include <libulam/semantic/program.hpp>
 
 #ifdef DEBUG_EVAL

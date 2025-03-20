@@ -1,8 +1,6 @@
-#include "libulam/sema/eval/visitor.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/diag.hpp>
-#include <libulam/sema/expr_visitor.hpp>
-#include <libulam/sema/param_eval.hpp>
+#include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -123,7 +121,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     // value
     if (var->requires_value()) {
         if (node->has_init()) {
-            ExprVisitor ev{_program, scope};
+            EvalExprVisitor ev{_program, scope};
             auto [val, ok] = ev.eval_init(var->node(), var->type());
             if (ok)
                 var->set_value(std::move(val));
@@ -192,7 +190,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
             assert(type->is_constructible());
             prop->set_default_value(type->construct());
         } else {
-            ExprVisitor ev{_program, ref(scope_view)};
+            EvalExprVisitor ev{_program, ref(scope_view)};
             auto [val, ok] = ev.eval_init(node, type);
             if (!ok)
                 RET_UPD_STATE(prop, false);
@@ -404,7 +402,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
             return _program->builtins().type(bi_type_id);
         auto args = type_spec->args();
         assert(args->child_num() > 0);
-        ExprVisitor ev{_program, scope};
+        EvalExprVisitor ev{_program, scope};
         bitsize_t size = ev.bitsize_for(args->get(0), bi_type_id);
         if (size == NoBitsize)
             return {};
@@ -450,7 +448,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     // template?
     if (sym->is<ClassTpl>()) {
         auto tpl = sym->get<ClassTpl>();
-        ExprVisitor ev{_program, scope};
+        EvalExprVisitor ev{_program, scope};
         auto [args, success] = ev.eval_tpl_args(type_spec->args(), tpl);
         if (!success)
             return {};
@@ -547,7 +545,7 @@ Ref<Type> Resolver::apply_array_dims(
         }
     }
 
-    ExprVisitor ev{_program, scope};
+    EvalExprVisitor ev{_program, scope};
     for (unsigned n = 0; n < num; ++n) {
         auto expr = dims->get(n);
         if (expr) {
