@@ -90,7 +90,6 @@ int main(int argc, char** argv) {
             "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3939_test_compiler_caarraylengthof.test", // alengthof, TODO
-            // "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // TODO: object initialization
             "t3972_test_compiler_string_dminit.test", // -"-
             "t3973_test_compiler_stringarray_dminit_lengthof.test", // -"-
             "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Atom& to quark ref cast
@@ -104,6 +103,11 @@ int main(int argc, char** argv) {
             "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
+            "t41085_test_compiler_elementandquark_instanceofwithconstructor.test", // instanceof with arguments
+            "t41088_test_compiler_instanceofconstructorfuncarg.test", // -"-
+            "t41089_test_compiler_assigntofuncreturnvalueonlhs_evalerr.test", // assignment to rvalue
+            "t41091_test_compiler_elementandquark_memberselectoninstanceofconstructorcallresult.test", // instanceof with arguments
+            "t41092_test_compiler_elementandquark_constructorcallonfuncreturninstance.test", // -"-
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

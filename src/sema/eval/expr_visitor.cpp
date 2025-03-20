@@ -14,10 +14,7 @@ EvalExprVisitor::EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope):
     ExprVisitor{eval._program, scope}, _eval{eval} {}
 
 ExprRes EvalExprVisitor::funcall(
-    Ref<ast::Expr> node,
-    Ref<Fun> fun,
-    LValue self,
-    TypedValueList&& args) {
+    Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << "\n";
     if (fun->is_native()) {
         // can't eval, return empty value

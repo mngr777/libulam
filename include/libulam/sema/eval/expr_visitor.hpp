@@ -14,7 +14,7 @@ public:
 
 protected:
     ExprRes funcall(
-        Ref<ast::Expr> node,
+        Ref<ast::Node> node,
         Ref<Fun> fun,
         LValue self,
         TypedValueList&& args) override;

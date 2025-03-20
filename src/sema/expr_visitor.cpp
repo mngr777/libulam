@@ -1,5 +1,6 @@
 #include "libulam/semantic/expr_res.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/typed_value.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/expr_visitor.hpp>
@@ -225,7 +226,8 @@ ExprRes ExprVisitor::visit(Ref<ast::Cast> node) {
     if (cast_type->is(VoidId))
         return {builtins().void_type(), Value{RValue{}}};
 
-    auto [val, status] = maybe_cast(node, cast_type, res.move_typed_value(), true);
+    auto [val, status] =
+        maybe_cast(node, cast_type, res.move_typed_value(), true);
     if (status == CastError)
         return {ExprError::InvalidCast};
     return {cast_type, std::move(val)};
@@ -725,14 +727,19 @@ ExprVisitor::eval_init(Ref<ast::VarDecl> node, Ref<Type> type) {
 
 std::pair<Value, bool>
 ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
-    if (!type->is_array()) {
-        // TODO: class constructors
-        diag().error(list, "type is not an array");
-        return {Value{RValue{}}, false};
-    }
+    if (type->is_array())
+        return eval_init_list_array(type->as_array(), list);
+    if (type->is_class())
+        return eval_init_list_class(type->as_class(), list);
 
-    auto fill = [&](auto& self, LValue cur,
-                    Ref<ast::InitList> list) -> std::pair<bool, bool> {
+    diag().error(list, "type is not an array or a class");
+    return {Value{RValue{}}, false};
+}
+
+std::pair<Value, bool> ExprVisitor::eval_init_list_array(
+    Ref<ArrayType> type, Ref<ast::InitList> list) {
+    auto fill_array = [&](auto& self, LValue cur,
+                          Ref<ast::InitList> list) -> std::pair<bool, bool> {
         auto array_type = cur.type()->as_array();
         auto array_size = array_type->array_size();
         auto item_type = array_type->item_type();
@@ -775,11 +782,53 @@ ExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
         return {true, all_consteval};
     };
 
-    Value val{type->actual()->construct()};
-    auto [ok, is_consteval] = fill(fill, LValue{val.data_view()}, list);
+    Value val{type->construct()};
+    auto [ok, is_consteval] =
+        fill_array(fill_array, LValue{val.data_view()}, list);
     if (ok && is_consteval)
         val.rvalue().set_is_consteval(is_consteval);
     return {std::move(val), ok};
+}
+
+std::pair<Value, bool>
+ExprVisitor::eval_init_list_class(Ref<Class> cls, Ref<ast::InitList> list) {
+    if (!list->is_flat()) {
+        diag().error(
+            list,
+            "multidimensional init insts are not supported for classes yet");
+        return {Value{RValue{}}, false};
+    }
+
+    TypedValueList args;
+    bool all_consteval = true;
+    for (unsigned n = 0; n < list->child_num(); ++n) {
+        auto expr = list->expr(n);
+        ExprRes res = expr->accept(*this);
+        if (!res)
+            return {Value{RValue{}}, false};
+        all_consteval = all_consteval && res.value().is_consteval();
+        args.push_back(res.move_typed_value());
+    }
+
+    // default construct
+    RValue rval = cls->construct();
+    if (args.empty()) {
+        rval.set_is_consteval(all_consteval);
+        return {Value{}, false};
+    }
+
+    // any constructors available?
+    if (!cls->has_constructors()) {
+        diag().error(list, "class does not have non-default constructors");
+        return {Value{RValue{}}, false};
+    }
+
+    // apply constructor
+    ExprRes res =
+        funcall(list, cls->constructors(), rval.self(), std::move(args));
+    if (!res)
+        return {Value{RValue{}}, false};
+    return {Value{std::move(rval)}, true};
 }
 
 ExprRes ExprVisitor::binary_op(
@@ -875,7 +924,7 @@ ExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
 }
 
 ExprVisitor::CastRes ExprVisitor::maybe_cast(
-    Ref<ast::Expr> node, Ref<Type> to, TypedValue&& tv, bool expl) {
+    Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv, bool expl) {
     auto from = tv.type();
     auto val = tv.move_value();
 
@@ -931,7 +980,7 @@ ExprVisitor::CastRes ExprVisitor::maybe_cast(
 }
 
 Value ExprVisitor::do_cast(
-    Ref<ast::Expr> node, Ref<const Type> to, TypedValue&& tv) {
+    Ref<ast::Node> node, Ref<const Type> to, TypedValue&& tv) {
     auto from = tv.type();
     auto val = tv.move_value();
 
@@ -986,7 +1035,7 @@ Value ExprVisitor::do_cast(
 }
 
 TypedValue ExprVisitor::do_cast(
-    Ref<ast::Expr> node, BuiltinTypeId bi_type_id, TypedValue&& tv) {
+    Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv) {
     auto type = tv.type()->actual();
 
     if (type->is_class()) {
@@ -1015,7 +1064,7 @@ TypedValue ExprVisitor::do_cast(
 }
 
 ExprRes ExprVisitor::funcall(
-    Ref<ast::Expr> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
+    Ref<ast::Node> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
     auto dyn_cls = self.dyn_cls();
     auto match_res = fset->find_match(dyn_cls, args);
     if (match_res.empty()) {
@@ -1042,7 +1091,8 @@ ExprRes ExprVisitor::funcall(
             param_type = param_type->deref(); // cast to non-ref type if casting
         }
 
-        auto [val, status] = maybe_cast(node, param_type, std::move(arg), false);
+        auto [val, status] =
+            maybe_cast(node, param_type, std::move(arg), false);
         assert(status != CastError);
         call_args.emplace_back(param_type, std::move(val));
     }
@@ -1050,7 +1100,7 @@ ExprRes ExprVisitor::funcall(
 }
 
 ExprRes ExprVisitor::funcall(
-    Ref<ast::Expr> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
+    Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " " << str(fun->name_id()) << "\n";
     return {fun->ret_type(), Value{}};
 }

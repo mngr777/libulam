@@ -78,6 +78,12 @@ public:
     virtual std::pair<Value, bool>
     eval_init_list(Ref<Type> type, Ref<ast::InitList> list);
 
+    std::pair<Value, bool>
+    eval_init_list_array(Ref<ArrayType> type, Ref<ast::InitList> list);
+
+    std::pair<Value, bool>
+    eval_init_list_class(Ref<Class> cls, Ref<ast::InitList> list);
+
 protected:
     virtual ExprRes binary_op(
         Ref<ast::Expr> node,
@@ -91,24 +97,24 @@ protected:
     assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
     virtual CastRes maybe_cast(
-        Ref<ast::Expr> node,
+        Ref<ast::Node> node,
         Ref<Type> type,
         TypedValue&& tv,
         bool expl = false);
 
-    Value do_cast(Ref<ast::Expr> node, Ref<const Type> type, TypedValue&& tv);
+    Value do_cast(Ref<ast::Node> node, Ref<const Type> type, TypedValue&& tv);
 
     TypedValue
-    do_cast(Ref<ast::Expr> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
+    do_cast(Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
 
     virtual ExprRes funcall(
-        Ref<ast::Expr> node,
+        Ref<ast::Node> node,
         Ref<FunSet> fset,
         LValue self,
         TypedValueList&& args);
 
     virtual ExprRes funcall(
-        Ref<ast::Expr> node, Ref<Fun> fun, LValue self, TypedValueList&& args);
+        Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args);
 
     Diag& diag();
     Builtins& builtins();
