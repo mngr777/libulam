@@ -108,6 +108,8 @@ int main(int argc, char** argv) {
             "t41089_test_compiler_assigntofuncreturnvalueonlhs_evalerr.test", // assignment to rvalue
             "t41091_test_compiler_elementandquark_memberselectoninstanceofconstructorcallresult.test", // instanceof with arguments
             "t41092_test_compiler_elementandquark_constructorcallonfuncreturninstance.test", // -"-
+            "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
+            "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

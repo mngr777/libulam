@@ -154,7 +154,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
     auto error = unary_op_type_check(node->op(), tv.type());
     switch (error.status) {
     case TypeError::Incompatible:
-        diag().error(node, "incompatible");
+        diag().error(node, "incompatible type");
         return {ExprError::InvalidOperandType};
     case TypeError::ExplCastRequired:
         if (ops::is_inc_dec(op)) {
@@ -205,7 +205,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
         } else if (arg_type->is_class()) {
             Resolver resolver{_program};
             auto cls = arg_type->as_class();
-            auto fset = cls->resolved_op(op, resolver);
+            auto fset = cls->op(op);
             assert(fset);
             return funcall(node, fset, tv.value().self(), {});
         }
@@ -919,15 +919,12 @@ ExprRes EvalExprVisitor::binary_op(
             // class op
             assert(l_tv.type()->actual()->is_class());
             auto cls = l_tv.type()->actual()->as_class();
-            if (!cls->has_op(op)) {
-                diag().error(
-                    node, "class does not have corresponding operator");
-                return {ExprError::NoOperator};
-            }
+            auto fset = cls->op(op);
+            assert(fset);
             auto obj = l_tv.move_value();
             TypedValueList args;
             args.push_back(std::move(r_tv));
-            return funcall(node, cls->op(op), obj.self(), std::move(args));
+            return funcall(node, fset, obj.self(), std::move(args));
         }
     }
 

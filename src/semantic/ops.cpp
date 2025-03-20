@@ -36,6 +36,8 @@ Op fun_name_op(const std::string_view name) {
 bool is_overloadable(Op op) {
     switch (op) {
     case Op::ArrayAccess:
+    case Op::Equal:
+    case Op::NotEqual:
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:
@@ -68,6 +70,8 @@ bool is_overloadable(Op op) {
     case Op::AssignBwAnd:
     case Op::AssignBwOr:
     case Op::AssignBwXor:
+    case Op::UnaryPlus:
+    case Op::UnaryMinus:
         return true;
     default:
         return false;
