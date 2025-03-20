@@ -164,12 +164,13 @@ TypeErrorPair
 class_binary_op_type_check(Op op, Ref<Class> cls, Ref<const Type> r_type) {
     assert(r_type->is_actual());
     TypeErrorPair errors;
+    if (cls->has_op(op))
+        return errors;
+
     if (op == Op::Assign) {
         errors.second = check_type_match(r_type, Value{}, cls);
         return errors;
     }
-    if (cls->has_op(op))
-        return errors;
 
     errors.first.status = TypeError::Incompatible;
     errors.second.status = TypeError::Incompatible;

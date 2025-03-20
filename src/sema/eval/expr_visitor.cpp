@@ -207,7 +207,15 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
             auto cls = arg_type->as_class();
             auto fset = cls->op(op);
             assert(fset);
-            return funcall(node, fset, tv.value().self(), {});
+            TypedValueList args;
+            if (op == Op::PostInc || op == Op::PostDec) {
+                // dummy argument for post inc/dec
+                auto int_type = _program->builtins().int_type();
+                auto rval = int_type->construct();
+                rval.set_is_consteval(true);
+                args.push_back({int_type, Value{std::move(rval)}});
+            }
+            return funcall(node, fset, tv.value().self(), std::move(args));
         }
     }
     assert(false);
@@ -904,8 +912,8 @@ ExprRes EvalExprVisitor::binary_op(
     if (!l_tv || !r_tv)
         return {ExprError::InvalidOperandType};
 
-    if (op != Op::Assign) {
-        if (l_tv.type()->actual()->is_prim()) {
+    if (l_tv.type()->actual()->is_prim()) {
+        if (op != Op::Assign) {
             // primitive binary op
             assert(r_tv.type()->actual()->is_prim());
             auto l_type = l_tv.type()->actual()->as_prim();
@@ -914,10 +922,11 @@ ExprRes EvalExprVisitor::binary_op(
             auto r_rval = r_tv.move_value().move_rvalue();
             r_tv = l_type->binary_op(
                 op, std::move(l_rval), r_type, std::move(r_rval));
-
-        } else {
-            // class op
-            assert(l_tv.type()->actual()->is_class());
+        }
+    } else if (l_tv.type()->actual()->is_class()) {
+        // class op
+        auto cls = l_tv.type()->actual()->as_class();
+        if (op != Op::Assign || cls->has_op(Op::Assign)) {
             auto cls = l_tv.type()->actual()->as_class();
             auto fset = cls->op(op);
             assert(fset);
