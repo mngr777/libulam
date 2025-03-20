@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -14,16 +15,26 @@ public:
 
     ULAM_AST_TUPLE_PROP(callable, 0)
     ULAM_AST_TUPLE_PROP(args, 1)
+
+    unsigned arg_num() const {
+        assert(has_args());
+        return args()->child_num();
+    }
 };
 
 class MemberAccess : public Tuple<OpExpr, Expr, Ident, TypeIdent> {
     ULAM_AST_EXPR
+    ULAM_AST_SIMPLE_ATTR(Op, op, Op::None)
 public:
     MemberAccess(
         Ptr<Expr>&& obj, Ptr<Ident>&& ident, Ptr<TypeIdent>&& base = {}):
         Tuple{
             std::move(obj), std::move(ident), std::move(base),
             Op::MemberAccess} {}
+
+    bool is_op() const {
+        return op() != Op::None;
+    }
 
     ULAM_AST_TUPLE_PROP(obj, 0);
     ULAM_AST_TUPLE_PROP(ident, 1);

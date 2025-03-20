@@ -1,3 +1,5 @@
+#include "libulam/semantic/expr_res.hpp"
+#include "libulam/semantic/typed_value.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -286,6 +288,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::StrLit> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     debug() << __FUNCTION__ << " FunCall\n";
     DBG_LINE(node);
+
     auto callable = node->callable()->accept(*this);
     if (!callable)
         return callable;
@@ -336,8 +339,17 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
         obj_val = Value{obj_val.as(cls)};
     }
 
+    // get op fset
+    if (node->is_op()) {
+        auto fset = cls->op(node->op());
+        if (!fset) {
+            diag().error(node, "operator not found");
+            return {ExprError::NoOperator};
+        }
+        return {builtins().type(FunId), obj_val.bound_fset(fset)};
+    }
+
     // get symbol
-    assert(cls->is_ready());
     auto name = node->ident()->name();
     auto sym = cls->get(name.str_id());
     if (!sym) {
@@ -379,6 +391,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
         diag().error(node->ident(), "not a class constant");
         return {ExprError::NotClassConst};
     }
+    // TODO: base class prop/fun
     // TODO: move resolution to class
     auto var = sym->get<Var>();
     auto scope = cls->scope();
@@ -893,6 +906,7 @@ ExprRes EvalExprVisitor::binary_op(
 
     if (op != Op::Assign) {
         if (l_tv.type()->actual()->is_prim()) {
+            // primitive binary op
             assert(r_tv.type()->actual()->is_prim());
             auto l_type = l_tv.type()->actual()->as_prim();
             auto r_type = r_tv.type()->actual()->as_prim();
@@ -900,9 +914,20 @@ ExprRes EvalExprVisitor::binary_op(
             auto r_rval = r_tv.move_value().move_rvalue();
             r_tv = l_type->binary_op(
                 op, std::move(l_rval), r_type, std::move(r_rval));
+
         } else {
-            // TODO: class operators
-            assert(false);
+            // class op
+            assert(l_tv.type()->actual()->is_class());
+            auto cls = l_tv.type()->actual()->as_class();
+            if (!cls->has_op(op)) {
+                diag().error(
+                    node, "class does not have corresponding operator");
+                return {ExprError::NoOperator};
+            }
+            auto obj = l_tv.move_value();
+            TypedValueList args;
+            args.push_back(std::move(r_tv));
+            return funcall(node, cls->op(op), obj.self(), std::move(args));
         }
     }
 

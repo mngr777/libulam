@@ -89,8 +89,7 @@ private:
     Ptr<ast::ParamList> parse_param_list(bool allow_ellipsis = false);
     Ptr<ast::Param> parse_param(bool requires_value);
 
-    std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>>
-    parse_init(
+    std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>> parse_init(
         bool is_required,
         Ref<ast::ExprList> array_dims,
         var_flags_t flags = NoVarFlags);
@@ -132,11 +131,12 @@ private:
     Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
     Ptr<ast::TypeSpec> parse_type_spec();
     Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& callable);
+    Ptr<ast::FunCall> parse_op_call();
     Ptr<ast::ArgList> parse_arg_list();
     Ptr<ast::ArrayAccess> parse_array_access(Ptr<ast::Expr>&& array);
-    Ptr<ast::Expr> parse_member_access_or_type_op(Ptr<ast::Expr>&& obj);
-    Ptr<ast::MemberAccess>
-    parse_member_access_rest(Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
+    Ptr<ast::Expr> parse_member_access_type_op_or_op_call(Ptr<ast::Expr>&& obj);
+    Ptr<ast::Expr> parse_member_access_or_op_call_rest(
+        Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
     Ptr<ast::Ternary> parse_ternary(Ptr<ast::Expr>&& cond);
     Ptr<ast::ClassConstAccess>
     parse_class_const_access_rest(Ptr<ast::TypeName> type_name);

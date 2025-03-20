@@ -458,13 +458,17 @@ void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {
 
 void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
     assert(node->has_obj());
-    assert(node->has_ident());
     paren_l();
     if (node->has_base())
         accept_me(node->base());
     accept_me(node->obj());
     _os << ".";
-    accept_me(node->ident());
+    if (node->is_op()) {
+        _os << "operator" << ulam::ops::str(node->op());
+    } else {
+        assert(node->has_ident());
+        accept_me(node->ident());
+    }
     paren_r();
 }
 
