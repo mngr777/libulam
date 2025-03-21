@@ -36,7 +36,7 @@ void Parser::add_str_src(const std::string& text, const Path& path) {
 }
 
 Ptr<ast::Block> Parser::parse_stmts(std::string text) {
-    _pp.main_string(text, "eval"); // TODO: stream source
+    _pp.main_string(text, ""); // TODO: stream source
     consume();
     auto block = tree<ast::Block>();
     parse_as_block(ref(block), true /* implicit braces */);

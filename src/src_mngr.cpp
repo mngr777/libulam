@@ -7,7 +7,8 @@ namespace ulam {
 Src* SrcMngr::string(std::string text, Path path) {
     assert(_src_map.count(path) == 0);
     auto ptr = std::make_unique<StrSrc>(_srcs.size(), std::move(text), path);
-    _src_map[path] = ptr.get();
+    if (!path.empty())
+        _src_map[path] = ptr.get();
     _srcs.emplace_back(std::move(ptr));
     return _srcs.back().get();
 }
@@ -15,7 +16,8 @@ Src* SrcMngr::string(std::string text, Path path) {
 Src* SrcMngr::file(Path path) {
     assert(_src_map.count(path) == 0);
     auto ptr = std::make_unique<FileSrc>(_srcs.size(), path);
-    _src_map[path] = ptr.get();
+    if (!path.empty())
+        _src_map[path] = ptr.get();
     _srcs.push_back(std::move(ptr));
     return _srcs.back().get();
 }
