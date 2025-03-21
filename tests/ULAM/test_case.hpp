@@ -18,6 +18,7 @@ private:
     std::string _text;
     std::string_view _answer;
     int _exit_status{0};
-    // {name, text}
-    std::vector<std::pair<std::string_view, std::string_view>> _srcs;
+    // {filename, text}
+    std::vector<std::pair<Path, std::string_view>> _srcs;
+    std::vector<std::pair<Path, std::string_view>> _inc_srcs;
 };

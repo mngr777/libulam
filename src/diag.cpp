@@ -56,7 +56,7 @@ void Diag::emit(
     const std::string& text) {
     const auto& loc = _sm.loc(loc_id);
     auto src = _sm.src(loc.src_id());
-    std::cerr << level_prefix(lvl) << "in " << src->name() << ":" << loc.linum()
+    std::cerr << level_prefix(lvl) << "in " << src->path() << ":" << loc.linum()
               << ":" << loc.chr() << "\n";
     auto line = _sm.line_at(loc);
     std::cerr << line;

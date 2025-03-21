@@ -11,7 +11,7 @@ namespace ulam {
 
 class Src {
 public:
-    Src(src_id_t id, std::string&& name): _id{id}, _name{std::move(name)} {}
+    Src(src_id_t id, std::filesystem::path path): _id{id}, _path{std::move(path)} {}
     virtual ~Src() {}
 
     Src(const Src&) = delete;
@@ -22,18 +22,18 @@ public:
     const mem::BufRef line(linum_t linum);
 
     const src_id_t id() const { return _id; }
-    const std::string& name() const { return _name; }
+    const std::filesystem::path& path() const { return _path; }
 
 private:
     src_id_t _id;
-    std::string _name;
+    std::filesystem::path _path;
     std::vector<std::size_t> _line_off; // line offsets, starting from 2nd line
 };
 
 class FileSrc : public Src {
 public:
     FileSrc(src_id_t id, std::filesystem::path path):
-        Src{id, path.filename()}, _path{path} {}
+        Src{id, path}, _path{path} {}
 
     const mem::BufRef content() override;
 
@@ -44,8 +44,8 @@ private:
 
 class StrSrc : public Src {
 public:
-    StrSrc(src_id_t id, std::string text, std::string name):
-        Src{id, std::move(name)}, _text{std::move(text)} {}
+    StrSrc(src_id_t id, std::string text, std::filesystem::path path):
+        Src{id, std::move(path)}, _text{std::move(text)} {}
 
     const mem::BufRef content() override {
         return {_text.c_str(), _text.size() + 1};

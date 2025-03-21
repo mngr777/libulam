@@ -15,13 +15,17 @@ class Preproc {
     friend Lex;
 
 public:
+    using Path = std::filesystem::path;
+
     explicit Preproc(Context& ctx): _ctx{ctx} {}
 
     Preproc(const Preproc&) = delete;
     Preproc& operator=(Preproc) = delete;
 
-    void main_file(std::filesystem::path path);
-    void main_string(std::string text, std::string name);
+    void main_file(Path path);
+    void main_string(std::string text, Path path);
+
+    void add_string(std::string text, Path path);
 
     Preproc& operator>>(Token& token);
 

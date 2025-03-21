@@ -11,12 +11,13 @@ std::string parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     std::string parsed;
     parsed.reserve(str.size());
     std::size_t cur = 0;
-    const char quote = str[cur++];
+    const char Quote = str[cur++];
+    assert(Quote == '<' || Quote == '"');
+    const char Closing = (Quote == '<') ? '>' : Quote;
     bool is_terminated = false;
-    assert(quote == '\'' || quote == '"');
     while (cur < str.size()) {
         char ch = str[cur++];
-        if (ch == quote) {
+        if (ch == Closing) {
             is_terminated = true;
             break;
         }

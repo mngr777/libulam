@@ -1,7 +1,4 @@
 #pragma once
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/params.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
@@ -20,14 +17,18 @@ class Preproc;
 
 class Parser {
 public:
+    using Path = std::filesystem::path;
+
     Parser(Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
         _ctx{ctx}, _str_pool{str_pool}, _text_pool{text_pool}, _pp{ctx} {}
 
-    Ptr<ast::ModuleDef> parse_module_file(const std::filesystem::path& path);
+    Ptr<ast::ModuleDef> parse_module_file(const Path& path);
     Ptr<ast::ModuleDef>
-    parse_module_str(const std::string& text, const std::string& name);
+    parse_module_str(const std::string& text, const Path& path);
 
     Ptr<ast::Block> parse_stmts(std::string text);
+
+    void add_str_src(const std::string& text, const Path& path);
 
 private:
     using var_flags_t = std::uint8_t;

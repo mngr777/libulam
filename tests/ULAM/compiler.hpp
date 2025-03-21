@@ -16,7 +16,9 @@ public:
         _parser{_ctx, _ast->ctx().str_pool(), _ast->ctx().text_pool()} {}
 
     void parse_module_file(const Path& path);
-    void parse_module_str(const std::string& text, const std::string& name);
+    void parse_module_str(const std::string& text, const Path& path);
+
+    void add_str_src(const std::string& text, const Path& path);
 
     ulam::Ref<ulam::Program> analyze();
 

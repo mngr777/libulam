@@ -19,11 +19,15 @@ void TestCase::run() {
     // stdlib
     compiler.parse_module_file(_stdlib_dir / "UrSelf.ulam");
     compiler.parse_module_file(_stdlib_dir / "Empty.ulam");
-    // test srcs
-    for (auto pair : _srcs) {
-        auto [name, text] = pair;
-        compiler.parse_module_str(std::string{text}, std::string{name});
-    }
+
+    // add .inc srcs
+    for (auto [path, text] : _inc_srcs)
+        compiler.add_str_src(std::string{text}, path);
+
+    // parse .ulam srcs
+    for (auto [path, text] : _srcs)
+        compiler.parse_module_str(std::string{text}, path);
+
     // analyze
     auto program = compiler.analyze();
     if (!program)
@@ -126,16 +130,24 @@ void TestCase::parse() {
         }
     };
 
-    // NOTE: ModuleName.ulam without extension
     auto read_file_name = [&]() -> std::string_view {
         if (!is_upper())
             error("file name must start with upper case letter");
         auto start = pos++;
-        while (is_alnum())
+        while (is_alnum() || text[pos] == '.')
             ++pos;
-        auto name = text.substr(start, pos - start);
-        skip(".ulam");
-        return name;
+        return text.substr(start, pos - start);
+    };
+
+    auto add_src = [&](Path path, std::string_view text) {
+        auto ext = path.extension();
+        if (ext == ".ulam") {
+            _srcs.emplace_back(std::move(path), text);
+        } else if (ext == ".inc") {
+            _inc_srcs.emplace_back(std::move(path), text);
+        } else {
+            error("source file extension must be `.ulam' or `.inc'");
+        }
     };
 
     // answer mark
@@ -165,7 +177,7 @@ void TestCase::parse() {
         skip("\n");
         auto src = read_until("\n#");
         ++pos;
-        _srcs.emplace_back(name, src);
+        add_src(name, src);
         skip_comments();
         if (text[pos] == '#' && text[pos + 1] == '.')
             break; // #.

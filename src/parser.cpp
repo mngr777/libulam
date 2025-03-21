@@ -18,18 +18,21 @@
 
 namespace ulam {
 
-Ptr<ast::ModuleDef>
-Parser::parse_module_file(const std::filesystem::path& path) {
+Ptr<ast::ModuleDef> Parser::parse_module_file(const Path& path) {
     _pp.main_file(path);
     consume();
     return parse_module(path.stem().string());
 }
 
 Ptr<ast::ModuleDef>
-Parser::parse_module_str(const std::string& text, const std::string& name) {
-    _pp.main_string(text, name);
+Parser::parse_module_str(const std::string& text, const Path& path) {
+    _pp.main_string(text, path);
     consume();
-    return parse_module(name);
+    return parse_module(path.stem().string());
+}
+
+void Parser::add_str_src(const std::string& text, const Path& path) {
+    _pp.add_string(text, path);
 }
 
 Ptr<ast::Block> Parser::parse_stmts(std::string text) {

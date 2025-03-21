@@ -18,9 +18,9 @@ void Compiler::parse_module_file(const Path& path) {
     }
 }
 
-void Compiler::parse_module_str(
-    const std::string& text, const std::string& name) {
-    auto module = _parser.parse_module_str(text, name);
+void Compiler::parse_module_str(const std::string& text, const Path& path) {
+    auto module = _parser.parse_module_str(text, path);
+    auto name = path.stem().string();
     std::cerr << "parsing module " << name << "\n";
     if (module) {
         if (_ast->has_module(module->name_id()))
@@ -28,6 +28,10 @@ void Compiler::parse_module_str(
                 std::string{"duplicate module name "} + name};
         _ast->add_module(std::move(module));
     }
+}
+
+void Compiler::add_str_src(const std::string& text, const Path& path) {
+    _parser.add_str_src(text, path);
 }
 
 ulam::Ref<ulam::Program> Compiler::analyze() {

@@ -4,15 +4,18 @@
 
 namespace ulam {
 
-Src* SrcMngr::string(std::string text, std::string name) {
-    auto ptr = std::make_unique<StrSrc>(
-        _srcs.size(), std::move(text), std::move(name));
+Src* SrcMngr::string(std::string text, Path path) {
+    assert(_src_map.count(path) == 0);
+    auto ptr = std::make_unique<StrSrc>(_srcs.size(), std::move(text), path);
+    _src_map[path] = ptr.get();
     _srcs.emplace_back(std::move(ptr));
     return _srcs.back().get();
 }
 
-Src* SrcMngr::file(std::filesystem::path path) {
-    auto ptr = std::make_unique<FileSrc>(_srcs.size(), std::move(path));
+Src* SrcMngr::file(Path path) {
+    assert(_src_map.count(path) == 0);
+    auto ptr = std::make_unique<FileSrc>(_srcs.size(), path);
+    _src_map[path] = ptr.get();
     _srcs.push_back(std::move(ptr));
     return _srcs.back().get();
 }
@@ -20,6 +23,11 @@ Src* SrcMngr::file(std::filesystem::path path) {
 Src* SrcMngr::src(src_id_t src_id) {
     assert(src_id < _srcs.size());
     return _srcs[src_id].get();
+}
+
+Src* SrcMngr::src(const Path& path) {
+    auto it = _src_map.find(path);
+    return (it != _src_map.end()) ? it->second : nullptr;
 }
 
 loc_id_t

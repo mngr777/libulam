@@ -1,3 +1,4 @@
+#include "src/parser/string.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/preproc.hpp>
@@ -11,19 +12,22 @@
 #endif
 #include "src/debug.hpp"
 
-
 namespace ulam {
 
-void Preproc::main_file(std::filesystem::path path) {
+void Preproc::main_file(Path path) {
     assert(_stack.empty());
     auto src = _ctx.sm().file(std::move(path));
     push(src);
 }
 
-void Preproc::main_string(std::string text, std::string name) {
+void Preproc::main_string(std::string text, Path path) {
     assert(_stack.empty());
-    auto src = _ctx.sm().string(std::move(text), std::move(name));
+    auto src = _ctx.sm().string(std::move(text), std::move(path));
     push(src);
+}
+
+void Preproc::add_string(std::string text, Path path) {
+    _ctx.sm().string(std::move(text), std::move(path));
 }
 
 Preproc& Preproc::operator>>(Token& token) {
@@ -39,10 +43,8 @@ Preproc& Preproc::operator>>(Token& token) {
             preproc_use();
             break;
         case tok::Load:
-            if (!preproc_load()) {
-                // TODO: emit error
+            if (!preproc_load())
                 return *this;
-            }
             break;
         case tok::Comment:
         case tok::MlComment:
@@ -121,12 +123,26 @@ void Preproc::preproc_use() {
 }
 
 bool Preproc::preproc_load() {
-    Token path;
-    lexer().lex_path(path);
-    auto src = _ctx.sm().file(_ctx.sm().str_at(path.loc_id, path.size));
-    if (src)
+    auto& sm = _ctx.sm();
+    auto& diag = _ctx.diag();
+
+    Token path_tok;
+    lexer().lex_path(path_tok);
+
+    auto path = sm.str_at(path_tok.loc_id, path_tok.size);
+    // bool global = (path[0] == '<'); // TODO
+    path = detail::parse_str(diag, path_tok.loc_id, path);
+
+    auto src = sm.src(path);
+    if (!src)
+        src = sm.file(path);
+    if (src) {
         push(src);
-    return src;
+    } else {
+        _ctx.diag().fatal(path_tok.loc_id, path_tok.size, "file not found");
+        return false;
+    }
+    return true;
 }
 
 } // namespace ulam

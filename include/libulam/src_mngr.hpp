@@ -1,7 +1,8 @@
 #pragma once
-#include "libulam/src.hpp"
-#include "libulam/src_loc.hpp"
+#include <libulam/src.hpp>
+#include <libulam/src_loc.hpp>
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -12,15 +13,18 @@ namespace ulam {
 
 class SrcMngr {
 public:
+    using Path = std::filesystem::path;
+
     SrcMngr() {}
 
     SrcMngr(const SrcMngr&) = delete;
     SrcMngr& operator=(const SrcMngr&) = delete;
 
-    Src* string(std::string text, std::string name);
-    Src* file(std::filesystem::path path);
+    Src* string(std::string text, Path path);
+    Src* file(Path path);
 
     Src* src(src_id_t src_id);
+    Src* src(const Path& path);
 
     loc_id_t loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t chr);
     SrcLoc loc(loc_id_t loc_id);
@@ -33,6 +37,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<Src>> _srcs;
+    std::map<Path, Src*> _src_map;
     std::vector<SrcLoc> _locs;
 };
 
