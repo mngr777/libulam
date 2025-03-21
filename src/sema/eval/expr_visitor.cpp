@@ -1,5 +1,3 @@
-#include "libulam/semantic/expr_res.hpp"
-#include "libulam/semantic/typed_value.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -297,17 +295,34 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     debug() << __FUNCTION__ << " FunCall\n";
     DBG_LINE(node);
 
-    auto callable = node->callable()->accept(*this);
-    if (!callable)
-        return callable;
+    LValue lval{};
+    Ref<FunSet> fset{};
+    if (node->has_callable()) {
+        // foo(...)
+        auto callable = node->callable()->accept(*this);
+        if (!callable)
+            return callable;
 
-    // get fun set
-    auto val = callable.move_value();
-    assert(val.is_lvalue());
-    auto lval = val.lvalue();
-    if (!lval.is<BoundFunSet>()) {
-        diag().error(node->callable(), "is not a function");
-        return {ExprError::NotFunction};
+        // get fun set
+        auto val = callable.move_value();
+        assert(val.is_lvalue());
+        lval = val.lvalue();
+        if (!lval.is<BoundFunSet>()) {
+            diag().error(node->callable(), "is not a function");
+            return {ExprError::NotFunction};
+        }
+        fset = lval.get<BoundFunSet>().fset();
+
+    } else {
+        // operator<op>()
+        assert(node->is_op_call());
+        lval = _scope->self();
+        auto cls = _scope->eff_self_cls();
+        fset = cls->op(node->fun_op());
+        if (!fset) {
+            diag().error(node, "operator not found in class");
+            return {ExprError::NoOperator};
+        }
     }
 
     // eval args
@@ -315,7 +330,6 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     if (!success)
         return {ExprError::ArgsEvalError};
 
-    auto fset = lval.get<BoundFunSet>().fset();
     return funcall(node->callable(), fset, lval.self(), std::move(args));
 }
 

@@ -9,12 +9,17 @@ namespace ulam::ast {
 
 class FunCall : public Tuple<OpExpr, Expr, ArgList> {
     ULAM_AST_EXPR
+    ULAM_AST_SIMPLE_ATTR(Op, fun_op, Op::None)
 public:
     FunCall(Ptr<Expr>&& callable, Ptr<ArgList>&& args):
         Tuple{std::move(callable), std::move(args), Op::FunCall} {}
 
     ULAM_AST_TUPLE_PROP(callable, 0)
     ULAM_AST_TUPLE_PROP(args, 1)
+
+    bool is_op_call() const {
+        return fun_op() != Op::None;
+    }
 
     unsigned arg_num() const {
         assert(has_args());

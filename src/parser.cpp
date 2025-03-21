@@ -1677,6 +1677,7 @@ Ptr<ast::FunCall> Parser::parse_op_call() {
             op = tok::unary_post_op(op_tok_type);
     }
     assert(op != Op::None);
+    op_call->set_fun_op(op);
     return op_call;
 }
 
