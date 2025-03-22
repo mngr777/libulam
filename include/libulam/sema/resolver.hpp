@@ -2,6 +2,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
@@ -15,12 +16,18 @@ namespace ulam::sema {
 
 // TODO: better diagnostics, trace type/value resolution somehow
 
+class EvalVisitor;
+
 class Resolver {
 public:
-    Resolver(Ref<Program> program): _program{program} {}
+    Resolver(
+        EvalVisitor& eval,
+        Diag& diag,
+        Builtins& builtins,
+        UniqStrPool& str_pool):
+        _eval{eval}, _diag{diag}, _builtins{builtins}, _str_pool{str_pool} {}
 
-    void resolve();
-
+    void resolve(Ref<Program> program);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
@@ -64,22 +71,24 @@ private:
 
     Ref<Type> apply_array_dims(
         Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
-        return apply_array_dims(type, dims, Ref<ast::InitList>{}, scope);
+        return apply_array_dims(type, dims, Ref<ast::InitValue>{}, scope);
     }
 
     Ref<Type> apply_array_dims(
         Ref<Type> type,
         Ref<ast::ExprList> dims,
-        Ref<ast::InitList> init_list,
+        Ref<ast::InitValue> init,
         Ref<Scope> scope);
 
     std::optional<bool> check_state(Ref<Decl> decl);
     void update_state(Ref<Decl> decl, bool is_resolved);
 
-    Diag& diag() { return _program->diag(); }
     std::string_view str(str_id_t str_id) const;
 
-    Ref<Program> _program;
+    EvalVisitor& _eval;
+    Diag& _diag;
+    Builtins& _builtins;
+    UniqStrPool& _str_pool;
     std::set<Ref<Class>> _classes;
 };
 

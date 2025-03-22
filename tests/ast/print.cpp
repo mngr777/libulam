@@ -1,4 +1,5 @@
 #include "./print.hpp"
+#include "libulam/ast/nodes/expr.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -84,13 +85,11 @@ void PrinterBase::print_var_decl(ulam::Ref<ulam::ast::VarDecl> node) {
     if (node->has_array_dims())
         print_array_dims(node->array_dims());
     // = value
-    if (node->has_init_value() || node->has_init_list()) {
-        _os << " = ";
-        if (node->has_init_value()) {
-            accept_me(node->init_value());
-        } else {
-            accept_me(node->init_list());
-        }
+    if (node->has_init()) {
+        auto init = node->init();
+        if (!init->is_constr_call())
+            _os << " = ";
+        accept_me(init);
     }
 }
 
@@ -255,10 +254,29 @@ void Printer::visit(ulam::Ref<ulam::ast::ArgList> node) {
     _os << ")";
 }
 
+void Printer::visit(ulam::Ref<ulam::ast::InitValue> node) {
+    node->get().accept([&](auto&& ptr) { accept_me(ulam::ref(ptr)); });
+}
+
 void Printer::visit(ulam::Ref<ulam::ast::InitList> node) {
-    _os << "{";
+    _os << (node->is_constr_call() ? "(" : "{");
     if (do_visit(node))
         traverse_list(node);
+    _os << (node->is_constr_call() ? ")" : "}");
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::InitMap> node) {
+    _os << "{";
+    if (do_visit(node)) {
+        unsigned n = 0;
+        for (ulam::str_id_t key : node->keys()) {
+            if (n > 0)
+                _os << ", ";
+            _os << "." << str(key) << " = ";
+            auto& item_v = node->get(key);
+            item_v.accept([&](auto&& ptr) { ptr->accept(*this); });
+        }
+    }
     _os << "}";
 }
 
@@ -374,13 +392,9 @@ void Printer::visit(ulam::Ref<ulam::ast::Return> node) {
     _os << ";";
 }
 
-void Printer::visit(ulam::Ref<ulam::ast::Continue> node) {
-    _os << "continue;";
-}
+void Printer::visit(ulam::Ref<ulam::ast::Continue> node) { _os << "continue;"; }
 
-void Printer::visit(ulam::Ref<ulam::ast::Break> node) {
-    _os << "break;";
-}
+void Printer::visit(ulam::Ref<ulam::ast::Break> node) { _os << "break;"; }
 
 void Printer::visit(ulam::Ref<ulam::ast::TypeOpExpr> node) {
     assert(node->has_type_name() != node->has_expr());

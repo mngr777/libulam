@@ -1,6 +1,8 @@
+#include "libulam/semantic/value/types.hpp"
 #include <libulam/ast/nodes/module.hpp>
-#include <libulam/diag.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/init.hpp>
+#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -28,8 +30,8 @@
 
 namespace ulam::sema {
 
-void Resolver::resolve() {
-    for (auto& module : _program->modules())
+void Resolver::resolve(Ref<Program> program) {
+    for (auto& module : program->modules())
         module->resolve(*this);
     for (auto cls : _classes)
         resolve(cls);
@@ -53,12 +55,12 @@ bool Resolver::resolve(Ref<Class> cls) {
         if (prop) {
             auto message = std::string{"size limit of "} +
                            std::to_string(cls->bitsize()) + " bits exceeded";
-            diag().error(prop->node(), std::move(message));
+            _diag.error(prop->node(), std::move(message));
             return false;
         }
         auto parent = cls->first_parent_over_max_bitsize();
         if (parent) {
-            diag().error(parent->node(), "size limit exceeded");
+            _diag.error(parent->node(), "size limit exceeded");
             return false;
         }
         assert(false);
@@ -121,15 +123,14 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     // value
     if (var->requires_value()) {
         if (node->has_init()) {
-            EvalExprVisitor ev{_program, scope};
-            auto [val, ok] = ev.eval_init(var->node(), var->type());
-            if (ok)
-                var->set_value(std::move(val));
-            is_resolved = is_resolved && ok;
-
+            auto init = _eval.init_helper(scope);
+            auto [val, ok] = init->eval(var->type(), node->init());
+            if (!ok)
+                RET_UPD_STATE(var, false);
+            var->set_value(std::move(val));
         } else {
             auto name = node->name();
-            diag().error(
+            _diag.error(
                 name.loc_id(), str(name.str_id()).size(),
                 "constant value required");
             is_resolved = false;
@@ -154,8 +155,7 @@ bool Resolver::resolve(Ref<Prop> prop) {
         RET_UPD_STATE(prop, false);
     // TODO: more type checks, e.g. for Void
     if (type->canon()->is_ref()) {
-        diag().error(
-            prop->type_node(), "property cannot have a reference type");
+        _diag.error(prop->type_node(), "property cannot have a reference type");
         RET_UPD_STATE(prop, false);
     }
     prop->set_type(type);
@@ -175,27 +175,12 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     auto scope_view = decl_scope_view(prop);
 
     if (node->has_init()) {
-        if (type->is_class()) {
-            // no init values for objects
-            Ref<ast::Node> init_node{};
-            if (node->has_init_list()) {
-                init_node = node->init_list();
-            } else {
-                assert(node->has_init_value());
-                init_node = node->init_value();
-            }
-            diag().error(
-                init_node,
-                "default values for object properties are not supported");
-            assert(type->is_constructible());
-            prop->set_default_value(type->construct());
-        } else {
-            EvalExprVisitor ev{_program, ref(scope_view)};
-            auto [val, ok] = ev.eval_init(node, type);
-            if (!ok)
-                RET_UPD_STATE(prop, false);
-            prop->set_default_value(val.move_rvalue());
-        }
+        auto init = _eval.init_helper(ref(scope_view));
+        auto [val, ok] = init->eval(type, node->init());
+        if (!ok)
+            RET_UPD_STATE(prop, false);
+        prop->set_default_value(val.move_rvalue());
+
     } else {
         prop->set_default_value(type->construct());
     }
@@ -212,22 +197,20 @@ bool Resolver::resolve(Ref<FunSet> fset) {
     for (auto fun : *fset) {
         is_resolved = resolve(fun) && is_resolved;
 
-        // TODO: move to Class to handle inherited conversion functions
-
         // conversion to Int?
         if (fun->is_ready() && str(fun->name_id()) == "toInt") {
             bool is_conv = true;
             // check ret type
-            auto int_type = _program->builtins().int_type();
+            auto int_type = _builtins.int_type();
             if (is_conv && !fun->ret_type()->is_same(int_type)) {
-                diag().warn(
+                _diag.warn(
                     fun->node(),
                     std::string{"return type must be "} + int_type->name());
                 is_conv = false;
             }
             // check params
             if (is_conv && fun->param_num() != 0) {
-                diag().warn(
+                _diag.warn(
                     fun->node(), "conversion function cannot take params");
                 is_conv = false;
             }
@@ -235,7 +218,7 @@ bool Resolver::resolve(Ref<FunSet> fset) {
                 fun->cls()->add_conv(fun);
         }
     }
-    fset->init_map(diag(), _program->str_pool());
+    fset->init_map(_diag, _str_pool);
     RET_UPD_STATE(fset, is_resolved);
 }
 
@@ -247,14 +230,14 @@ bool Resolver::resolve(Ref<Fun> fun) {
 
     // return type
     if (fun->is_constructor()) {
-        fun->set_ret_type(_program->builtins().void_type());
+        fun->set_ret_type(_builtins.void_type());
     } else {
         auto ret_type_node = fun->ret_type_node();
         auto ret_type = resolve_fun_ret_type(ret_type_node, ref(scope_view));
         if (ret_type) {
             fun->set_ret_type(ret_type);
         } else {
-            diag().error(ret_type_node, "cannot resolve return type");
+            _diag.error(ret_type_node, "cannot resolve return type");
             is_resolved = false;
         }
     }
@@ -280,7 +263,7 @@ Ref<Class> Resolver::resolve_class_name(
         return {};
 
     if (!type->is_class()) {
-        diag().error(type_name, "not a class");
+        _diag.error(type_name, "not a class");
         return {};
     }
     if (!init(type->as_class()))
@@ -324,7 +307,7 @@ Ref<Type> Resolver::resolve_type_name(
         if (type_name->child_num() > 1) {
             auto ident = type_name->ident(1);
             auto name_id = ident->name().str_id();
-            diag().error(
+            _diag.error(
                 ident->loc_id(), str(name_id).size(),
                 "built-ins don't have member types");
         }
@@ -344,12 +327,12 @@ Ref<Type> Resolver::resolve_type_name(
     for (unsigned n = 1; n < type_name->child_num(); ++n) {
         // init next class
         if (!type->is_class()) {
-            diag().error(ident, "not a class");
+            _diag.error(ident, "not a class");
             return {};
         }
         auto cls = type->as_class();
         if (!init(cls)) {
-            diag().error(ident, "cannot resolve");
+            _diag.error(ident, "cannot resolve");
             return {};
         }
 
@@ -357,7 +340,7 @@ Ref<Type> Resolver::resolve_type_name(
         ident = type_name->ident(n);
         if (ident->is_super()) {
             if (!cls->has_super()) {
-                diag().error(ident, "class doesn't have a superclass");
+                _diag.error(ident, "class doesn't have a superclass");
                 return {};
             }
             type = cls->super();
@@ -367,7 +350,7 @@ Ref<Type> Resolver::resolve_type_name(
         }
         // not found ?
         if (!type) {
-            diag().error(ident, "type name not found in class");
+            _diag.error(ident, "type name not found in class");
             return {};
         }
         // resolved?
@@ -379,13 +362,13 @@ Ref<Type> Resolver::resolve_type_name(
         // fully resolve class or class dependencies, e.g. array type
         // ClassName[2] depends on class ClassName
         if (!resolve_class_deps(type)) {
-            diag().error(ident, "cannot resolve");
+            _diag.error(ident, "cannot resolve");
             return {};
         }
     } else if (type->is_class()) {
         // just init if class
         if (!init(type->as_class())) {
-            diag().error(ident, "cannot resolve");
+            _diag.error(ident, "cannot resolve");
             return {};
         }
     }
@@ -399,18 +382,18 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();
         if (!type_spec->has_args())
-            return _program->builtins().type(bi_type_id);
+            return _builtins.type(bi_type_id);
         auto args = type_spec->args();
         assert(args->child_num() > 0);
-        EvalExprVisitor ev{_program, scope};
-        bitsize_t size = ev.bitsize_for(args->get(0), bi_type_id);
+        auto ev = _eval.expr_visitor(scope);
+        bitsize_t size = ev->bitsize_for(args->get(0), bi_type_id);
         if (size == NoBitsize)
             return {};
         if (args->child_num() > 1) {
-            diag().error(args->child(1), "too many arguments");
+            _diag.error(args->child(1), "too many arguments");
             return {};
         }
-        return _program->builtins().prim_type(bi_type_id, size);
+        return _builtins.prim_type(bi_type_id, size);
     }
     assert(type_spec->has_ident());
     auto ident = type_spec->ident();
@@ -421,7 +404,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
         auto self_cls = scope->self_cls();
         if (!self_cls) {
             std::string name{ident->is_self() ? "Self" : "Super"};
-            diag().error(ident, name + " can only be used in class context");
+            _diag.error(ident, name + " can only be used in class context");
             return {};
         }
         // Self
@@ -430,7 +413,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
 
         // Super
         if (!self_cls->has_super()) {
-            diag().error(
+            _diag.error(
                 ident, self_cls->name() + " does not have a superclass");
             return {};
         }
@@ -441,15 +424,15 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     auto sym =
         ident->is_local() ? scope->get_local(name_id) : scope->get(name_id);
     if (!sym) {
-        diag().error(ident, std::string{str(name_id)} + " type not found");
+        _diag.error(ident, std::string{str(name_id)} + " type not found");
         return {};
     }
 
     // template?
     if (sym->is<ClassTpl>()) {
         auto tpl = sym->get<ClassTpl>();
-        EvalExprVisitor ev{_program, scope};
-        auto [args, success] = ev.eval_tpl_args(type_spec->args(), tpl);
+        auto ev = _eval.expr_visitor(scope);
+        auto [args, success] = ev->eval_tpl_args(type_spec->args(), tpl);
         if (!success)
             return {};
         return tpl->type(std::move(args));
@@ -489,8 +472,7 @@ Ref<Type> Resolver::resolve_var_decl_type(
 
     // []
     if (node->has_array_dims())
-        type = apply_array_dims(
-            type, node->array_dims(), node->init_list(), scope);
+        type = apply_array_dims(type, node->array_dims(), node->init(), scope);
 
     // &
     if (node->is_ref())
@@ -522,69 +504,45 @@ Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
 Ref<Type> Resolver::apply_array_dims(
     Ref<Type> type,
     Ref<ast::ExprList> dims,
-    Ref<ast::InitList> init_list,
+    Ref<ast::InitValue> init,
     Ref<Scope> scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
-    assert(!dims->has_empty() || init_list);
+    assert(!dims->has_empty() || init);
 
-    auto num = dims->child_num();
-    if (init_list) {
-        // does the number of dimensions match init list's?
-        auto depth = init_list->depth();
-        if (num != depth) {
-            assert(num > 0);
-            Ref<ast::Node> node =
-                (num < depth) ? dims->child(num - 1) : dims->child(depth);
-            auto message = std::string{"array type has "} +
-                           std::to_string(num) +
-                           " dimensions while initializer list has " +
-                           std::to_string(depth);
-            diag().error(node, std::move(message));
+    // get dimension list
+    ArrayDimList dim_list;
+    if (dims->has_empty()) {
+        if (!init) {
+            _diag.error(
+                dims, "array size must be set explicitly unless initializer "
+                      "list is provided");
             return {};
         }
+        bool ok = false;
+        auto init_helper = _eval.init_helper(scope);
+        std::tie(dim_list, ok) =
+            init_helper->array_dims(dims->child_num(), init);
+        if (!ok)
+            return {};
     }
 
-    EvalExprVisitor ev{_program, scope};
-    for (unsigned n = 0; n < num; ++n) {
+    // make array type
+    auto ev = _eval.expr_visitor(scope);
+    for (unsigned n = 0; n < dims->child_num(); ++n) {
         auto expr = dims->get(n);
+        array_size_t size{};
         if (expr) {
-            // eval array size expr
-            array_size_t size = ev.array_size(dims->get(n));
+            // explicit size expr
+            size = ev->array_size(expr);
             if (size == UnknownArraySize)
                 return {};
-
-            // matches init list?
-            // (one-dimensional lists are allowed to have less elements)
-            if (init_list) {
-                if ((num > 1 && size > init_list->child_num()) ||
-                    size < init_list->child_num()) {
-                    auto message = std::string{"array size "} +
-                                   std::to_string(size) +
-                                   " does not match initializer list (" +
-                                   std::to_string(init_list->child_num()) + ")";
-                    diag().error(expr, std::move(message));
-                    return {};
-                }
-            }
-            type = type->array_type(size);
-
         } else {
-            // use size from init list
-            if (!init_list) {
-                diag().error(
-                    dims, "array size must be set explicitly unless "
-                          "initializer list is provided");
-                return {};
-            }
-            type = type->array_type(init_list->child_num());
+            // size defined by init list
+            assert(n < dim_list.size());
+            size = dim_list[n];
         }
-
-        if (init_list && n + 1 < num) {
-            // move to first sublist
-            init_list = init_list->sublist(0);
-            assert(init_list);
-        }
+        type = type->array_type(size);
     }
     return type;
 }
@@ -605,7 +563,7 @@ void Resolver::update_state(Ref<Decl> obj, bool is_resolved) {
 }
 
 std::string_view Resolver::str(str_id_t str_id) const {
-    return _program->str_pool().get(str_id);
+    return _str_pool.get(str_id);
 }
 
 } // namespace ulam::sema

@@ -1,5 +1,8 @@
 #include <libulam/ast/nodes/access.hpp>
+#include <libulam/ast/nodes/args.hpp>
 #include <libulam/ast/nodes/expr.hpp>
+#include <libulam/ast/nodes/exprs.hpp>
+#include <libulam/ast/nodes/init.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/root.hpp>

@@ -13,6 +13,8 @@ class Program;
 
 namespace ulam::sema {
 
+class EvalVisitor;
+
 class RecVisitor : public ast::RecVisitor {
 public:
     using ast::RecVisitor::do_visit;
@@ -21,11 +23,8 @@ public:
 
     enum class Pass { Module, Classes, FunBodies };
 
-    RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies = false):
-        _diag{diag},
-        _ast{ast},
-        _skip_fun_bodies{skip_fun_bodies},
-        _pass{Pass::Module} {}
+    RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies = false);
+    ~RecVisitor();
 
     void analyze();
 
@@ -67,15 +66,16 @@ protected:
 
     Pass pass() { return _pass; }
 
-    Ref<Program> program() {
-        assert(ast()->program());
-        return ast()->program();
-    }
-
     Ref<ast::Root> ast() {
         assert(_ast);
         return _ast;
     }
+
+    Ref<Program> program() {
+        assert(_program);
+        return _program;
+    }
+
 
     Ref<Module> module() {
         assert(module_def());
@@ -94,6 +94,8 @@ protected:
 private:
     Diag& _diag;
     Ref<ast::Root> _ast;
+    Ref<Program> _program;
+    Ptr<EvalVisitor> _eval;
     bool _skip_fun_bodies;
 
     Pass _pass;

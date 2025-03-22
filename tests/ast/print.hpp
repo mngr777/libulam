@@ -99,7 +99,9 @@ protected:
     void visit(ulam::Ref<ulam::ast::ParamList> node) override;
     void visit(ulam::Ref<ulam::ast::Param> node) override;
     void visit(ulam::Ref<ulam::ast::ArgList> node) override;
+    void visit(ulam::Ref<ulam::ast::InitValue> node) override;
     void visit(ulam::Ref<ulam::ast::InitList> node) override;
+    void visit(ulam::Ref<ulam::ast::InitMap> node) override;
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::EmptyStmt> node) override;

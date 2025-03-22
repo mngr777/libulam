@@ -1,8 +1,8 @@
 #pragma once
-#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/src_loc.hpp>
@@ -10,7 +10,6 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #define ULAM_AST_NODE                                                          \
@@ -205,10 +204,10 @@ private:
 
 template <typename B, typename... Ns> class ListOf : public B {
 public:
-    using ItemT = Variant<Ns...>;
+    using ItemT = detail::Variant<Ptr<Ns>...>;
 
     template <typename N> void add(Ptr<N>&& item) {
-        _items.push_back(std::move(item));
+        _items.push_back(ItemT{std::move(item)});
     }
 
     ItemT& get(unsigned n) {
@@ -236,12 +235,55 @@ public:
     }
 
     Ref<const Node> child(unsigned n) const override {
-        return std::visit(
-            [](auto&& ptr) -> Ref<const Node> { return ref(ptr); }, _items[n]);
+        return _items[n].accept(
+            [](auto&& ptr) -> Ref<const Node> { return ref(ptr); });
     }
 
 private:
     std::vector<ItemT> _items; // TODO: list?
+};
+
+template <typename B, typename... Ns> class Variant : public B {
+public:
+    using ItemT = detail::Variant<Ptr<Ns>...>;
+
+    Variant(ItemT&& item): _item{std::move(item)} {}
+
+    template <typename N> bool is() const {
+        return _item.template is<Ptr<N>>();
+    }
+
+    ItemT& get() { return _item; }
+    const ItemT& get() const { return _item; }
+
+    template <typename N> Ref<N> get() {
+        return ref(_item.template get<Ptr<N>>());
+    }
+    template <typename N> Ref<const N> get() const {
+        return ref(_item.template get<Ptr<N>>());
+    }
+
+    template <typename N> ItemT replace(Ptr<N>&& repl) {
+        return replace(ItemT{repl});
+    }
+    template <typename N> ItemT replace(ItemT&& repl) {
+        _item.swap(repl);
+        return repl;
+    }
+
+    unsigned child_num() const override { return 1; }
+
+    Ref<Node> child(unsigned n) override {
+        return const_cast<Ref<Node>>(std::as_const(*this).child(n));
+    }
+
+    Ref<const Node> child(unsigned n) const override {
+        return _item.accept(
+            [](auto&& ptr) -> Ref<const Node> { return ref(ptr); });
+    }
+
+private:
+    ItemT _item;
 };
 
 } // namespace ulam::ast

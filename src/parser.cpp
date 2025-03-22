@@ -1,4 +1,5 @@
 #include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/var_decl.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -559,14 +560,12 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
     }
 
     // value
-    auto [ok, init_value, init_list] =
-        parse_init(false, ref(array_dims), flags);
+    auto [init, ok] = parse_init(false, ref(array_dims), flags);
     if (!ok)
         return {};
 
     auto node = tree_loc<ast::VarDef>(
-        name.loc_id(), name, std::move(array_dims), std::move(init_value),
-        std::move(init_list));
+        name.loc_id(), name, std::move(array_dims), std::move(init));
     node->set_is_ref(is_ref);
     return node;
 }
@@ -612,7 +611,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         consume();
     }
 
-    if (params->has_ellipsis() && !is_native) {
+    if (params && params->has_ellipsis() && !is_native) {
         diag(
             params->ellipsis_loc_id(), 1,
             "only native functions can have ellipsis parameter");
@@ -701,14 +700,14 @@ Ptr<ast::ParamList> Parser::parse_param_list(bool allow_ellipsis) {
         if (!param)
             goto Panic;
         if (requires_value) {
-            if (!param->has_init_value()) {
+            if (!param->has_init()) {
                 // pretend we didn't see previous value
                 assert(prev);
-                prev->replace_init_value({});
+                prev->replace_init({});
                 requires_value = false;
             }
         } else {
-            requires_value = param->has_init_value();
+            requires_value = param->has_init();
         }
         prev = ref(param);
         node->add(std::move(param));
@@ -759,108 +758,130 @@ Ptr<ast::Param> Parser::parse_param(bool requires_value) {
     }
 
     // value
-    auto [ok, init_value, init_list] =
-        parse_init(requires_value, ref(array_dims));
+    auto [init, ok] = parse_init(requires_value, ref(array_dims));
     if (!ok)
         return {};
 
     auto node = tree_loc<ast::Param>(
         name.loc_id(), name, std::move(type), std::move(array_dims),
-        std::move(init_value), std::move(init_list));
+        std::move(init));
     node->set_is_const(is_const);
     node->set_is_ref(is_ref);
     return node;
 }
 
 // NOTE: starts at `=' or `(' for constructor call
-std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>> Parser::parse_init(
+std::pair<Ptr<ast::InitValue>, bool> Parser::parse_init(
     bool is_required, Ref<ast::ExprList> array_dims, var_flags_t flags) {
 
     bool is_array = (bool)array_dims;
     bool allow_constr = !is_array && flags & VarAllowConstructorInit;
-
-    Ptr<ast::Expr> value{};
-    Ptr<ast::InitList> list{};
 
     bool has_equal = _tok.is(tok::Equal);
     if (has_equal) {
         allow_constr = false; // not constructor init syntax
         consume();
     }
+    auto loc_id = _tok.loc_id;
+
+    auto make_list_or_map = [&](auto&& list_map_v) {
+        auto val = list_map_v.accept(
+            [&](Ptr<ast::InitList>& list) {
+                if (!list)
+                    return Ptr<ast::InitValue>{};
+                return tree_loc<ast::InitValue>(loc_id, std::move(list));
+            },
+            [&](Ptr<ast::InitMap>& map) {
+                if (!map)
+                    return Ptr<ast::InitValue>{};
+                return tree_loc<ast::InitValue>(loc_id, std::move(map));
+            });
+        auto ok = (bool)val;
+        return std::pair{std::move(val), ok};
+    };
 
     if (allow_constr && _tok.is(tok::ParenL)) {
         // Type var(...)
-        list = parse_init_list();
-        if (!list)
-            return {false, std::move(value), std::move(list)};
+        return make_list_or_map(parse_init_list_or_map());
 
     } else if (has_equal) {
         if (_tok.is(tok::BraceL)) {
             // Type var = {...}
-            list = parse_init_list();
-            if (!list)
-                return {false, std::move(value), std::move(list)};
+            // NOTE: arrays cannot have init map, to be checked later
+            return make_list_or_map(parse_init_list_or_map());
+
         } else {
             // Type var = <value>;
             if (is_array) {
                 diag("use initializer list to set array value");
                 return {};
             }
-            value = parse_expr();
-            if (!value)
-                return {false, std::move(value), std::move(list)};
+            auto expr = parse_expr();
+            if (!expr)
+                return {};
+            return {tree_loc<ast::InitValue>(loc_id, std::move(expr)), true};
         }
     } else if (is_array && array_dims->has_empty()) {
         diag("array value is required to fill array dimensions");
+        return {Ptr<ast::InitValue>{}, false};
     } else if (is_required) {
         diag("missing init value");
+        return {Ptr<ast::InitValue>{}, false};
     }
-    return {true, std::move(value), std::move(list)};
+    return {Ptr<ast::InitValue>{}, true};
+}
+
+detail::Variant<Ptr<ast::InitList>, Ptr<ast::InitMap>>
+Parser::parse_init_list_or_map() {
+    assert(_tok.in(tok::BraceL, tok::ParenL));
+    using Res = decltype(parse_init_list_or_map());
+
+    if (_tok.is(tok::ParenL))
+        return Res{parse_init_list()};
+
+    bool is_map = false;
+    {
+        auto brace_tok = _tok;
+        consume();
+        is_map = _tok.is(tok::Period);
+        putback(brace_tok);
+    }
+    return is_map ? Res{parse_init_map()} : Res{parse_init_list()};
 }
 
 Ptr<ast::InitList> Parser::parse_init_list() {
     assert(_tok.in(tok::BraceL, tok::ParenL));
     // { or (
     auto node = tree_loc<ast::InitList>(_tok.loc_id);
+    node->set_is_constr_call(_tok.is(tok::ParenL));
     tok::Type closing = _tok.is(tok::BraceL) ? tok::BraceR : tok::ParenR;
     consume();
     while (!_tok.is(closing)) {
         if (_tok.is(tok::BraceL)) {
-            // sublist
-            // non-empty flat list?
-            if (node->is_flat() && !node->empty()) {
-                unexpected();
+            // list or map
+            auto list_map_v = parse_init_list_or_map();
+            bool ok = list_map_v.accept([&](auto&& ptr) { return (bool)ptr; });
+            if (!ok)
                 goto Panic;
-            }
-            // add sublist
-            auto sublist = parse_init_list();
-            if (!sublist)
-                goto Panic;
-            node->add(std::move(sublist));
+            list_map_v.accept(
+                [&](Ptr<ast::InitList>& list) { node->add(std::move(list)); },
+                [&](Ptr<ast::InitMap>& map) { node->add(std::move(map)); });
 
         } else {
-            // flat expr list
-            // non-empty non-flat list?
-            if (!node->is_flat() && !node->empty()) {
-                expect(tok::BraceL); // force error
-                return {};
-            }
-            // add expr
+            // expr
             auto expr = parse_expr(ExprStopAtComma);
             if (!expr)
                 goto Panic;
             node->add(std::move(expr));
         }
+
         // ,
-        if (!_tok.is(closing))
-            expect(tok::Comma);
+        if (!_tok.is(closing) && !expect(tok::Comma))
+            goto Panic;
     }
     // } or )
     if (!expect(closing))
         goto Panic;
-
-    if (!validate_init_list(ref(node)))
-        return {};
     return node;
 
 Panic:
@@ -869,53 +890,59 @@ Panic:
     return {};
 }
 
-bool Parser::validate_init_list(Ref<ast::InitList> list) {
-    std::vector<Ref<ast::InitList>> cur{list};
-    std::vector<Ref<ast::InitList>> nxt;
-
-    auto add_children = [&](Ref<ast::InitList> list) {
-        assert(!list->is_flat());
-        for (unsigned n = 0; n < list->child_num(); ++n)
-            nxt.push_back(list->sublist(n));
-    };
-
-    auto swap = [&]() {
-        std::swap(cur, nxt);
-        nxt.clear();
-    };
-
-    while (!cur.empty()) {
-        auto first = cur[0];
-        unsigned size = first->child_num();
-        bool is_flat = first->is_flat();
-        if (!is_flat)
-            add_children(first);
-        for (unsigned n = 1; n < cur.size(); ++n) {
-            auto nth = cur[n];
-            if (nth->is_flat() != is_flat) {
-                std::string message =
-                    is_flat ? "expecting expression" : "expecting sublist";
-                diag(nth->child(0)->loc_id(), 1, message);
-                return false;
-            }
-            if (nth->child_num() != size) {
-                auto child_num = nth->child_num();
-                Ref<ast::Node> node = nth;
-                std::string message = (child_num < size) ? "not enough elements"
-                                                         : "too many elements";
-                if (nth->child_num() > 0) {
-                    node = (child_num < size) ? nth->child(child_num - 1)
-                                              : nth->child(size);
-                }
-                diag(node->loc_id(), 1, message);
-                return false;
-            }
-            if (is_flat)
-                add_children(nth);
+Ptr<ast::InitMap> Parser::parse_init_map() {
+    assert(_tok.is(tok::BraceL));
+    // {
+    auto node = tree_loc<ast::InitMap>(_tok.loc_id);
+    consume();
+    while (!_tok.is(tok::BraceR)) {
+        // .<label>
+        if (!expect(tok::Period))
+            goto Panic;
+        if (!match(tok::Ident))
+            goto Panic;
+        auto name_id = tok_str_id();
+        // duplicate?
+        if (node->has(name_id)) {
+            diag("duplicate label");
+            goto Panic;
         }
-        swap();
+        consume();
+
+        // =
+        if (!expect(tok::Equal))
+            goto Panic;
+
+        if (_tok.is(tok::BraceL)) {
+            // list or map
+            auto list_map_v = parse_init_list_or_map();
+            bool ok = list_map_v.accept([&](auto&& ptr) { return (bool)ptr; });
+            if (!ok)
+                goto Panic;
+            list_map_v.accept(
+                [&](Ptr<ast::InitList>& list) {
+                    node->add(name_id, std::move(list));
+                },
+                [&](Ptr<ast::InitMap>& map) {
+                    node->add(name_id, std::move(map));
+                });
+        } else {
+            // expr
+            auto expr = parse_expr(ExprStopAtComma);
+            if (!expr)
+                goto Panic;
+            node->add(name_id, std::move(expr));
+        }
+
+        // ,
+        if (!_tok.is(tok::BraceR) && !expect(tok::Comma))
+            goto Panic;
     }
-    return true;
+
+Panic:
+    panic(tok::BraceR);
+    consume_if(tok::BraceR);
+    return {};
 }
 
 Ptr<ast::Block> Parser::parse_block() {

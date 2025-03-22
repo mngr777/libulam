@@ -1,6 +1,7 @@
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/init.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/program.hpp>
@@ -32,6 +33,7 @@ void Init::visit(Ref<ast::Root> node) {
         diag(), node->ctx().str_pool(), node->ctx().text_pool(), _sm));
     RecVisitor::visit(node);
     export_classes();
+    resolve();
 }
 
 void Init::visit(Ref<ast::ModuleDef> node) {
@@ -107,8 +109,8 @@ void Init::visit(Ref<ast::VarDefList> node) {
         auto name_id = def->name_id();
 
         // visit for potential type names
-        if (def->has_init_value())
-            def->init_value()->accept(*this);
+        if (def->has_init())
+            def->init()->accept(*this);
 
         // already in current scope?
         if (scope()->has(name_id, true)) {
@@ -234,6 +236,12 @@ void Init::export_classes() {
             }
         }
     }
+}
+
+void Init::resolve() {
+    auto program = ast()->program();
+    EvalVisitor eval{program};
+    eval.resolver()->resolve(program);
 }
 
 } // namespace ulam::sema

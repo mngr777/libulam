@@ -1,5 +1,7 @@
 #pragma once
 #include <libulam/ast/node.hpp>
+#include <libulam/ast/nodes/args.hpp>
+#include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 
@@ -13,8 +15,6 @@ class TypeIdent : public Stmt, public Named {
 public:
     explicit TypeIdent(Str name): Named{name} { set_loc_id(name.loc_id()); }
 };
-
-class ArgList;
 
 class TypeSpec : public Tuple<Stmt, TypeIdent, ArgList> {
     ULAM_AST_NODE

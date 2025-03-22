@@ -7,7 +7,6 @@
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/src_loc.hpp>
-#include <utility>
 
 namespace ulam::ast {
 
@@ -18,11 +17,10 @@ public:
         Str name,
         Ptr<TypeName>&& type_name,
         Ptr<ExprList>&& array_dims,
-        Ptr<Expr>&& init_value,
-        Ptr<InitList>&& init_list):
+        Ptr<InitValue>&& init):
         Tuple{
             std::move(type_name), name, std::move(array_dims),
-            std::move(init_value), std::move(init_list)} {}
+            std::move(init)} {}
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
 
@@ -42,10 +40,6 @@ class ParamList : public List<Node, Param> {
     ULAM_AST_SIMPLE_ATTR(loc_id_t, ellipsis_loc_id, NoLocId)
 public:
     bool has_ellipsis() const { return ellipsis_loc_id() != NoLocId; }
-};
-
-class ArgList : public List<Node, Expr> {
-    ULAM_AST_NODE
 };
 
 } // namespace ulam::ast

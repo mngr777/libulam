@@ -39,9 +39,7 @@ Op Fun::op() const { return _node->op(); }
 
 bool Fun::is_marked_virtual() const { return node()->is_marked_virtual(); }
 
-bool Fun::is_pure_virtual() const {
-    return is_virtual() && !_node->has_body();
-}
+bool Fun::is_pure_virtual() const { return is_virtual() && !_node->has_body(); }
 
 bool Fun::is_native() const { return _node->is_native(); }
 
@@ -61,7 +59,7 @@ void Fun::add_param(Ref<ast::Param> node) {
 unsigned Fun::min_param_num() const {
     unsigned num = param_num();
     for (auto it = _params.rbegin(); it != _params.rend(); ++it) {
-        if (!(*it)->node()->has_init_value())
+        if (!(*it)->node()->has_init())
             break;
         --num;
     }

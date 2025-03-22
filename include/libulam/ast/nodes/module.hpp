@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
+#include <libulam/ast/nodes/exprs.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
@@ -158,15 +159,9 @@ public:
 class VarDef : public VarDecl {
     ULAM_AST_NODE
 public:
-    VarDef(
-        Str name,
-        Ptr<ExprList>&& array_dims,
-        Ptr<Expr>&& init_value,
-        Ptr<InitList>&& init_list):
-        VarDecl{
-            name, std::move(array_dims), std::move(init_value),
-            std::move(init_list)} {}
-    VarDef(Str name): VarDef{name, {}, {}, {}} {}
+    VarDef(Str name, Ptr<ExprList>&& array_dims, Ptr<InitValue>&& init):
+        VarDecl{name, std::move(array_dims), std::move(init)} {}
+    VarDef(Str name): VarDef{name, {}, {}} {}
 };
 
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {

@@ -10,7 +10,6 @@
 #include <string_view>
 
 namespace ulam::ast {
-class ArgList;
 class ClassDef;
 class FunDef;
 class TypeName;
@@ -129,6 +128,7 @@ private:
 
     const auto& props() const { return _props; }
     const auto& all_props() const { return _props; } // + inherited
+    auto& convs() { return _convs; }
     auto& fsets() { return _fsets; }
 
     std::string_view _name;

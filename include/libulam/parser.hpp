@@ -1,7 +1,9 @@
 #pragma once
+#include "libulam/ast/nodes/var_decl.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
+#include <libulam/detail/variant.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/str_pool.hpp>
@@ -89,13 +91,14 @@ private:
     Ptr<ast::FunDef> parse_constructor_def_rest(ast::Str name);
     Ptr<ast::ParamList> parse_param_list(bool allow_ellipsis = false);
     Ptr<ast::Param> parse_param(bool requires_value);
-
-    std::tuple<bool, Ptr<ast::Expr>, Ptr<ast::InitList>> parse_init(
+    std::pair<Ptr<ast::InitValue>, bool> parse_init(
         bool is_required,
         Ref<ast::ExprList> array_dims,
         var_flags_t flags = NoVarFlags);
+    detail::Variant<Ptr<ast::InitList>, Ptr<ast::InitMap>>
+    parse_init_list_or_map();
     Ptr<ast::InitList> parse_init_list();
-    bool validate_init_list(Ref<ast::InitList> list);
+    Ptr<ast::InitMap> parse_init_map();
 
     Ptr<ast::Block> parse_block();
     void parse_as_block(Ref<ast::Block> node, bool implicit_braces = false);

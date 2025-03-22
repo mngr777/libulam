@@ -1,7 +1,10 @@
 #include <cassert>
 #include <exception>
+#include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/funcall.hpp>
+#include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/expr_res.hpp>
@@ -21,8 +24,7 @@
 
 namespace ulam::sema {
 
-EvalVisitor::EvalVisitor(Ref<Program> program):
-    _program{program}, _resolver{program} {
+EvalVisitor::EvalVisitor(Ref<Program> program): _program{program} {
     // init global scope
     _scope_stack.push(scp::Program);
     for (auto& mod : program->modules())
@@ -53,7 +55,7 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
     debug() << __FUNCTION__ << " TypeDef\n";
     Ptr<UserType> type = make<AliasType>(builtins(), nullptr, node);
-    if (_resolver.resolve(type->as_alias(), scope()))
+    if (resolver()->resolve(type->as_alias(), scope()))
         scope()->set(type->name_id(), std::move(type));
 }
 
@@ -64,12 +66,12 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
         auto def_node = node->def(n);
         auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
         var->set_scope_lvl(_scope_stack.size());
-        if (!_resolver.resolve(ref(var), scope()))
+        if (!resolver()->resolve(ref(var), scope()))
             continue;
         if (var->value().empty()) {
             if (def_node->has_init()) {
-                EvalExprVisitor ev{*this, scope()};
-                auto [val, ok] = ev.eval_init(def_node, var->type());
+                auto init = init_helper(scope());
+                auto [val, ok] = init->eval(var->type(), def_node->init());
                 if (!ok)
                     throw EvalExceptError("failed to eval init value");
                 var->set_value(std::move(val));
@@ -117,8 +119,7 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     assert(node->has_if_branch());
 
     // eval ident
-    EvalExprVisitor ev{*this, scope()};
-    ExprRes res = node->ident()->accept(ev);
+    ExprRes res = node->ident()->accept(*expr_visitor(scope()));
     if (!res)
         throw EvalExceptError("failed to eval if-as ident");
     auto arg_type = res.type()->actual();
@@ -128,8 +129,7 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     }
 
     // resolve type
-    Resolver resolver{_program};
-    auto type = resolver.resolve_type_name(node->type_name(), scope());
+    auto type = resolver()->resolve_type_name(node->type_name(), scope());
     if (!type)
         throw std::exception();
     type = type->canon();
@@ -257,10 +257,10 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
     bool matched = false;
 
     // eval switch expr, store result in tmp var
-    EvalExprVisitor ev{*this, scope()};
+    auto ev = expr_visitor(scope());
     Ptr<Var> var{};
     {
-        ExprRes res = node->expr()->accept(ev);
+        ExprRes res = node->expr()->accept(*ev);
         if (!res)
             throw EvalExceptError("cannot eval which expr");
         var = make<Var>(res.move_typed_value());
@@ -273,7 +273,7 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
             matched = matched || case_->is_default();
             if (!matched) {
                 auto [is_match, ok] =
-                    ev.match(node->expr(), ref(var), case_->expr());
+                    ev->match(node->expr(), ref(var), case_->expr());
                 if (!ok)
                     throw EvalExceptError("cannot eval case expr");
                 matched = is_match;
@@ -301,6 +301,26 @@ void EvalVisitor::visit(Ref<ast::MemberAccess> node) { eval_expr(node); }
 void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
+
+Ptr<Resolver> EvalVisitor::resolver() {
+    return make<Resolver>(*this, diag(), builtins(), _program->str_pool());
+}
+
+Ptr<EvalExprVisitor> EvalVisitor::expr_visitor(Ref<Scope> scope) {
+    return make<EvalExprVisitor>(*this, scope);
+}
+
+Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope) {
+    return make<EvalInit>(*this, diag(), scope);
+}
+
+Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope) {
+    return make<EvalCast>(*this, diag(), scope);
+}
+
+Ptr<EvalFuncall> EvalVisitor::funcall_helper(Ref<Scope> scope) {
+    return make<EvalFuncall>(*this, diag(), scope);
+}
 
 ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
@@ -390,8 +410,9 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
                 return {ExprError::ReferenceToLocal};
             }
         }
-        EvalExprVisitor ev{*this, scope()};
-        res = ev.cast(ret.node()->expr(), ret_type, std::move(res), false);
+        auto cast = cast_helper(scope());
+        res = cast->cast(
+            ret.node()->expr(), ret_type, res.move_typed_value(), false);
         return res;
     }
     debug() << "}\n";
@@ -402,8 +423,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
-    EvalExprVisitor ev{*this, scope()};
-    ExprRes res = expr->accept(ev);
+    ExprRes res = expr->accept(*expr_visitor(scope()));
     if (!res)
         throw EvalExceptError("failed to eval expression");
     return res;
@@ -411,13 +431,19 @@ ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
 
 bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n";
-    EvalExprVisitor ev{*this, scope()};
-    auto res = ev.eval_cond(expr);
-    if (!res)
-        throw EvalExceptError("failed to eval condition");
 
+    // eval
+    assert(expr);
+    auto res = expr->accept(*expr_visitor(scope()));
+    if (!res)
+        return false;
+
+    // cast to Bool(1)
     auto boolean = _program->builtins().boolean();
-    assert(res.type() == boolean);
+    auto cast = cast_helper(scope());
+    res = cast->cast(expr, boolean, res.move_typed_value(), true);
+    if (!res)
+        return false;
     return boolean->is_true(res.move_value().move_rvalue());
 }
 

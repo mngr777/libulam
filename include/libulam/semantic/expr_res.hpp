@@ -41,13 +41,14 @@ enum class ExprError {
     NotReference,
     ReferenceToLocal,
     InvalidReturnType,
-    ArgsEvalError, // TMP
     NoMatchingFunction,
     FunctionIsPureVirtual,
     AmbiguousFunctionCall
 };
 
 class Type;
+
+// TODO: move to sema/eval
 
 class ExprRes {
 public:

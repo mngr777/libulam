@@ -8,7 +8,10 @@
 
 namespace ulam::sema {
 
+class EvalCast;
 class EvalExprVisitor;
+class EvalInit;
+class EvalFuncall;
 
 class EvalVisitor : public ast::Visitor {
     friend EvalExprVisitor;
@@ -40,7 +43,12 @@ public:
     void visit(Ref<ast::TypeOpExpr> node) override;
     void visit(Ref<ast::Ident> node) override;
 
-protected:
+    virtual Ptr<Resolver> resolver();
+    virtual Ptr<EvalExprVisitor> expr_visitor(Ref<Scope> scope);
+    virtual Ptr<EvalInit> init_helper(Ref<Scope> scope);
+    virtual Ptr<EvalCast> cast_helper(Ref<Scope> scope);
+    virtual Ptr<EvalFuncall> funcall_helper(Ref<Scope> scope);
+
     virtual ExprRes
     funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
@@ -58,7 +66,6 @@ private:
     }
 
     Ref<Program> _program;
-    Resolver _resolver;
     ScopeStack _scope_stack;
 };
 

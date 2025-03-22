@@ -1,6 +1,8 @@
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/init.hpp>
+#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
@@ -10,10 +12,23 @@
 
 namespace ulam::sema {
 
+RecVisitor::RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies):
+    _diag{diag},
+    _ast{ast},
+    _program{},
+    _eval{},
+    _skip_fun_bodies{skip_fun_bodies},
+    _pass{Pass::Module} {}
+
+RecVisitor::~RecVisitor() {}
+
 void RecVisitor::analyze() { visit(_ast); }
 
 void RecVisitor::visit(Ref<ast::Root> node) {
     assert(node->program());
+    _program = node->program();
+    _eval = make<EvalVisitor>(_program);
+
     if (do_visit(node))
         traverse(node);
 }
@@ -41,8 +56,8 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
 void RecVisitor::traverse(Ref<ast::ModuleDef> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
-        if (pass() == Pass::Module || is<ast::ClassDef>(child_v))
-            std::visit([&](auto&& ptr) { ptr->accept(*this); }, child_v);
+        if (pass() == Pass::Module || child_v.is<Ptr<ast::ClassDef>>())
+            child_v.accept([&](auto&& ptr) { ptr->accept(*this); });
     }
 }
 
@@ -69,8 +84,8 @@ void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
     // traverse
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
-        if (pass() == Pass::Classes || is<ast::FunDef>(child_v))
-            std::visit([&](auto&& ptr) { ptr->accept(*this); }, child_v);
+        if (pass() == Pass::Classes || child_v.is<Ptr<ast::FunDef>>())
+            child_v.accept([&](auto&& ptr) { ptr->accept(*this); });
     }
     // exit scope
     assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
@@ -128,17 +143,16 @@ bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
 
 bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (!sync_scope(node)) {
-        Resolver resolver{program()};
         Ptr<UserType> type =
             make<AliasType>(program()->builtins(), nullptr, node);
-        resolver.resolve(type->as_alias(), scope());
+        _eval->resolver()->resolve(type->as_alias(), scope());
         scope()->set(type->name_id(), std::move(type));
     }
     return true;
 }
 
 void RecVisitor::visit(Ref<ast::VarDefList> node) {
-    Resolver resolver{program()};
+    auto resolver = _eval->resolver();
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto def = node->def(n);
         if (!sync_scope(def)) {
@@ -147,15 +161,12 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
             if (node->is_const())
                 flags |= Var::Const;
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
-            if (resolver.resolve(ref(var), scope())) {
-                if (def->has_init_value()) {
-                    EvalExprVisitor ev{program(), scope()};
-                    ExprRes res = def->init_value()->accept(ev);
-                    if (res.ok()) {
-                        // TODO: conversion/type error
-                        auto tv = res.move_typed_value();
-                        var->set_value(tv.move_value());
-                    }
+            if (resolver->resolve(ref(var), scope())) {
+                if (!var->has_value() && def->has_init()) {
+                    auto init = _eval->init_helper(scope());
+                    auto [val, ok] = init->eval(var->type(), def->init());
+                    if (ok)
+                        var->set_value(std::move(val));
                 }
                 scope()->set(var->name_id(), std::move(var));
             }

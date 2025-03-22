@@ -26,6 +26,7 @@ public:
 
 private:
     void export_classes();
+    void resolve();
 
     SrcMngr& _sm;
 };

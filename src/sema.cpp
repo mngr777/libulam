@@ -18,9 +18,6 @@ void Sema::analyze(Ref<ast::Root> ast) {
     sema::Init init{_diag, _sm, ast};
     init.analyze();
     assert(ast->program());
-
-    sema::Resolver resolver{ast->program()};
-    resolver.resolve();
 }
 
 } // namespace ulam

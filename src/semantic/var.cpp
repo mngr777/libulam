@@ -24,6 +24,10 @@ Var::Var(
     Flag flags):
     Var{type_node, node, tv.type(), tv.move_value(), flags} {}
 
+bool Var::has_value() const { return !value().empty(); }
+
+const Value& Var::value() const { return _value; }
+
 void Var::set_value(Value&& value) { std::swap(_value, value); }
 
 DataView Var::data_view() {

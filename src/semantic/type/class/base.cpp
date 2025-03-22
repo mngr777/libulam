@@ -192,7 +192,7 @@ Ref<FunSet> ClassBase::find_op_fset(Op op) {
 Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
     auto fset = make<FunSet>();
     auto ref = ulam::ref(fset);
-    fset->set_scope_version(scope()->version());
+    fset->set_scope_version(scope()->version()); // ??
     set(name_id, std::move(fset));
     scope()->set(name_id, ref);
     return ref;
@@ -202,7 +202,7 @@ Ref<FunSet> ClassBase::add_op_fset(Op op) {
     assert(_ops.count(op) == 0);
     auto fset = make<FunSet>();
     auto ref = ulam::ref(fset);
-    fset->set_scope_version(scope()->version());
+    fset->set_scope_version(scope()->version()); // ??
     _ops[op] = std::move(fset);
     return ref;
 }

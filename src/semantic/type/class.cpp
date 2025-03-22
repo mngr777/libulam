@@ -458,7 +458,6 @@ ConvList Class::convs(BuiltinTypeId bi_type_id, bool allow_cast) const {
 }
 
 void Class::add_conv(Ref<Fun> fun) {
-    assert(fun->cls() == this); // TODO: inherited convs
     auto ret_canon = fun->ret_type()->canon();
     assert(_convs.count(ret_canon->id()) == 0);
     _convs[ret_canon->id()] = fun;
@@ -589,17 +588,25 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 
 void Class::merge_fsets() {
     for (auto parent : parents()) {
+        // constructors
+        constructors()->merge(parent->cls()->constructors());
+
         // methods
         for (auto [name_id, fset] : parent->cls()->fsets()) {
             auto sym = get(name_id);
             if (!sym || sym->is<FunSet>())
                 find_fset(name_id)->merge(fset);
         }
+
         // operators
         for (auto& [op, fset] : parent->cls()->ops())
             find_op_fset(op)->merge(ref(fset));
-        // TODO: conversions
-        constructors()->merge(parent->cls()->constructors());
+
+        // conversions
+        for (auto [type_id, fun] : parent->cls()->convs()) {
+            if (_convs.count(type_id) == 0)
+                add_conv(fun);
+        }
     }
 }
 

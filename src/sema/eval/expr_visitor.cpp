@@ -1,6 +1,9 @@
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
+#include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/funcall.hpp>
+#include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -28,17 +31,14 @@
 namespace ulam::sema {
 
 EvalExprVisitor::EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope):
-    _eval{&eval}, _program{eval._program}, _scope{scope} {}
-
-EvalExprVisitor::EvalExprVisitor(Ref<Program> program, Ref<Scope> scope):
-    _eval{}, _program{program}, _scope{scope} {}
+    _eval{eval}, _program{eval._program}, _scope{scope} {}
 
 ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n";
     DBG_LINE(node);
     if (node->has_type_name()) {
-        Resolver resolver{_program};
-        auto type = resolver.resolve_type_name(node->type_name(), _scope, true);
+        auto type = _eval.resolver()->resolve_type_name(
+            node->type_name(), _scope, true);
         if (!type)
             return {ExprError::UnresolvableType};
         auto tv = type->actual()->type_op(node->op());
@@ -89,8 +89,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
-            Resolver resolver{_program};
-            if (!resolver.resolve(var, _scope))
+            if (!_eval.resolver()->resolve(var, _scope))
                 return {ExprError::UnresolvableVar};
             return {var->type(), Value{var->lvalue()}};
         },
@@ -156,15 +155,19 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
         return {ExprError::InvalidOperandType};
     case TypeError::ExplCastRequired:
         if (ops::is_inc_dec(op)) {
-            // ??
+            // assert ??
             diag().error(node, "incompatible");
             return {ExprError::InvalidOperandType};
         }
         return {ExprError::CastRequired};
-    case TypeError::ImplCastRequired:
+    case TypeError::ImplCastRequired: {
         assert(!ops::is_inc_dec(op));
-        tv = do_cast(node, error.cast_bi_type_id, std::move(tv));
-        break;
+        auto cast = _eval.cast_helper(_scope);
+        auto cast_res = cast->cast(node, error.cast_bi_type_id, std::move(tv));
+        if (!cast_res)
+            return cast_res;
+        tv = cast_res.move_typed_value();
+    } break;
     case TypeError::Ok:
         break;
     }
@@ -184,8 +187,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
 
     } else if (arg_type->is_object()) {
         if (op == Op::Is) {
-            Resolver resolver{_program};
-            auto type = resolver.resolve_type_name(node->type_name(), _scope);
+            auto type =
+                _eval.resolver()->resolve_type_name(node->type_name(), _scope);
             if (!type)
                 return {ExprError::UnresolvableType};
             if (!check_is_object(node, type))
@@ -201,7 +204,6 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
             return {boolean, Value{boolean->construct(is)}};
 
         } else if (arg_type->is_class()) {
-            Resolver resolver{_program};
             auto cls = arg_type->as_class();
             auto fset = cls->op(op);
             assert(fset);
@@ -213,7 +215,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
                 rval.set_is_consteval(true);
                 args.push_back({int_type, Value{std::move(rval)}});
             }
-            return funcall(node, fset, tv.value().self(), std::move(args));
+            auto funcall = _eval.funcall_helper(_scope);
+            return funcall->funcall(
+                node, fset, tv.value().self(), std::move(args));
         }
     }
     assert(false);
@@ -228,9 +232,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
         return res;
 
     // resolve target type
-    Resolver resolver{_program};
-    auto cast_type =
-        resolver.resolve_full_type_name(node->full_type_name(), _scope);
+    auto cast_type = _eval.resolver()->resolve_full_type_name(
+        node->full_type_name(), _scope);
     if (!cast_type)
         return {ExprError::InvalidCast};
 
@@ -238,22 +241,29 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
     if (cast_type->is(VoidId))
         return {builtins().void_type(), Value{RValue{}}};
 
-    auto [val, status] =
-        maybe_cast(node, cast_type, res.move_typed_value(), true);
-    if (status == CastError)
-        return {ExprError::InvalidCast};
-    return {cast_type, std::move(val)};
+    auto cast = _eval.cast_helper(_scope);
+    res = cast->cast(node, cast_type, res.move_typed_value(), true);
+    return res;
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
     debug() << __FUNCTION__ << " Ternary\n";
     DBG_LINE(node);
-    ExprRes cond_res = eval_cond(node->cond());
+
+    // eval condition
+    assert(node->has_cond());
+    auto cond_res = node->cond()->accept(*this);
     if (!cond_res)
         return cond_res;
 
+    // cast bo Bool(1)
     auto boolean = builtins().boolean();
-    assert(cond_res.type() == boolean);
+    auto cast = _eval.cast_helper(_scope);
+    cond_res = cast->cast(node, boolean, cond_res.move_typed_value());
+    if (!cond_res)
+        return cond_res;
+
+    // select and eval expr
     if (boolean->is_true(cond_res.move_value().move_rvalue()))
         return node->if_true()->accept(*this);
     return node->if_false()->accept(*this);
@@ -326,11 +336,13 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     }
 
     // eval args
-    auto [args, success] = eval_args(node->args());
-    if (!success)
-        return {ExprError::ArgsEvalError};
+    auto [args, error] = eval_args(node->args());
+    if (error != ExprError::Ok)
+        return {error};
 
-    return funcall(node->callable(), fset, lval.self(), std::move(args));
+    auto funcall = _eval.funcall_helper(_scope);
+    return funcall->funcall(
+        node->callable(), fset, lval.self(), std::move(args));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
@@ -381,8 +393,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     return sym->accept(
         [&](Ref<Var> var) -> ExprRes {
-            Resolver resolver{_program};
-            if (!resolver.resolve(var))
+            if (!_eval.resolver()->resolve(var))
                 return {ExprError::UnresolvableVar};
             return {var->type(), Value{var->lvalue()}};
         },
@@ -398,8 +409,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     debug() << __FUNCTION__ << "ClassConstAccess";
     DBG_LINE(node);
-    Resolver resolver{_program};
-    auto type = resolver.resolve_class_name(node->type_name(), _scope, false);
+    auto resolver = _eval.resolver();
+    auto type = resolver->resolve_class_name(node->type_name(), _scope, false);
     if (!type)
         return {ExprError::UnresolvableType};
 
@@ -418,7 +429,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     auto var = sym->get<Var>();
     auto scope = cls->scope();
     auto scope_view = scope->view(var->scope_version());
-    if (!resolver.resolve(var, ref(scope_view)))
+    if (!resolver->resolve(var, ref(scope_view)))
         return {ExprError::UnresolvableClassConst};
     return {var->type(), Value{var->rvalue()}};
 }
@@ -440,10 +451,12 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return {ExprError::UnknownArrayIndex};
     // cast to default Int
     auto int_type = builtins().int_type();
-    auto [index_val, cast_status] =
-        maybe_cast(node->index(), int_type, index_res.move_typed_value());
-    if (cast_status == CastError)
-        return {ExprError::InvalidCast};
+    auto cast = _eval.cast_helper(_scope);
+    index_res =
+        cast->cast(node->index(), int_type, index_res.move_typed_value());
+    if (!index_res)
+        return index_res;
+    auto index_val = index_res.move_value();
 
     // class?
     if (array_res.type()->actual()->is_class()) {
@@ -454,8 +467,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         bool is_tmp = array_res.value().is_tmp();
         TypedValueList args;
         args.emplace_back(int_type, std::move(index_val));
-        ExprRes res =
-            funcall(node, fset, array_res.move_value().self(), std::move(args));
+
+        // call operator
+        auto funcall = _eval.funcall_helper(_scope);
+        ExprRes res = funcall->funcall(
+            node, fset, array_res.move_value().self(), std::move(args));
         if (is_tmp && res.value().is_lvalue()) {
             LValue lval = res.move_value().lvalue();
             lval.set_is_xvalue(true);
@@ -555,25 +571,6 @@ Ref<Class> EvalExprVisitor::class_base(
     return base;
 }
 
-ExprRes EvalExprVisitor::cast(
-    Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl) {
-    debug() << __FUNCTION__ << "\n";
-    DBG_LINE(node);
-    auto cast_res = maybe_cast(node, type, res.move_typed_value(), expl);
-    if (cast_res.second == CastError)
-        return {ExprError::InvalidCast};
-    return {type, std::move(cast_res.first)};
-}
-
-ExprRes EvalExprVisitor::eval_cond(Ref<ast::Expr> node) {
-    debug() << __FUNCTION__ << "\n";
-    DBG_LINE(node);
-    ExprRes res = node->accept(*this);
-    if (res)
-        res = cast(node, builtins().boolean(), std::move(res), false);
-    return res;
-}
-
 std::pair<bool, bool> EvalExprVisitor::match(
     Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr) {
     ExprRes l_res{var->type(), Value{var->lvalue()}};
@@ -589,11 +586,12 @@ std::pair<bool, bool> EvalExprVisitor::match(
 
     // cast to Bool(1) just in case
     auto boolean = builtins().boolean();
-    auto [val, status] = maybe_cast(expr, boolean, res.move_typed_value());
-    if (status == CastError)
+    auto cast = _eval.cast_helper(_scope);
+    res = cast->cast(expr, boolean, res.move_typed_value());
+    if (!res)
         return {false, false};
 
-    return {boolean->is_true(val.move_rvalue()), true};
+    return {boolean->is_true(res.move_value().move_rvalue()), true};
 }
 
 bitsize_t
@@ -617,10 +615,11 @@ EvalExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
 
     // cast to default Unsigned
     auto uns_type = builtins().unsigned_type();
-    auto cast_res = maybe_cast(expr, uns_type, res.move_typed_value(), true);
-    if (cast_res.second == CastError)
+    auto cast = _eval.cast_helper(_scope);
+    res = cast->cast(expr, uns_type, res.move_typed_value(), true);
+    if (!res)
         return NoBitsize;
-    auto rval = cast_res.first.move_rvalue();
+    auto rval = res.move_value().move_rvalue();
     auto size = rval.get<Unsigned>();
 
     // check range
@@ -651,11 +650,12 @@ array_size_t EvalExprVisitor::array_size(Ref<ast::Expr> expr) {
 
     // cast to default Int
     auto int_type = builtins().int_type();
-    auto cast_res = maybe_cast(expr, int_type, res.move_typed_value());
-    if (cast_res.second == CastError)
+    auto cast = _eval.cast_helper(_scope);
+    res = cast->cast(expr, int_type, res.move_typed_value());
+    if (!res)
         return UnknownArraySize;
 
-    auto rval = cast_res.first.move_rvalue();
+    auto rval = res.move_value().move_rvalue();
     if (rval.empty())
         return UnknownArraySize;
     assert(rval.is_consteval());
@@ -669,24 +669,6 @@ array_size_t EvalExprVisitor::array_size(Ref<ast::Expr> expr) {
 }
 
 std::pair<TypedValueList, bool>
-EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {
-    debug() << __FUNCTION__ << "\n";
-    DBG_LINE(args);
-    std::pair<TypedValueList, bool> res;
-    res.second = true;
-    for (unsigned n = 0; n < args->child_num(); ++n) {
-        // TODO: default arguments
-        ExprRes arg_res = args->get(n)->accept(*this);
-        if (!arg_res) {
-            res.second = false;
-            break;
-        }
-        res.first.push_back(arg_res.move_typed_value());
-    }
-    return res;
-}
-
-std::pair<TypedValueList, bool>
 EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n";
     DBG_LINE(args);
@@ -696,13 +678,14 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     auto scope = make<BasicScope>(ref(param_scope_view));
     std::list<Ref<Var>> cls_params;
 
+    auto resolver = _eval.resolver();
+    auto cast = _eval.cast_helper(_scope);
     std::pair<TypedValueList, bool> res;
     res.second = false;
     unsigned n = 0;
     for (auto param : tpl->params()) {
         // param type
-        Resolver resolver{_program};
-        auto type = resolver.resolve_type_name(param->type_node(), ref(scope));
+        auto type = resolver->resolve_type_name(param->type_node(), ref(scope));
         if (!type)
             return res;
 
@@ -713,16 +696,17 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             auto arg = args->get(n);
             auto arg_res = arg->accept(*this);
             if (arg_res)
-                arg_res = cast(arg, type, std::move(arg_res), false);
+                arg_res =
+                    cast->cast(arg, type, arg_res.move_typed_value(), false);
             if (!arg_res)
                 return res;
             val = arg_res.move_value();
 
         } else if (param->node()->has_init()) {
             // default argument
-            EvalExprVisitor ev{_program, ref(scope)};
-            bool ok = false;
-            std::tie(val, ok) = ev.eval_init(param->node(), type);
+            auto init = _eval.init_helper(ref(scope));
+            bool ok{};
+            std::tie(val, ok) = init->eval(type, param->node()->init());
             if (!ok)
                 return res;
 
@@ -745,133 +729,6 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     return res;
 }
 
-std::pair<Value, bool>
-EvalExprVisitor::eval_init(Ref<ast::VarDecl> node, Ref<Type> type) {
-    std::pair<Value, bool> res{RValue{}, false};
-    if (node->has_init_value()) {
-        // single expr
-        ExprRes init_res = node->init_value()->accept(*this);
-        if (init_res)
-            init_res =
-                cast(node->init_value(), type, std::move(init_res), false);
-        if (init_res)
-            res = {init_res.move_value(), true};
-
-    } else if (node->has_init_list()) {
-        // init list
-        auto [val, ok] = eval_init_list(type, node->init_list());
-        if (ok)
-            res = {std::move(val), ok};
-    }
-    return res;
-}
-
-std::pair<Value, bool>
-EvalExprVisitor::eval_init_list(Ref<Type> type, Ref<ast::InitList> list) {
-    if (type->is_array())
-        return eval_init_list_array(type->as_array(), list);
-    if (type->is_class())
-        return eval_init_list_class(type->as_class(), list);
-
-    diag().error(list, "type is not an array or a class");
-    return {Value{RValue{}}, false};
-}
-
-std::pair<Value, bool> EvalExprVisitor::eval_init_list_array(
-    Ref<ArrayType> type, Ref<ast::InitList> list) {
-    auto fill_array = [&](auto& self, LValue cur,
-                          Ref<ast::InitList> list) -> std::pair<bool, bool> {
-        auto array_type = cur.type()->as_array();
-        auto array_size = array_type->array_size();
-        auto item_type = array_type->item_type();
-        // assert(array_size >= list->child_num()); // see t3847, QW(0)
-        assert(list->child_num() > 0);
-
-        bool all_consteval = true;
-        if (list->is_flat()) {
-            unsigned last_expr_idx = list->child_num() - 1;
-            RValue last_rval;
-            for (unsigned n = 0; n < array_size; ++n) {
-                bool is_last = (n + 1 == array_size);
-                RValue rval;
-                if (n <= last_expr_idx) {
-                    auto expr = list->expr(n);
-                    ExprRes res = expr->accept(*this);
-                    if (res)
-                        res = cast(expr, item_type, std::move(res), false);
-                    if (!res)
-                        return {false, false};
-                    rval = res.move_value().move_rvalue();
-                    if (n == last_expr_idx && !is_last)
-                        last_rval = rval.copy();
-                } else {
-                    rval = is_last ? std::move(last_rval) : last_rval.copy();
-                }
-                all_consteval = all_consteval && rval.is_consteval();
-                cur.array_access(n).assign(std::move(rval));
-            }
-        } else {
-            bool all_consteval = true;
-            for (unsigned n = 0; n < list->child_num(); ++n) {
-                auto [ok, is_consteval] =
-                    self(self, cur.array_access(n), list->sublist(n));
-                if (!ok)
-                    return {false, false};
-                all_consteval = all_consteval && is_consteval;
-            }
-        }
-        return {true, all_consteval};
-    };
-
-    Value val{type->construct()};
-    auto [ok, is_consteval] =
-        fill_array(fill_array, LValue{val.data_view()}, list);
-    if (ok && is_consteval)
-        val.rvalue().set_is_consteval(is_consteval);
-    return {std::move(val), ok};
-}
-
-std::pair<Value, bool>
-EvalExprVisitor::eval_init_list_class(Ref<Class> cls, Ref<ast::InitList> list) {
-    if (!list->is_flat()) {
-        diag().error(
-            list,
-            "multidimensional init insts are not supported for classes yet");
-        return {Value{RValue{}}, false};
-    }
-
-    TypedValueList args;
-    bool all_consteval = true;
-    for (unsigned n = 0; n < list->child_num(); ++n) {
-        auto expr = list->expr(n);
-        ExprRes res = expr->accept(*this);
-        if (!res)
-            return {Value{RValue{}}, false};
-        all_consteval = all_consteval && res.value().is_consteval();
-        args.push_back(res.move_typed_value());
-    }
-
-    // default construct
-    RValue rval = cls->construct();
-    if (args.empty()) {
-        rval.set_is_consteval(all_consteval);
-        return {Value{}, false};
-    }
-
-    // any constructors available?
-    if (!cls->has_constructors()) {
-        diag().error(list, "class does not have non-default constructors");
-        return {Value{RValue{}}, false};
-    }
-
-    // apply constructor
-    ExprRes res =
-        funcall(list, cls->constructors(), rval.self(), std::move(args));
-    if (!res)
-        return {Value{RValue{}}, false};
-    return {Value{std::move(rval)}, true};
-}
-
 ExprRes EvalExprVisitor::binary_op(
     Ref<ast::Expr> node,
     Op op,
@@ -889,14 +746,15 @@ ExprRes EvalExprVisitor::binary_op(
         lval = left.value().lvalue();
     }
 
+    auto cast = _eval.cast_helper(_scope);
     auto type_errors =
         binary_op_type_check(op, left.type(), right.typed_value());
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
-                      TypedValue&& tv) -> TypedValue {
+                      TypedValue&& tv) -> ExprRes {
         switch (error.status) {
         case TypeError::Incompatible:
             diag().error(expr, "incompatible type");
-            return {};
+            return {ExprError::InvalidOperandType};
         case TypeError::ExplCastRequired: {
             auto rval = tv.move_value().move_rvalue();
             auto message =
@@ -906,14 +764,13 @@ ExprRes EvalExprVisitor::binary_op(
                     ? std::string{builtin_type_str(error.cast_bi_type_id)}
                     : error.cast_type->name();
             diag().error(expr, message);
-            return {};
+            return {ExprError::InvalidOperandType};
         }
         case TypeError::ImplCastRequired: {
             if (error.cast_bi_type_id != NoBuiltinTypeId)
-                return do_cast(expr, error.cast_bi_type_id, std::move(tv));
+                return cast->cast(expr, error.cast_bi_type_id, std::move(tv));
             assert(error.cast_type);
-            return {
-                error.cast_type, do_cast(expr, error.cast_type, std::move(tv))};
+            return cast->cast(expr, error.cast_type, std::move(tv));
         }
         case TypeError::Ok:
             return std::move(tv);
@@ -921,11 +778,19 @@ ExprRes EvalExprVisitor::binary_op(
             assert(false);
         };
     };
-    auto l_tv = recast(l_node, type_errors.first, left.move_typed_value());
-    auto r_tv = recast(r_node, type_errors.second, right.move_typed_value());
-    if (!l_tv || !r_tv)
-        return {ExprError::InvalidOperandType};
 
+    // cast left
+    auto l_res = recast(l_node, type_errors.first, left.move_typed_value());
+    if (!l_res)
+        return l_res;
+
+    // cast right
+    auto r_res = recast(r_node, type_errors.second, right.move_typed_value());
+    if (!r_res)
+        return r_res;
+
+    auto l_tv = l_res.move_typed_value();
+    auto r_tv = r_res.move_typed_value();
     if (l_tv.type()->actual()->is_prim()) {
         if (op != Op::Assign) {
             // primitive binary op
@@ -947,7 +812,8 @@ ExprRes EvalExprVisitor::binary_op(
             auto obj = l_tv.move_value();
             TypedValueList args;
             args.push_back(std::move(r_tv));
-            return funcall(node, fset, obj.self(), std::move(args));
+            auto funcall = _eval.funcall_helper(_scope);
+            return funcall->funcall(node, fset, obj.self(), std::move(args));
         }
     }
 
@@ -967,210 +833,31 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
     DBG_LINE(node);
     if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
-    auto [val, status] = maybe_cast(node, to.type()->deref(), std::move(tv));
-    if (status == CastError)
-        return {ExprError::InvalidCast};
+    auto cast = _eval.cast_helper(_scope);
+    auto res = cast->cast(node, to.type()->deref(), std::move(tv));
+    if (!res)
+        return res;
     auto lval = to.move_value().lvalue();
-    return {to.type(), lval.assign(val.move_rvalue())};
+    return {to.type(), lval.assign(res.move_value().move_rvalue())};
 }
 
-EvalExprVisitor::CastRes EvalExprVisitor::maybe_cast(
-    Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv, bool expl) {
-    auto from = tv.type();
-    auto val = tv.move_value();
-
-    if (to->is_ref()) {
-        // taking or casting a reference
-        if (val.is_rvalue()) {
-            diag().error(node, "cannot take a reference of rvalue");
-            return {Value{LValue{}}, CastError};
-        }
-        if (val.lvalue().is_xvalue()) {
-            diag().error(node, "cannot take a reference to xvalue");
-            return {Value{LValue{}}, CastError};
-        }
-        if (from->deref()->is_class())
-            from = val.dyn_obj_type()->ref_type();
-        from = from->ref_type();
-
-    } else if (from->is_ref() || val.is_lvalue()) {
-        // copy value from reference
-        assert(val.is_lvalue());
-        val = val.deref();
-        from = from->deref();
-        if (from->is_class())
-            from = val.dyn_obj_type();
-    }
-
-    if (to->is_same(from))
-        return {std::move(val), NoCast};
-
-    // implicit cast to base class
-    if (!expl && to->is_ref() && to->actual()->is_class() &&
-        from->actual()->is_class()) {
-        auto to_cls = to->actual()->as_class();
-        auto from_cls = from->actual()->as_class();
-        if (to_cls->is_base_of(from_cls))
-            return {std::move(val), NoCast};
-    }
-
-    if (!expl && from->is_impl_castable_to(to, val)) {
-        val = do_cast(node, to, {from, std::move(val)});
-        return {std::move(val), CastOk};
-    }
-
-    if (from->is_expl_castable_to(to)) {
-        if (expl) {
-            val = do_cast(node, to, {from, std::move(val)});
-            return {std::move(val), CastOk};
-        }
-        diag().error(node, "suggest explicit cast");
-    }
-    diag().error(node, "invalid cast");
-    return {Value{RValue{}}, CastError};
-}
-
-Value EvalExprVisitor::do_cast(
-    Ref<ast::Node> node, Ref<const Type> to, TypedValue&& tv) {
-    auto from = tv.type();
-    auto val = tv.move_value();
-
-    if (to->is_ref()) {
-        // taking or casting a reference
-        assert(!val.is_tmp());
-        from = from->ref_type();
-
-    } else if (from->is_ref()) {
-        // copy value from reference
-        assert(val.is_lvalue());
-        from = from->deref();
-        val = val.deref();
-    }
-
-    assert(!to->is_same(from));
-    assert(from->is_expl_castable_to(to));
-
-    if (from->is_prim()) {
-        assert(to->is_prim());
-        return from->as_prim()->cast_to(to, std::move(val));
-
-    } else if (from->is_class()) {
-        auto cls = from->as_class();
-        auto convs = cls->convs(to, true);
-        if (convs.size() == 0) {
-            assert(to->is_object());
-            assert(cls->is_castable_to_object_type(to, true));
-            return cls->cast_to_object_type(to, std::move(val));
-
-        } else {
-            ExprRes res = funcall(node, *convs.begin(), val.self(), {});
-            if (!res) {
-                diag().error(node, "conversion failed");
-                return Value{}; // ??
-            }
-            if (!res.type()->is_same(to)) {
-                assert(res.type()->is_expl_castable_to(to));
-                return do_cast(node, to, res.move_typed_value());
-            }
-            return res.move_value();
-        }
-    } else if (from->is(AtomId)) {
-        return from->cast_to(to, std::move(val));
-
-    } else if (from->is_ref()) {
-        assert(to->is_ref());
-        return from->cast_to(to, std::move(val));
-    }
-
-    assert(false);
-}
-
-TypedValue EvalExprVisitor::do_cast(
-    Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv) {
-    auto type = tv.type()->actual();
-
-    if (type->is_class()) {
-        // class conversion
-        auto cls = type->as_class();
-        auto convs = cls->convs(bi_type_id, true);
-        assert(convs.size() == 1);
-        auto self = tv.move_value().self();
-        ExprRes res = funcall(node, *convs.begin(), self, {});
-        if (!res) {
-            diag().error(node, "conversion failed");
-            return {}; // ??
-        }
-        assert(res.type()->is_prim());
-        if (!res.type()->is(bi_type_id))
-            return do_cast(node, bi_type_id, res.move_typed_value());
-        return {res.type()->as_prim(), res.move_value()};
-    }
-
-    // primitive to builtin
-    auto val = tv.move_value().deref();
-    if (type->is_prim())
-        return type->as_prim()->cast_to(bi_type_id, std::move(val));
-
-    assert(false);
-}
-
-ExprRes EvalExprVisitor::funcall(
-    Ref<ast::Node> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
-    auto dyn_cls = self.dyn_cls();
-    auto match_res = fset->find_match(dyn_cls, args);
-    if (match_res.empty()) {
-        diag().error(node, "no matching functions found");
-        return {ExprError::NoMatchingFunction};
-    } else if (match_res.size() > 1) {
-        diag().error(node, "ambiguous function call");
-        return {ExprError::AmbiguousFunctionCall};
-    }
-
-    TypedValueList call_args{};
-    auto fun = *match_res.begin();
-    for (auto& param : fun->params()) {
-        assert(!args.empty());
-
-        auto arg = std::move(args.front());
-        args.pop_front();
-
-        auto param_type = param->type();
-
-        // binding rvalue or xvalue lvalue to const ref
-        if (param_type->is_ref() && arg.value().is_tmp()) {
-            assert(param->is_const());
-            param_type = param_type->deref(); // cast to non-ref type if casting
-        }
-
-        auto [val, status] =
-            maybe_cast(node, param_type, std::move(arg), false);
-        assert(status != CastError);
-        call_args.emplace_back(param_type, std::move(val));
-    }
-    return funcall(node, fun, self, std::move(call_args));
-}
-
-ExprRes EvalExprVisitor::funcall(
-    Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
+std::pair<TypedValueList, ExprError>
+EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {
     debug() << __FUNCTION__ << "\n";
-    assert(_eval); // TMP
+    DBG_LINE(args);
 
-    if (fun->is_native()) {
-        // can't eval, return empty value
-        diag().notice(node, "cannot evaluate native function");
-        if (fun->ret_type()->is_ref()) {
-            LValue lval;
-            lval.set_is_xvalue(false);
-            return {fun->ret_type(), Value{lval}};
+    decltype(EvalExprVisitor::eval_args(args)) res;
+    res.second = ExprError::Ok;
+    for (unsigned n = 0; n < args->child_num(); ++n) {
+        // TODO: default arguments
+        ExprRes arg_res = args->get(n)->accept(*this);
+        if (!arg_res) {
+            res.second = arg_res.error();
+            break;
         }
-        return {fun->ret_type(), Value{RValue{}}};
-
-    } else if (fun->is_pure_virtual()) {
-        diag().error(node, "function is pure virtual");
-        return {ExprError::FunctionIsPureVirtual};
+        res.first.push_back(arg_res.move_typed_value());
     }
-    assert(fun->node()->has_body());
-    return _eval->funcall(fun, self.self(), std::move(args));
+    return res;
 }
 
 Diag& EvalExprVisitor::diag() { return _program->diag(); }

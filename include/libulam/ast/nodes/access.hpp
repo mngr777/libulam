@@ -1,7 +1,8 @@
 #pragma once
 #include <cassert>
 #include <libulam/ast/node.hpp>
-#include <libulam/ast/nodes/expr.hpp>
+#include <libulam/ast/nodes/args.hpp>
+#include <libulam/ast/nodes/exprs.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/ast/nodes/type.hpp>
 
@@ -17,9 +18,7 @@ public:
     ULAM_AST_TUPLE_PROP(callable, 0)
     ULAM_AST_TUPLE_PROP(args, 1)
 
-    bool is_op_call() const {
-        return fun_op() != Op::None;
-    }
+    bool is_op_call() const { return fun_op() != Op::None; }
 
     unsigned arg_num() const {
         assert(has_args());
@@ -37,9 +36,7 @@ public:
             std::move(obj), std::move(ident), std::move(base),
             Op::MemberAccess} {}
 
-    bool is_op() const {
-        return op() != Op::None;
-    }
+    bool is_op() const { return op() != Op::None; }
 
     ULAM_AST_TUPLE_PROP(obj, 0);
     ULAM_AST_TUPLE_PROP(ident, 1);

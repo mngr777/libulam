@@ -21,11 +21,7 @@ class EvalVisitor;
 
 class EvalExprVisitor : public ast::ExprVisitor {
 public:
-    enum CastStatus { CastOk, CastError, NoCast };
-    using CastRes = std::pair<Value, CastStatus>;
-
     EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope);
-    EvalExprVisitor(Ref<Program> program, Ref<Scope> scope);
 
     EvalExprVisitor(EvalExprVisitor&&) = default;
     EvalExprVisitor& operator=(EvalExprVisitor&& other);
@@ -55,11 +51,6 @@ public:
     virtual Ref<Class>
     class_base(Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident);
 
-    virtual ExprRes
-    cast(Ref<ast::Expr> node, Ref<Type> type, ExprRes&& res, bool expl);
-
-    virtual ExprRes eval_cond(Ref<ast::Expr> node);
-
     // {res, ok}
     virtual std::pair<bool, bool>
     match(Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr);
@@ -69,22 +60,8 @@ public:
 
     virtual array_size_t array_size(Ref<ast::Expr> expr);
 
-    virtual std::pair<TypedValueList, bool> eval_args(Ref<ast::ArgList> args);
-
     virtual std::pair<TypedValueList, bool>
     eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
-
-    virtual std::pair<Value, bool>
-    eval_init(Ref<ast::VarDecl> node, Ref<Type> type);
-
-    virtual std::pair<Value, bool>
-    eval_init_list(Ref<Type> type, Ref<ast::InitList> list);
-
-    std::pair<Value, bool>
-    eval_init_list_array(Ref<ArrayType> type, Ref<ast::InitList> list);
-
-    std::pair<Value, bool>
-    eval_init_list_class(Ref<Class> cls, Ref<ast::InitList> list);
 
 protected:
     virtual ExprRes binary_op(
@@ -98,25 +75,7 @@ protected:
     virtual ExprRes
     assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
-    virtual CastRes maybe_cast(
-        Ref<ast::Node> node,
-        Ref<Type> type,
-        TypedValue&& tv,
-        bool expl = false);
-
-    Value do_cast(Ref<ast::Node> node, Ref<const Type> type, TypedValue&& tv);
-
-    TypedValue
-    do_cast(Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
-
-    virtual ExprRes funcall(
-        Ref<ast::Node> node,
-        Ref<FunSet> fset,
-        LValue self,
-        TypedValueList&& args);
-
-    virtual ExprRes funcall(
-        Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args);
+    virtual std::pair<TypedValueList, ExprError> eval_args(Ref<ast::ArgList> args);
 
     Diag& diag();
     Builtins& builtins();
@@ -124,7 +83,7 @@ protected:
     std::string_view str(str_id_t str_id);
 
 private:
-    EvalVisitor* _eval;
+    EvalVisitor& _eval;
     Ref<Program> _program;
     Ref<Scope> _scope;
 };

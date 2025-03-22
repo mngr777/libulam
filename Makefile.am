@@ -9,7 +9,10 @@ AST_HEADER_FILES = \
 	include/libulam/ast/expr_visitor.hpp \
 	include/libulam/ast/node.hpp \
 	include/libulam/ast/nodes/access.hpp \
+	include/libulam/ast/nodes/args.hpp \
 	include/libulam/ast/nodes/expr.hpp \
+	include/libulam/ast/nodes/exprs.hpp \
+	include/libulam/ast/nodes/init.hpp \
 	include/libulam/ast/nodes/params.hpp \
 	include/libulam/ast/nodes/root.hpp \
 	include/libulam/ast/nodes/stmt.hpp \
@@ -115,8 +118,11 @@ SEMANTIC_SOURCE_FILES = \
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
 	include/libulam/sema/eval.hpp \
+	include/libulam/sema/eval/cast.hpp \
 	include/libulam/sema/eval/except.hpp \
 	include/libulam/sema/eval/expr_visitor.hpp \
+	include/libulam/sema/eval/funcall.hpp \
+	include/libulam/sema/eval/init.hpp \
 	include/libulam/sema/eval/visitor.hpp \
 	include/libulam/sema/init.hpp \
 	include/libulam/sema/resolver.hpp \
@@ -125,8 +131,11 @@ SEMA_HEADER_FILES = \
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
 	src/sema/eval.cpp \
+	src/sema/eval/cast.cpp \
 	src/sema/eval/except.cpp \
 	src/sema/eval/expr_visitor.cpp \
+	src/sema/eval/funcall.cpp \
+	src/sema/eval/init.cpp \
 	src/sema/eval/visitor.cpp \
 	src/sema/out.hpp \
 	src/sema/out.cpp \

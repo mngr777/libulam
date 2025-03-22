@@ -30,7 +30,8 @@ public:
         return is_const() && !is(Tpl) && !is(ClassParam);
     }
 
-    const Value& value() const { return _value; }
+    bool has_value() const;
+    const Value& value() const;
     void set_value(Value&& value);
 
     DataView data_view();
