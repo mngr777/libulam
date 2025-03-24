@@ -270,7 +270,7 @@ void Printer::visit(ulam::Ref<ulam::ast::InitMap> node) {
     if (do_visit(node)) {
         unsigned n = 0;
         for (ulam::str_id_t key : node->keys()) {
-            if (n > 0)
+            if (n++ > 0)
                 _os << ", ";
             _os << "." << str(key) << " = ";
             auto& item_v = node->get(key);

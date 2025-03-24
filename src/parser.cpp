@@ -812,10 +812,6 @@ std::pair<Ptr<ast::InitValue>, bool> Parser::parse_init(
 
         } else {
             // Type var = <value>;
-            if (is_array) {
-                diag("use initializer list to set array value");
-                return {};
-            }
             auto expr = parse_expr();
             if (!expr)
                 return {};

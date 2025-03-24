@@ -124,7 +124,12 @@ Ref<ast::FunDefBody> Fun::body_node() const { return _node->body(); }
 void Fun::add_override(Ref<Fun> fun) {
     assert(is_virtual());        // must be already marked as virtual
     assert(fun->key() == key()); // parameters must match
-    assert(_overrides.count(fun->cls()->id()) == 0); // one override per class
+
+    if (_overrides.count(fun->cls()->id()) == 1) {
+        // can happen with multible inheritance
+        assert(_overrides[fun->cls()->id()] == fun);
+        return;
+    }
 
     fun->set_is_virtual(true);
     if (!fun->_overridden)
