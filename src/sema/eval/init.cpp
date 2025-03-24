@@ -211,7 +211,7 @@ EvalInit::EvalRes EvalInit::eval_class_map(
 
         // eval item
         auto prop = sym->get<Prop>();
-        auto [val, ok] = eval_v(prop->type(), map->get(key), depth + 1);
+        auto [val, ok] = eval_v(prop->type(), map->get(key), 1);
         if (!ok)
             return {Value{RValue{}}, false};
 
