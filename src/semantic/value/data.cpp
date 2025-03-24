@@ -126,8 +126,12 @@ DataView DataView::prop(Ref<Prop> prop_) {
         assert(_type->is(AtomId));
         cls = _view_type->as_class();
     }
-    return {_storage,      prop_->type(), prop_->data_off_in(cls),
-            prop_->type(), _atom.off,     _atom.type};
+    return {_storage,
+            prop_->type(),
+            (bitsize_t)(_off + prop_->data_off_in(cls)),
+            prop_->type(),
+            _atom.off,
+            _atom.type};
 }
 
 const DataView DataView::prop(Ref<Prop> prop_) const {

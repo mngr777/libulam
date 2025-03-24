@@ -44,7 +44,8 @@ RValue StringType::from_datum(Datum datum) const {
 
 Datum StringType::to_datum(const RValue& rval) const {
     assert(rval.is<String>());
-    return rval.get<String>().id;
+    Datum datum = rval.get<String>().id;
+    return datum;
 }
 
 
