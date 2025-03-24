@@ -111,15 +111,6 @@ int main(int argc, char** argv) {
             "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
             "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
             "t41153_test_compiler_elementandquark_selfcasttoatom_issue.test", // quark to Atom cast
-            // "t41171_test_compiler_classdminit_localvar.test", // init list named member init, TODO
-            // "t41172_test_compiler_classdminitarrays_localvar.test", // -"-, TODO
-            // "t41173_test_compiler_classdminitarraysinclass_localvar.test", // -"-, TODO
-            // "t41174_test_compiler_classdminitarrayofquarks_localvar.test", // -"-, TODO
-            // "t41182_test_compiler_classdminitarrayofquarksinherited_localvar.test", // -"-, TODO
-            // "t41183_test_compiler_classdminit_inheritedtemplateString_localvar.test", // -"-, TODO
-            // "t41184_test_compiler_classdminitwithconstructor_localvar.test", // -"-, TODO
-            // "t41185_test_compiler_classdminitarrayofquarksinquark_issue.test", // -"-, TODO
-            // "t41198_test_compiler_constantclasswish.test", // -"-, TODO
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
