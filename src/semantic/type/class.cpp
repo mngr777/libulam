@@ -179,11 +179,6 @@ bool Class::is_same_or_base_of(Ref<const Class> other) const {
     return other == this || is_base_of(other);
 }
 
-Ref<Class> Class::base(str_id_t name_id) {
-    auto anc = _ancestry.base(name_id);
-    return anc ? anc->cls() : Ref<Class>{};
-}
-
 bool Class::has_super() const { return !_ancestry.parents().empty(); }
 
 Ref<Class> Class::super() {
@@ -570,6 +565,13 @@ void Class::init_default_data(sema::Resolver& resolver) {
 void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
     if (!_ancestry.add(cls, node))
         return;
+
+    // import ancestor types
+    for (auto& anc : cls->_ancestry.ancestors()) {
+        auto name_id = anc->cls()->name_id();
+        if (!inh_scope()->has(name_id))
+            inh_scope()->set(name_id, anc->cls());
+    }
 
     // import symbols
     for (auto& [name_id, sym] : cls->members()) {

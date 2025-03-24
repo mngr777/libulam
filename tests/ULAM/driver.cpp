@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
             "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // Atom& to quark ref cast
             "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
             "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
-            "t41043_test_compiler_forascond.test", // for (; (a as Type); ) {...}, TODO?
+            "t41043_test_compiler_forascond.test", // for (; (a as Type); ) {...}, TODO
             "t41046_test_compiler_switchascondcases.test", // which() as cond
             "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
             "t41051_test_compiler_element_castatomreffuncreturnvalue_issue.test", // Atom& to quark ref cast
@@ -122,6 +122,14 @@ int main(int argc, char** argv) {
             "t41266_test_compiler_constantclassarrayoftransients.test", // module-local constant `keyexpr_x13` addressed as `KeyExprRep.keyexpr_x13` ??
             "t41284_test_compiler_localdefquestioncolon_filescope.test", // module-local constants referenced before definition
             "t41285_test_compiler_localdefquestioncolon_usingtemplateinstanceconstant_filescope.test",
+            "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
+            "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
+            "t41315_test_compiler_elementandquark_multibases_isasbase.test", // Atom& to quark ref cast
+            "t41316_test_compiler_transientandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
+            "t41318_test_compiler_elementandquark_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // Atom& to quark
+            "t41320_test_compiler_elementandquark_multibases_refbasecallsoverridebaseclassvirtualfunc.test", // -"-
+            "t41323_test_compiler_elementandquark_multibases_virtualfuncscalledonsharedancestoranddatamembercopies.test", // -"-
+            "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // -"-
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

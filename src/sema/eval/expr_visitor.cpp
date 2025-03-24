@@ -1,3 +1,4 @@
+#include "libulam/semantic/type.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/eval/cast.hpp>
@@ -565,9 +566,33 @@ Ref<Class> EvalExprVisitor::class_base(
     if (ident->is_super())
         return class_super(node, cls);
     assert(!ident->is_self());
-    auto base = cls->base(ident->name_id());
-    if (!base)
-        diag().error(node, "class does not have a base with this name");
+
+    // search in class scope
+    auto sym = cls->scope()->get(ident->name_id());
+    if (!sym) {
+        diag().error(ident, "base type not found");
+        return {};
+    }
+    assert(sym->is<UserType>());
+    auto type = sym->get<UserType>();
+
+    // resolve aliases
+    if (type->is_alias()) {
+        auto resolver = _eval.resolver();
+        if (!resolver->resolve(type->as_alias()))
+            return {};
+    }
+
+    if (!type->is_class()) {
+        diag().error(ident, "type is not a class");
+        return {};
+    }
+
+    auto base = type->as_class();
+    if (!base->is_same_or_base_of(cls)) {
+        diag().error(ident, std::string{"not an ancestor of "} + cls->name());
+        return {};
+    }
     return base;
 }
 
