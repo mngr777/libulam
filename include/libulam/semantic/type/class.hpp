@@ -82,6 +82,8 @@ public:
     bool is_constructible() const override { return true; }
     RValue construct() const override;
 
+    RValue construct(Bits&& bits) const;
+
     RValue load(const BitsView data, bitsize_t off) const override;
     void store(BitsView data, bitsize_t off, const RValue& rval)
         const override;
@@ -90,11 +92,7 @@ public:
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    bool is_castable_to_object_type(Ref<const Type> type, bool expl = false) const;
-
-    Value cast_to_object_type(Ref<const Type> type, Value&& val) const;
-
-    // TODO void write_base_data();
+    Value cast_to(Ref<const Type> type, Value&& val) override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;

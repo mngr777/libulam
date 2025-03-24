@@ -21,10 +21,18 @@ public:
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
     RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval)
-        const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
 
     RValue construct() const override;
+
+    RValue construct(Bits&& bits) const;
+
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+
+    Value cast_to(Ref<const Type> type, Value&& val) override;
+
+    conv_cost_t
+    conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
     TypedValue binary_op(
         Op op,

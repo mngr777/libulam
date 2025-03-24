@@ -11,6 +11,7 @@
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
+#include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
@@ -247,8 +248,13 @@ Ref<Prop> Class::first_prop_over_max_bitsize() {
 }
 
 RValue Class::construct() const {
-    // TMP?: const cast hack
+    // TODO: const_cast
     return RValue{make_s<Data>(const_cast<Class*>(this), _init_bits.copy())};
+}
+
+RValue Class::construct(Bits&& bits) const {
+    assert(bits.len() == bitsize());
+    return RValue{make_s<Data>(const_cast<Class*>(this), std::move(bits))};
 }
 
 RValue Class::load(const BitsView data, bitsize_t off) const {
@@ -308,24 +314,21 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
 // the error is to be catched when applying conversions
 
 bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
+    assert(!is_same(type));
     if (!convs(type, expl).empty())
         return true;
-    return type->is_object() && is_castable_to_object_type(type, expl);
-}
 
-bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
-    return !convs(bi_type_id, expl).empty();
-}
-
-bool Class::is_castable_to_object_type(Ref<const Type> type, bool expl) const {
-    assert(!is_same(type));
-    assert(type->is_object());
+    // to Bits
+    if (type->is(BitsId))
+        return expl && (type->bitsize() == bitsize()); // too strict??
 
     // to Atom
     if (type->is(AtomId))
         return is_element();
 
-    assert(type->is_class());
+    if (!type->is_class())
+        return false;
+
     auto cls = type->as_class();
 
     // downcast
@@ -333,25 +336,49 @@ bool Class::is_castable_to_object_type(Ref<const Type> type, bool expl) const {
         return true;
 
     // upcast
-    return expl && is_base_of(cls);
+    if (is_base_of(cls))
+        return expl && is_base_of(cls);
+
+    // object of same size
+    return expl && type->bitsize() == bitsize();
 }
 
-Value Class::cast_to_object_type(Ref<const Type> type, Value&& val) const {
+bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
+    // NOTE: must be conv or cast to exact type otherwise
+    return !convs(bi_type_id, expl).empty();
+}
+
+Value Class::cast_to(Ref<const Type> type, Value&& val) {
     assert(!is_same(type));
+    assert(convs(type, true).empty()); // must use conversion function otherwise
 
     auto rval = val.move_rvalue();
     assert(rval.is<DataPtr>());
 
+    bool is_consteval = rval.is_consteval();
+
     auto obj = rval.get<DataPtr>();
     assert(obj->type()->is_same(this));
-    assert(is_castable_to_object_type(type, true));
+
+    // to Bits
+    if (type->is(BitsId)) {
+        // TODO: const_cast
+        auto new_rval = const_cast<Class*>(this)
+                            ->builtins()
+                            .bits_type(type->bitsize())
+                            ->construct(std::move(obj->bits()));
+        new_rval.set_is_consteval(is_consteval);
+        return Value{std::move(new_rval)};
+    }
 
     // to Atom
     if (type->is(AtomId)) {
         // TODO: const_cast
-        auto atom = const_cast<Class*>(this)->builtins().atom_type()->construct(
-            std::move(obj->bits()));
-        return Value{std::move(atom)};
+        auto new_rval =
+            const_cast<Class*>(this)->builtins().atom_type()->construct(
+                std::move(obj->bits()));
+        new_rval.set_is_consteval(is_consteval);
+        return Value{std::move(new_rval)};
     }
 
     assert(type->is_class());
@@ -363,6 +390,7 @@ Value Class::cast_to_object_type(Ref<const Type> type, Value&& val) const {
         auto new_obj = new_rval.get<DataPtr>();
         for (auto prop : cls->all_props())
             prop->store(new_obj, prop->load(obj));
+        new_rval.set_is_consteval(is_consteval);
         return Value{std::move(new_rval)};
     }
 
@@ -372,6 +400,7 @@ Value Class::cast_to_object_type(Ref<const Type> type, Value&& val) const {
     auto new_obj = new_rval.get<DataPtr>();
     for (auto prop : all_props())
         prop->store(new_obj, prop->load(obj));
+    new_rval.set_is_consteval(is_consteval);
     return Value{std::move(new_rval)};
 }
 
@@ -384,21 +413,25 @@ conv_cost_t Class::conv_cost(Ref<const Type> type, bool allow_cast) const {
     if (cost != MaxConvCost)
         return cost;
 
-    // class to Atom/class
-    if (type->is_object() && is_castable_to_object_type(type, allow_cast)) {
-        // to Atom
-        if (type->is(AtomId))
-            return ElementToAtomConvCost;
-        assert(type->is_class());
-        auto cls = type->as_class();
-        // downcast
-        if (cls->is_base_of(this))
-            return ClassDowncastCost;
-        // upcast
-        assert(is_base_of(cls));
-        return ClassUpcastCost;
-    }
-    return MaxConvCost;
+    if (!is_castable_to(type, allow_cast))
+        return MaxConvCost;
+
+    // to Bits
+    if (type->is(BitsId))
+        return ClassToBitsConvCost;
+
+    // to Atom
+    if (type->is(AtomId))
+        return ElementToAtomConvCost;
+
+    assert(type->is_class());
+    auto cls = type->as_class();
+    // downcast
+    if (cls->is_base_of(this))
+        return ClassDowncastCost;
+    // upcast
+    assert(is_base_of(cls));
+    return ClassUpcastCost;
 }
 
 ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {

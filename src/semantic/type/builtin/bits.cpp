@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/conv.hpp"
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/bits.hpp>
@@ -17,6 +18,46 @@ void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) const {
 }
 
 RValue BitsType::construct() const { return RValue{Bits{bitsize()}}; }
+
+RValue BitsType::construct(Bits&& bits) const {
+    assert(bits.len());
+    return RValue{std::move(bits)};
+}
+
+bool BitsType::is_castable_to(Ref<const Type> type, bool expl) const {
+    if (type->is_class())
+        return expl && type->bitsize();
+    return _PrimType::is_castable_to(type, expl);
+}
+
+Value BitsType::cast_to(Ref<const Type> type, Value&& val) {
+    if (type->is_class()) {
+        assert(type->bitsize() == bitsize());
+        auto cls = type->as_class();
+        RValue new_rval{};
+        if (!val.empty()) {
+            auto rval = val.move_rvalue();
+            assert(rval.is<Bits>());
+            bool is_consteval = rval.is_consteval();
+            auto& bits = rval.get<Bits>();
+            new_rval = cls->construct(std::move(bits));
+            new_rval.set_is_consteval(is_consteval);
+        } else {
+            new_rval = cls->construct();
+        }
+        return Value{std::move(new_rval)};
+    }
+    return _PrimType::cast_to(type, std::move(val));
+}
+
+conv_cost_t BitsType::conv_cost(Ref<const Type> type, bool allow_cast) const {
+    if (type->is_class()) {
+        return (allow_cast && type->bitsize() == bitsize())
+                   ? BitsToClassConvCost
+                   : MaxConvCost;
+    }
+    return _PrimType::conv_cost(type, allow_cast);
+}
 
 TypedValue BitsType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {

@@ -96,16 +96,14 @@ ExprRes EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv) {
     assert(from->is_expl_castable_to(to));
 
     if (from->is_prim()) {
-        assert(to->is_prim());
         return {to, from->as_prim()->cast_to(to, std::move(val))};
 
     } else if (from->is_class()) {
         auto cls = from->as_class();
         auto convs = cls->convs(to, true);
         if (convs.size() == 0) {
-            assert(to->is_object());
-            assert(cls->is_castable_to_object_type(to, true));
-            return {to, cls->cast_to_object_type(to, std::move(val))};
+            assert(cls->is_castable_to(to, true));
+            return {to, cls->cast_to(to, std::move(val))};
 
         } else {
             auto funcall = _eval.funcall_helper(_scope);
