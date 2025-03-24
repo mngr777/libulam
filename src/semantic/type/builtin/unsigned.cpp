@@ -29,7 +29,8 @@ RValue UnsignedType::from_datum(Datum datum) const {
 
 Datum UnsignedType::to_datum(const RValue& rval) const {
     assert(rval.is<Unsigned>());
-    return rval.get<Unsigned>();
+    auto uns_val = rval.get<Unsigned>();
+    return (Datum)uns_val;
 }
 
 TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {

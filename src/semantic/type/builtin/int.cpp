@@ -27,27 +27,14 @@ TypedValue IntType::type_op(TypeOp op) {
 RValue IntType::construct() const { return RValue{Integer{}}; }
 
 RValue IntType::from_datum(Datum datum) const {
-    int shift = sizeof(datum) * 8 - bitsize();
-    if (shift == 0)
-        return RValue{(Integer)datum};
-    assert(shift > 0);
-    if (1 << (bitsize() - 1) & datum) {
-        // negative, prepend with 1's
-        datum |= ((1 << (shift + 1)) - 1) << bitsize();
-    }
-    return RValue{(Integer)datum};
+    Integer int_val = detail::integer_from_datum(datum, bitsize());
+    return RValue{int_val};
 }
 
 Datum IntType::to_datum(const RValue& rval) const {
     assert(rval.is<Integer>());
     auto int_val = rval.get<Integer>();
-    auto datum = (Datum)int_val;
-    int shift = sizeof(datum) * 8 - bitsize();
-    if (shift == 0)
-        return datum;
-    assert(shift > 0);
-    datum = (datum << shift) >> shift;
-    return datum;
+    return detail::integer_to_datum(int_val, bitsize());
 }
 
 TypedValue IntType::unary_op(Op op, RValue&& rval) {

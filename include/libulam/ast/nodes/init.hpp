@@ -40,10 +40,19 @@ public:
 
     template <typename N> void add(str_id_t name_id, Ptr<N>&& item) {
         assert(_map.count(name_id) == 0);
-        unsigned idx = child_num();
+        unsigned n = child_num();
         ListOf::add(std::move(item));
         _keys.push_back(name_id);
-        _map[name_id] = idx;
+        _map[name_id] = n;
+    }
+
+    Ref<Node> child_by_key(str_id_t name_id) {
+        assert(_map.count(name_id) == 1);
+        unsigned n = _map[name_id];
+        return InitList::child(n);
+    }
+    Ref<const Node> child_by_key(str_id_t name_id) const {
+        return const_cast<InitMap*>(this)->child_by_key(name_id);
     }
 
     const KeyList keys() const { return _keys; }
@@ -61,7 +70,9 @@ public:
 
     bool is_constr_call() const {
         return get().accept(
-            [&](const Ptr<ast::InitList>& list) { return list->is_constr_call(); },
+            [&](const Ptr<ast::InitList>& list) {
+                return list->is_constr_call();
+            },
             [&](auto&& other) { return false; });
     }
 };

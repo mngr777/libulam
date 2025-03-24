@@ -8,6 +8,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam::sema {
 
@@ -17,8 +18,9 @@ class EvalInit {
 public:
     using EvalRes = std::pair<Value, bool>;
 
-    EvalInit(EvalVisitor& eval, Diag& diag, Ref<Scope> scope):
-        _eval{eval}, _diag{diag}, _scope{scope} {}
+    EvalInit(
+        EvalVisitor& eval, Diag& diag, UniqStrPool& str_pool, Ref<Scope> scope):
+        _eval{eval}, _diag{diag}, _str_pool{str_pool}, _scope{scope} {}
 
     // {dimensions, is_array}
     std::pair<ArrayDimList, bool>
@@ -42,8 +44,12 @@ protected:
     EvalRes eval_array_list(
         Ref<ArrayType> array_type, Ref<ast::InitList> list, unsigned depth);
 
+    EvalRes
+    eval_class_map(Ref<Class> cls, Ref<ast::InitMap> map, unsigned depth);
+
     EvalVisitor& _eval;
     Diag& _diag;
+    UniqStrPool& _str_pool;
     Ref<Scope> _scope;
 };
 

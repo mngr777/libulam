@@ -311,7 +311,7 @@ Ptr<EvalExprVisitor> EvalVisitor::expr_visitor(Ref<Scope> scope) {
 }
 
 Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope) {
-    return make<EvalInit>(*this, diag(), scope);
+    return make<EvalInit>(*this, diag(), _program->str_pool(), scope);
 }
 
 Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope) {

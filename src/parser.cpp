@@ -938,6 +938,10 @@ Ptr<ast::InitMap> Parser::parse_init_map() {
         if (!_tok.is(tok::BraceR) && !expect(tok::Comma))
             goto Panic;
     }
+    if (!expect(tok::BraceR))
+        goto Panic;
+
+    return node;
 
 Panic:
     panic(tok::BraceR);

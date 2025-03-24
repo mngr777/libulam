@@ -84,11 +84,18 @@ EvalInit::eval_list(Ref<Type> type, Ref<ast::InitList> list, unsigned depth) {
 
 EvalInit::EvalRes
 EvalInit::eval_map(Ref<Type> type, Ref<ast::InitMap> map, unsigned depth) {
-    return {Value{RValue{}}, false}; // TODO
+    if (type->is_class()) {
+        return eval_class_map(type->as_class(), map, depth);
+    } else {
+        _diag.error(
+            map, "designated initializers are only supported for classes");
+        return {Value{RValue{}}, false};
+    }
 }
 
 EvalInit::EvalRes EvalInit::eval_class_list(
     Ref<Class> cls, Ref<ast::InitList> list, unsigned depth) {
+    // construct
     auto rval = cls->construct();
     if (list->size() == 0) {
         rval.set_is_consteval(true);
@@ -173,6 +180,46 @@ EvalInit::EvalRes EvalInit::eval_array_list(
                 copy ? item_val.copy_rvalue() : item_val.move_rvalue());
         }
     }
+    rval.set_is_consteval(is_consteval);
+    return {Value{std::move(rval)}, true};
+}
+
+EvalInit::EvalRes EvalInit::eval_class_map(
+    Ref<Class> cls, Ref<ast::InitMap> map, unsigned depth) {
+    // construct
+    auto rval = cls->construct();
+    assert(map->size() > 0);
+
+    bool is_consteval = true;
+    for (auto key : map->keys()) {
+        auto sym = cls->get(key);
+        // not found?
+        if (!sym) {
+            auto name = _str_pool.get(key);
+            auto message = std::string{"property `"} + std::string{name} +
+                           "' not found in " + cls->name();
+            _diag.error(map->child_by_key(key), std::move(message));
+            return {Value{RValue{}}, false};
+        }
+        // not a property?
+        if (!sym->is<Prop>()) {
+            auto name = _str_pool.get(key);
+            auto message = cls->name() + "." + std::string{name} + " is not a property";
+            _diag.error(map->child_by_key(key), std::move(message));
+            return {Value{RValue{}}, false};
+        }
+
+        // eval item
+        auto prop = sym->get<Prop>();
+        auto [val, ok] = eval_v(prop->type(), map->get(key), depth + 1);
+        if (!ok)
+            return {Value{RValue{}}, false};
+
+        // assign
+        is_consteval = is_consteval && val.is_consteval();
+        rval.prop(prop).assign(val.move_rvalue());
+    }
+
     rval.set_is_consteval(is_consteval);
     return {Value{std::move(rval)}, true};
 }

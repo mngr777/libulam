@@ -36,12 +36,15 @@ bool BoolType::is_true(const RValue& rval) const {
 }
 
 RValue BoolType::from_datum(Datum datum) const {
-    return RValue{(Unsigned)datum};
+    RValue rval{(Unsigned)datum};
+    return construct(is_true(rval));
 }
 
 Datum BoolType::to_datum(const RValue& rval) const {
     assert(rval.is<Unsigned>());
-    return rval.get<Unsigned>(); // ??
+    auto rval_upd = construct(is_true(rval));
+    auto uns_val = rval_upd.get<Unsigned>();
+    return uns_val;
 }
 
 TypedValue BoolType::unary_op(Op op, RValue&& rval) {

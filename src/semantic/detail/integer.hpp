@@ -38,6 +38,33 @@ constexpr Unsigned log2(Unsigned value) {
 #endif
 }
 
+constexpr Datum integer_to_datum(Integer value, bitsize_t size) {
+    assert(size > 0);
+    assert(size <= sizeof(value) * 8);
+
+    auto datum = (Datum)value;
+#ifndef NDEBUG
+    const int Shift = sizeof(value) * 8 - size;
+    if (Shift > 0) {
+        // remove leading 1's
+        datum = (datum << Shift) >> Shift;
+    }
+#endif
+    return datum;
+}
+
+constexpr Integer integer_from_datum(Datum datum, bitsize_t size) {
+    assert(size > 0);
+    assert(size <= sizeof(datum) * 8);
+
+    const int Shift = sizeof(datum) * 8 - size;
+    if (Shift > 0 && (1 << (size - 1) & datum)) {
+        // prepend negative value with 1's
+        datum |= (((Unsigned)1 << (Shift + 1)) - 1) << size;
+    }
+    return (Integer)datum;
+}
+
 constexpr Unsigned ones(bitsize_t n) {
     if (n == sizeof(Unsigned) * 8)
         return -1;
@@ -78,10 +105,8 @@ inline bitsize_t bitsize(Integer value) {
     if (value == 0)
         return 1;
     auto size = bitsize(abs(value));
-    if (size < 2)
-        return 2;
-    if (size > 2 && value == integer_min(size - 1))
-        return size - 1;
+    if (value != integer_min(size))
+        ++size;
     return size;
 }
 
