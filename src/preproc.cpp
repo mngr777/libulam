@@ -68,6 +68,15 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::StringT:
             token.type = tok::BuiltinTypeIdent;
             return *this;
+        case tok::__File:
+        case tok::__FilePath:
+        case tok::__Class:
+        case tok::__Func:
+            token.type = tok::String;
+            return *this;
+        case tok::__Line:
+            token.type = tok::Number;
+            return *this;
         case tok::Eof:
             _stack.pop();
             if (_stack.empty())
@@ -77,6 +86,11 @@ Preproc& Preproc::operator>>(Token& token) {
             return *this;
         }
     }
+}
+
+const Preproc::Path& Preproc::current_path() const {
+    assert(!_stack.empty());
+    return _stack.top().first->path();
 }
 
 void Preproc::push(Src* src) {

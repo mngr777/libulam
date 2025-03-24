@@ -29,6 +29,8 @@ public:
 
     Preproc& operator>>(Token& token);
 
+    const Path& current_path() const;
+
 private:
     struct {
         Version version;

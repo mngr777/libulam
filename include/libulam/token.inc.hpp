@@ -113,6 +113,12 @@ TOK(".", Period)
 TOK(",", Comma)
 TOK("...", Ellipsis)
 
+TOK("__FILE__", __File)
+TOK("__FILEPATH__", __FilePath)
+TOK("__LINE__", __Line)
+TOK("__CLASS__", __Class)
+TOK("__FUNC__", __Func)
+
 TOK(nullptr, Comment)
 TOK(nullptr, MlComment)
 TOK(nullptr, TypeIdent)

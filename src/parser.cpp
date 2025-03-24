@@ -1,5 +1,3 @@
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/var_decl.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -182,8 +180,11 @@ void Parser::parse_module_var_or_type_def(Ref<ast::ModuleDef> node) {
 
 Ptr<ast::ClassDef> Parser::parse_class_def() {
     auto node = parse_class_def_head();
-    if (node)
+    if (node) {
+        _cur_cls_name_id = node->name_id();
         parse_class_def_body(ref(node));
+        _cur_cls_name_id = NoStrId;
+    }
     return node;
 }
 
@@ -603,8 +604,10 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
             diag("function with a body is marked as native");
             ok = false;
         }
+        _cur_fun_name_id = name.str_id();
         body = make<ast::FunDefBody>();
         parse_as_block(ref(body));
+        _cur_fun_name_id = NoStrId;
     } else {
         // no body (must be either native or pure virtual)
         assert(_tok.is(tok::Semicol));
@@ -1966,7 +1969,7 @@ Ptr<ast::BoolLit> Parser::parse_bool_lit() {
 Ptr<ast::NumLit> Parser::parse_num_lit() {
     assert(_tok.is(tok::Number));
     auto loc_id = _tok.loc_id;
-    auto number = detail::parse_num_str(_ctx.diag(), _tok.loc_id, tok_str());
+    auto number = num_lit_number();
     consume();
     return tree_loc<ast::NumLit>(loc_id, std::move(number));
 }
@@ -1982,10 +1985,48 @@ Ptr<ast::NumLit> Parser::parse_char_lit() {
 Ptr<ast::StrLit> Parser::parse_str_lit() {
     assert(_tok.is(tok::String));
     auto loc_id = _tok.loc_id;
-    auto text = detail::parse_str(_ctx.diag(), _tok.loc_id, tok_str());
+    auto text = str_lit_text();
     consume();
     auto str_id = _text_pool.put(text);
     return tree_loc<ast::StrLit>(loc_id, String{str_id});
+}
+
+Number Parser::num_lit_number() {
+    assert(_tok.is(tok::Number));
+    switch (_tok.orig_type) {
+    case tok::Number:
+        return detail::parse_num_str(_ctx.diag(), _tok.loc_id, tok_str());
+    case tok::__Line:
+        return {Radix::Decimal, (Unsigned)_ctx.sm().loc(_tok.loc_id).linum()};
+    default:
+        assert(false);
+    }
+}
+
+std::string Parser::str_lit_text() {
+    assert(_tok.is(tok::String));
+    switch (_tok.orig_type) {
+    case tok::String:
+        return detail::parse_str(_ctx.diag(), _tok.loc_id, tok_str());
+    case tok::__File:
+        return _pp.current_path().filename();
+    case tok::__FilePath:
+        return _pp.current_path();
+    case tok::__Class:
+        if (_cur_cls_name_id == NoStrId) {
+            diag("__CLASS__ macro defined outside of class body");
+            return {};
+        }
+        return std::string{_str_pool.get(_cur_cls_name_id)};
+    case tok::__Func:
+        if (_cur_fun_name_id == NoStrId) {
+            diag("__FUN__ macro outside of function body");
+            return {};
+        }
+        return std::string{_str_pool.get(_cur_fun_name_id)};
+    default:
+        assert(false);
+    }
 }
 
 template <typename N, typename... Args> Ptr<N> Parser::tree(Args&&... args) {

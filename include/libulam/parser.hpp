@@ -157,6 +157,9 @@ private:
     template <typename N, typename... Args>
     Ptr<N> tree_loc(loc_id_t loc_id, Args&&... args);
 
+    std::string str_lit_text();
+    Number num_lit_number();
+
     std::string_view tok_str();
     ast::Str tok_ast_str();
     str_id_t tok_str_id();
@@ -165,8 +168,12 @@ private:
     UniqStrPool& _str_pool;
     UniqStrPool& _text_pool;
     Preproc _pp;
+
     Token _tok;
     std::stack<Token> _back;
+
+    str_id_t _cur_cls_name_id{NoStrId};
+    str_id_t _cur_fun_name_id{NoStrId};
 };
 
 } // namespace ulam

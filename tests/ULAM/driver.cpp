@@ -130,6 +130,15 @@ int main(int argc, char** argv) {
             "t41320_test_compiler_elementandquark_multibases_refbasecallsoverridebaseclassvirtualfunc.test", // -"-
             "t41323_test_compiler_elementandquark_multibases_virtualfuncscalledonsharedancestoranddatamembercopies.test", // -"-
             "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // -"-
+            "t41376_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccall.test", // classid magic, TODO
+            "t41379_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingclassidofref.test", // -"-
+            "t41380_test_compiler_elementandquark_multibases_constantspecificbasevariablevirtualfunccall.test", // -"-
+            "t41381_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingconstantclassidofref.test", // -"-
+            "t41382_test_compiler_elementandquarkswclassargs_wdefaultparamvalueandtype_insertCLASS.test", // __CLASS_*__, TODO
+            "t41384_test_compiler_elementandquarkwclassargs_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // base class access args, TODO
+            "t41391_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant.test", // classid magic, TODO
+            "t41392_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant2.test", // -"-
+            "t41393_test_compiler_elementandquark_multibases_virtualfuncsselectwselfSelfandclassidconstant3.test", // -"-
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
