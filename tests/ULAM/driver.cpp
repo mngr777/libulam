@@ -139,6 +139,9 @@ int main(int argc, char** argv) {
             "t41391_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant.test", // classid magic, TODO
             "t41392_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant2.test", // -"-
             "t41393_test_compiler_elementandquark_multibases_virtualfuncsselectwselfSelfandclassidconstant3.test", // -"-
+            "t41414_test_compiler_castingquarkreftobits_ish.test", // ref to base to Bits(Base.sizeof), TODO?? -- need "known dynamic type" flag similar to consteval for values
+            "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
+            "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

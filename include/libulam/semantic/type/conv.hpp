@@ -20,6 +20,7 @@ static constexpr conv_cost_t CastCost =
 static constexpr conv_cost_t ElementToAtomConvCost = 2;
 static constexpr conv_cost_t ClassToBitsConvCost = 3;
 static constexpr conv_cost_t BitsToClassConvCost = 3;
+static constexpr conv_cost_t BitsToAtomConvCost = 3;
 static constexpr conv_cost_t ClassDowncastCost = 1;
 static constexpr conv_cost_t ClassUpcastCost = CastCost;
 static constexpr conv_cost_t MaxConvCost = -1;

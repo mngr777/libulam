@@ -1,6 +1,7 @@
-#include "libulam/semantic/type/conv.hpp"
+#include "libulam/semantic/value/types.hpp"
 #include <algorithm>
 #include <functional>
+#include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtins.hpp>
@@ -31,22 +32,37 @@ bool BitsType::is_castable_to(Ref<const Type> type, bool expl) const {
 }
 
 Value BitsType::cast_to(Ref<const Type> type, Value&& val) {
+    // class?
     if (type->is_class()) {
         assert(type->bitsize() == bitsize());
         auto cls = type->as_class();
-        RValue new_rval{};
-        if (!val.empty()) {
-            auto rval = val.move_rvalue();
-            assert(rval.is<Bits>());
-            bool is_consteval = rval.is_consteval();
-            auto& bits = rval.get<Bits>();
-            new_rval = cls->construct(std::move(bits));
-            new_rval.set_is_consteval(is_consteval);
-        } else {
-            new_rval = cls->construct();
-        }
+        if (val.empty())
+            return Value{cls->construct()};
+
+        auto rval = val.move_rvalue();
+        assert(rval.is<Bits>());
+        bool is_consteval = rval.is_consteval();
+        auto& bits = rval.get<Bits>();
+        auto new_rval = cls->construct(std::move(bits));
+        new_rval.set_is_consteval(is_consteval);
         return Value{std::move(new_rval)};
     }
+
+    // atom?
+    if (type->is(AtomId)) {
+        assert(bitsize() == ULAM_ATOM_SIZE);
+        if (val.empty())
+            return Value{type->construct()};
+
+        auto rval = val.move_rvalue();
+        assert(rval.is<Bits>());
+        bool is_consteval = rval.is_consteval();
+        auto& bits = rval.get<Bits>();
+        auto new_rval = builtins().atom_type()->construct(std::move(bits));
+        new_rval.set_is_consteval(is_consteval);
+        return Value{std::move(new_rval)};
+    }
+
     return _PrimType::cast_to(type, std::move(val));
 }
 
@@ -55,6 +71,9 @@ conv_cost_t BitsType::conv_cost(Ref<const Type> type, bool allow_cast) const {
         return (allow_cast && type->bitsize() == bitsize())
                    ? BitsToClassConvCost
                    : MaxConvCost;
+    }
+    if (type->is(AtomId)) {
+        return (bitsize() == ULAM_ATOM_SIZE) ? BitsToAtomConvCost : MaxConvCost;
     }
     return _PrimType::conv_cost(type, allow_cast);
 }
@@ -141,11 +160,9 @@ bool BitsType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case BitsId:
         return expl || type->bitsize() >= bitsize();
     case AtomId:
-        assert(false); // TMP
-        return expl;
+        return expl && bitsize() == ULAM_ATOM_SIZE;
     case StringId:
-        assert(false); // TMP
-        return expl;
+        return false;
     case FunId:
     case VoidId:
     default:
@@ -166,11 +183,9 @@ bool BitsType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case BitsId:
         return true;
     case AtomId:
-        assert(false); // TMP
-        return expl;
+        return expl && bitsize() == ULAM_ATOM_SIZE;
     case StringId:
-        assert(false); // TMP
-        return expl;
+        return false;
     case FunId:
     case VoidId:
     default:
