@@ -11,12 +11,13 @@ namespace ulam {
 // Scope
 
 Scope::Symbol* Scope::get_local(str_id_t name_id) {
-    if (is(scp::Module))
-        return get(name_id);
-    auto scope = parent(scp::Module);
-    if (scope)
-        return scope->get(name_id);
-    return {};
+    // ??
+    if (is(scp::Class)) {
+        assert(parent());
+        return parent()->get(name_id);
+    }
+    auto sym = get(name_id, true);
+    return (sym || !parent()) ? sym : parent()->get_local(name_id);
 }
 
 // ScopeBase
