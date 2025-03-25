@@ -388,6 +388,40 @@ TypedValue ArrayType::type_op(TypeOp op) {
     }
 }
 
+bool ArrayType::is_castable_to(Ref<const Type> type, bool expl) const {
+    assert(!is_same(type));
+    if (!type->is_array())
+        return false;
+
+    auto array_type = type->as_array();
+    if (array_type->array_size() != array_size())
+        return false;
+
+    assert(!array_type->item_type()->is_same(item_type()));
+    return item_type()->is_castable_to(array_type->item_type(), expl);
+}
+
+Value ArrayType::cast_to(Ref<const Type> type, Value&& val) {
+    assert(!is_same(type));
+    assert(type->is_array());
+
+    auto array_type = type->as_array();
+    assert(array_type->array_size() == array_size());
+    assert(!array_type->item_type()->is_same(item_type()));
+
+    auto rval = type->construct();
+    rval.set_is_consteval(val.is_consteval());
+    for (array_idx_t i = 0; i < array_size(); ++i) {
+        auto item_lval = rval.array_access(i);
+        auto item_rval =
+            item_type()
+                ->cast_to(array_type->item_type(), Value{val.array_access(i)})
+                .move_rvalue();
+        item_lval.assign(std::move(item_rval));
+    }
+    return Value{std::move(rval)};
+}
+
 void ArrayType::set_canon(Ref<ArrayType> canon) {
     assert(canon);
     assert(canon->item_type() == item_type()->canon());

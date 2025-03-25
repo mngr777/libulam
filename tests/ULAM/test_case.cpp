@@ -16,17 +16,22 @@ void TestCase::run() {
     assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
-    // stdlib
-    compiler.parse_module_file(_stdlib_dir / "UrSelf.ulam");
-    compiler.parse_module_file(_stdlib_dir / "Empty.ulam");
 
     // add .inc srcs
     for (auto [path, text] : _inc_srcs)
         compiler.add_str_src(std::string{text}, path);
 
     // parse .ulam srcs
-    for (auto [path, text] : _srcs)
+    bool has_empty = false;
+    for (auto [path, text] : _srcs) {
+        has_empty = has_empty || path.filename() == "Empty.ulam";
         compiler.parse_module_str(std::string{text}, path);
+    }
+
+    // stdlib
+    compiler.parse_module_file(_stdlib_dir / "UrSelf.ulam");
+    if (!has_empty)
+        compiler.parse_module_file(_stdlib_dir / "Empty.ulam");
 
     // analyze
     auto program = compiler.analyze();

@@ -153,6 +153,7 @@ int main(int argc, char** argv) {
             "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
             "t41469_test_compiler_instanceofconstructor_ish.test", // instanceof with arguments, TODO
             "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
+            "t41487_test_compiler_constantatomarrayofasingleconstantelement_ish.test", // instanceof with arguments, TODO
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

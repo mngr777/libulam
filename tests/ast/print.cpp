@@ -451,11 +451,19 @@ void Printer::visit(ulam::Ref<ulam::ast::UnaryOp> node) {
     assert(node->op() != ulam::Op::None);
     assert(node->has_arg());
     paren_l();
-    if (ulam::ops::is_unary_pre_op(node->op()))
-        _os << ulam::ops::str(node->op());
-    accept_me(node->arg());
-    if (ulam::ops::is_unary_post_op(node->op()))
-        _os << ulam::ops::str(node->op());
+    if (node->op() == ulam::Op::Is) {
+        // `ident is Type`
+        assert(node->has_type_name());
+        accept_me(node->arg());
+        _os << " " << ulam::ops::str(node->op()) << " ";
+        accept_me(node->type_name());
+    } else {
+        if (ulam::ops::is_unary_pre_op(node->op()))
+            _os << ulam::ops::str(node->op());
+        accept_me(node->arg());
+        if (ulam::ops::is_unary_post_op(node->op()))
+            _os << ulam::ops::str(node->op());
+    }
     paren_r();
 }
 

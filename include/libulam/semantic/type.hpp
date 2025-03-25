@@ -302,6 +302,10 @@ public:
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
 
+    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+
+    Value cast_to(Ref<const Type> type, Value&& val) override;
+
     Ref<Type> item_type() { return _item_type; }
     Ref<const Type> item_type() const { return _item_type; }
 

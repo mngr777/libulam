@@ -119,6 +119,10 @@ ExprRes EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv) {
             }
             return res;
         }
+    } else if (from->is_array()) {
+        assert(to->is_array());
+        return {to, from->cast_to(to, std::move(val))};
+
     } else if (from->is(AtomId)) {
         return {to, from->cast_to(to, std::move(val))};
 
