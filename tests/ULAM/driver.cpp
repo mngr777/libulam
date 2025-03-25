@@ -97,13 +97,13 @@ int main(int argc, char** argv) {
             "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
             "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
             "t41043_test_compiler_forascond.test", // for (; (a as Type); ) {...}, TODO
-            "t41046_test_compiler_switchascondcases.test", // which() as cond
+            "t41046_test_compiler_switchascondcases.test", // which() as cond, TODO
             "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
             "t41051_test_compiler_element_castatomreffuncreturnvalue_issue.test", // Atom& to quark ref cast
             "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
-            "t41085_test_compiler_elementandquark_instanceofwithconstructor.test", // instanceof with arguments
+            "t41085_test_compiler_elementandquark_instanceofwithconstructor.test", // instanceof with arguments, TODO
             "t41088_test_compiler_instanceofconstructorfuncarg.test", // -"-
             "t41089_test_compiler_assigntofuncreturnvalueonlhs_evalerr.test", // assignment to rvalue
             "t41091_test_compiler_elementandquark_memberselectoninstanceofconstructorcallresult.test", // instanceof with arguments
@@ -151,6 +151,8 @@ int main(int argc, char** argv) {
             "t41453_test_compiler_templateclasseswithmembertypedefbaseclasses.test", // -"-
             "t41457_test_compiler_atomreftoaccessdatamemberofbaseclass_gencode_ish.test", // quark reference to Atom
             "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
+            "t41469_test_compiler_instanceofconstructor_ish.test", // instanceof with arguments, TODO
+            "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

@@ -364,8 +364,8 @@ RValue IntType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
     }
     case UnaryId: {
         Unsigned val = std::max((Integer)0, int_val);
-        val = std::min((Unsigned)type->bitsize(), detail::ones(val));
-        return RValue{val, is_consteval};
+        val = std::min(val, (Unsigned)type->bitsize());
+        return RValue{detail::ones(val), is_consteval};
     }
     case BitsId: {
         auto bits_rval = type->construct();
