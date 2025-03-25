@@ -39,7 +39,7 @@ Datum IntType::to_datum(const RValue& rval) const {
 
 TypedValue IntType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
-        return {this, Value{RValue{}}};
+        return {this, Value{std::move(rval)}};
 
     bool is_consteval = rval.is_consteval();
     auto int_val = rval.get<Integer>();

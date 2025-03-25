@@ -34,6 +34,8 @@ public:
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
+    TypedValue unary_op(Op op, RValue&& rval) override;
+
     TypedValue binary_op(
         Op op,
         RValue&& l_rval,

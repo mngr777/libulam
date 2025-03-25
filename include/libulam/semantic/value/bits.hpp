@@ -114,6 +114,8 @@ public:
 
     size_t len() const { return _len; }
 
+    void flip();
+
     bool operator==(const Bits& other) const;
     bool operator!=(const Bits& other) const;
 

@@ -78,6 +78,22 @@ conv_cost_t BitsType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return _PrimType::conv_cost(type, allow_cast);
 }
 
+TypedValue BitsType::unary_op(Op op, RValue&& rval) {
+    if (rval.empty())
+        return {this, Value{std::move(rval)}};
+
+    switch (op) {
+    case Op::BwNot: {
+        assert(rval.is<Bits>());
+        auto& bits = rval.get<Bits>();
+        bits.flip();
+        return {this, Value{std::move(rval)}};
+    }
+    default:
+        assert(false);
+    }
+}
+
 TypedValue BitsType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(BitsId) || r_type->is(UnsignedId));

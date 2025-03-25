@@ -264,6 +264,14 @@ void Bits::write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
     _bits[unit_idx] = (_bits[unit_idx] & ~mask) | (value << shift);
 }
 
+void Bits::flip() {
+    if (_len == 0)
+        return;
+    for (auto& unit : _bits)
+        unit = ~unit;
+    _bits[_bits.size() - 1] &= last_unit_mask();
+}
+
 bool Bits::operator==(const Bits& other) const {
     return _len == other._len && _bits == other._bits;
 }
