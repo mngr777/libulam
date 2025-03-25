@@ -83,9 +83,9 @@ int main(int argc, char** argv) {
             "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
             "t3834_test_compiler_atomreffromsuperquarkrefwithcast.test", // quark element base to Atom&: use (Atom&)(Elt&)q ?
             "t3837_test_compiler_element_quarkrefatomof_issue.test", // Atom to quark element base reference: use (QPerc&)(Elt&) ?
-            "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use, wontfix?
-            "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition, wontfix?
-            "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value, wontfix?
+            "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use
+            "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition
+            "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
             "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
             "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
             "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
             "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
             "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
             "t41153_test_compiler_elementandquark_selfcasttoatom_issue.test", // quark to Atom cast
-            "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param ised in previous param definition, wontfix?
+            "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param ised in previous param definition
             "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
             "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
             "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"-
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
             "t41391_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant.test", // classid magic, TODO
             "t41392_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant2.test", // -"-
             "t41393_test_compiler_elementandquark_multibases_virtualfuncsselectwselfSelfandclassidconstant3.test", // -"-
-            "t41414_test_compiler_castingquarkreftobits_ish.test", // ref to base to Bits(Base.sizeof), TODO?? -- need "known dynamic type" flag similar to consteval for values
+            "t41414_test_compiler_castingquarkreftobits_ish.test", // ref to base to Bits(Base.sizeof), TODO?? -- need "known dynamic type" flag similar to consteval for values?
             "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
             "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
             "t41438_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // tpl constant used as default tpl param value
@@ -163,6 +163,10 @@ int main(int argc, char** argv) {
             "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
             "t41619_test_compiler_positionofdatamemberinbaseclassofbaseclassnoref.test", // positionof base type chain, TODO
             "t41621_test_compiler_elementpositionofdatamemberusingSelf.test", // instanceof base type chain, TODO
+            "t41647_test_compiler_elementinheritedquarks_multibase_templatebaseclasswithdmandfuncnotfound.test", // class typedef used in parent list
+            "t41648_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocalnone_issue.test", // -"-
+            "t41649_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocaldm_issue.test", // -"-
+            "t41650_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedeflocals_issue.test", // -"-
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)
