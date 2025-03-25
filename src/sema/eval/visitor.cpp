@@ -444,6 +444,8 @@ bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
     res = cast->cast(expr, boolean, res.move_typed_value(), true);
     if (!res)
         return false;
+    if (res.value().empty())
+        throw EvalExceptError("empty value in condition");
     return boolean->is_true(res.move_value().move_rvalue());
 }
 

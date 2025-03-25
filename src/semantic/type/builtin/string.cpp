@@ -48,7 +48,6 @@ Datum StringType::to_datum(const RValue& rval) const {
     return datum;
 }
 
-
 str_len_t StringType::len(const Value& val) const {
     if (val.empty())
         return NoStrLen;
@@ -100,6 +99,70 @@ TypedValue StringType::binary_op(
         auto rval = type->construct(l_str != r_str);
         rval.set_is_consteval(is_consteval);
         return {type, Value{std::move(rval)}};
+    }
+    default:
+        assert(false);
+    }
+}
+
+bool StringType::is_castable_to_prim(
+    Ref<const PrimType> type, bool expl) const {
+    switch (type->bi_type_id()) {
+    case BoolId:
+        return expl;
+    case StringId:
+        assert(false);
+    default:
+        return false;
+    }
+}
+
+bool StringType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
+    switch (id) {
+    case BoolId:
+        return expl;
+    case StringId:
+        assert(false);
+    default:
+        return false;
+    }
+}
+
+TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
+    assert(is_expl_castable_to(id));
+
+    bool is_unknown = rval.empty();
+    bool is_consteval = !is_unknown && rval.is_consteval();
+
+    switch (id) {
+    case BoolId: {
+        auto boolean = builtins().boolean();
+        if (is_unknown)
+            return {boolean, Value{RValue{}}};
+        bool is_empty = len(Value{rval.copy()}) == 0;
+        auto new_rval = boolean->construct(!is_empty);
+        new_rval.set_is_consteval(is_consteval);
+        return {boolean, Value{std::move(new_rval)}};
+    }
+    default:
+        assert(false);
+    }
+}
+
+RValue StringType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+    assert(is_expl_castable_to(type));
+    if (rval.empty())
+        return std::move(rval);
+
+    bool is_consteval = rval.is_consteval();
+
+    switch (type->bi_type_id()) {
+    case BoolId: {
+        auto boolean = builtins().bool_type(type->bitsize());
+        bool is_empty = len(Value{rval.copy()}) == 0;
+        auto new_rval = boolean->construct(!is_empty);
+        new_rval.set_is_consteval(is_consteval);
+        return new_rval;
     }
     default:
         assert(false);

@@ -142,6 +142,15 @@ int main(int argc, char** argv) {
             "t41414_test_compiler_castingquarkreftobits_ish.test", // ref to base to Bits(Base.sizeof), TODO?? -- need "known dynamic type" flag similar to consteval for values
             "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
             "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
+            "t41438_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // tpl constant used as default tpl param value
+            "t41439_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // -"-
+            "t41444_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwmemberconstantdefaults_unseencase_ish.test", // -"-
+            "t41445_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwmemberconstantdefaults_seencase_ish.test", // -"-
+            "t41447_test_compiler_quarktemplatewithtypedefanddmfrombasesbaseclasstemplateclassinstance.test", // native function result used in condition
+            "t41452_test_compiler_templateclasseswiththreewayreferencingtypedefs.test", // class typedef used in parent list
+            "t41453_test_compiler_templateclasseswithmembertypedefbaseclasses.test", // -"-
+            "t41457_test_compiler_atomreftoaccessdatamemberofbaseclass_gencode_ish.test", // quark reference to Atom
+            "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

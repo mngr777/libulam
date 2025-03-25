@@ -46,6 +46,14 @@ public:
 
     BuiltinTypeId bi_type_id() const override { return StringId; }
 
+protected:
+    bool is_castable_to_prim(
+        Ref<const PrimType> type, bool expl = true) const override;
+    bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
+
+    TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
+    RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) override;
+
 private:
     UniqStrPool& _text_pool;
 };
