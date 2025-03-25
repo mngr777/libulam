@@ -61,7 +61,7 @@ LValue LValue::as(Ref<Type> type) {
 
 LValue LValue::atom_of() {
     auto data_view = accept(
-        [&](Ref<Var> var) { return var->data_view(); },
+        [&](Ref<Var> var) { return var->data_view().atom_of(); },
         [&](DataView& data) { return data.atom_of(); },
         [&](BoundFunSet& bfset) { return DataView{}; },
         [&](std::monostate&) { return DataView{}; });
@@ -175,6 +175,15 @@ LValue RValue::as(Ref<Type> type) {
     return lval;
 }
 
+LValue RValue::atom_of() {
+    auto data = accept(
+        [&](DataPtr& data) { return data->view(); },
+        [&](auto& other) { return DataView{}; });
+    if (!data)
+        return LValue{};
+    return LValue{data.atom_of()};
+}
+
 LValue RValue::array_access(array_idx_t idx) {
     return accept(
         [&](DataPtr& data) { return LValue{data->array_item(idx)}; },
@@ -221,6 +230,10 @@ LValue Value::self() {
 
 LValue Value::as(Ref<Type> type) {
     return accept([&](auto& val) { return val.as(type); });
+}
+
+LValue Value::atom_of() {
+    return accept([&](auto& val) { return val.atom_of(); });
 }
 
 Value Value::array_access(array_idx_t idx) {

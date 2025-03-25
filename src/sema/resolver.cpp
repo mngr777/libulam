@@ -322,7 +322,7 @@ Ref<Type> Resolver::resolve_type_name(
 
     // follow rest of type idents, resolve aliases along the way
     // e.g. in `A(x).B.C`, `A(x)` and `A(x).B` must resolve to classes,
-    // `A(x).B` and `A(x).B.C` must be typedefs
+    // `A(x).B` and `A(x).B.C` must be typedefs (or base classes)
     auto ident = type_name->ident(0);
     for (unsigned n = 1; n < type_name->child_num(); ++n) {
         // init next class
@@ -346,9 +346,14 @@ Ref<Type> Resolver::resolve_type_name(
             type = cls->super();
         } else {
             assert(!ident->is_self());
+            // alias?
             type = cls->init_type_def(*this, ident->name_id());
+            if (!type) {
+                // base?
+                type = cls->base_by_name_id(ident->name_id());
+            }
         }
-        // not found ?
+        // not found?
         if (!type) {
             _diag.error(ident, "type name not found in class");
             return {};

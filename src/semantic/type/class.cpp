@@ -187,6 +187,11 @@ Ref<Class> Class::super() {
     return (*_ancestry.parents().begin())->cls();
 }
 
+Ref<Class> Class::base_by_name_id(str_id_t name_id) {
+    auto anc = _ancestry.base(name_id);
+    return anc ? anc->cls() : Ref<Class>{};
+}
+
 bitsize_t Class::base_off(Ref<const Class> base) const {
     assert(base->is_base_of(this));
     return direct_bitsize() + _ancestry.data_off(base);

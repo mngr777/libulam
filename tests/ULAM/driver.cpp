@@ -154,6 +154,12 @@ int main(int argc, char** argv) {
             "t41469_test_compiler_instanceofconstructor_ish.test", // instanceof with arguments, TODO
             "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
             "t41487_test_compiler_constantatomarrayofasingleconstantelement_ish.test", // instanceof with arguments, TODO
+            "t41506_test_compiler_elementinheritedquark_constantof_withsuper.test", // quark to Atom
+            "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // class typedef used in parent list
+            "t41524_test_compiler_elementmultiinheritance_shadowingtypedefsinhierarchy.test", // -"-
+            "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
+            "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
+            "t41533_test_compiler_instanceofconstructorandclassidof.test", // instanceof with arguments, TODO
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

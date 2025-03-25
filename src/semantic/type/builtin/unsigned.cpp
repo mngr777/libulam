@@ -371,8 +371,10 @@ RValue UnsignedType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
         return RValue{val, is_consteval};
     }
     case BitsId: {
+        auto size = std::min(bitsize(), type->bitsize());
+        uns_val = std::min(uns_val, detail::unsigned_max(size));
         auto bits_rval = type->construct();
-        bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
+        bits_rval.get<Bits>().write_right(size, (Datum)uns_val);
         bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }

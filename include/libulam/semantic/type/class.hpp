@@ -67,6 +67,8 @@ public:
     bool has_super() const;
     Ref<Class> super();
 
+    Ref<Class> base_by_name_id(str_id_t name_id);
+
     bitsize_t base_off(Ref<const Class> base) const;
 
     auto& parents() { return _ancestry.parents(); }

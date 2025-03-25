@@ -92,6 +92,7 @@ public:
 
     LValue self();
     LValue as(Ref<Type> type);
+    LValue atom_of();
 
     LValue array_access(array_idx_t idx);
     LValue prop(Ref<Prop> prop);
@@ -138,6 +139,7 @@ public:
 
     LValue self();
     LValue as(Ref<Type> type);
+    LValue atom_of();
 
     Value array_access(array_idx_t index);
     Value prop(Ref<Prop> prop);

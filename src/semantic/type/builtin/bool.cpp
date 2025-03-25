@@ -170,9 +170,11 @@ RValue BoolType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
         return RValue{uns_val, is_consteval};
     }
     case BitsId: {
-        auto bits_rval = type->construct();
         auto size = std::min(bitsize(), type->bitsize());
-        bits_rval.get<Bits>().write_right(size, to_datum(rval));
+        auto boolean = builtins().bool_type(size);
+        auto datum = boolean->to_datum(boolean->construct(is_truth));
+        auto bits_rval = type->construct();
+        bits_rval.get<Bits>().write_right(size, datum);
         bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }

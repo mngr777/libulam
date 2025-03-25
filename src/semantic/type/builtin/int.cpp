@@ -368,9 +368,12 @@ RValue IntType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
         return RValue{detail::ones(val), is_consteval};
     }
     case BitsId: {
+        auto size = std::min(bitsize(), type->bitsize());
+        int_val = std::min(int_val, detail::integer_max(size));
+        int_val = std::max(int_val, detail::integer_min(size));
+        auto datum = detail::integer_to_datum(int_val, size);
         auto bits_rval = type->construct();
-        // TODO: adjust value?
-        bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
+        bits_rval.get<Bits>().write_right(size, datum);
         bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }

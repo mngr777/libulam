@@ -235,8 +235,11 @@ RValue UnaryType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
         return RValue{detail::ones(uns_val), is_consteval};
     }
     case BitsId: {
+        auto size = std::min(bitsize(), type->bitsize());
+        uns_val = std::min<bitsize_t>(uns_val, size);
+        Datum datum = detail::ones(uns_val);
         auto bits_rval = type->construct();
-        bits_rval.get<Bits>().write_right(type->bitsize(), to_datum(rval));
+        bits_rval.get<Bits>().write_right(size, datum);
         bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }

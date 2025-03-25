@@ -106,6 +106,8 @@ TypedValue Type::type_op(TypeOp op) {
             builtins().type(UnsignedId),
             Value{RValue{(Unsigned)bitsize(), true}}};
     }
+    case TypeOp::ConstantOf:
+        // TODO: store constant in Program?
     case TypeOp::InstanceOf: {
         if (!is_constructible())
             return {};
@@ -126,9 +128,9 @@ TypedValue Type::type_op(TypeOp op, Value& val) {
     switch (op) {
     case TypeOp::AtomOf: {
         auto atom_type = builtins().atom_type();
-        if (val.empty() || val.is_rvalue())
+        if (val.empty())
             return {};
-        auto lval = val.lvalue().atom_of();
+        auto lval = val.atom_of();
         if (lval.empty())
             return {};
         return {atom_type, Value{lval.as(atom_type)}};
