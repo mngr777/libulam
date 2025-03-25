@@ -87,6 +87,8 @@ public:
     DataView atom_of();
     const DataView atom_of() const;
 
+    bitsize_t position_of() const;
+
     bool is_array() const;
     bool is_object() const;
     bool is_atom() const;

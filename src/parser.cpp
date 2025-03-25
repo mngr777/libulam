@@ -80,9 +80,9 @@ bool Parser::expect(tok::Type type) {
 
 template <typename... Ts> void Parser::panic(Ts... stop) {
     while (!_tok.in(tok::Eof, stop...)) {
-        // consume everything until closing paren/brace/bracket,
-        // ignore mismatches
         if (_tok.in(tok::ParenL, tok::BraceL, tok::BracketL)) {
+            // consume everything until closing paren/brace/bracket,
+            // ignore mismatches
             consume();
             unsigned open = 1;
             while (open > 0 && !_tok.is(tok::Eof)) {
@@ -1489,7 +1489,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(expr_flags_t flags) {
     consume();
     Ptr<ast::Expr> inner{};
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
-        // cast or type op
+        // (Type) | (Type.<type_op>
         auto full_type_name = parse_full_type_name(true);
         if (!full_type_name)
             goto Panic;
@@ -1534,6 +1534,19 @@ Ptr<ast::Expr> Parser::parse_class_const_access_or_type_op() {
 Ptr<ast::TypeOpExpr>
 Parser::parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr) {
     assert((bool)type != (bool)expr);
+
+    // obj.Base.<type_op>
+    Ptr<ast::TypeIdent> base{};
+    if (_tok.is(tok::TypeIdent)) {
+        if (!expr) {
+            unexpected();
+            return {};
+        }
+        base = parse_type_ident(TypeAllowSuper);
+        if (!base || !expect(tok::Period))
+            return {};
+    }
+
     auto type_op = _tok.type_op();
     if (type_op == TypeOp::None) {
         unexpected();
@@ -1542,7 +1555,7 @@ Parser::parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr) {
     auto loc_id = _tok.loc_id;
     consume();
     return tree_loc<ast::TypeOpExpr>(
-        loc_id, type_op, std::move(type), std::move(expr));
+        loc_id, type_op, std::move(type), std::move(expr), std::move(base));
 }
 
 Ptr<ast::TypeExpr> Parser::parse_type_expr() {
@@ -1761,9 +1774,33 @@ Parser::parse_member_access_type_op_or_op_call(Ptr<ast::Expr>&& obj) {
     auto op_loc_id = _tok.loc_id;
     consume();
 
-    if (_tok.in(tok::Ident, tok::TypeIdent, tok::Operator))
+    if (_tok.in(tok::Ident, tok::Operator)) {
+        // <obj>.ident | <obj>.operator<op>
         return parse_member_access_or_op_call_rest(std::move(obj), op_loc_id);
+    }
 
+    // <obj>.Type.
+    if (_tok.is(tok::TypeIdent)) {
+        // Type
+        auto ident_tok = _tok;
+        consume();
+        // .
+        if (!match(tok::Period))
+            return {};
+        auto period_tok = _tok;
+        consume();
+        auto cur = _tok;
+        putback(period_tok);
+        putback(ident_tok);
+        if (cur.is_type_op()) {
+            // <obj>.Type.<type_op>
+            return parse_type_op_rest({}, std::move(obj));
+        }
+        // <obj>.Type.ident?
+        return parse_member_access_or_op_call_rest(std::move(obj), op_loc_id);
+    }
+
+    // <obj>.<type_op>
     if (_tok.is_type_op())
         return parse_type_op_rest({}, std::move(obj));
 
@@ -1775,17 +1812,15 @@ Ptr<ast::Expr> Parser::parse_member_access_or_op_call_rest(
     Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
     assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Operator));
 
+    // obj.Base.mem
     Ptr<ast::TypeIdent> base{};
-    Ptr<ast::Ident> ident{};
-
-    // foo.Base.bar
     if (_tok.is(tok::TypeIdent)) {
         base = parse_type_ident(TypeAllowSuper);
-        if (!base)
+        if (!base || !expect(tok::Period))
             return {};
-        expect(tok::Period);
     }
 
+    Ptr<ast::Ident> ident{};
     tok::Type op_tok_type = tok::Eof;
     if (_tok.is(tok::Operator)) {
         consume();

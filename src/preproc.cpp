@@ -131,7 +131,6 @@ void Preproc::preproc_ulam() {
 void Preproc::preproc_use() {
     Token token;
     if (expect(token, tok::TypeIdent, tok::Semicol, tok::Eof)) {
-        // TODO: load
         expect(token, tok::Semicol, tok::Eof);
     }
 }

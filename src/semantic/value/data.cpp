@@ -149,6 +149,11 @@ const DataView DataView::atom_of() const {
     return const_cast<DataView*>(this)->atom_of();
 }
 
+bitsize_t DataView::position_of() const {
+    // TMP
+    return _off;
+}
+
 bool DataView::is_array() const { return _view_type->is_array(); }
 bool DataView::is_object() const { return _view_type->is_object(); }
 bool DataView::is_atom() const { return _view_type->is_atom(); }

@@ -139,7 +139,7 @@ void TestCase::parse() {
         if (!is_upper())
             error("file name must start with upper case letter");
         auto start = pos++;
-        while (is_alnum() || text[pos] == '.')
+        while (is_alnum() || text[pos] == '_' || text[pos] == '.')
             ++pos;
         return text.substr(start, pos - start);
     };

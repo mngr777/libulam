@@ -51,9 +51,27 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     auto expr_res = node->expr()->accept(*this);
     if (!expr_res)
         return expr_res;
-    assert(expr_res.type());
+
+    auto type = expr_res.type();
     auto val = expr_res.move_value();
-    auto tv = expr_res.type()->actual()->type_op(node->op(), val);
+
+    // obj.Base.<type_op>?
+    if (node->has_base()) {
+        if (!type->is_class()) {
+            diag().error(node->base(), "not an object");
+            return {ExprError::NotObject};
+        }
+        auto cls = class_base(node, type->as_class(), node->base());
+        if (!cls) {
+            auto error = node->base()->is_super() ? ExprError::NoSuper
+                                                  : ExprError::BaseNotFound;
+            return {error};
+        }
+        val = Value{val.as(cls)};
+        type->actual()->type_op(node->op(), val);
+    }
+
+    auto tv = type->actual()->type_op(node->op(), val);
     if (!tv)
         return {ExprError::InvalidTypeOperator};
     return tv;
@@ -363,7 +381,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
     auto cls = obj_res.type()->actual()->as_class();
     auto obj_val = obj_res.move_value();
 
-    // foo.Base.bar?
+    // obj.Base.bar?
     if (node->has_base()) {
         cls = class_base(node, cls, node->base());
         if (!cls) {

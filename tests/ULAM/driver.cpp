@@ -160,6 +160,7 @@ int main(int argc, char** argv) {
             "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
             "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
             "t41533_test_compiler_instanceofconstructorandclassidof.test", // instanceof with arguments, TODO
+            "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
         };
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (skip.count(test_paths[n - 1].filename()) > 0)

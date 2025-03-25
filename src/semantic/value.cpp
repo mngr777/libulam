@@ -21,7 +21,7 @@ DataView LValue::data_view() {
     return accept(
         [&](Ref<Var> var) { return var->data_view(); },
         [&](DataView& data) { return data; },
-        [&](BoundFunSet&) -> DataView { assert(false); },
+        [&](BoundFunSet&) { return DataView{}; },
         [&](std::monostate&) { return DataView{}; });
 }
 
@@ -139,7 +139,7 @@ RValue RValue::copy() const {
 DataView RValue::data_view() {
     return accept(
         [&](DataPtr data) { return data->view(); },
-        [&](auto& other) -> DataView { assert(false); });
+        [&](auto& other) { return DataView{}; });
 }
 
 const DataView RValue::data_view() const {
@@ -234,6 +234,11 @@ LValue Value::as(Ref<Type> type) {
 
 LValue Value::atom_of() {
     return accept([&](auto& val) { return val.atom_of(); });
+}
+
+bitsize_t Value::position_of() {
+    auto data = data_view();
+    return data ? data.position_of() : NoBitsize;
 }
 
 Value Value::array_access(array_idx_t idx) {

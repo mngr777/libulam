@@ -127,13 +127,24 @@ TypedValue Type::type_op(TypeOp op) {
 TypedValue Type::type_op(TypeOp op, Value& val) {
     switch (op) {
     case TypeOp::AtomOf: {
-        auto atom_type = builtins().atom_type();
         if (val.empty())
             return {};
+        auto atom_type = builtins().atom_type();
         auto lval = val.atom_of();
         if (lval.empty())
             return {};
         return {atom_type, Value{lval.as(atom_type)}};
+    }
+    case TypeOp::PositionOf: {
+        if (val.empty())
+            return {};
+        auto pos = val.position_of();
+        if (pos == NoBitsize)
+            return {};
+        auto uns_type = builtins().unsigned_type();
+        RValue rval{(Unsigned)pos};
+        rval.set_is_consteval(true);
+        return {uns_type, Value{std::move(rval)}};
     }
     default:
         return type_op(op);

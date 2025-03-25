@@ -141,6 +141,8 @@ public:
     LValue as(Ref<Type> type);
     LValue atom_of();
 
+    bitsize_t position_of();
+
     Value array_access(array_idx_t index);
     Value prop(Ref<Prop> prop);
     Value bound_fset(Ref<FunSet> fset);
