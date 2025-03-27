@@ -20,7 +20,7 @@ mkdir build
 cd build
 ../configure
 # with debug output:
-# CXXFLAGS='-DDEBUG_INIT -DEBUG_RESOLVER -DDEBUG_EVAL -DDEBUG_EVAL_EXPR_VISITOR' ../configure
+# ../configure CPPFLAGS='-DDEBUG_INIT -DEBUG_RESOLVER -DDEBUG_EVAL -DDEBUG_EVAL_EXPR_VISITOR'
 make -j4
 
 # running tests:
