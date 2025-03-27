@@ -12,7 +12,7 @@ See [docs/overview.md](docs/overview.md) for some implementation details.
 libulam interpreter can run about 90% of ULAM's `generic/safe` tests. A list of skipped tests can be found in [tests/ULAM/driver.cpp](tests/ULAM/driver.cpp#L104). Some of these tests are TODO and some are skipped because of changes to the language (see [docs/ulam-diff.md](docs/ulam-diff.md)).
 
 ## Building
-
+GNU autotools suit is used to build the library.
 ```
 cd /path/to/repo
 ./autogen.sh
