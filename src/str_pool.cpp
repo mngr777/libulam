@@ -1,5 +1,5 @@
-#include "libulam/str_pool.hpp"
 #include <cassert>
+#include <libulam/str_pool.hpp>
 
 namespace ulam {
 
@@ -19,8 +19,7 @@ StrPoolBase::PairT StrPoolBase::store(const std::string_view str, bool copy) {
 
 // UniqStrPool
 
-UniqStrPool::UniqStrPool(UniqStrPool* parent):
-    StrPoolBase{}, _parent{parent} {
+UniqStrPool::UniqStrPool(UniqStrPool* parent): StrPoolBase{}, _parent{parent} {
     if (_parent) {
         _offset = _parent->_offset + _parent->_index.size();
         _parent->_is_locked = true; // lock parent

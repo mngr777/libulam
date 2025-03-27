@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/bound_fun_set.hpp"
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>

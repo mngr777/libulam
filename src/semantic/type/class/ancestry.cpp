@@ -1,4 +1,3 @@
-#include "libulam/semantic/type.hpp"
 #include <cassert>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>

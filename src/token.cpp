@@ -1,6 +1,6 @@
-#include "libulam/semantic/ops.hpp"
 #include "src/detail/string.hpp"
 #include <cassert>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/token.hpp>
 #include <map>
 

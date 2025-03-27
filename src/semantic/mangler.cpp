@@ -5,7 +5,6 @@
 #include <libulam/semantic/type/class.hpp>
 #include <sstream>
 
-#define DEBUG_MANGLER // TEST
 #ifdef DEBUG_MANGLER
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::Mangler] "

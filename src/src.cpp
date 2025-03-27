@@ -1,7 +1,7 @@
-#include "libulam/src.hpp"
-#include "libulam/memory/buf.hpp"
 #include <cstdio>
 #include <cstring>
+#include <libulam/memory/buf.hpp>
+#include <libulam/src.hpp>
 
 namespace ulam {
 

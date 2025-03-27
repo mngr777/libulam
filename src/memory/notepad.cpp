@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "libulam/memory/notepad.hpp"
+#include <libulam/memory/notepad.hpp>
 
 namespace ulam::mem {
 

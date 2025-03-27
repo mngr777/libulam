@@ -15,12 +15,11 @@
 #include <libulam/semantic/var.hpp>
 #include <utility>
 
-#define DEBUG_EVAL // TEST
 #ifdef DEBUG_EVAL
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::sema::EvalVisitor] "
-#    include "src/debug.hpp"
 #endif
+#include "src/debug.hpp"
 
 namespace ulam::sema {
 

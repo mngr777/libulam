@@ -18,12 +18,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#define DEBUG_INIT // TEST
 #ifdef DEBUG_INIT
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[sema::Init] "
-#    include "src/debug.hpp"
 #endif
+#include "src/debug.hpp"
 
 namespace ulam::sema {
 

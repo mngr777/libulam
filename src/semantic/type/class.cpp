@@ -20,12 +20,11 @@
 #include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 
-#define DEBUG_CLASS // TEST
 #ifdef DEBUG_CLASS
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::Class] "
-#    include "src/debug.hpp"
 #endif
+#include "src/debug.hpp"
 
 namespace ulam {
 

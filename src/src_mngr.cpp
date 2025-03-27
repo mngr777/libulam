@@ -1,6 +1,6 @@
-#include "libulam/src_mngr.hpp"
-#include "libulam/src_loc.hpp"
 #include <cassert>
+#include <libulam/src_loc.hpp>
+#include <libulam/src_mngr.hpp>
 
 namespace ulam {
 

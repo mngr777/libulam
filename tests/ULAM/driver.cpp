@@ -1,17 +1,20 @@
 #include "./test_case.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
-#include <set> // TEST
+#include <set>
 #include <stdexcept>
 #include <string>
+
+constexpr char UlamPathEnv[] = "ULAM_PATH";
 
 using Path = std::filesystem::path;
 
 static void exit_usage(std::string name) {
-    std::cout << name << " <path-to-ulam-src-root>[ <case-number>]\n";
+    std::cout << name << "[{<case-number>|'t<test-number>'}]\n";
     std::exit(-1);
 }
 
@@ -43,17 +46,34 @@ static bool run(Path stdlib_dir, unsigned n, std::vector<Path> test_paths) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 2)
+    // ULAM root
+    const char* ulam_path_env = std::getenv(UlamPathEnv);
+    if (!ulam_path_env) {
+        std::cerr << "`" << UlamPathEnv << "' is not set\n";
+        std::exit(-1);
+    }
+    const Path ulam_src_root{ulam_path_env};
+    if (argc > 2)
         exit_usage(argv[0]);
+
     // ULAM paths
-    const Path ulam_src_root{argv[1]};
     const Path stdlib_dir{ulam_src_root / "share" / "ulam" / "stdlib"};
     const Path test_src_dir{
         ulam_src_root / "src" / "test" / "generic" / "safe"};
-    // test case number
+
+    // case number/test name
     unsigned case_num = 0;
-    if (argc > 2)
-        case_num = std::stoul(argv[2]);
+    std::string test_name;
+    if (argc > 1) {
+        std::string_view arg{argv[1]};
+        if (arg.empty())
+            exit_usage(argv[0]);
+        if (arg[0] == 't') {
+            test_name = arg;
+        } else {
+            case_num = std::stoul(arg.data());
+        }
+    }
 
     std::vector<Path> test_paths;
     {
@@ -63,7 +83,24 @@ int main(int argc, char** argv) {
     }
     std::sort(test_paths.begin(), test_paths.end());
 
-    if (case_num == 0) {
+    if (case_num != 0) {
+        if (case_num <= test_paths.size()) {
+            run(stdlib_dir, case_num, test_paths);
+        } else {
+            std::cout << "case not found\n";
+        }
+
+    } else if (!test_name.empty()) {
+        auto it = std::find_if(test_paths.begin(), test_paths.end(), [&](const Path& path) {
+            return path.filename().string().substr(0, test_name.size()) == test_name;
+        });
+        if (it != test_paths.end()) {
+            run(stdlib_dir, std::distance(test_paths.begin(), it) + 1, test_paths);
+        } else {
+            std::cout << "test not found\n";
+        }
+
+    } else {
         std::set<std::string> skip = {
             "t3233_test_compiler_elementandquarkarray_ew.test", // aref called by name
             "t3241_test_compiler_unarymod.test", // invalid implicit cast?
@@ -173,12 +210,6 @@ int main(int argc, char** argv) {
                 continue;
             if (!run(stdlib_dir, n, test_paths))
                 break;
-        }
-    } else {
-        if (case_num <= test_paths.size()) {
-            run(stdlib_dir, case_num, test_paths);
-        } else {
-            std::cout << "case not found\n";
         }
     }
 }

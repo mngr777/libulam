@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/atom.hpp>

@@ -1,3 +1,3 @@
-#include "libulam/memory/buf.hpp"
+#include <libulam/memory/buf.hpp>
 
 namespace ulam::mem {}

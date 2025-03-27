@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
@@ -8,12 +7,11 @@
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 
-#define DEBUG_SEMA_RESOLVER // TEST
 #ifdef DEBUG_SEMA_RESOLVER
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[sema::Resolver] "
-#    include "src/debug.hpp"
 #endif
+#include "src/debug.hpp"
 
 #define CHECK_STATE(decl)                                                      \
     do {                                                                       \

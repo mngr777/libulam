@@ -1,4 +1,3 @@
-#include "libulam/semantic/type.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/eval/cast.hpp>
@@ -20,10 +19,9 @@
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
 
-#define DEBUG_EXPR_VISITOR // TEST
-#ifdef DEBUG_EXPR_VISITOR
+#ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
-#    define ULAM_DEBUG_PREFIX "[ulam::sema::ExprVisitor] "
+#    define ULAM_DEBUG_PREFIX "[ulam::sema::EvalExprVisitor] "
 #endif
 #include "src/debug.hpp"
 

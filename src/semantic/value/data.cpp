@@ -1,5 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
-#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class.hpp>

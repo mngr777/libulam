@@ -1,6 +1,6 @@
 #include "src/sema/out.hpp"
-#include "libulam/sema/visitor.hpp"
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/visitor.hpp>
 
 namespace ulam::sema {
 
