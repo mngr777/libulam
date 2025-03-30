@@ -102,7 +102,6 @@ int main(int argc, char** argv) {
 
     } else {
         std::set<std::string> skip = {
-            "t3233_test_compiler_elementandquarkarray_ew.test", // aref called by name
             "t3241_test_compiler_unarymod.test", // invalid implicit cast?
             "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // TODO: aref can have overloads
             "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?

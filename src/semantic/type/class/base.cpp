@@ -114,15 +114,17 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
         fun->add_param(param_node);
     }
 
-    Ref<FunSet> fset{};
     if (node->is_constructor()) {
-        fset = constructors();
-    } else if (node->is_op()) {
-        fset = find_op_fset(node->op());
+        constructors()->add(std::move(fun));
     } else {
-        fset = find_fset(name_id);
+        if (!node->is_op() || node->is_op_alias()) {
+            if (node->is_op())
+                find_op_fset(node->op())->add(ref);
+            find_fset(name_id)->add(std::move(fun));
+        } else {
+            find_op_fset(node->op())->add(std::move(fun));
+        }
     }
-    fset->add(std::move(fun));
 
     if (!node->has_scope_version()) {
         node->set_fun(ref);
