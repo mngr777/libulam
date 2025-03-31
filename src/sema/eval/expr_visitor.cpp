@@ -41,8 +41,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
         if (!type)
             return {ExprError::UnresolvableType};
         auto tv = type->actual()->type_op(node->op());
-        if (!tv)
+        if (!tv) {
+            diag().error(node, "invalid type operator");
             return {ExprError::InvalidTypeOperator};
+        }
         return tv;
     }
     assert(node->has_expr());
@@ -66,10 +68,26 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
             return {error};
         }
         val = Value{val.as(cls)};
-        type->actual()->type_op(node->op(), val);
     }
 
-    auto tv = type->actual()->type_op(node->op(), val);
+    TypedValue tv;
+
+    // class type op may require an evaluator
+    if (type->is_class()) {
+        auto cls = type->as_class();
+
+        // custom lengthof?
+        if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
+            if (!val.has_rvalue())
+                return {builtins().unsigned_type(), Value{RValue{}}};
+            auto funcall = _eval.funcall_helper(_scope);
+            TypedValueList args;
+            return funcall->funcall(
+                node, cls->fun("alengthof"), val.self(), std::move(args));
+        }
+    }
+
+    tv = type->actual()->type_op(node->op(), val);
     if (!tv)
         return {ExprError::InvalidTypeOperator};
     return tv;

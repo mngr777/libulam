@@ -56,6 +56,9 @@ public:
     bool has_fun(str_id_t name_id) const;
     bool has_fun(const std::string_view name) const;
 
+    Ref<FunSet> fun(str_id_t name_id);
+    Ref<FunSet> fun(const std::string_view name);
+
     Symbol* get(const std::string_view name);
     const Symbol* get(const std::string_view name) const;
 
