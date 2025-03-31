@@ -1551,15 +1551,30 @@ Parser::parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr) {
             return {};
     }
 
+    // op
     auto type_op = _tok.type_op();
     if (type_op == TypeOp::None) {
         unexpected();
         return {};
     }
-    auto loc_id = _tok.loc_id;
     consume();
+
+    // args (instanceof only)
+    Ptr<ast::ArgList> args{};
+    if (_tok.is(tok::ParenL)) {
+        if (type_op != TypeOp::InstanceOf) {
+            diag("only `instanceof` type operator can have arguments");
+            consume();
+            panic(tok::ParenR);
+            return {};
+        }
+        args = parse_arg_list();
+    }
+
+    auto loc_id = type ? type->loc_id() : expr->loc_id();
     return tree_loc<ast::TypeOpExpr>(
-        loc_id, type_op, std::move(type), std::move(expr), std::move(base));
+        loc_id, type_op, std::move(type), std::move(expr), std::move(base),
+        std::move(args));
 }
 
 Ptr<ast::TypeExpr> Parser::parse_type_expr() {
