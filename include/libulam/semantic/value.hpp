@@ -28,7 +28,9 @@ class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
 public:
     using Variant::Variant;
 
+    bool has_rvalue() const;
     RValue rvalue() const;
+    void with_rvalue(std::function<void(const RValue&)> cb) const;
 
     Ref<Type> type() const;
 
@@ -117,6 +119,7 @@ public:
     Value& operator=(Value&&) = default;
 
     bool empty() const;
+    bool has_rvalue() const;
 
     bool is_lvalue() const { return is<LValue>(); }
     bool is_rvalue() const { return is<RValue>(); }

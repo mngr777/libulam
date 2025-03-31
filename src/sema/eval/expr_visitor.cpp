@@ -211,9 +211,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
             if (!check_is_object(node, type))
                 return {ExprError::NotObject};
             assert(op == Op::Is);
-            if (tv.value().empty())
+            if (!tv.value().has_rvalue())
                 return {builtins().boolean(), Value{RValue{}}};
-            assert(!tv.value().empty());
             auto dyn_type = tv.value().dyn_obj_type();
             bool is =
                 dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
@@ -466,14 +465,6 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     auto index_res = node->index()->accept(*this);
     if (!index_res)
         return {ExprError::UnknownArrayIndex};
-    // cast to default Int
-    auto int_type = builtins().int_type();
-    auto cast = _eval.cast_helper(_scope);
-    index_res =
-        cast->cast(node->index(), int_type, index_res.move_typed_value());
-    if (!index_res)
-        return index_res;
-    auto index_val = index_res.move_value();
 
     // class?
     if (array_res.type()->actual()->is_class()) {
@@ -483,7 +474,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
             return {ExprError::NoOperator};
         bool is_tmp = array_res.value().is_tmp();
         TypedValueList args;
-        args.emplace_back(int_type, std::move(index_val));
+        args.push_back(index_res.move_typed_value());
 
         // call operator
         auto funcall = _eval.funcall_helper(_scope);
@@ -496,6 +487,15 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         }
         return res;
     }
+
+    // cast to default Int
+    auto int_type = builtins().int_type();
+    auto cast = _eval.cast_helper(_scope);
+    index_res =
+        cast->cast(node->index(), int_type, index_res.move_typed_value());
+    if (!index_res)
+        return index_res;
+    auto index_val = index_res.move_value();
 
     auto index = index_val.move_rvalue().get<Integer>();
 

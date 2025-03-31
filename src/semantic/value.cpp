@@ -8,6 +8,36 @@ namespace ulam {
 
 // LValue
 
+bool LValue::has_rvalue() const {
+    return accept(
+        [&](Ref<const Var> var) { return var->value().has_rvalue(); },
+        [&](const DataView& data) { return true; },
+        [&](const BoundFunSet&) -> bool { assert(false); },
+        [&](const std::monostate&) { return false; });
+}
+
+RValue LValue::rvalue() const {
+    return accept(
+        [&](Ref<const Var> var) { return var->rvalue(); },
+        [&](const DataView& data) { return data.load(); },
+        [&](const BoundFunSet&) -> RValue { assert(false); },
+        [&](const std::monostate&) { return RValue{}; });
+}
+
+void LValue::with_rvalue(std::function<void(const RValue&)> cb) const {
+    accept(
+        [&](Ref<const Var> var) { var->value().with_rvalue(cb); },
+        [&](const DataView& data) {
+            RValue rval = data.load();
+            cb(rval);
+        },
+        [&](const BoundFunSet& bound_fset) { assert(false); },
+        [&](const std::monostate&) {
+            RValue rval;
+            cb(rval);
+        });
+}
+
 Ref<Type> LValue::type() const {
     return accept(
         [&](Ref<const Var> var) { return var->type(); },
@@ -67,14 +97,6 @@ LValue LValue::atom_of() {
     if (!data_view)
         return LValue{};
     return derived(data_view);
-}
-
-RValue LValue::rvalue() const {
-    return accept(
-        [&](Ref<const Var> var) { return var->rvalue(); },
-        [&](const DataView& data) { return data.load(); },
-        [&](const BoundFunSet&) -> RValue { assert(false); },
-        [&](const std::monostate&) { return RValue{}; });
 }
 
 LValue LValue::array_access(array_idx_t idx) {
@@ -207,6 +229,12 @@ bool Value::empty() const {
     return accept([&](auto& val) { return val.empty(); });
 }
 
+bool Value::has_rvalue() const {
+    return accept(
+        [&](const LValue& lval) { return lval.has_rvalue(); },
+        [&](const RValue& rval) { return !rval.empty(); });
+}
+
 DataView Value::data_view() {
     return accept([&](auto& val) { return val.data_view(); });
 }
@@ -276,11 +304,7 @@ bool Value::is_consteval() const {
 
 void Value::with_rvalue(std::function<void(const RValue&)> cb) const {
     accept(
-        [&](const LValue& lval) {
-            // TODO: LValue::with_rvalue
-            auto rval = lval.rvalue();
-            cb(rval);
-        },
+        [&](const LValue& lval) { lval.with_rvalue(cb); },
         [&](const RValue& rval) { cb(rval); });
 }
 

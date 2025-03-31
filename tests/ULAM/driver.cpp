@@ -103,10 +103,9 @@ int main(int argc, char** argv) {
     } else {
         std::set<std::string> skip = {
             "t3241_test_compiler_unarymod.test", // invalid implicit cast?
-            "t3484_test_compiler_elementandquark_caarray_ambiguousfunc_issue.test", // TODO: aref can have overloads
             "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
             "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
-            "t3504_test_compiler_arraywithconstantindex.test", // wrong definitiong order, wontfix?
+            "t3504_test_compiler_arraywithconstantindex.test", // constant used before definition
             "t3631_test_compiler_element_castatomandquark_ish.test", // tmp, quark to Atom?
             "t3675_test_compiler_elementandquark_Selfatomoffordefaultelement.test", // quark self to Atoms
             "t3692_test_compiler_atomcasttoquarkselfref.test", // quark Self to Atom
@@ -146,6 +145,7 @@ int main(int argc, char** argv) {
             "t41092_test_compiler_elementandquark_constructorcallonfuncreturninstance.test", // -"-
             "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
             "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
+            "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
             "t41153_test_compiler_elementandquark_selfcasttoatom_issue.test", // quark to Atom cast
             "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param ised in previous param definition
             "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
