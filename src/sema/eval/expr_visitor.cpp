@@ -70,8 +70,6 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
         val = Value{val.as(cls)};
     }
 
-    TypedValue tv;
-
     // class type op may require an evaluator
     if (type->is_class()) {
         auto cls = type->as_class();
@@ -87,7 +85,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
         }
     }
 
-    tv = type->actual()->type_op(node->op(), val);
+    auto tv = type->actual()->type_op(node->op(), val);
     if (!tv)
         return {ExprError::InvalidTypeOperator};
     return tv;
