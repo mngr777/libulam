@@ -32,6 +32,18 @@ bool ClassBase::has_fun(const std::string_view name) const {
     return sym && sym->is<FunSet>();
 }
 
+Ref<FunSet> ClassBase::fun(str_id_t name_id) {
+    assert(has_fun(name_id));
+    auto sym = get(name_id);
+    return sym->get<FunSet>();
+}
+
+Ref<FunSet> ClassBase::fun(const std::string_view name) {
+    assert(has_fun(name));
+    auto sym = get(name);
+    return sym->get<FunSet>();
+}
+
 ClassBase::Symbol* ClassBase::get(const std::string_view name) {
     return const_cast<Symbol*>(const_cast<const ClassBase*>(this)->get(name));
 }
@@ -171,9 +183,7 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     return ref;
 }
 
-bool ClassBase::has_constructors() const {
-    return (bool)_constructors;
-}
+bool ClassBase::has_constructors() const { return (bool)_constructors; }
 
 Ref<FunSet> ClassBase::constructors() {
     assert(_constructors);
