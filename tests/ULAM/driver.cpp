@@ -135,10 +135,7 @@ int main(int argc, char** argv) {
             "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
             "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
-            "t41085_test_compiler_elementandquark_instanceofwithconstructor.test", // instanceof with arguments, TODO
-            "t41088_test_compiler_instanceofconstructorfuncarg.test", // -"-
             "t41089_test_compiler_assigntofuncreturnvalueonlhs_evalerr.test", // assignment to rvalue
-            "t41091_test_compiler_elementandquark_memberselectoninstanceofconstructorcallresult.test", // instanceof with arguments
             "t41092_test_compiler_elementandquark_constructorcallonfuncreturninstance.test", // -"-
             "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
             "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
@@ -184,15 +181,12 @@ int main(int argc, char** argv) {
             "t41453_test_compiler_templateclasseswithmembertypedefbaseclasses.test", // -"-
             "t41457_test_compiler_atomreftoaccessdatamemberofbaseclass_gencode_ish.test", // quark reference to Atom
             "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
-            "t41469_test_compiler_instanceofconstructor_ish.test", // instanceof with arguments, TODO
             "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
-            "t41487_test_compiler_constantatomarrayofasingleconstantelement_ish.test", // instanceof with arguments, TODO
             "t41506_test_compiler_elementinheritedquark_constantof_withsuper.test", // quark to Atom
             "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // class typedef used in parent list
             "t41524_test_compiler_elementmultiinheritance_shadowingtypedefsinhierarchy.test", // -"-
             "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
             "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
-            "t41533_test_compiler_instanceofconstructorandclassidof.test", // instanceof with arguments, TODO
             "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
             "t41619_test_compiler_positionofdatamemberinbaseclassofbaseclassnoref.test", // positionof base type chain, TODO
             "t41621_test_compiler_elementpositionofdatamemberusingSelf.test", // instanceof base type chain, TODO

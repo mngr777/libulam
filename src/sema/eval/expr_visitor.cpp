@@ -36,10 +36,26 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n";
     DBG_LINE(node);
     if (node->has_type_name()) {
+        // resolve type
         auto type = _eval.resolver()->resolve_type_name(
             node->type_name(), _scope, true);
         if (!type)
             return {ExprError::UnresolvableType};
+
+        if (type->is_class()) {
+            // instanceof with arguments?
+            auto cls = type->as_class();
+            if (node->op() == TypeOp::InstanceOf && node->has_args()) {
+                auto [args, error] = eval_args(node->args());
+                if (error != ExprError::Ok)
+                    return {error};
+                auto rval = cls->construct();
+                auto funcall = _eval.funcall_helper(_scope);
+                funcall->funcall(node, cls->constructors(), rval.self(), std::move(args));
+                return {type, Value{std::move(rval)}};
+            }
+        }
+
         auto tv = type->actual()->type_op(node->op());
         if (!tv) {
             diag().error(node, "invalid type operator");
@@ -72,9 +88,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
 
     // class type op may require an evaluator
     if (type->is_class()) {
-        auto cls = type->as_class();
-
         // custom lengthof?
+        auto cls = type->as_class();
         if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
             if (!val.has_rvalue())
                 return {builtins().unsigned_type(), Value{RValue{}}};
