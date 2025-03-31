@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
             "t3697_test_compiler_elementandquark_castreftoatom.test", // quark ref to Atom: use .atomof instead?
             "t3701_test_compiler_elementandquark_castclassreftoatomref.test", // quark ref to Atom&
             "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
-            "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit, TODO
+            "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
             "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
             "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
             "t3834_test_compiler_atomreffromsuperquarkrefwithcast.test", // quark element base to Atom&: use (Atom&)(Elt&)q ?
