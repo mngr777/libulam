@@ -2,7 +2,7 @@
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
-#include <libulam/semantic/expr_res.hpp>
+#include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
@@ -75,7 +75,8 @@ protected:
     virtual ExprRes
     assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
-    virtual std::pair<TypedValueList, ExprError> eval_args(Ref<ast::ArgList> args);
+    virtual std::pair<TypedValueList, ExprError>
+    eval_args(Ref<ast::ArgList> args);
 
     Diag& diag();
     Builtins& builtins();

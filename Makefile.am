@@ -124,6 +124,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/funcall.hpp \
 	include/libulam/sema/eval/init.hpp \
 	include/libulam/sema/eval/visitor.hpp \
+	include/libulam/sema/expr_res.hpp \
 	include/libulam/sema/init.hpp \
 	include/libulam/sema/resolver.hpp \
 	include/libulam/sema/visitor.hpp

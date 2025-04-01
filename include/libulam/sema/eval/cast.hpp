@@ -1,10 +1,10 @@
 #pragma once
 #include <libulam/diag.hpp>
-#include <libulam/semantic/expr_res.hpp>
+#include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/typed_value.hpp>
 #include <utility>
 
 namespace ulam::sema {
@@ -32,11 +32,8 @@ public:
         bool expl = false);
 
 protected:
-    virtual CastRes maybe_cast(
-        Ref<ast::Node> node,
-        Ref<Type> type,
-        TypedValue&& tv,
-        bool expl);
+    virtual CastRes
+    maybe_cast(Ref<ast::Node> node, Ref<Type> type, TypedValue&& tv, bool expl);
 
     virtual CastRes maybe_cast(
         Ref<ast::Node> node,

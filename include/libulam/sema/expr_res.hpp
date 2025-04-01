@@ -5,6 +5,10 @@
 #include <utility>
 
 namespace ulam {
+class Type;
+}
+
+namespace ulam::sema {
 
 enum class ExprError {
     Ok,
@@ -45,10 +49,6 @@ enum class ExprError {
     FunctionIsPureVirtual,
     AmbiguousFunctionCall
 };
-
-class Type;
-
-// TODO: move to sema/eval
 
 class ExprRes {
 public:

@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/expr_res.hpp>
+#include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
 
 namespace ulam::sema {

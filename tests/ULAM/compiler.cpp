@@ -59,7 +59,7 @@ void Compiler::compile(std::ostream& out) {
                 auto text = std::string{module->name()} + " foo; foo.test();\n";
                 try {
                     eval.eval(text);
-                } catch (ulam::EvalExceptError& e) {
+                } catch (ulam::sema::EvalExceptError& e) {
                     std::cerr << "eval error: " << e.message() << "\n";
                     throw e;
                 }

@@ -1,14 +1,14 @@
 #pragma once
 #include <exception>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/expr_res.hpp>
+#include <libulam/sema/expr_res.hpp>
 #include <string>
 
 namespace ulam::ast {
 class Return;
 }
 
-namespace ulam {
+namespace ulam::sema {
 
 class EvalExcept : std::exception {};
 
@@ -46,4 +46,4 @@ private:
     std::string _message;
 };
 
-} // namespace ulam
+} // namespace ulam::sema
