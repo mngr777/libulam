@@ -1,4 +1,5 @@
-#include "tests/ULAM/compiler.hpp"
+#include "./compiler.hpp"
+#include "./eval.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
@@ -45,7 +46,7 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
 }
 
 void Compiler::compile(std::ostream& out) {
-    ulam::sema::Eval eval{_ctx, ulam::ref(_ast)};
+    Eval eval{_ctx, ulam::ref(_ast)};
     for (auto module : _ast->program()->modules()) {
         auto sym = module->get(module->name_id());
         if (!sym) {

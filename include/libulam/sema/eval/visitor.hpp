@@ -51,7 +51,7 @@ public:
 
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
-private:
+protected:
     ExprRes eval_expr(Ref<ast::Expr> expr);
     bool eval_cond(Ref<ast::Expr> expr);
 
