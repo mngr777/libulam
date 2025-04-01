@@ -13,12 +13,13 @@ class Eval {
 public:
     Eval(Context& ctx, Ref<ast::Root> ast);
 
-    void eval(const std::string& text);
+    virtual void eval(const std::string& text);
 
-private:
+protected:
+    virtual Ptr<EvalVisitor> visitor();
+
     Context& _ctx;
     Ref<ast::Root> _ast;
-    EvalVisitor _eval;
 };
 
 } // namespace ulam::sema

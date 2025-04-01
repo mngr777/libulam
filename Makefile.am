@@ -252,6 +252,18 @@ test_ulam_SOURCES = \
 	tests/ULAM/compiler.hpp \
 	tests/ULAM/compiler.cpp \
 	tests/ULAM/driver.cpp \
+	tests/ULAM/eval.hpp \
+	tests/ULAM/eval.cpp \
+	tests/ULAM/eval/cast.hpp \
+	tests/ULAM/eval/cast.cpp \
+	tests/ULAM/eval/expr_visitor.hpp \
+	tests/ULAM/eval/expr_visitor.cpp \
+	tests/ULAM/eval/funcall.hpp \
+	tests/ULAM/eval/funcall.cpp \
+	tests/ULAM/eval/init.hpp \
+	tests/ULAM/eval/init.cpp \
+	tests/ULAM/eval/visitor.hpp \
+	tests/ULAM/eval/visitor.cpp \
 	tests/ULAM/test_case.hpp \
 	tests/ULAM/test_case.cpp
 test_ulam_LDADD = $(TEST_LIBS)
