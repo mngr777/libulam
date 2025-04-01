@@ -15,19 +15,19 @@ namespace ulam {
 
 Type::~Type() {}
 
-RValue Type::construct() const { assert(false); }
+RValue Type::construct() { assert(false); }
 
-RValue Type::load(const Bits& data, bitsize_t off) const {
+RValue Type::load(const Bits& data, bitsize_t off) {
     return load(data.view(), off);
 }
 
-void Type::store(Bits& data, bitsize_t off, const RValue& rval) const {
+void Type::store(Bits& data, bitsize_t off, const RValue& rval) {
     store(data.view(), off, rval);
 }
 
-RValue Type::load(const BitsView data, bitsize_t off) const { assert(false); }
+RValue Type::load(const BitsView data, bitsize_t off) { assert(false); }
 
-void Type::store(BitsView data, bitsize_t off, const RValue& rval) const {
+void Type::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(false);
 }
 
@@ -217,7 +217,7 @@ Type::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
     return conv_cost(type, allow_cast);
 }
 
-Value Type::cast_to(Ref<const Type> type, Value&& val) { assert(false); }
+Value Type::cast_to(Ref<Type> type, Value&& val) { assert(false); }
 
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
     return make<ArrayType>(_builtins, _id_gen, this, size);
@@ -246,13 +246,13 @@ bool AliasType::is_constructible() const {
     return non_alias()->is_constructible();
 }
 
-RValue AliasType::construct() const { return non_alias()->construct(); }
+RValue AliasType::construct() { return non_alias()->construct(); }
 
-RValue AliasType::load(const BitsView data, bitsize_t off) const {
+RValue AliasType::load(const BitsView data, bitsize_t off) {
     return non_alias()->load(data, off);
 }
 
-void AliasType::store(BitsView data, bitsize_t off, const RValue& rval) const {
+void AliasType::store(BitsView data, bitsize_t off, const RValue& rval) {
     non_alias()->store(data, off, std::move(rval));
 }
 
@@ -287,7 +287,7 @@ conv_cost_t AliasType::conv_cost(
     return non_alias()->conv_cost(type->non_alias(), val, allow_cast);
 }
 
-Value AliasType::cast_to(Ref<const Type> type, Value&& val) {
+Value AliasType::cast_to(Ref<Type> type, Value&& val) {
     return non_alias()->cast_to(type, std::move(val));
 }
 
@@ -372,18 +372,16 @@ bitsize_t ArrayType::bitsize() const {
     return _array_size * _item_type->bitsize();
 }
 
-RValue ArrayType::construct() const {
-    return RValue{make_s<Data>(const_cast<ArrayType*>(this))};
-}
+RValue ArrayType::construct() { return RValue{make_s<Data>(this)}; }
 
-RValue ArrayType::load(const BitsView data, bitsize_t off) const {
+RValue ArrayType::load(const BitsView data, bitsize_t off) {
     auto rval = construct();
     if (bitsize() > 0)
         rval.data_view().bits().write(0, data.view(off, bitsize()));
     return rval;
 }
 
-void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) const {
+void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(rval.is<DataPtr>());
     if (bitsize() > 0)
         data.write(off, rval.get<DataPtr>()->bits().view());
@@ -414,7 +412,7 @@ bool ArrayType::is_castable_to(Ref<const Type> type, bool expl) const {
     return item_type()->is_castable_to(array_type->item_type(), expl);
 }
 
-Value ArrayType::cast_to(Ref<const Type> type, Value&& val) {
+Value ArrayType::cast_to(Ref<Type> type, Value&& val) {
     assert(!is_same(type));
     assert(type->is_array());
 
@@ -524,13 +522,12 @@ conv_cost_t RefType::conv_cost(
     return refd()->conv_cost(type->actual(), val, allow_cast); // ??
 }
 
-Value RefType::cast_to(Ref<const Type> type, Value&& val) {
+Value RefType::cast_to(Ref<Type> type, Value&& val) {
     assert(val.is_lvalue());
     if (!type->is_ref())
         return refd()->cast_to(type, std::move(val));
     assert(is_expl_castable_to(type));
-    // TODO: remove const cast
-    return Value{val.lvalue().as(const_cast<Ref<Type>>(type->deref()))};
+    return Value{val.lvalue().as(type->deref())};
 }
 
 Ptr<ArrayType> RefType::make_array_type(array_size_t size) { assert(false); }

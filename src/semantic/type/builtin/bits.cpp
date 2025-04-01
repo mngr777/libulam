@@ -7,19 +7,19 @@
 
 namespace ulam {
 
-RValue BitsType::load(const BitsView data, bitsize_t off) const {
+RValue BitsType::load(const BitsView data, bitsize_t off) {
     Bits val{data.view(off, bitsize()).copy()};
     return RValue{std::move(val)};
 }
 
-void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) const {
+void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(rval.is<Bits>());
     data.write(off, rval.get<Bits>().view());
 }
 
-RValue BitsType::construct() const { return RValue{Bits{bitsize()}}; }
+RValue BitsType::construct() { return RValue{Bits{bitsize()}}; }
 
-RValue BitsType::construct(Bits&& bits) const {
+RValue BitsType::construct(Bits&& bits) {
     assert(bits.len());
     return RValue{std::move(bits)};
 }
@@ -30,7 +30,7 @@ bool BitsType::is_castable_to(Ref<const Type> type, bool expl) const {
     return _PrimType::is_castable_to(type, expl);
 }
 
-Value BitsType::cast_to(Ref<const Type> type, Value&& val) {
+Value BitsType::cast_to(Ref<Type> type, Value&& val) {
     // class?
     if (type->is_class()) {
         assert(type->bitsize() == bitsize());
@@ -212,7 +212,7 @@ TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(false && "Bits is not implicitly castable to other types");
 }
 
-RValue BitsType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     if (rval.empty())
         return std::move(rval);

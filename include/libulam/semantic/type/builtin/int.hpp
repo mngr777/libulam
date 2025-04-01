@@ -18,10 +18,10 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct() const override;
+    RValue construct() override;
 
-    RValue from_datum(Datum datum) const override;
-    Datum to_datum(const RValue& rval) const override;
+    RValue from_datum(Datum datum) override;
+    Datum to_datum(const RValue& rval) override;
 
     TypedValue unary_op(Op op, RValue&& rval) override;
 
@@ -43,7 +43,7 @@ protected:
         BuiltinTypeId bi_type_id, const Value& val) const override;
 
     TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
-    RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) override;
+    RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) override;
 };
 
 class IntTypeTpl : public _PrimTypeTpl<IntType> {

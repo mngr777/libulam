@@ -251,23 +251,20 @@ Ref<Prop> Class::first_prop_over_max_bitsize() {
     return {};
 }
 
-RValue Class::construct() const {
-    // TODO: const_cast
-    return RValue{make_s<Data>(const_cast<Class*>(this), _init_bits.copy())};
+RValue Class::construct() {
+    return RValue{make_s<Data>(this, _init_bits.copy())};
 }
 
-RValue Class::construct(Bits&& bits) const {
+RValue Class::construct(Bits&& bits) {
     assert(bits.len() == bitsize());
-    return RValue{make_s<Data>(const_cast<Class*>(this), std::move(bits))};
+    return RValue{make_s<Data>(this, std::move(bits))};
 }
 
-RValue Class::load(const BitsView data, bitsize_t off) const {
-    // TMP?: const cast hack
-    return RValue{make_s<Data>(
-        const_cast<Class*>(this), data.view(off, bitsize()).copy())};
+RValue Class::load(const BitsView data, bitsize_t off) {
+    return RValue{make_s<Data>(this, data.view(off, bitsize()).copy())};
 }
 
-void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
+void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(rval.is<DataPtr>());
     auto obj_data = rval.get<DataPtr>();
     auto type = obj_data->type();
@@ -308,7 +305,7 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) const {
         // is derived from Base
         assert(cls->is_base_of(this));
         for (auto prop : cls->all_props()) {
-            auto prop_off = prop->data_off_in(const_cast<Class*>(this));
+            auto prop_off = prop->data_off_in(this);
             prop->type()->store(data, off + prop_off, prop->load(obj_data));
         }
     }
@@ -352,7 +349,7 @@ bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
     return !convs(bi_type_id, expl).empty();
 }
 
-Value Class::cast_to(Ref<const Type> type, Value&& val) {
+Value Class::cast_to(Ref<Type> type, Value&& val) {
     assert(!is_same(type));
     assert(convs(type, true).empty()); // must use conversion function otherwise
 
@@ -366,21 +363,16 @@ Value Class::cast_to(Ref<const Type> type, Value&& val) {
 
     // to Bits
     if (type->is(BitsId)) {
-        // TODO: const_cast
-        auto new_rval = const_cast<Class*>(this)
-                            ->builtins()
-                            .bits_type(type->bitsize())
-                            ->construct(std::move(obj->bits()));
+        auto bits_type = builtins().bits_type(type->bitsize());
+        auto new_rval = bits_type->construct(std::move(obj->bits()));
         new_rval.set_is_consteval(is_consteval);
         return Value{std::move(new_rval)};
     }
 
     // to Atom
     if (type->is(AtomId)) {
-        // TODO: const_cast
-        auto new_rval =
-            const_cast<Class*>(this)->builtins().atom_type()->construct(
-                std::move(obj->bits()));
+        auto atom_type = builtins().atom_type();
+        auto new_rval = atom_type->construct(std::move(obj->bits()));
         new_rval.set_is_consteval(is_consteval);
         return Value{std::move(new_rval)};
     }

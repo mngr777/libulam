@@ -29,12 +29,12 @@ public:
 
     bool is_constructible() const override { return true; }
 
-    RValue load(const BitsView data, bitsize_t off) const override;
+    RValue load(const BitsView data, bitsize_t off) override;
 
-    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
-    virtual RValue from_datum(Datum datum) const { assert(false); }
-    virtual Datum to_datum(const RValue& rval) const { assert(false); }
+    virtual RValue from_datum(Datum datum) { assert(false); }
+    virtual Datum to_datum(const RValue& rval) { assert(false); }
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
@@ -55,7 +55,7 @@ public:
         const Value& val,
         bool allow_cast = false) const override;
 
-    Value cast_to(Ref<const Type> type, Value&& val) override;
+    Value cast_to(Ref<Type> type, Value&& val) override;
     TypedValue cast_to(BuiltinTypeId bi_type_id, Value&& val);
 
     virtual TypedValue unary_op(Op op, RValue&& rval) { assert(false); }
@@ -83,7 +83,7 @@ protected:
     virtual TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         assert(false);
     }
-    virtual RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+    virtual RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         assert(false);
     }
 

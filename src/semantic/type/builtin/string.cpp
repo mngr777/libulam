@@ -33,16 +33,16 @@ TypedValue StringType::type_op(TypeOp op, Value& val) {
     }
 }
 
-RValue StringType::construct() const {
+RValue StringType::construct() {
     assert(_text_pool.has(""));
     return RValue{String{_text_pool.id("")}};
 }
 
-RValue StringType::from_datum(Datum datum) const {
+RValue StringType::from_datum(Datum datum) {
     return RValue{String{(str_id_t)datum}};
 }
 
-Datum StringType::to_datum(const RValue& rval) const {
+Datum StringType::to_datum(const RValue& rval) {
     assert(rval.is<String>());
     Datum datum = rval.get<String>().id;
     return datum;
@@ -149,7 +149,7 @@ TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue StringType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+RValue StringType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     if (rval.empty())
         return std::move(rval);

@@ -68,13 +68,13 @@ public:
     virtual bitsize_t bitsize() const = 0;
 
     virtual bool is_constructible() const { return false; }
-    virtual RValue construct() const;
+    virtual RValue construct();
 
-    RValue load(const Bits& data, bitsize_t off) const;
-    void store(Bits& data, bitsize_t off, const RValue& rval) const;
+    RValue load(const Bits& data, bitsize_t off);
+    void store(Bits& data, bitsize_t off, const RValue& rval);
 
-    virtual RValue load(const BitsView data, bitsize_t off) const;
-    virtual void store(BitsView data, bitsize_t off, const RValue& rval) const;
+    virtual RValue load(const BitsView data, bitsize_t off);
+    virtual void store(BitsView data, bitsize_t off, const RValue& rval);
 
     // canonical non-reference type, type of value
     bool is_actual() const;
@@ -143,7 +143,7 @@ public:
     virtual conv_cost_t conv_cost(
         Ref<const Type> type, const Value& val, bool allow_cast = false) const;
 
-    virtual Value cast_to(Ref<const Type> type, Value&& val);
+    virtual Value cast_to(Ref<Type> type, Value&& val);
 
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }
@@ -205,10 +205,10 @@ public:
     bitsize_t bitsize() const override;
 
     bool is_constructible() const override;
-    RValue construct() const override;
+    RValue construct() override;
 
-    RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
+    RValue load(const BitsView data, bitsize_t off) override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
@@ -234,7 +234,7 @@ public:
         const Value& val,
         bool allow_cast = false) const override;
 
-    Value cast_to(Ref<const Type> type, Value&& val) override;
+    Value cast_to(Ref<Type> type, Value&& val) override;
 
     Ref<Type> non_alias() override { return _non_alias; }
     Ref<const Type> non_alias() const override { return _non_alias; }
@@ -292,10 +292,10 @@ public:
     bitsize_t bitsize() const override;
 
     bool is_constructible() const override { return true; }
-    RValue construct() const override;
+    RValue construct() override;
 
-    RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
+    RValue load(const BitsView data, bitsize_t off) override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
     TypedValue type_op(TypeOp op) override;
 
@@ -304,7 +304,7 @@ public:
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
-    Value cast_to(Ref<const Type> type, Value&& val) override;
+    Value cast_to(Ref<Type> type, Value&& val) override;
 
     Ref<Type> item_type() { return _item_type; }
     Ref<const Type> item_type() const { return _item_type; }
@@ -366,7 +366,7 @@ public:
         const Value& val,
         bool allow_cast = false) const override;
 
-    Value cast_to(Ref<const Type> type, Value&& val) override;
+    Value cast_to(Ref<Type> type, Value&& val) override;
 
     Ptr<ArrayType> make_array_type(array_size_t size) override;
     Ptr<RefType> make_ref_type() override;

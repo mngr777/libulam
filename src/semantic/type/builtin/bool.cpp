@@ -25,7 +25,7 @@ TypedValue BoolType::type_op(TypeOp op) {
     }
 }
 
-RValue BoolType::construct(bool value) const {
+RValue BoolType::construct(bool value) {
     return RValue{value ? detail::ones(bitsize()) : 0};
 }
 
@@ -35,12 +35,12 @@ bool BoolType::is_true(const RValue& rval) const {
     return detail::count_ones(uns_val) >= (bitsize() + 1u) / 2;
 }
 
-RValue BoolType::from_datum(Datum datum) const {
+RValue BoolType::from_datum(Datum datum) {
     RValue rval{(Unsigned)datum};
     return construct(is_true(rval));
 }
 
-Datum BoolType::to_datum(const RValue& rval) const {
+Datum BoolType::to_datum(const RValue& rval) {
     assert(rval.is<Unsigned>());
     auto rval_upd = construct(is_true(rval));
     auto uns_val = rval_upd.get<Unsigned>();
@@ -147,7 +147,7 @@ TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue BoolType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+RValue BoolType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     if (rval.empty())
         return std::move(rval);

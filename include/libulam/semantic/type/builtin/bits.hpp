@@ -20,16 +20,16 @@ public:
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
-    RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval) const override;
+    RValue load(const BitsView data, bitsize_t off) override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
-    RValue construct() const override;
+    RValue construct() override;
 
-    RValue construct(Bits&& bits) const;
+    RValue construct(Bits&& bits);
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
-    Value cast_to(Ref<const Type> type, Value&& val) override;
+    Value cast_to(Ref<Type> type, Value&& val) override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
@@ -48,7 +48,7 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 
     TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
-    RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) override;
+    RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) override;
 };
 
 class BitsTypeTpl : public _PrimTypeTpl<BitsType> {

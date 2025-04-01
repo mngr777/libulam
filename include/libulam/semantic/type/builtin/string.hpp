@@ -1,10 +1,10 @@
 #pragma once
-#include <libulam/str_pool.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/str_pool.hpp>
 #include <string>
 
 namespace ulam::ast {
@@ -28,10 +28,10 @@ public:
     TypedValue type_op(TypeOp op) override;
     TypedValue type_op(TypeOp op, Value& val) override;
 
-    RValue construct() const override;
+    RValue construct() override;
 
-    RValue from_datum(Datum datum) const override;
-    Datum to_datum(const RValue& rval) const override;
+    RValue from_datum(Datum datum) override;
+    Datum to_datum(const RValue& rval) override;
 
     str_len_t len(const Value& val) const;
     std::uint8_t chr(const Value& val, array_idx_t idx) const;
@@ -52,7 +52,7 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 
     TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
-    RValue cast_to_prim(Ref<const PrimType> type, RValue&& rval) override;
+    RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) override;
 
 private:
     UniqStrPool& _text_pool;
