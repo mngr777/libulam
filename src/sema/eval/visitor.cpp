@@ -323,13 +323,15 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
     assert(fun->params().size() == args.size());
 
+    // push stack "frame"
+    auto stack_raii = _stack.raii(fun, self);
+
     // push fun scope
     scope_lvl_t scope_lvl = _scope_stack.size();
-    auto sr_params =
+    auto scope_raii =
         _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
 
     // bind `self`, set `Self`
-    // scope()->set_self(self.as(fun->cls()));
     scope()->set_self(self);
     scope()->set_self_cls(fun->cls());
     if (self.has_auto_scope_lvl())

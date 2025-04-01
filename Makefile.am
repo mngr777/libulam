@@ -123,6 +123,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/expr_visitor.hpp \
 	include/libulam/sema/eval/funcall.hpp \
 	include/libulam/sema/eval/init.hpp \
+	include/libulam/sema/eval/stack.hpp \
 	include/libulam/sema/eval/visitor.hpp \
 	include/libulam/sema/expr_res.hpp \
 	include/libulam/sema/init.hpp \
@@ -137,6 +138,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/eval/expr_visitor.cpp \
 	src/sema/eval/funcall.cpp \
 	src/sema/eval/init.cpp \
+	src/sema/eval/stack.cpp \
 	src/sema/eval/visitor.cpp \
 	src/sema/out.hpp \
 	src/sema/out.cpp \

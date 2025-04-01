@@ -10,28 +10,28 @@ class ScopeStack {
 public:
     class Raii {
         friend ScopeStack;
-
-    public:
-        ~Raii();
-
-        Raii(Raii&& other) = default;
-        Raii& operator=(Raii&& other) = delete;
-
     private:
         Raii(ScopeStack& stack, Ptr<Scope>&& scope);
         Raii(ScopeStack& stack, ScopeFlags flags);
 
+    public:
+        ~Raii();
+
+        Raii(Raii&&) = default;
+        Raii& operator=(Raii&&) = delete;
+
+    private:
         ScopeStack& _stack;
         Ref<Scope> _scope;
     };
 
     ScopeStack() {}
 
-    ScopeStack(ScopeStack&& other) = default;
-    ScopeStack& operator=(ScopeStack&& other) = default;
+    ScopeStack(ScopeStack&&) = default;
+    ScopeStack& operator=(ScopeStack&&) = default;
 
-    std::size_t size() { return _stack.size(); }
-    bool empty() { return _stack.empty(); }
+    std::size_t size() const { return _stack.size(); }
+    bool empty() const { return _stack.empty(); }
 
     Ref<Scope> top();
 
