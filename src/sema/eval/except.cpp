@@ -1,7 +1,7 @@
 #include <libulam/sema/eval/except.hpp>
 #include <utility>
 
-namespace ulam {
+namespace ulam::sema {
 
 ExprRes EvalExceptReturn::move_res() {
     ExprRes res;
@@ -9,4 +9,4 @@ ExprRes EvalExceptReturn::move_res() {
     return res;
 }
 
-} // namespace ulam
+} // namespace ulam::sema

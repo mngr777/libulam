@@ -2,8 +2,8 @@
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/sema/expr_res.hpp>
 #include <libulam/sema/resolver.hpp>
-#include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 
 namespace ulam::sema {
@@ -49,8 +49,7 @@ public:
     virtual Ptr<EvalCast> cast_helper(Ref<Scope> scope);
     virtual Ptr<EvalFuncall> funcall_helper(Ref<Scope> scope);
 
-    virtual ExprRes
-    funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
+    virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
 private:
     ExprRes eval_expr(Ref<ast::Expr> expr);

@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/semantic/expr_res.hpp>
+#include <libulam/sema/expr_res.hpp>
 
 namespace ulam::ast {
 
@@ -20,20 +20,20 @@ class ArrayAccess;
 
 class ExprVisitor {
 public:
-    virtual ExprRes visit(Ref<ast::TypeOpExpr> node) = 0;
-    virtual ExprRes visit(Ref<ast::Ident> node) = 0;
-    virtual ExprRes visit(Ref<ast::ParenExpr> node) = 0;
-    virtual ExprRes visit(Ref<ast::UnaryOp> node) = 0;
-    virtual ExprRes visit(Ref<ast::BinaryOp> node) = 0;
-    virtual ExprRes visit(Ref<ast::Cast> node) = 0;
-    virtual ExprRes visit(Ref<ast::Ternary> node) = 0;
-    virtual ExprRes visit(Ref<ast::BoolLit> node) = 0;
-    virtual ExprRes visit(Ref<ast::NumLit> node) = 0;
-    virtual ExprRes visit(Ref<ast::StrLit> node) = 0;
-    virtual ExprRes visit(Ref<ast::FunCall> node) = 0;
-    virtual ExprRes visit(Ref<ast::MemberAccess> node) = 0;
-    virtual ExprRes visit(Ref<ast::ClassConstAccess> node) = 0;
-    virtual ExprRes visit(Ref<ast::ArrayAccess> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::TypeOpExpr> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::Ident> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::ParenExpr> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::UnaryOp> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::BinaryOp> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::Cast> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::Ternary> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::BoolLit> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::NumLit> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::StrLit> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::FunCall> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::MemberAccess> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::ClassConstAccess> node) = 0;
+    virtual sema::ExprRes visit(Ref<ast::ArrayAccess> node) = 0;
 };
 
 } // namespace ulam::ast

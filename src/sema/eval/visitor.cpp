@@ -1,5 +1,4 @@
 #include <cassert>
-#include <exception>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -7,7 +6,6 @@
 #include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
-#include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type.hpp>

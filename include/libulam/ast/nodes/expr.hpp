@@ -2,11 +2,14 @@
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
+#include <libulam/sema/expr_res.hpp>
 
 #define ULAM_AST_EXPR                                                          \
     ULAM_AST_NODE                                                              \
 public:                                                                        \
-    virtual ExprRes accept(ExprVisitor& v) override { return v.visit(this); }  \
+    virtual sema::ExprRes accept(ExprVisitor& v) override {                    \
+        return v.visit(this);                                                  \
+    }                                                                          \
                                                                                \
 private:
 
@@ -15,7 +18,7 @@ namespace ulam::ast {
 class Expr : public Stmt {
     ULAM_AST_NODE
 public:
-    virtual ExprRes accept(ExprVisitor& v) { return {}; };
+    virtual sema::ExprRes accept(ExprVisitor& v) { return {}; };
 };
 
 class ExprList : public List<Node, Expr> {

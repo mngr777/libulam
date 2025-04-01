@@ -1,6 +1,5 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
 
