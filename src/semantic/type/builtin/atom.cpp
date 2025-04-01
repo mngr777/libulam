@@ -7,21 +7,21 @@
 
 namespace ulam {
 
-RValue AtomType::load(const BitsView data, bitsize_t off) const {
+RValue AtomType::load(const BitsView data, bitsize_t off) {
     return construct(data.view(off, bitsize()).copy());
 }
 
-void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) const {
+void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(rval.is<DataPtr>());
     data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
-RValue AtomType::construct() const {
-    return RValue{make_s<Data>(const_cast<AtomType*>(this))};
+RValue AtomType::construct() {
+    return RValue{make_s<Data>(this)};
 }
 
-RValue AtomType::construct(Bits&& bits) const {
-    return RValue{make_s<Data>(const_cast<AtomType*>(this), std::move(bits))};
+RValue AtomType::construct(Bits&& bits) {
+    return RValue{make_s<Data>(this, std::move(bits))};
 }
 
 bool AtomType::is_castable_to(Ref<const Type> type, bool expl) const {
@@ -40,7 +40,7 @@ conv_cost_t AtomType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return MaxConvCost;
 }
 
-Value AtomType::cast_to(Ref<const Type> type, Value&& val) {
+Value AtomType::cast_to(Ref<Type> type, Value&& val) {
     assert(is_expl_castable_to(type));
     assert(type->is_class() && type->as_class()->is_element());
     if (val.empty())

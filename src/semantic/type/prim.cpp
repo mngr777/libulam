@@ -19,11 +19,11 @@ std::string PrimType::name() const {
     return ss.str();
 }
 
-RValue PrimType::load(const BitsView data, bitsize_t off) const {
+RValue PrimType::load(const BitsView data, bitsize_t off) {
     return from_datum(data.read(off, bitsize()));
 }
 void PrimType::store(
-    BitsView data, bitsize_t off, const RValue& rval) const {
+    BitsView data, bitsize_t off, const RValue& rval) {
     data.write(off, bitsize(), to_datum(rval));
 }
 
@@ -55,7 +55,7 @@ bool PrimType::is_impl_castable_to(
     return is_impl_castable_to_prim(bi_type_id, val);
 }
 
-Value PrimType::cast_to(Ref<const Type> type, Value&& val) {
+Value PrimType::cast_to(Ref<Type> type, Value&& val) {
     return Value{cast_to_prim(type->as_prim(), val.move_rvalue())};
 }
 

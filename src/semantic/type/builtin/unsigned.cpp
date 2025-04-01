@@ -21,13 +21,13 @@ TypedValue UnsignedType::type_op(TypeOp op) {
     }
 }
 
-RValue UnsignedType::construct() const { return RValue{Unsigned{}}; }
+RValue UnsignedType::construct() { return RValue{Unsigned{}}; }
 
-RValue UnsignedType::from_datum(Datum datum) const {
+RValue UnsignedType::from_datum(Datum datum) {
     return RValue{(Unsigned)datum};
 }
 
-Datum UnsignedType::to_datum(const RValue& rval) const {
+Datum UnsignedType::to_datum(const RValue& rval) {
     assert(rval.is<Unsigned>());
     auto uns_val = rval.get<Unsigned>();
     return (Datum)uns_val;
@@ -340,7 +340,7 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue UnsignedType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     if (rval.empty())
         return std::move(rval);

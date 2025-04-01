@@ -24,14 +24,14 @@ TypedValue IntType::type_op(TypeOp op) {
     }
 }
 
-RValue IntType::construct() const { return RValue{Integer{}}; }
+RValue IntType::construct() { return RValue{Integer{}}; }
 
-RValue IntType::from_datum(Datum datum) const {
+RValue IntType::from_datum(Datum datum) {
     Integer int_val = detail::integer_from_datum(datum, bitsize());
     return RValue{int_val};
 }
 
-Datum IntType::to_datum(const RValue& rval) const {
+Datum IntType::to_datum(const RValue& rval) {
     assert(rval.is<Integer>());
     auto int_val = rval.get<Integer>();
     return detail::integer_to_datum(int_val, bitsize());
@@ -340,7 +340,7 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     }
 }
 
-RValue IntType::cast_to_prim(Ref<const PrimType> type, RValue&& rval) {
+RValue IntType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
     if (rval.empty())
         return std::move(rval);

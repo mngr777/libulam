@@ -21,13 +21,13 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct() const override { return RValue{Unsigned{}}; }
-    RValue construct(bool value) const;
+    RValue construct() override { return RValue{Unsigned{}}; }
+    RValue construct(bool value);
 
     bool is_true(const RValue& rval) const;
 
-    RValue from_datum(Datum datum) const override;
-    Datum to_datum(const RValue& rval) const override;
+    RValue from_datum(Datum datum) override;
+    Datum to_datum(const RValue& rval) override;
 
     TypedValue unary_op(Op op, RValue&& rval) override;
 
@@ -43,7 +43,7 @@ protected:
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 
     TypedValue cast_to_prim(BuiltinTypeId id, RValue&& value) override;
-    RValue cast_to_prim(Ref<const PrimType> type, RValue&& value) override;
+    RValue cast_to_prim(Ref<PrimType> type, RValue&& value) override;
 };
 
 class BoolTypeTpl : public _PrimTypeTpl<BoolType> {

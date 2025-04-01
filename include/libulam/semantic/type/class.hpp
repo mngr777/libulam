@@ -1,10 +1,10 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/conv.hpp>
+#include <libulam/semantic/value/bits.hpp>
 #include <list>
 #include <map>
 #include <string_view>
@@ -82,19 +82,18 @@ public:
     Ref<Prop> first_prop_over_max_bitsize();
 
     bool is_constructible() const override { return true; }
-    RValue construct() const override;
+    RValue construct() override;
 
-    RValue construct(Bits&& bits) const;
+    RValue construct(Bits&& bits);
 
-    RValue load(const BitsView data, bitsize_t off) const override;
-    void store(BitsView data, bitsize_t off, const RValue& rval)
-        const override;
+    RValue load(const BitsView data, bitsize_t off) override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
 
-    Value cast_to(Ref<const Type> type, Value&& val) override;
+    Value cast_to(Ref<Type> type, Value&& val) override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
