@@ -38,7 +38,7 @@ public:
     using Symbol = SymbolTable::Symbol;
 
     ClassBase(
-        Ref<ast::ClassDef> node, Ref<Module> module, ScopeFlags scope_flags);
+        Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags);
 
     ClassBase(ClassBase&&) = default;
     ClassBase& operator=(ClassBase&&) = default;

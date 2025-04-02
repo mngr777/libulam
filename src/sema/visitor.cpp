@@ -208,7 +208,7 @@ void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
     enter_scope(std::move(scope));
 }
 
-void RecVisitor::enter_scope(ScopeFlags flags) { _scopes.push(flags); }
+void RecVisitor::enter_scope(scope_flags_t flags) { _scopes.push(flags); }
 
 void RecVisitor::enter_scope(Ptr<Scope>&& scope) {
     _scopes.push(std::move(scope));

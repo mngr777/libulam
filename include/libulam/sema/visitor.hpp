@@ -57,7 +57,7 @@ protected:
     void enter_class_tpl_scope(Ref<ClassTpl> tpl);
 
     void enter_scope(Ptr<Scope>&& scope);
-    void enter_scope(ScopeFlags flags = scp::NoFlags);
+    void enter_scope(scope_flags_t flags = scp::NoFlags);
     void exit_scope();
 
     Diag& diag();

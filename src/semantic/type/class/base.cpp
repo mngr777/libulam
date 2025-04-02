@@ -10,7 +10,7 @@
 namespace ulam {
 
 ClassBase::ClassBase(
-    Ref<ast::ClassDef> node, Ref<Module> module, ScopeFlags scope_flags):
+    Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags):
     _node{node},
     _module{module},
     _inh_scope{make<PersScope>(module->scope())},

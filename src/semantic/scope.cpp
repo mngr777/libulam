@@ -22,13 +22,13 @@ Scope::Symbol* Scope::get_local(str_id_t name_id) {
 
 // ScopeBase
 
-Ref<Scope> ScopeBase::parent(ScopeFlags flags) {
+Ref<Scope> ScopeBase::parent(scope_flags_t flags) {
     return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
                ? _parent
                : _parent->parent(flags);
 }
 
-Ref<const Scope> ScopeBase::parent(ScopeFlags flags) const {
+Ref<const Scope> ScopeBase::parent(scope_flags_t flags) const {
     return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
                ? _parent
                : _parent->parent(flags);
