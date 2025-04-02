@@ -36,9 +36,9 @@ public:
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
-    virtual Ref<Scope> parent(ScopeFlags flags = scp::NoFlags) = 0;
+    virtual Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) = 0;
     // TODO: remove const version
-    virtual Ref<const Scope> parent(ScopeFlags flags = scp::NoFlags) const = 0;
+    virtual Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const = 0;
 
     bool has_version() const { return version() != NoScopeVersion; }
     virtual ScopeVersion version() const { return NoScopeVersion; }
@@ -48,7 +48,7 @@ public:
     virtual Ptr<PersScopeView> view(ScopeVersion version) { assert(false); }
     virtual Ptr<PersScopeView> view() { assert(false); }
 
-    virtual ScopeFlags flags() const = 0;
+    virtual scope_flags_t flags() const = 0;
 
     virtual bool has_self() const { assert(false); }
     virtual LValue self() { assert(false); }
@@ -58,8 +58,8 @@ public:
     virtual Ref<Class> self_cls() { assert(false); }
     virtual void set_self_cls(Ref<Class> cls) { assert(false); }
 
-    bool is(ScopeFlags flags_) { return flags() & flags_; }
-    bool in(ScopeFlags flags_) {
+    bool is(scope_flags_t flags_) { return flags() & flags_; }
+    bool in(scope_flags_t flags_) {
         return is(flags_) || (parent() && parent()->in(flags_));
     }
 
@@ -85,13 +85,13 @@ protected:
 
 class ScopeBase : public Scope {
 public:
-    ScopeBase(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
+    ScopeBase(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
         Scope{}, _parent{parent}, _flags{flags}, _self{} {}
 
-    Ref<Scope> parent(ScopeFlags flags = scp::NoFlags) override;
-    Ref<const Scope> parent(ScopeFlags flags = scp::NoFlags) const override;
+    Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) override;
+    Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const override;
 
-    ScopeFlags flags() const override { return _flags; }
+    scope_flags_t flags() const override { return _flags; }
 
     bool has_self() const override;
     LValue self() override;
@@ -103,7 +103,7 @@ public:
 
 private:
     Ref<Scope> _parent;
-    ScopeFlags _flags;
+    scope_flags_t _flags;
     struct {
         LValue lval;
         Ref<Class> cls{}; // effective self class for `if (self as Class) {}`
@@ -115,7 +115,7 @@ private:
 
 class BasicScope : public ScopeBase {
 public:
-    explicit BasicScope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
+    explicit BasicScope(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
         ScopeBase{parent, flags} {
         assert((flags & scp::Persistent) == 0);
     }
@@ -179,8 +179,8 @@ private:
     using Map = std::unordered_map<str_id_t, SymbolVersionList>;
 
 public:
-    explicit PersScope(Ref<Scope> parent, ScopeFlags flags = scp::NoFlags):
-        ScopeBase{parent, (ScopeFlags)(flags | scp::Persistent)}, _version{0} {}
+    explicit PersScope(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
+        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)}, _version{0} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;

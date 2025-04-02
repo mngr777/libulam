@@ -17,14 +17,14 @@ public:
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
-    Ref<Scope> parent(ScopeFlags flags = scp::NoFlags) override;
-    Ref<const Scope> parent(ScopeFlags flags = scp::NoFlags) const override;
+    Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) override;
+    Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const override;
 
     Ref<Class> self_cls() override;
 
     operator bool() const { return _scope; }
 
-    ScopeFlags flags() const override;
+    scope_flags_t flags() const override;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
 

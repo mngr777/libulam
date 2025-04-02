@@ -12,7 +12,7 @@ public:
         friend ScopeStack;
     private:
         Raii(ScopeStack& stack, Ptr<Scope>&& scope);
-        Raii(ScopeStack& stack, ScopeFlags flags);
+        Raii(ScopeStack& stack, scope_flags_t flags);
 
     public:
         ~Raii();
@@ -36,10 +36,10 @@ public:
     Ref<Scope> top();
 
     Raii raii(Ptr<Scope>&& scope);
-    Raii raii(ScopeFlags flags);
+    Raii raii(scope_flags_t flags);
 
     void push(Ptr<Scope>&& scope);
-    void push(ScopeFlags flags);
+    void push(scope_flags_t flags);
 
     void pop();
 

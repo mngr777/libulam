@@ -7,7 +7,7 @@ ScopeStack::Raii::Raii(ScopeStack& stack, Ptr<Scope>&& scope): _stack{stack} {
     _scope = _stack.top();
 }
 
-ScopeStack::Raii::Raii(ScopeStack& stack, ScopeFlags flags): _stack{stack} {
+ScopeStack::Raii::Raii(ScopeStack& stack, scope_flags_t flags): _stack{stack} {
     _stack.push(flags);
     _scope = _stack.top();
 }
@@ -26,13 +26,13 @@ ScopeStack::Raii ScopeStack::raii(Ptr<Scope>&& scope) {
     return {*this, std::move(scope)};
 }
 
-ScopeStack::Raii ScopeStack::raii(ScopeFlags flags) {
+ScopeStack::Raii ScopeStack::raii(scope_flags_t flags) {
     return {*this, flags};
 }
 
 void ScopeStack::push(Ptr<Scope>&& scope) { _stack.push(std::move(scope)); }
 
-void ScopeStack::push(ScopeFlags flags) {
+void ScopeStack::push(scope_flags_t flags) {
     auto parent = !empty() ? top() : Ref<Scope>{};
     push(make<BasicScope>(parent, flags));
 }

@@ -18,17 +18,17 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     return {name_id, get(name_id)};
 }
 
-Ref<Scope> PersScopeView::parent(ScopeFlags flags) {
+Ref<Scope> PersScopeView::parent(scope_flags_t flags) {
     return scope()->parent(flags);
 }
 
-Ref<const Scope> PersScopeView::parent(ScopeFlags flags) const {
+Ref<const Scope> PersScopeView::parent(scope_flags_t flags) const {
     return scope()->parent(flags);
 }
 
 Ref<Class> PersScopeView::self_cls() { return scope()->self_cls(); }
 
-ScopeFlags PersScopeView::flags() const { return scope()->flags(); }
+scope_flags_t PersScopeView::flags() const { return scope()->flags(); }
 
 Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
     return scope()->get(name_id, _version, current);
