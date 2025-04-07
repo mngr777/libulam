@@ -53,8 +53,8 @@ public:
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
 protected:
-    ExprRes eval_expr(Ref<ast::Expr> expr);
-    bool eval_cond(Ref<ast::Expr> expr);
+    virtual ExprRes eval_expr(Ref<ast::Expr> expr);
+    virtual bool eval_cond(Ref<ast::Expr> expr);
 
     Ref<Scope> scope() { return _scope_stack.top(); }
 

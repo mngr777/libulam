@@ -7,19 +7,20 @@
 namespace ulam::sema {
 
 ExprRes EvalCast::cast(
-    Ref<ast::Node> node, Ref<Type> type, TypedValue&& tv, bool expl) {
-    auto [res, _] = maybe_cast(node, type, std::move(tv), expl);
+    Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl) {
+    auto [res, _] = maybe_cast(node, type, std::move(arg), expl);
     return std::move(res);
 }
 
 ExprRes EvalCast::cast(
-    Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv, bool expl) {
-    auto [res, _] = maybe_cast(node, bi_type_id, std::move(tv), expl);
+    Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
+    auto [res, _] = maybe_cast(node, bi_type_id, std::move(arg), expl);
     return std::move(res);
 }
 
 EvalCast::CastRes EvalCast::maybe_cast(
-    Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv, bool expl) {
+    Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
+    auto tv = arg.move_typed_value();
     auto from = tv.type();
     auto val = tv.move_value();
 
@@ -135,7 +136,8 @@ ExprRes EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv) {
 }
 
 EvalCast::CastRes EvalCast::maybe_cast(
-    Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv, bool expl) {
+    Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
+    auto tv = arg.move_typed_value();
     if (tv.type()->actual()->is(bi_type_id))
         return {ExprRes{std::move(tv)}, NoCast};
 

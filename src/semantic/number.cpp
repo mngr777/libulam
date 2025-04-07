@@ -1,5 +1,6 @@
 #include "src/semantic/detail/integer.hpp"
 #include <libulam/semantic/number.hpp>
+#include <sstream>
 
 std::ostream& operator<<(std::ostream& os, const ulam::Number& number) {
     number.write_value(os);
@@ -24,7 +25,7 @@ void Number::write_value(std::ostream& os) const {
     switch (_radix) {
     case Radix::Binary:
         write(os); // TODO
-    break;
+        break;
     case Radix::Octal:
         write(os << "0" << std::oct);
         break;
@@ -37,6 +38,12 @@ void Number::write_value(std::ostream& os) const {
         write(os << "0x" << std::hex);
         break;
     }
+}
+
+std::string Number::str() const {
+    std::ostringstream ss;
+    write_value(ss);
+    return ss.str();
 }
 
 } // namespace ulam

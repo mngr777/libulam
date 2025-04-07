@@ -1,4 +1,6 @@
 #pragma once
+#include "libulam/ast/nodes/access.hpp"
+#include "libulam/ast/nodes/exprs.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -26,20 +28,20 @@ public:
     EvalExprVisitor(EvalExprVisitor&&) = default;
     EvalExprVisitor& operator=(EvalExprVisitor&& other);
 
-    virtual ExprRes visit(Ref<ast::TypeOpExpr> node) override;
-    virtual ExprRes visit(Ref<ast::Ident> node) override;
-    virtual ExprRes visit(Ref<ast::ParenExpr> node) override;
-    virtual ExprRes visit(Ref<ast::BinaryOp> node) override;
-    virtual ExprRes visit(Ref<ast::UnaryOp> node) override;
-    virtual ExprRes visit(Ref<ast::Cast> node) override;
-    virtual ExprRes visit(Ref<ast::Ternary> node) override;
-    virtual ExprRes visit(Ref<ast::BoolLit> node) override;
-    virtual ExprRes visit(Ref<ast::NumLit> node) override;
-    virtual ExprRes visit(Ref<ast::StrLit> node) override;
-    virtual ExprRes visit(Ref<ast::FunCall> node) override;
-    virtual ExprRes visit(Ref<ast::MemberAccess> node) override;
-    virtual ExprRes visit(Ref<ast::ClassConstAccess> node) override;
-    virtual ExprRes visit(Ref<ast::ArrayAccess> node) override;
+    ExprRes visit(Ref<ast::TypeOpExpr> node) override;
+    ExprRes visit(Ref<ast::Ident> node) override;
+    ExprRes visit(Ref<ast::ParenExpr> node) override;
+    ExprRes visit(Ref<ast::BinaryOp> node) override;
+    ExprRes visit(Ref<ast::UnaryOp> node) override;
+    ExprRes visit(Ref<ast::Cast> node) override;
+    ExprRes visit(Ref<ast::Ternary> node) override;
+    ExprRes visit(Ref<ast::BoolLit> node) override;
+    ExprRes visit(Ref<ast::NumLit> node) override;
+    ExprRes visit(Ref<ast::StrLit> node) override;
+    ExprRes visit(Ref<ast::FunCall> node) override;
+    ExprRes visit(Ref<ast::MemberAccess> node) override;
+    ExprRes visit(Ref<ast::ClassConstAccess> node) override;
+    ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
     virtual bool check_is_assignable(Ref<ast::Expr> node, const Value& value);
     virtual bool check_is_object(
@@ -72,18 +74,41 @@ protected:
         Ref<ast::Expr> r_node,
         ExprRes&& right);
 
+    virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
+    virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, ExprRes res);
+
+    virtual ExprRes ident_self(Ref<ast::Ident> node);
+    virtual ExprRes ident_super(Ref<ast::Ident> node);
+    virtual ExprRes ident_var(Ref<ast::Ident> node, Ref<Var> var);
+    virtual ExprRes ident_prop(Ref<ast::Ident> node, Ref<Prop> prop);
+    virtual ExprRes ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset);
+
+    virtual ExprRes callable_op(Ref<ast::FunCall> node);
+
+    virtual ExprRes member_access_op(
+        Ref<ast::MemberAccess> node, ExprRes&& obj);
+    virtual ExprRes
+    member_access_var(Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var);
+    virtual ExprRes member_access_prop(
+        Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Prop> prop);
+    virtual ExprRes member_access_fset(
+        Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset);
+
+    virtual ExprRes
+    as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);
+
     virtual ExprRes
     assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
-    virtual std::pair<TypedValueList, ExprError>
-    eval_args(Ref<ast::ArgList> args);
+    virtual ExprResList eval_args(Ref<ast::ArgList> args);
 
+protected:
     Diag& diag();
     Builtins& builtins();
 
     std::string_view str(str_id_t str_id);
+    std::string_view text(str_id_t str_id);
 
-private:
     EvalVisitor& _eval;
     Ref<Program> _program;
     Ref<Scope> _scope;

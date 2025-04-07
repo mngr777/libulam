@@ -1,6 +1,72 @@
+#include "./stringifier.hpp"
+#include "./visitor.hpp"
+#include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/expr_res.hpp>
+#include <libulam/semantic/scope.hpp>
 
 class EvalExprVisitor : public ulam::sema::EvalExprVisitor {
 public:
-    using ulam::sema::EvalExprVisitor::EvalExprVisitor;
+    using ExprError = ulam::sema::ExprError;
+    using ExprRes = ulam::sema::ExprRes;
+
+    EvalExprVisitor(
+        EvalVisitor& eval,
+        Stringifier& stringifier,
+        ulam::Ref<ulam::Scope> scope):
+        ulam::sema::EvalExprVisitor{eval, scope}, _stringifier{stringifier} {}
+
+    ExprRes visit(ulam::Ref<ulam::ast::BoolLit> node) override;
+    ExprRes visit(ulam::Ref<ulam::ast::NumLit> node) override;
+    ExprRes visit(ulam::Ref<ulam::ast::StrLit> node) override;
+
+protected:
+    ExprRes type_op(
+        ulam::Ref<ulam::ast::TypeOpExpr> node,
+        ulam::Ref<ulam::Type> type) override;
+
+    ExprRes
+    type_op(ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes res) override;
+
+    ExprRes ident_self(ulam::Ref<ulam::ast::Ident> node) override;
+
+    ExprRes ident_super(ulam::Ref<ulam::ast::Ident> node) override;
+
+    ExprRes ident_var(
+        ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Var> var) override;
+
+    ExprRes ident_prop(
+        ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Prop> prop) override;
+
+    ExprRes ident_fset(
+        ulam::Ref<ulam::ast::Ident> node,
+        ulam::Ref<ulam::FunSet> fset) override;
+
+    ExprRes member_access_op(
+        ulam::Ref<ulam::ast::MemberAccess> node, ExprRes&& obj) override;
+
+    ExprRes member_access_var(
+        ulam::Ref<ulam::ast::MemberAccess> node,
+        ExprRes&& obj,
+        ulam::Ref<ulam::Var> var) override;
+
+    ExprRes member_access_prop(
+        ulam::Ref<ulam::ast::MemberAccess> node,
+        ExprRes&& obj,
+        ulam::Ref<ulam::Prop> prop) override;
+
+    ExprRes member_access_fset(
+        ulam::Ref<ulam::ast::MemberAccess> node,
+        ExprRes&& obj,
+        ulam::Ref<ulam::FunSet> fset) override;
+
+    ExprRes binary_op(
+        ulam::Ref<ulam::ast::Expr> node,
+        ulam::Op op,
+        ulam::Ref<ulam::ast::Expr> l_node,
+        ExprRes&& left,
+        ulam::Ref<ulam::ast::Expr> r_node,
+        ExprRes&& right) override;
+
+    Stringifier& _stringifier;
 };

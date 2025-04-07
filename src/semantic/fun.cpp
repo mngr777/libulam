@@ -66,7 +66,7 @@ unsigned Fun::min_param_num() const {
     return num;
 }
 
-Fun::MatchRes Fun::match(const TypedValueList& args) {
+Fun::MatchRes Fun::match(const TypedValueRefList& args) {
     if (min_param_num() > args.size())
         return {NoMatch, MaxConvCost};
     if (args.size() > param_num() && !has_ellipsis())
@@ -81,7 +81,7 @@ Fun::MatchRes Fun::match(const TypedValueList& args) {
             break;
         }
         auto& param = (*param_it);
-        auto& arg = (*arg_it);
+        auto& arg = (*arg_it).get();
 
         auto param_type = param->type();
         auto arg_type = arg.type();
@@ -176,12 +176,21 @@ FunSet::Iterator& FunSet::Iterator::operator++() {
 
 // FunSet
 
-FunSet::FunSet() {
+FunSet::FunSet(str_id_t name_id): _name_id{name_id} {
     _map.emplace(); // empty map for empty set
 }
 
+bool FunSet::has_name_id() const {
+    return _name_id != NoStrId;
+}
+
+str_id_t FunSet::name_id() const {
+    assert(has_name_id());
+    return _name_id;
+}
+
 FunSet::Matches
-FunSet::find_match(Ref<const Class> dyn_cls, const TypedValueList& args) {
+FunSet::find_match(Ref<const Class> dyn_cls, const TypedValueRefList& args) {
     FunSet::Matches overrides{};
     auto matches = find_match(args);
     for (auto match : matches) {
@@ -191,7 +200,7 @@ FunSet::find_match(Ref<const Class> dyn_cls, const TypedValueList& args) {
     return overrides;
 }
 
-FunSet::Matches FunSet::find_match(const TypedValueList& args) {
+FunSet::Matches FunSet::find_match(const TypedValueRefList& args) {
     Matches matches;
     conv_cost_t min_conv_cost = MaxConvCost;
     for (auto fun : *this) {

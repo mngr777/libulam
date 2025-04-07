@@ -30,10 +30,6 @@ public:
         assert(has_type_name() != has_expr());
         assert(has_expr() || !has_base());
     }
-    // TypeOpExpr(TypeOp op, Ptr<TypeName>&& type):
-    //     TypeOpExpr{op, std::move(type), {}, {}} {}
-    // TypeOpExpr(TypeOp op, Ptr<Expr>&& expr, Ptr<TypeIdent> base):
-    //     TypeOpExpr{op, {}, std::move(expr), std::move(base)} {}
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
     ULAM_AST_TUPLE_PROP(expr, 1)

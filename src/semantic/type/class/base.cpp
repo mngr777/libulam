@@ -202,7 +202,7 @@ Ref<FunSet> ClassBase::find_op_fset(Op op) {
 }
 
 Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
-    auto fset = make<FunSet>();
+    auto fset = make<FunSet>(name_id);
     auto ref = ulam::ref(fset);
     fset->set_scope_version(scope()->version()); // ??
     set(name_id, std::move(fset));

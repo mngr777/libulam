@@ -22,23 +22,23 @@ public:
     virtual ExprRes cast(
         Ref<ast::Node> node,
         Ref<Type> type,
-        TypedValue&& tv,
+        ExprRes&& arg,
         bool expl = false);
 
     virtual ExprRes cast(
         Ref<ast::Node> node,
         BuiltinTypeId bi_type_id,
-        TypedValue&& tv,
+        ExprRes&& arg,
         bool expl = false);
 
 protected:
     virtual CastRes
-    maybe_cast(Ref<ast::Node> node, Ref<Type> type, TypedValue&& tv, bool expl);
+    maybe_cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl);
 
     virtual CastRes maybe_cast(
         Ref<ast::Node> node,
         BuiltinTypeId bi_type_id,
-        TypedValue&& tv,
+        ExprRes&& arg,
         bool expl);
 
     virtual ExprRes
