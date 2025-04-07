@@ -48,6 +48,26 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
     return res;
 }
 
+EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
+    ulam::Ref<ulam::ast::Expr> node,
+    ulam::Op op,
+    ulam::LValue lval,
+    ulam::Ref<ulam::ast::Expr> l_node,
+    EvalExprVisitor::ExprRes&& left,
+    ulam::Ref<ulam::ast::Expr> r_node,
+    EvalExprVisitor::ExprRes&& right) {
+    std::string data{};
+    if (left.has_data() && right.has_data()) {
+        data = left.data<std::string>() + " " + right.data<std::string>() +
+               " " + ulam::ops::str(op);
+    }
+    auto res = ulam::sema::EvalExprVisitor::apply_binary_op(
+        node, op, lval, l_node, std::move(left), r_node, std::move(right));
+    if (res && !data.empty())
+        res.set_data(data);
+    return res;
+}
+
 EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
     ulam::Ref<ulam::ast::TypeOpExpr> node, EvalExprVisitor::ExprRes res) {
     res = ulam::sema::EvalExprVisitor::type_op(node, std::move(res));
@@ -171,27 +191,9 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_fset(
         return res;
     if (!data.empty()) {
         assert(fset->has_name_id());
-        data += std::string{" {args}"} + std::string{str(fset->name_id())} + " .";
+        data +=
+            std::string{" {args}"} + std::string{str(fset->name_id())} + " .";
         res.set_data(data);
     }
-    return res;
-}
-
-EvalExprVisitor::ExprRes EvalExprVisitor::binary_op(
-    ulam::Ref<ulam::ast::Expr> node,
-    ulam::Op op,
-    ulam::Ref<ulam::ast::Expr> l_node,
-    EvalExprVisitor::ExprRes&& left,
-    ulam::Ref<ulam::ast::Expr> r_node,
-    EvalExprVisitor::ExprRes&& right) {
-    std::string data{};
-    if (left.has_data() && right.has_data()) {
-        data = left.data<std::string>() + " " + right.data<std::string>() +
-               " " + ulam::ops::str(op);
-    }
-    auto res = ulam::sema::EvalExprVisitor::binary_op(
-        node, op, l_node, std::move(left), r_node, std::move(right));
-    if (res && !data.empty())
-        res.set_data(data);
     return res;
 }

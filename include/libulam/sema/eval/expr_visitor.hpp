@@ -74,6 +74,15 @@ protected:
         Ref<ast::Expr> r_node,
         ExprRes&& right);
 
+    virtual ExprRes apply_binary_op(
+        Ref<ast::Expr> node,
+        Op op,
+        LValue lval,
+        Ref<ast::Expr> l_node,
+        ExprRes&& left,
+        Ref<ast::Expr> r_node,
+        ExprRes&& right);
+
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, ExprRes res);
 

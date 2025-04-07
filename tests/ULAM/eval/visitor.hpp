@@ -6,15 +6,19 @@
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
+#include <string>
 
 class EvalVisitor : public ulam::sema::EvalVisitor {
 public:
     EvalVisitor(ulam::Ref<ulam::Program> program):
         ulam::sema::EvalVisitor{program}, _stringifier{program->text_pool()} {}
 
-protected:
-    ulam::sema::ExprRes eval_expr(ulam::Ref<ulam::ast::Expr> expr) override;
+    void visit(ulam::Ref<ulam::ast::Return> node) override;
+    void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
 
+    const std::string& data() const { return _data; }
+
+protected:
     ulam::Ptr<ulam::sema::EvalExprVisitor>
     expr_visitor(ulam::Ref<ulam::Scope> scope) override;
 
@@ -27,6 +31,11 @@ protected:
     ulam::Ptr<ulam::sema::EvalFuncall>
     funcall_helper(ulam::Ref<ulam::Scope> scope) override;
 
+    ulam::sema::ExprRes eval_expr(ulam::Ref<ulam::ast::Expr> expr) override;
+
 private:
+    void append(std::string data);
+
     Stringifier _stringifier;
+    std::string _data;
 };

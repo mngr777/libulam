@@ -3,6 +3,7 @@
 #include "./expr_visitor.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
+#include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
 #    define ULAM_DEBUG
@@ -10,14 +11,28 @@
 #endif
 #include "src/debug.hpp"
 
-ulam::sema::ExprRes EvalVisitor::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
-    auto res = ulam::sema::EvalVisitor::eval_expr(expr);
-    assert(res);
-    debug() << "expr: "
-            << (res.has_data() ? res.data<std::string>()
-                               : std::string{"no data"})
-            << "\n";
-    return res;
+// TODO: throw when missing data
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
+    auto res = ret_res(node);
+    if (_stack.size() == 1) {
+        if (res.has_data()) {
+            append(res.data<std::string>());
+            append("return");
+        }
+    }
+    throw ulam::sema::EvalExceptReturn(node, std::move(res));
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
+    debug() << __FUNCTION__ << " ExprStmt\n";
+    if (!node->has_expr())
+        return;
+    auto res = eval_expr(node->expr());
+    if (_stack.size() == 1) {
+        if (res.has_data())
+            append(res.data<std::string>());
+    }
 }
 
 ulam::Ptr<ulam::sema::EvalExprVisitor>
@@ -38,4 +53,20 @@ EvalVisitor::cast_helper(ulam::Ref<ulam::Scope> scope) {
 ulam::Ptr<ulam::sema::EvalFuncall>
 EvalVisitor::funcall_helper(ulam::Ref<ulam::Scope> scope) {
     return ulam::make<EvalFuncall>(*this, diag(), scope);
+}
+
+ulam::sema::ExprRes EvalVisitor::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
+    auto res = ulam::sema::EvalVisitor::eval_expr(expr);
+    assert(res);
+    debug() << "expr: "
+            << (res.has_data() ? res.data<std::string>()
+                               : std::string{"no data"})
+            << "\n";
+    return res;
+}
+
+void EvalVisitor::append(std::string data) {
+    if (!_data.empty())
+        _data += " ";
+    _data += data;
 }

@@ -12,19 +12,22 @@
 
 namespace ulam::sema {
 
-Eval::Eval(Context& ctx, Ref<ast::Root> ast):
-    _ctx{ctx}, _ast{ast} {
+Eval::Eval(Context& ctx, Ref<ast::Root> ast): _ctx{ctx}, _ast{ast} {
     assert(_ast->program());
 }
 
 void Eval::eval(const std::string& text) {
-    Parser parser{_ctx, _ast->ctx().str_pool(), _ast->ctx().text_pool()};
-    auto block = parser.parse_stmts(text);
-    visitor()->eval(ref(block));
+    auto block = parse(text);
+    do_eval(ref(block));
 }
 
-Ptr<EvalVisitor> Eval::visitor() {
-    return make<EvalVisitor>(_ast->program());
+Ptr<ast::Block> Eval::parse(const std::string& text) {
+    Parser parser{_ctx, _ast->ctx().str_pool(), _ast->ctx().text_pool()};
+    return parser.parse_stmts(text);
+}
+void Eval::do_eval(Ref<ast::Block> block) {
+    auto visitor = make<EvalVisitor>(_ast->program());
+    visitor->eval(block);
 }
 
 } // namespace ulam::sema

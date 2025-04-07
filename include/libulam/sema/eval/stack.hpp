@@ -11,7 +11,7 @@ class EvalStack {
 public:
     class Item {
     public:
-        Item(Ref<Fun> fun, LValue self) {}
+        Item(Ref<Fun> fun, LValue self): _fun{fun}, _self{self} {}
 
         Ref<Fun> fun() { return _fun; }
         LValue self() { return _self; }
