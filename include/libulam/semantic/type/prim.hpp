@@ -118,8 +118,17 @@ public:
         bitsize_t bitsize):
         PrimType{builtins, &id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
 
+    std::string name() const override {
+        auto name = PrimType::name();
+        if (bitsize() != DefaultSize)
+            name += std::string{"("} + std::to_string(bitsize()) + ")";
+        return name;
+    }
+
     BuiltinTypeId bi_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
+
+
 
 protected:
     Ref<PrimTypeTpl> tpl() { return _tpl; }

@@ -36,10 +36,12 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
         for (unsigned n = 0; n < num; ++n) {
             auto stmt = block->get(n);
             if (n + 1 == num) {
-                // if last stmt is an expr, return its result
+                // if last stmt is an expr, return its result as rvalue
                 auto expr_stmt = dynamic_cast<Ref<ast::ExprStmt>>(stmt);
-                if (expr_stmt)
-                    return eval_expr(expr_stmt->expr());
+                if (expr_stmt) {
+                    auto res = eval_expr(expr_stmt->expr());
+                    return {res.type()->deref(), res.move_value().deref()};
+                }
             }
             block->get(n)->accept(*this);
         }

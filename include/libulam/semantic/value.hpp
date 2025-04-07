@@ -101,9 +101,7 @@ public:
     LValue bound_fset(Ref<FunSet> fset);
 
     bool is_consteval() const { return _is_consteval; }
-    void set_is_consteval(bool is_consteval) {
-        _is_consteval = is_consteval;
-    } // TMP??
+    void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; }
 
 private:
     bool _is_consteval;

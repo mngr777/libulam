@@ -10,7 +10,7 @@ public:
     const std::string& data() const { return _data; }
 
 protected:
-    void do_eval(ulam::Ref<ulam::ast::Block> block) override;
+    ulam::sema::ExprRes do_eval(ulam::Ref<ulam::ast::Block> block) override;
 
 private:
     std::string _data;

@@ -104,6 +104,9 @@ public:
     // TODO: make protected
     void add_conv(Ref<Fun> fun);
 
+    const auto& props() const { return _props; }
+    const auto& all_props() const { return _all_props; } // + inherited
+
 protected:
     Ref<Class> _as_class() override { return this; }
     Ref<const Class> _as_class() const override { return this; }
@@ -123,8 +126,6 @@ private:
     void merge_fsets();
     void init_layout();
 
-    const auto& props() const { return _props; }
-    const auto& all_props() const { return _props; } // + inherited
     auto& convs() { return _convs; }
     auto& fsets() { return _fsets; }
 

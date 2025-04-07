@@ -11,7 +11,8 @@
 class EvalVisitor : public ulam::sema::EvalVisitor {
 public:
     EvalVisitor(ulam::Ref<ulam::Program> program):
-        ulam::sema::EvalVisitor{program}, _stringifier{program->text_pool()} {}
+        ulam::sema::EvalVisitor{program},
+        _stringifier{program->builtins(), program->text_pool()} {}
 
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;

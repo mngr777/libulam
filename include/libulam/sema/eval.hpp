@@ -13,11 +13,11 @@ class Eval {
 public:
     Eval(Context& ctx, Ref<ast::Root> ast);
 
-    virtual void eval(const std::string& text);
+    virtual ExprRes eval(const std::string& text);
 
 protected:
     virtual Ptr<ast::Block> parse(const std::string& text);
-    virtual void do_eval(Ref<ast::Block> block);
+    virtual ExprRes do_eval(Ref<ast::Block> block);
 
     Context& _ctx;
     Ref<ast::Root> _ast;

@@ -13,17 +13,13 @@ PrimType::PrimType(Builtins& builtins, TypeIdGen* id_gen):
 }
 
 std::string PrimType::name() const {
-    std::stringstream ss;
-    ss << builtin_type_str(bi_type_id());
-    ss << "(" << (Unsigned)bitsize() << ")";
-    return ss.str();
+    return std::string{builtin_type_str(bi_type_id())};
 }
 
 RValue PrimType::load(const BitsView data, bitsize_t off) {
     return from_datum(data.read(off, bitsize()));
 }
-void PrimType::store(
-    BitsView data, bitsize_t off, const RValue& rval) {
+void PrimType::store(BitsView data, bitsize_t off, const RValue& rval) {
     data.write(off, bitsize(), to_datum(rval));
 }
 
@@ -73,13 +69,15 @@ conv_cost_t PrimType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return MaxConvCost;
 }
 
-conv_cost_t PrimType::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
+conv_cost_t PrimType::conv_cost(
+    Ref<const Type> type, const Value& val, bool allow_cast) const {
     if (is_same(type))
         return 0;
     if (is_impl_castable_to(type, val))
         return prim_conv_cost(this, type->as_prim());
     if (allow_cast && is_expl_castable_to(type))
-        return prim_cast_cost(this, type->as_prim());;
+        return prim_cast_cost(this, type->as_prim());
+    ;
     return MaxConvCost;
 }
 

@@ -1,5 +1,6 @@
 #include "./compiler.hpp"
 #include "./eval.hpp"
+#include "./eval/stringifier.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
@@ -9,6 +10,25 @@
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <stdexcept>
 #include <utility>
+
+namespace {
+
+std::string class_prefix(ulam::Ref<ulam::Class> cls) {
+    switch (cls->kind()) {
+    case ulam::ClassKind::Element:
+        return "Ue_";
+    case ulam::ClassKind::Transient:
+        return "Un_";
+    default:
+        return "Uq_";
+    }
+}
+
+std::string class_name(ulam::Ref<ulam::Class> cls) {
+    return class_prefix(cls) + cls->name();
+}
+
+} // namespace
 
 void Compiler::parse_module_file(const Path& path) {
     auto module = _parser.parse_module_file(path);
@@ -27,6 +47,8 @@ void Compiler::parse_module_str(const std::string& text, const Path& path) {
         if (_ast->has_module(module->name_id()))
             throw std::invalid_argument{
                 std::string{"duplicate module name "} + name};
+        // NOTE: only string modules to be compiled: all files are from stdlib
+        _module_name_ids.insert(module->name_id());
         _ast->add_module(std::move(module));
     }
 }
@@ -48,24 +70,69 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
 void Compiler::compile(std::ostream& out) {
     Eval eval{_ctx, ulam::ref(_ast)};
     for (auto module : _ast->program()->modules()) {
+        if (_module_name_ids.count(module->name_id()) == 0)
+            continue;
+
         auto sym = module->get(module->name_id());
         if (!sym) {
             throw std::invalid_argument(
                 std::string{"no main class in module "} +
                 std::string{module->name()});
         }
-        if (sym->is<ulam::Class>()) {
-            auto cls = sym->get<ulam::Class>();
-            if (cls->has_fun("test")) {
-                auto text = std::string{module->name()} + " foo; foo.test();\n";
-                try {
-                    eval.eval(text);
-                    std::cout << eval.data() << "\n";
-                } catch (ulam::sema::EvalExceptError& e) {
-                    std::cerr << "eval error: " << e.message() << "\n";
-                    throw e;
-                }
-            }
+        assert(sym->is<ulam::Class>());
+        auto cls = sym->get<ulam::Class>();
+        bool has_test = cls->has_fun("test");
+
+        auto text = cls->name() + " foo; ";
+        if (has_test)
+            text += "foo.test(); ";
+        text += "foo;\n";
+
+        try {
+            auto obj = eval.eval(text);
+            assert(obj);
+            assert(obj.type()->is_class());
+            assert(obj.value().is_rvalue());
+            auto test_postfix =
+                has_test ? "Int test() { " + eval.data() + " }" : "<NOMAIN>";
+            write_obj(out, std::move(obj), test_postfix);
+            out << "\n";
+
+        } catch (ulam::sema::EvalExceptError& e) {
+            std::cerr << "eval error: " << e.message() << "\n";
+            throw e;
         }
     }
+}
+
+void Compiler::write_obj(
+    std::ostream& out,
+    ulam::sema::ExprRes&& obj,
+    const std::string& test_postfix) {
+    assert(obj.type()->is_class());
+    auto cls = obj.type()->as_class();
+    auto val = obj.move_value();
+
+    out << class_name(cls) << " { ";
+    write_class_props(out, cls, val);
+    out << test_postfix << " }";
+}
+
+void Compiler::write_class_prop(
+    std::ostream& out, ulam::Ref<ulam::Prop> prop, ulam::Value& obj) {
+    assert(_ast->program());
+    auto program = _ast->program();
+    auto& str_pool = program->str_pool();
+    Stringifier stringifier{program->builtins(), program->text_pool()};
+
+    auto type = prop->type()->canon();
+    auto rval = obj.prop(prop).copy_rvalue();
+    out << type->name() << " " << str_pool.get(prop->name_id()) << "("
+        << stringifier.stringify(type, rval) << "); ";
+}
+
+void Compiler::write_class_props(
+    std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj) {
+    for (auto prop : cls->props())
+        write_class_prop(out, prop, obj);
 }

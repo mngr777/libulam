@@ -5,6 +5,7 @@
 #include <ios>
 #include <sstream>
 #include <stdexcept>
+#include <iostream> // TEST
 
 TestCase::TestCase(const Path& stdlib_dir, const Path& path):
     _stdlib_dir{stdlib_dir} {
@@ -38,6 +39,8 @@ void TestCase::run() {
     if (!program)
         throw std::invalid_argument("failed to analyze program");
     compiler.compile(out);
+    std::string data = out.str();
+    std::cout << data << std::endl;
 }
 
 void TestCase::load(const std::filesystem::path& path) {

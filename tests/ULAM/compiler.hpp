@@ -1,10 +1,13 @@
 #pragma once
+#include <filesystem>
 #include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/parser.hpp>
+#include <libulam/sema/expr_res.hpp>
+#include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
+#include <set>
 #include <string>
-#include <filesystem>
 
 class Compiler {
 public:
@@ -25,7 +28,18 @@ public:
     void compile(std::ostream& out);
 
 private:
+    void write_obj(
+        std::ostream& out,
+        ulam::sema::ExprRes&& obj,
+        const std::string& test_postfix);
+
+    void write_class_props(
+        std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj);
+    void write_class_prop(
+        std::ostream& out, ulam::Ref<ulam::Prop> prop, ulam::Value& obj);
+
     ulam::Context _ctx;
     ulam::Ptr<ulam::ast::Root> _ast;
     ulam::Parser _parser;
+    std::set<ulam::str_id_t> _module_name_ids;
 };
