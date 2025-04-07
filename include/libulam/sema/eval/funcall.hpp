@@ -15,9 +15,14 @@ public:
 
     virtual ExprRes funcall(
         Ref<ast::Node> node,
+        ExprRes&& callable,
+        ExprResList&& args);
+
+    virtual ExprRes funcall(
+        Ref<ast::Node> node,
         Ref<FunSet> fset,
         LValue self,
-        TypedValueList&& args);
+        ExprResList&& args);
 
     virtual ExprRes funcall(
         Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args);

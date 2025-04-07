@@ -62,7 +62,7 @@ EvalInit::eval_expr(Ref<Type> type, Ref<ast::Expr> expr, unsigned depth) {
     // cast
     if (res) {
         auto cast = _eval.cast_helper(_scope);
-        res = cast->cast(expr, type, res.move_typed_value());
+        res = cast->cast(expr, type, std::move(res));
     }
     if (!res)
         return {Value{RValue{}}, false};
@@ -104,7 +104,7 @@ EvalInit::EvalRes EvalInit::eval_class_list(
 
     // eval args
     auto ev = _eval.expr_visitor(_scope);
-    TypedValueList args;
+    ExprResList args;
     for (unsigned n = 0; n < list->size(); ++n) {
         auto& item = list->get(n);
         if (!item.is<Ptr<ast::Expr>>()) {
@@ -116,7 +116,7 @@ EvalInit::EvalRes EvalInit::eval_class_list(
         auto expr_res = expr->accept(*ev);
         if (!expr_res)
             return {Value{RValue{}}, false};
-        args.push_back(expr_res.move_typed_value());
+        args.push_back(std::move(expr_res));
     }
 
     // call constructor
@@ -204,7 +204,8 @@ EvalInit::EvalRes EvalInit::eval_class_map(
         // not a property?
         if (!sym->is<Prop>()) {
             auto name = _str_pool.get(key);
-            auto message = cls->name() + "." + std::string{name} + " is not a property";
+            auto message =
+                cls->name() + "." + std::string{name} + " is not a property";
             _diag.error(map->child_by_key(key), std::move(message));
             return {Value{RValue{}}, false};
         }

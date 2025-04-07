@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <libulam/semantic/value/types.hpp>
 #include <ostream>
+#include <string>
 #include <variant>
 
 namespace ulam {
@@ -21,9 +22,7 @@ public:
 
     Radix radix() const { return _radix; }
 
-    bool is_signed() const {
-        return std::holds_alternative<Integer>(_value);
-    }
+    bool is_signed() const { return std::holds_alternative<Integer>(_value); }
 
     Unsigned as_unsigned() const {
         if (is_signed()) {
@@ -41,6 +40,8 @@ public:
     }
 
     void write_value(std::ostream& os) const;
+
+    std::string str() const;
 
 private:
     Radix _radix;

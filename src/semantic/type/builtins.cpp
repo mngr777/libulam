@@ -15,8 +15,8 @@ namespace {
 
 template <typename T> bitsize_t prim_size(bitsize_t size) {
     return (size == NoBitsize)
-        ? T::DefaultSize
-        : std::min(std::max(size, T::MinSize), T::MaxSize);
+               ? T::DefaultSize
+               : std::min(std::max(size, T::MinSize), T::MaxSize);
 }
 
 } // namespace
@@ -135,5 +135,7 @@ Ref<AtomType> Builtins::atom_type() { return ref(_atom_type); }
 Ref<StringType> Builtins::string_type() { return ref(_string_type); }
 
 Ref<VoidType> Builtins::void_type() { return ref(_void_type); }
+
+Ref<FunType> Builtins::fun_type() { return ref(_fun_type); }
 
 } // namespace ulam

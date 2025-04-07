@@ -10,6 +10,7 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtin/fun.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
@@ -36,74 +37,18 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n";
     DBG_LINE(node);
     if (node->has_type_name()) {
-        // resolve type
         auto type = _eval.resolver()->resolve_type_name(
             node->type_name(), _scope, true);
         if (!type)
             return {ExprError::UnresolvableType};
-
-        if (type->is_class()) {
-            // instanceof with arguments?
-            auto cls = type->as_class();
-            if (node->op() == TypeOp::InstanceOf && node->has_args()) {
-                auto [args, error] = eval_args(node->args());
-                if (error != ExprError::Ok)
-                    return {error};
-                auto rval = cls->construct();
-                auto funcall = _eval.funcall_helper(_scope);
-                funcall->funcall(node, cls->constructors(), rval.self(), std::move(args));
-                return {type, Value{std::move(rval)}};
-            }
-        }
-
-        auto tv = type->actual()->type_op(node->op());
-        if (!tv) {
-            diag().error(node, "invalid type operator");
-            return {ExprError::InvalidTypeOperator};
-        }
-        return tv;
+        return type_op(node, type);
+    } else {
+        assert(node->has_expr());
+        auto expr_res = node->expr()->accept(*this);
+        if (!expr_res)
+            return expr_res;
+        return type_op(node, std::move(expr_res));
     }
-    assert(node->has_expr());
-    auto expr_res = node->expr()->accept(*this);
-    if (!expr_res)
-        return expr_res;
-
-    auto type = expr_res.type();
-    auto val = expr_res.move_value();
-
-    // obj.Base.<type_op>?
-    if (node->has_base()) {
-        if (!type->is_class()) {
-            diag().error(node->base(), "not an object");
-            return {ExprError::NotObject};
-        }
-        auto cls = class_base(node, type->as_class(), node->base());
-        if (!cls) {
-            auto error = node->base()->is_super() ? ExprError::NoSuper
-                                                  : ExprError::BaseNotFound;
-            return {error};
-        }
-        val = Value{val.as(cls)};
-    }
-
-    // class type op may require an evaluator
-    if (type->is_class()) {
-        // custom lengthof?
-        auto cls = type->as_class();
-        if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
-            if (!val.has_rvalue())
-                return {builtins().unsigned_type(), Value{RValue{}}};
-            auto funcall = _eval.funcall_helper(_scope);
-            TypedValueList args;
-            return funcall->funcall(
-                node, cls->fun("alengthof"), val.self(), std::move(args));
-        }
-    }
-
-    auto tv = type->actual()->type_op(node->op(), val);
-    if (!tv)
-        return {ExprError::InvalidTypeOperator};
-    return tv;
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
@@ -112,20 +57,12 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
     DBG_LINE(node);
 
     // self
-    if (node->is_self()) {
-        auto self = _scope->self();
-        return {_scope->eff_self_cls(), Value{self}};
-    }
+    if (node->is_self())
+        return ident_self(node);
 
     // super
-    if (node->is_super()) {
-        auto self_cls = _scope->self_cls();
-        auto sup = class_super(node, self_cls);
-        if (!sup)
-            return {ExprError::NoSuper};
-        auto self = _scope->self();
-        return {sup, Value{self.as(sup)}};
-    }
+    if (node->is_super())
+        return ident_super(node);
 
     auto name_id = node->name().str_id();
     auto sym =
@@ -135,19 +72,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
         return {ExprError::SymbolNotFound};
     }
 
+    using std::placeholders::_1;
     return sym->accept(
-        [&](Ref<Var> var) -> ExprRes {
-            if (!_eval.resolver()->resolve(var, _scope))
-                return {ExprError::UnresolvableVar};
-            return {var->type(), Value{var->lvalue()}};
-        },
-        [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), Value{_scope->self().prop(prop)}};
-        },
-        [&](Ref<FunSet> fset) -> ExprRes {
-            return {
-                builtins().type(FunId), Value{_scope->self().bound_fset(fset)}};
-        },
+        std::bind(std::mem_fn(&EvalExprVisitor::ident_var), this, node, _1),
+        std::bind(std::mem_fn(&EvalExprVisitor::ident_prop), this, node, _1),
+        std::bind(std::mem_fn(&EvalExprVisitor::ident_fset), this, node, _1),
         [&](auto value) -> ExprRes { assert(false); });
 }
 
@@ -254,7 +183,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
             auto cls = arg_type->as_class();
             auto fset = cls->op(op);
             assert(fset);
-            TypedValueList args;
+            ExprResList args;
             if (op == Op::PostInc || op == Op::PostDec) {
                 // dummy argument for post inc/dec
                 auto int_type = _program->builtins().int_type();
@@ -289,7 +218,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
         return {builtins().void_type(), Value{RValue{}}};
 
     auto cast = _eval.cast_helper(_scope);
-    res = cast->cast(node, cast_type, res.move_typed_value(), true);
+    res = cast->cast(node, cast_type, std::move(res), true);
     return res;
 }
 
@@ -352,44 +281,17 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     debug() << __FUNCTION__ << " FunCall\n";
     DBG_LINE(node);
 
-    LValue lval{};
-    Ref<FunSet> fset{};
-    if (node->has_callable()) {
-        // foo(...)
-        auto callable = node->callable()->accept(*this);
-        if (!callable)
-            return callable;
+    // obj.fun | operator<op>
+    auto callable = node->has_callable() ? node->callable()->accept(*this)
+                                         : callable_op(node);
 
-        // get fun set
-        auto val = callable.move_value();
-        assert(val.is_lvalue());
-        lval = val.lvalue();
-        if (!lval.is<BoundFunSet>()) {
-            diag().error(node->callable(), "is not a function");
-            return {ExprError::NotFunction};
-        }
-        fset = lval.get<BoundFunSet>().fset();
-
-    } else {
-        // operator<op>()
-        assert(node->is_op_call());
-        lval = _scope->self();
-        auto cls = _scope->eff_self_cls();
-        fset = cls->op(node->fun_op());
-        if (!fset) {
-            diag().error(node, "operator not found in class");
-            return {ExprError::NoOperator};
-        }
-    }
-
-    // eval args
-    auto [args, error] = eval_args(node->args());
-    if (error != ExprError::Ok)
-        return {error};
+    // args
+    auto args = eval_args(node->args());
+    if (!args)
+        return {args.error()};
 
     auto funcall = _eval.funcall_helper(_scope);
-    return funcall->funcall(
-        node->callable(), fset, lval.self(), std::move(args));
+    return funcall->funcall(node, std::move(callable), std::move(args));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
@@ -398,39 +300,27 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
     assert(node->has_obj());
 
     // eval object expr
-    auto obj_res = node->obj()->accept(*this);
-    if (!obj_res)
+    auto obj = node->obj()->accept(*this);
+    if (!obj)
         return {ExprError::Error};
 
     // is an object?
-    if (!check_is_class(node, obj_res.type(), true))
+    if (!check_is_class(node, obj.type(), true))
         return {ExprError::NotClass};
-
-    auto cls = obj_res.type()->actual()->as_class();
-    auto obj_val = obj_res.move_value();
 
     // obj.Base.bar?
     if (node->has_base()) {
-        cls = class_base(node, cls, node->base());
-        if (!cls) {
-            auto error = node->base()->is_super() ? ExprError::NoSuper
-                                                  : ExprError::BaseNotFound;
-            return {error};
-        }
-        obj_val = Value{obj_val.as(cls)};
+        obj = as_base(node, node->base(), std::move(obj));
+        if (!obj)
+            return obj;
     }
 
     // get op fset
-    if (node->is_op()) {
-        auto fset = cls->op(node->op());
-        if (!fset) {
-            diag().error(node, "operator not found");
-            return {ExprError::NoOperator};
-        }
-        return {builtins().type(FunId), obj_val.bound_fset(fset)};
-    }
+    if (node->is_op())
+        return member_access_op(node, std::move(obj));
 
     // get symbol
+    auto cls = obj.type()->as_class();
     auto name = node->ident()->name();
     auto sym = cls->get(name.str_id());
     if (!sym) {
@@ -439,16 +329,14 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
     }
 
     return sym->accept(
-        [&](Ref<Var> var) -> ExprRes {
-            if (!_eval.resolver()->resolve(var))
-                return {ExprError::UnresolvableVar};
-            return {var->type(), Value{var->lvalue()}};
+        [&](Ref<Var> var) {
+            return member_access_var(node, std::move(obj), var);
         },
-        [&](Ref<Prop> prop) -> ExprRes {
-            return {prop->type(), obj_val.prop(prop)};
+        [&](Ref<Prop> prop) {
+            return member_access_prop(node, std::move(obj), prop);
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            return {builtins().type(FunId), obj_val.bound_fset(fset)};
+            return member_access_fset(node, std::move(obj), fset);
         },
         [&](auto other) -> ExprRes { assert(false); });
 }
@@ -504,8 +392,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         if (!fset)
             return {ExprError::NoOperator};
         bool is_tmp = array_res.value().is_tmp();
-        TypedValueList args;
-        args.push_back(index_res.move_typed_value());
+        ExprResList args;
+        args.push_back(std::move(index_res));
 
         // call operator
         auto funcall = _eval.funcall_helper(_scope);
@@ -688,7 +576,7 @@ EvalExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     // cast to default Unsigned
     auto uns_type = builtins().unsigned_type();
     auto cast = _eval.cast_helper(_scope);
-    res = cast->cast(expr, uns_type, res.move_typed_value(), true);
+    res = cast->cast(expr, uns_type, std::move(res), true);
     if (!res)
         return NoBitsize;
     auto rval = res.move_value().move_rvalue();
@@ -822,15 +710,15 @@ ExprRes EvalExprVisitor::binary_op(
     auto type_errors =
         binary_op_type_check(op, left.type(), right.typed_value());
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
-                      TypedValue&& tv) -> ExprRes {
+                      ExprRes&& arg) -> ExprRes {
         switch (error.status) {
         case TypeError::Incompatible:
             diag().error(expr, "incompatible type");
             return {ExprError::InvalidOperandType};
         case TypeError::ExplCastRequired: {
-            auto rval = tv.move_value().move_rvalue();
+            auto rval = arg.move_value().move_rvalue();
             auto message =
-                std::string{"suggest casting "} + tv.type()->name() + " to ";
+                std::string{"suggest casting "} + arg.type()->name() + " to ";
             message +=
                 (error.cast_bi_type_id != NoBuiltinTypeId)
                     ? std::string{builtin_type_str(error.cast_bi_type_id)}
@@ -840,29 +728,29 @@ ExprRes EvalExprVisitor::binary_op(
         }
         case TypeError::ImplCastRequired: {
             if (error.cast_bi_type_id != NoBuiltinTypeId)
-                return cast->cast(expr, error.cast_bi_type_id, std::move(tv));
+                return cast->cast(expr, error.cast_bi_type_id, std::move(arg));
             assert(error.cast_type);
-            return cast->cast(expr, error.cast_type, std::move(tv));
+            return cast->cast(expr, error.cast_type, std::move(arg));
         }
         case TypeError::Ok:
-            return std::move(tv);
+            return std::move(arg);
         default:
             assert(false);
         };
     };
 
     // cast left
-    auto l_res = recast(l_node, type_errors.first, left.move_typed_value());
-    if (!l_res)
-        return l_res;
+    left = recast(l_node, type_errors.first, std::move(left));
+    if (!left)
+        return std::move(left);
 
     // cast right
-    auto r_res = recast(r_node, type_errors.second, right.move_typed_value());
-    if (!r_res)
-        return r_res;
+    right = recast(r_node, type_errors.second, std::move(right));
+    if (!right)
+        return std::move(right);
 
-    auto l_tv = l_res.move_typed_value();
-    auto r_tv = r_res.move_typed_value();
+    auto l_tv = left.move_typed_value();
+    auto r_tv = right.move_typed_value();
     if (l_tv.type()->actual()->is_prim()) {
         if (op != Op::Assign) {
             // primitive binary op
@@ -882,8 +770,8 @@ ExprRes EvalExprVisitor::binary_op(
             auto fset = cls->op(op);
             assert(fset);
             auto obj = l_tv.move_value();
-            TypedValueList args;
-            args.push_back(std::move(r_tv));
+            ExprResList args;
+            args.push_back(std::move(right));
             auto funcall = _eval.funcall_helper(_scope);
             return funcall->funcall(node, fset, obj.self(), std::move(args));
         }
@@ -897,6 +785,149 @@ ExprRes EvalExprVisitor::binary_op(
             node, TypedValue{l_tv.type(), Value{lval}}, std::move(r_tv));
     }
     return {std::move(r_tv)};
+}
+
+ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
+    if (type->is_class()) {
+        // instanceof with arguments?
+        auto cls = type->as_class();
+        if (node->op() == TypeOp::InstanceOf && node->has_args()) {
+            auto args = eval_args(node->args());
+            if (!args)
+                return {args.error()};
+            auto rval = cls->construct();
+            auto funcall = _eval.funcall_helper(_scope);
+            funcall->funcall(
+                node, cls->constructors(), rval.self(), std::move(args));
+            return {type, Value{std::move(rval)}};
+        }
+    }
+
+    auto tv = type->actual()->type_op(node->op());
+    if (!tv) {
+        diag().error(node, "invalid type operator");
+        return {ExprError::InvalidTypeOperator};
+    }
+    return tv;
+}
+
+ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, ExprRes res) {
+    auto type = res.type();
+    auto val = res.move_value();
+
+    // obj.Base.<type_op>?
+    if (node->has_base()) {
+        if (!type->is_class()) {
+            diag().error(node->base(), "not an object");
+            return {ExprError::NotObject};
+        }
+        auto cls = class_base(node, type->as_class(), node->base());
+        if (!cls) {
+            auto error = node->base()->is_super() ? ExprError::NoSuper
+                                                  : ExprError::BaseNotFound;
+            return {error};
+        }
+        val = Value{val.as(cls)};
+    }
+
+    // class type op may require an evaluator
+    if (type->is_class()) {
+        // custom lengthof?
+        auto cls = type->as_class();
+        if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
+            if (!val.has_rvalue())
+                return {builtins().unsigned_type(), Value{RValue{}}};
+            auto funcall = _eval.funcall_helper(_scope);
+            ExprResList args;
+            return funcall->funcall(
+                node, cls->fun("alengthof"), val.self(), std::move(args));
+        }
+    }
+
+    auto tv = type->actual()->type_op(node->op(), val);
+    if (!tv)
+        return {ExprError::InvalidTypeOperator};
+    return tv;
+}
+
+ExprRes EvalExprVisitor::ident_self(Ref<ast::Ident> node) {
+    auto self = _scope->self();
+    return {_scope->eff_self_cls(), Value{self}};
+}
+
+ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
+    auto self_cls = _scope->self_cls();
+    auto sup = class_super(node, self_cls);
+    if (!sup)
+        return {ExprError::NoSuper};
+    auto self = _scope->self();
+    return {sup, Value{self.as(sup)}};
+}
+
+ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
+    if (!_eval.resolver()->resolve(var, _scope))
+        return {ExprError::UnresolvableVar};
+    return {var->type(), Value{var->lvalue()}};
+}
+
+ExprRes EvalExprVisitor::ident_prop(Ref<ast::Ident> node, Ref<Prop> prop) {
+    return {prop->type(), Value{_scope->self().prop(prop)}};
+}
+
+ExprRes EvalExprVisitor::ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset) {
+    return {builtins().fun_type(), Value{_scope->self().bound_fset(fset)}};
+}
+
+ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
+    assert(node->is_op_call());
+    auto lval = _scope->self();
+    auto cls = _scope->eff_self_cls();
+    auto fset = cls->op(node->fun_op());
+    if (!fset) {
+        diag().error(node, "operator not found in class");
+        return {ExprError::NoOperator};
+    }
+    return {builtins().fun_type(), Value{lval.bound_fset(fset)}};
+}
+
+ExprRes
+EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
+    auto cls = obj.type()->as_class();
+    auto fset = cls->op(node->op());
+    if (!fset) {
+        diag().error(node, "operator not found");
+        return {ExprError::NoOperator};
+    }
+    return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+}
+
+ExprRes EvalExprVisitor::member_access_var(
+    Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var) {
+    if (!_eval.resolver()->resolve(var))
+        return {ExprError::UnresolvableVar};
+    return {var->type(), Value{var->lvalue()}};
+}
+
+ExprRes EvalExprVisitor::member_access_prop(
+    Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Prop> prop) {
+    return {prop->type(), obj.move_value().prop(prop)};
+}
+
+ExprRes EvalExprVisitor::member_access_fset(
+    Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset) {
+    return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+}
+
+ExprRes EvalExprVisitor::as_base(
+    Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj) {
+    auto cls = obj.type()->as_class();
+    cls = class_base(node, cls, base);
+    if (!cls) {
+        auto error =
+            base->is_super() ? ExprError::NoSuper : ExprError::BaseNotFound;
+        return {error};
+    }
+    return {cls, Value{obj.move_value().as(cls)}};
 }
 
 ExprRes
@@ -913,23 +944,19 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
     return {to.type(), lval.assign(res.move_value().move_rvalue())};
 }
 
-std::pair<TypedValueList, ExprError>
-EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {
+ExprResList EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {
     debug() << __FUNCTION__ << "\n";
     DBG_LINE(args);
 
-    decltype(EvalExprVisitor::eval_args(args)) res;
-    res.second = ExprError::Ok;
+    ExprResList list;
     for (unsigned n = 0; n < args->child_num(); ++n) {
         // TODO: default arguments
         ExprRes arg_res = args->get(n)->accept(*this);
-        if (!arg_res) {
-            res.second = arg_res.error();
-            break;
-        }
-        res.first.push_back(arg_res.move_typed_value());
+        list.push_back(std::move(arg_res));
+        if (!list)
+            return list;
     }
-    return res;
+    return list;
 }
 
 Diag& EvalExprVisitor::diag() { return _program->diag(); }
@@ -938,6 +965,10 @@ Builtins& EvalExprVisitor::builtins() { return _program->builtins(); }
 
 std::string_view EvalExprVisitor::str(str_id_t str_id) {
     return _program->str_pool().get(str_id);
+}
+
+std::string_view EvalExprVisitor::text(str_id_t str_id) {
+    return _program->text_pool().get(str_id);
 }
 
 } // namespace ulam::sema

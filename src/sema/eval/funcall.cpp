@@ -1,3 +1,4 @@
+#include <libulam/semantic/value/bound_fun_set.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -5,9 +6,25 @@
 namespace ulam::sema {
 
 ExprRes EvalFuncall::funcall(
-    Ref<ast::Node> node, Ref<FunSet> fset, LValue self, TypedValueList&& args) {
+    Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
+    assert(callable);
+    assert(args);
+    assert(callable.type()->is(FunId));
+
+    auto val = callable.move_value();
+    assert(val.is_lvalue());
+    assert(val.lvalue().is<BoundFunSet>());
+
+    auto bound_fset = val.lvalue().get<BoundFunSet>();
+    return funcall(node, bound_fset.fset(), LValue{bound_fset.self()}, std::move(args));
+}
+
+
+ExprRes EvalFuncall::funcall(
+    Ref<ast::Node> node, Ref<FunSet> fset, LValue self, ExprResList&& args) {
+    assert(args);
     auto dyn_cls = self.dyn_cls();
-    auto match_res = fset->find_match(dyn_cls, args);
+    auto match_res = fset->find_match(dyn_cls, args.typed_value_refs());
     if (match_res.empty()) {
         _diag.error(node, "no matching functions found");
         return {ExprError::NoMatchingFunction};
@@ -22,9 +39,7 @@ ExprRes EvalFuncall::funcall(
     for (auto& param : fun->params()) {
         assert(!args.empty());
 
-        auto arg = std::move(args.front());
-        args.pop_front();
-
+        auto arg = args.pop_front();
         auto param_type = param->type();
 
         // binding rvalue or xvalue lvalue to const ref

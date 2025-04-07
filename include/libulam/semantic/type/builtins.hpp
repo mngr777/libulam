@@ -1,8 +1,8 @@
 #pragma once
-#include <libulam/str_pool.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/str_pool.hpp>
 
 namespace ulam {
 
@@ -47,6 +47,7 @@ public:
     Ref<AtomType> atom_type();
     Ref<StringType> string_type();
     Ref<VoidType> void_type();
+    Ref<FunType> fun_type();
 
     Ref<BoolType> boolean() { return bool_type(1); }
 

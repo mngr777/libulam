@@ -73,7 +73,7 @@ public:
     unsigned min_param_num() const;
     unsigned param_num() const { return _params.size(); }
 
-    MatchRes match(const TypedValueList& args);
+    MatchRes match(const TypedValueRefList& args);
 
     Ref<Fun> find_override(Ref<const Class> cls);
 
@@ -126,13 +126,16 @@ public:
         FunList::iterator _it;
     };
 
-    FunSet();
+    FunSet(str_id_t name_id = NoStrId);
 
     FunSet(FunSet&&) = default;
     FunSet& operator=(FunSet&&) = default;
 
-    Matches find_match(Ref<const Class> dyn_cls, const TypedValueList& args);
-    Matches find_match(const TypedValueList& args);
+    bool has_name_id() const;
+    str_id_t name_id() const;
+
+    Matches find_match(Ref<const Class> dyn_cls, const TypedValueRefList& args);
+    Matches find_match(const TypedValueRefList& args);
 
     void add(Ptr<Fun>&& fun);
     void add(Ref<Fun> fun);
@@ -150,6 +153,7 @@ public:
 private:
     using ParamTypeMap = std::unordered_map<std::string, Ref<Fun>>;
 
+    str_id_t _name_id;
     FunList _funs;
     std::optional<ParamTypeMap> _map;
 };

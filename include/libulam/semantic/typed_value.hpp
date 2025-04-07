@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value.hpp>
 #include <list>
@@ -39,5 +40,6 @@ private:
 };
 
 using TypedValueList = std::list<TypedValue>;
+using TypedValueRefList = std::list<std::reference_wrapper<const TypedValue>>;
 
 } // namespace ulam

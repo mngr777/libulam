@@ -1,7 +1,11 @@
 #pragma once
+#include <algorithm>
+#include <any>
+#include <cassert>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
+#include <list>
 #include <utility>
 
 namespace ulam {
@@ -64,14 +68,14 @@ public:
     ExprRes& operator=(ExprRes&&) = default;
 
     bool ok() const { return _error == ExprError::Ok; }
-    operator bool() { return ok(); }
+    operator bool() const { return ok(); }
 
     Ref<Type> type() { return _typed_value.type(); }
     Ref<const Type> type() const { return _typed_value.type(); }
 
     const Value& value() { return _typed_value.value(); }
 
-    const TypedValue& typed_value() { return _typed_value; }
+    const TypedValue& typed_value() const { return _typed_value; }
 
     TypedValue move_typed_value() {
         TypedValue tv;
@@ -83,9 +87,66 @@ public:
 
     ExprError error() const { return _error; }
 
+    bool has_data() const { return _data.has_value(); }
+
+    template <typename T> T data() const {
+        assert(has_data());
+        return std::any_cast<T>(_data);
+    }
+
+    template <typename T, typename V> T data(V&& def) const {
+        if (has_data())
+            return std::any_cast<T>(_data);
+        return T{std::forward<V>(def)};
+    }
+
+    template <typename T> void set_data(T data) { _data = std::move(data); }
+
+    void uns_data() { _data.reset(); }
+
 private:
     TypedValue _typed_value;
     ExprError _error;
+    std::any _data;
 };
 
-} // namespace ulam
+class ExprResList {
+public:
+    bool ok() const { return _list.empty() || _list.back(); }
+    operator bool() const { return ok(); }
+
+    ExprError error() {
+        assert(!empty());
+        return _list.back().error();
+    }
+
+    void push_back(ExprRes&& res) { _list.push_back(std::move(res)); }
+
+    ExprRes pop_front() {
+        assert(!empty());
+        auto res = std::move(_list.front());
+        _list.pop_front();
+        return res;
+    }
+
+    auto begin() { return _list.begin(); }
+    auto begin() const { return _list.cbegin(); }
+
+    auto end() { return _list.end(); }
+    auto end() const { return _list.end(); }
+
+    std::size_t size() const { return _list.size(); }
+    bool empty() const { return _list.empty(); }
+
+    TypedValueRefList typed_value_refs() const {
+        TypedValueRefList list;
+        for (const auto& res : _list)
+            list.push_back(std::cref(res.typed_value()));
+        return list;
+    }
+
+private:
+    std::list<ExprRes> _list;
+};
+
+} // namespace ulam::sema
