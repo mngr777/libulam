@@ -1,8 +1,9 @@
 #include "./eval.hpp"
 #include "./eval/visitor.hpp"
 
-void Eval::do_eval(ulam::Ref<ulam::ast::Block> block) {
+ulam::sema::ExprRes Eval::do_eval(ulam::Ref<ulam::ast::Block> block) {
     auto visitor = ulam::make<EvalVisitor>(_ast->program());
-    visitor->eval(block);
+    auto res = visitor->eval(block);
     _data = visitor->data();
+    return res;
 }
