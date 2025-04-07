@@ -1,6 +1,8 @@
 #include "./eval.hpp"
 #include "./eval/visitor.hpp"
 
-ulam::Ptr<ulam::sema::EvalVisitor> Eval::visitor() {
-    return ulam::make<EvalVisitor>(_ast->program());
+void Eval::do_eval(ulam::Ref<ulam::ast::Block> block) {
+    auto visitor = ulam::make<EvalVisitor>(_ast->program());
+    visitor->eval(block);
+    _data = visitor->data();
 }

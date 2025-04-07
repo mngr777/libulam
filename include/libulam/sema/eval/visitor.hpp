@@ -53,6 +53,10 @@ public:
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
 protected:
+    virtual void var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
+
+    virtual ExprRes ret_res(Ref<ast::Return> node);
+
     virtual ExprRes eval_expr(Ref<ast::Expr> expr);
     virtual bool eval_cond(Ref<ast::Expr> expr);
 

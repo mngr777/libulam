@@ -21,6 +21,15 @@ public:
     ExprRes visit(ulam::Ref<ulam::ast::StrLit> node) override;
 
 protected:
+    ExprRes apply_binary_op(
+        ulam::Ref<ulam::ast::Expr> node,
+        ulam::Op op,
+        ulam::LValue lval,
+        ulam::Ref<ulam::ast::Expr> l_node,
+        ExprRes&& left,
+        ulam::Ref<ulam::ast::Expr> r_node,
+        ExprRes&& right) override;
+
     ExprRes type_op(
         ulam::Ref<ulam::ast::TypeOpExpr> node,
         ulam::Ref<ulam::Type> type) override;
@@ -59,14 +68,6 @@ protected:
         ulam::Ref<ulam::ast::MemberAccess> node,
         ExprRes&& obj,
         ulam::Ref<ulam::FunSet> fset) override;
-
-    ExprRes binary_op(
-        ulam::Ref<ulam::ast::Expr> node,
-        ulam::Op op,
-        ulam::Ref<ulam::ast::Expr> l_node,
-        ExprRes&& left,
-        ulam::Ref<ulam::ast::Expr> r_node,
-        ExprRes&& right) override;
 
     Stringifier& _stringifier;
 };

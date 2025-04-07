@@ -10,6 +10,7 @@
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/var.hpp>
 #include <utility>
 
@@ -59,26 +60,8 @@ void EvalVisitor::visit(Ref<ast::TypeDef> node) {
 void EvalVisitor::visit(Ref<ast::VarDefList> node) {
     debug() << __FUNCTION__ << " VarDefList\n";
     auto type_name = node->type_name();
-    for (unsigned n = 0; n < node->def_num(); ++n) {
-        auto def_node = node->def(n);
-        auto var = make<Var>(type_name, def_node, Ref<Type>{}, Var::NoFlags);
-        var->set_scope_lvl(_scope_stack.size());
-        if (!resolver()->resolve(ref(var), scope()))
-            continue;
-        if (var->value().empty()) {
-            if (def_node->has_init()) {
-                auto init = init_helper(scope());
-                auto [val, ok] = init->eval(var->type(), def_node->init());
-                if (!ok)
-                    throw EvalExceptError("failed to eval init value");
-                var->set_value(std::move(val));
-            } else {
-                auto rval = var->type()->construct();
-                var->set_value(Value{std::move(rval)});
-            }
-        }
-        scope()->set(var->name_id(), std::move(var));
-    }
+    for (unsigned n = 0; n < node->def_num(); ++n)
+        var_def(type_name, node->def(n));
 }
 
 void EvalVisitor::visit(Ref<ast::Block> node) {
@@ -190,13 +173,51 @@ void EvalVisitor::visit(Ref<ast::For> node) {
 
 void EvalVisitor::visit(Ref<ast::Return> node) {
     debug() << __FUNCTION__ << " Return\n";
+    throw EvalExceptReturn(node, ret_res(node));
+}
+
+ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
     ExprRes res;
     if (node->has_expr()) {
         res = eval_expr(node->expr());
     } else {
         res = {_program->builtins().type(VoidId), Value{RValue{}}};
     }
-    throw EvalExceptReturn(node, std::move(res));
+
+    assert(!_stack.empty());
+    auto fun = _stack.top().fun();
+    auto ret_type = fun->ret_type();
+
+    // Check if Void fun returns value and vice versa
+    if (ret_type->is(VoidId)) {
+        if (!res.type()->is(VoidId)) {
+            diag().error(node, "return value in function returning Void");
+            return {ExprError::NonVoidReturn};
+        }
+        return res;
+    } else if (res.type()->is(VoidId)) {
+        diag().error(node, "no return value");
+        return {ExprError::NoReturnValue};
+    }
+
+    // Check reference
+    if (ret_type->is_ref()) {
+        if (!res.value().is_lvalue()) {
+            diag().error(node, "not a reference");
+            return {ExprError::NotReference};
+        }
+        const LValue lval = res.value().lvalue();
+        if (lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
+            lval.scope_lvl() >= _scope_stack.size()) {
+            diag().error(node, "reference to local variable");
+            return {ExprError::ReferenceToLocal};
+        }
+    }
+
+    // Cast
+    auto cast = cast_helper(scope());
+    res = cast->cast(node, ret_type, std::move(res), false);
+    return res;
 }
 
 void EvalVisitor::visit(Ref<ast::Break> node) {
@@ -372,52 +393,32 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         fun->body_node()->accept(*this);
     } catch (EvalExceptReturn& ret) {
         debug() << "}\n";
-
-        ExprRes res = ret.move_res();
-        auto ret_type = fun->ret_type();
-        if (!res)
-            return res;
-
-        auto type = res.type();
-        // auto val = res.move_value();
-
-        // Void ret type
-        if (ret_type->is(VoidId)) {
-            if (!res.type()->is(VoidId)) {
-                diag().error(
-                    ret.node(), "return value in function returning Void");
-                return {ExprError::NonVoidReturn};
-            }
-            return {ret_type, Value{RValue{}}};
-
-        } else if (type->is(VoidId)) {
-            diag().error(ret.node(), "no return value");
-            return {ExprError::NoReturnValue};
-        }
-
-        // Reference ret type
-        if (ret_type->is_ref()) {
-            if (!res.value().is_lvalue()) {
-                diag().error(ret.node(), "not a reference");
-                return {ExprError::NotReference};
-            }
-            // TODO: test
-            const LValue lval = res.value().lvalue();
-            if (lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
-                lval.scope_lvl() >= _scope_stack.size()) {
-                diag().error(ret.node(), "reference to local");
-                return {ExprError::ReferenceToLocal};
-            }
-        }
-        auto cast = cast_helper(scope());
-        res = cast->cast(
-            ret.node()->expr(), ret_type, res.move_typed_value(), false);
-        return res;
+        return ret.move_res();
     }
     debug() << "}\n";
     if (!fun->ret_type()->is(VoidId))
         return {ExprError::NoReturn};
-    return {fun->ret_type(), Value{RValue{}}};
+    return {builtins().void_type(), Value{RValue{}}};
+}
+
+void EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
+    auto var = make<Var>(type_name, node, Ref<Type>{}, Var::NoFlags);
+    var->set_scope_lvl(_scope_stack.size());
+    if (!resolver()->resolve(ref(var), scope()))
+        return;
+    if (var->value().empty()) {
+        if (node->has_init()) {
+            auto init = init_helper(scope());
+            auto [val, ok] = init->eval(var->type(), node->init());
+            if (!ok)
+                throw EvalExceptError("failed to eval init value");
+            var->set_value(std::move(val));
+        } else {
+            auto rval = var->type()->construct();
+            var->set_value(Value{std::move(rval)});
+        }
+    }
+    scope()->set(var->name_id(), std::move(var));
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {

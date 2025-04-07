@@ -6,7 +6,7 @@ ulam::sema::ExprRes EvalCast::cast(
     ulam::Ref<ulam::Type> type,
     ulam::sema::ExprRes&& arg,
     bool expl) {
-    auto data = arg.has_data() ? arg.data<std::string>() : std::string{};
+    auto data = arg.data<std::string>("");
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
     if (status == CastOk && !data.empty())
         res.set_data(data + " cast");
@@ -18,7 +18,7 @@ ulam::sema::ExprRes EvalCast::cast(
     ulam::BuiltinTypeId bi_type_id,
     ulam::sema::ExprRes&& arg,
     bool expl) {
-    auto data = arg.has_data() ? arg.data<std::string>() : std::string{};
+    auto data = arg.data<std::string>("");
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
     if (status == CastOk && !data.empty())
         res.set_data(data + " cast");

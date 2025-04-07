@@ -749,6 +749,18 @@ ExprRes EvalExprVisitor::binary_op(
     if (!right)
         return std::move(right);
 
+    return apply_binary_op(
+        node, op, lval, l_node, std::move(left), r_node, std::move(right));
+}
+
+ExprRes EvalExprVisitor::apply_binary_op(
+    Ref<ast::Expr> node,
+    Op op,
+    LValue lval,
+    Ref<ast::Expr> l_node,
+    ExprRes&& left,
+    Ref<ast::Expr> r_node,
+    ExprRes&& right) {
     auto l_tv = left.move_typed_value();
     auto r_tv = right.move_typed_value();
     if (l_tv.type()->actual()->is_prim()) {
