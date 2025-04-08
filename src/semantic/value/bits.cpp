@@ -7,7 +7,6 @@
 // TODO: (maybe) optimize, see MFM::BitVector impl, use
 // variant<uint32_t,vector>, use small vector
 // TODO: naming: size/len, capitalize consts
-// TODO: byte order
 
 namespace ulam {
 namespace {
@@ -144,7 +143,7 @@ void BitsView::bin_op(const BitsView& other, UnitBinOp op) {
         }
         unit_t u1 = read(len() - off1, size1);
         unit_t u2 = 0;
-        if (other.len() + size1 < off1) {
+        if (other.len() + size1 > off1) {
             size_t off2 = off1;
             size_t size2 = size1;
             if (off2 > other.len()) {

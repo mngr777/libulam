@@ -93,8 +93,9 @@ void Compiler::compile(std::ostream& out) {
             assert(obj);
             assert(obj.type()->is_class());
             assert(obj.value().is_rvalue());
+            // NOTE: intentional double space after `{'
             auto test_postfix =
-                has_test ? "Int test() { " + eval.data() + " }" : "<NOMAIN>";
+                has_test ? "Int test() {  " + eval.data() + " }" : "<NOMAIN>";
             write_obj(out, std::move(obj), test_postfix);
             out << "\n";
 
