@@ -251,6 +251,8 @@ test_eval_virtual_LDADD = $(TEST_LIBS)
 test_ulam_SOURCES = \
 	tests/ast/print.hpp \
 	tests/ast/print.cpp \
+	tests/ULAM/answer.hpp \
+	tests/ULAM/answer.cpp \
 	tests/ULAM/compiler.hpp \
 	tests/ULAM/compiler.cpp \
 	tests/ULAM/driver.cpp \

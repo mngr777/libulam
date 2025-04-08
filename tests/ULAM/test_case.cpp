@@ -1,11 +1,32 @@
 #include "tests/ULAM/test_case.hpp"
+#include "tests/ULAM/answer.hpp"
 #include "tests/ULAM/compiler.hpp"
 #include <cassert>
 #include <fstream>
 #include <ios>
+#include <iostream> // TEST
 #include <sstream>
 #include <stdexcept>
-#include <iostream> // TEST
+
+namespace {
+
+std::map<std::string, Answer> parse_answers(const std::string_view text) {
+    std::map<std::string, Answer> answers;
+    std::size_t pos{0};
+    while (pos < text.size()) {
+        auto nl_pos = text.find('\n', pos);
+        auto line = (nl_pos != std::string::npos) ? text.substr(pos, nl_pos)
+                                                  : text.substr(pos);
+        pos += line.size() + 1;
+        auto answer = parse_answer(line);
+        auto name = answer.class_name();
+        assert(answers.count(name) == 0);
+        answers.emplace(std::move(name), std::move(answer));
+    }
+    return answers;
+}
+
+} // namespace
 
 TestCase::TestCase(const Path& stdlib_dir, const Path& path):
     _stdlib_dir{stdlib_dir} {
@@ -38,9 +59,15 @@ void TestCase::run() {
     auto program = compiler.analyze();
     if (!program)
         throw std::invalid_argument("failed to analyze program");
+
+    // compile
     compiler.compile(out);
-    std::string data = out.str();
-    std::cout << data << std::endl;
+    auto compiled = out.str();
+    std::cout << "COMPILED:\n" << compiled << "\n";
+
+    // check
+    auto answers = parse_answers(compiled);
+    compare_answer_maps(_answers, answers);
 }
 
 void TestCase::load(const std::filesystem::path& path) {
@@ -104,12 +131,14 @@ void TestCase::parse() {
     auto is_alpha = [&]() { return is_upper() || is_lower(); };
     auto is_alnum = [&]() { return is_alpha() || is_digit(); };
 
+    auto at = [&](const std::string& str) {
+        return str == text.substr(pos, str.size());
+    };
+
     auto skip = [&](const std::string& str) {
-        auto n = pos;
-        for (std::size_t i = 0; i < str.size(); ++i)
-            if (text[n++] != str[i])
-                error(str + " not found");
-        pos = n;
+        if (!at(str))
+            error(str + " not found");
+        pos += str.size();
     };
 
     auto read_int = [&]() -> int {
@@ -170,8 +199,12 @@ void TestCase::parse() {
     _exit_status = read_int();
     skip("\n");
 
-    // answer
-    _answer = read_until("#");
+    // parse answers
+    {
+        auto start = pos;
+        move_to("#");
+        _answers = parse_answers(text.substr(start, pos - start));
+    }
     skip_comments();
 
     // NOTE: main file is marked with #>, but is not necessarily the first one
