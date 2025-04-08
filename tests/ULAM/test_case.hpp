@@ -1,4 +1,5 @@
 #pragma once
+#include "./answer.hpp"
 #include <filesystem>
 #include <vector>
 
@@ -16,7 +17,7 @@ private:
 
     Path _stdlib_dir;
     std::string _text;
-    std::string_view _answer;
+    AnswerMap _answers;
     int _exit_status{0};
     // {filename, text}
     std::vector<std::pair<Path, std::string_view>> _srcs;
