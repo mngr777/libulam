@@ -1,4 +1,4 @@
-#include "src/semantic/detail/integer.hpp"
+#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
@@ -6,6 +6,13 @@
 #include <libulam/semantic/type/builtins.hpp>
 
 namespace ulam {
+
+Unsigned UnaryType::unsigned_value(const RValue& rval) {
+    assert(!rval.empty());
+    Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
+    assert(uns_val <= bitsize());
+    return uns_val;
+}
 
 TypedValue UnaryType::type_op(TypeOp op) {
     switch (op) {
@@ -20,9 +27,7 @@ TypedValue UnaryType::type_op(TypeOp op) {
 
 RValue UnaryType::construct() { return RValue{Unsigned{}}; }
 
-RValue UnaryType::from_datum(Datum datum) {
-    return RValue{(Unsigned)datum};
-}
+RValue UnaryType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
 
 Datum UnaryType::to_datum(const RValue& rval) {
     assert(rval.is<Unsigned>());
@@ -34,7 +39,7 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
         return {this, Value{RValue{}}};
 
     bool is_consteval = rval.is_consteval();
-    Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
+    Unsigned uns_val = unsigned_value(rval);
     switch (op) {
     case Op::UnaryMinus: {
         bitsize_t size = detail::bitsize(uns_val);
@@ -71,10 +76,9 @@ TypedValue UnaryType::binary_op(
 
     bool is_unknown = l_rval.empty() || r_rval.empty();
 
-    Unsigned l_uns =
-        l_rval.empty() ? 0 : detail::count_ones(l_rval.get<Unsigned>());
-    Unsigned r_uns =
-        r_rval.empty() ? 0 : detail::count_ones(r_rval.get<Unsigned>());
+    Unsigned l_uns = l_rval.empty() ? 0 : unsigned_value(l_rval);
+    auto r_unary_type = builtins().unary_type(r_type->bitsize());
+    Unsigned r_uns = r_rval.empty() ? 0 : r_unary_type->unsigned_value(r_rval);
 
     bool is_consteval =
         !is_unknown && l_rval.is_consteval() && r_rval.is_consteval();
@@ -153,7 +157,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
     bool is_unknown = rval.empty();
     bool is_consteval = rval.is_consteval();
-    auto uns_val = is_unknown ? 0 : detail::count_ones(rval.get<Unsigned>());
+    auto uns_val = is_unknown ? 0 : unsigned_value(rval);
 
     switch (id) {
     case IntId: {
@@ -211,7 +215,8 @@ RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     if (rval.empty())
         return std::move(rval);
 
-    Unsigned uns_val = detail::count_ones(rval.get<Unsigned>());
+    auto unary_type = builtins().unary_type(type->bitsize());
+    Unsigned uns_val = unary_type->unsigned_value(rval);
     bool is_consteval = rval.is_consteval();
     switch (type->bi_type_id()) {
     case IntId: {

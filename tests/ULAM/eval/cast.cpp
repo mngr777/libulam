@@ -8,8 +8,11 @@ ulam::sema::ExprRes EvalCast::cast(
     bool expl) {
     auto data = arg.data<std::string>("");
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
-    if (status == CastOk && !data.empty())
-        res.set_data(data + " cast");
+    if (!data.empty()) {
+        if (status == CastOk)
+            data += " cast";
+        res.set_data(data);
+    }
     return std::move(res);
 }
 
@@ -20,7 +23,10 @@ ulam::sema::ExprRes EvalCast::cast(
     bool expl) {
     auto data = arg.data<std::string>("");
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
-    if (status == CastOk && !data.empty())
-        res.set_data(data + " cast");
+    if (!data.empty()) {
+        if (status == CastOk)
+            data += " cast";
+        res.set_data(data);
+    }
     return std::move(res);
 }
