@@ -201,7 +201,7 @@ void compare_answers(const Answer& truth, const Answer& answer) {
         }
         auto answer_text = it->second;
         if (answer_text != text) {
-            auto message = std::string("property `") + name +
+            auto message = std::string{"property `"} + name +
                            "' in compiled class `" + answer.class_name() +
                            "' does not match the answer: `" + answer_text +
                            "` vs `" + text + "`";
@@ -211,10 +211,9 @@ void compare_answers(const Answer& truth, const Answer& answer) {
 
     // test() fun text
     if (answer.test_fun() != truth.test_fun()) {
-        auto message = std::string(
-            "`" + answer.class_name() +
-            "test' function text does not match the answer: `" +
-            answer.test_fun() + "` vs `" + truth.test_fun() + "`");
+        auto message = std::string{"`test' function text of compiled class `"} +
+                       answer.class_name() + "' does not match the answer: `" +
+                       answer.test_fun() + "` vs `" + truth.test_fun() + "`";
         throw std::invalid_argument(message);
     }
 }

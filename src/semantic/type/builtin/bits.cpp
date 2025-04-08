@@ -117,7 +117,7 @@ TypedValue BitsType::binary_op(
         return {type, Value{RValue{std::move(bits)}}};
     };
 
-    auto bw_and = [](auto v1, auto v2) { return v1 | v2; };
+    auto bw_and = [](auto v1, auto v2) { return v1 & v2; };
     auto bw_or = [](auto v1, auto v2) { return v1 | v2; };
     auto bw_xor = [](auto v1, auto v2) { return v1 ^ v2; };
 
