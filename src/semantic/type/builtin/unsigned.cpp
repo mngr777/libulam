@@ -1,5 +1,5 @@
-#include "src/semantic/detail/integer.hpp"
 #include <cassert>
+#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -23,9 +23,7 @@ TypedValue UnsignedType::type_op(TypeOp op) {
 
 RValue UnsignedType::construct() { return RValue{Unsigned{}}; }
 
-RValue UnsignedType::from_datum(Datum datum) {
-    return RValue{(Unsigned)datum};
-}
+RValue UnsignedType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
 
 Datum UnsignedType::to_datum(const RValue& rval) {
     assert(rval.is<Unsigned>());
@@ -79,8 +77,7 @@ TypedValue UnsignedType::binary_op(
     Unsigned l_uns = l_rval.empty() ? 0 : l_rval.get<Unsigned>();
     Unsigned r_uns = r_rval.empty() ? 0 : r_rval.get<Unsigned>();
 
-    bool is_wider =
-        bitsize() > DefaultSize || r_type->bitsize() > DefaultSize;
+    bool is_wider = bitsize() > DefaultSize || r_type->bitsize() > DefaultSize;
     bitsize_t max_size = is_wider ? MaxSize : DefaultSize;
 
     bool is_consteval = !ops::is_assign(op) && !is_unknown &&
@@ -283,14 +280,17 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     case IntId: {
         bitsize_t max_size = is_wider ? IntType::MaxSize : IntType::DefaultSize;
         if (is_consteval) {
-            auto size = std::min<bitsize_t>(detail::bitsize(uns_val) + 1, max_size);
+            auto size =
+                std::min<bitsize_t>(detail::bitsize(uns_val) + 1, max_size);
             auto type = builtins().int_type(size);
-            Integer int_val = std::min((Unsigned)detail::integer_max(size), uns_val);
+            Integer int_val =
+                std::min((Unsigned)detail::integer_max(size), uns_val);
             return {type, Value{RValue{int_val, true}}};
         } else {
             auto size = std::min<bitsize_t>(bitsize() + 1, max_size);
             auto type = builtins().int_type(size);
-            Integer int_val = std::min((Unsigned)detail::integer_max(size), uns_val);
+            Integer int_val =
+                std::min((Unsigned)detail::integer_max(size), uns_val);
             return {type, Value{!is_unknown ? RValue{int_val} : RValue{}}};
         }
     }
@@ -308,7 +308,8 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {boolean, Value{std::move(rval)}};
     }
     case UnaryId: {
-        bitsize_t max_size = is_wider ? UnaryType::MaxSize : UnaryType::DefaultSize;
+        bitsize_t max_size =
+            is_wider ? UnaryType::MaxSize : UnaryType::DefaultSize;
         if (is_consteval) {
             auto size = std::min<bitsize_t>(max_size, uns_val);
             auto type = builtins().unary_type(size);

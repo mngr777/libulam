@@ -1,8 +1,8 @@
-#include "src/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/diag.hpp>
+#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>

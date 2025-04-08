@@ -34,7 +34,7 @@ TestCase::TestCase(const Path& stdlib_dir, const Path& path):
     parse();
 }
 
-void TestCase::run() {
+void TestCase::run(run_flags_t flags) {
     assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
@@ -66,8 +66,10 @@ void TestCase::run() {
     std::cout << "COMPILED:\n" << compiled << "\n";
 
     // check
-    auto answers = parse_answers(compiled);
-    compare_answer_maps(_answers, answers);
+    if ((flags & SkipAnswerCheck) == 0) {
+        auto answers = parse_answers(compiled);
+        compare_answer_maps(_answers, answers);
+    }
 }
 
 void TestCase::load(const std::filesystem::path& path) {

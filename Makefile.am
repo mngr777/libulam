@@ -28,6 +28,7 @@ AST_SOURCE_FILES = \
 
 SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/decl.hpp \
+	include/libulam/semantic/detail/integer.hpp \
 	include/libulam/semantic/mangler.hpp \
 	include/libulam/semantic/module.hpp \
 	include/libulam/semantic/number.hpp \
@@ -74,7 +75,6 @@ SEMANTIC_HEADER_FILES = \
 
 SEMANTIC_SOURCE_FILES = \
 	src/semantic/decl.cpp \
-	src/semantic/detail/integer.hpp \
 	src/semantic/detail/leximited.hpp \
 	src/semantic/detail/leximited.cpp \
 	src/semantic/fun.cpp \

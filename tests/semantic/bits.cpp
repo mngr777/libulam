@@ -1,7 +1,7 @@
-#include "libulam/semantic/value/bits.hpp"
-#include "libulam/semantic/value/types.hpp"
-#include "src/semantic/detail/integer.hpp"
 #include <iostream>
+#include <libulam/semantic/detail/integer.hpp>
+#include <libulam/semantic/value/bits.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <limits>
 #include <vector>
 

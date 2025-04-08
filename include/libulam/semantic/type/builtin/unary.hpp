@@ -22,6 +22,8 @@ public:
         bitsize_t bitsize):
         _PrimType{builtins, id_gen, tpl, bitsize} {}
 
+    Unsigned unsigned_value(const RValue& rval);
+
     TypedValue type_op(TypeOp op) override;
 
     RValue construct() override;

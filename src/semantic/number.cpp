@@ -1,4 +1,4 @@
-#include "src/semantic/detail/integer.hpp"
+#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/number.hpp>
 #include <sstream>
 
