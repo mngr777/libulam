@@ -212,8 +212,8 @@ void compare_answers(const Answer& truth, const Answer& answer) {
     // test() fun text
     if (answer.test_fun() != truth.test_fun()) {
         auto message = std::string{"`test' function text of compiled class `"} +
-                       answer.class_name() + "' does not match the answer: `" +
-                       answer.test_fun() + "` vs `" + truth.test_fun() + "`";
+                       answer.class_name() + "' does not match the answer:\n`" +
+                       answer.test_fun() + "`\n vs \n`" + truth.test_fun() + "`";
         throw std::invalid_argument(message);
     }
 }

@@ -120,9 +120,46 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_fset(
     auto res = ulam::sema::EvalExprVisitor::ident_fset(node, fset);
     if (res) {
         auto data =
-            std::string{"self "} + std::string{str(fset->name_id())} + " .";
+            std::string{"self {args}"} + std::string{str(fset->name_id())} + " .";
         res.set_data(data);
     }
+    return res;
+}
+
+EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
+    ulam::Ref<ulam::ast::ArrayAccess> node,
+    EvalExprVisitor::ExprRes&& obj,
+    EvalExprVisitor::ExprRes&& idx) {
+    // TODO
+    return ulam::sema::EvalExprVisitor::array_access_class(
+        node, std::move(obj), std::move(idx));
+}
+
+EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
+    ulam::Ref<ulam::ast::ArrayAccess> node,
+    EvalExprVisitor::ExprRes&& obj,
+    EvalExprVisitor::ExprRes&& idx) {
+    std::string data;
+    if (obj.has_data() && idx.has_data())
+        data = obj.data<std::string>() + " " + idx.data<std::string>() + " []";
+    auto res = ulam::sema::EvalExprVisitor::array_access_string(
+        node, std::move(obj), std::move(idx));
+    if (!data.empty())
+        res.set_data(std::move(data));
+    return res;
+}
+
+EvalExprVisitor::ExprRes EvalExprVisitor::array_access_array(
+    ulam::Ref<ulam::ast::ArrayAccess> node,
+    EvalExprVisitor::ExprRes&& obj,
+    EvalExprVisitor::ExprRes&& idx) {
+    std::string data;
+    if (obj.has_data() && idx.has_data())
+        data = obj.data<std::string>() + " " + idx.data<std::string>() + " []";
+    auto res = ulam::sema::EvalExprVisitor::array_access_array(
+        node, std::move(obj), std::move(idx));
+    if (!data.empty())
+        res.set_data(std::move(data));
     return res;
 }
 

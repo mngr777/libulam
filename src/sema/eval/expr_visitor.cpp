@@ -93,9 +93,12 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
 
     // TODO: special case for short-circuiting
     auto left = node->lhs()->accept(*this);
+    if (!left)
+        return left;
+
     auto right = node->rhs()->accept(*this);
-    if (!left || !right)
-        return {ExprError::Error};
+    if (!right)
+        return right;
 
     return binary_op(
         node, node->op(), node->lhs(), std::move(left), node->rhs(),
@@ -105,98 +108,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
     debug() << __FUNCTION__ << " UnaryOp\n";
     DBG_LINE(node);
-    auto res = node->arg()->accept(*this);
-    if (!res)
-        return res;
+    auto arg = node->arg()->accept(*this);
+    if (!arg)
+        return arg;
 
-    Op op = node->op();
-    auto tv = res.move_typed_value();
-
-    LValue lval;
-    RValue orig_rval;
-    if (ops::is_inc_dec(op)) {
-        // store lvalue
-        if (!check_is_assignable(node, tv.value()))
-            return {ExprError::NotAssignable};
-        lval = tv.value().lvalue();
-
-        // store original rvalue
-        if (ops::is_unary_post_op(op))
-            orig_rval = tv.value().copy_rvalue();
-    }
-
-    auto error = unary_op_type_check(node->op(), tv.type());
-    switch (error.status) {
-    case TypeError::Incompatible:
-        diag().error(node, "incompatible type");
-        return {ExprError::InvalidOperandType};
-    case TypeError::ExplCastRequired:
-        if (ops::is_inc_dec(op)) {
-            // assert ??
-            diag().error(node, "incompatible");
-            return {ExprError::InvalidOperandType};
-        }
-        return {ExprError::CastRequired};
-    case TypeError::ImplCastRequired: {
-        assert(!ops::is_inc_dec(op));
-        auto cast = _eval.cast_helper(_scope);
-        auto cast_res = cast->cast(node, error.cast_bi_type_id, std::move(tv));
-        if (!cast_res)
-            return cast_res;
-        tv = cast_res.move_typed_value();
-    } break;
-    case TypeError::Ok:
-        break;
-    }
-
-    auto arg_type = tv.type()->deref();
-    if (arg_type->is_prim()) {
-        tv = arg_type->as_prim()->unary_op(op, tv.move_value().move_rvalue());
-        if (ops::is_inc_dec(op)) {
-            if (!lval.empty() && !tv.value().empty())
-                assign(node, TypedValue{tv.type(), Value{lval}}, std::move(tv));
-            if (ops::is_unary_pre_op(op))
-                return {tv.type(), Value{lval}};
-            assert(ops::is_unary_post_op(op));
-            return {tv.type(), Value{std::move(orig_rval)}};
-        }
-        return {std::move(tv)};
-
-    } else if (arg_type->is_object()) {
-        if (op == Op::Is) {
-            auto type =
-                _eval.resolver()->resolve_type_name(node->type_name(), _scope);
-            if (!type)
-                return {ExprError::UnresolvableType};
-            if (!check_is_object(node, type))
-                return {ExprError::NotObject};
-            assert(op == Op::Is);
-            if (!tv.value().has_rvalue())
-                return {builtins().boolean(), Value{RValue{}}};
-            auto dyn_type = tv.value().dyn_obj_type();
-            bool is =
-                dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
-            auto boolean = builtins().boolean();
-            return {boolean, Value{boolean->construct(is)}};
-
-        } else if (arg_type->is_class()) {
-            auto cls = arg_type->as_class();
-            auto fset = cls->op(op);
-            assert(fset);
-            ExprResList args;
-            if (op == Op::PostInc || op == Op::PostDec) {
-                // dummy argument for post inc/dec
-                auto int_type = _program->builtins().int_type();
-                auto rval = int_type->construct();
-                rval.set_is_consteval(true);
-                args.push_back({int_type, Value{std::move(rval)}});
-            }
-            auto funcall = _eval.funcall_helper(_scope);
-            return funcall->funcall(
-                node, fset, tv.value().self(), std::move(args));
-        }
-    }
-    assert(false);
+    return unary_op(node, node->op(), node->arg(), std::move(arg));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
@@ -376,82 +292,35 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     assert(node->has_index());
 
     // eval array expr
-    auto array_res = node->array()->accept(*this);
-    if (!array_res)
+    auto obj = node->array()->accept(*this);
+    if (!obj)
         return {ExprError::Error};
 
     // index
-    auto index_res = node->index()->accept(*this);
-    if (!index_res)
+    auto idx = node->index()->accept(*this);
+    if (!idx)
         return {ExprError::UnknownArrayIndex};
 
     // class?
-    if (array_res.type()->actual()->is_class()) {
-        auto cls = array_res.type()->actual()->as_class();
-        auto fset = cls->op(Op::ArrayAccess);
-        if (!fset)
-            return {ExprError::NoOperator};
-        bool is_tmp = array_res.value().is_tmp();
-        ExprResList args;
-        args.push_back(std::move(index_res));
+    if (obj.type()->actual()->is_class())
+        return array_access_class(node, std::move(obj), std::move(idx));
 
-        // call operator
-        auto funcall = _eval.funcall_helper(_scope);
-        ExprRes res = funcall->funcall(
-            node, fset, array_res.move_value().self(), std::move(args));
-        if (is_tmp && res.value().is_lvalue()) {
-            LValue lval = res.move_value().lvalue();
-            lval.set_is_xvalue(true);
-            return {res.type(), Value{std::move(lval)}};
-        }
-        return res;
-    }
-
-    // cast to default Int
-    auto int_type = builtins().int_type();
+    // cast to index type
     auto cast = _eval.cast_helper(_scope);
-    index_res =
-        cast->cast(node->index(), int_type, index_res.move_typed_value());
-    if (!index_res)
-        return index_res;
-    auto index_val = index_res.move_value();
-
-    auto index = index_val.move_rvalue().get<Integer>();
+    idx = cast->cast(node->index(), IntId, std::move(idx));
+    if (!idx)
+        return idx;
 
     // string?
-    if (array_res.type()->actual()->is(StringId)) {
-        auto type = builtins().string_type();
-        auto len = type->len(array_res.value());
-        if (index < 0 || index + 1 > len) {
-            diag().error(node->index(), "char index is out of range");
-            return {ExprError::CharIndexOutOfRange};
-        }
-        auto chr = type->chr(array_res.value(), index);
-        bool is_consteval = array_res.value().is_consteval();
-        return {
-            builtins().unsigned_type(8),
-            Value{RValue{(Unsigned)chr, is_consteval}}};
-    }
+    if (obj.type()->actual()->is(StringId))
+        return array_access_string(node, std::move(obj), std::move(idx));
 
-    // array?
-    if (!array_res.type()->actual()->is_array()) {
+    // must be an array
+    if (!obj.type()->actual()->is_array()) {
         diag().error(node->array(), "not an array");
         return {ExprError::NotArray};
     }
-
-    // array
-    auto array_type =
-        array_res.type()->non_alias()->deref()->non_alias()->as_array();
-    assert(array_type);
-    auto item_type = array_type->item_type();
-    auto array_val = array_res.move_value();
-
-    // check bounds
-    if (index < 0 || index + 1 > array_type->array_size()) {
-        diag().error(node->index(), "array index is out of range");
-        return {ExprError::ArrayIndexOutOfRange};
-    }
-    return {item_type, array_val.array_access(index)};
+    return array_access_array(node, std::move(obj), std::move(idx));
 }
 
 bool EvalExprVisitor::check_is_assignable(
@@ -799,6 +668,109 @@ ExprRes EvalExprVisitor::apply_binary_op(
     return {std::move(r_tv)};
 }
 
+ExprRes EvalExprVisitor::unary_op(
+    Ref<ast::Expr> node,
+    Op op,
+    Ref<ast::Expr> arg_node,
+    ExprRes&& arg,
+    Ref<ast::TypeName> type_name) {
+
+    LValue lval;
+    if (ops::is_inc_dec(op)) {
+        // store lvalue
+        if (!check_is_assignable(node, arg.value()))
+            return {ExprError::NotAssignable};
+        lval = arg.value().lvalue();
+    }
+
+    auto error = unary_op_type_check(op, arg.type());
+    switch (error.status) {
+    case TypeError::Incompatible:
+        diag().error(node, "incompatible type");
+        return {ExprError::InvalidOperandType};
+    case TypeError::ExplCastRequired:
+        if (ops::is_inc_dec(op)) {
+            // assert ??
+            diag().error(node, "incompatible");
+            return {ExprError::InvalidOperandType};
+        }
+        return {ExprError::CastRequired};
+    case TypeError::ImplCastRequired: {
+        assert(!ops::is_inc_dec(op));
+        auto cast = _eval.cast_helper(_scope);
+        arg = cast->cast(node, error.cast_bi_type_id, std::move(arg));
+        if (!arg)
+            return std::move(arg);
+    } break;
+    case TypeError::Ok:
+        break;
+    }
+    return apply_unary_op(node, op, lval, arg_node, std::move(arg));
+}
+
+ExprRes EvalExprVisitor::apply_unary_op(
+    Ref<ast::Expr> node,
+    Op op,
+    LValue lval,
+    Ref<ast::Expr> arg_node,
+    ExprRes&& arg,
+    Ref<ast::TypeName> type_name) {
+
+    auto arg_type = arg.type()->deref();
+    if (arg_type->is_prim()) {
+        auto tv =
+            arg_type->as_prim()->unary_op(op, arg.move_value().move_rvalue());
+        RValue orig_rval;
+        if (ops::is_unary_pre_op(op))
+            orig_rval = tv.value().copy_rvalue();
+
+        if (ops::is_inc_dec(op)) {
+            if (!lval.empty() && !tv.value().empty())
+                assign(node, TypedValue{tv.type(), Value{lval}}, std::move(tv));
+            if (ops::is_unary_pre_op(op))
+                return {tv.type(), Value{lval}};
+            assert(ops::is_unary_post_op(op));
+            return {tv.type(), Value{std::move(orig_rval)}};
+        }
+        return {std::move(tv)};
+
+    } else if (arg_type->is_object()) {
+        if (op == Op::Is) {
+            assert(type_name);
+            auto type = _eval.resolver()->resolve_type_name(type_name, _scope);
+            if (!type)
+                return {ExprError::UnresolvableType};
+            if (!check_is_object(node, type))
+                return {ExprError::NotObject};
+            assert(op == Op::Is);
+            if (!arg.value().has_rvalue())
+                return {builtins().boolean(), Value{RValue{}}};
+            auto dyn_type = arg.value().dyn_obj_type();
+            bool is =
+                dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
+            auto boolean = builtins().boolean();
+            return {boolean, Value{boolean->construct(is)}};
+
+        } else if (arg_type->is_class()) {
+            auto cls = arg_type->as_class();
+            auto fset = cls->op(op);
+            assert(fset);
+            ExprResList args;
+            if (op == Op::PostInc || op == Op::PostDec) {
+                // dummy argument for post inc/dec
+                auto int_type = _program->builtins().int_type();
+                auto rval = int_type->construct();
+                rval.set_is_consteval(true);
+                args.push_back({int_type, Value{std::move(rval)}});
+            }
+            arg = bind(node, fset, std::move(arg));
+            auto funcall = _eval.funcall_helper(_scope);
+            return funcall->funcall(node, std::move(arg), std::move(args));
+        }
+    }
+    assert(false);
+}
+
 ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
     if (type->is_class()) {
         // instanceof with arguments?
@@ -902,15 +874,74 @@ ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
     return {builtins().fun_type(), Value{lval.bound_fset(fset)}};
 }
 
-ExprRes
-EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
+ExprRes EvalExprVisitor::array_access_class(
+    Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
+    assert(obj.type()->is_class());
+
+    auto cls = obj.type()->actual()->as_class();
+    auto fset = cls->op(Op::ArrayAccess);
+    if (!fset)
+        return {ExprError::NoOperator};
+    bool is_tmp = obj.value().is_tmp();
+    ExprResList args;
+    args.push_back(std::move(idx));
+
+    // call operator
+    auto funcall = _eval.funcall_helper(_scope);
+    ExprRes res =
+        funcall->funcall(node, fset, obj.move_value().self(), std::move(args));
+    if (is_tmp && res.value().is_lvalue()) {
+        LValue lval = res.move_value().lvalue();
+        lval.set_is_xvalue(true);
+        return {res.type(), Value{std::move(lval)}};
+    }
+    return res;
+}
+
+ExprRes EvalExprVisitor::array_access_string(
+    Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
+    assert(obj.type()->is(StringId));
+    assert(idx.type()->is(IntId));
+
+    auto int_idx = idx.value().copy_rvalue().get<Integer>();
+    auto type = builtins().string_type();
+    auto len = type->len(obj.value());
+    if (int_idx < 0 || int_idx + 1 > len) {
+        diag().error(node->index(), "char index is out of range");
+        return {ExprError::CharIndexOutOfRange};
+    }
+    auto chr = type->chr(obj.value(), int_idx);
+    bool is_consteval = obj.value().is_consteval();
+    return {builtins().char_type(), Value{RValue{(Unsigned)chr, is_consteval}}};
+}
+
+ExprRes EvalExprVisitor::array_access_array(
+    Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
+    assert(obj.type()->is_array());
+    assert(idx.type()->is(IntId));
+
+    auto int_idx = idx.value().copy_rvalue().get<Integer>();
+    auto array_type = obj.type()->non_alias()->deref()->non_alias()->as_array();
+    assert(array_type);
+    auto item_type = array_type->item_type();
+    auto array_val = obj.move_value();
+
+    // check bounds
+    if (int_idx < 0 || int_idx + 1 > array_type->array_size()) {
+        diag().error(node->index(), "array index is out of range");
+        return {ExprError::ArrayIndexOutOfRange};
+    }
+    return {item_type, array_val.array_access(int_idx)};
+}
+
+ExprRes EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
     auto cls = obj.type()->as_class();
     auto fset = cls->op(node->op());
     if (!fset) {
         diag().error(node, "operator not found");
         return {ExprError::NoOperator};
     }
-    return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+    return bind(node, fset, std::move(obj));
 }
 
 ExprRes EvalExprVisitor::member_access_var(
@@ -927,6 +958,12 @@ ExprRes EvalExprVisitor::member_access_prop(
 
 ExprRes EvalExprVisitor::member_access_fset(
     Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset) {
+    return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+}
+
+ExprRes
+EvalExprVisitor::bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj) {
+    assert(obj.type()->is_class());
     return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
 }
 

@@ -55,6 +55,18 @@ EvalVisitor::funcall_helper(ulam::Ref<ulam::Scope> scope) {
     return ulam::make<EvalFuncall>(*this, diag(), scope);
 }
 
+ulam::Ref<ulam::Var> EvalVisitor::var_def(
+    ulam::Ref<ulam::ast::TypeName> type_name,
+    ulam::Ref<ulam::ast::VarDef> node) {
+    auto var = ulam::sema::EvalVisitor::var_def(type_name, node);
+    if (var && _stack.size() == 1) {
+        std::string name{_program->str_pool().get(var->name_id())};
+        append(var->type()->name());
+        append(name + "; ");
+    }
+    return var;
+}
+
 ulam::sema::ExprRes EvalVisitor::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
     auto res = ulam::sema::EvalVisitor::eval_expr(expr);
     assert(res);
@@ -68,5 +80,5 @@ ulam::sema::ExprRes EvalVisitor::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
 void EvalVisitor::append(std::string data) {
     if (!_data.empty())
         _data += " ";
-    _data += data;
+    _data += std::move(data);
 }

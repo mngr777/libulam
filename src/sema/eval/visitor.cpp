@@ -11,7 +11,6 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
-#include <libulam/semantic/var.hpp>
 #include <utility>
 
 #ifdef DEBUG_EVAL
@@ -361,7 +360,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         self.set_scope_lvl(scope_lvl);
 
     // bind params
-    std::list<Ptr<ast::VarDef>> tmp_var_defs{};
+    std::list<Ptr<ast::VarDef>> tmp_defs{};
     std::list<Ptr<Var>> tmp_vars{};
     for (const auto& param : fun->params()) {
         assert(!args.empty());
@@ -372,14 +371,14 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
         // binding rvalue or xvalue lvalue to const ref via tmp variable
         if (param->type()->is_ref() && arg.value().is_tmp()) {
             assert(param->is_const());
-            // create tmp vardef
-            auto var_def = make<ast::VarDef>(param->node()->name());
+            // create tmp var def
+            auto def = make<ast::VarDef>(param->node()->name());
             auto var = make<Var>(
-                param->type_node(), ref(var_def),
+                param->type_node(), ref(def),
                 TypedValue{param->type()->deref(), arg.move_value().deref()},
                 param->flags() | Var::TmpFunParam);
             arg = {param->type(), Value{LValue{ref(var)}}};
-            tmp_var_defs.push_back(std::move(var_def));
+            tmp_defs.push_back(std::move(def));
             tmp_vars.push_back(std::move(var));
         }
         assert(arg.type()->is_same(param->type()));
@@ -403,11 +402,11 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     return {builtins().void_type(), Value{RValue{}}};
 }
 
-void EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
+Ref<Var> EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
     auto var = make<Var>(type_name, node, Ref<Type>{}, Var::NoFlags);
     var->set_scope_lvl(_scope_stack.size());
     if (!resolver()->resolve(ref(var), scope()))
-        return;
+        return {};
     if (var->value().empty()) {
         if (node->has_init()) {
             auto init = init_helper(scope());
@@ -420,7 +419,9 @@ void EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
             var->set_value(Value{std::move(rval)});
         }
     }
+    auto ref = ulam::ref(var);
     scope()->set(var->name_id(), std::move(var));
+    return ref;
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
