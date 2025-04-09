@@ -53,9 +53,7 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
 
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
     debug() << __FUNCTION__ << " TypeDef\n";
-    Ptr<UserType> type = make<AliasType>(builtins(), nullptr, node);
-    if (resolver()->resolve(type->as_alias(), scope()))
-        scope()->set(type->name_id(), std::move(type));
+    type_def(node);
 }
 
 void EvalVisitor::visit(Ref<ast::VarDefList> node) {
@@ -402,7 +400,18 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     return {builtins().void_type(), Value{RValue{}}};
 }
 
-Ref<Var> EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
+Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
+    Ptr<UserType> type =
+        make<AliasType>(_program->str_pool(), builtins(), nullptr, node);
+    auto ref = ulam::ref(type);
+    if (!resolver()->resolve(type->as_alias(), scope()))
+        throw EvalExceptError("failed to resolve type");
+    scope()->set(type->name_id(), std::move(type));
+    return ref->as_alias();
+}
+
+Ref<Var>
+EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
     auto var = make<Var>(type_name, node, Ref<Type>{}, Var::NoFlags);
     var->set_scope_lvl(_scope_stack.size());
     if (!resolver()->resolve(ref(var), scope()))

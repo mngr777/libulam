@@ -22,6 +22,9 @@ private:
     std::string
     stringify_class(ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
 
+    std::string stringify_array(
+        ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
+
     ulam::Builtins& _builtins;
     ulam::UniqStrPool& _text_pool;
 };

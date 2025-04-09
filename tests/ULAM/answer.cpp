@@ -4,8 +4,22 @@
 #include <iostream>
 #include <stdexcept>
 
+bool Answer::has_type_def(const std::string& alias) const {
+    return _type_defs.count(alias) > 0;
+}
+
+std::string Answer::type_def(const std::string& alias) const {
+    auto it = _type_defs.find(alias);
+    return (it != _type_defs.end()) ? it->second : std::string{};
+}
+
+void Answer::add_type_def(std::string alias, std::string text) {
+    assert(!has_type_def(alias));
+    _type_defs.emplace(std::move(alias), std::move(text));
+}
+
 bool Answer::has_prop(const std::string& name) const {
-    return _props.count(name) == 1;
+    return _props.count(name) > 0;
 }
 
 std::string Answer::prop(const std::string& name) const {
@@ -85,18 +99,25 @@ Answer parse_answer(const std::string_view text) {
         return text.substr(start, pos - start);
     };
 
-    auto skip_type_name = [&]() {
-        // Type
+    auto skip_type_ident = [&]() {
         if (!is_upper())
             error("type name must start with uppercase letter");
         ++pos;
         while (is_ident())
             ++pos;
+    };
+
+    auto skip_type_name = [&]() {
+        skip_type_ident();
         // ()
         if (text[pos] == '(')
             skip_parens();
-        if (text[pos] == '[')
-            skip_brackets();
+    };
+
+    auto read_type_ident = [&]() {
+        auto start = pos;
+        skip_type_ident();
+        return text.substr(start, pos - start);
     };
 
     auto read_prop_name = [&]() {
@@ -119,30 +140,61 @@ Answer parse_answer(const std::string_view text) {
 
     constexpr char TestFunStart[] = "Int test()";
     constexpr char NoMain[] = "<NOMAIN>";
+    constexpr char TypeDef[] = "typedef";
 
     // props
     skip_spaces();
     while (!at(TestFunStart) && !at(NoMain)) {
         auto start = pos;
 
-        // Type(...)[...]
-        skip_type_name();
-        skip_spaces();
+        if (at(TypeDef)) {
+            // typedef
+            skip(TypeDef);
+            skip_spaces();
 
-        // ident
-        std::string name{read_prop_name()};
-        skip_spaces();
+            // Type(...)
+            skip_type_name();
+            skip_spaces();
 
-        // value
-        if (text[pos] == '(')
-            skip_parens();
+            // Type
+            std::string alias{read_type_ident()};
+            skip_spaces();
 
-        // ;
-        skip_spaces();
-        skip(";");
+            // []
+            if (text[pos] == '[')
+                skip_brackets();
 
-        std::string prop_text{text.substr(start, pos - start)};
-        answer.add_prop(std::move(name), std::move(prop_text));
+            // ;
+            skip_spaces();
+            skip(";");
+
+            std::string type_def_text{text.substr(start, pos - start)};
+            answer.add_type_def(std::move(alias), std::move(type_def_text));
+
+        } else {
+            // Type(...)[...]
+            skip_type_name();
+            skip_spaces();
+
+            // ident
+            std::string name{read_prop_name()};
+            skip_spaces();
+
+            // []
+            if (text[pos] == '[')
+                skip_brackets();
+
+            // value
+            if (text[pos] == '(')
+                skip_parens();
+
+            // ;
+            skip_spaces();
+            skip(";");
+
+            std::string prop_text{text.substr(start, pos - start)};
+            answer.add_prop(std::move(name), std::move(prop_text));
+        }
 
         skip_spaces();
     }
@@ -189,6 +241,26 @@ void compare_answer_maps(
 void compare_answers(const Answer& truth, const Answer& answer) {
     assert(truth.class_name() == answer.class_name());
 
+    // typedefs
+    const auto& type_defs = answer.type_defs();
+    for (const auto& [alias, text] : truth.type_defs()) {
+        auto it = type_defs.find(alias);
+        if (it == type_defs.end()) {
+            auto message = std::string{"typedef `"} + alias +
+                           "' not found in compiled class `" +
+                           answer.class_name() + "'";
+            throw std::invalid_argument(message);
+        }
+        auto answer_text = it->second;
+        if (answer_text != text) {
+            auto message = std::string{"typedef `"} + alias +
+                           "' in compiled class '" + answer.class_name() +
+                           "` does not match the answer: `" + answer_text +
+                           "` vs `" + text + "`";
+            throw std::invalid_argument(message);
+        }
+    }
+
     // properties
     const auto& props = answer.props();
     for (const auto& [name, text] : truth.props()) {
@@ -213,7 +285,8 @@ void compare_answers(const Answer& truth, const Answer& answer) {
     if (answer.test_fun() != truth.test_fun()) {
         auto message = std::string{"`test' function text of compiled class `"} +
                        answer.class_name() + "' does not match the answer:\n`" +
-                       answer.test_fun() + "`\n vs \n`" + truth.test_fun() + "`";
+                       answer.test_fun() + "`\n vs \n`" + truth.test_fun() +
+                       "`";
         throw std::invalid_argument(message);
     }
 }

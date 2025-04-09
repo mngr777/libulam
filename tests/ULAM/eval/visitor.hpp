@@ -14,8 +14,11 @@ public:
         ulam::sema::EvalVisitor{program},
         _stringifier{program->builtins(), program->text_pool()} {}
 
+    void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
+
+    bool in_main() { return _stack.size() == 1; }
 
     const std::string& data() const { return _data; }
 
@@ -32,6 +35,9 @@ public:
     funcall_helper(ulam::Ref<ulam::Scope> scope) override;
 
 protected:
+    ulam::Ref<ulam::AliasType>
+    type_def(ulam::Ref<ulam::ast::TypeDef> node) override;
+
     ulam::Ref<ulam::Var> var_def(
         ulam::Ref<ulam::ast::TypeName> type_name,
         ulam::Ref<ulam::ast::VarDef> node) override;

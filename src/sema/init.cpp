@@ -91,8 +91,8 @@ void Init::visit(Ref<ast::TypeDef> node) {
         sync_scope(node);
     } else {
         // transient typedef (in function body)
-        Ptr<UserType> type =
-            make<AliasType>(program()->builtins(), nullptr, node);
+        Ptr<UserType> type = make<AliasType>(
+            program()->str_pool(), program()->builtins(), nullptr, node);
         scope()->set(alias_id, std::move(type));
     }
 }

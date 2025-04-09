@@ -195,8 +195,12 @@ public:
 
 class AliasType : public UserType {
 public:
-    AliasType(Builtins& builtins, TypeIdGen* id_gen, Ref<ast::TypeDef> node):
-        UserType{builtins, id_gen}, _node{node} {}
+    AliasType(
+        UniqStrPool& str_pool,
+        Builtins& builtins,
+        TypeIdGen* id_gen,
+        Ref<ast::TypeDef> node):
+        UserType{builtins, id_gen}, _str_pool{str_pool}, _node{node} {}
 
     std::string name() const override;
 
@@ -271,6 +275,7 @@ protected:
     Ptr<RefType> make_ref_type() override;
 
 private:
+    UniqStrPool& _str_pool;
     Ref<ast::TypeDef> _node;
     Ref<Type> _aliased{};
     Ref<Type> _canon{};

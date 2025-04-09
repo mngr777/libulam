@@ -12,7 +12,9 @@ Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
         return stringify_prim(type->as_prim(), rval);
     if (type->is_class())
         return stringify_class(type->as_class(), rval);
-    assert(false); // TODO
+    if (type->is_array())
+        return stringify_array(type->as_array(), rval);
+    assert(false);
 }
 
 std::string Stringifier::stringify_prim(
@@ -54,4 +56,17 @@ std::string Stringifier::stringify_prim(
 std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
     return ""; // TODO
+}
+
+std::string Stringifier::stringify_array(
+    ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
+    std::string str;
+    auto data = rval.data_view();
+    for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
+        if (idx > 0)
+            str += ",";
+        auto item_rval = data.array_item(idx).load();
+        str += stringify(array_type->item_type(), item_rval);
+    }
+    return str;
 }

@@ -72,6 +72,7 @@ Ref<Var> Class::add_param(
 Ref<AliasType> Class::add_type_def(Ref<ast::TypeDef> node) {
     auto type = ClassBase::add_type_def(node);
     type->set_cls(this);
+    _type_defs.push_back(type);
     return type;
 }
 

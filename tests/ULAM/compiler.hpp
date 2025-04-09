@@ -6,6 +6,7 @@
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/type.hpp>
 #include <set>
 #include <string>
 
@@ -32,6 +33,10 @@ private:
         std::ostream& out,
         ulam::sema::ExprRes&& obj,
         const std::string& test_postfix);
+
+    void write_class_type_defs(std::ostream& out, ulam::Ref<ulam::Class> cls);
+    void write_class_type_def(
+        std::ostream& out, ulam::Ref<ulam::AliasType> alias_type);
 
     void write_class_props(
         std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj);
