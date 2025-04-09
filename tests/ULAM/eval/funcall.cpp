@@ -11,16 +11,14 @@ ulam::sema::ExprRes EvalFuncall::do_funcall(
     if (callable.has_data()) {
         std::string arg_data{};
         for (const auto& arg : args) {
-            if (!arg_data.empty())
-                arg_data += " ";
             if (!arg.has_data()) {
                 arg_data.clear();
                 break;
             }
-            arg_data += arg.data<std::string>();
+            arg_data += arg.data<std::string>() + " ";
         }
-        if (!arg_data.empty()) {
-            arg_data = "( " + arg_data + " )";
+        if (args.empty() || !arg_data.empty()) {
+            arg_data = "( " + arg_data + ")";
             data = callable.data<std::string>();
             auto pos = data.find("{args}");
             if (pos != std::string::npos) {
