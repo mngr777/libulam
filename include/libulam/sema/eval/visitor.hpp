@@ -54,6 +54,8 @@ public:
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
 protected:
+    virtual Ref<AliasType> type_def(Ref<ast::TypeDef> node);
+
     virtual Ref<Var>
     var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
 

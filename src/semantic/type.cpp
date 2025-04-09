@@ -232,7 +232,7 @@ Ptr<RefType> Type::make_ref_type() {
 // TODO: get name from program context when refactored
 std::string AliasType::name() const {
     assert(_canon);
-    return std::string{"alias for "} + _canon->name();
+    return std::string{_str_pool.get(name_id())};
 }
 
 str_id_t AliasType::name_id() const { return _node->alias_id(); }

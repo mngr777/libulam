@@ -1,11 +1,13 @@
 #include "./compiler.hpp"
 #include "./eval.hpp"
 #include "./eval/stringifier.hpp"
+#include "./type_str.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
 #include <libulam/sema/eval/except.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <stdexcept>
@@ -115,8 +117,28 @@ void Compiler::write_obj(
     auto val = obj.move_value();
 
     out << class_name(cls) << " { ";
+    write_class_type_defs(out, cls);
     write_class_props(out, cls, val);
     out << test_postfix << " }";
+}
+
+void Compiler::write_class_type_defs(
+    std::ostream& out, ulam::Ref<ulam::Class> cls) {
+    for (auto type_def : cls->type_defs())
+        write_class_type_def(out, type_def);
+}
+
+void Compiler::write_class_type_def(
+    std::ostream& out, ulam::Ref<ulam::AliasType> alias_type) {
+    auto aliased = alias_type->aliased();
+    out << "typedef " << type_base_name(aliased) << " " << alias_type->name()
+        << type_dim_str(aliased) << ";";
+}
+
+void Compiler::write_class_props(
+    std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj) {
+    for (auto prop : cls->props())
+        write_class_prop(out, prop, obj);
 }
 
 void Compiler::write_class_prop(
@@ -126,14 +148,10 @@ void Compiler::write_class_prop(
     auto& str_pool = program->str_pool();
     Stringifier stringifier{program->builtins(), program->text_pool()};
 
-    auto type = prop->type()->canon();
+    auto type = prop->type();
     auto rval = obj.prop(prop).copy_rvalue();
-    out << type->name() << " " << str_pool.get(prop->name_id()) << "("
-        << stringifier.stringify(type, rval) << "); ";
-}
 
-void Compiler::write_class_props(
-    std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj) {
-    for (auto prop : cls->props())
-        write_class_prop(out, prop, obj);
+    out << type_base_name(type) << " " << str_pool.get(prop->name_id())
+        << type_dim_str(type) << "(" << stringifier.stringify(type, rval)
+        << "); ";
 }

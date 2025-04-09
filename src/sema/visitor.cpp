@@ -143,8 +143,8 @@ bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
 
 bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (!sync_scope(node)) {
-        Ptr<UserType> type =
-            make<AliasType>(program()->builtins(), nullptr, node);
+        Ptr<UserType> type = make<AliasType>(
+            program()->str_pool(), program()->builtins(), nullptr, node);
         _eval->resolver()->resolve(type->as_alias(), scope());
         scope()->set(type->name_id(), std::move(type));
     }

@@ -24,8 +24,9 @@ const std::string_view Module::name() const {
 
 Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
-    Ptr<UserType> type =
-        make<AliasType>(program()->builtins(), &program()->type_id_gen(), node);
+    Ptr<UserType> type = make<AliasType>(
+        program()->str_pool(), program()->builtins(), &program()->type_id_gen(),
+        node);
     auto ref = ulam::ref(type)->as_alias();
     type->set_module(this);
     type->set_scope_version(scope()->version());

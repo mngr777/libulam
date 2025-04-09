@@ -100,8 +100,9 @@ Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
     auto program = _module->program();
     assert(!has(name_id));
 
-    Ptr<UserType> type =
-        make<AliasType>(program->builtins(), &program->type_id_gen(), node);
+    Ptr<UserType> type = make<AliasType>(
+        program->str_pool(), program->builtins(), &program->type_id_gen(),
+        node);
     auto ref = ulam::ref(type)->as_alias();
     type->set_scope_version(scope()->version());
 

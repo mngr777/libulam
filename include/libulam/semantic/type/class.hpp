@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/type.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
@@ -104,6 +105,8 @@ public:
     // TODO: make protected
     void add_conv(Ref<Fun> fun);
 
+    const auto& type_defs() const { return _type_defs; }
+
     const auto& props() const { return _props; }
     const auto& all_props() const { return _all_props; } // + inherited
 
@@ -132,6 +135,7 @@ private:
     std::string_view _name;
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
+    std::list<Ref<AliasType>> _type_defs;
     std::list<Ref<Prop>> _props;
     std::list<Ref<Prop>> _all_props;
     std::map<type_id_t, Ref<Fun>> _convs;
