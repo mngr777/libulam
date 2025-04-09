@@ -83,6 +83,21 @@ protected:
         Ref<ast::Expr> r_node,
         ExprRes&& right);
 
+    virtual ExprRes unary_op(
+        Ref<ast::Expr> node,
+        Op op,
+        Ref<ast::Expr> arg_node,
+        ExprRes&& arg,
+        Ref<ast::TypeName> type_name = {});
+
+    virtual ExprRes apply_unary_op(
+        Ref<ast::Expr> node,
+        Op op,
+        LValue lval,
+        Ref<ast::Expr> arg_node,
+        ExprRes&& arg,
+        Ref<ast::TypeName> type_name = {});
+
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, ExprRes res);
 
@@ -94,14 +109,23 @@ protected:
 
     virtual ExprRes callable_op(Ref<ast::FunCall> node);
 
-    virtual ExprRes member_access_op(
-        Ref<ast::MemberAccess> node, ExprRes&& obj);
+    virtual ExprRes array_access_class(
+        Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx);
+    virtual ExprRes array_access_string(
+        Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx);
+    virtual ExprRes array_access_array(
+        Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx);
+
+    virtual ExprRes
+    member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj);
     virtual ExprRes
     member_access_var(Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var);
     virtual ExprRes member_access_prop(
         Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Prop> prop);
     virtual ExprRes member_access_fset(
         Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset);
+
+    virtual ExprRes bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj);
 
     virtual ExprRes
     as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);

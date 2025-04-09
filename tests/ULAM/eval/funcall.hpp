@@ -8,8 +8,10 @@ class EvalFuncall : public ulam::sema::EvalFuncall {
 public:
     using ulam::sema::EvalFuncall::EvalFuncall;
 
-    ulam::sema::ExprRes funcall(
+protected:
+    ulam::sema::ExprRes do_funcall(
         ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Fun> fun,
         ulam::sema::ExprRes&& callable,
         ulam::sema::ExprResList&& args);
 };

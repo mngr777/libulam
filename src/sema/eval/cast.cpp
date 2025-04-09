@@ -6,8 +6,8 @@
 
 namespace ulam::sema {
 
-ExprRes EvalCast::cast(
-    Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl) {
+ExprRes
+EvalCast::cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl) {
     auto [res, _] = maybe_cast(node, type, std::move(arg), expl);
     return std::move(res);
 }

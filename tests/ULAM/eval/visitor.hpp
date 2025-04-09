@@ -19,7 +19,6 @@ public:
 
     const std::string& data() const { return _data; }
 
-protected:
     ulam::Ptr<ulam::sema::EvalExprVisitor>
     expr_visitor(ulam::Ref<ulam::Scope> scope) override;
 
@@ -31,6 +30,11 @@ protected:
 
     ulam::Ptr<ulam::sema::EvalFuncall>
     funcall_helper(ulam::Ref<ulam::Scope> scope) override;
+
+protected:
+    ulam::Ref<ulam::Var> var_def(
+        ulam::Ref<ulam::ast::TypeName> type_name,
+        ulam::Ref<ulam::ast::VarDef> node) override;
 
     ulam::sema::ExprRes eval_expr(ulam::Ref<ulam::ast::Expr> expr) override;
 

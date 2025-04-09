@@ -19,11 +19,8 @@ public:
     EvalCast(EvalVisitor& eval, Diag& diag, Ref<Scope> scope):
         _eval{eval}, _diag{diag}, _scope{scope} {}
 
-    virtual ExprRes cast(
-        Ref<ast::Node> node,
-        Ref<Type> type,
-        ExprRes&& arg,
-        bool expl = false);
+    virtual ExprRes
+    cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl = false);
 
     virtual ExprRes cast(
         Ref<ast::Node> node,

@@ -6,6 +6,7 @@
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/stack.hpp>
+#include <libulam/semantic/var.hpp>
 
 namespace ulam::sema {
 
@@ -53,7 +54,8 @@ public:
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
 
 protected:
-    virtual void var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
+    virtual Ref<Var>
+    var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
 
     virtual ExprRes ret_res(Ref<ast::Return> node);
 

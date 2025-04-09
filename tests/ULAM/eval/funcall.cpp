@@ -1,8 +1,9 @@
 #include "./funcall.hpp"
 #include <string>
 
-ulam::sema::ExprRes EvalFuncall::funcall(
+ulam::sema::ExprRes EvalFuncall::do_funcall(
     ulam::Ref<ulam::ast::Node> node,
+    ulam::Ref<ulam::Fun> fun,
     ulam::sema::ExprRes&& callable,
     ulam::sema::ExprResList&& args) {
 
@@ -11,7 +12,7 @@ ulam::sema::ExprRes EvalFuncall::funcall(
         std::string arg_data{};
         for (const auto& arg : args) {
             if (!arg_data.empty())
-                arg_data += ", ";
+                arg_data += " ";
             if (!arg.has_data()) {
                 arg_data.clear();
                 break;
@@ -30,7 +31,8 @@ ulam::sema::ExprRes EvalFuncall::funcall(
         }
     }
 
-    auto res = ulam::sema::EvalFuncall::funcall(node, std::move(callable), std::move(args));
+    auto res = ulam::sema::EvalFuncall::do_funcall(
+        node, fun, std::move(callable), std::move(args));
     if (!data.empty()) {
         res.set_data(data);
     } else {

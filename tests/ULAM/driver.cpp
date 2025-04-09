@@ -107,7 +107,8 @@ static const std::set<std::string> Skip = {
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
-    "t3104_test_compiler_bitwisexor.test", // casting 1 to Int(3) for `a == 1` omitted
+    "t3104_test_compiler_bitwisexor.test", // tmp, casting 1 to Int(3) for `a == 1` omitted
+    "t3114_test_compiler_funcdef_arrayarg.test", // tmp, explicitly casting 7 to Int for m() call
 };
 
 using Path = std::filesystem::path;

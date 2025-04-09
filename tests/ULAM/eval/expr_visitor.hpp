@@ -51,6 +51,21 @@ protected:
         ulam::Ref<ulam::ast::Ident> node,
         ulam::Ref<ulam::FunSet> fset) override;
 
+    ExprRes array_access_class(
+        ulam::Ref<ulam::ast::ArrayAccess> node,
+        ExprRes&& obj,
+        ExprRes&& idx) override;
+
+    ExprRes array_access_string(
+        ulam::Ref<ulam::ast::ArrayAccess> node,
+        ExprRes&& obj,
+        ExprRes&& idx) override;
+
+    ExprRes array_access_array(
+        ulam::Ref<ulam::ast::ArrayAccess> node,
+        ExprRes&& obj,
+        ExprRes&& idx) override;
+
     ExprRes member_access_op(
         ulam::Ref<ulam::ast::MemberAccess> node, ExprRes&& obj) override;
 

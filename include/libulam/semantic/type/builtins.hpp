@@ -50,6 +50,7 @@ public:
     Ref<FunType> fun_type();
 
     Ref<BoolType> boolean() { return bool_type(1); }
+    Ref<UnsignedType> char_type() { return unsigned_type(8); }
 
     Ref<PrimTypeTpl> prim_type_tpl(BuiltinTypeId id);
 
