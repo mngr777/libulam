@@ -12,6 +12,18 @@
 
 #define DBG_LINE(node) debug() << _program->sm().line_at(node->loc_id())
 
+bool ends_with_cast(const std::string& data) {
+    static const std::string_view Cast{"cast"};
+    return data.size() > Cast.size() &&
+           std::string_view{data}.substr(data.size() - Cast.size()) == Cast;
+}
+
+std::string add_cast(std::string&& data) {
+    if (!ends_with_cast(data))
+        return data + " cast";
+    return std::move(data);
+}
+
 EvalExprVisitor::ExprRes
 EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
     auto res = ulam::sema::EvalExprVisitor::visit(node);
@@ -58,8 +70,45 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     EvalExprVisitor::ExprRes&& right) {
     std::string data{};
     if (left.has_data() && right.has_data()) {
-        data = left.data<std::string>() + " " + right.data<std::string>() +
-               " " + ulam::ops::str(op);
+        auto l_data = left.data<std::string>();
+        auto r_data = right.data<std::string>();
+
+        switch (ulam::ops::kind(op)) {
+        case ulam::ops::Kind::Equality:
+            // cast right arg to exact type for comparison
+            if (right.type() != left.type())
+                r_data = add_cast(std::move(r_data));
+            break;
+        case ulam::ops::Kind::Numeric: {
+            if (op == ulam::Op::Assign) {
+                if (right.type() != left.type() &&
+                    !right.value().is_consteval()) {
+                    r_data = add_cast(std::move(r_data));
+                }
+
+            } else if (ulam::ops::is_assign(op)) {
+                if (right.type() != left.type())
+                    r_data = add_cast(std::move(r_data));
+
+            } else {
+                // cast to 32 or 64 common bit width
+                auto l_size = left.type()->bitsize();
+                auto r_size = right.type()->bitsize();
+                auto size = std::max(l_size, r_size);
+                assert(size < 64);
+                size = (size > 32) ? 64 : 32;
+                if (l_size != size)
+                    l_data = add_cast(std::move(l_data));
+                if (r_size != size)
+                    r_data = add_cast(std::move(r_data));
+            }
+            break;
+        }
+        default: {
+        } // do nothing
+        }
+
+        data = l_data + " " + r_data + " " + ulam::ops::str(op);
     }
     auto res = ulam::sema::EvalExprVisitor::apply_binary_op(
         node, op, lval, l_node, std::move(left), r_node, std::move(right));
@@ -119,8 +168,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_fset(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::FunSet> fset) {
     auto res = ulam::sema::EvalExprVisitor::ident_fset(node, fset);
     if (res) {
-        auto data =
-            std::string{"self {args}"} + std::string{str(fset->name_id())} + " .";
+        auto data = std::string{"self {args}"} +
+                    std::string{str(fset->name_id())} + " .";
         res.set_data(data);
     }
     return res;
