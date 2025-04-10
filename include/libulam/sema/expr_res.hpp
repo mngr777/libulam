@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <any>
 #include <cassert>
+#include <cstdint>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
@@ -56,13 +57,16 @@ enum class ExprError {
 
 class ExprRes {
 public:
+    using flags_t = std::uint16_t;
+
     ExprRes(TypedValue&& tv, ExprError error = ExprError::Ok):
-        _typed_value{std::move(tv)}, _error{error} {}
+        _typed_value{std::move(tv)}, _error{error}, _flags{0} {}
 
     ExprRes(Ref<Type> type, Value&& value, ExprError error = ExprError::Ok):
-        _typed_value{type, std::move(value)}, _error{error} {}
+        _typed_value{type, std::move(value)}, _error{error}, _flags{0} {}
 
-    ExprRes(ExprError error = ExprError::NotImplemented): _error{error} {}
+    ExprRes(ExprError error = ExprError::NotImplemented):
+        _error{error}, _flags{0} {}
 
     ExprRes(ExprRes&&) = default;
     ExprRes& operator=(ExprRes&&) = default;
@@ -87,6 +91,9 @@ public:
 
     ExprError error() const { return _error; }
 
+    bool has_flag(flags_t flag) const { return _flags & flag; }
+    void set_flag(flags_t flag) { _flags |= flag; }
+
     bool has_data() const { return _data.has_value(); }
 
     template <typename T> T data() const {
@@ -107,6 +114,7 @@ public:
 private:
     TypedValue _typed_value;
     ExprError _error;
+    flags_t _flags;
     std::any _data;
 };
 

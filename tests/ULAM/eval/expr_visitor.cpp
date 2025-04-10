@@ -1,4 +1,5 @@
 #include "./expr_visitor.hpp"
+#include "./expr_flags.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
@@ -20,8 +21,8 @@ bool ends_with_cast(const std::string& data) {
            std::string_view{data}.substr(data.size() - Cast.size()) == Cast;
 }
 
-std::string add_cast(std::string&& data) {
-    if (!ends_with_cast(data))
+std::string add_cast(std::string&& data, bool force) {
+    if (force || !ends_with_cast(data))
         return data + " cast";
     return std::move(data);
 }
@@ -106,21 +107,21 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
         auto r_data = right.data<std::string>();
 
         switch (ulam::ops::kind(op)) {
+        case ulam::ops::Kind::Assign:
+            if (right.type() != left.type() && !right.value().is_consteval())
+                r_data = add_cast(std::move(r_data), left.has_flag(ExplCast));
+            break;
         case ulam::ops::Kind::Equality:
+        case ulam::ops::Kind::Comparison:
             // cast right arg to exact type for comparison
             if (right.type() != left.type())
-                r_data = add_cast(std::move(r_data));
+                r_data = add_cast(std::move(r_data), right.has_flag(ExplCast));
             break;
         case ulam::ops::Kind::Numeric: {
-            if (op == ulam::Op::Assign) {
-                if (right.type() != left.type() &&
-                    !right.value().is_consteval()) {
-                    r_data = add_cast(std::move(r_data));
-                }
-
-            } else if (ulam::ops::is_assign(op)) {
+            if (ulam::ops::is_assign(op)) {
                 if (right.type() != left.type())
-                    r_data = add_cast(std::move(r_data));
+                    r_data =
+                        add_cast(std::move(r_data), right.has_flag(ExplCast));
 
             } else {
                 // cast to 32 or 64 common bit width
@@ -130,9 +131,11 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
                 assert(size < 64);
                 size = (size > 32) ? 64 : 32;
                 if (l_size != size)
-                    l_data = add_cast(std::move(l_data));
+                    l_data =
+                        add_cast(std::move(l_data), left.has_flag(ExplCast));
                 if (r_size != size)
-                    r_data = add_cast(std::move(r_data));
+                    r_data =
+                        add_cast(std::move(r_data), right.has_flag(ExplCast));
             }
             break;
         }

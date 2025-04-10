@@ -1,4 +1,5 @@
 #include "./cast.hpp"
+#include "./expr_flags.hpp"
 #include <cassert>
 
 ulam::sema::ExprRes EvalCast::cast(
@@ -9,8 +10,11 @@ ulam::sema::ExprRes EvalCast::cast(
     auto data = arg.data<std::string>("");
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
     if (!data.empty()) {
-        if (status == CastOk)
+        if (status == CastOk) {
             data += " cast";
+            if (expl)
+                res.set_flag(ExplCast);
+        }
         res.set_data(data);
     }
     return std::move(res);
@@ -24,8 +28,11 @@ ulam::sema::ExprRes EvalCast::cast(
     auto data = arg.data<std::string>("");
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
     if (!data.empty()) {
-        if (status == CastOk)
+        if (status == CastOk) {
             data += " cast";
+            if (expl)
+                res.set_flag(ExplCast);
+        }
         res.set_data(data);
     }
     return std::move(res);
