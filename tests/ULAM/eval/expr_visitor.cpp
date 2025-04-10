@@ -12,6 +12,8 @@
 
 #define DBG_LINE(node) debug() << _program->sm().line_at(node->loc_id())
 
+namespace {
+
 bool ends_with_cast(const std::string& data) {
     static const std::string_view Cast{"cast"};
     return data.size() > Cast.size() &&
@@ -23,6 +25,36 @@ std::string add_cast(std::string&& data) {
         return data + " cast";
     return std::move(data);
 }
+
+std::string
+add_array_access(const std::string& data, const std::string& idx_data) {
+    static const std::string_view Self_{"self "};
+    assert(!data.empty());
+
+    if (*data.rbegin() == '.') {
+        // ULAM quirk:
+        // `a.b[c] -> `a b c [] .`, but
+        // `/* self. */ b[c]` -> `self b . c []`
+
+        // Go 3 spaces back or (or to the beginning),
+        // then compare substring of len 5 to "self "
+        auto pos = std::string::npos;
+        for (int i = 0; i < 3; ++i) {
+            pos = data.rfind(' ', pos);
+            // at least 2 spaces must be present, since we have member access op
+            assert(i == 2 || pos != std::string::npos);
+            assert(pos != 0); // data string can't start with ' '
+            if (pos != std::string::npos)
+                --pos;
+        }
+        pos = (pos == std::string::npos) ? 0 : pos + 1;
+        if (std::string_view{data}.substr(pos, Self_.size()) != Self_)
+            return data.substr(0, data.size() - 1) + idx_data + " [] .";
+    }
+    return data + " " + idx_data + " []";
+}
+
+} // namespace
 
 EvalExprVisitor::ExprRes
 EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
@@ -190,7 +222,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
     EvalExprVisitor::ExprRes&& idx) {
     std::string data;
     if (obj.has_data() && idx.has_data())
-        data = obj.data<std::string>() + " " + idx.data<std::string>() + " []";
+        data =
+            add_array_access(obj.data<std::string>(), idx.data<std::string>());
     auto res = ulam::sema::EvalExprVisitor::array_access_string(
         node, std::move(obj), std::move(idx));
     if (!data.empty())
@@ -204,7 +237,10 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_array(
     EvalExprVisitor::ExprRes&& idx) {
     std::string data;
     if (obj.has_data() && idx.has_data())
-        data = obj.data<std::string>() + " " + idx.data<std::string>() + " []";
+        // data = obj.data<std::string>() + " " + idx.data<std::string>() + "
+        // []";
+        data =
+            add_array_access(obj.data<std::string>(), idx.data<std::string>());
     auto res = ulam::sema::EvalExprVisitor::array_access_array(
         node, std::move(obj), std::move(idx));
     if (!data.empty())

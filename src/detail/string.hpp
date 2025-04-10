@@ -3,9 +3,7 @@
 
 namespace ulam::detail {
 
-// TODO: replace comparisons with switch
-
-inline bool is_whitespace(char ch) {
+constexpr bool is_whitespace(char ch) {
     switch (ch) {
     case ' ':
     case '\t':
@@ -17,19 +15,19 @@ inline bool is_whitespace(char ch) {
     }
 }
 
-inline bool is_digit(char ch) { return '0' <= ch && ch <= '9'; }
-inline bool is_xdigit(char ch) {
+constexpr bool is_digit(char ch) { return '0' <= ch && ch <= '9'; }
+constexpr bool is_xdigit(char ch) {
     return is_digit(ch) || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F');
 }
-inline bool is_upper(char ch) { return 'A' <= ch && ch <= 'Z'; }
-inline bool is_lower(char ch) { return 'a' <= ch && ch <= 'z'; }
-inline bool is_word(char ch) {
+constexpr bool is_upper(char ch) { return 'A' <= ch && ch <= 'Z'; }
+constexpr bool is_lower(char ch) { return 'a' <= ch && ch <= 'z'; }
+constexpr bool is_word(char ch) {
     return ch == '_' || is_upper(ch) || is_lower(ch) || is_digit(ch);
 }
 
 constexpr std::uint8_t NotDigit = -1;
 
-inline std::uint8_t digit_value(char digit) {
+constexpr std::uint8_t digit_value(char digit) {
     if ('0' <= digit && digit <= '9')
         return digit - '0';
     if ('A' <= digit && digit <= 'F')
@@ -39,7 +37,7 @@ inline std::uint8_t digit_value(char digit) {
     return NotDigit;
 }
 
-inline char escaped(char ch) {
+constexpr char escaped(char ch) {
     switch (ch) {
     case '0':
         return '\0';
