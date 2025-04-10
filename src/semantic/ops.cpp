@@ -86,15 +86,16 @@ Kind kind(Op op) {
     case Op::Equal:
     case Op::NotEqual:
         return Kind::Equality;
+    case Op::Less:
+    case Op::LessOrEq:
+    case Op::Greater:
+    case Op::GreaterOrEq:
+        return Kind::Comparison;
     case Op::Prod:
     case Op::Quot:
     case Op::Rem:
     case Op::Sum:
     case Op::Diff:
-    case Op::Less:
-    case Op::LessOrEq:
-    case Op::Greater:
-    case Op::GreaterOrEq:
     case Op::UnaryPlus:
     case Op::UnaryMinus:
     case Op::PreInc:
