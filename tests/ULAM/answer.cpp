@@ -184,15 +184,34 @@ Answer parse_answer(const std::string_view text) {
             if (text[pos] == '[')
                 skip_brackets();
 
+            std::string prop_text{text.substr(start, pos - start)};
+
             // value
-            if (text[pos] == '(')
+            if (text[pos] == '(') {
+                auto start = pos;
                 skip_parens();
+                auto end = pos - 1;
+                assert(text[start] == '(' && text[end] == ')');
+                ++start;
+                --end;
+                // remove leading/trailing spaces:
+                // ULAM adds a leading space after `(' for non-main classes
+                while (start < end && text[start] == ' ')
+                    ++start;
+                while (end > start && text[end] == ' ')
+                    --end;
+                if (end != start) {
+                    prop_text += "(" + std::string{text.substr(start, end + 1 - start)} + ");";
+                } else {
+                    prop_text += "();";
+                }
+            }
 
             // ;
             skip_spaces();
             skip(";");
 
-            std::string prop_text{text.substr(start, pos - start)};
+
             answer.add_prop(std::move(name), std::move(prop_text));
         }
 

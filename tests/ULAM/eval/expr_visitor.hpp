@@ -30,6 +30,14 @@ protected:
         ulam::Ref<ulam::ast::Expr> r_node,
         ExprRes&& right) override;
 
+    ExprRes apply_unary_op(
+        ulam::Ref<ulam::ast::Expr> node,
+        ulam::Op op,
+        ulam::LValue lval,
+        ulam::Ref<ulam::ast::Expr> arg_node,
+        ExprRes&& arg,
+        ulam::Ref<ulam::ast::TypeName> type_name) override;
+
     ExprRes type_op(
         ulam::Ref<ulam::ast::TypeOpExpr> node,
         ulam::Ref<ulam::Type> type) override;
