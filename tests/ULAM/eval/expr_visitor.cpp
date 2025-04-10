@@ -141,6 +141,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
         }
 
         data = l_data + " " + r_data + " " + ulam::ops::str(op);
+        if (op == ulam::Op::Sum || op == ulam::Op::Diff)
+            data += "b";
     }
     auto res = ulam::sema::EvalExprVisitor::apply_binary_op(
         node, op, lval, l_node, std::move(left), r_node, std::move(right));

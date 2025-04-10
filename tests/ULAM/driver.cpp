@@ -107,7 +107,6 @@ static const std::set<std::string> Skip = {
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
-    "t3117_test_compiler_funcdef_withdatamembers.test", // tmp: + op quirk
 };
 
 using Path = std::filesystem::path;
