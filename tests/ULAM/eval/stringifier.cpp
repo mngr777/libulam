@@ -65,6 +65,9 @@ std::string Stringifier::stringify_class(
 
 std::string Stringifier::stringify_array(
     ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
+    if (array_type->array_size() == 0)
+        return " ";
+
     std::string str;
     auto item_type = array_type->item_type();
     auto data = rval.data_view();
