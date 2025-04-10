@@ -270,6 +270,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/stringifier.cpp \
 	tests/ULAM/eval/visitor.hpp \
 	tests/ULAM/eval/visitor.cpp \
+	tests/ULAM/prop_str.hpp \
+	tests/ULAM/prop_str.cpp \
 	tests/ULAM/test_case.hpp \
 	tests/ULAM/test_case.cpp \
 	tests/ULAM/type_str.hpp \

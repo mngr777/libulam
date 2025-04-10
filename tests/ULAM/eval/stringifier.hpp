@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -10,8 +11,10 @@
 
 class Stringifier {
 public:
-    Stringifier(ulam::Builtins& builtins, ulam::UniqStrPool& text_pool):
-        _builtins{builtins}, _text_pool{text_pool} {}
+    Stringifier(ulam::Ref<ulam::Program> program):
+        _builtins{program->builtins()},
+        _str_pool{program->str_pool()},
+        _text_pool{program->text_pool()} {}
 
     std::string stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval);
 
@@ -26,5 +29,6 @@ private:
         ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
 
     ulam::Builtins& _builtins;
+    ulam::UniqStrPool& _str_pool;
     ulam::UniqStrPool& _text_pool;
 };

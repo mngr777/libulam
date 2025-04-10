@@ -15,7 +15,7 @@ std::map<std::string, Answer> parse_answers(const std::string_view text) {
     std::size_t pos{0};
     while (pos < text.size()) {
         auto nl_pos = text.find('\n', pos);
-        auto line = (nl_pos != std::string::npos) ? text.substr(pos, nl_pos)
+        auto line = (nl_pos != std::string::npos) ? text.substr(pos, nl_pos - pos)
                                                   : text.substr(pos);
         pos += line.size() + 1;
         auto answer = parse_answer(line);
@@ -63,13 +63,12 @@ void TestCase::run(run_flags_t flags) {
     // compile
     compiler.compile(out);
     auto compiled = out.str();
-    std::cout << "COMPILED:\n" << compiled << "\n";
+    auto answers = parse_answers(compiled);
+    std::cout << "COMPILED:\n" << answers << "\n";
 
     // check
-    if ((flags & SkipAnswerCheck) == 0) {
-        auto answers = parse_answers(compiled);
+    if ((flags & SkipAnswerCheck) == 0)
         compare_answer_maps(_answers, answers);
-    }
 }
 
 void TestCase::load(const std::filesystem::path& path) {

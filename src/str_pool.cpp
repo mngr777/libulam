@@ -5,6 +5,11 @@ namespace ulam {
 
 // StrPoolBase
 
+bool StrPoolBase::has_id(str_id_t id) const {
+    assert(id != NoStrId);
+    return id < _index.size();
+}
+
 const std::string_view StrPoolBase::get(str_id_t id) const {
     assert(id < _index.size());
     return _index[id];
