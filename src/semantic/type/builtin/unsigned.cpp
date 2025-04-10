@@ -367,8 +367,8 @@ RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return rval;
     }
     case UnaryId: {
-        Unsigned val =
-            std::min((Unsigned)type->bitsize(), detail::ones(uns_val));
+        uns_val = std::min<Unsigned>(uns_val, type->bitsize());
+        Unsigned val = detail::ones(uns_val);
         return RValue{val, is_consteval};
     }
     case BitsId: {
