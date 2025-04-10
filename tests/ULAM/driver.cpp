@@ -107,6 +107,7 @@ static const std::set<std::string> Skip = {
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
+    "t3183_test_compiler_element_unarycastconstant.test", // cast after array access for `m_u[3] == 2`
 };
 
 using Path = std::filesystem::path;

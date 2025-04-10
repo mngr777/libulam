@@ -101,7 +101,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     EvalExprVisitor::ExprRes&& left,
     ulam::Ref<ulam::ast::Expr> r_node,
     EvalExprVisitor::ExprRes&& right) {
-    std::string data{};
+
+    std::string data;
     if (left.has_data() && right.has_data()) {
         auto l_data = left.data<std::string>();
         auto r_data = right.data<std::string>();
@@ -154,9 +155,34 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     return res;
 }
 
+EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
+    ulam::Ref<ulam::ast::Expr> node,
+    ulam::Op op,
+    ulam::LValue lval,
+    ulam::Ref<ulam::ast::Expr> arg_node,
+    EvalExprVisitor::ExprRes&& arg,
+    ulam::Ref<ulam::ast::TypeName> type_name) {
+
+    std::string data;
+    if (arg.has_data()) {
+        // TODO
+        data = arg.data<std::string>();
+        if (ulam::ops::is_unary_pre_op(op))
+            data = std::string{ulam::ops::str(op)} + data;
+    }
+    auto res = ulam::sema::EvalExprVisitor::apply_unary_op(
+        node, op, lval, arg_node, std::move(arg), type_name);
+    if (res && !data.empty())
+        res.set_data(data);
+    return res;
+}
+
 EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
     ulam::Ref<ulam::ast::TypeOpExpr> node, EvalExprVisitor::ExprRes res) {
     res = ulam::sema::EvalExprVisitor::type_op(node, std::move(res));
+    if (!res)
+        return res;
+
     const auto& val = res.value();
     if (val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
