@@ -1,6 +1,7 @@
 #include "./compiler.hpp"
 #include "./eval.hpp"
 #include "./eval/stringifier.hpp"
+#include "./prop_str.hpp"
 #include "./type_str.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
@@ -132,7 +133,7 @@ void Compiler::write_class_type_def(
     std::ostream& out, ulam::Ref<ulam::AliasType> alias_type) {
     auto aliased = alias_type->aliased();
     out << "typedef " << type_base_name(aliased) << " " << alias_type->name()
-        << type_dim_str(aliased) << ";";
+        << type_dim_str(aliased) << "; ";
 }
 
 void Compiler::write_class_props(
@@ -146,12 +147,7 @@ void Compiler::write_class_prop(
     assert(_ast->program());
     auto program = _ast->program();
     auto& str_pool = program->str_pool();
-    Stringifier stringifier{program->builtins(), program->text_pool()};
-
-    auto type = prop->type();
-    auto rval = obj.prop(prop).copy_rvalue();
-
-    out << type_base_name(type) << " " << str_pool.get(prop->name_id())
-        << type_dim_str(type) << "(" << stringifier.stringify(type, rval)
-        << "); ";
+    Stringifier stringifier{program};
+    auto rval_copy = obj.copy_rvalue(); // TMP
+    out << prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
 }

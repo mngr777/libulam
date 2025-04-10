@@ -16,6 +16,8 @@ public:
     StrPoolBase(const StrPoolBase&) = delete;
     StrPoolBase& operator=(const StrPoolBase&) = delete;
 
+    bool has_id(str_id_t id) const;
+
     virtual str_id_t put(const std::string_view str, bool copy = true) = 0;
     virtual const std::string_view get(str_id_t id) const;
 

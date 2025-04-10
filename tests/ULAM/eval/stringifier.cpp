@@ -1,4 +1,5 @@
 #include "./stringifier.hpp"
+#include "../prop_str.hpp"
 #include <cassert>
 #include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
@@ -55,18 +56,23 @@ std::string Stringifier::stringify_prim(
 
 std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
-    return ""; // TODO
+    std::string str;
+    auto rval_copy = rval.copy(); // TMP
+    for (auto prop : cls->props())
+        str += " " + prop_str(_str_pool, *this, prop, rval_copy) + "; ";
+    return str;
 }
 
 std::string Stringifier::stringify_array(
     ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
     std::string str;
+    auto item_type = array_type->item_type();
     auto data = rval.data_view();
     for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
         if (idx > 0)
-            str += ",";
+            str += item_type->is_class() ? "" : ",";
         auto item_rval = data.array_item(idx).load();
-        str += stringify(array_type->item_type(), item_rval);
+        str += stringify(item_type, item_rval);
     }
     return str;
 }

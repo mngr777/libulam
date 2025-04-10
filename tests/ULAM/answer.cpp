@@ -293,9 +293,17 @@ void compare_answers(const Answer& truth, const Answer& answer) {
 
 std::ostream& operator<<(std::ostream& os, const Answer& answer) {
     os << answer.class_name() << " { ";
+    for (const auto& [_, text] : answer.type_defs())
+        os << text << " ";
     for (const auto& [_, text] : answer.props())
         os << text << " ";
     os << answer.test_fun();
     os << " }";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const AnswerMap& answers) {
+    for (const auto& [_, answer] : answers)
+        os << answer << "\n";
     return os;
 }

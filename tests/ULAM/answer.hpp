@@ -38,3 +38,4 @@ void compare_answer_maps(
 void compare_answers(const Answer& truth, const Answer& answer);
 
 std::ostream& operator<<(std::ostream& os, const Answer& answer);
+std::ostream& operator<<(std::ostream& os, const AnswerMap& answers);
