@@ -127,10 +127,10 @@ prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
     case ops::Kind::Assign: {
         errors.second = check_type_match(r_tv.type(), r_tv.value(), l_type);
     } break;
-    case ops::Kind::Equality: {
-        errors.second =
-            check_type_match(r_tv.type(), r_tv.value(), l_type->bi_type_id());
-    } break;
+    case ops::Kind::Equality://  {
+    //     errors.second =
+    //         check_type_match(r_tv.type(), r_tv.value(), l_type->bi_type_id());
+    // } break;
     case ops::Kind::Comparison:
     case ops::Kind::Numeric: {
         auto r_type = r_tv.type()->actual();
