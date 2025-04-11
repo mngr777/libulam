@@ -15,12 +15,6 @@
 
 namespace {
 
-// bool ends_with_cast(const std::string& data) {
-//     static const std::string_view Cast{"cast"};
-//     return data.size() > Cast.size() &&
-//            std::string_view{data}.substr(data.size() - Cast.size()) == Cast;
-// }
-
 std::string add_cast(std::string&& data, ulam::sema::ExprRes::flags_t flags) {
     if ((flags & ExplCast) || (flags & ImplCast) == 0)
         return data + " cast";
@@ -32,6 +26,7 @@ add_array_access(const std::string& data, const std::string& idx_data) {
     static const std::string_view Self_{"self "};
     assert(!data.empty());
 
+    // TODO: use a flag
     if (*data.rbegin() == '.') {
         // ULAM quirk:
         // `a.b[c] -> `a b c [] .`, but
@@ -123,7 +118,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
                 if (right.type() != left.type())
                     r_data = add_cast(std::move(r_data), right.flags());
 
-            } else {
+            } else if (!left.type()->is_class()) {
                 // cast to 32 or 64 common bit width
                 auto l_size = left.type()->bitsize();
                 auto r_size = right.type()->bitsize();
@@ -162,10 +157,13 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
 
     std::string data;
     if (arg.has_data()) {
-        // TODO
         data = arg.data<std::string>();
-        if (ulam::ops::is_unary_pre_op(op))
-            data = std::string{ulam::ops::str(op)} + data;
+        std::string op_str{ulam::ops::str(op)};
+        if (op == ulam::Op::UnaryMinus || op == ulam::Op::UnaryPlus) {
+            data = op_str + data;
+        } else {
+            data = data + " " + op_str;
+        }
     }
     auto res = ulam::sema::EvalExprVisitor::apply_unary_op(
         node, op, lval, arg_node, std::move(arg), type_name);
