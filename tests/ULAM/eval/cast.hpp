@@ -21,13 +21,27 @@ public:
         bool expl = false) override;
 
 protected:
+    virtual ulam::sema::ExprRes cast_class_fun(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Fun> fun,
+        ulam::sema::ExprRes&& arg,
+        bool expl) override;
+
+    virtual ulam::sema::ExprRes cast_class_fun_after(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Type> to,
+        ulam::sema::ExprRes&& arg,
+        bool expl) override;
+
     ulam::sema::ExprRes cast_prim(
         ulam::Ref<ulam::ast::Node> node,
         ulam::BuiltinTypeId bi_type_id,
-        ulam::sema::ExprRes&& arg) override;
+        ulam::sema::ExprRes&& arg,
+        bool expl) override;
 
     ulam::sema::ExprRes cast_default(
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Type> to,
-        ulam::sema::ExprRes&& arg) override;
+        ulam::sema::ExprRes&& arg,
+        bool expl) override;
 };

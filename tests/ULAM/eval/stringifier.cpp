@@ -27,12 +27,12 @@ std::string Stringifier::stringify_prim(
     }
     case ulam::UnsignedId: {
         auto uns_val = rval.get<ulam::Unsigned>();
-        return std::to_string(uns_val) + 'u';
+        return std::to_string(uns_val) + "u";
     }
     case ulam::UnaryId: {
         auto unary_type = _builtins.unary_type(type->bitsize());
         auto uns_val = unary_type->unsigned_value(rval);
-        return std::to_string(uns_val) + 'u';
+        return std::to_string(uns_val) + "u";
     }
     case ulam::BoolId: {
         auto bool_type = _builtins.bool_type(type->bitsize());

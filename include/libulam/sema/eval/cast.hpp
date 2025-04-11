@@ -38,33 +38,47 @@ protected:
         ExprRes&& arg,
         bool expl);
 
-    virtual ExprRes do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+    virtual ExprRes
+    do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+
+    virtual ExprRes do_cast(
+        Ref<ast::Node> node,
+        BuiltinTypeId bi_type_id,
+        ExprRes&& arg,
+        bool expl);
 
     virtual ExprRes
-    do_cast(Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg);
+    cast_class(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+
+    virtual ExprRes cast_class_default(
+        Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
-    cast_class(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+    cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl);
+
+    virtual ExprRes cast_class_fun_after(
+        Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
-    cast_class_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+    cast_prim(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+
+    virtual ExprRes cast_prim(
+        Ref<ast::Node> node,
+        BuiltinTypeId bi_type_id,
+        ExprRes&& arg,
+        bool expl);
 
     virtual ExprRes
-    cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg);
-
-    virtual ExprRes cast_prim(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
-    virtual ExprRes
-    cast_prim(Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg);
+    cast_array(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
-    cast_array(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
-
-    virtual ExprRes cast_atom(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
-
-    virtual ExprRes cast_ref(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+    cast_atom(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
-    cast_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+    cast_ref(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+
+    virtual ExprRes
+    cast_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     ExprRes take_ref(Ref<ast::Node> node, ExprRes&& arg);
     ExprRes deref(ExprRes&& arg);
