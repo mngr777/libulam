@@ -20,22 +20,26 @@ public:
         _eval{eval}, _diag{diag}, _scope{scope} {}
 
     virtual ExprRes
+    construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);
+
+    virtual ExprRes
     funcall(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args);
 
-    // TODO: remove
     virtual ExprRes funcall(
-        Ref<ast::Node> node, Ref<FunSet> fset, LValue self, ExprResList&& args);
-
-    // TODO: remove
-    virtual ExprRes funcall(
-        Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args);
+        Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
 
 protected:
-    virtual ExprRes do_funcall(
+    virtual ExprRes funcall_callable(
         Ref<ast::Node> node,
         Ref<Fun> fun,
         ExprRes&& callable,
         ExprResList&& args);
+
+    virtual ExprRes funcall_obj(
+        Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
+
+    virtual ExprRes do_funcall(
+        Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args);
 
     virtual std::pair<FunSet::Matches, ExprError> find_match(
         Ref<ast::Node> node,

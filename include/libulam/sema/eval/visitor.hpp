@@ -51,7 +51,7 @@ public:
     virtual Ptr<EvalCast> cast_helper(Ref<Scope> scope);
     virtual Ptr<EvalFuncall> funcall_helper(Ref<Scope> scope);
 
-    virtual ExprRes funcall(Ref<Fun> fun, LValue self, TypedValueList&& args);
+    virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
 protected:
     virtual Ref<AliasType> type_def(Ref<ast::TypeDef> node);

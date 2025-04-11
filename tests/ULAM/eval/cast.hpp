@@ -1,5 +1,6 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/typed_value.hpp>
 
@@ -18,4 +19,15 @@ public:
         ulam::BuiltinTypeId bi_type_id,
         ulam::sema::ExprRes&& arg,
         bool expl = false) override;
+
+protected:
+    ulam::sema::ExprRes cast_prim(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::BuiltinTypeId bi_type_id,
+        ulam::sema::ExprRes&& arg) override;
+
+    ulam::sema::ExprRes cast_default(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Type> to,
+        ulam::sema::ExprRes&& arg) override;
 };

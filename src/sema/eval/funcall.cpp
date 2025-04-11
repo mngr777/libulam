@@ -1,9 +1,26 @@
+#include "libulam/sema/expr_res.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/value/bound_fun_set.hpp>
 
 namespace ulam::sema {
+
+ExprRes EvalFuncall::construct(
+    Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args) {
+    auto rval = cls->construct();
+    if (cls->has_constructors()) {
+        auto [match_res, error] =
+            find_match(node, cls->constructors(), cls, args.typed_value_refs());
+        if (error != ExprError::Ok)
+            return {error};
+        auto fun = *match_res.begin();
+
+        args = cast_args(node, fun, std::move(args));
+        return do_funcall(node, fun, rval.self(), std::move(args));
+    }
+    return {cls, Value{std::move(rval)}};
+}
 
 ExprRes EvalFuncall::funcall(
     Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
@@ -14,42 +31,42 @@ ExprRes EvalFuncall::funcall(
     const auto& val = callable.value();
     assert(val.is_lvalue());
     assert(val.lvalue().is<BoundFunSet>());
-    const auto& bound_fset = val.lvalue().get<BoundFunSet>();
+    const auto& bfset = val.lvalue().get<BoundFunSet>();
 
-    // find match
-    auto fset = bound_fset.fset();
-    auto dyn_cls = bound_fset.self().type()->as_class();
+    auto fset = bfset.fset();
+    auto dyn_cls = bfset.self().type()->as_class();
     auto [match_res, error] =
         find_match(node, fset, dyn_cls, args.typed_value_refs());
     if (error != ExprError::Ok)
         return {error};
     auto fun = *match_res.begin();
 
-    // cast args
     args = cast_args(node, fun, std::move(args));
-
-    return do_funcall(node, fun, std::move(callable), std::move(args));
+    return funcall_callable(node, fun, std::move(callable), std::move(args));
 }
 
 ExprRes EvalFuncall::funcall(
-    Ref<ast::Node> node, Ref<FunSet> fset, LValue self, ExprResList&& args) {
-    assert(args);
-
-    auto [match_res, error] =
-        find_match(node, fset, self.dyn_cls(), args.typed_value_refs());
-    if (error != ExprError::Ok)
-        return {error};
-    auto fun = *match_res.begin();
+    Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     args = cast_args(node, fun, std::move(args));
-    // TMP
-    TypedValueList call_args;
-    for (auto& arg : args)
-        call_args.push_back(arg.move_typed_value());
-    return funcall(node, fun, self, std::move(call_args));
+    return funcall_obj(node, fun, std::move(obj), std::move(args));
 }
 
-ExprRes EvalFuncall::funcall(
-    Ref<ast::Node> node, Ref<Fun> fun, LValue self, TypedValueList&& args) {
+ExprRes EvalFuncall::funcall_callable(
+    Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& callable, ExprResList&& args) {
+    assert(callable.type()->is(FunId));
+    auto val = callable.move_value();
+    return do_funcall(node, fun, val.self(), std::move(args));
+}
+
+ExprRes EvalFuncall::funcall_obj(
+    Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
+    assert(obj.type()->is_class());
+    auto val = obj.move_value();
+    return do_funcall(node, fun, val.self(), std::move(args));
+}
+
+ExprRes EvalFuncall::do_funcall(
+    Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
     if (fun->is_native()) {
         // can't eval, return empty value
         _diag.notice(node, "cannot evaluate native function");
@@ -66,16 +83,6 @@ ExprRes EvalFuncall::funcall(
     }
     assert(fun->node()->has_body());
     return _eval.funcall(fun, self.self(), std::move(args));
-}
-
-ExprRes EvalFuncall::do_funcall(
-    Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& callable, ExprResList&& args) {
-    // TMP
-    TypedValueList call_args;
-    for (auto& arg : args)
-        call_args.push_back(arg.move_typed_value());
-    auto val = callable.move_value();
-    return funcall(node, fun, val.self(), std::move(call_args));
 }
 
 std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(

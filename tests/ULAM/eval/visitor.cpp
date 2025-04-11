@@ -61,7 +61,7 @@ EvalVisitor::cast_helper(ulam::Ref<ulam::Scope> scope) {
 
 ulam::Ptr<ulam::sema::EvalFuncall>
 EvalVisitor::funcall_helper(ulam::Ref<ulam::Scope> scope) {
-    return ulam::make<EvalFuncall>(*this, diag(), scope);
+    return ulam::make<EvalFuncall>(*this, diag(), _program->str_pool(), scope);
 }
 
 ulam::Ref<ulam::AliasType>

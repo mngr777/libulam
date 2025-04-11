@@ -150,7 +150,7 @@ ExprRes
 EvalCast::cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg) {
     assert(arg.type()->is_class());
     auto funcall = _eval.funcall_helper(_scope);
-    ExprRes res = funcall->funcall(node, fun, arg.move_value().self(), {});
+    ExprRes res = funcall->funcall(node, fun, std::move(arg), {});
     if (!res)
         _diag.error(node, "conversion failed");
     return res;
@@ -158,7 +158,7 @@ EvalCast::cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg) {
 
 ExprRes EvalCast::cast_prim(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
     assert(arg.type()->is_prim());
-    return {to, arg.type()->cast_to(to, arg.move_value())};
+    return cast_default(node, to, std::move(arg));
 }
 
 ExprRes EvalCast::cast_prim(
@@ -184,7 +184,7 @@ ExprRes EvalCast::cast_ref(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
 
 ExprRes
 EvalCast::cast_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
-    return cast_default(node, to, std::move(arg));
+    return {to, arg.type()->cast_to(to, arg.move_value())};
 }
 
 ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {

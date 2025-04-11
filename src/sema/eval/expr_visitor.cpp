@@ -630,42 +630,40 @@ ExprRes EvalExprVisitor::apply_binary_op(
     ExprRes&& left,
     Ref<ast::Expr> r_node,
     ExprRes&& right) {
-    auto l_tv = left.move_typed_value();
-    auto r_tv = right.move_typed_value();
-    if (l_tv.type()->actual()->is_prim()) {
+
+    auto l_type = left.type()->actual();
+    auto r_type = right.type()->actual();
+    if (left.type()->actual()->is_prim()) {
         if (op != Op::Assign) {
             // primitive binary op
-            assert(r_tv.type()->actual()->is_prim());
-            auto l_type = l_tv.type()->actual()->as_prim();
-            auto r_type = r_tv.type()->actual()->as_prim();
-            auto l_rval = l_tv.move_value().move_rvalue();
-            auto r_rval = r_tv.move_value().move_rvalue();
-            r_tv = l_type->binary_op(
-                op, std::move(l_rval), r_type, std::move(r_rval));
+            assert(r_type->is_prim());
+            auto l_rval = left.move_value().move_rvalue();
+            auto r_rval = right.move_value().move_rvalue();
+            right = {l_type->as_prim()->binary_op(
+                op, std::move(l_rval), r_type->as_prim(), std::move(r_rval))};
         }
-    } else if (l_tv.type()->actual()->is_class()) {
+    } else if (left.type()->actual()->is_class()) {
         // class op
-        auto cls = l_tv.type()->actual()->as_class();
+        auto cls = left.type()->actual()->as_class();
         if (op != Op::Assign || cls->has_op(Op::Assign)) {
-            auto cls = l_tv.type()->actual()->as_class();
+            auto cls = left.type()->actual()->as_class();
             auto fset = cls->op(op);
             assert(fset);
-            auto obj = l_tv.move_value();
+            left = bind(node, fset, std::move(left));
             ExprResList args;
             args.push_back(std::move(right));
             auto funcall = _eval.funcall_helper(_scope);
-            return funcall->funcall(node, fset, obj.self(), std::move(args));
+            return funcall->funcall(node, std::move(left), std::move(args));
         }
     }
 
     // handle assignment
     if (ops::is_assign(op)) {
-        if (lval.empty() || r_tv.value().empty())
-            return {std::move(l_tv)};
-        return assign(
-            node, TypedValue{l_tv.type(), Value{lval}}, std::move(r_tv));
+        if (lval.empty() || right.value().empty())
+            return std::move(left);
+        return assign(node, {l_type, Value{lval}}, right.move_typed_value());
     }
-    return {std::move(r_tv)};
+    return std::move(right);
 }
 
 ExprRes EvalExprVisitor::unary_op(
@@ -779,11 +777,8 @@ ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
             auto args = eval_args(node->args());
             if (!args)
                 return {args.error()};
-            auto rval = cls->construct();
             auto funcall = _eval.funcall_helper(_scope);
-            funcall->funcall(
-                node, cls->constructors(), rval.self(), std::move(args));
-            return {type, Value{std::move(rval)}};
+            return funcall->construct(node, cls, std::move(args));
         }
     }
 
@@ -795,40 +790,29 @@ ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
     return tv;
 }
 
-ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, ExprRes res) {
-    auto type = res.type();
-    auto val = res.move_value();
-
+ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, ExprRes arg) {
     // obj.Base.<type_op>?
     if (node->has_base()) {
-        if (!type->is_class()) {
-            diag().error(node->base(), "not an object");
-            return {ExprError::NotObject};
-        }
-        auto cls = class_base(node, type->as_class(), node->base());
-        if (!cls) {
-            auto error = node->base()->is_super() ? ExprError::NoSuper
-                                                  : ExprError::BaseNotFound;
-            return {error};
-        }
-        val = Value{val.as(cls)};
+        arg = as_base(node, node->base(), std::move(arg));
+        if (!arg)
+            return arg;
     }
 
     // class type op may require an evaluator
-    if (type->is_class()) {
+    if (arg.type()->is_class()) {
         // custom lengthof?
-        auto cls = type->as_class();
+        auto cls = arg.type()->as_class();
         if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
-            if (!val.has_rvalue())
+            if (!arg.value().has_rvalue())
                 return {builtins().unsigned_type(), Value{RValue{}}};
+            arg = bind(node, cls->fun("alengthof"), std::move(arg));
             auto funcall = _eval.funcall_helper(_scope);
-            ExprResList args;
-            return funcall->funcall(
-                node, cls->fun("alengthof"), val.self(), std::move(args));
+            return funcall->funcall(node, std::move(arg), {});
         }
     }
 
-    auto tv = type->actual()->type_op(node->op(), val);
+    auto val = arg.move_value();
+    auto tv = arg.type()->actual()->type_op(node->op(), val);
     if (!tv)
         return {ExprError::InvalidTypeOperator};
     return tv;
@@ -878,18 +862,20 @@ ExprRes EvalExprVisitor::array_access_class(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     assert(obj.type()->is_class());
 
+    // op fset
     auto cls = obj.type()->actual()->as_class();
     auto fset = cls->op(Op::ArrayAccess);
     if (!fset)
         return {ExprError::NoOperator};
     bool is_tmp = obj.value().is_tmp();
+
+    // callable, args
+    auto callable = bind(node, fset, std::move(obj));
     ExprResList args;
     args.push_back(std::move(idx));
 
-    // call operator
     auto funcall = _eval.funcall_helper(_scope);
-    ExprRes res =
-        funcall->funcall(node, fset, obj.move_value().self(), std::move(args));
+    ExprRes res = funcall->funcall(node, std::move(callable), std::move(args));
     if (is_tmp && res.value().is_lvalue()) {
         LValue lval = res.move_value().lvalue();
         lval.set_is_xvalue(true);
@@ -934,7 +920,8 @@ ExprRes EvalExprVisitor::array_access_array(
     return {item_type, array_val.array_access(int_idx)};
 }
 
-ExprRes EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
+ExprRes
+EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
     auto cls = obj.type()->as_class();
     auto fset = cls->op(node->op());
     if (!fset) {
