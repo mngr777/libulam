@@ -38,11 +38,38 @@ protected:
         ExprRes&& arg,
         bool expl);
 
-    virtual ExprRes
-    do_cast(Ref<ast::Node> node, Ref<Type> type, TypedValue&& tv);
+    virtual ExprRes do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
 
     virtual ExprRes
-    do_cast(Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv);
+    do_cast(Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg);
+
+    virtual ExprRes
+    cast_class(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+
+    virtual ExprRes
+    cast_class_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+
+    virtual ExprRes
+    cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg);
+
+    virtual ExprRes cast_prim(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+    virtual ExprRes
+    cast_prim(Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg);
+
+    virtual ExprRes
+    cast_array(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+
+    virtual ExprRes cast_atom(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+
+    virtual ExprRes cast_ref(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+
+    virtual ExprRes
+    cast_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg);
+
+    ExprRes take_ref(Ref<ast::Node> node, ExprRes&& arg);
+    ExprRes deref(ExprRes&& arg);
+
+    ExprRes change_type(Ref<Type> type, ExprRes&& arg);
 
     EvalVisitor& _eval;
     Diag& _diag;

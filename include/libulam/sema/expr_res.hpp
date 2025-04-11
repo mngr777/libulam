@@ -94,6 +94,9 @@ public:
     bool has_flag(flags_t flag) const { return _flags & flag; }
     void set_flag(flags_t flag) { _flags |= flag; }
 
+    flags_t flags() const { return _flags; }
+    void set_flags(flags_t flags) { _flags = flags; };
+
     bool has_data() const { return _data.has_value(); }
 
     template <typename T> T data() const {
@@ -108,6 +111,12 @@ public:
     }
 
     template <typename T> void set_data(T data) { _data = std::move(data); }
+
+    std::any move_data() {
+        std::any data;
+        std::swap(_data, data);
+        return data;
+    }
 
     void uns_data() { _data.reset(); }
 

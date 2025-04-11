@@ -20,54 +20,38 @@ ExprRes EvalCast::cast(
 
 EvalCast::CastRes EvalCast::maybe_cast(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    auto tv = arg.move_typed_value();
-    auto from = tv.type();
-    auto val = tv.move_value();
-
     if (to->is_ref()) {
         // taking or casting a reference
-        if (val.is_rvalue()) {
-            _diag.error(node, "cannot take a reference of rvalue");
-            return {ExprRes{ExprError::InvalidCast}, InvalidCast};
-        }
-        if (val.lvalue().is_xvalue()) {
-            _diag.error(node, "cannot take a reference to xvalue");
-            return {ExprRes{ExprError::InvalidCast}, InvalidCast};
-        }
-        if (from->deref()->is_class())
-            from = val.dyn_obj_type()->ref_type();
-        from = from->ref_type();
+        arg = take_ref(node, std::move(arg));
 
-    } else if (from->is_ref() || val.is_lvalue()) {
+    } else if (arg.value().is_lvalue()) {
         // copy value from reference
-        assert(val.is_lvalue());
-        val = val.deref();
-        from = from->deref();
-        if (from->is_class())
-            from = val.dyn_obj_type();
+        arg = deref(std::move(arg));
     }
+    if (!arg)
+        return {std::move(arg), InvalidCast};
 
-    if (to->is_same(from))
-        return {ExprRes{to, std::move(val)}, NoCast};
+    if (to->is_same(arg.type()))
+        return {change_type(to, std::move(arg)), NoCast};
 
     // implicit cast to base class
     if (!expl && to->is_ref() && to->actual()->is_class() &&
-        from->actual()->is_class()) {
+        arg.type()->actual()->is_class()) {
         auto to_cls = to->actual()->as_class();
-        auto from_cls = from->actual()->as_class();
+        auto from_cls = arg.type()->actual()->as_class();
         if (to_cls->is_base_of(from_cls))
-            return {ExprRes{to, std::move(val)}, NoCast};
+            return {change_type(to, std::move(arg)), NoCast};
     }
 
-    if (!expl && from->is_impl_castable_to(to, val)) {
-        auto res = do_cast(node, to, {from, std::move(val)});
+    if (!expl && arg.type()->is_impl_castable_to(to, arg.value())) {
+        auto res = do_cast(node, to, std::move(arg));
         auto status = res ? CastOk : CastError;
         return {std::move(res), status};
     }
 
-    if (from->is_expl_castable_to(to)) {
+    if (arg.type()->is_expl_castable_to(to)) {
         if (expl) {
-            auto res = do_cast(node, to, {from, std::move(val)});
+            auto res = do_cast(node, to, std::move(arg));
             auto status = res ? CastOk : CastError;
             return {std::move(res), status};
         }
@@ -77,103 +61,177 @@ EvalCast::CastRes EvalCast::maybe_cast(
     return {ExprRes{ExprError::InvalidCast}, InvalidCast};
 }
 
-ExprRes EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, TypedValue&& tv) {
-    auto from = tv.type();
-    auto val = tv.move_value();
-
-    if (to->is_ref()) {
-        // taking or casting a reference
-        assert(!val.is_tmp());
-        from = from->ref_type();
-
-    } else if (from->is_ref()) {
-        // copy value from reference
-        assert(val.is_lvalue());
-        from = from->deref();
-        val = val.deref();
-    }
-
+ExprRes EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    auto from = arg.type();
+    assert(!to->is_ref() || (from->is_ref() && !arg.value().is_tmp()));
+    assert(to->is_ref() || !from->is_ref());
     assert(!to->is_same(from));
     assert(from->is_expl_castable_to(to));
 
     if (from->is_prim()) {
-        return {to, from->as_prim()->cast_to(to, std::move(val))};
+        return cast_prim(node, to, std::move(arg));
 
     } else if (from->is_class()) {
-        auto cls = from->as_class();
-        auto convs = cls->convs(to, true);
-        if (convs.size() == 0) {
-            assert(cls->is_castable_to(to, true));
-            return {to, cls->cast_to(to, std::move(val))};
+        return cast_class(node, to, std::move(arg));
 
-        } else {
-            auto funcall = _eval.funcall_helper(_scope);
-            ExprRes res =
-                funcall->funcall(node, *convs.begin(), val.self(), {});
-            if (!res) {
-                _diag.error(node, "conversion failed");
-                return res;
-            }
-            if (!res.type()->is_same(to)) {
-                assert(res.type()->is_expl_castable_to(to));
-                return do_cast(node, to, res.move_typed_value());
-            }
-            return res;
-        }
     } else if (from->is_array()) {
         assert(to->is_array());
-        return {to, from->cast_to(to, std::move(val))};
+        return cast_array(node, to, std::move(arg));
 
     } else if (from->is(AtomId)) {
-        return {to, from->cast_to(to, std::move(val))};
+        return cast_atom(node, to, std::move(arg));
 
     } else if (from->is_ref()) {
         assert(to->is_ref());
-        return {to, from->cast_to(to, std::move(val))};
+        return cast_ref(node, to, std::move(arg));
     }
-
     assert(false);
 }
 
 EvalCast::CastRes EvalCast::maybe_cast(
     Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
-    auto tv = arg.move_typed_value();
-    if (tv.type()->actual()->is(bi_type_id))
-        return {ExprRes{std::move(tv)}, NoCast};
+    if (arg.type()->actual()->is(bi_type_id))
+        return {std::move(arg), NoCast};
 
-    auto res = do_cast(node, bi_type_id, std::move(tv));
+    auto res = do_cast(node, bi_type_id, std::move(arg));
     auto status = res ? CastOk : CastError;
     return {std::move(res), status};
 }
 
 ExprRes EvalCast::do_cast(
-    Ref<ast::Node> node, BuiltinTypeId bi_type_id, TypedValue&& tv) {
-    auto type = tv.type()->actual();
+    Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg) {
+    if (arg.value().is_lvalue())
+        arg = deref(std::move(arg));
 
-    if (type->is_class()) {
+    if (arg.type()->is_prim()) {
+        return cast_prim(node, bi_type_id, std::move(arg));
+
+    } else if (arg.type()->is_class()) {
         // class conversion
-        auto cls = type->as_class();
+        auto cls = arg.type()->as_class();
         auto convs = cls->convs(bi_type_id, true);
         assert(convs.size() == 1);
-        auto self = tv.move_value().self();
-        auto funcall = _eval.funcall_helper(_scope);
-        ExprRes res = funcall->funcall(node, *convs.begin(), self, {});
-        if (!res) {
-            _diag.error(node, "conversion failed");
-            return res;
-        }
-        assert(res.type()->is_prim());
-        if (!res.type()->is(bi_type_id))
-            res = do_cast(node, bi_type_id, res.move_typed_value());
-        return res;
-    }
 
-    // primitive to builtin
-    auto val = tv.move_value().deref();
-    if (type->is_prim()) {
-        return {type->as_prim()->cast_to(bi_type_id, std::move(val))};
+        arg = cast_class_fun(node, *convs.begin(), std::move(arg));
+
+        assert(arg.type()->is_prim());
+        if (!arg.type()->is(bi_type_id))
+            arg = do_cast(node, bi_type_id, std::move(arg));
+        return std::move(arg);
     }
     assert(false);
+}
+
+ExprRes EvalCast::cast_class(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    assert(arg.type()->is_class());
+    auto cls = arg.type()->as_class();
+    auto convs = cls->convs(to, true);
+    if (convs.size() == 0) {
+        assert(cls->is_castable_to(to, true));
+        return cast_class_default(node, to, std::move(arg));
+
+    } else {
+        arg = cast_class_fun(node, *convs.begin(), std::move(arg));
+        if (!arg.type()->is_same(to)) {
+            assert(arg.type()->is_expl_castable_to(to));
+            return do_cast(node, to, std::move(arg));
+        }
+        return std::move(arg);
+    }
+}
+
+ExprRes
+EvalCast::cast_class_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    assert(arg.type()->is_class());
+    return cast_default(node, to, std::move(arg));
+}
+
+ExprRes
+EvalCast::cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg) {
+    assert(arg.type()->is_class());
+    auto funcall = _eval.funcall_helper(_scope);
+    ExprRes res = funcall->funcall(node, fun, arg.move_value().self(), {});
+    if (!res)
+        _diag.error(node, "conversion failed");
+    return res;
+}
+
+ExprRes EvalCast::cast_prim(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    assert(arg.type()->is_prim());
+    return {to, arg.type()->cast_to(to, arg.move_value())};
+}
+
+ExprRes EvalCast::cast_prim(
+    Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg) {
+    assert(arg.type()->is_prim());
+    return {arg.type()->as_prim()->cast_to(bi_type_id, arg.move_value())};
+}
+
+ExprRes EvalCast::cast_array(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    assert(arg.type()->is_array());
+    return cast_default(node, to, std::move(arg));
+}
+
+ExprRes EvalCast::cast_atom(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    assert(arg.type()->is(AtomId));
+    return cast_default(node, to, std::move(arg));
+}
+
+ExprRes EvalCast::cast_ref(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    assert(arg.type()->is_ref());
+    return cast_default(node, to, std::move(arg));
+}
+
+ExprRes
+EvalCast::cast_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg) {
+    return cast_default(node, to, std::move(arg));
+}
+
+ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
+    auto type = arg.type();
+    const auto& val = arg.value();
+
+    if (val.is_rvalue()) {
+        _diag.error(node, "cannot take a reference of rvalue");
+        return {ExprError::InvalidCast};
+    }
+    if (val.lvalue().is_xvalue()) {
+        _diag.error(node, "cannot take a reference to xvalue");
+        return {ExprError::InvalidCast};
+    }
+    if (type->deref()->is_class() && val.has_rvalue())
+        type = val.dyn_obj_type()->ref_type();
+    type = type->ref_type();
+
+    return change_type(type, std::move(arg));
+}
+
+ExprRes EvalCast::deref(ExprRes&& arg) {
+    assert(arg.value().is_lvalue());
+    auto type = arg.type();
+    auto val = arg.move_value();
+    auto data = arg.move_data();
+    auto flags = arg.flags();
+
+    val = val.deref();
+    type = type->deref();
+    if (arg.type()->is_class() && arg.value().has_rvalue())
+        type = val.dyn_obj_type();
+
+    ExprRes res{type, std::move(val)};
+    res.set_data(std::move(data));
+    res.set_flags(flags);
+    return res;
+}
+
+ExprRes EvalCast::change_type(Ref<Type> type, ExprRes&& arg) {
+    auto val = arg.move_value();
+    auto data = arg.move_data();
+    auto flags = arg.flags();
+    ExprRes res{type, std::move(val)};
+    res.set_data(std::move(data));
+    res.set_flags(flags);
+    return res;
 }
 
 } // namespace ulam::sema
