@@ -95,13 +95,6 @@ EvalInit::eval_map(Ref<Type> type, Ref<ast::InitMap> map, unsigned depth) {
 
 EvalInit::EvalRes EvalInit::eval_class_list(
     Ref<Class> cls, Ref<ast::InitList> list, unsigned depth) {
-    // construct
-    auto rval = cls->construct();
-    if (list->size() == 0) {
-        rval.set_is_consteval(true);
-        return {Value{std::move(rval)}, true};
-    }
-
     // eval args
     auto ev = _eval.expr_visitor(_scope);
     ExprResList args;
@@ -121,11 +114,10 @@ EvalInit::EvalRes EvalInit::eval_class_list(
 
     // call constructor
     auto funcall = _eval.funcall_helper(_scope);
-    auto funcall_res = funcall->funcall(
-        list, cls->constructors(), rval.self(), std::move(args));
-    if (!funcall_res)
+    auto obj = funcall->construct(list, cls, std::move(args));
+    if (!obj)
         return {Value{RValue{}}, false};
-    return {Value{std::move(rval)}, true};
+    return {obj.move_value(), true};
 }
 
 EvalInit::EvalRes EvalInit::eval_array_list(

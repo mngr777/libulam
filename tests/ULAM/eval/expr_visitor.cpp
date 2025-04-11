@@ -339,11 +339,29 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_fset(
         node, std::move(obj), fset);
     if (!res)
         return res;
-    if (!data.empty()) {
-        assert(fset->has_name_id());
-        data +=
-            std::string{" {args}"} + std::string{str(fset->name_id())} + " .";
-        res.set_data(data);
-    }
+    if (!data.empty())
+        res.set_data(callable_data(data, fset));
     return res;
+}
+
+EvalExprVisitor::ExprRes EvalExprVisitor::bind(
+    ulam::Ref<ulam::ast::Expr> node,
+    ulam::Ref<ulam::FunSet> fset,
+    ulam::sema::ExprRes&& obj) {
+    assert(obj);
+
+    auto data = obj.data<std::string>("");
+    auto res = bind(node, fset, std::move(obj));
+    if (!res)
+        return res;
+    if (!data.empty() && fset->has_name_id())
+        res.set_data(callable_data(data, fset));
+    return res;
+}
+
+std::string EvalExprVisitor::callable_data(
+    const std::string& data, ulam::Ref<ulam::FunSet> fset) {
+    assert(!data.empty() && fset->has_name_id());
+    return data + std::string{" {args}" + std::string{str(fset->name_id())}} +
+           " .";
 }

@@ -92,5 +92,13 @@ protected:
         ExprRes&& obj,
         ulam::Ref<ulam::FunSet> fset) override;
 
+    ExprRes bind(
+        ulam::Ref<ulam::ast::Expr> node,
+        ulam::Ref<ulam::FunSet> fset,
+        ulam::sema::ExprRes&& obj) override;
+
+    std::string
+    callable_data(const std::string& data, ulam::Ref<ulam::FunSet> fset);
+
     Stringifier& _stringifier;
 };

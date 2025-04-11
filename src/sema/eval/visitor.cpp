@@ -339,7 +339,7 @@ Ptr<EvalFuncall> EvalVisitor::funcall_helper(Ref<Scope> scope) {
     return make<EvalFuncall>(*this, diag(), scope);
 }
 
-ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
+ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
     debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
     assert(fun->params().size() == args.size());
 
@@ -362,9 +362,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, TypedValueList&& args) {
     std::list<Ptr<Var>> tmp_vars{};
     for (const auto& param : fun->params()) {
         assert(!args.empty());
-
-        auto arg = std::move(args.front());
-        args.pop_front();
+        auto arg = args.pop_front();
 
         // binding rvalue or xvalue lvalue to const ref via tmp variable
         if (param->type()->is_ref() && arg.value().is_tmp()) {
