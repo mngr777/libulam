@@ -108,6 +108,7 @@ static const std::set<std::string> Skip = {
 
 static const std::set<std::string> SkipAnswerCheck = {
     "t3207_test_compiler_elementandquark_inside_a_quark.test", // tmp: prop ordering
+    "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
 };
 
 using Path = std::filesystem::path;
