@@ -11,10 +11,11 @@
 
 class Stringifier {
 public:
-    Stringifier(ulam::Ref<ulam::Program> program):
+    explicit Stringifier(ulam::Ref<ulam::Program> program, bool is_main = true):
         _builtins{program->builtins()},
         _str_pool{program->str_pool()},
-        _text_pool{program->text_pool()} {}
+        _text_pool{program->text_pool()},
+        _is_main{is_main} {}
 
     std::string stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval);
 
@@ -31,4 +32,5 @@ private:
     ulam::Builtins& _builtins;
     ulam::UniqStrPool& _str_pool;
     ulam::UniqStrPool& _text_pool;
+    bool _is_main;
 };

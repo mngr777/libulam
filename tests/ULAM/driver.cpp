@@ -107,13 +107,6 @@ static const std::set<std::string> Skip = {
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
-    // "t3200_test_compiler_elementandquark_twoquarkscasttoint_compilable.test", // 6 cast in `s.assert(6 == bar1)`
-    // "t3201_test_compiler_elementandquark_twoquarkscasttoint_witharray.test", // TODO: is 7 or 4 correct?
-    // "t3202_test_compiler_elementandquark_ifelsefunccall_compilable.test", // -"-
-    // "t3203_test_compiler_elementandquark_funccallargexpression.test", // -"-
-    // "t3207_test_compiler_elementandquark_inside_a_quark.test", // TODO: parse class props in answers
-    // "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
-    // "t3209_test_compiler_elementandquark_quarkunion.test", // -"-
 };
 
 using Path = std::filesystem::path;
@@ -123,7 +116,7 @@ static void exit_usage(std::string name) {
     std::exit(-1);
 }
 
-static bool run(Path stdlib_dir, const Path& path) {
+static bool run(Path stdlib_dir, const Path& path, bool single) {
     try {
         TestCase::run_flags_t flags = TestCase::NoRunFlags;
         if (SkipAnswerCheck.count(path.filename()) > 0)
@@ -137,13 +130,13 @@ static bool run(Path stdlib_dir, const Path& path) {
     }
 }
 
-static bool run(Path stdlib_dir, unsigned n, std::vector<Path> test_paths) {
+static bool run(Path stdlib_dir, unsigned n, std::vector<Path> test_paths, bool single) {
     assert(n > 0);
     auto& path = test_paths[n - 1];
     std::cout << "# " << std::dec << n << " " << path.filename() << "\n";
     bool ok = true;
     try {
-        ok = run(stdlib_dir, path);
+        ok = run(stdlib_dir, path, single);
     } catch (std::exception& exc) {
         std::cout << "exception thrown\n";
         ok = false;
@@ -193,7 +186,7 @@ int main(int argc, char** argv) {
 
     if (case_num != 0) {
         if (case_num <= test_paths.size()) {
-            run(stdlib_dir, case_num, test_paths);
+            run(stdlib_dir, case_num, test_paths, true);
         } else {
             std::cout << "case not found\n";
         }
@@ -203,7 +196,7 @@ int main(int argc, char** argv) {
             return path.filename().string().substr(0, test_name.size()) == test_name;
         });
         if (it != test_paths.end()) {
-            run(stdlib_dir, std::distance(test_paths.begin(), it) + 1, test_paths);
+            run(stdlib_dir, std::distance(test_paths.begin(), it) + 1, test_paths, true);
         } else {
             std::cout << "test not found\n";
         }
@@ -212,7 +205,7 @@ int main(int argc, char** argv) {
         for (unsigned n = 1; n <= test_paths.size(); ++n) {
             if (Skip.count(test_paths[n - 1].filename()) > 0)
                 continue;
-            if (!run(stdlib_dir, n, test_paths))
+            if (!run(stdlib_dir, n, test_paths, false))
                 break;
         }
     }

@@ -99,7 +99,7 @@ void Compiler::compile(std::ostream& out) {
             // NOTE: intentional double space after `{'
             auto test_postfix =
                 has_test ? "Int test() {  " + eval.data() + " }" : "<NOMAIN>";
-            write_obj(out, std::move(obj), test_postfix);
+            write_obj(out, std::move(obj), test_postfix, has_test);
             out << "\n";
 
         } catch (ulam::sema::EvalExceptError& e) {
@@ -112,14 +112,15 @@ void Compiler::compile(std::ostream& out) {
 void Compiler::write_obj(
     std::ostream& out,
     ulam::sema::ExprRes&& obj,
-    const std::string& test_postfix) {
+    const std::string& test_postfix,
+    bool is_main) {
     assert(obj.type()->is_class());
     auto cls = obj.type()->as_class();
     auto val = obj.move_value();
 
     out << class_name(cls) << " { ";
     write_class_type_defs(out, cls);
-    write_class_props(out, cls, val);
+    write_class_props(out, cls, val, is_main);
     out << test_postfix << " }";
 }
 
@@ -137,17 +138,23 @@ void Compiler::write_class_type_def(
 }
 
 void Compiler::write_class_props(
-    std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj) {
+    std::ostream& out,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Value& obj,
+    bool is_main) {
     for (auto prop : cls->props())
-        write_class_prop(out, prop, obj);
+        write_class_prop(out, prop, obj, is_main);
 }
 
 void Compiler::write_class_prop(
-    std::ostream& out, ulam::Ref<ulam::Prop> prop, ulam::Value& obj) {
+    std::ostream& out,
+    ulam::Ref<ulam::Prop> prop,
+    ulam::Value& obj,
+    bool is_main) {
     assert(_ast->program());
     auto program = _ast->program();
     auto& str_pool = program->str_pool();
-    Stringifier stringifier{program};
+    Stringifier stringifier{program, is_main};
     auto rval_copy = obj.copy_rvalue(); // TMP
     out << prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
 }

@@ -133,11 +133,25 @@ TypedValue BitsType::binary_op(
         bool val = (is_equal == (op == Op::Equal));
         return {boolean, Value{boolean->construct(val)}};
     }
-    case Op::AssignShiftLeft:
-    case Op::ShiftLeft: {
+    case Op::AssignShiftLeft: {
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() << shift};
         return {this, Value{RValue{std::move(bits)}}};
+    }
+    case Op::ShiftLeft: {
+        Unsigned shift = r_rval.get<Unsigned>();
+        if (shift == 0)
+            return {this, Value{std::move(l_rval)}};
+        bitsize_t max_size = 32;
+        if (bitsize() > max_size)
+            max_size = (bitsize() > 64) ? MaxSize : 64;
+        bitsize_t size = std::min<bitsize_t>(bitsize() + shift, max_size);
+        auto type = builtins().bits_type(size);
+        auto rval = type->construct();
+        auto& bits = rval.get<Bits>();
+        bits |= l_rval.get<Bits>();
+        bits <<= shift;
+        return {type, Value{std::move(rval)}};
     }
     case Op::AssignShiftRight:
     case Op::ShiftRight: {

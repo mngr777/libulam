@@ -200,17 +200,18 @@ Answer parse_answer(const std::string_view text) {
                     ++start;
                 while (end > start && text[end] == ' ')
                     --end;
-                if (end != start) {
-                    prop_text += "(" + std::string{text.substr(start, end + 1 - start)} + ");";
+                std::string value_str;
+                if (end >= start) {
+                    value_str = "(" + std::string{text.substr(start, end + 1 - start)} + ");";
                 } else {
-                    prop_text += "();";
+                    value_str += "();";
                 }
+                prop_text += value_str;
             }
 
             // ;
             skip_spaces();
             skip(";");
-
 
             answer.add_prop(std::move(name), std::move(prop_text));
         }
