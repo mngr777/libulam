@@ -47,7 +47,11 @@ LValue Var::lvalue() {
     return lval;
 }
 
-RValue Var::rvalue() const { return _value.copy_rvalue(); }
+RValue Var::rvalue() const {
+    auto rval = _value.copy_rvalue();
+    rval.set_is_consteval(is_consteval());
+    return rval;
+}
 
 Value Var::move_value() {
     auto val = _value.is_lvalue() ? Value{LValue{}} : Value{RValue{}};

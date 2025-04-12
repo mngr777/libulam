@@ -158,8 +158,16 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     }
     auto res = ulam::sema::EvalExprVisitor::apply_binary_op(
         node, op, lval, l_node, std::move(left), r_node, std::move(right));
-    if (res && !data.empty())
-        res.set_data(data);
+    if (res && !data.empty()) {
+        const auto& val = res.value();
+        if (/* !ulam::ops::is_assign(op) && */ val.is_consteval()) {
+            val.with_rvalue([&](const ulam::RValue& rval) {
+                res.set_data(_stringifier.stringify(res.type(), rval));
+            });
+        } else {
+            res.set_data(data);
+        }
+    }
     return res;
 }
 

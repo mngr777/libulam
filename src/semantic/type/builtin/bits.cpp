@@ -98,6 +98,8 @@ TypedValue BitsType::binary_op(
     assert(r_type->is(BitsId) || r_type->is(UnsignedId));
     assert(l_rval.empty() || l_rval.is<Bits>());
     bool is_unknown = l_rval.empty() || r_rval.empty();
+    bool is_consteval = !ops::is_assign(op) && !is_unknown &&
+                        l_rval.is_consteval() && r_rval.is_consteval();
 
     // &, |, ^
     using BinOp = std::function<Bits(const BitsView, const BitsView)>;
@@ -114,7 +116,7 @@ TypedValue BitsType::binary_op(
                           ? r_bits.view_right(bitsize())
                           : r_bits.view();
         Bits bits{op(l_view, r_view)};
-        return {type, Value{RValue{std::move(bits)}}};
+        return {type, Value{RValue{std::move(bits), is_consteval}}};
     };
 
     auto bw_and = [](auto v1, auto v2) { return v1 & v2; };
@@ -136,7 +138,7 @@ TypedValue BitsType::binary_op(
     case Op::AssignShiftLeft: {
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() << shift};
-        return {this, Value{RValue{std::move(bits)}}};
+        return {this, Value{RValue{std::move(bits), is_consteval}}};
     }
     case Op::ShiftLeft: {
         Unsigned shift = r_rval.get<Unsigned>();
@@ -157,7 +159,7 @@ TypedValue BitsType::binary_op(
     case Op::ShiftRight: {
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() >> shift};
-        return {this, Value{RValue{std::move(bits)}}};
+        return {this, Value{RValue{std::move(bits), is_consteval}}};
     }
     case Op::AssignBwAnd:
         return binop(bw_and, true);
