@@ -100,49 +100,51 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
 
     std::string data;
     if (left.has_data() && right.has_data()) {
-        auto l_type = left.type();
-        auto r_type = right.type();
+        auto l_type = left.type()->actual();
+        auto r_type = right.type()->actual();
         auto l_data = left.data<std::string>();
         auto r_data = right.data<std::string>();
+        auto l_flags = left.flags();
+        auto r_flags = right.flags();
 
         switch (ulam::ops::kind(op)) {
         case ulam::ops::Kind::Assign:
             if (r_type != l_type)
-                r_data = add_cast(std::move(r_data), right.flags());
+                r_data = add_cast(std::move(r_data), r_flags);
             break;
         case ulam::ops::Kind::Equality:
         case ulam::ops::Kind::Comparison:
             // cast right arg to exact type for comparison
-            if (right.type() != left.type()) {
+            if (r_type != l_type) {
                 if (l_type->is_prim() &&
                     ulam::has_bitsize(l_type->bi_type_id())) {
                     assert(r_type->is(l_type->bi_type_id()));
                     if (l_type->bitsize() < r_type->bitsize()) {
-                        l_data = add_cast(std::move(l_data), left.flags());
+                        l_data = add_cast(std::move(l_data), l_flags);
                     } else {
-                        r_data = add_cast(std::move(r_data), right.flags());
+                        r_data = add_cast(std::move(r_data), r_flags);
                     }
                 } else {
-                    r_data = add_cast(std::move(r_data), right.flags());
+                    r_data = add_cast(std::move(r_data), r_flags);
                 }
             }
             break;
         case ulam::ops::Kind::Numeric: {
             if (ulam::ops::is_assign(op)) {
-                if (right.type() != left.type())
-                    r_data = add_cast(std::move(r_data), right.flags());
+                if (r_type != l_type)
+                    r_data = add_cast(std::move(r_data), r_flags);
 
-            } else if (!left.type()->is_class()) {
+            } else if (!l_type->is_class()) {
                 // cast to 32 or 64 common bit width
-                auto l_size = left.type()->bitsize();
-                auto r_size = right.type()->bitsize();
+                auto l_size = l_type->bitsize();
+                auto r_size = r_type->bitsize();
                 auto size = std::max(l_size, r_size);
                 assert(size < 64);
                 size = (size > 32) ? 64 : 32;
                 if (l_size != size)
-                    l_data = add_cast(std::move(l_data), left.flags());
+                    l_data = add_cast(std::move(l_data), l_flags);
                 if (r_size != size)
-                    r_data = add_cast(std::move(r_data), right.flags());
+                    r_data = add_cast(std::move(r_data), r_flags);
             }
             break;
         }
@@ -239,11 +241,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_prop(
 EvalExprVisitor::ExprRes EvalExprVisitor::ident_fset(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::FunSet> fset) {
     auto res = ulam::sema::EvalExprVisitor::ident_fset(node, fset);
-    if (res) {
-        auto data = std::string{"self {args}"} +
-                    std::string{str(fset->name_id())} + " .";
-        res.set_data(data);
-    }
+    if (res)
+        res.set_data(std::string{"self {args}{fun} ."});
     return res;
 }
 
@@ -251,7 +250,6 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
     ulam::Ref<ulam::ast::ArrayAccess> node,
     EvalExprVisitor::ExprRes&& obj,
     EvalExprVisitor::ExprRes&& idx) {
-    // TODO
     return ulam::sema::EvalExprVisitor::array_access_class(
         node, std::move(obj), std::move(idx));
 }
@@ -361,19 +359,16 @@ EvalExprVisitor::ExprRes EvalExprVisitor::bind(
     ulam::Ref<ulam::FunSet> fset,
     ulam::sema::ExprRes&& obj) {
     assert(obj);
-
     auto data = obj.data<std::string>("");
     auto res = ulam::sema::EvalExprVisitor::bind(node, fset, std::move(obj));
     if (!res)
         return res;
-    if (!data.empty() && fset->has_name_id())
+    if (!data.empty())
         res.set_data(callable_data(data, fset));
     return res;
 }
 
 std::string EvalExprVisitor::callable_data(
     const std::string& data, ulam::Ref<ulam::FunSet> fset) {
-    assert(!data.empty() && fset->has_name_id());
-    return data + std::string{" {args}" + std::string{str(fset->name_id())}} +
-           " .";
+    return data + " {args}{fun} .";
 }

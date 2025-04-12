@@ -35,6 +35,8 @@ bool Fun::is_constructor() const { return _node->is_constructor(); }
 
 bool Fun::is_op() const { return _node->is_op(); }
 
+bool Fun::is_op_alias() const { return _node->is_op_alias(); }
+
 Op Fun::op() const { return _node->op(); }
 
 bool Fun::is_marked_virtual() const { return node()->is_marked_virtual(); }
@@ -180,9 +182,7 @@ FunSet::FunSet(str_id_t name_id): _name_id{name_id} {
     _map.emplace(); // empty map for empty set
 }
 
-bool FunSet::has_name_id() const {
-    return _name_id != NoStrId;
-}
+bool FunSet::has_name_id() const { return _name_id != NoStrId; }
 
 str_id_t FunSet::name_id() const {
     assert(has_name_id());
