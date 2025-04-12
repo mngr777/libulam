@@ -32,16 +32,24 @@ private:
     void write_obj(
         std::ostream& out,
         ulam::sema::ExprRes&& obj,
-        const std::string& test_postfix);
+        const std::string& test_postfix,
+        bool is_main);
 
     void write_class_type_defs(std::ostream& out, ulam::Ref<ulam::Class> cls);
     void write_class_type_def(
         std::ostream& out, ulam::Ref<ulam::AliasType> alias_type);
 
     void write_class_props(
-        std::ostream& out, ulam::Ref<ulam::Class> cls, ulam::Value& obj);
+        std::ostream& out,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Value& obj,
+        bool is_main);
+
     void write_class_prop(
-        std::ostream& out, ulam::Ref<ulam::Prop> prop, ulam::Value& obj);
+        std::ostream& out,
+        ulam::Ref<ulam::Prop> prop,
+        ulam::Value& obj,
+        bool is_main);
 
     ulam::Context _ctx;
     ulam::Ptr<ulam::ast::Root> _ast;
