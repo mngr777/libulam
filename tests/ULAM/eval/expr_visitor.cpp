@@ -1,5 +1,6 @@
 #include "./expr_visitor.hpp"
 #include "./expr_flags.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
@@ -99,19 +100,32 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
 
     std::string data;
     if (left.has_data() && right.has_data()) {
+        auto l_type = left.type();
+        auto r_type = right.type();
         auto l_data = left.data<std::string>();
         auto r_data = right.data<std::string>();
 
         switch (ulam::ops::kind(op)) {
         case ulam::ops::Kind::Assign:
-            if (right.type() != left.type() && !right.value().is_consteval())
+            if (r_type != l_type)
                 r_data = add_cast(std::move(r_data), right.flags());
             break;
         case ulam::ops::Kind::Equality:
         case ulam::ops::Kind::Comparison:
             // cast right arg to exact type for comparison
-            if (right.type() != left.type())
-                r_data = add_cast(std::move(r_data), right.flags());
+            if (right.type() != left.type()) {
+                if (l_type->is_prim() &&
+                    ulam::has_bitsize(l_type->bi_type_id())) {
+                    assert(r_type->is(l_type->bi_type_id()));
+                    if (l_type->bitsize() < r_type->bitsize()) {
+                        l_data = add_cast(std::move(l_data), left.flags());
+                    } else {
+                        r_data = add_cast(std::move(r_data), right.flags());
+                    }
+                } else {
+                    r_data = add_cast(std::move(r_data), right.flags());
+                }
+            }
             break;
         case ulam::ops::Kind::Numeric: {
             if (ulam::ops::is_assign(op)) {
