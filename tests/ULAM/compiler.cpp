@@ -154,7 +154,11 @@ void Compiler::write_class_prop(
     assert(_ast->program());
     auto program = _ast->program();
     auto& str_pool = program->str_pool();
-    Stringifier stringifier{program, is_main};
+
+    Stringifier stringifier{program};
+    stringifier.options.use_unsigned_suffix = is_main;
+    stringifier.options.bits_use_unsigned_suffix = false;
+
     auto rval_copy = obj.copy_rvalue(); // TMP
     out << prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
 }

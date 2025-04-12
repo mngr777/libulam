@@ -41,7 +41,7 @@ public:
 
     Value move_value();
 
-    bool is_consteval() const { return _value.is_consteval() && !is(FunParam); }
+    bool is_consteval() const { return is_const() && !is(FunParam); }
 
     bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
     scope_lvl_t scope_lvl() const { return _scope_lvl; }

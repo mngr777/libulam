@@ -26,23 +26,20 @@ std::string Stringifier::stringify_prim(
         return std::to_string(int_val);
     }
     case ulam::UnsignedId: {
-        auto uns_val = rval.get<ulam::Unsigned>();
-        return std::to_string(uns_val) + (_is_main ? "u" : "");
+        return unsigned_to_str(rval.get<ulam::Unsigned>());
     }
     case ulam::UnaryId: {
         auto unary_type = _builtins.unary_type(type->bitsize());
         auto uns_val = unary_type->unsigned_value(rval);
-        return std::to_string(uns_val) + (_is_main ? "u" : "");
+        return unsigned_to_str(uns_val);
     }
     case ulam::BoolId: {
         auto bool_type = _builtins.bool_type(type->bitsize());
         return bool_type->is_true(rval) ? "true" : "false";
     }
     case ulam::BitsId: {
-        if (type->bitsize() < sizeof(ulam::Integer) * 8) {
-            auto& bits = rval.get<ulam::Bits>();
-            auto datum = bits.read_right(type->bitsize());
-            return std::to_string((ulam::Unsigned)datum);
+        if (type->bitsize() < sizeof(ulam::Datum) * 8) {
+            return bits_to_str(rval.get<ulam::Bits>());
         } else {
             assert(false); // TODO
         }
@@ -75,5 +72,21 @@ std::string Stringifier::stringify_array(
         auto item_rval = data.array_item(idx).load();
         str += stringify(item_type, item_rval);
     }
+    return str;
+}
+
+std::string Stringifier::unsigned_to_str(ulam::Unsigned val) {
+    auto str = std::to_string(val);
+    if (options.use_unsigned_suffix)
+        str += "u";
+    return str;
+}
+
+std::string Stringifier::bits_to_str(const ulam::Bits& bits) {
+    assert(bits.len() <= sizeof(ulam::Datum) * 8);
+    auto datum = bits.read(0, bits.len());
+    auto str = std::to_string((ulam::Unsigned)datum);
+    if (options.bits_use_unsigned_suffix)
+        str += "u";
     return str;
 }
