@@ -107,10 +107,13 @@ static const std::set<std::string> Skip = {
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
-    "t3200_test_compiler_elementandquark_twoquarkscasttoint_compilable.test", // 6 cast in `s.assert(6 == bar1)`
-    "t3201_test_compiler_elementandquark_twoquarkscasttoint_witharray.test", // TODO: is 7 or 4 correct?
-    "t3202_test_compiler_elementandquark_ifelsefunccall_compilable.test", // -"-
-    "t3203_test_compiler_elementandquark_funccallargexpression.test", // -"-
+    // "t3200_test_compiler_elementandquark_twoquarkscasttoint_compilable.test", // 6 cast in `s.assert(6 == bar1)`
+    // "t3201_test_compiler_elementandquark_twoquarkscasttoint_witharray.test", // TODO: is 7 or 4 correct?
+    // "t3202_test_compiler_elementandquark_ifelsefunccall_compilable.test", // -"-
+    // "t3203_test_compiler_elementandquark_funccallargexpression.test", // -"-
+    // "t3207_test_compiler_elementandquark_inside_a_quark.test", // TODO: parse class props in answers
+    // "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
+    // "t3209_test_compiler_elementandquark_quarkunion.test", // -"-
 };
 
 using Path = std::filesystem::path;
