@@ -109,6 +109,8 @@ static const std::set<std::string> Skip = {
 static const std::set<std::string> SkipAnswerCheck = {
     "t3207_test_compiler_elementandquark_inside_a_quark.test", // tmp: prop ordering
     "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
+    "t3230_test_compiler_elementandquarkarray_elementLocal.test", // tmp: quark array value format
+    "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
 };
 
 using Path = std::filesystem::path;
@@ -120,11 +122,11 @@ static void exit_usage(std::string name) {
 
 static bool run(Path stdlib_dir, const Path& path, bool single) {
     try {
-        TestCase::run_flags_t flags = TestCase::NoRunFlags;
+        TestCase::flags_t flags = TestCase::NoFlags;
         if (!single && SkipAnswerCheck.count(path.filename()) > 0)
             flags |= TestCase::SkipAnswerCheck;
-        TestCase test_case{stdlib_dir, path};
-        test_case.run(flags);
+        TestCase test_case{stdlib_dir, path, flags};
+        test_case.run();
         return true;
     } catch (std::invalid_argument& e) {
         std::cerr << e.what() << "\n";

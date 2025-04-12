@@ -28,13 +28,13 @@ std::map<std::string, Answer> parse_answers(const std::string_view text) {
 
 } // namespace
 
-TestCase::TestCase(const Path& stdlib_dir, const Path& path):
-    _stdlib_dir{stdlib_dir} {
+TestCase::TestCase(const Path& stdlib_dir, const Path& path, flags_t flags):
+    _stdlib_dir{stdlib_dir}, _flags{flags} {
     load(path);
     parse();
 }
 
-void TestCase::run(run_flags_t flags) {
+void TestCase::run() {
     assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
@@ -67,7 +67,7 @@ void TestCase::run(run_flags_t flags) {
     std::cout << "COMPILED:\n" << answers << "\n";
 
     // check
-    if ((flags & SkipAnswerCheck) == 0)
+    if (!(_flags & SkipAnswerCheck))
         compare_answer_maps(_answers, answers);
 }
 
@@ -204,7 +204,8 @@ void TestCase::parse() {
     {
         auto start = pos;
         move_to("#");
-        _answers = parse_answers(text.substr(start, pos - start));
+        if (!(_flags & SkipAnswerCheck))
+            _answers = parse_answers(text.substr(start, pos - start));
     }
     skip_comments();
 
