@@ -128,7 +128,7 @@ TypedValue BitsType::binary_op(
         if (is_unknown)
             return {boolean, Value{RValue{}}};
         auto& l_bits = l_rval.get<Bits>();
-        auto& r_bits = l_rval.get<Bits>();
+        auto& r_bits = r_rval.get<Bits>();
         bool is_equal = (l_bits == r_bits);
         bool val = (is_equal == (op == Op::Equal));
         return {boolean, Value{boolean->construct(val)}};
