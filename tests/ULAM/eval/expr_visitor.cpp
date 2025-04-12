@@ -363,7 +363,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::bind(
     assert(obj);
 
     auto data = obj.data<std::string>("");
-    auto res = bind(node, fset, std::move(obj));
+    auto res = ulam::sema::EvalExprVisitor::bind(node, fset, std::move(obj));
     if (!res)
         return res;
     if (!data.empty() && fset->has_name_id())
