@@ -16,37 +16,24 @@
 
 namespace {
 
-std::string add_cast(std::string&& data, ulam::sema::ExprRes::flags_t flags) {
+using flags_t = ulam::sema::ExprRes::flags_t;
+
+std::string add_cast(std::string&& data, flags_t flags) {
     if ((flags & ExplCast) || (flags & ImplCast) == 0)
         return data + " cast";
     return std::move(data);
 }
 
-std::string
-add_array_access(const std::string& data, const std::string& idx_data) {
-    static const std::string_view Self_{"self "};
+std::string add_array_access(
+    const std::string& data, const std::string& idx_data, flags_t flags) {
     assert(!data.empty());
 
     // TODO: use a flag
-    if (*data.rbegin() == '.') {
+    if (*data.rbegin() == '.' && (flags & ExtMemberAccess)) {
         // ULAM quirk:
         // `a.b[c] -> `a b c [] .`, but
         // `/* self. */ b[c]` -> `self b . c []`
-
-        // Go 3 spaces back or (or to the beginning),
-        // then compare substring of len 5 to "self "
-        auto pos = std::string::npos;
-        for (int i = 0; i < 3; ++i) {
-            pos = data.rfind(' ', pos);
-            // at least 2 spaces must be present, since we have member access op
-            assert(i == 2 || pos != std::string::npos);
-            assert(pos != 0); // data string can't start with ' '
-            if (pos != std::string::npos)
-                --pos;
-        }
-        pos = (pos == std::string::npos) ? 0 : pos + 1;
-        if (std::string_view{data}.substr(pos, Self_.size()) != Self_)
-            return data.substr(0, data.size() - 1) + idx_data + " [] .";
+        return data.substr(0, data.size() - 1) + idx_data + " [] .";
     }
     return data + " " + idx_data + " []";
 }
@@ -214,8 +201,10 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
 EvalExprVisitor::ExprRes
 EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
     auto res = ulam::sema::EvalExprVisitor::ident_self(node);
-    if (res)
+    if (res) {
         res.set_data(std::string{"self"});
+        res.set_flag(Self);
+    }
     return res;
 }
 
@@ -258,8 +247,27 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
     ulam::Ref<ulam::ast::ArrayAccess> node,
     EvalExprVisitor::ExprRes&& obj,
     EvalExprVisitor::ExprRes&& idx) {
-    return ulam::sema::EvalExprVisitor::array_access_class(
+    auto data = obj.data<std::string>("");
+    bool ext_member_access = obj.has_flag(ExtMemberAccess);
+    if (!data.empty() && ext_member_access) {
+        // ULAM quirk:
+        // `a.b[c] -> `a b c [] .`, but
+        // `/* self. */ b[c]` -> `self b . c []`
+        // remove " ." at the end to append after `aref` call
+        auto size = data.size();
+        assert(size > 2 && data[size - 1] == '.' && data[size - 2] == ' ');
+        obj.set_data(data.substr(0, data.size() - 2));
+    }
+
+    auto res = ulam::sema::EvalExprVisitor::array_access_class(
         node, std::move(obj), std::move(idx));
+    if (!res)
+        return res;
+
+    data = res.data<std::string>();
+    if (!data.empty() && ext_member_access)
+        res.set_data(data + " .");
+    return res;
 }
 
 EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
@@ -268,8 +276,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
     EvalExprVisitor::ExprRes&& idx) {
     std::string data;
     if (obj.has_data() && idx.has_data())
-        data =
-            add_array_access(obj.data<std::string>(), idx.data<std::string>());
+        data = add_array_access(
+            obj.data<std::string>(), idx.data<std::string>(), obj.flags());
     auto res = ulam::sema::EvalExprVisitor::array_access_string(
         node, std::move(obj), std::move(idx));
     if (!data.empty())
@@ -283,10 +291,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_array(
     EvalExprVisitor::ExprRes&& idx) {
     std::string data;
     if (obj.has_data() && idx.has_data())
-        // data = obj.data<std::string>() + " " + idx.data<std::string>() + "
-        // []";
-        data =
-            add_array_access(obj.data<std::string>(), idx.data<std::string>());
+        data = add_array_access(
+            obj.data<std::string>(), idx.data<std::string>(), obj.flags());
     auto res = ulam::sema::EvalExprVisitor::array_access_array(
         node, std::move(obj), std::move(idx));
     if (!data.empty())
@@ -334,6 +340,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
     ulam::Ref<ulam::Prop> prop) {
     if (!obj)
         return std::move(obj);
+    bool is_self = obj.has_flag(Self);
     auto data = obj.data<std::string>("");
     auto res = ulam::sema::EvalExprVisitor::member_access_prop(
         node, std::move(obj), prop);
@@ -342,6 +349,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
     if (!data.empty()) {
         data += std::string{" "} + std::string{str(prop->name_id())} + " .";
         res.set_data(data);
+        if (!is_self)
+            res.set_flag(ExtMemberAccess);
     }
     return res;
 }
