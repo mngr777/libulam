@@ -47,6 +47,7 @@ public:
     bool is_constructor() const;
 
     bool is_op() const;
+    bool is_op_alias() const;
     Op op() const;
 
     bool is_virtual() const { return _is_virtual; }

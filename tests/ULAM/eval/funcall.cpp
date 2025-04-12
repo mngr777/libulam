@@ -7,18 +7,32 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
     ulam::Ref<ulam::Fun> fun,
     ulam::sema::ExprRes&& callable,
     ulam::sema::ExprResList&& args) {
+    static const std::string_view FunPh{"{fun}"};
+    static const std::string_view ArgsPh{"{args}"};
 
     std::string data;
     if (callable.has_data()) {
         auto arg_str = arg_data(args);
         if (!arg_str.empty()) {
             data = callable.data<std::string>();
-            auto pos = data.find("{args}");
+            auto pos = data.rfind(ArgsPh);
             if (pos != std::string::npos) {
-                data.replace(pos, std::string_view{"{args}"}.size(), arg_str);
+                data.replace(pos, ArgsPh.size(), arg_str);
             } else {
                 data.clear();
             }
+        }
+
+        if (!fun->is_op() || fun->is_op_alias()) {
+            std::string name{_str_pool.get(fun->name_id())};
+            auto pos = data.rfind(FunPh);
+            if (pos != std::string::npos) {
+                data.replace(pos, FunPh.size(), name);
+            } else {
+                data.clear();
+            }
+        } else {
+            // TODO: operators
         }
     }
 
