@@ -42,9 +42,7 @@ std::string Stringifier::stringify_prim(
         if (type->bitsize() < sizeof(ulam::Integer) * 8) {
             auto& bits = rval.get<ulam::Bits>();
             auto datum = bits.read_right(type->bitsize());
-            ulam::Integer int_val =
-                ulam::detail::integer_from_datum(datum, type->bitsize());
-            return std::to_string(int_val);
+            return std::to_string((ulam::Unsigned)datum);
         } else {
             assert(false); // TODO
         }
