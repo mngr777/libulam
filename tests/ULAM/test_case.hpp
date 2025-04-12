@@ -8,13 +8,13 @@ class TestCase {
 public:
     using Path = std::filesystem::path;
 
-    using run_flags_t = std::uint8_t;
-    static constexpr run_flags_t NoRunFlags = 0;
-    static constexpr run_flags_t SkipAnswerCheck = 1;
+    using flags_t = std::uint8_t;
+    static constexpr flags_t NoFlags = 0;
+    static constexpr flags_t SkipAnswerCheck = 1;
 
-    TestCase(const Path& stdlib_dir, const Path& path);
+    TestCase(const Path& stdlib_dir, const Path& path, flags_t flags = NoFlags);
 
-    void run(run_flags_t flags = NoRunFlags);
+    void run();
 
 private:
     void load(const Path& path);
@@ -27,4 +27,5 @@ private:
     // {filename, text}
     std::vector<std::pair<Path, std::string_view>> _srcs;
     std::vector<std::pair<Path, std::string_view>> _inc_srcs;
+    flags_t _flags;
 };
