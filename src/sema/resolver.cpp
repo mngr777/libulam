@@ -33,6 +33,10 @@ void Resolver::resolve(Ref<Program> program) {
         module->resolve(*this);
     for (auto cls : _classes)
         resolve(cls);
+    for (auto cls : _classes) {
+        for (auto type_def : cls->type_defs())
+            resolve(type_def);
+    }
     _classes.clear();
 }
 
