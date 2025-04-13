@@ -1,32 +1,28 @@
 #pragma once
 #include <libulam/ast/nodes/expr.hpp>
-#include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/ast/nodes/init.hpp>
 #include <libulam/detail/variant.hpp>
-#include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/scope.hpp>
+#include <libulam/sema/eval/helper.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
-#include <libulam/str_pool.hpp>
 
 namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalInit {
+class EvalInit : public EvalHelper {
 public:
     using EvalRes = std::pair<Value, bool>;
 
-    EvalInit(
-        EvalVisitor& eval, Diag& diag, UniqStrPool& str_pool, Ref<Scope> scope):
-        _eval{eval}, _diag{diag}, _str_pool{str_pool}, _scope{scope} {}
+    using EvalHelper::EvalHelper;
 
     // {dimensions, is_array}
     std::pair<ArrayDimList, bool>
     array_dims(unsigned num, Ref<ast::InitValue> init);
 
-    virtual EvalRes eval(Ref<Type> type, Ref<ast::InitValue> init);
+    virtual EvalRes eval_init(Ref<Type> type, Ref<ast::InitValue> init);
 
 protected:
     using Variant = ast::InitValue::ItemT;
@@ -46,11 +42,6 @@ protected:
 
     EvalRes
     eval_class_map(Ref<Class> cls, Ref<ast::InitMap> map, unsigned depth);
-
-    EvalVisitor& _eval;
-    Diag& _diag;
-    UniqStrPool& _str_pool;
-    Ref<Scope> _scope;
 };
 
 } // namespace ulam::sema

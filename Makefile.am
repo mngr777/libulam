@@ -121,6 +121,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/cast.hpp \
 	include/libulam/sema/eval/except.hpp \
 	include/libulam/sema/eval/expr_visitor.hpp \
+	include/libulam/sema/eval/flags.hpp \
 	include/libulam/sema/eval/funcall.hpp \
 	include/libulam/sema/eval/init.hpp \
 	include/libulam/sema/eval/stack.hpp \
@@ -260,6 +261,7 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval.cpp \
 	tests/ULAM/eval/cast.hpp \
 	tests/ULAM/eval/cast.cpp \
+	tests/ULAM/eval/expr_flags.hpp \
 	tests/ULAM/eval/expr_visitor.hpp \
 	tests/ULAM/eval/expr_visitor.cpp \
 	tests/ULAM/eval/funcall.hpp \

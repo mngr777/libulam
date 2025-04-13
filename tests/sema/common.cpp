@@ -5,7 +5,6 @@
 #include "libulam/parser.hpp"
 #include "libulam/sema.hpp"
 #include "libulam/sema/eval.hpp"
-#include "libulam/sema/eval/except.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream>
 

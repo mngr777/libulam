@@ -2,6 +2,7 @@
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/stack.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -46,10 +47,18 @@ public:
     void visit(Ref<ast::Ident> node) override;
 
     virtual Ptr<Resolver> resolver();
-    virtual Ptr<EvalExprVisitor> expr_visitor(Ref<Scope> scope);
-    virtual Ptr<EvalInit> init_helper(Ref<Scope> scope);
-    virtual Ptr<EvalCast> cast_helper(Ref<Scope> scope);
-    virtual Ptr<EvalFuncall> funcall_helper(Ref<Scope> scope);
+
+    virtual Ptr<EvalExprVisitor>
+    expr_visitor(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+
+    virtual Ptr<EvalInit>
+    init_helper(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+
+    virtual Ptr<EvalCast>
+    cast_helper(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+
+    virtual Ptr<EvalFuncall>
+    funcall_helper(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
 
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <libulam/diag.hpp>
+#include <libulam/sema/eval/helper.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
@@ -11,13 +11,12 @@ namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalCast {
+class EvalCast : public EvalHelper {
 public:
     enum CastStatus { CastOk, InvalidCast, CastError, NoCast };
     using CastRes = std::pair<ExprRes, CastStatus>;
 
-    EvalCast(EvalVisitor& eval, Diag& diag, Ref<Scope> scope):
-        _eval{eval}, _diag{diag}, _scope{scope} {}
+    using EvalHelper::EvalHelper;
 
     virtual ExprRes
     cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl = false);
@@ -84,10 +83,6 @@ protected:
     ExprRes deref(ExprRes&& arg);
 
     ExprRes change_type(Ref<Type> type, ExprRes&& arg);
-
-    EvalVisitor& _eval;
-    Diag& _diag;
-    Ref<Scope> _scope;
 };
 
 } // namespace ulam::sema
