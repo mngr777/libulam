@@ -25,6 +25,8 @@ public:
 
     bool state_is(State state) const { return _state == state; }
 
+    bool is_local() const { return !has_module(); }
+
     bool has_module() const;
     Ref<Module> module() const;
     void set_module(Ref<Module> module);

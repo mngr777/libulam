@@ -44,22 +44,23 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
     }
 }
 
-ulam::Ptr<ulam::sema::EvalExprVisitor> EvalVisitor::expr_visitor(
+ulam::Ptr<ulam::sema::EvalExprVisitor> EvalVisitor::_expr_visitor(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
-    return ulam::make<EvalExprVisitor>(*this, _program, _stringifier, scope);
+    return ulam::make<EvalExprVisitor>(
+        *this, _program, _stringifier, scope, flags);
 }
 
-ulam::Ptr<ulam::sema::EvalInit> EvalVisitor::init_helper(
+ulam::Ptr<ulam::sema::EvalInit> EvalVisitor::_init_helper(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
     return ulam::make<EvalInit>(*this, _program, scope, flags);
 }
 
-ulam::Ptr<ulam::sema::EvalCast> EvalVisitor::cast_helper(
+ulam::Ptr<ulam::sema::EvalCast> EvalVisitor::_cast_helper(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
     return ulam::make<EvalCast>(*this, _program, scope, flags);
 }
 
-ulam::Ptr<ulam::sema::EvalFuncall> EvalVisitor::funcall_helper(
+ulam::Ptr<ulam::sema::EvalFuncall> EvalVisitor::_funcall_helper(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
     return ulam::make<EvalFuncall>(*this, _program, scope, flags);
 }

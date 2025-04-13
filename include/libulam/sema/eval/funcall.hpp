@@ -38,6 +38,8 @@ protected:
     virtual ExprRes do_funcall(
         Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args);
 
+    virtual ExprRes empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun);
+
     virtual std::pair<FunSet::Matches, ExprError> find_match(
         Ref<ast::Node> node,
         Ref<FunSet> fset,

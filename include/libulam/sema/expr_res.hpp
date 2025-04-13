@@ -52,7 +52,8 @@ enum class ExprError {
     InvalidReturnType,
     NoMatchingFunction,
     FunctionIsPureVirtual,
-    AmbiguousFunctionCall
+    AmbiguousFunctionCall,
+    NotConsteval
 };
 
 class ExprRes {

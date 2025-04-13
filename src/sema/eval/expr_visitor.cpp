@@ -1,5 +1,4 @@
 #include <cassert>
-#include <libulam/ast/nodes/expr.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/funcall.hpp>
@@ -7,7 +6,6 @@
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/fun.hpp>
@@ -15,9 +13,7 @@
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
-#include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/ops.hpp>
-#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
@@ -30,19 +26,21 @@ namespace ulam::sema {
 
 ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n" << line_at(node);
+    ExprRes res;
     if (node->has_type_name()) {
         auto type = eval().resolver()->resolve_type_name(
             node->type_name(), scope(), true);
         if (!type)
             return {ExprError::UnresolvableType};
-        return type_op(node, type);
+        res = type_op(node, type);
     } else {
         assert(node->has_expr());
         auto expr_res = node->expr()->accept(*this);
         if (!expr_res)
             return expr_res;
-        return type_op(node, std::move(expr_res));
+        res = type_op(node, std::move(expr_res));
     }
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
@@ -51,11 +49,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
 
     // self
     if (node->is_self())
-        return ident_self(node);
+        return check(node, ident_self(node));
 
     // super
     if (node->is_super())
-        return ident_super(node);
+        return check(node, ident_super(node));
 
     auto name_id = node->name().str_id();
     auto sym =
@@ -66,11 +64,12 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
     }
 
     using std::placeholders::_1;
-    return sym->accept(
+    auto res = sym->accept(
         std::bind(std::mem_fn(&EvalExprVisitor::ident_var), this, node, _1),
         std::bind(std::mem_fn(&EvalExprVisitor::ident_prop), this, node, _1),
         std::bind(std::mem_fn(&EvalExprVisitor::ident_fset), this, node, _1),
         [&](auto value) -> ExprRes { assert(false); });
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::ParenExpr> node) {
@@ -91,9 +90,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
     if (!right)
         return right;
 
-    return binary_op(
+    auto res = binary_op(
         node, node->op(), node->lhs(), std::move(left), node->rhs(),
         std::move(right));
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
@@ -102,7 +102,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
     if (!arg)
         return arg;
 
-    return unary_op(node, node->op(), node->arg(), std::move(arg));
+    auto res = unary_op(node, node->op(), node->arg(), std::move(arg));
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
@@ -124,7 +125,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
 
     auto cast = eval().cast_helper(scope(), flags());
     res = cast->cast(node, cast_type, std::move(res), true);
-    return res;
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
@@ -155,27 +156,30 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BoolLit> node) {
     auto type = builtins().boolean();
     auto rval = type->construct(node->value());
     rval.set_is_consteval(true);
-    return {type, Value{std::move(rval)}};
+    return check(node, {type, Value{std::move(rval)}});
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::NumLit> node) {
     debug() << __FUNCTION__ << " NumLit\n" << line_at(node);
     const auto& number = node->value();
+    Ref<Type> type{};
+    RValue rval{};
     if (number.is_signed()) {
         // Int(n)
-        auto type = builtins().int_type(number.bitsize());
-        return {type, Value{RValue{number.value<Integer>(), true}}};
+        type = builtins().int_type(number.bitsize());
+        rval = RValue{number.value<Integer>(), true};
     } else {
         // Unsigned(n)
-        auto type = builtins().unsigned_type(number.bitsize());
-        return {type, Value{RValue{number.value<Unsigned>(), true}}};
+        type = builtins().unsigned_type(number.bitsize());
+        rval = RValue{number.value<Unsigned>(), true};
     }
+    return check(node, {type, Value{std::move(rval)}});
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::StrLit> node) {
     debug() << __FUNCTION__ << " StrLit\n" << line_at(node);
     auto type = builtins().type(StringId);
-    return {type, Value{RValue{node->value(), true}}};
+    return check(node, ExprRes{type, Value{RValue{node->value(), true}}});
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
@@ -191,7 +195,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
         return {args.error()};
 
     auto funcall = eval().funcall_helper(scope(), flags());
-    return funcall->funcall(node, std::move(callable), std::move(args));
+    auto res = funcall->funcall(node, std::move(callable), std::move(args));
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
@@ -216,7 +221,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
 
     // get op fset
     if (node->is_op())
-        return member_access_op(node, std::move(obj));
+        return check(node, member_access_op(node, std::move(obj)));
 
     // get symbol
     auto cls = obj.type()->as_class();
@@ -227,7 +232,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::MemberNotFound};
     }
 
-    return sym->accept(
+    auto res = sym->accept(
         [&](Ref<Var> var) {
             return member_access_var(node, std::move(obj), var);
         },
@@ -238,6 +243,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return member_access_fset(node, std::move(obj), fset);
         },
         [&](auto other) -> ExprRes { assert(false); });
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
@@ -259,13 +265,13 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
         return {ExprError::NotClassConst};
     }
     // TODO: base class prop/fun
-    // TODO: move resolution to class
+    // TODO: move resolution to class?
     auto var = sym->get<Var>();
     auto scope = cls->scope();
     auto scope_view = scope->view(var->scope_version());
     if (!resolver->resolve(var, ref(scope_view)))
         return {ExprError::UnresolvableClassConst};
-    return {var->type(), Value{var->rvalue()}};
+    return check(node, {var->type(), Value{var->rvalue()}});
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
@@ -284,8 +290,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return {ExprError::UnknownArrayIndex};
 
     // class?
-    if (obj.type()->actual()->is_class())
-        return array_access_class(node, std::move(obj), std::move(idx));
+    if (obj.type()->actual()->is_class()) {
+        return check(
+            node, array_access_class(node, std::move(obj), std::move(idx)));
+    }
 
     // cast to index type
     auto cast = eval().cast_helper(scope(), flags());
@@ -294,15 +302,26 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
         return idx;
 
     // string?
-    if (obj.type()->actual()->is(StringId))
-        return array_access_string(node, std::move(obj), std::move(idx));
+    if (obj.type()->actual()->is(StringId)) {
+        return check(
+            node, array_access_string(node, std::move(obj), std::move(idx)));
+    }
 
     // must be an array
     if (!obj.type()->actual()->is_array()) {
         diag().error(node->array(), "not an array");
         return {ExprError::NotArray};
     }
-    return array_access_array(node, std::move(obj), std::move(idx));
+    return check(
+        node, array_access_array(node, std::move(obj), std::move(idx)));
+}
+
+ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
+    if (res && (flags() & evl::Consteval) && !res.value().is_consteval()) {
+        diag().error(node, "not consteval");
+        return {ExprError::NotConsteval};
+    }
+    return std::move(res);
 }
 
 bool EvalExprVisitor::check_is_assignable(
@@ -959,6 +978,8 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
         return res;
 
     auto lval = to.move_value().lvalue();
+    if (flags() & evl::NoExec)
+        return {to.type(), Value{lval}};
     return {to.type(), lval.assign(res.move_value().move_rvalue())};
 }
 

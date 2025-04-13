@@ -4,6 +4,7 @@
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/program.hpp>
@@ -22,10 +23,12 @@ class Resolver {
 public:
     Resolver(
         EvalVisitor& eval,
-        Diag& diag,
-        Builtins& builtins,
-        UniqStrPool& str_pool):
-        _eval{eval}, _diag{diag}, _builtins{builtins}, _str_pool{str_pool} {}
+        Ref<Program> program,
+        eval_flags_t flags = evl::NoFlags):
+        _eval{eval},
+        _diag{program->diag()},
+        _builtins{program->builtins()},
+        _str_pool{program->str_pool()} {}
 
     void resolve(Ref<Program> program);
     bool init(Ref<Class> cls);
@@ -89,6 +92,7 @@ private:
     Diag& _diag;
     Builtins& _builtins;
     UniqStrPool& _str_pool;
+    eval_flags_t _flags;
     std::set<Ref<Class>> _classes;
 };
 
