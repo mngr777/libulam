@@ -27,7 +27,7 @@ public:
         Flag flags = NoFlags);
 
     bool requires_value() const {
-        return is_const() && !is(Tpl) && !is(ClassParam);
+        return type()->is_ref() || (is_const() && !is(Tpl) && !is(ClassParam));
     }
 
     bool has_value() const;

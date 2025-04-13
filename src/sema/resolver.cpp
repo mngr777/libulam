@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
@@ -76,7 +77,7 @@ bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
     auto type_expr = alias->node()->type_expr();
 
     Ptr<PersScopeView> scope_view{};
-    if (alias->has_module()) {
+    if (!alias->is_local()) {
         scope_view = decl_scope_view(alias);
         scope = ref(scope_view);
     }
@@ -103,12 +104,11 @@ bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
 
 bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     CHECK_STATE(var);
-    bool is_resolved = true;
     auto node = var->node();
     auto type_name = var->type_node();
 
     Ptr<PersScopeView> scope_view{};
-    if (var->has_module()) {
+    if (!var->is_local()) {
         scope_view = decl_scope_view(var);
         scope = ref(scope_view);
     }
@@ -117,15 +117,29 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     // type
     if (!var->has_type()) {
         auto type = resolve_var_decl_type(type_name, node, scope, true);
-        if (type)
-            var->set_type(type);
-        is_resolved = type && is_resolved;
+        if (!var->is_local() && type->is_ref()) {
+            if (var->has_cls()) {
+                _diag.error(
+                    type_name, "class constant cannot have reference type");
+            } else {
+                assert(var->has_module());
+                _diag.error(
+                    type_name, "module constant cannot have reference type");
+            }
+            type = {};
+        }
+        if (!type)
+            RET_UPD_STATE(var, false);
+        var->set_type(type);
     }
 
     // value
     if (var->requires_value()) {
         if (node->has_init()) {
-            auto init = _eval.init_helper(scope);
+            auto flags = _flags;
+            if (!var->is_local() && !var->type()->is_ref())
+                flags |= evl::Consteval; // class/module const
+            auto init = _eval.init_helper(scope, flags);
             auto [val, ok] = init->eval_init(var->type(), node->init());
             if (!ok)
                 RET_UPD_STATE(var, false);
@@ -133,12 +147,11 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
         } else {
             auto name = node->name();
             _diag.error(
-                name.loc_id(), str(name.str_id()).size(),
-                "constant value required");
-            is_resolved = false;
+                name.loc_id(), str(name.str_id()).size(), "value required");
+            RET_UPD_STATE(var, false);
         }
     }
-    RET_UPD_STATE(var, is_resolved);
+    RET_UPD_STATE(var, true);
 }
 
 bool Resolver::resolve(Ref<AliasType> alias) { return resolve(alias, {}); }
@@ -177,7 +190,8 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     auto scope_view = decl_scope_view(prop);
 
     if (node->has_init()) {
-        auto init = _eval.init_helper(ref(scope_view));
+        auto flags = _flags | evl::Consteval;
+        auto init = _eval.init_helper(ref(scope_view), flags);
         auto [val, ok] = init->eval_init(type, node->init());
         if (!ok)
             RET_UPD_STATE(prop, false);
@@ -392,7 +406,8 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
             return _builtins.type(bi_type_id);
         auto args = type_spec->args();
         assert(args->child_num() > 0);
-        auto ev = _eval.expr_visitor(scope);
+        auto flags = _flags | evl::Consteval;
+        auto ev = _eval.expr_visitor(scope, flags);
         bitsize_t size = ev->bitsize_for(args->get(0), bi_type_id);
         if (size == NoBitsize)
             return {};
@@ -438,7 +453,8 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     // template?
     if (sym->is<ClassTpl>()) {
         auto tpl = sym->get<ClassTpl>();
-        auto ev = _eval.expr_visitor(scope);
+        auto flags = _flags | evl::Consteval;
+        auto ev = _eval.expr_visitor(scope, flags);
         auto [args, success] = ev->eval_tpl_args(type_spec->args(), tpl);
         if (!success)
             return {};
@@ -449,7 +465,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
 }
 
 Ptr<PersScopeView> Resolver::decl_scope_view(Ref<Decl> decl) {
-    assert(decl->has_cls() || decl->has_module());
+    assert(!decl->is_local());
     auto scope =
         decl->has_cls() ? decl->cls()->scope() : decl->module()->scope();
     return scope->view(decl->scope_version());
@@ -527,7 +543,8 @@ Ref<Type> Resolver::apply_array_dims(
             return {};
         }
         bool ok = false;
-        auto init_helper = _eval.init_helper(scope);
+        auto flags = _flags | evl::Consteval;
+        auto init_helper = _eval.init_helper(scope, flags);
         std::tie(dim_list, ok) =
             init_helper->array_dims(dims->child_num(), init);
         if (!ok)
@@ -535,7 +552,8 @@ Ref<Type> Resolver::apply_array_dims(
     }
 
     // make array type
-    auto ev = _eval.expr_visitor(scope);
+    auto flags = _flags | evl::Consteval;
+    auto ev = _eval.expr_visitor(scope, flags);
     for (unsigned n = 0; n < dims->child_num(); ++n) {
         auto expr = dims->get(n);
         array_size_t size{};

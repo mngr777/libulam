@@ -1,4 +1,4 @@
-#include "libulam/sema/expr_res.hpp"
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -28,6 +28,9 @@ ExprRes EvalFuncall::funcall(
     assert(args);
     assert(callable.type()->is(FunId));
 
+    if (flags() & evl::Consteval)
+        return {ExprError::NotConsteval};
+
     const auto& val = callable.value();
     assert(val.is_lvalue());
     assert(val.lvalue().is<BoundFunSet>());
@@ -47,6 +50,11 @@ ExprRes EvalFuncall::funcall(
 
 ExprRes EvalFuncall::funcall(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
+    assert(args);
+
+    if (flags() & evl::Consteval)
+        return {ExprError::NotConsteval};
+
     args = cast_args(node, fun, std::move(args));
     return funcall_obj(node, fun, std::move(obj), std::move(args));
 }
@@ -70,19 +78,25 @@ ExprRes EvalFuncall::do_funcall(
     if (fun->is_native()) {
         // can't eval, return empty value
         diag().notice(node, "cannot evaluate native function");
-        if (fun->ret_type()->is_ref()) {
-            LValue lval;
-            lval.set_is_xvalue(false);
-            return {fun->ret_type(), Value{lval}};
-        }
-        return {fun->ret_type(), Value{RValue{}}};
+        return empty_ret_val(node, fun);
 
     } else if (fun->is_pure_virtual()) {
         diag().error(node, "function is pure virtual");
         return {ExprError::FunctionIsPureVirtual};
     }
     assert(fun->node()->has_body());
+    if (flags() & evl::NoExec)
+        return empty_ret_val(node, fun);
     return eval().funcall(fun, self.self(), std::move(args));
+}
+
+ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
+    if (fun->ret_type()->is_ref()) {
+        LValue lval;
+        lval.set_is_xvalue(false);
+        return {fun->ret_type(), Value{lval}};
+    }
+    return {fun->ret_type(), Value{RValue{}}};
 }
 
 std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(

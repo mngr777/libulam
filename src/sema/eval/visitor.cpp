@@ -21,7 +21,8 @@
 
 namespace ulam::sema {
 
-EvalVisitor::EvalVisitor(Ref<Program> program): _program{program} {
+EvalVisitor::EvalVisitor(Ref<Program> program, eval_flags_t flags):
+    _program{program}, _flags{flags} {
     // init global scope
     _scope_stack.push(scp::Program);
     for (auto& mod : program->modules())
@@ -319,26 +320,26 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
-Ptr<Resolver> EvalVisitor::resolver() {
-    return make<Resolver>(*this, diag(), builtins(), _program->str_pool());
+Ptr<Resolver> EvalVisitor::resolver(eval_flags_t flags) {
+    return make<Resolver>(*this, _program, _flags | flags);
 }
 
 Ptr<EvalExprVisitor>
 EvalVisitor::expr_visitor(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalExprVisitor>(*this, _program, scope, flags);
+    return _expr_visitor(scope, _flags | flags);
 }
 
 Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalInit>(*this, _program, scope, flags);
+    return _init_helper(scope, _flags | flags);
 }
 
 Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalCast>(*this, _program, scope, flags);
+    return _cast_helper(scope, _flags | flags);
 }
 
 Ptr<EvalFuncall>
 EvalVisitor::funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalFuncall>(*this, _program, scope, flags);
+    return _funcall_helper(scope, _flags | flags);
 }
 
 ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
@@ -398,6 +399,28 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
     if (!fun->ret_type()->is(VoidId))
         return {ExprError::NoReturn};
     return {builtins().void_type(), Value{RValue{}}};
+}
+
+Ptr<Resolver> EvalVisitor::_resolver(eval_flags_t flags) {
+    return make<Resolver>(*this, _program, _flags | flags);
+}
+
+Ptr<EvalExprVisitor>
+EvalVisitor::_expr_visitor(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalExprVisitor>(*this, _program, scope, flags);
+}
+
+Ptr<EvalInit> EvalVisitor::_init_helper(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalInit>(*this, _program, scope, flags);
+}
+
+Ptr<EvalCast> EvalVisitor::_cast_helper(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalCast>(*this, _program, scope, flags);
+}
+
+Ptr<EvalFuncall>
+EvalVisitor::_funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalFuncall>(*this, _program, scope, flags);
 }
 
 Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {

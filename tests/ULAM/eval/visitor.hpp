@@ -11,8 +11,10 @@
 
 class EvalVisitor : public ulam::sema::EvalVisitor {
 public:
-    EvalVisitor(ulam::Ref<ulam::Program> program):
-        ulam::sema::EvalVisitor{program}, _stringifier{program} {}
+    explicit EvalVisitor(
+        ulam::Ref<ulam::Program> program,
+        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
+        ulam::sema::EvalVisitor{program, flags}, _stringifier{program} {}
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
@@ -22,23 +24,19 @@ public:
 
     const std::string& data() const { return _data; }
 
-    ulam::Ptr<ulam::sema::EvalExprVisitor> expr_visitor(
-        ulam::Ref<ulam::Scope> scope,
-        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags) override;
-
-    ulam::Ptr<ulam::sema::EvalInit> init_helper(
-        ulam::Ref<ulam::Scope> scope,
-        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags) override;
-
-    ulam::Ptr<ulam::sema::EvalCast> cast_helper(
-        ulam::Ref<ulam::Scope> scope,
-        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags) override;
-
-    ulam::Ptr<ulam::sema::EvalFuncall> funcall_helper(
-        ulam::Ref<ulam::Scope> scope,
-        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags) override;
-
 protected:
+    ulam::Ptr<ulam::sema::EvalExprVisitor> _expr_visitor(
+        ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) override;
+
+    ulam::Ptr<ulam::sema::EvalInit> _init_helper(
+        ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) override;
+
+    ulam::Ptr<ulam::sema::EvalCast> _cast_helper(
+        ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) override;
+
+    ulam::Ptr<ulam::sema::EvalFuncall> _funcall_helper(
+        ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) override;
+
     ulam::Ref<ulam::AliasType>
     type_def(ulam::Ref<ulam::ast::TypeDef> node) override;
 

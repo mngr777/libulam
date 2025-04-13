@@ -8,6 +8,7 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/typed_value.hpp>
+#include <libulam/semantic/value.hpp>
 #include <utility>
 
 namespace ulam {
@@ -44,6 +45,8 @@ public:
     ExprRes visit(Ref<ast::MemberAccess> node) override;
     ExprRes visit(Ref<ast::ClassConstAccess> node) override;
     ExprRes visit(Ref<ast::ArrayAccess> node) override;
+
+    virtual ExprRes check(Ref<ast::Expr> node, ExprRes&& res);
 
     virtual bool check_is_assignable(Ref<ast::Expr> node, const Value& value);
     virtual bool check_is_object(
