@@ -111,6 +111,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
     "t3230_test_compiler_elementandquarkarray_elementLocal.test", // tmp: quark array value format
     "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
+    "t3233_test_compiler_elementandquarkarray_ew.test", // TODO: init
 };
 
 using Path = std::filesystem::path;

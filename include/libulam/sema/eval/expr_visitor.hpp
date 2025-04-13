@@ -1,16 +1,13 @@
 #pragma once
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/exprs.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
+#include <libulam/sema/eval/flags.hpp>
+#include <libulam/sema/eval/helper.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/typed_value.hpp>
-#include <libulam/str_pool.hpp>
-#include <string_view>
 #include <utility>
 
 namespace ulam {
@@ -21,9 +18,14 @@ namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalExprVisitor : public ast::ExprVisitor {
+class EvalExprVisitor : public EvalHelper, public ast::ExprVisitor {
 public:
-    EvalExprVisitor(EvalVisitor& eval, Ref<Scope> scope);
+    EvalExprVisitor(
+        EvalVisitor& eval,
+        Ref<Program> program,
+        Ref<Scope> scope,
+        eval_flags_t flags):
+        EvalHelper(eval, program, scope, flags) {}
 
     EvalExprVisitor(EvalExprVisitor&&) = default;
     EvalExprVisitor& operator=(EvalExprVisitor&& other);
@@ -134,17 +136,6 @@ protected:
     assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
     virtual ExprResList eval_args(Ref<ast::ArgList> args);
-
-protected:
-    Diag& diag();
-    Builtins& builtins();
-
-    std::string_view str(str_id_t str_id);
-    std::string_view text(str_id_t str_id);
-
-    EvalVisitor& _eval;
-    Ref<Program> _program;
-    Ref<Scope> _scope;
 };
 
 } // namespace ulam::sema

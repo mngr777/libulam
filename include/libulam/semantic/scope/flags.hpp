@@ -16,6 +16,7 @@ static constexpr scope_flags_t ClassTpl = 1 << 5;  // 32
 static constexpr scope_flags_t Fun = 1 << 6;       // 64
 static constexpr scope_flags_t Break = 1 << 7;     // 128
 static constexpr scope_flags_t Continue = 1 << 8;  // 256
+static constexpr scope_flags_t Last = 1 << 9;
 } // namespace scp
 
 } // namespace ulam

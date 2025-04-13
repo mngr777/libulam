@@ -126,7 +126,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     if (var->requires_value()) {
         if (node->has_init()) {
             auto init = _eval.init_helper(scope);
-            auto [val, ok] = init->eval(var->type(), node->init());
+            auto [val, ok] = init->eval_init(var->type(), node->init());
             if (!ok)
                 RET_UPD_STATE(var, false);
             var->set_value(std::move(val));
@@ -178,7 +178,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
 
     if (node->has_init()) {
         auto init = _eval.init_helper(ref(scope_view));
-        auto [val, ok] = init->eval(type, node->init());
+        auto [val, ok] = init->eval_init(type, node->init());
         if (!ok)
             RET_UPD_STATE(prop, false);
         prop->set_default_value(val.move_rvalue());

@@ -69,7 +69,7 @@ ExprRes EvalFuncall::do_funcall(
     Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
     if (fun->is_native()) {
         // can't eval, return empty value
-        _diag.notice(node, "cannot evaluate native function");
+        diag().notice(node, "cannot evaluate native function");
         if (fun->ret_type()->is_ref()) {
             LValue lval;
             lval.set_is_xvalue(false);
@@ -78,11 +78,11 @@ ExprRes EvalFuncall::do_funcall(
         return {fun->ret_type(), Value{RValue{}}};
 
     } else if (fun->is_pure_virtual()) {
-        _diag.error(node, "function is pure virtual");
+        diag().error(node, "function is pure virtual");
         return {ExprError::FunctionIsPureVirtual};
     }
     assert(fun->node()->has_body());
-    return _eval.funcall(fun, self.self(), std::move(args));
+    return eval().funcall(fun, self.self(), std::move(args));
 }
 
 std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(
@@ -94,10 +94,10 @@ std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(
     auto error = ExprError::Ok;
     auto match_res = fset->find_match(dyn_cls, args);
     if (match_res.empty()) {
-        _diag.error(node, "no matching functions found");
+        diag().error(node, "no matching functions found");
         error = ExprError::NoMatchingFunction;
     } else if (match_res.size() > 1) {
-        _diag.error(node, "ambiguous function call");
+        diag().error(node, "ambiguous function call");
         error = ExprError::AmbiguousFunctionCall;
     }
     return {std::move(match_res), error};
@@ -106,7 +106,7 @@ std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(
 ExprResList
 EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
     assert(fun->params().size() == args.size());
-    auto cast = _eval.cast_helper(_scope);
+    auto cast = eval().cast_helper(scope(), flags());
 
     auto arg_it = args.begin();
     auto param_it = fun->params().begin();

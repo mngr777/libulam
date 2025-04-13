@@ -323,20 +323,22 @@ Ptr<Resolver> EvalVisitor::resolver() {
     return make<Resolver>(*this, diag(), builtins(), _program->str_pool());
 }
 
-Ptr<EvalExprVisitor> EvalVisitor::expr_visitor(Ref<Scope> scope) {
-    return make<EvalExprVisitor>(*this, scope);
+Ptr<EvalExprVisitor>
+EvalVisitor::expr_visitor(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalExprVisitor>(*this, _program, scope, flags);
 }
 
-Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope) {
-    return make<EvalInit>(*this, diag(), _program->str_pool(), scope);
+Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalInit>(*this, _program, scope, flags);
 }
 
-Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope) {
-    return make<EvalCast>(*this, diag(), scope);
+Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalCast>(*this, _program, scope, flags);
 }
 
-Ptr<EvalFuncall> EvalVisitor::funcall_helper(Ref<Scope> scope) {
-    return make<EvalFuncall>(*this, diag(), scope);
+Ptr<EvalFuncall>
+EvalVisitor::funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
+    return make<EvalFuncall>(*this, _program, scope, flags);
 }
 
 ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
@@ -417,7 +419,7 @@ EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
     if (var->value().empty()) {
         if (node->has_init()) {
             auto init = init_helper(scope());
-            auto [val, ok] = init->eval(var->type(), node->init());
+            auto [val, ok] = init->eval_init(var->type(), node->init());
             if (!ok)
                 throw EvalExceptError("failed to eval init value");
             var->set_value(std::move(val));

@@ -55,9 +55,9 @@ EvalCast::CastRes EvalCast::maybe_cast(
             auto status = res ? CastOk : CastError;
             return {std::move(res), status};
         }
-        _diag.error(node, "suggest explicit cast");
+        diag().error(node, "suggest explicit cast");
     }
-    _diag.error(node, "invalid cast");
+    diag().error(node, "invalid cast");
     return {ExprRes{ExprError::InvalidCast}, InvalidCast};
 }
 
@@ -151,10 +151,10 @@ ExprRes EvalCast::cast_class_default(
 ExprRes EvalCast::cast_class_fun(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl) {
     assert(arg.type()->is_class());
-    auto funcall = _eval.funcall_helper(_scope);
+    auto funcall = eval().funcall_helper(scope(), flags());
     ExprRes res = funcall->funcall(node, fun, std::move(arg), {});
     if (!res)
-        _diag.error(node, "conversion failed");
+        diag().error(node, "conversion failed");
     return res;
 }
 
@@ -203,11 +203,11 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
     const auto& val = arg.value();
 
     if (val.is_rvalue()) {
-        _diag.error(node, "cannot take a reference of rvalue");
+        diag().error(node, "cannot take a reference of rvalue");
         return {ExprError::InvalidCast};
     }
     if (val.lvalue().is_xvalue()) {
-        _diag.error(node, "cannot take a reference to xvalue");
+        diag().error(node, "cannot take a reference to xvalue");
         return {ExprError::InvalidCast};
     }
     if (type->deref()->is_class() && val.has_rvalue())

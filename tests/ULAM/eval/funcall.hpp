@@ -7,13 +7,7 @@
 
 class EvalFuncall : public ulam::sema::EvalFuncall {
 public:
-    EvalFuncall(
-        ulam::sema::EvalVisitor& eval,
-        ulam::Diag& diag,
-        ulam::UniqStrPool& str_pool,
-        ulam::Ref<ulam::Scope> scope):
-        ulam::sema::EvalFuncall::EvalFuncall{eval, diag, scope},
-        _str_pool{str_pool} {}
+    using ulam::sema::EvalFuncall::EvalFuncall;
 
 protected:
     virtual ulam::sema::ExprRes funcall_callable(
@@ -29,6 +23,4 @@ protected:
         ulam::sema::ExprResList&& args);
 
     std::string arg_data(const ulam::sema::ExprResList& args);
-
-    ulam::UniqStrPool& _str_pool;
 };

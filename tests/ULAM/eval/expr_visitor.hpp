@@ -3,7 +3,9 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/expr_res.hpp>
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/sema/eval/flags.hpp>
 
 class EvalExprVisitor : public ulam::sema::EvalExprVisitor {
 public:
@@ -12,9 +14,12 @@ public:
 
     EvalExprVisitor(
         EvalVisitor& eval,
+        ulam::Ref<ulam::Program> program,
         Stringifier& stringifier,
-        ulam::Ref<ulam::Scope> scope):
-        ulam::sema::EvalExprVisitor{eval, scope}, _stringifier{stringifier} {}
+        ulam::Ref<ulam::Scope> scope,
+        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
+        ulam::sema::EvalExprVisitor{eval, program, scope, flags},
+        _stringifier{stringifier} {}
 
     ExprRes visit(ulam::Ref<ulam::ast::BoolLit> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::NumLit> node) override;

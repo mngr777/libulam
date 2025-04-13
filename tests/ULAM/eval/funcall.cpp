@@ -24,10 +24,9 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
         }
 
         if (!fun->is_op() || fun->is_op_alias()) {
-            std::string name{_str_pool.get(fun->name_id())};
             auto pos = data.rfind(FunPh);
             if (pos != std::string::npos) {
-                data.replace(pos, FunPh.size(), name);
+                data.replace(pos, FunPh.size(), str(fun->name_id()));
             } else {
                 data.clear();
             }
@@ -56,7 +55,7 @@ ulam::sema::ExprRes EvalFuncall::funcall_obj(
     if (obj.has_data()) {
         auto arg_str = arg_data(args);
         if (!arg_str.empty()) {
-            std::string fun_name{_str_pool.get(fun->name_id())};
+            std::string fun_name{str(fun->name_id())};
             data = obj.data<std::string>() + " " + arg_str + fun_name + " .";
         }
     }

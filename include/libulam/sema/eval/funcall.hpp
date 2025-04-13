@@ -1,23 +1,20 @@
 #pragma once
 #include <libulam/ast/nodes/expr.hpp>
-#include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/sema/eval/helper.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/typed_value.hpp>
 
-// TODO: interface
-
 namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalFuncall {
+class EvalFuncall : public EvalHelper {
 public:
-    EvalFuncall(EvalVisitor& eval, Diag& diag, Ref<Scope> scope):
-        _eval{eval}, _diag{diag}, _scope{scope} {}
+    using EvalHelper::EvalHelper;
 
     virtual ExprRes
     construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);
@@ -49,10 +46,6 @@ protected:
 
     virtual ExprResList
     cast_args(Ref<ast::Node>, Ref<Fun> fun, ExprResList&& args);
-
-    EvalVisitor& _eval;
-    Diag& _diag;
-    Ref<Scope> _scope;
 };
 
 } // namespace ulam::sema

@@ -14,7 +14,7 @@ EvalInit::array_dims(unsigned num, Ref<ast::InitValue> init) {
     bool ok = true;
 
     if (!init->is<ast::InitList>()) {
-        _diag.error(init, "init value is not an array");
+        diag().error(init, "init value is not an array");
         return {std::move(dims), false};
     }
 
@@ -29,7 +29,7 @@ EvalInit::array_dims(unsigned num, Ref<ast::InitValue> init) {
         first.accept(
             [&](Ptr<ast::InitList>& sublist) { cur = ref(sublist); },
             [&](auto&& other) {
-                _diag.error(ref(other), "not an array");
+                diag().error(ref(other), "not an array");
                 cur = {};
                 ok = false;
             });
@@ -37,7 +37,7 @@ EvalInit::array_dims(unsigned num, Ref<ast::InitValue> init) {
     return {std::move(dims), ok};
 }
 
-EvalInit::EvalRes EvalInit::eval(Ref<Type> type, Ref<ast::InitValue> init) {
+EvalInit::EvalRes EvalInit::eval_init(Ref<Type> type, Ref<ast::InitValue> init) {
     return eval_v(type, init->get(), 1);
 }
 
@@ -56,12 +56,12 @@ EvalInit::eval_v(Ref<Type> type, Variant& init, unsigned depth) {
 EvalInit::EvalRes
 EvalInit::eval_expr(Ref<Type> type, Ref<ast::Expr> expr, unsigned depth) {
     // eval
-    auto ev = _eval.expr_visitor(_scope);
+    auto ev = eval().expr_visitor(scope(), flags());
     auto res = expr->accept(*ev);
 
     // cast
     if (res) {
-        auto cast = _eval.cast_helper(_scope);
+        auto cast = eval().cast_helper(scope(), flags());
         res = cast->cast(expr, type, std::move(res));
     }
     if (!res)
@@ -76,7 +76,7 @@ EvalInit::eval_list(Ref<Type> type, Ref<ast::InitList> list, unsigned depth) {
     } else if (type->is_array()) {
         return eval_array_list(type->as_array(), list, depth);
     } else {
-        _diag.error(
+        diag().error(
             list, "variable of scalar type cannot have initializer list");
         return {Value{RValue{}}, false};
     }
@@ -87,7 +87,7 @@ EvalInit::eval_map(Ref<Type> type, Ref<ast::InitMap> map, unsigned depth) {
     if (type->is_class()) {
         return eval_class_map(type->as_class(), map, depth);
     } else {
-        _diag.error(
+        diag().error(
             map, "designated initializers are only supported for classes");
         return {Value{RValue{}}, false};
     }
@@ -96,12 +96,12 @@ EvalInit::eval_map(Ref<Type> type, Ref<ast::InitMap> map, unsigned depth) {
 EvalInit::EvalRes EvalInit::eval_class_list(
     Ref<Class> cls, Ref<ast::InitList> list, unsigned depth) {
     // eval args
-    auto ev = _eval.expr_visitor(_scope);
+    auto ev = eval().expr_visitor(scope(), flags());
     ExprResList args;
     for (unsigned n = 0; n < list->size(); ++n) {
         auto& item = list->get(n);
         if (!item.is<Ptr<ast::Expr>>()) {
-            _diag.error(
+            diag().error(
                 list->child(n), "initializer list arguments are not supported");
             return {Value{RValue{}}, false};
         }
@@ -113,7 +113,7 @@ EvalInit::EvalRes EvalInit::eval_class_list(
     }
 
     // call constructor
-    auto funcall = _eval.funcall_helper(_scope);
+    auto funcall = eval().funcall_helper(scope(), flags());
     auto obj = funcall->construct(list, cls, std::move(args));
     if (!obj)
         return {Value{RValue{}}, false};
@@ -133,10 +133,10 @@ EvalInit::EvalRes EvalInit::eval_array_list(
     bool autofill = (depth == 1) && !item_type->is_array();
     if (!autofill) {
         if (list->size() < size) {
-            _diag.error(list, "not enough items");
+            diag().error(list, "not enough items");
             return {Value{RValue{}}, false};
         } else if (size < list->size()) {
-            _diag.error(list, "too many items");
+            diag().error(list, "too many items");
             return {Value{RValue{}}, false};
         }
     }
@@ -187,18 +187,16 @@ EvalInit::EvalRes EvalInit::eval_class_map(
         auto sym = cls->get(key);
         // not found?
         if (!sym) {
-            auto name = _str_pool.get(key);
-            auto message = std::string{"property `"} + std::string{name} +
+            auto message = std::string{"property `"} + std::string{str(key)} +
                            "' not found in " + cls->name();
-            _diag.error(map->child_by_key(key), std::move(message));
+            diag().error(map->child_by_key(key), std::move(message));
             return {Value{RValue{}}, false};
         }
         // not a property?
         if (!sym->is<Prop>()) {
-            auto name = _str_pool.get(key);
-            auto message =
-                cls->name() + "." + std::string{name} + " is not a property";
-            _diag.error(map->child_by_key(key), std::move(message));
+            auto message = cls->name() + "." + std::string{str(key)} +
+                           " is not a property";
+            diag().error(map->child_by_key(key), std::move(message));
             return {Value{RValue{}}, false};
         }
 
