@@ -9,7 +9,7 @@ ulam::sema::ExprRes EvalCast::cast(
     bool expl) {
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
     if (status == CastOk)
-        res.set_flag(expl ? ExplCast : ImplCast);
+        res.set_flag(expl ? exp::ExplCast : exp::ImplCast);
     return std::move(res);
 }
 
@@ -20,7 +20,7 @@ ulam::sema::ExprRes EvalCast::cast(
     bool expl) {
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
     if (status == CastOk)
-        res.set_flag(expl ? ExplCast : ImplCast);
+        res.set_flag(expl ? exp::ExplCast : exp::ImplCast);
     return std::move(res);
 }
 

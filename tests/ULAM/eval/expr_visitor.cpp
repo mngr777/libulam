@@ -19,7 +19,7 @@ namespace {
 using flags_t = ulam::sema::ExprRes::flags_t;
 
 std::string add_cast(std::string&& data, flags_t flags) {
-    if ((flags & ExplCast) || (flags & ImplCast) == 0)
+    if ((flags & exp::ExplCast) || (flags & exp::ImplCast) == 0)
         return data + " cast";
     return std::move(data);
 }
@@ -29,7 +29,7 @@ std::string add_array_access(
     assert(!data.empty());
 
     // TODO: use a flag
-    if (*data.rbegin() == '.' && (flags & ExtMemberAccess)) {
+    if (*data.rbegin() == '.' && (flags & exp::ExtMemberAccess)) {
         // ULAM quirk:
         // `a.b[c] -> `a b c [] .`, but
         // `/* self. */ b[c]` -> `self b . c []`
@@ -203,7 +203,7 @@ EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
     auto res = ulam::sema::EvalExprVisitor::ident_self(node);
     if (res) {
         res.set_data(std::string{"self"});
-        res.set_flag(Self);
+        res.set_flag(exp::Self);
     }
     return res;
 }
@@ -248,7 +248,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
     EvalExprVisitor::ExprRes&& obj,
     EvalExprVisitor::ExprRes&& idx) {
     auto data = obj.data<std::string>("");
-    bool ext_member_access = obj.has_flag(ExtMemberAccess);
+    bool ext_member_access = obj.has_flag(exp::ExtMemberAccess);
     if (!data.empty() && ext_member_access) {
         // ULAM quirk:
         // `a.b[c] -> `a b c [] .`, but
@@ -340,7 +340,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
     ulam::Ref<ulam::Prop> prop) {
     if (!obj)
         return std::move(obj);
-    bool is_self = obj.has_flag(Self);
+    bool is_self = obj.has_flag(exp::Self);
     auto data = obj.data<std::string>("");
     auto res = ulam::sema::EvalExprVisitor::member_access_prop(
         node, std::move(obj), prop);
@@ -350,7 +350,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
         data += std::string{" "} + std::string{str(prop->name_id())} + " .";
         res.set_data(data);
         if (!is_self)
-            res.set_flag(ExtMemberAccess);
+            res.set_flag(exp::ExtMemberAccess);
     }
     return res;
 }
