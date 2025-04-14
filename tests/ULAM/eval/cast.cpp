@@ -54,7 +54,7 @@ ulam::sema::ExprRes EvalCast::cast_class_fun_after(
 
 void EvalCast::update_res(
     ulam::sema::ExprRes& res, EvalCast::CastStatus status, bool expl) {
-    if (!res || status == EvalCast::NoCast)
+    if (!res || (!expl && status == EvalCast::NoCast))
         return;
     assert(status != EvalCast::InvalidCast && status != EvalCast::CastError);
     auto data = res.data<std::string>("");
