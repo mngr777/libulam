@@ -1,6 +1,13 @@
 #include "./type_str.hpp"
 #include <sstream>
 
+std::string type_str(ulam::Ref<ulam::Type> type) {
+    auto str = type_base_name(type) + type_dim_str(type);
+    if (type->is_ref())
+        str += "&";
+    return str;
+}
+
 std::string type_base_name(ulam::Ref<ulam::Type> type) {
     type = type->canon();
     while (type->is_array())

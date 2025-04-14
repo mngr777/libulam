@@ -101,7 +101,7 @@ protected:
         LValue lval,
         Ref<ast::Expr> arg_node,
         ExprRes&& arg,
-        Ref<ast::TypeName> type_name = {});
+        Ref<Type> type = {});
 
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, ExprRes arg);
