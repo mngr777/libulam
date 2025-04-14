@@ -19,6 +19,7 @@ public:
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::If> node) override;
+    void visit(ulam::Ref<ulam::ast::For> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
@@ -26,7 +27,7 @@ public:
     bool in_main() const { return _stack.size() == 1; }
 
     bool codegen_enabled() const {
-        return in_main() && !(flags() & evl::NoCodegen);
+        return in_main() && !has_flag(evl::NoCodegen);
     }
 
     const std::string& data() const { return _data; }
@@ -62,8 +63,11 @@ protected:
         ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;
 
 private:
+    unsigned next_loop_idx() { return ++_loop_idx; }
+
     void append(std::string data, bool nospace = false);
 
     Stringifier _stringifier;
     std::string _data;
+    unsigned _loop_idx{0}; // ??
 };

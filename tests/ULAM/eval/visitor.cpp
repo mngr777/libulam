@@ -5,7 +5,9 @@
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
+#include "libulam/sema/eval/flags.hpp"
 #include "libulam/sema/eval/visitor.hpp"
+#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -53,20 +55,58 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     // codegen
     if (codegen_enabled()) {
         auto no_exec_raii = flags_raii(flags() | ulam::sema::evl::NoExec);
-        auto scope_raii{
-            _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue)};
+        auto scope_raii =
+            _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
         append("{");
 
-        // cond
+        // cond, TODO: cast to Bool
         auto cond_res = eval_expr(node->cond());
         if (cond_res.has_data()) {
             append(cond_res.data<std::string>());
             append("cond");
         }
+
         // body
         node->body()->accept(*this);
 
-        append("_1: while"); // TODO
+        append("_" + std::to_string(next_loop_idx()) + ": while");
+        append("}");
+    }
+
+    // exec
+    auto no_codegen_raii = flags_raii(flags() | evl::NoCodegen);
+    ulam::sema::EvalVisitor::visit(node);
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
+    // codegen
+    if (codegen_enabled()) {
+        auto no_exec_raii = flags_raii(flags() | ulam::sema::evl::NoExec);
+        auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
+        append("{");
+
+        // init
+        if (node->has_init())
+            node->init()->accept(*this);
+
+        // cond, TODO: cast to Bool
+        if (node->has_cond()) {
+            auto cond_res = eval_expr(node->cond());
+            if (cond_res.has_data())
+                append(cond_res.data<std::string>());
+        }
+        append("cond");
+
+        // body
+        node->body()->accept(*this);
+
+        append("_" + std::to_string(next_loop_idx()) + ":");
+        if (node->has_upd()) {
+            auto upd_res = eval_expr(node->upd());
+            if (upd_res.has_data())
+                append(upd_res.data<std::string>());
+        }
+        append("while");
         append("}");
     }
 
@@ -83,7 +123,9 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
             append("return");
         }
     }
-    throw ulam::sema::EvalExceptReturn(node, std::move(res));
+    // TODO: check scope, type
+    if (!has_flag(ulam::sema::evl::NoExec))
+        throw ulam::sema::EvalExceptReturn(node, std::move(res));
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
