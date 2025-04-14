@@ -28,7 +28,6 @@ std::string add_array_access(
     const std::string& data, const std::string& idx_data, flags_t flags) {
     assert(!data.empty());
 
-    // TODO: use a flag
     if (*data.rbegin() == '.' && (flags & exp::ExtMemberAccess)) {
         // ULAM quirk:
         // `a.b[c] -> `a b c [] .`, but
@@ -169,11 +168,19 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
     std::string data;
     if (arg.has_data()) {
         data = arg.data<std::string>();
-        std::string op_str{ulam::ops::str(op)};
         if (op == ulam::Op::UnaryMinus || op == ulam::Op::UnaryPlus) {
+            // +<num> | -<num>
+            std::string op_str{ulam::ops::str(op)};
             data = op_str + data;
+        } else if (op == ulam::Op::PreInc || op == ulam::Op::PreDec) {
+            // x 1 [cast] += | x 1 [cast] -=
+            std::string op_str{(op == ulam::Op::PreInc) ? "+=" : "-="};
+            std::string inc_str{arg.type()->is(ulam::IntId) ? "1" : "1 cast"};
+            data += " " + inc_str + " " + op_str;
         } else {
-            data = data + " " + op_str;
+            // x <op>
+            std::string op_str{ulam::ops::str(op)};
+            data += " " + op_str;
         }
     }
     auto res = ulam::sema::EvalExprVisitor::apply_unary_op(
