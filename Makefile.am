@@ -126,6 +126,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/init.hpp \
 	include/libulam/sema/eval/stack.hpp \
 	include/libulam/sema/eval/visitor.hpp \
+	include/libulam/sema/expr_error.hpp \
 	include/libulam/sema/expr_res.hpp \
 	include/libulam/sema/init.hpp \
 	include/libulam/sema/resolver.hpp \

@@ -13,7 +13,15 @@ class EvalVisitor;
 
 class EvalCast : public EvalHelper {
 public:
-    enum CastStatus { CastOk, InvalidCast, CastError, NoCast };
+    enum CastStatus {
+        CastOk,
+        InvalidCast,
+        CastError,
+        NoCast,
+        CastRef,
+        CastDeref,
+        CastDown
+    };
     using CastRes = std::pair<ExprRes, CastStatus>;
 
     using EvalHelper::EvalHelper;
@@ -81,8 +89,6 @@ protected:
 
     ExprRes take_ref(Ref<ast::Node> node, ExprRes&& arg);
     ExprRes deref(ExprRes&& arg);
-
-    ExprRes change_type(Ref<Type> type, ExprRes&& arg);
 };
 
 } // namespace ulam::sema

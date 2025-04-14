@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/sema/expr_error.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <list>
@@ -15,63 +16,15 @@ class Type;
 
 namespace ulam::sema {
 
-enum class ExprError {
-    Ok,
-    Error,
-    NoSelf,
-    NoSuper,
-    BaseNotFound,
-    SymbolNotFound,
-    MemberNotFound,
-    UnresolvableType,
-    UnresolvableClassConst,
-    UnresolvableVar,
-    UnresolvableProp,
-    UnresolvableFunSet,
-    NotAssignable,
-    NotImplemented,
-    NotFunction,
-    NotClassConst,
-    NotArray,
-    TypeMismatch,
-    UnknownArrayIndex,
-    ArrayIndexOutOfRange,
-    CharIndexOutOfRange,
-    NotObject,
-    NotClass,
-    NoOperator,
-    InvalidTypeOperator,
-    InvalidOperandType,
-    CastRequired,
-    InvalidCast,
-    NonVoidReturn,
-    NoReturn,
-    NoReturnValue,
-    NotReference,
-    ReferenceToLocal,
-    InvalidReturnType,
-    NoMatchingFunction,
-    FunctionIsPureVirtual,
-    AmbiguousFunctionCall,
-    NotConsteval,
-    NonScalarInit,
-    DesignatedInit,
-    InitListArgument,
-    InitNotEnoughItems,
-    InitTooManyItems,
-    InitPropNotInClass,
-    InitNotProp
-};
-
 class ExprRes {
 public:
     using flags_t = std::uint16_t;
 
-    ExprRes(TypedValue&& tv, ExprError error = ExprError::Ok):
-        _typed_value{std::move(tv)}, _error{error}, _flags{0} {}
+    ExprRes(TypedValue&& tv):
+        _typed_value{std::move(tv)}, _error{ExprError::Ok}, _flags{0} {}
 
-    ExprRes(Ref<Type> type, Value&& value, ExprError error = ExprError::Ok):
-        _typed_value{type, std::move(value)}, _error{error}, _flags{0} {}
+    ExprRes(Ref<Type> type, Value&& value):
+        ExprRes{{type, std::move(value)}} {}
 
     ExprRes(ExprError error = ExprError::NotImplemented):
         _error{error}, _flags{0} {}
@@ -89,6 +42,17 @@ public:
         res._data = _data;
         res._flags = _flags;
         return res;
+    }
+
+    ExprRes derived(TypedValue&& tv) {
+        ExprRes res{std::move(tv)};
+        res._data = _data;
+        res._flags = _flags;
+        return res;
+    }
+
+    ExprRes derived(Ref<Type> type, Value&& val) {
+        return derived({type, std::move(val)});
     }
 
     bool ok() const { return _error == ExprError::Ok; }
