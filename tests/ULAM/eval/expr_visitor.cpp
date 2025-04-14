@@ -1,5 +1,6 @@
 #include "./expr_visitor.hpp"
 #include "./expr_flags.hpp"
+#include "../type_str.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -163,7 +164,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
     ulam::LValue lval,
     ulam::Ref<ulam::ast::Expr> arg_node,
     EvalExprVisitor::ExprRes&& arg,
-    ulam::Ref<ulam::ast::TypeName> type_name) {
+    ulam::Ref<ulam::Type> type) {
 
     std::string data;
     if (arg.has_data()) {
@@ -178,13 +179,15 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
             std::string inc_str{arg.type()->is(ulam::IntId) ? "1" : "1 cast"};
             data += " " + inc_str + " " + op_str;
         } else {
-            // x <op>
+            // x <op> | x Type is
             std::string op_str{ulam::ops::str(op)};
+            if (type)
+                data += " " + type_str(type);
             data += " " + op_str;
         }
     }
     auto res = ulam::sema::EvalExprVisitor::apply_unary_op(
-        node, op, lval, arg_node, std::move(arg), type_name);
+        node, op, lval, arg_node, std::move(arg), type);
     if (res && !data.empty())
         res.set_data(data);
     return res;

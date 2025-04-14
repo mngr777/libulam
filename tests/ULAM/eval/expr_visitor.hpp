@@ -41,7 +41,7 @@ protected:
         ulam::LValue lval,
         ulam::Ref<ulam::ast::Expr> arg_node,
         ExprRes&& arg,
-        ulam::Ref<ulam::ast::TypeName> type_name) override;
+        ulam::Ref<ulam::Type> type) override;
 
     ExprRes type_op(
         ulam::Ref<ulam::ast::TypeOpExpr> node,

@@ -542,8 +542,8 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             return res;
 
         // create var in tmp scope
-        auto var =
-            make<Var>(param->type_node(), param->node(), type, arg_res.move_value());
+        auto var = make<Var>(
+            param->type_node(), param->node(), type, arg_res.move_value());
         cls_params.push_back(ref(var)); // add to list
         param_scope->set(param->name_id(), std::move(var));
     }
@@ -698,7 +698,15 @@ ExprRes EvalExprVisitor::unary_op(
     case TypeError::Ok:
         break;
     }
-    return apply_unary_op(node, op, lval, arg_node, std::move(arg), type_name);
+
+    Ref<Type> type{};
+    if (type_name) {
+        type = eval().resolver()->resolve_type_name(type_name, scope());
+        if (!type)
+            return {ExprError::UnresolvableType};
+    }
+
+    return apply_unary_op(node, op, lval, arg_node, std::move(arg), type);
 }
 
 ExprRes EvalExprVisitor::apply_unary_op(
@@ -707,7 +715,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
     LValue lval,
     Ref<ast::Expr> arg_node,
     ExprRes&& arg,
-    Ref<ast::TypeName> type_name) {
+    Ref<Type> type) {
 
     auto arg_type = arg.type()->deref();
     if (arg_type->is_prim()) {
@@ -729,11 +737,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
 
     } else if (arg_type->is_object()) {
         if (op == Op::Is) {
-            assert(type_name);
-            auto type =
-                eval().resolver()->resolve_type_name(type_name, scope());
-            if (!type)
-                return {ExprError::UnresolvableType};
+            assert(type);
             if (!check_is_object(node, type))
                 return {ExprError::NotObject};
             assert(op == Op::Is);
