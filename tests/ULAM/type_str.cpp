@@ -21,3 +21,9 @@ std::string type_dim_str(ulam::Ref<ulam::Type> type) {
         out << "[" << *it << "]";
     return out.str();
 }
+
+std::string type_def_str(ulam::Ref<ulam::AliasType> alias) {
+    auto aliased = alias->aliased();
+    return "typedef " + type_base_name(aliased) + " " + alias->name() +
+           type_dim_str(aliased) + "; ";
+}

@@ -6,3 +6,5 @@
 std::string type_base_name(ulam::Ref<ulam::Type> type);
 
 std::string type_dim_str(ulam::Ref<ulam::Type> type);
+
+std::string type_def_str(ulam::Ref<ulam::AliasType> alias);

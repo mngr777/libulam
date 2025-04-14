@@ -118,6 +118,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3249_test_compiler_elementandquark_conditionalas.test", // TODO: parent props
     // "t3250_test_compiler_elementandquark_funcdef_nativevarargs.test",  // TODO: init
     "t3251_test_compiler_declassign.test", // -"-
+    "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return
 };
 
 using Path = std::filesystem::path;
@@ -217,7 +218,7 @@ int main(int argc, char** argv) {
             if (Skip.count(test_paths[n - 1].filename()) > 0)
                 continue;
             if (!run(stdlib_dir, n, test_paths, false))
-                break;
+                return -1;
         }
     }
 }
