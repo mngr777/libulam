@@ -20,7 +20,7 @@ ExprRes EvalCast::cast(
 
 EvalCast::CastRes EvalCast::maybe_cast(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    if (to->is_ref()) {
+    if (to->is_ref() && !arg.value().is_lvalue()) {
         // taking or casting a reference
         arg = take_ref(node, std::move(arg));
 

@@ -280,6 +280,10 @@ Value Value::bound_fset(Ref<FunSet> fset) {
     return accept([&](auto& val) { return Value{val.bound_fset(fset)}; });
 }
 
+Value Value::copy() const {
+    return is_lvalue() ? Value{lvalue()} : Value{copy_rvalue()};
+}
+
 RValue Value::copy_rvalue() const {
     return accept(
         [&](const LValue& lval) { return lval.rvalue(); },

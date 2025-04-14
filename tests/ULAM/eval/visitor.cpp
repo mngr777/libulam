@@ -108,12 +108,31 @@ ulam::Ref<ulam::Var> EvalVisitor::var_def(
     ulam::Ref<ulam::ast::TypeName> type_name,
     ulam::Ref<ulam::ast::VarDef> node) {
     auto var = ulam::sema::EvalVisitor::var_def(type_name, node);
+    if (var && codegen_enabled())
+        append("; ", true);
+    return var;
+}
+
+ulam::Ptr<ulam::Var> EvalVisitor::make_var(
+    ulam::Ref<ulam::ast::TypeName> type_name,
+    ulam::Ref<ulam::ast::VarDef> node) {
+    auto var = ulam::sema::EvalVisitor::make_var(type_name, node);
     if (var && codegen_enabled()) {
         std::string name{_program->str_pool().get(var->name_id())};
         append(type_base_name(var->type()));
-        append(name + type_dim_str(var->type()) + "; ");
+        append(name + type_dim_str(var->type()));
     }
     return var;
+}
+
+void EvalVisitor::var_set_init(
+    ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) {
+    auto data = init.data<std::string>("");
+    ulam::sema::EvalVisitor::var_set_init(var, std::move(init));
+    if (!data.empty() && codegen_enabled()) {
+        append("=");
+        append(data);
+    }
 }
 
 ulam::sema::ExprRes EvalVisitor::_eval_expr(
@@ -131,8 +150,8 @@ EvalVisitor::FlagsRaii EvalVisitor::flags_raii(ulam::sema::eval_flags_t flags) {
     return {*this, flags};
 }
 
-void EvalVisitor::append(std::string data) {
-    if (!_data.empty())
+void EvalVisitor::append(std::string data, bool nospace) {
+    if (!nospace && !_data.empty())
         _data += " ";
     _data += std::move(data);
 }

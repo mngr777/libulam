@@ -140,10 +140,10 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             if (!var->is_local() && !var->type()->is_ref())
                 flags |= evl::Consteval; // class/module const
             auto init = _eval.init_helper(scope, flags);
-            auto [val, ok] = init->eval_init(var->type(), node->init());
-            if (!ok)
+            auto init_res = init->eval_init(var->type(), node->init());
+            if (!init_res)
                 RET_UPD_STATE(var, false);
-            var->set_value(std::move(val));
+            var->set_value(init_res.move_value());
         } else {
             auto name = node->name();
             _diag.error(
@@ -192,15 +192,13 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     if (node->has_init()) {
         auto flags = _flags | evl::Consteval;
         auto init = _eval.init_helper(ref(scope_view), flags);
-        auto [val, ok] = init->eval_init(type, node->init());
-        if (!ok)
+        auto init_res = init->eval_init(type, node->init());
+        if (!init_res)
             RET_UPD_STATE(prop, false);
-        prop->set_default_value(val.move_rvalue());
-
+        prop->set_default_value(init_res.move_value().move_rvalue());
     } else {
         prop->set_default_value(type->construct());
     }
-
     return true;
 }
 

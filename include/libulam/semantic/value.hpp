@@ -148,6 +148,8 @@ public:
     Value prop(Ref<Prop> prop);
     Value bound_fset(Ref<FunSet> fset);
 
+    Value copy() const;
+
     RValue copy_rvalue() const;
     RValue move_rvalue();
 

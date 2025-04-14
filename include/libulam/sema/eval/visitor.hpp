@@ -79,6 +79,12 @@ protected:
     virtual Ref<Var>
     var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
 
+    virtual Ptr<Var>
+    make_var(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
+
+    virtual void var_set_init(Ref<Var> var, ExprRes&& init);
+    virtual void var_set_default(Ref<Var> var);
+
     virtual ExprRes ret_res(Ref<ast::Return> node);
 
     ExprRes eval_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);

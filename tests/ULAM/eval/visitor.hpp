@@ -50,6 +50,13 @@ protected:
         ulam::Ref<ulam::ast::TypeName> type_name,
         ulam::Ref<ulam::ast::VarDef> node) override;
 
+    ulam::Ptr<ulam::Var> make_var(
+        ulam::Ref<ulam::ast::TypeName> type_name,
+        ulam::Ref<ulam::ast::VarDef> node) override;
+
+    void
+    var_set_init(ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) override;
+
     ulam::sema::ExprRes _eval_expr(
         ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;
 
@@ -71,7 +78,7 @@ private:
 
     FlagsRaii flags_raii(ulam::sema::eval_flags_t flags);
 
-    void append(std::string data);
+    void append(std::string data, bool nospace = false);
 
     Stringifier _stringifier;
     std::string _data;

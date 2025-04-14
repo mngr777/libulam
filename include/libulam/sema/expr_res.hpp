@@ -53,7 +53,14 @@ enum class ExprError {
     NoMatchingFunction,
     FunctionIsPureVirtual,
     AmbiguousFunctionCall,
-    NotConsteval
+    NotConsteval,
+    NonScalarInit,
+    DesignatedInit,
+    InitListArgument,
+    InitNotEnoughItems,
+    InitTooManyItems,
+    InitPropNotInClass,
+    InitNotProp
 };
 
 class ExprRes {
@@ -72,14 +79,23 @@ public:
     ExprRes(ExprRes&&) = default;
     ExprRes& operator=(ExprRes&&) = default;
 
+    ExprRes copy() const {
+        ExprRes res;
+        if (ok()) {
+            res = {type(), value().copy()};
+        } else {
+            res = {error()};
+        }
+        res._data = _data;
+        res._flags = _flags;
+        return res;
+    }
+
     bool ok() const { return _error == ExprError::Ok; }
     operator bool() const { return ok(); }
 
-    Ref<Type> type() { return _typed_value.type(); }
-    Ref<const Type> type() const { return _typed_value.type(); }
-
-    const Value& value() { return _typed_value.value(); }
-
+    Ref<Type> type() const { return _typed_value.type(); }
+    const Value& value() const { return _typed_value.value(); }
     const TypedValue& typed_value() const { return _typed_value; }
 
     TypedValue move_typed_value() {
@@ -94,6 +110,7 @@ public:
 
     bool has_flag(flags_t flag) const { return _flags & flag; }
     void set_flag(flags_t flag) { _flags |= flag; }
+    void uns_flag(flags_t flag) { _flags &= ~flag; }
 
     flags_t flags() const { return _flags; }
     void set_flags(flags_t flags) { _flags = flags; };

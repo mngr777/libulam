@@ -102,7 +102,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
     if (!arg)
         return arg;
 
-    auto res = unary_op(node, node->op(), node->arg(), std::move(arg), node->type_name());
+    auto res = unary_op(
+        node, node->op(), node->arg(), std::move(arg), node->type_name());
     return check(node, std::move(res));
 }
 
@@ -518,35 +519,31 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             return res;
 
         // value
-        Value val{RValue{}};
+        ExprRes arg_res;
         if (n < args->child_num()) {
             // argument provided
             auto arg = args->get(n);
-            auto arg_res = arg->accept(*this);
+            arg_res = arg->accept(*this);
             if (arg_res)
                 arg_res =
                     cast->cast(arg, type, arg_res.move_typed_value(), false);
-            if (!arg_res)
-                return res;
-            val = arg_res.move_value();
 
         } else if (param->node()->has_init()) {
             // default argument
             auto init = eval().init_helper(ref(param_scope), flags());
-            bool ok{};
-            std::tie(val, ok) = init->eval_init(type, param->node()->init());
-            if (!ok)
-                return res;
+            arg_res = init->eval_init(type, param->node()->init());
 
         } else {
             diag().error(args, "not enough arguments");
             return res;
         }
         ++n;
+        if (!arg_res)
+            return res;
 
         // create var in tmp scope
         auto var =
-            make<Var>(param->type_node(), param->node(), type, std::move(val));
+            make<Var>(param->type_node(), param->node(), type, arg_res.move_value());
         cls_params.push_back(ref(var)); // add to list
         param_scope->set(param->name_id(), std::move(var));
     }

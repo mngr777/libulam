@@ -164,9 +164,9 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
             if (resolver->resolve(ref(var), scope())) {
                 if (!var->has_value() && def->has_init()) {
                     auto init = _eval->init_helper(scope());
-                    auto [val, ok] = init->eval_init(var->type(), def->init());
-                    if (ok)
-                        var->set_value(std::move(val));
+                    auto init_res = init->eval_init(var->type(), def->init());
+                    if (init_res)
+                        var->set_value(init_res.move_value());
                 }
                 scope()->set(var->name_id(), std::move(var));
             }
