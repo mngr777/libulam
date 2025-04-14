@@ -102,18 +102,18 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
         case ulam::ops::Kind::Equality:
         case ulam::ops::Kind::Comparison:
             // cast right arg to exact type for comparison
-            if (r_type != l_type) {
-                if (l_type->is_prim() &&
-                    ulam::has_bitsize(l_type->bi_type_id())) {
-                    assert(r_type->is(l_type->bi_type_id()));
-                    if (l_type->bitsize() < r_type->bitsize()) {
-                        l_data = add_cast(std::move(l_data), l_flags);
-                    } else {
-                        r_data = add_cast(std::move(r_data), r_flags);
-                    }
+            if (r_type == l_type)
+                break;
+            if (l_type->is_prim() &&
+                ulam::has_bitsize(l_type->bi_type_id())) {
+                assert(r_type->is(l_type->bi_type_id()));
+                if (l_type->bitsize() < r_type->bitsize()) {
+                    l_data = add_cast(std::move(l_data), l_flags);
                 } else {
                     r_data = add_cast(std::move(r_data), r_flags);
                 }
+            } else {
+                r_data = add_cast(std::move(r_data), r_flags);
             }
             break;
         case ulam::ops::Kind::Numeric: {
