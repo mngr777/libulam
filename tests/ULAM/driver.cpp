@@ -111,10 +111,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
     "t3230_test_compiler_elementandquarkarray_elementLocal.test", // tmp: quark array value format
     "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
-    // "t3233_test_compiler_elementandquarkarray_ew.test", // TODO: init
     "t3248_test_compiler_elementandquark_caarray_isparse.test", // TODO: non-ref `is`
     "t3249_test_compiler_elementandquark_conditionalas.test", // TODO: parent props
-    "t3250_test_compiler_elementandquark_funcdef_nativevarargs.test", // TODO: init
+    // "t3250_test_compiler_elementandquark_funcdef_nativevarargs.test",  // TODO: init
     "t3251_test_compiler_declassign.test", // -"-
 };
 

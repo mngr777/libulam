@@ -25,7 +25,7 @@ public:
     bool in_main() const { return _stack.size() == 1; }
 
     bool codegen_enabled() const {
-        return in_main() && !(_flags & evl::NoCodegen);
+        return in_main() && !(flags() & evl::NoCodegen);
     }
 
     const std::string& data() const { return _data; }
@@ -61,23 +61,6 @@ protected:
         ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;
 
 private:
-    class FlagsRaii {
-    public:
-        using eval_flags_t = ulam::sema::eval_flags_t;
-
-        FlagsRaii(EvalVisitor& eval, eval_flags_t flags):
-            _eval{eval}, _orig_flags{eval._flags} {
-            _eval._flags = flags;
-        }
-        ~FlagsRaii() { _eval._flags = _orig_flags; }
-
-    private:
-        EvalVisitor& _eval;
-        eval_flags_t _orig_flags;
-    };
-
-    FlagsRaii flags_raii(ulam::sema::eval_flags_t flags);
-
     void append(std::string data, bool nospace = false);
 
     Stringifier _stringifier;

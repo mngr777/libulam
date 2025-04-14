@@ -2,10 +2,13 @@
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/memory/ptr.hpp>
+#include <libulam/sema/eval/base.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/stack.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 #include <libulam/semantic/var.hpp>
 
@@ -16,7 +19,7 @@ class EvalExprVisitor;
 class EvalInit;
 class EvalFuncall;
 
-class EvalVisitor : public ast::Visitor {
+class EvalVisitor : public ast::Visitor, public EvalBase {
 public:
     explicit EvalVisitor(
         Ref<Program> program, eval_flags_t flags = evl::NoFlags);
@@ -95,15 +98,6 @@ protected:
 
     Ref<Scope> scope() { return _scope_stack.top(); }
 
-    Builtins& builtins() { return _program->builtins(); }
-    Diag& diag() { return _program->diag(); }
-
-    std::string_view str(str_id_t str_id) {
-        return _program->str_pool().get(str_id);
-    }
-
-    Ref<Program> _program;
-    eval_flags_t _flags;
     EvalStack _stack;
     ScopeStack _scope_stack;
 };

@@ -151,7 +151,8 @@ ExprRes EvalInit::eval_array_list(
         bool copy = (n + 1 == list->size() && size > list->size());
         if (!item.value().empty()) {
             array = array_set(
-                std::move(array), n, copy ? item.copy() : std::move(item));
+                std::move(array), n, copy ? item.copy() : std::move(item),
+                false);
         }
     }
     // fill rest with copies of the last value
@@ -159,7 +160,8 @@ ExprRes EvalInit::eval_array_list(
         for (; n < size; ++n) {
             bool copy = (n + 1 < size);
             array = array_set(
-                std::move(array), n, copy ? item.copy() : std::move(item));
+                std::move(array), n, copy ? item.copy() : std::move(item),
+                true);
         }
     }
     return array;
@@ -200,13 +202,19 @@ ExprRes EvalInit::eval_class_map(
     return obj;
 }
 
+ExprRes
+EvalInit::eval_array_list_item(Ref<Type> type, Variant& item_v, unsigned depth) {
+    return eval_v(type, item_v, depth);
+}
+
 ExprRes EvalInit::make_array(Ref<ArrayType> array_type) {
     RValue rval = array_type->construct();
     rval.set_is_consteval(true);
     return {array_type, Value{std::move(rval)}};
 }
 
-ExprRes EvalInit::array_set(ExprRes&& array, array_idx_t idx, ExprRes&& item) {
+ExprRes EvalInit::array_set(
+    ExprRes&& array, array_idx_t idx, ExprRes&& item, bool autofill) {
     assert(array.type()->is_array());
     assert(idx < array.type()->as_array()->array_size());
 

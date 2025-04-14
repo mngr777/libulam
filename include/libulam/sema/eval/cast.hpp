@@ -20,7 +20,8 @@ public:
         NoCast,
         CastRef,
         CastDeref,
-        CastDown
+        CastDowncast,
+        CastConsteval
     };
     using CastRes = std::pair<ExprRes, CastStatus>;
 

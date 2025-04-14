@@ -26,7 +26,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
 void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     // codegen
     if (codegen_enabled()) {
-        auto no_exec_raii = flags_raii(_flags | ulam::sema::evl::NoExec);
+        auto no_exec_raii = flags_raii(flags() | ulam::sema::evl::NoExec);
         auto scope_raii{
             _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue)};
         append("{");
@@ -45,7 +45,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     }
 
     // exec
-    auto no_codegen_raii = flags_raii(_flags | evl::NoCodegen);
+    auto no_codegen_raii = flags_raii(flags() | evl::NoCodegen);
     ulam::sema::EvalVisitor::visit(node);
 }
 
@@ -74,22 +74,22 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
 ulam::Ptr<ulam::sema::EvalExprVisitor> EvalVisitor::_expr_visitor(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
     return ulam::make<EvalExprVisitor>(
-        *this, _program, _stringifier, scope, flags);
+        *this, program(), _stringifier, scope, flags);
 }
 
 ulam::Ptr<ulam::sema::EvalInit> EvalVisitor::_init_helper(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
-    return ulam::make<EvalInit>(*this, _program, scope, flags);
+    return ulam::make<EvalInit>(*this, program(), scope, flags);
 }
 
 ulam::Ptr<ulam::sema::EvalCast> EvalVisitor::_cast_helper(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
-    return ulam::make<EvalCast>(*this, _program, scope, flags);
+    return ulam::make<EvalCast>(*this, program(), scope, flags);
 }
 
 ulam::Ptr<ulam::sema::EvalFuncall> EvalVisitor::_funcall_helper(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
-    return ulam::make<EvalFuncall>(*this, _program, scope, flags);
+    return ulam::make<EvalFuncall>(*this, program(), scope, flags);
 }
 
 ulam::Ref<ulam::AliasType>
@@ -118,7 +118,7 @@ ulam::Ptr<ulam::Var> EvalVisitor::make_var(
     ulam::Ref<ulam::ast::VarDef> node) {
     auto var = ulam::sema::EvalVisitor::make_var(type_name, node);
     if (var && codegen_enabled()) {
-        std::string name{_program->str_pool().get(var->name_id())};
+        std::string name{str(var->name_id())};
         append(type_base_name(var->type()));
         append(name + type_dim_str(var->type()));
     }
@@ -144,10 +144,6 @@ ulam::sema::ExprRes EvalVisitor::_eval_expr(
                                : std::string{"no data"})
             << "\n";
     return res;
-}
-
-EvalVisitor::FlagsRaii EvalVisitor::flags_raii(ulam::sema::eval_flags_t flags) {
-    return {*this, flags};
 }
 
 void EvalVisitor::append(std::string data, bool nospace) {

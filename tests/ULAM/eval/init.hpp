@@ -9,18 +9,19 @@ public:
     using ulam::sema::EvalInit::EvalInit;
 
 protected:
-    virtual ulam::sema::ExprRes eval_array_list(
+    ulam::sema::ExprRes eval_array_list(
         ulam::Ref<ulam::ArrayType> array_type,
         ulam::Ref<ulam::ast::InitList> list,
-        unsigned depth);
+        unsigned depth) override;
 
-    virtual ulam::sema::ExprRes
-    make_array(ulam::Ref<ulam::ArrayType> array_type);
+    ulam::sema::ExprRes
+    make_array(ulam::Ref<ulam::ArrayType> array_type) override;
 
     virtual ulam::sema::ExprRes array_set(
         ulam::sema::ExprRes&& array,
         ulam::array_idx_t idx,
-        ulam::sema::ExprRes&& item);
+        ulam::sema::ExprRes&& item,
+        bool autofill) override;
 
     // virtual ulam::sema::ExprRes make_obj(ulam::Ref<ulam::Class> cls);
 
