@@ -38,8 +38,8 @@ private:
     void write_class_parents(std::ostream& out, ulam::Ref<ulam::Class> cls);
 
     void write_class_type_defs(std::ostream& out, ulam::Ref<ulam::Class> cls);
-    void write_class_type_def(
-        std::ostream& out, ulam::Ref<ulam::AliasType> alias_type);
+    void
+    write_class_type_def(std::ostream& out, ulam::Ref<ulam::AliasType> alias);
 
     void write_class_props(
         std::ostream& out,

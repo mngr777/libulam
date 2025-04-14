@@ -12,7 +12,12 @@ std::string prop_str(
     auto type = prop->type();
     auto rval = obj.prop(prop).rvalue(); // TMP
     os << type_base_name(type) << " " << str_pool.get(prop->name_id())
-       << type_dim_str(type) << "(" << stringifier.stringify(type, rval)
+       << type_dim_str(type) << "(";
+    if (type->is_class()) {
+        for (auto type_def : type->as_class()->type_defs())
+            os << type_def_str(type_def);
+    }
+    os << stringifier.stringify(type, rval)
        << ")";
     return os.str();
 }

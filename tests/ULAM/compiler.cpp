@@ -152,10 +152,8 @@ void Compiler::write_class_type_defs(
 }
 
 void Compiler::write_class_type_def(
-    std::ostream& out, ulam::Ref<ulam::AliasType> alias_type) {
-    auto aliased = alias_type->aliased();
-    out << "typedef " << type_base_name(aliased) << " " << alias_type->name()
-        << type_dim_str(aliased) << "; ";
+    std::ostream& out, ulam::Ref<ulam::AliasType> alias) {
+    out << type_def_str(alias);
 }
 
 void Compiler::write_class_props(
