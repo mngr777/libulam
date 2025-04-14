@@ -1,0 +1,53 @@
+#pragma once
+
+namespace ulam::sema {
+
+enum class ExprError {
+    Ok,
+    Error,
+    NoSelf,
+    NoSuper,
+    BaseNotFound,
+    SymbolNotFound,
+    MemberNotFound,
+    UnresolvableType,
+    UnresolvableClassConst,
+    UnresolvableVar,
+    UnresolvableProp,
+    UnresolvableFunSet,
+    NotAssignable,
+    NotImplemented,
+    NotFunction,
+    NotClassConst,
+    NotArray,
+    TypeMismatch,
+    UnknownArrayIndex,
+    ArrayIndexOutOfRange,
+    CharIndexOutOfRange,
+    NotObject,
+    NotClass,
+    NoOperator,
+    InvalidTypeOperator,
+    InvalidOperandType,
+    CastRequired,
+    InvalidCast,
+    NonVoidReturn,
+    NoReturn,
+    NoReturnValue,
+    NotReference,
+    ReferenceToLocal,
+    InvalidReturnType,
+    NoMatchingFunction,
+    FunctionIsPureVirtual,
+    AmbiguousFunctionCall,
+    NotConsteval,
+    NonScalarInit,
+    DesignatedInit,
+    InitListArgument,
+    InitNotEnoughItems,
+    InitTooManyItems,
+    InitPropNotInClass,
+    InitNotProp
+};
+
+}

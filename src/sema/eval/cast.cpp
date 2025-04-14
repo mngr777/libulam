@@ -20,19 +20,24 @@ ExprRes EvalCast::cast(
 
 EvalCast::CastRes EvalCast::maybe_cast(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
+    CastStatus status = NoCast;
     if (to->is_ref() && !arg.value().is_lvalue()) {
         // taking or casting a reference
+        assert(!arg.type()->is_ref());
+        status = CastRef;
         arg = take_ref(node, std::move(arg));
 
     } else if (arg.value().is_lvalue()) {
         // copy value from reference
+        if (arg.type()->is_ref())
+            status = CastDeref;
         arg = deref(std::move(arg));
     }
     if (!arg)
         return {std::move(arg), InvalidCast};
 
     if (to->is_same(arg.type()))
-        return {change_type(to, std::move(arg)), NoCast};
+        return {arg.derived(to, arg.move_value()), status};
 
     // implicit cast to base class
     if (!expl && to->is_ref() && to->actual()->is_class() &&
@@ -40,7 +45,7 @@ EvalCast::CastRes EvalCast::maybe_cast(
         auto to_cls = to->actual()->as_class();
         auto from_cls = arg.type()->actual()->as_class();
         if (to_cls->is_base_of(from_cls))
-            return {change_type(to, std::move(arg)), NoCast};
+            return {arg.derived(to_cls, arg.move_value()), CastDown};
     }
 
     if (!expl && arg.type()->is_impl_castable_to(to, arg.value())) {
@@ -172,7 +177,8 @@ ExprRes EvalCast::cast_prim(
 ExprRes EvalCast::cast_prim(
     Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
     assert(arg.type()->is_prim());
-    return {arg.type()->as_prim()->cast_to(bi_type_id, arg.move_value())};
+    auto tv = arg.type()->as_prim()->cast_to(bi_type_id, arg.move_value());
+    return arg.derived(std::move(tv));
 }
 
 ExprRes EvalCast::cast_array(
@@ -195,7 +201,7 @@ ExprRes EvalCast::cast_ref(
 
 ExprRes EvalCast::cast_default(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    return {to, arg.type()->cast_to(to, arg.move_value())};
+    return arg.derived({to, arg.type()->cast_to(to, arg.move_value())});
 }
 
 ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
@@ -214,35 +220,19 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
         type = val.dyn_obj_type()->ref_type();
     type = type->ref_type();
 
-    return change_type(type, std::move(arg));
+    return arg.derived(type, arg.move_value());
 }
 
 ExprRes EvalCast::deref(ExprRes&& arg) {
     assert(arg.value().is_lvalue());
     auto type = arg.type();
     auto val = arg.move_value();
-    auto data = arg.move_data();
-    auto flags = arg.flags();
-
     val = val.deref();
     type = type->deref();
     if (arg.type()->is_class() && arg.value().has_rvalue())
         type = val.dyn_obj_type();
 
-    ExprRes res{type, std::move(val)};
-    res.set_data(std::move(data));
-    res.set_flags(flags);
-    return res;
-}
-
-ExprRes EvalCast::change_type(Ref<Type> type, ExprRes&& arg) {
-    auto val = arg.move_value();
-    auto data = arg.move_data();
-    auto flags = arg.flags();
-    ExprRes res{type, std::move(val)};
-    res.set_data(std::move(data));
-    res.set_flags(flags);
-    return res;
+    return arg.derived(type, std::move(val));
 }
 
 } // namespace ulam::sema
