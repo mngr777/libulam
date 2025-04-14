@@ -116,9 +116,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
     "t3248_test_compiler_elementandquark_caarray_isparse.test", // TODO: non-ref `is`
     "t3249_test_compiler_elementandquark_conditionalas.test", // TODO: parent props
-    // "t3250_test_compiler_elementandquark_funcdef_nativevarargs.test",  // TODO: init
     "t3251_test_compiler_declassign.test", // -"-
-    "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return
+    // "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return
+    "t3257_test_compiler_arrayplusequal_issue.test", // -"-
 };
 
 using Path = std::filesystem::path;

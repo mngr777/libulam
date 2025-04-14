@@ -38,10 +38,11 @@ protected:
     UniqStrPool& text_pool() { return _program->text_pool(); }
     const UniqStrPool& text_pool() const { return _program->text_pool(); }
 
+    bool has_flag(eval_flags_t flag) const { return _flags & flag; }
     eval_flags_t flags() const { return _flags; }
 
 protected:
-        class FlagsRaii {
+    class FlagsRaii {
     public:
         using eval_flags_t = ulam::sema::eval_flags_t;
 
