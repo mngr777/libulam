@@ -1,12 +1,19 @@
 #pragma once
+#include <list>
 #include <map>
 #include <ostream>
 #include <string>
+#include <utility>
 
 class Answer {
 public:
     const std::string& class_name() const { return _class_name; }
     void set_class_name(std::string name) { _class_name = std::move(name); }
+
+    const std::list<std::string> parents() { return _parents; }
+    void add_parent(std::string parent) {
+        _parents.push_back(std::move(parent));
+    }
 
     const std::string& test_fun() const { return _test_fun; }
     void set_test_fun(std::string text) { _test_fun = std::move(text); }
@@ -24,6 +31,7 @@ public:
 
 private:
     std::string _class_name;
+    std::list<std::string> _parents;
     std::string _test_fun;
     std::map<std::string, std::string> _props;
     std::map<std::string, std::string> _type_defs;

@@ -90,14 +90,16 @@ Answer parse_answer(const std::string_view text) {
     auto skip_brackets = std::bind(skip_block, '[', ']');
     auto skip_braces = std::bind(skip_block, '{', '}');
 
-    auto read_class_name = [&]() {
-        if (text[pos] != 'U')
+    auto read_class_name = [&](bool is_parent = false) {
+        if (!is_parent && text[pos] != 'U')
             error("class name must start with 'U'");
         auto start = pos++;
         while (is_ident())
             ++pos;
         return text.substr(start, pos - start);
     };
+
+    auto read_parent_class_name = std::bind(read_class_name, true);
 
     auto skip_type_ident = [&]() {
         if (!is_upper())
@@ -134,8 +136,24 @@ Answer parse_answer(const std::string_view text) {
     skip_spaces();
     answer.set_class_name(std::string{read_class_name()});
 
-    // {
+    // parents
     skip_spaces();
+    if (at(":")) {
+        skip(":");
+        skip_spaces();
+
+        answer.add_parent(std::string{read_parent_class_name()});
+        skip_spaces();
+        while (at("+")) {
+            skip("+");
+            skip_spaces();
+            answer.add_parent(std::string{read_parent_class_name()});
+            skip_spaces();
+        }
+    }
+
+    // {
+    // skip_spaces();
     skip("{");
 
     constexpr char TestFunStart[] = "Int test()";
