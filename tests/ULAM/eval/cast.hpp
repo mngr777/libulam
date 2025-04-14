@@ -32,4 +32,7 @@ protected:
         ulam::Ref<ulam::Type> to,
         ulam::sema::ExprRes&& arg,
         bool expl) override;
+
+    void update_res(
+        ulam::sema::ExprRes& res, EvalCast::CastStatus status, bool expl);
 };

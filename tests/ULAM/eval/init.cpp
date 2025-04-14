@@ -6,9 +6,9 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
     auto array = ulam::sema::EvalInit::eval_array_list(array_type, list, depth);
-    auto data = array.data<std::string>("");
-    if (!data.empty()) {
-        array.set_data("(" + data + ")");
+    if (array.has_data()) {
+        auto data = array.data<std::string>();
+        array.set_data("{ " + data + " }");
     } else {
         array.uns_data();
     }
@@ -18,22 +18,26 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
 ulam::sema::ExprRes
 EvalInit::make_array(ulam::Ref<ulam::ArrayType> array_type) {
     auto array = ulam::sema::EvalInit::make_array(array_type);
-    array.set_data("");
+    array.set_data<std::string>("");
     return array;
 }
 
 ulam::sema::ExprRes EvalInit::array_set(
     ulam::sema::ExprRes&& array,
     ulam::array_idx_t idx,
-    ulam::sema::ExprRes&& item) {
+    ulam::sema::ExprRes&& item,
+    bool autofill) {
     std::string array_data;
     if (array.has_data() && item.has_data()) {
         array_data = array.data<std::string>();
-        if (!array_data.empty())
-            array_data += ",";
-        array_data += item.data<std::string>();
+        if (!autofill) {
+            if (!array_data.empty())
+                array_data += ",";
+            array_data += item.data<std::string>();
+        }
     }
-    array = ulam::sema::EvalInit::array_set(std::move(array), idx, std::move(item));
+    array =
+        ulam::sema::EvalInit::array_set(std::move(array), idx, std::move(item), autofill);
     if (!array_data.empty()) {
         array.set_data(array_data);
     } else {

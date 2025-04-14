@@ -45,12 +45,14 @@ EvalCast::CastRes EvalCast::maybe_cast(
         auto to_cls = to->actual()->as_class();
         auto from_cls = arg.type()->actual()->as_class();
         if (to_cls->is_base_of(from_cls))
-            return {arg.derived(to_cls, arg.move_value()), CastDown};
+            return {arg.derived(to_cls, arg.move_value()), CastDowncast};
     }
 
     if (!expl && arg.type()->is_impl_castable_to(to, arg.value())) {
         auto res = do_cast(node, to, std::move(arg), expl);
-        auto status = res ? CastOk : CastError;
+        auto status = CastError;
+        if (res)
+            status = res.value().is_consteval() ? CastConsteval : CastOk;
         return {std::move(res), status};
     }
 

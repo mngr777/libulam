@@ -23,7 +23,7 @@
 namespace ulam::sema {
 
 EvalVisitor::EvalVisitor(Ref<Program> program, eval_flags_t flags):
-    _program{program}, _flags{flags} {
+    EvalBase{program, flags} {
     // init global scope
     _scope_stack.push(scp::Program);
     for (auto& mod : program->modules())
@@ -50,7 +50,7 @@ ExprRes EvalVisitor::eval(Ref<ast::Block> block) {
         // TODO: return status
         throw e;
     }
-    return {_program->builtins().type(VoidId), Value{RValue{}}};
+    return {builtins().type(VoidId), Value{RValue{}}};
 }
 
 void EvalVisitor::visit(Ref<ast::TypeDef> node) {
@@ -182,7 +182,7 @@ ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
     if (node->has_expr()) {
         res = eval_expr(node->expr());
     } else {
-        res = {_program->builtins().type(VoidId), Value{RValue{}}};
+        res = {builtins().type(VoidId), Value{RValue{}}};
     }
 
     assert(!_stack.empty());
@@ -321,26 +321,26 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
-Ptr<Resolver> EvalVisitor::resolver(eval_flags_t flags) {
-    return make<Resolver>(*this, _program, _flags | flags);
+Ptr<Resolver> EvalVisitor::resolver(eval_flags_t flags_) {
+    return _resolver(flags() | flags_);
 }
 
 Ptr<EvalExprVisitor>
-EvalVisitor::expr_visitor(Ref<Scope> scope, eval_flags_t flags) {
-    return _expr_visitor(scope, _flags | flags);
+EvalVisitor::expr_visitor(Ref<Scope> scope, eval_flags_t flags_) {
+    return _expr_visitor(scope, flags() | flags_);
 }
 
-Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return _init_helper(scope, _flags | flags);
+Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope, eval_flags_t flags_) {
+    return _init_helper(scope, flags() | flags_);
 }
 
-Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return _cast_helper(scope, _flags | flags);
+Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope, eval_flags_t flags_) {
+    return _cast_helper(scope, flags() | flags_);
 }
 
 Ptr<EvalFuncall>
-EvalVisitor::funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return _funcall_helper(scope, _flags | flags);
+EvalVisitor::funcall_helper(Ref<Scope> scope, eval_flags_t flags_) {
+    return _funcall_helper(scope, flags() | flags_);
 }
 
 ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
@@ -403,30 +403,29 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
 }
 
 Ptr<Resolver> EvalVisitor::_resolver(eval_flags_t flags) {
-    return make<Resolver>(*this, _program, _flags | flags);
+    return make<Resolver>(*this, program(), flags);
 }
 
 Ptr<EvalExprVisitor>
 EvalVisitor::_expr_visitor(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalExprVisitor>(*this, _program, scope, flags);
+    return make<EvalExprVisitor>(*this, program(), scope, flags);
 }
 
 Ptr<EvalInit> EvalVisitor::_init_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalInit>(*this, _program, scope, flags);
+    return make<EvalInit>(*this, program(), scope, flags);
 }
 
 Ptr<EvalCast> EvalVisitor::_cast_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalCast>(*this, _program, scope, flags);
+    return make<EvalCast>(*this, program(), scope, flags);
 }
 
 Ptr<EvalFuncall>
 EvalVisitor::_funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
-    return make<EvalFuncall>(*this, _program, scope, flags);
+    return make<EvalFuncall>(*this, program(), scope, flags);
 }
 
 Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
-    Ptr<UserType> type =
-        make<AliasType>(_program->str_pool(), builtins(), nullptr, node);
+    Ptr<UserType> type = make<AliasType>(str_pool(), builtins(), nullptr, node);
     auto ref = ulam::ref(type);
     if (!resolver()->resolve(type->as_alias(), scope()))
         throw EvalExceptError("failed to resolve type");
@@ -477,8 +476,8 @@ void EvalVisitor::var_set_default(Ref<Var> var) {
     var->set_value(Value{var->type()->construct()});
 }
 
-ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
-    return _eval_expr(expr, _flags | flags);
+ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr, eval_flags_t flags_) {
+    return _eval_expr(expr, flags() | flags_);
 }
 
 ExprRes EvalVisitor::_eval_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
@@ -489,8 +488,8 @@ ExprRes EvalVisitor::_eval_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
     return res;
 }
 
-bool EvalVisitor::eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
-    return _eval_cond(expr, _flags | flags);
+bool EvalVisitor::eval_cond(Ref<ast::Expr> expr, eval_flags_t flags_) {
+    return _eval_cond(expr, flags() | flags_);
 }
 
 bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
@@ -502,7 +501,7 @@ bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
         return false;
 
     // cast to Bool(1)
-    auto boolean = _program->builtins().boolean();
+    auto boolean = builtins().boolean();
     auto cast = cast_helper(scope(), flags);
     res = cast->cast(expr, boolean, res.move_typed_value(), true);
     if (!res)

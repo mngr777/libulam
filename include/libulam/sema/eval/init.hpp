@@ -30,20 +30,28 @@ protected:
 
     ExprRes eval_v(Ref<Type> type, Variant& v, unsigned depth);
 
-    virtual ExprRes eval_expr(Ref<Type> type, Ref<ast::Expr> expr, unsigned depth);
-    virtual ExprRes eval_list(Ref<Type> type, Ref<ast::InitList> list, unsigned depth);
-    virtual ExprRes eval_map(Ref<Type> type, Ref<ast::InitMap> map, unsigned depth);
+    virtual ExprRes
+    eval_expr(Ref<Type> type, Ref<ast::Expr> expr, unsigned depth);
+    virtual ExprRes
+    eval_list(Ref<Type> type, Ref<ast::InitList> list, unsigned depth);
+    virtual ExprRes
+    eval_map(Ref<Type> type, Ref<ast::InitMap> map, unsigned depth);
 
     virtual ExprRes
     eval_class_list(Ref<Class> cls, Ref<ast::InitList> list, unsigned depth);
+
     virtual ExprRes eval_array_list(
         Ref<ArrayType> array_type, Ref<ast::InitList> list, unsigned depth);
 
     virtual ExprRes
     eval_class_map(Ref<Class> cls, Ref<ast::InitMap> map, unsigned depth);
 
+    virtual ExprRes
+    eval_array_list_item(Ref<Type> type, Variant& item_v, unsigned depth);
+
     virtual ExprRes make_array(Ref<ArrayType> array_type);
-    virtual ExprRes array_set(ExprRes&& array, array_idx_t idx, ExprRes&& item);
+    virtual ExprRes
+    array_set(ExprRes&& array, array_idx_t idx, ExprRes&& item, bool autofill);
 
     virtual ExprRes make_obj(Ref<Class> cls);
     virtual ExprRes obj_set(ExprRes&& obj, Ref<Prop> prop, ExprRes&& prop_res);
