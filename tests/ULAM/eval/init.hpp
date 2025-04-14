@@ -14,6 +14,9 @@ protected:
         ulam::Ref<ulam::ast::InitList> list,
         unsigned depth) override;
 
+    ulam::sema::ExprRes eval_array_list_item(
+        ulam::Ref<ulam::Type> type, Variant& item_v, unsigned depth) override;
+
     ulam::sema::ExprRes
     make_array(ulam::Ref<ulam::ArrayType> array_type) override;
 
