@@ -17,8 +17,6 @@ class EvalInit;
 class EvalFuncall;
 
 class EvalVisitor : public ast::Visitor {
-    friend EvalExprVisitor;
-
 public:
     explicit EvalVisitor(
         Ref<Program> program, eval_flags_t flags = evl::NoFlags);
@@ -83,8 +81,11 @@ protected:
 
     virtual ExprRes ret_res(Ref<ast::Return> node);
 
-    virtual ExprRes eval_expr(Ref<ast::Expr> expr);
-    virtual bool eval_cond(Ref<ast::Expr> expr);
+    ExprRes eval_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes _eval_expr(Ref<ast::Expr> expr, eval_flags_t flags);
+
+    bool eval_cond(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
+    virtual bool _eval_cond(Ref<ast::Expr> expr, eval_flags_t flags);
 
     Ref<Scope> scope() { return _scope_stack.top(); }
 
