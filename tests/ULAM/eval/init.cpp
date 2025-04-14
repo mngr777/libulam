@@ -1,4 +1,5 @@
 #include "./init.hpp"
+#include "./flags.hpp"
 #include <string>
 
 ulam::sema::ExprRes EvalInit::eval_array_list(
@@ -13,6 +14,12 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
         array.uns_data();
     }
     return array;
+}
+
+ulam::sema::ExprRes EvalInit::eval_array_list_item(
+    ulam::Ref<ulam::Type> type, Variant& item_v, unsigned depth) {
+    auto no_consteval_cast = flags_raii(flags() | evl::NoConstevalCast);
+    return ulam::sema::EvalInit::eval_array_list_item(type, item_v, depth);
 }
 
 ulam::sema::ExprRes
@@ -36,8 +43,8 @@ ulam::sema::ExprRes EvalInit::array_set(
             array_data += item.data<std::string>();
         }
     }
-    array =
-        ulam::sema::EvalInit::array_set(std::move(array), idx, std::move(item), autofill);
+    array = ulam::sema::EvalInit::array_set(
+        std::move(array), idx, std::move(item), autofill);
     if (!array_data.empty()) {
         array.set_data(array_data);
     } else {

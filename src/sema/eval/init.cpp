@@ -144,7 +144,7 @@ ExprRes EvalInit::eval_array_list(
     // fill with list items
     for (; n < std::min<unsigned>(list->size(), size); ++n) {
         // eval item
-        item = eval_v(item_type, list->get(n), depth + 1);
+        item = eval_array_list_item(item_type, list->get(n), depth + 1);
         if (!item)
             return item;
         // assign to array item
@@ -202,8 +202,8 @@ ExprRes EvalInit::eval_class_map(
     return obj;
 }
 
-ExprRes
-EvalInit::eval_array_list_item(Ref<Type> type, Variant& item_v, unsigned depth) {
+ExprRes EvalInit::eval_array_list_item(
+    Ref<Type> type, Variant& item_v, unsigned depth) {
     return eval_v(type, item_v, depth);
 }
 
