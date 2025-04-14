@@ -18,6 +18,7 @@ public:
         ulam::sema::EvalVisitor{program, flags}, _stringifier{program} {}
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
+    void visit(ulam::Ref<ulam::ast::If> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
