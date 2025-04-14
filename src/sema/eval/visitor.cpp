@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -456,30 +457,37 @@ EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
     return ref;
 }
 
-ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
+ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
+    return _eval_expr(expr, _flags | flags);
+}
+
+ExprRes EvalVisitor::_eval_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
     debug() << __FUNCTION__ << "\n";
-    ExprRes res = expr->accept(*expr_visitor(scope()));
+    ExprRes res = expr->accept(*expr_visitor(scope(), flags));
     if (!res)
         throw EvalExceptError("failed to eval expression");
     return res;
 }
 
-bool EvalVisitor::eval_cond(Ref<ast::Expr> expr) {
+bool EvalVisitor::eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
+    return _eval_cond(expr, _flags | flags);
+}
+
+bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
     debug() << __FUNCTION__ << "\n";
 
     // eval
-    assert(expr);
-    auto res = expr->accept(*expr_visitor(scope()));
+    auto res = _eval_expr(expr, flags);
     if (!res)
         return false;
 
     // cast to Bool(1)
     auto boolean = _program->builtins().boolean();
-    auto cast = cast_helper(scope());
+    auto cast = cast_helper(scope(), flags);
     res = cast->cast(expr, boolean, res.move_typed_value(), true);
     if (!res)
         return false;
-    if (res.value().empty())
+    if (!(flags & evl::NoExec) && res.value().empty())
         throw EvalExceptError("empty value in condition");
     return boolean->is_true(res.move_value().move_rvalue());
 }

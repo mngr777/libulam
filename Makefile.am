@@ -264,6 +264,7 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/expr_flags.hpp \
 	tests/ULAM/eval/expr_visitor.hpp \
 	tests/ULAM/eval/expr_visitor.cpp \
+	tests/ULAM/eval/flags.hpp \
 	tests/ULAM/eval/funcall.hpp \
 	tests/ULAM/eval/funcall.cpp \
 	tests/ULAM/eval/init.hpp \
