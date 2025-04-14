@@ -35,6 +35,8 @@ private:
         const std::string& test_postfix,
         bool is_main);
 
+    void write_class_parents(std::ostream& out, ulam::Ref<ulam::Class> cls);
+
     void write_class_type_defs(std::ostream& out, ulam::Ref<ulam::Class> cls);
     void write_class_type_def(
         std::ostream& out, ulam::Ref<ulam::AliasType> alias_type);

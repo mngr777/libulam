@@ -102,7 +102,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::UnaryOp> node) {
     if (!arg)
         return arg;
 
-    auto res = unary_op(node, node->op(), node->arg(), std::move(arg));
+    auto res = unary_op(node, node->op(), node->arg(), std::move(arg), node->type_name());
     return check(node, std::move(res));
 }
 
@@ -701,7 +701,7 @@ ExprRes EvalExprVisitor::unary_op(
     case TypeError::Ok:
         break;
     }
-    return apply_unary_op(node, op, lval, arg_node, std::move(arg));
+    return apply_unary_op(node, op, lval, arg_node, std::move(arg), type_name);
 }
 
 ExprRes EvalExprVisitor::apply_unary_op(

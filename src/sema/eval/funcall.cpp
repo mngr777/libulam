@@ -119,12 +119,18 @@ std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(
 
 ExprResList
 EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
-    assert(fun->params().size() == args.size());
+    assert(fun->has_ellipsis() || fun->params().size() == args.size());
+    assert(!fun->has_ellipsis() || fun->params().size() <= args.size());
+
     auto cast = eval().cast_helper(scope(), flags());
 
     auto arg_it = args.begin();
     auto param_it = fun->params().begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
+        if (param_it == fun->params().end()) {
+            assert(fun->has_ellipsis());
+            break;
+        }
         auto& arg = *arg_it;
         auto& param = *param_it;
         auto param_type = param->type();

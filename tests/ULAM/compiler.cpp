@@ -118,10 +118,31 @@ void Compiler::write_obj(
     auto cls = obj.type()->as_class();
     auto val = obj.move_value();
 
-    out << class_name(cls) << " { ";
+    out << class_name(cls);
+    write_class_parents(out, cls);
+    out << " { ";
     write_class_type_defs(out, cls);
     write_class_props(out, cls, val, is_main);
     out << test_postfix << " }";
+}
+
+void Compiler::write_class_parents(
+    std::ostream& out, ulam::Ref<ulam::Class> cls) {
+    auto parents = cls->parents();
+    if (parents.size() < 2)
+        return; // ignoring UrSelf
+
+    out << " : ";
+    bool first = true;
+    for (auto anc : parents) {
+        if (!first)
+            out << " + ";
+        auto name = anc->cls()->name();
+        if (name != "UrSelf") {
+            out << name;
+            first = false;
+        }
+    }
 }
 
 void Compiler::write_class_type_defs(

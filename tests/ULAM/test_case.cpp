@@ -2,6 +2,7 @@
 #include "tests/ULAM/answer.hpp"
 #include "tests/ULAM/compiler.hpp"
 #include <cassert>
+#include <exception>
 #include <fstream>
 #include <ios>
 #include <iostream> // TEST
@@ -63,8 +64,14 @@ void TestCase::run() {
     // compile
     compiler.compile(out);
     auto compiled = out.str();
-    auto answers = parse_answers(compiled);
-    std::cout << "COMPILED:\n" << answers << "\n";
+    AnswerMap answers;
+    try {
+        answers = parse_answers(compiled);
+        std::cout << "COMPILED:\n" << answers << "\n";
+    } catch (std::exception& e) {
+        std::cout << "COMPILED:\n" << compiled << "\n";
+        throw e;
+    }
 
     // check
     if (!(_flags & SkipAnswerCheck))
