@@ -5,6 +5,7 @@
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
+#include "libulam/sema/eval/visitor.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -21,6 +22,31 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
     ulam::sema::EvalVisitor::visit(node);
     if (codegen_enabled())
         append("}");
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
+    // codegen
+    if (codegen_enabled()) {
+        auto no_exec_raii = flags_raii(flags() | ulam::sema::evl::NoExec);
+        append("{");
+
+        // cond
+        auto cond_res = eval_expr(node->cond());
+        if (cond_res.has_data()) {
+            append(cond_res.data<std::string>());
+            append("cond");
+        }
+        // if-branch
+        node->if_branch()->accept(*this);
+        // TODO: else-branch
+
+        append("if");
+        append("}");
+    }
+
+    // exec
+    auto no_codegen_raii = flags_raii(flags() | evl::NoCodegen);
+    ulam::sema::EvalVisitor::visit(node);
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {

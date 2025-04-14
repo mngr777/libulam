@@ -1105,8 +1105,6 @@ Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
             consume();
             // if (ident as Type
             type = parse_type_name();
-            if (!type)
-                ok = false;
         } else {
             // if (expr
             expr = parse_expr_climb_rest(std::move(ident), 0);
@@ -1114,7 +1112,7 @@ Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
     } else {
         expr = parse_expr();
     }
-    ok = ok && expr;
+    ok = ok && (expr || type);
     // )
     if (!expect(tok::ParenR)) {
         panic(tok::ParenR);

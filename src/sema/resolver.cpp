@@ -134,7 +134,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     }
 
     // value
-    if (var->requires_value()) {
+    if (var->requires_value() && !var->has_value()) {
         if (node->has_init()) {
             auto flags = _flags;
             if (!var->is_local() && !var->type()->is_ref())

@@ -120,6 +120,7 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     }
 
     Ref<Type> dyn_type = res.type();
+    Ptr<ast::VarDef> def{};
     if (!res.value().empty())
         dyn_type = res.value().dyn_obj_type()->actual();
     if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
@@ -130,7 +131,7 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
             scope()->set_self(val.lvalue().self().as(type), type->as_class());
         } else {
             auto obj_view = val.lvalue().as(type);
-            auto def = make<ast::VarDef>(node->ident()->name());
+            def = make<ast::VarDef>(node->ident()->name());
             auto var = make<Var>(
                 node->type_name(), ref(def),
                 TypedValue{type->ref_type(), Value{LValue{obj_view}}});
