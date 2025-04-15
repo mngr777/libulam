@@ -45,8 +45,10 @@ TypedValue IntType::unary_op(Op op, RValue&& rval) {
     auto int_val = rval.get<Integer>();
     switch (op) {
     case Op::UnaryMinus:
-        int_val = (int_val == detail::min<Integer>()) ? detail::max<Integer>()
-                                                      : -int_val;
+        assert(int_val >= detail::integer_min(bitsize()));
+        int_val = (int_val == detail::integer_min(bitsize()))
+                      ? detail::integer_max(bitsize())
+                      : -int_val;
         break;
     case Op::UnaryPlus:
         break;
