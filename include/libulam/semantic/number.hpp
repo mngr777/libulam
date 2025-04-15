@@ -19,6 +19,7 @@ class Number {
 public:
     Number(Radix radix, Integer value): _radix{radix}, _value{value} {}
     Number(Radix radix, Unsigned value): _radix{radix}, _value{value} {}
+    Number(): Number{Radix::Decimal, (Integer)0} {}
 
     Radix radix() const { return _radix; }
 

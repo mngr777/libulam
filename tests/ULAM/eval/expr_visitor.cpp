@@ -1,6 +1,6 @@
 #include "./expr_visitor.hpp"
-#include "./expr_flags.hpp"
 #include "../type_str.hpp"
+#include "./expr_flags.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -51,8 +51,16 @@ EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
 EvalExprVisitor::ExprRes
 EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     auto res = ulam::sema::EvalExprVisitor::visit(node);
-    if (res)
-        res.set_data(node->value().str());
+    if (res) {
+        const auto& num = node->value();
+        ulam::Number dec_num;
+        if (num.is_signed()) {
+            dec_num = {ulam::Radix::Decimal, num.value<ulam::Integer>()};
+        } else {
+            dec_num = {ulam::Radix::Decimal, num.value<ulam::Unsigned>()};
+        }
+        res.set_data(dec_num.str());
+    }
     return res;
 }
 
@@ -104,8 +112,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
             // cast right arg to exact type for comparison
             if (r_type == l_type)
                 break;
-            if (l_type->is_prim() &&
-                ulam::has_bitsize(l_type->bi_type_id())) {
+            if (l_type->is_prim() && ulam::has_bitsize(l_type->bi_type_id())) {
                 assert(r_type->is(l_type->bi_type_id()));
                 if (l_type->bitsize() < r_type->bitsize()) {
                     l_data = add_cast(std::move(l_data), l_flags);
