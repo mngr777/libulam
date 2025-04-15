@@ -11,7 +11,7 @@ namespace ulam {
 TypedValue BoolType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::MinOf: {
-        auto rval = construct(false);
+        auto rval = construct(false);;
         rval.set_is_consteval(true);
         return {this, Value{std::move(rval)}};
     }

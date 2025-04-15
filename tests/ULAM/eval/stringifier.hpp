@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type.hpp>
@@ -11,12 +12,20 @@
 
 class Stringifier {
 public:
+    using flags_t = std::uint16_t;
+    static constexpr flags_t NoFlags = 0;
+    static constexpr flags_t BoolAsUnsignedLit = 1;
+    static constexpr flags_t UnaryAsUnsignedLit = 1 << 1;
+
     explicit Stringifier(ulam::Ref<ulam::Program> program):
         _builtins{program->builtins()},
         _str_pool{program->str_pool()},
         _text_pool{program->text_pool()} {}
 
-    std::string stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval);
+    std::string stringify(
+        ulam::Ref<ulam::Type> type,
+        const ulam::RValue& rval,
+        flags_t flags = NoFlags);
 
     struct {
         bool use_unsigned_suffix = true;
@@ -24,14 +33,18 @@ public:
     } options;
 
 private:
-    std::string
-    stringify_prim(ulam::Ref<ulam::PrimType> type, const ulam::RValue& rval);
+    std::string stringify_prim(
+        ulam::Ref<ulam::PrimType> type,
+        const ulam::RValue& rval,
+        flags_t flags);
 
-    std::string
-    stringify_class(ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
+    std::string stringify_class(
+        ulam::Ref<ulam::Class> cls, const ulam::RValue& rval, flags_t flags);
 
     std::string stringify_array(
-        ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
+        ulam::Ref<ulam::ArrayType> array_type,
+        const ulam::RValue& rval,
+        flags_t flags);
 
     std::string unsigned_to_str(ulam::Unsigned val);
     std::string bits_to_str(const ulam::Bits& bits);

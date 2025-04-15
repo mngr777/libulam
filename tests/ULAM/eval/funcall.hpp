@@ -2,6 +2,8 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/program.hpp>
+#include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/str_pool.hpp>
 

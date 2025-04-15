@@ -6,22 +6,22 @@
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/value/types.hpp>
 
-std::string
-Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
+std::string Stringifier::stringify(
+    ulam::Ref<ulam::Type> type, const ulam::RValue& rval, flags_t flags) {
     assert(!rval.empty());
     if (type->is_prim())
-        return stringify_prim(type->as_prim(), rval);
+        return stringify_prim(type->as_prim(), rval, flags);
     if (type->is_class())
-        return stringify_class(type->as_class(), rval);
+        return stringify_class(type->as_class(), rval, flags);
     if (type->is_array())
-        return stringify_array(type->as_array(), rval);
+        return stringify_array(type->as_array(), rval, flags);
     if (type->is_atom())
         return "";
     assert(false);
 }
 
 std::string Stringifier::stringify_prim(
-    ulam::Ref<ulam::PrimType> type, const ulam::RValue& rval) {
+    ulam::Ref<ulam::PrimType> type, const ulam::RValue& rval, flags_t flags) {
     switch (type->bi_type_id()) {
     case ulam::IntId: {
         auto int_val = rval.get<ulam::Integer>();
@@ -31,11 +31,15 @@ std::string Stringifier::stringify_prim(
         return unsigned_to_str(rval.get<ulam::Unsigned>());
     }
     case ulam::UnaryId: {
+        if (flags & UnaryAsUnsignedLit)
+            return unsigned_to_str(rval.get<ulam::Unsigned>());
         auto unary_type = _builtins.unary_type(type->bitsize());
         auto uns_val = unary_type->unsigned_value(rval);
         return unsigned_to_str(uns_val);
     }
     case ulam::BoolId: {
+        if (flags & BoolAsUnsignedLit)
+            return unsigned_to_str(rval.get<ulam::Unsigned>());
         auto bool_type = _builtins.bool_type(type->bitsize());
         return bool_type->is_true(rval) ? "true" : "false";
     }
@@ -52,7 +56,7 @@ std::string Stringifier::stringify_prim(
 }
 
 std::string Stringifier::stringify_class(
-    ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
+    ulam::Ref<ulam::Class> cls, const ulam::RValue& rval, flags_t flags) {
     std::string str;
     auto rval_copy = rval.copy(); // TMP
     for (auto prop : cls->props())
@@ -61,7 +65,9 @@ std::string Stringifier::stringify_class(
 }
 
 std::string Stringifier::stringify_array(
-    ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
+    ulam::Ref<ulam::ArrayType> array_type,
+    const ulam::RValue& rval,
+    flags_t flags) {
     if (array_type->array_size() == 0)
         return " ";
 
