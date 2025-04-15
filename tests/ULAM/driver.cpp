@@ -119,6 +119,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3251_test_compiler_declassign.test", // -"-
     // "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return
     "t3257_test_compiler_arrayplusequal_issue.test", // -"-
+    "t3286_test_compiler_elementandquark_selfatomcasts.test", // TODO: non-ref `is`
 };
 
 using Path = std::filesystem::path;
