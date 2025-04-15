@@ -16,16 +16,27 @@ Unsigned UnaryType::unsigned_value(const RValue& rval) {
 
 TypedValue UnaryType::type_op(TypeOp op) {
     switch (op) {
-    case TypeOp::MinOf:
-        return {this, Value{RValue{(Unsigned)0, true}}};
-    case TypeOp::MaxOf:
-        return {this, Value{RValue{(Unsigned)bitsize(), true}}};
+    case TypeOp::MinOf: {
+        auto rval = construct(0);
+        rval.set_is_consteval(true);
+        return {this, Value{std::move(rval)}};
+    }
+    case TypeOp::MaxOf: {
+        auto rval = construct(bitsize());
+        rval.set_is_consteval(true);
+        return {this, Value{std::move(rval)}};
+    }
     default:
         return _PrimType::type_op(op);
     }
 }
 
-RValue UnaryType::construct() { return RValue{Unsigned{}}; }
+RValue UnaryType::construct() { return construct(0); }
+
+RValue UnaryType::construct(Unsigned uns_val) {
+    assert(uns_val <= bitsize());
+    return RValue{detail::ones(uns_val)};
+}
 
 RValue UnaryType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
 

@@ -1,5 +1,6 @@
 #include "./funcall.hpp"
 #include "libulam/sema/eval/funcall.hpp"
+#include "tests/ULAM/eval/stringifier.hpp"
 #include <string>
 
 ulam::sema::ExprRes EvalFuncall::funcall_callable(
@@ -22,8 +23,7 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
                 data.clear();
             }
         }
-
-        if (!fun->is_op() || fun->is_op_alias()) {
+        if (!data.empty() && (!fun->is_op() || fun->is_op_alias())) {
             auto pos = data.rfind(FunPh);
             if (pos != std::string::npos) {
                 data.replace(pos, FunPh.size(), str(fun->name_id()));
@@ -34,7 +34,6 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
             // TODO: operators
         }
     }
-
     auto res = ulam::sema::EvalFuncall::funcall_callable(
         node, fun, std::move(callable), std::move(args));
     if (!data.empty()) {
@@ -59,7 +58,6 @@ ulam::sema::ExprRes EvalFuncall::funcall_obj(
             data = obj.data<std::string>() + " " + arg_str + fun_name + " .";
         }
     }
-
     auto res = ulam::sema::EvalFuncall::funcall_obj(
         node, fun, std::move(obj), std::move(args));
     if (!data.empty()) {

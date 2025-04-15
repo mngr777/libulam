@@ -82,7 +82,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     // codegen
     if (codegen_enabled()) {
         auto no_exec_raii = flags_raii(flags() | ulam::sema::evl::NoExec);
-        auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
+        auto scope_raii =
+            _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
         append("{");
 
         // init
