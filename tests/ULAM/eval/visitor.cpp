@@ -20,11 +20,16 @@
 // TODO: throw when missing data
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
-    if (codegen_enabled())
+    std::size_t size{0};
+    if (codegen_enabled()) {
         append("{");
+        size = _data.size();
+    }
     ulam::sema::EvalVisitor::visit(node);
-    if (codegen_enabled())
-        append("}");
+    if (codegen_enabled()) {
+        bool nospace = _data.size() == size;
+        append("}", nospace);
+    }
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
@@ -39,11 +44,17 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
             append(cond_res.data<std::string>());
             append("cond");
         }
+
         // if-branch
         node->if_branch()->accept(*this);
-        // TODO: else-branch
-
         append("if");
+
+        // else-branch
+        if (node->has_else_branch()) {
+            node->else_branch()->accept(*this);
+            append("else");
+        }
+
         append("}");
     }
 
