@@ -1,6 +1,7 @@
 #include "./visitor.hpp"
 #include "../type_str.hpp"
 #include "./cast.hpp"
+#include "./expr_res.hpp"
 #include "./expr_visitor.hpp"
 #include "./flags.hpp"
 #include "./funcall.hpp"
@@ -130,14 +131,16 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
-    debug() << __FUNCTION__ << " ExprStmt\n";
     if (!node->has_expr())
         return;
     auto res = eval_expr(node->expr());
-    if (codegen_enabled()) {
-        if (res.has_data())
-            append(res.data<std::string>());
-    }
+    if (codegen_enabled())
+        append(exp::data(res));
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::EmptyStmt> node) {
+    if (codegen_enabled())
+        append(";");
 }
 
 ulam::Ptr<ulam::sema::EvalExprVisitor> EvalVisitor::_expr_visitor(

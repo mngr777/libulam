@@ -17,9 +17,6 @@ protected:
     ulam::sema::ExprRes eval_array_list_item(
         ulam::Ref<ulam::Type> type, Variant& item_v, unsigned depth) override;
 
-    ulam::sema::ExprRes
-    make_array(ulam::Ref<ulam::ArrayType> array_type) override;
-
     virtual ulam::sema::ExprRes array_set(
         ulam::sema::ExprRes&& array,
         ulam::array_idx_t idx,

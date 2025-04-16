@@ -246,6 +246,10 @@ void EvalVisitor::visit(Ref<ast::ExprStmt> node) {
         eval_expr(node->expr());
 }
 
+void EvalVisitor::visit(Ref<ast::EmptyStmt> node) {
+    debug() << __FUNCTION__ << " EmptyStmt\n";
+}
+
 void EvalVisitor::visit(Ref<ast::While> node) {
     debug() << __FUNCTION__ << " While\n";
     assert(node->has_cond());
@@ -504,7 +508,7 @@ bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
     // cast to Bool(1)
     auto boolean = builtins().boolean();
     auto cast = cast_helper(scope(), flags);
-    res = cast->cast(expr, boolean, res.move_typed_value(), true);
+    res = cast->cast(expr, boolean, std::move(res), true);
     if (!res)
         return false;
     if (!(flags & evl::NoExec) && res.value().empty())

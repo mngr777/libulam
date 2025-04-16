@@ -263,6 +263,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/cast.hpp \
 	tests/ULAM/eval/cast.cpp \
 	tests/ULAM/eval/expr_flags.hpp \
+	tests/ULAM/eval/expr_res.hpp \
+	tests/ULAM/eval/expr_res.cpp \
 	tests/ULAM/eval/expr_visitor.hpp \
 	tests/ULAM/eval/expr_visitor.cpp \
 	tests/ULAM/eval/flags.hpp \
