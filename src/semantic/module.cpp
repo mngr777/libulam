@@ -68,6 +68,8 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
     assert(!node->has_scope_version());
     node->set_cls(ref);
     node->set_scope_version(scope()->version());
+
+    _classes.push_back(ref);
     return ref;
 }
 

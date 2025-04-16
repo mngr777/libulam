@@ -1,5 +1,4 @@
 #include "./compiler.hpp"
-#include "./eval.hpp"
 #include "./eval/stringifier.hpp"
 #include "./prop_str.hpp"
 #include "./type_str.hpp"
@@ -83,29 +82,35 @@ void Compiler::compile(std::ostream& out) {
                 std::string{module->name()});
         }
         assert(sym->is<ulam::Class>());
-        auto cls = sym->get<ulam::Class>();
-        bool has_test = cls->has_fun("test");
 
-        auto text = cls->name() + " foo; ";
-        if (has_test)
-            text += "foo.test(); ";
-        text += "foo;\n";
+        for (auto cls : module->classes())
+            compile_class(out, eval, cls);
+    }
+}
 
-        try {
-            auto obj = eval.eval(text);
-            assert(obj);
-            assert(obj.type()->is_class());
-            assert(obj.value().is_rvalue());
-            // NOTE: intentional double space after `{'
-            auto test_postfix =
-                has_test ? "Int test() {  " + eval.data() + " }" : "<NOMAIN>";
-            write_obj(out, std::move(obj), test_postfix, has_test);
-            out << "\n";
+void Compiler::compile_class(
+    std::ostream& out, Eval& eval, ulam::Ref<ulam::Class> cls) {
+    bool has_test = cls->has_fun("test");
 
-        } catch (ulam::sema::EvalExceptError& e) {
-            std::cerr << "eval error: " << e.message() << "\n";
-            throw e;
-        }
+    auto text = cls->name() + " foo; ";
+    if (has_test)
+        text += "foo.test(); ";
+    text += "foo;\n";
+
+    try {
+        auto obj = eval.eval(text);
+        assert(obj);
+        assert(obj.type()->is_class());
+        assert(obj.value().is_rvalue());
+        // NOTE: intentional double space after `{'
+        auto test_postfix =
+            has_test ? "Int test() {  " + eval.data() + " }" : "<NOMAIN>";
+        write_obj(out, std::move(obj), test_postfix, has_test);
+        out << "\n";
+
+    } catch (ulam::sema::EvalExceptError& e) {
+        std::cerr << "eval error: " << e.message() << "\n";
+        throw e;
     }
 }
 

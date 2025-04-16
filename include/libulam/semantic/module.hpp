@@ -4,9 +4,10 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/str_pool.hpp>
+#include <list>
 #include <set>
-#include <unordered_map>
 #include <string_view>
+#include <unordered_map>
 
 namespace ulam::ast {
 class ModuleDef;
@@ -51,13 +52,17 @@ public:
     using SymbolTable = _SymbolTable<Class, ClassTpl>;
     using Symbol = SymbolTable::Symbol;
 
+    using ClassList = std::list<Ref<Class>>;
+
     Module(Ref<Program> program, Ref<ast::ModuleDef> node);
     ~Module();
 
     Module(Module&&) = default;
     Module& operator=(Module&&) = default;
 
-    bool operator==(const Module& other) const { return name_id() == other.name_id(); }
+    bool operator==(const Module& other) const {
+        return name_id() == other.name_id();
+    }
     bool operator!=(const Module& other) const { return !operator==(other); }
 
     Ref<Program> program() { return _program; }
@@ -85,7 +90,7 @@ public:
     const Symbol* get(const std::string_view name) const;
 
     Symbol* get(str_id_t name_id);
-    const Symbol* get(str_id_t name_id) const ;
+    const Symbol* get(str_id_t name_id) const;
 
     template <typename T> void set(str_id_t name_id, Ptr<T>&& value) {
         _symbols.set(name_id, std::move(value));
@@ -98,6 +103,8 @@ public:
     void
     add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
 
+    const ClassList classes() const { return _classes; }
+
     bool resolve(sema::Resolver& resolver);
 
 private:
@@ -108,6 +115,7 @@ private:
     SymbolTable _symbols;
     std::set<str_id_t> _deps;
     std::unordered_map<str_id_t, Import> _imports;
+    ClassList _classes;
 };
 
 } // namespace ulam
