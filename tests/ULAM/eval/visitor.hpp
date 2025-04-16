@@ -23,6 +23,7 @@ public:
     void visit(ulam::Ref<ulam::ast::While> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
+    void visit(ulam::Ref<ulam::ast::EmptyStmt> node) override;
 
     bool in_main() const { return _stack.size() == 1; }
 

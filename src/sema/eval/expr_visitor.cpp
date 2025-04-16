@@ -480,7 +480,7 @@ array_size_t EvalExprVisitor::array_size(Ref<ast::Expr> expr) {
     // cast to default Int
     auto int_type = builtins().int_type();
     auto cast = eval().cast_helper(scope(), flags());
-    res = cast->cast(expr, int_type, res.move_typed_value());
+    res = cast->cast(expr, int_type, std::move(res));
     if (!res)
         return UnknownArraySize;
 

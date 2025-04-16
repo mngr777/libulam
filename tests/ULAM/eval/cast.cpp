@@ -1,5 +1,6 @@
 #include "./cast.hpp"
 #include "./expr_flags.hpp"
+#include "./expr_res.hpp"
 #include "libulam/sema/eval/cast.hpp"
 #include "tests/ULAM/eval/flags.hpp"
 #include <cassert>
@@ -57,17 +58,13 @@ void EvalCast::update_res(
     if (!res || (!expl && status == EvalCast::NoCast))
         return;
     assert(status != EvalCast::InvalidCast && status != EvalCast::CastError);
-    auto data = res.data<std::string>("");
-    if (!data.empty()) {
-        bool is_conv = res.has_flag(exp::ConvCast);
-        bool is_consteval =
-            status == EvalCast::CastConsteval &&
-            (flags() & evl::NoConstevalCast);
-        if (expl || (!is_conv && !is_consteval))
-            res.set_data(data + " cast");
-    } else {
-        res.uns_data();
-    }
+
+    auto data = exp::data(res);
+    bool is_conv = res.has_flag(exp::ConvCast);
+    bool is_consteval = status == EvalCast::CastConsteval &&
+        (flags() & evl::NoConstevalCast);
     res.uns_flag(exp::ConvCast);
-    res.set_flag(expl ? exp::ExplCast : exp::ImplCast);
+
+    if (expl || (!is_conv && !is_consteval))
+        exp::add_cast(res, expl);
 }
