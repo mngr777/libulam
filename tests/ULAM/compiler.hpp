@@ -1,4 +1,5 @@
 #pragma once
+#include "./eval.hpp"
 #include <filesystem>
 #include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -29,6 +30,8 @@ public:
     void compile(std::ostream& out);
 
 private:
+    void compile_class(std::ostream& out, Eval& eval, ulam::Ref<ulam::Class> cls);
+
     void write_obj(
         std::ostream& out,
         ulam::sema::ExprRes&& obj,
