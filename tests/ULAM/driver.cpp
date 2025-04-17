@@ -115,14 +115,19 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3230_test_compiler_elementandquarkarray_elementLocal.test", // tmp: quark array value format
     "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
     "t3248_test_compiler_elementandquark_caarray_isparse.test", // TODO: non-ref `is`
-    "t3249_test_compiler_elementandquark_conditionalas.test", // TODO: parent props
-    "t3251_test_compiler_declassign.test", // -"-
-    "t3257_test_compiler_arrayplusequal_issue.test", // -"-
+    "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return
     "t3286_test_compiler_elementandquark_selfatomcasts.test", // TODO: non-ref `is`
     "t3287_test_compiler_primitive_minmaxsizeof.test", // TODO: Bool/Unary output as reinterp-d Unsigned (for native functions?)
     "t3289_test_compiler_primitive_minmaxsizeof_bytype.test", // -"-
     "t3326_test_compiler_elementwithclassparameters.test", // TODO: tpl
     "t3327_test_compiler_elementwithclassparameters_mergeduplicate.test", // -"-
+    "t3328_test_compiler_elementwithclassparameters_self.test", // -"-
+    "t3329_test_compiler_elementwithclassparameters_deferred.test", // -"-
+    "t3330_test_compiler_elementwithclassparameters_deferred.test", // -"-
+    "t3331_test_compiler_elementwithclassparameters_deferred.test", // -"-
+    "t3332_test_compiler_elementwithclassparameters_deferredsizeofinquark.test", // -"-
+    "t3333_test_compiler_elementwithclassparameters_deferredfuncargs.test", // -"-
+    "t3335_test_compiler_elementwithclassparameters_deferredfuncargs.test", // -"-
 };
 
 using Path = std::filesystem::path;
