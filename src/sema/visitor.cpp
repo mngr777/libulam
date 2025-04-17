@@ -161,15 +161,8 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
             if (node->is_const())
                 flags |= Var::Const;
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
-            if (resolver->resolve(ref(var), scope())) {
-                if (!var->has_value() && def->has_init()) {
-                    auto init = _eval->init_helper(scope());
-                    auto init_res = init->eval_init(var->type(), def->init());
-                    if (init_res)
-                        var->set_value(init_res.move_value());
-                }
+            if (resolver->resolve(ref(var), scope()))
                 scope()->set(var->name_id(), std::move(var));
-            }
         }
     }
 }

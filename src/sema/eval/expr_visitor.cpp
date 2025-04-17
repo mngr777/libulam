@@ -531,7 +531,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         } else if (param->node()->has_init()) {
             // default argument
             auto init = eval().init_helper(ref(param_scope), flags());
-            arg_res = init->eval_init(type, param->node()->init());
+            arg_res = init->eval_init(type, param->node()->init(), true);
 
         } else {
             diag().error(args, "not enough arguments");

@@ -6,7 +6,13 @@
 
 class EvalInit : public ulam::sema::EvalInit {
 public:
-    using ulam::sema::EvalInit::EvalInit;
+    using Base = ulam::sema::EvalInit;
+    using Base::EvalInit;
+
+    virtual ulam::sema::ExprRes eval_init(
+        ulam::Ref<ulam::Type> type,
+        ulam::Ref<ulam::ast::InitValue> init,
+        bool is_const) override;
 
 protected:
     ulam::sema::ExprRes eval_array_list(

@@ -140,7 +140,8 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             if (!var->is_local() && !var->type()->is_ref())
                 flags |= evl::Consteval; // class/module const
             auto init = _eval.init_helper(scope, flags);
-            auto init_res = init->eval_init(var->type(), node->init());
+            auto init_res =
+                init->eval_init(var->type(), node->init(), var->is_const());
             bool ok = init_res.ok();
             update_state(var, ok);
             if (ok)
@@ -200,7 +201,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     if (node->has_init()) {
         auto flags = _flags | evl::Consteval;
         auto init = _eval.init_helper(ref(scope_view), flags);
-        auto init_res = init->eval_init(type, node->init());
+        auto init_res = init->eval_init(type, node->init(), false);
         if (!init_res)
             RET_UPD_STATE(prop, false);
         prop->set_default_value(init_res.move_value().move_rvalue());

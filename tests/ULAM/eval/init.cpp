@@ -3,11 +3,23 @@
 #include "./flags.hpp"
 #include <string>
 
+ulam::sema::ExprRes EvalInit::eval_init(
+    ulam::Ref<ulam::Type> type,
+    ulam::Ref<ulam::ast::InitValue> init,
+    bool is_const) {
+    // for constants, omit consteval cast for scalars
+    auto flags_ = flags();
+    if (is_const)
+        flags_ |= evl::NoConstevalCast;
+    auto no_consteval_cast = flags_raii(flags_);
+    return Base::eval_init(type, std::move(init), is_const);
+}
+
 ulam::sema::ExprRes EvalInit::eval_array_list(
     ulam::Ref<ulam::ArrayType> array_type,
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
-    auto array = ulam::sema::EvalInit::eval_array_list(array_type, list, depth);
+    auto array = Base::eval_array_list(array_type, list, depth);
     auto data = exp::data_combine("{", exp::data(array), "}");
     exp::set_data(array, data);
     return array;
@@ -16,7 +28,7 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
 ulam::sema::ExprRes EvalInit::eval_array_list_item(
     ulam::Ref<ulam::Type> type, Variant& item_v, unsigned depth) {
     auto no_consteval_cast = flags_raii(flags() | evl::NoConstevalCast);
-    return ulam::sema::EvalInit::eval_array_list_item(type, item_v, depth);
+    return Base::eval_array_list_item(type, item_v, depth);
 }
 
 ulam::sema::ExprRes EvalInit::array_set(
@@ -29,8 +41,7 @@ ulam::sema::ExprRes EvalInit::array_set(
         exp::append(array, exp::data(item), ",");
     std::string data = exp::data(array);
 
-    array = ulam::sema::EvalInit::array_set(
-        std::move(array), idx, std::move(item), autofill);
+    array = Base::array_set(std::move(array), idx, std::move(item), autofill);
 
     exp::set_data(array, data);
     return std::move(array);

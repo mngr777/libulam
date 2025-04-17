@@ -1,5 +1,6 @@
 #include "./funcall.hpp"
 #include "./expr_res.hpp"
+#include "tests/ULAM/eval/flags.hpp"
 #include <string>
 
 namespace {
@@ -28,8 +29,8 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
         // TODO: operators
     }
 
-    auto res = ulam::sema::EvalFuncall::funcall_callable(
-        node, fun, std::move(callable), std::move(args));
+    auto res =
+        Base::funcall_callable(node, fun, std::move(callable), std::move(args));
 
     exp::set_data(res, data);
     return res;
@@ -46,11 +47,19 @@ ulam::sema::ExprRes EvalFuncall::funcall_obj(
     auto call_data = arg_data(args) + std::string{str(fun->name_id())};
     data = exp::data_combine(data, call_data, ".");
 
-    auto res = ulam::sema::EvalFuncall::funcall_obj(
-        node, fun, std::move(obj), std::move(args));
+    auto res = Base::funcall_obj(node, fun, std::move(obj), std::move(args));
 
     res.set_data(data);
     return res;
+}
+
+ulam::sema::ExprResList EvalFuncall::cast_args(
+    ulam::Ref<ulam::ast::Node> node,
+    ulam::Ref<ulam::Fun> fun,
+    ulam::sema::ExprResList&& args) {
+    // do not omit consteval casts for arguments (t3233)
+    auto consteval_cast_raii = flags_raii(flags() & ~evl::NoConstevalCast);
+    return Base::cast_args(node, fun, std::move(args));
 }
 
 std::string EvalFuncall::arg_data(const ulam::sema::ExprResList& args) {

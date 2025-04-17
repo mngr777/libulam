@@ -39,7 +39,8 @@ EvalInit::array_dims(unsigned num, Ref<ast::InitValue> init) {
     return {std::move(dims), ok};
 }
 
-ExprRes EvalInit::eval_init(Ref<Type> type, Ref<ast::InitValue> init) {
+ExprRes
+EvalInit::eval_init(Ref<Type> type, Ref<ast::InitValue> init, bool is_const) {
     return eval_v(type, init->get(), 1);
 }
 
