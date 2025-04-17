@@ -187,34 +187,30 @@ EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
     return type;
 }
 
-ulam::Ref<ulam::Var> EvalVisitor::var_def(
-    ulam::Ref<ulam::ast::TypeName> type_name,
-    ulam::Ref<ulam::ast::VarDef> node) {
-    auto var = ulam::sema::EvalVisitor::var_def(type_name, node);
-    if (var && codegen_enabled())
-        append("; ", true);
-    return var;
-}
-
-ulam::Ptr<ulam::Var> EvalVisitor::make_var(
-    ulam::Ref<ulam::ast::TypeName> type_name,
-    ulam::Ref<ulam::ast::VarDef> node) {
-    auto var = ulam::sema::EvalVisitor::make_var(type_name, node);
-    if (var && codegen_enabled()) {
-        std::string name{str(var->name_id())};
-        append(type_base_name(var->type()));
-        append(name + type_dim_str(var->type()));
-    }
-    return var;
-}
-
-void EvalVisitor::var_set_init(
+void EvalVisitor::var_init_expr(
     ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) {
-    auto data = init.data<std::string>("");
-    ulam::sema::EvalVisitor::var_set_init(var, std::move(init));
-    if (!data.empty() && codegen_enabled()) {
+    auto data = exp::data(init);
+    ulam::sema::EvalVisitor::var_init_expr(var, std::move(init));
+    if (codegen_enabled()) {
         append("=");
         append(data);
+        append("; ", true);
+    }
+}
+
+void EvalVisitor::var_init_default(ulam::Ref<ulam::Var> var) {
+    ulam::sema::EvalVisitor::var_init_default(var);
+    if (codegen_enabled())
+        append("; ", true);
+}
+
+void EvalVisitor::var_init(ulam::Ref<ulam::Var> var) {
+    if (codegen_enabled()) {
+        std::string name{str(var->name_id())};
+        if (var->is_const())
+            append("constant");
+        append(type_base_name(var->type()));
+        append(name + type_dim_str(var->type()));
     }
 }
 

@@ -532,6 +532,8 @@ void Printer::visit(ulam::Ref<ulam::ast::TypeExpr> node) {
 }
 
 void Printer::traverse(ulam::Ref<ulam::ast::VarDefList> node) {
+    if (node->is_const())
+        _os << "constant ";
     accept_me(node->type_name());
     _os << " ";
     assert(node->def_num() > 0);

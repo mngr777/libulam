@@ -49,16 +49,10 @@ protected:
     ulam::Ref<ulam::AliasType>
     type_def(ulam::Ref<ulam::ast::TypeDef> node) override;
 
-    ulam::Ref<ulam::Var> var_def(
-        ulam::Ref<ulam::ast::TypeName> type_name,
-        ulam::Ref<ulam::ast::VarDef> node) override;
-
-    ulam::Ptr<ulam::Var> make_var(
-        ulam::Ref<ulam::ast::TypeName> type_name,
-        ulam::Ref<ulam::ast::VarDef> node) override;
-
-    void
-    var_set_init(ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) override;
+    void var_init_expr(
+        ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) override;
+    void var_init_default(ulam::Ref<ulam::Var> var) override;
+    void var_init(ulam::Ref<ulam::Var> var) override;
 
     ulam::sema::ExprRes _eval_expr(
         ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;

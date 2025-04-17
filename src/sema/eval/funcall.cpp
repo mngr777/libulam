@@ -1,8 +1,14 @@
-#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/value/bound_fun_set.hpp>
+
+#ifdef DEBUG_EVAL
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[ulam::sema::EvalFuncall] "
+#endif
+#include "src/debug.hpp"
 
 namespace ulam::sema {
 
@@ -43,6 +49,8 @@ ExprRes EvalFuncall::funcall(
     if (error != ExprError::Ok)
         return {error};
     auto fun = *match_res.begin();
+
+    debug() << "###" << str(fun->name_id()) << "\n";
 
     args = cast_args(node, fun, std::move(args));
     return funcall_callable(node, fun, std::move(callable), std::move(args));

@@ -38,7 +38,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
         auto expr_res = node->expr()->accept(*this);
         if (!expr_res)
             return expr_res;
-        res = type_op(node, std::move(expr_res));
+        res = type_op_expr(node, std::move(expr_res));
     }
     return check(node, std::move(res));
 }
@@ -790,12 +790,12 @@ ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
     return tv;
 }
 
-ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, ExprRes arg) {
+ExprRes EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     // obj.Base.<type_op>?
     if (node->has_base()) {
         arg = as_base(node, node->base(), std::move(arg));
         if (!arg)
-            return arg;
+            return std::move(arg);
     }
 
     // class type op may require an evaluator
@@ -803,14 +803,22 @@ ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, ExprRes arg) {
         // custom lengthof?
         auto cls = arg.type()->as_class();
         if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
-            if (!arg.value().has_rvalue())
-                return {builtins().unsigned_type(), Value{RValue{}}};
-            arg = bind(node, cls->fun("alengthof"), std::move(arg));
-            auto funcall = eval().funcall_helper(scope(), flags());
-            return funcall->funcall(node, std::move(arg), {});
+            return type_op_expr_fun(
+                node, cls->fun("alengthof"), std::move(arg));
         }
     }
+    return type_op_expr_default(node, std::move(arg));
+}
 
+ExprRes EvalExprVisitor::type_op_expr_fun(
+    Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg) {
+    arg = bind(node, fset, std::move(arg));
+    auto funcall = eval().funcall_helper(scope(), flags());
+    return funcall->funcall(node, std::move(arg), {});
+}
+
+ExprRes EvalExprVisitor::type_op_expr_default(
+    Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     auto val = arg.move_value();
     auto tv = arg.type()->actual()->type_op(node->op(), val);
     if (!tv)

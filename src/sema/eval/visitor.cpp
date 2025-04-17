@@ -62,7 +62,7 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
     debug() << __FUNCTION__ << " VarDefList\n";
     auto type_name = node->type_name();
     for (unsigned n = 0; n < node->def_num(); ++n)
-        var_def(type_name, node->def(n));
+        var_def(type_name, node->def(n), node->is_const());
 }
 
 void EvalVisitor::visit(Ref<ast::Block> node) {
@@ -438,47 +438,40 @@ Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
     return ref->as_alias();
 }
 
-Ref<Var>
-EvalVisitor::var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
-    auto var = make_var(type_name, node);
+Ref<Var> EvalVisitor::var_def(
+    Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const) {
+    auto var = make_var(type_name, node, is_const);
     if (!var)
         return {};
     auto ref = ulam::ref(var);
-    if (var->value().empty()) {
-        if (node->has_init()) {
-            auto init = init_helper(scope());
-            auto init_res = init->eval_init(var->type(), node->init());
-            if (!init_res)
-                throw EvalExceptError("failed to eval init value");
-            var_set_init(ref, std::move(init_res));
-        } else {
-            var_set_default(ref);
-        }
-    }
     scope()->set(var->name_id(), std::move(var));
     return ref;
 }
 
-Ptr<Var>
-EvalVisitor::make_var(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node) {
-    auto var = make<Var>(type_name, node, Ref<Type>{}, Var::NoFlags);
+Ptr<Var> EvalVisitor::make_var(
+    Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const) {
+    auto flags = is_const ? Var::Const : Var::NoFlags;
+    auto var = make<Var>(type_name, node, Ref<Type>{}, flags);
     var->set_scope_lvl(_scope_stack.size());
     if (!resolver()->resolve(ref(var), scope()))
         return {};
     return var;
 }
 
-void EvalVisitor::var_set_init(Ref<Var> var, ExprRes&& init) {
-    assert(var && var->is_ready());
-    assert(var->value().empty());
+void EvalVisitor::var_init_expr(Ref<Var> var, ExprRes&& init) {
     assert(init);
+    var_init(var);
     var->set_value(init.move_value());
 }
 
-void EvalVisitor::var_set_default(Ref<Var> var) {
+void EvalVisitor::var_init_default(Ref<Var> var) {
+    var_init(var);
+    var->set_value(Value{var->type()->construct()});
+}
+
+void EvalVisitor::var_init(Ref<Var> var) {
     assert(var && var->is_ready());
     assert(var->value().empty());
-    var->set_value(Value{var->type()->construct()});
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr, eval_flags_t flags_) {

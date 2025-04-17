@@ -2,13 +2,14 @@
 #include "./visitor.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
-#include <libulam/sema/eval/flags.hpp>
 
 class EvalExprVisitor : public ulam::sema::EvalExprVisitor {
 public:
+    using Base = ulam::sema::EvalExprVisitor;
     using ExprError = ulam::sema::ExprError;
     using ExprRes = ulam::sema::ExprRes;
 
@@ -47,8 +48,8 @@ protected:
         ulam::Ref<ulam::ast::TypeOpExpr> node,
         ulam::Ref<ulam::Type> type) override;
 
-    ExprRes
-    type_op(ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes res) override;
+    ExprRes type_op_expr_default(
+        ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) override;
 
     ExprRes ident_self(ulam::Ref<ulam::ast::Ident> node) override;
 
