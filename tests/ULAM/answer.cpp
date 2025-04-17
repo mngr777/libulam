@@ -136,6 +136,11 @@ Answer parse_answer(const std::string_view text) {
     skip_spaces();
     answer.set_class_name(std::string{read_class_name()});
 
+    // params (TODO)
+    skip_spaces();
+    if (at("("))
+        skip_parens();
+
     // parents
     skip_spaces();
     if (at(":")) {
@@ -220,7 +225,9 @@ Answer parse_answer(const std::string_view text) {
                     --end;
                 std::string value_str;
                 if (end >= start) {
-                    value_str = "(" + std::string{text.substr(start, end + 1 - start)} + ");";
+                    value_str =
+                        "(" + std::string{text.substr(start, end + 1 - start)} +
+                        ");";
                 } else {
                     value_str += "();";
                 }

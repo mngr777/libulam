@@ -525,8 +525,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             auto arg = args->get(n);
             arg_res = arg->accept(*this);
             if (arg_res)
-                arg_res =
-                    cast->cast(arg, type, arg_res.move_typed_value(), false);
+                arg_res = cast->cast(arg, type, std::move(arg_res), false);
 
         } else if (param->node()->has_init()) {
             // default argument
@@ -790,7 +789,8 @@ ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
     return tv;
 }
 
-ExprRes EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
+ExprRes
+EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     // obj.Base.<type_op>?
     if (node->has_base()) {
         arg = as_base(node, node->base(), std::move(arg));
