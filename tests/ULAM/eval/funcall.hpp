@@ -9,7 +9,8 @@
 
 class EvalFuncall : public ulam::sema::EvalFuncall {
 public:
-    using ulam::sema::EvalFuncall::EvalFuncall;
+    using Base = ulam::sema::EvalFuncall;
+    using Base::EvalFuncall;
 
 protected:
     virtual ulam::sema::ExprRes funcall_callable(
@@ -22,6 +23,11 @@ protected:
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
         ulam::sema::ExprRes&& obj,
+        ulam::sema::ExprResList&& args);
+
+    virtual ulam::sema::ExprResList cast_args(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Fun> fun,
         ulam::sema::ExprResList&& args);
 
     std::string arg_data(const ulam::sema::ExprResList& args);

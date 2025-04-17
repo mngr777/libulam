@@ -21,7 +21,7 @@ public:
     std::pair<ArrayDimList, bool>
     array_dims(unsigned num, Ref<ast::InitValue> init);
 
-    virtual ExprRes eval_init(Ref<Type> type, Ref<ast::InitValue> init);
+    virtual ExprRes eval_init(Ref<Type> type, Ref<ast::InitValue> init, bool is_const);
 
 protected:
     using Variant = ast::InitValue::ItemT;
