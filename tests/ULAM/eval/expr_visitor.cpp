@@ -1,5 +1,5 @@
 #include "./expr_visitor.hpp"
-#include "../type_str.hpp"
+#include "../out.hpp"
 #include "./expr_flags.hpp"
 #include "./expr_res.hpp"
 #include "libulam/semantic/type/builtin_type_id.hpp"
@@ -177,7 +177,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
         // x <op> | x Type is
         std::string op_str{ulam::ops::str(op)};
         if (type)
-            data = exp::data_combine(data, type_str(type));
+            data = exp::data_combine(data, out::type_str(type));
         data = exp::data_combine(data, op_str);
     }
 

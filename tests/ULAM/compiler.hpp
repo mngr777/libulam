@@ -27,31 +27,35 @@ public:
 
     ulam::Ref<ulam::Program> analyze();
 
-    void compile(std::ostream& out);
+    void compile(std::ostream& os);
 
 private:
-    void compile_class(std::ostream& out, Eval& eval, ulam::Ref<ulam::Class> cls);
+    void
+    compile_class(std::ostream& os, Eval& eval, ulam::Ref<ulam::Class> cls);
 
     void write_obj(
-        std::ostream& out,
+        std::ostream& os,
         ulam::sema::ExprRes&& obj,
         const std::string& test_postfix,
         bool is_main);
 
-    void write_class_parents(std::ostream& out, ulam::Ref<ulam::Class> cls);
+    void write_class_parents(std::ostream& os, ulam::Ref<ulam::Class> cls);
 
-    void write_class_type_defs(std::ostream& out, ulam::Ref<ulam::Class> cls);
+    void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
     void
-    write_class_type_def(std::ostream& out, ulam::Ref<ulam::AliasType> alias);
+    write_class_type_def(std::ostream& os, ulam::Ref<ulam::AliasType> alias);
+
+    void write_class_consts(std::ostream& os, ulam::Ref<ulam::Class> cls);
+    void write_class_const(std::ostream& os, ulam::Ref<ulam::Var> var);
 
     void write_class_props(
-        std::ostream& out,
+        std::ostream& os,
         ulam::Ref<ulam::Class> cls,
         ulam::Value& obj,
         bool is_main);
 
     void write_class_prop(
-        std::ostream& out,
+        std::ostream& os,
         ulam::Ref<ulam::Prop> prop,
         ulam::Value& obj,
         bool is_main);

@@ -86,6 +86,7 @@ Ref<Var>
 Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = ClassBase::add_const(type_node, node);
     var->set_cls(this);
+    _consts.push_back(var);
     return var;
 }
 

@@ -1,5 +1,5 @@
 #include "./stringifier.hpp"
-#include "../prop_str.hpp"
+#include "../out.hpp"
 #include <cassert>
 #include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
@@ -60,7 +60,7 @@ std::string Stringifier::stringify_class(
     std::string str;
     auto rval_copy = rval.copy(); // TMP
     for (auto prop : cls->props())
-        str += " " + prop_str(_str_pool, *this, prop, rval_copy) + "; ";
+        str += " " + out::prop_str(_str_pool, *this, prop, rval_copy) + "; ";
     return str;
 }
 
