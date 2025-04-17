@@ -4,6 +4,15 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace {
+
+constexpr char TestFunStart[] = "Int test()";
+constexpr char NoMain[] = "<NOMAIN>";
+constexpr char Constant[] = "constant";
+constexpr char TypeDef[] = "typedef";
+
+} // namespace
+
 bool Answer::has_type_def(const std::string& alias) const {
     return _type_defs.count(alias) > 0;
 }
@@ -67,6 +76,13 @@ Answer parse_answer(const std::string_view text) {
         pos += str.size();
     };
 
+    auto skip_until = [&](const std::string& str) {
+        auto n = text.find(str, pos);
+        if (n == std::string::npos)
+            error(str + " not found");
+        pos = n;
+    };
+
     auto skip_block = [&](char open, char close) {
         if (text[pos] != open)
             error(std::string{"unexpectend char, expecting `"} + open + "'");
@@ -93,9 +109,14 @@ Answer parse_answer(const std::string_view text) {
     auto read_class_name = [&](bool is_parent = false) {
         if (!is_parent && text[pos] != 'U')
             error("class name must start with 'U'");
+        // Type
         auto start = pos++;
         while (is_ident())
             ++pos;
+        // ()
+        skip_spaces();
+        if (at("("))
+            skip_parens();
         return text.substr(start, pos - start);
     };
 
@@ -132,6 +153,96 @@ Answer parse_answer(const std::string_view text) {
         return text.substr(start, pos - start);
     };
 
+    // {name, text}
+    auto read_type_def = [&](const std::string& base_prefix)
+        -> std::pair<std::string, std::string> {
+        auto start = pos;
+
+        // typedef
+        skip(TypeDef);
+        skip_spaces();
+
+        // Type()
+        skip_type_name();
+        skip_spaces();
+
+        // Type
+        std::string alias = base_prefix + std::string{read_type_ident()};
+        skip_spaces();
+
+        // []
+        if (text[pos] == '[')
+            skip_brackets();
+
+        // ;
+        skip_spaces();
+        skip(";");
+
+        std::string type_def_text{text.substr(start, pos - start)};
+        return {std::move(alias), std::move(type_def_text)};
+    };
+
+    // {name, text}
+    auto read_prop = [&](const std::string& base_prefix)
+        -> std::pair<std::string, std::string> {
+        auto start = pos;
+
+        // constant
+        if (at(Constant))
+            skip(Constant);
+
+        // Type()
+        skip_spaces();
+        skip_type_name();
+        skip_spaces();
+
+        // ident
+        std::string name = base_prefix + std::string{read_prop_name()};
+        skip_spaces();
+
+        // []
+        if (at("["))
+            skip_brackets();
+
+        std::string prop_text{text.substr(start, pos - start)};
+
+        // value
+        skip_spaces();
+        if (at("(")) {
+            auto start = pos;
+            skip_parens();
+            auto end = pos - 1;
+            assert(text[start] == '(' && text[end] == ')');
+            ++start;
+            --end;
+            // remove leading/trailing spaces:
+            // ULAM adds a leading space after `(' for non-main classes
+            while (start < end && text[start] == ' ')
+                ++start;
+            while (end > start && text[end] == ' ')
+                --end;
+            std::string value_str;
+            if (end >= start) {
+                value_str = "(" +
+                            std::string{text.substr(start, end + 1 - start)} +
+                            ");";
+            } else {
+                value_str += "();";
+            }
+            prop_text += value_str;
+
+        } else if (at("=")) {
+            skip("=");
+            skip_until(";");
+        }
+
+        // ;
+        skip_spaces();
+        skip(";");
+
+        return {std::move(name), std::move(prop_text)};
+    };
+
     // class name
     skip_spaces();
     answer.set_class_name(std::string{read_class_name()});
@@ -161,86 +272,30 @@ Answer parse_answer(const std::string_view text) {
     // skip_spaces();
     skip("{");
 
-    constexpr char TestFunStart[] = "Int test()";
-    constexpr char NoMain[] = "<NOMAIN>";
-    constexpr char TypeDef[] = "typedef";
-
     // props
     skip_spaces();
+    std::string base_prefix;
     while (!at(TestFunStart) && !at(NoMain)) {
-        auto start = pos;
-
-        if (at(TypeDef)) {
-            // typedef
-            skip(TypeDef);
+        if (at(":")) {
+            assert(base_prefix.empty());
+            skip(":");
+            base_prefix = std::string{read_parent_class_name()} + "::";
             skip_spaces();
+            skip("<");
 
-            // Type(...)
-            skip_type_name();
-            skip_spaces();
+        } else if (at(">")) {
+            assert(!base_prefix.empty());
+            base_prefix.clear();
+            skip(">");
 
-            // Type
-            std::string alias{read_type_ident()};
-            skip_spaces();
-
-            // []
-            if (text[pos] == '[')
-                skip_brackets();
-
-            // ;
-            skip_spaces();
-            skip(";");
-
-            std::string type_def_text{text.substr(start, pos - start)};
-            answer.add_type_def(std::move(alias), std::move(type_def_text));
+        } else if (at(TypeDef)) {
+            auto [alias, type_def_text] = read_type_def(base_prefix);
+            answer.add_type_def(std::move(alias), base_prefix + type_def_text);
 
         } else {
-            // Type(...)[...]
-            skip_type_name();
-            skip_spaces();
-
-            // ident
-            std::string name{read_prop_name()};
-            skip_spaces();
-
-            // []
-            if (text[pos] == '[')
-                skip_brackets();
-
-            std::string prop_text{text.substr(start, pos - start)};
-
-            // value
-            if (text[pos] == '(') {
-                auto start = pos;
-                skip_parens();
-                auto end = pos - 1;
-                assert(text[start] == '(' && text[end] == ')');
-                ++start;
-                --end;
-                // remove leading/trailing spaces:
-                // ULAM adds a leading space after `(' for non-main classes
-                while (start < end && text[start] == ' ')
-                    ++start;
-                while (end > start && text[end] == ' ')
-                    --end;
-                std::string value_str;
-                if (end >= start) {
-                    value_str =
-                        "(" + std::string{text.substr(start, end + 1 - start)} +
-                        ");";
-                } else {
-                    value_str += "();";
-                }
-                prop_text += value_str;
-            }
-
-            // ;
-            skip_spaces();
-            skip(";");
-
-            answer.add_prop(std::move(name), std::move(prop_text));
+            auto [name, prop_text] = read_prop(base_prefix);
+            answer.add_prop(std::move(name), base_prefix + prop_text);
         }
-
         skip_spaces();
     }
 
@@ -252,7 +307,7 @@ Answer parse_answer(const std::string_view text) {
         skip(TestFunStart);
         skip_spaces();
 
-        // {...}
+        // {}
         skip_braces();
 
         std::string test_fun{text.substr(start, pos - start)};
