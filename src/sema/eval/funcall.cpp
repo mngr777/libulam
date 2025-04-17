@@ -50,8 +50,6 @@ ExprRes EvalFuncall::funcall(
         return {error};
     auto fun = *match_res.begin();
 
-    debug() << "###" << str(fun->name_id()) << "\n";
-
     args = cast_args(node, fun, std::move(args));
     return funcall_callable(node, fun, std::move(callable), std::move(args));
 }

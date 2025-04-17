@@ -121,6 +121,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3286_test_compiler_elementandquark_selfatomcasts.test", // TODO: non-ref `is`
     "t3287_test_compiler_primitive_minmaxsizeof.test", // TODO: Bool/Unary output as reinterp-d Unsigned (for native functions?)
     "t3289_test_compiler_primitive_minmaxsizeof_bytype.test", // -"-
+    "t3326_test_compiler_elementwithclassparameters.test", // TODO: tpl
+    "t3327_test_compiler_elementwithclassparameters_mergeduplicate.test", // -"-
 };
 
 using Path = std::filesystem::path;

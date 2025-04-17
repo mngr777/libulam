@@ -81,7 +81,7 @@ void Compiler::compile(std::ostream& out) {
                 std::string{"no main class in module "} +
                 std::string{module->name()});
         }
-        assert(sym->is<ulam::Class>());
+        assert(sym->is<ulam::Class>() || sym->is<ulam::ClassTpl>());
 
         for (auto cls : module->classes())
             compile_class(out, eval, cls);
