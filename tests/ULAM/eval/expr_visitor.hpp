@@ -19,7 +19,7 @@ public:
         Stringifier& stringifier,
         ulam::Ref<ulam::Scope> scope,
         ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
-        ulam::sema::EvalExprVisitor{eval, program, scope, flags},
+        Base::EvalExprVisitor{eval, program, scope, flags},
         _stringifier{stringifier} {}
 
     ExprRes visit(ulam::Ref<ulam::ast::BoolLit> node) override;

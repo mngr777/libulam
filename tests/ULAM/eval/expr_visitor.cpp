@@ -6,8 +6,8 @@
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
-#include <libulam/semantic/value.hpp>
 #include <libulam/semantic/type_ops.hpp>
+#include <libulam/semantic/value.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
@@ -23,14 +23,14 @@ constexpr char FuncallPh[] = "{args}{fun}";
 
 EvalExprVisitor::ExprRes
 EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
-    auto res = ulam::sema::EvalExprVisitor::visit(node);
-    res.set_data(std::string{node->value() ? "true" : "false"});
+    auto res = Base::visit(node);
+    exp::set_data(res, std::string{node->value() ? "true" : "false"});
     return res;
 }
 
 EvalExprVisitor::ExprRes
 EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
-    auto res = ulam::sema::EvalExprVisitor::visit(node);
+    auto res = Base::visit(node);
 
     const auto& num = node->value();
     ulam::Number dec_num;
@@ -39,24 +39,24 @@ EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     } else {
         dec_num = {ulam::Radix::Decimal, num.value<ulam::Unsigned>()};
     }
-    res.set_data(dec_num.str());
+    exp::set_data(res, dec_num.str());
     res.set_flag(exp::NumLit);
     return res;
 }
 
 EvalExprVisitor::ExprRes
 EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
-    auto res = ulam::sema::EvalExprVisitor::visit(node);
-    res.set_data(std::string{text(node->value().id)});
+    auto res = Base::visit(node);
+    exp::set_data(res, std::string{text(node->value().id)});
     return res;
 }
 
 EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
-    auto res = ulam::sema::EvalExprVisitor::type_op(node, type);
+    auto res = Base::type_op(node, type);
     if (res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            res.set_data(_stringifier.stringify(res.type(), rval));
+            exp::set_data(res, _stringifier.stringify(res.type(), rval));
         });
     }
     return res;
@@ -68,7 +68,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op_expr_default(
     auto res = Base::type_op_expr_default(node, std::move(arg));
     if (res.type()->is_prim() && res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            res.set_data(_stringifier.stringify(res.type(), rval));
+            exp::set_data(res, _stringifier.stringify(res.type(), rval));
         });
     } else {
         exp::set_data(res, data);
@@ -138,16 +138,16 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
         op_str += "b";
     auto data = exp::data_combine(exp::data(left), exp::data(right), op_str);
 
-    auto res = ulam::sema::EvalExprVisitor::apply_binary_op(
+    auto res = Base::apply_binary_op(
         node, op, lval, l_node, std::move(left), r_node, std::move(right));
 
     const auto& val = res.value();
     if (val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
-            res.set_data(_stringifier.stringify(res.type(), rval));
+            exp::set_data(res, _stringifier.stringify(res.type(), rval));
         });
     } else {
-        res.set_data(data);
+        exp::set_data(res, data);
     }
     return res;
 }
@@ -181,37 +181,43 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
         data = exp::data_combine(data, op_str);
     }
 
-    auto res = ulam::sema::EvalExprVisitor::apply_unary_op(
-        node, op, lval, arg_node, std::move(arg), type);
+    auto res =
+        Base::apply_unary_op(node, op, lval, arg_node, std::move(arg), type);
 
-    res.set_data(data);
+    exp::set_data(res, data);
     return res;
 }
 
 EvalExprVisitor::ExprRes
 EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
-    auto res = ulam::sema::EvalExprVisitor::ident_self(node);
+    auto res = Base::ident_self(node);
     exp::set_self(res);
     return res;
 }
 
 EvalExprVisitor::ExprRes
 EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
-    auto res = ulam::sema::EvalExprVisitor::ident_super(node);
+    auto res = Base::ident_super(node);
     exp::set_data(res, "super");
     return res;
 }
 
 EvalExprVisitor::ExprRes EvalExprVisitor::ident_var(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Var> var) {
-    auto res = ulam::sema::EvalExprVisitor::ident_var(node, var);
-    exp::set_data(res, str(var->name_id()));
+    auto res = Base::ident_var(node, var);
+    if (res.value().is_consteval()) {
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
+            exp::set_data(res, _stringifier.stringify(res.type(), rval));
+        });
+    } else {
+        exp::set_data(res, str(var->name_id()));
+    }
     return res;
 }
 
 EvalExprVisitor::ExprRes EvalExprVisitor::ident_prop(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Prop> prop) {
-    auto res = ulam::sema::EvalExprVisitor::ident_prop(node, prop);
+    auto res = Base::ident_prop(node, prop);
     exp::set_self(res);
     exp::add_member_access(res, str(prop->name_id()), true);
     return res;
@@ -219,7 +225,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_prop(
 
 EvalExprVisitor::ExprRes EvalExprVisitor::ident_fset(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::FunSet> fset) {
-    auto res = ulam::sema::EvalExprVisitor::ident_fset(node, fset);
+    auto res = Base::ident_fset(node, fset);
     exp::set_self(res);
     exp::add_member_access(res, FuncallPh, true);
     return res;
@@ -233,8 +239,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
     if (before_member_access)
         exp::remove_member_access_op(obj);
 
-    auto res = ulam::sema::EvalExprVisitor::array_access_class(
-        node, std::move(obj), std::move(idx));
+    auto res = Base::array_access_class(node, std::move(obj), std::move(idx));
 
     if (before_member_access)
         exp::append(res, ".");
@@ -248,8 +253,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
     auto data = exp::data(obj);
     bool before_member_access = obj.has_flag(exp::MemberAccess);
 
-    auto res = ulam::sema::EvalExprVisitor::array_access_string(
-        node, std::move(obj), std::move(idx));
+    auto res = Base::array_access_string(node, std::move(obj), std::move(idx));
 
     exp::set_data(res, std::move(data));
     exp::add_array_access(res, exp::data(idx), before_member_access);
@@ -264,8 +268,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_array(
     auto idx_data = exp::data(idx);
     bool before_member_access = obj.has_flag(exp::MemberAccess);
 
-    auto res = ulam::sema::EvalExprVisitor::array_access_array(
-        node, std::move(obj), std::move(idx));
+    auto res = Base::array_access_array(node, std::move(obj), std::move(idx));
 
     exp::set_data(res, std::move(data));
     exp::add_array_access(res, idx_data, before_member_access);
@@ -278,8 +281,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_op(
         return std::move(obj);
     auto data = exp::data(obj);
 
-    auto res =
-        ulam::sema::EvalExprVisitor::member_access_op(node, std::move(obj));
+    auto res = Base::member_access_op(node, std::move(obj));
 
     auto op_str = ulam::ops::str(node->op());
     exp::set_data(res, data);
@@ -296,8 +298,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_var(
     auto data = exp::data(obj);
     bool is_self = obj.has_flag(exp::Self);
 
-    auto res = ulam::sema::EvalExprVisitor::member_access_var(
-        node, std::move(obj), var);
+    auto res = Base::member_access_var(node, std::move(obj), var);
 
     auto name = str(var->name_id());
     exp::set_data(res, data);
@@ -314,8 +315,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
     auto data = exp::data(obj);
     bool is_self = obj.has_flag(exp::Self);
 
-    auto res = ulam::sema::EvalExprVisitor::member_access_prop(
-        node, std::move(obj), prop);
+    auto res = Base::member_access_prop(node, std::move(obj), prop);
 
     auto name = str(prop->name_id());
     exp::set_data(res, data);
@@ -332,8 +332,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_fset(
     auto data = exp::data(obj);
     bool is_self = obj.has_flag(exp::Self);
 
-    auto res = ulam::sema::EvalExprVisitor::member_access_fset(
-        node, std::move(obj), fset);
+    auto res = Base::member_access_fset(node, std::move(obj), fset);
 
     exp::set_data(res, data);
     exp::add_member_access(res, FuncallPh, is_self);
@@ -348,7 +347,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::bind(
     auto data = exp::data(obj);
     bool is_self = obj.has_flag(exp::Self);
 
-    auto res = ulam::sema::EvalExprVisitor::bind(node, fset, std::move(obj));
+    auto res = Base::bind(node, fset, std::move(obj));
 
     exp::set_data(res, data);
     exp::add_member_access(res, FuncallPh, is_self);
