@@ -2,6 +2,12 @@
 #include "./expr_flags.hpp"
 #include <utility>
 
+#ifdef DEBUG_EVAL
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[compiler/ExprRes] "
+#endif
+#include "src/debug.hpp"
+
 namespace exp {
 
 std::string data(const ulam::sema::ExprRes& res) {
@@ -34,6 +40,8 @@ void set_self(ulam::sema::ExprRes& res) {
 bool add_cast(ulam::sema::ExprRes& res, bool expl) {
     // add cast unless it's an implicit cast on implicit cast result
     bool added = expl || !res.has_flag(ImplCast);
+    res.uns_flag(ExplCast);
+    res.uns_flag(ImplCast);
     if (added) {
         append(res, "cast");
         res.set_flag(expl ? ExplCast : ImplCast);

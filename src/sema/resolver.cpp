@@ -134,21 +134,29 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
     }
 
     // value
-    if (var->requires_value() && !var->has_value()) {
+    if (!var->has_value()) {
         if (node->has_init()) {
             auto flags = _flags;
             if (!var->is_local() && !var->type()->is_ref())
                 flags |= evl::Consteval; // class/module const
             auto init = _eval.init_helper(scope, flags);
             auto init_res = init->eval_init(var->type(), node->init());
-            if (!init_res)
-                RET_UPD_STATE(var, false);
-            var->set_value(init_res.move_value());
-        } else {
+            bool ok = init_res.ok();
+            update_state(var, ok);
+            if (ok)
+                _eval.var_init_expr(var, std::move(init_res));
+            return ok;
+
+        } else if (var->requires_value()) {
             auto name = node->name();
             _diag.error(
                 name.loc_id(), str(name.str_id()).size(), "value required");
             RET_UPD_STATE(var, false);
+
+        } else {
+            update_state(var, true);
+            _eval.var_init_default(var);
+            return true;
         }
     }
     RET_UPD_STATE(var, true);

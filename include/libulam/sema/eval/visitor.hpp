@@ -20,6 +20,7 @@ class EvalInit;
 class EvalFuncall;
 
 class EvalVisitor : public ast::Visitor, public EvalBase {
+    friend Resolver;
 public:
     explicit EvalVisitor(
         Ref<Program> program, eval_flags_t flags = evl::NoFlags);
@@ -81,13 +82,14 @@ protected:
     virtual Ref<AliasType> type_def(Ref<ast::TypeDef> node);
 
     virtual Ref<Var>
-    var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
+    var_def(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const);
 
-    virtual Ptr<Var>
-    make_var(Ref<ast::TypeName> type_name, Ref<ast::VarDef> node);
+    virtual Ptr<Var> make_var(
+        Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const);
 
-    virtual void var_set_init(Ref<Var> var, ExprRes&& init);
-    virtual void var_set_default(Ref<Var> var);
+    virtual void var_init_expr(Ref<Var> var, ExprRes&& init);
+    virtual void var_init_default(Ref<Var> var);
+    virtual void var_init(Ref<Var> var);
 
     virtual ExprRes ret_res(Ref<ast::Return> node);
 

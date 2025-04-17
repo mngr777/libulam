@@ -28,7 +28,8 @@ public:
         _eval{eval},
         _diag{program->diag()},
         _builtins{program->builtins()},
-        _str_pool{program->str_pool()} {}
+        _str_pool{program->str_pool()},
+        _flags{flags} {}
 
     void resolve(Ref<Program> program);
     bool init(Ref<Class> cls);

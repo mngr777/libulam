@@ -104,7 +104,12 @@ protected:
         Ref<Type> type = {});
 
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
-    virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, ExprRes arg);
+    virtual ExprRes type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
+
+    virtual ExprRes type_op_expr_fun(
+        Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg);
+    virtual ExprRes
+    type_op_expr_default(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
 
     virtual ExprRes ident_self(Ref<ast::Ident> node);
     virtual ExprRes ident_super(Ref<ast::Ident> node);

@@ -5,7 +5,11 @@
 #include "tests/ULAM/eval/flags.hpp"
 #include <cassert>
 
-namespace {} // namespace
+#ifdef DEBUG_EVAL_EXPR_VISITOR
+#    define ULAM_DEBUG
+#    define ULAM_DEBUG_PREFIX "[compiler/EvalCast] "
+#endif
+#include "src/debug.hpp"
 
 ulam::sema::ExprRes EvalCast::cast(
     ulam::Ref<ulam::ast::Node> node,
@@ -61,8 +65,8 @@ void EvalCast::update_res(
 
     auto data = exp::data(res);
     bool is_conv = res.has_flag(exp::ConvCast);
-    bool is_consteval = status == EvalCast::CastConsteval &&
-        (flags() & evl::NoConstevalCast);
+    bool is_consteval =
+        status == EvalCast::CastConsteval && (flags() & evl::NoConstevalCast);
     res.uns_flag(exp::ConvCast);
 
     if (expl || (!is_conv && !is_consteval))

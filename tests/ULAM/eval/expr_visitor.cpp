@@ -7,6 +7,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/type_ops.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
@@ -53,11 +54,25 @@ EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
 EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
     auto res = ulam::sema::EvalExprVisitor::type_op(node, type);
-    const auto& val = res.value();
-    if (val.is_consteval()) {
-        val.with_rvalue([&](const ulam::RValue& rval) {
+    if (res.value().is_consteval()) {
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
             res.set_data(_stringifier.stringify(res.type(), rval));
         });
+    }
+    return res;
+}
+
+EvalExprVisitor::ExprRes EvalExprVisitor::type_op_expr_default(
+    ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
+    auto data = exp::data(arg);
+    auto res = Base::type_op_expr_default(node, std::move(arg));
+    if (res.type()->is_prim() && res.value().is_consteval()) {
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
+            res.set_data(_stringifier.stringify(res.type(), rval));
+        });
+    } else {
+        exp::set_data(res, data);
+        exp::append(res, ulam::ops::str(node->op()));
     }
     return res;
 }
@@ -170,20 +185,6 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
         node, op, lval, arg_node, std::move(arg), type);
 
     res.set_data(data);
-    return res;
-}
-
-EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
-    ulam::Ref<ulam::ast::TypeOpExpr> node, EvalExprVisitor::ExprRes res) {
-    res = ulam::sema::EvalExprVisitor::type_op(node, std::move(res));
-
-    const auto& val = res.value();
-    if (val.is_consteval()) {
-        val.with_rvalue([&](const ulam::RValue& rval) {
-            res.set_data(_stringifier.stringify(res.type(), rval));
-        });
-    }
-
     return res;
 }
 
