@@ -1,5 +1,5 @@
 #include "./visitor.hpp"
-#include "../type_str.hpp"
+#include "../out.hpp"
 #include "./cast.hpp"
 #include "./expr_res.hpp"
 #include "./expr_visitor.hpp"
@@ -177,14 +177,10 @@ ulam::Ptr<ulam::sema::EvalFuncall> EvalVisitor::_funcall_helper(
 
 ulam::Ref<ulam::AliasType>
 EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
-    auto type = ulam::sema::EvalVisitor::type_def(node);
-    if (type && codegen_enabled()) {
-        auto aliased = type->aliased();
-        append("typedef");
-        append(type_base_name(aliased));
-        append(type->name() + type_dim_str(aliased) + "; ");
-    }
-    return type;
+    auto alias_type = ulam::sema::EvalVisitor::type_def(node);
+    if (alias_type && codegen_enabled())
+        append(out::type_def_str(alias_type) + "; ");
+    return alias_type;
 }
 
 void EvalVisitor::var_init_expr(
@@ -205,13 +201,8 @@ void EvalVisitor::var_init_default(ulam::Ref<ulam::Var> var) {
 }
 
 void EvalVisitor::var_init(ulam::Ref<ulam::Var> var) {
-    if (codegen_enabled()) {
-        std::string name{str(var->name_id())};
-        if (var->is_const())
-            append("constant");
-        append(type_base_name(var->type()));
-        append(name + type_dim_str(var->type()));
-    }
+    if (codegen_enabled())
+        append(out::var_def_str(str_pool(), var));
 }
 
 ulam::sema::ExprRes EvalVisitor::_eval_expr(

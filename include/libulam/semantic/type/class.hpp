@@ -107,6 +107,8 @@ public:
 
     const auto& type_defs() const { return _type_defs; }
 
+    const auto& consts() const { return _consts; }
+
     const auto& props() const { return _props; }
     const auto& all_props() const { return _all_props; } // + inherited
 
@@ -136,6 +138,7 @@ private:
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
     std::list<Ref<AliasType>> _type_defs;
+    std::list<Ref<Var>> _consts;
     std::list<Ref<Prop>> _props;
     std::list<Ref<Prop>> _all_props;
     std::map<type_id_t, Ref<Fun>> _convs;

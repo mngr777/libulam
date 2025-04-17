@@ -1,7 +1,6 @@
 #include "./compiler.hpp"
 #include "./eval/stringifier.hpp"
-#include "./prop_str.hpp"
-#include "./type_str.hpp"
+#include "./out.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
@@ -69,7 +68,7 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
     return _ast->program();
 }
 
-void Compiler::compile(std::ostream& out) {
+void Compiler::compile(std::ostream& os) {
     Eval eval{_ctx, ulam::ref(_ast)};
     for (auto module : _ast->program()->modules()) {
         if (_module_name_ids.count(module->name_id()) == 0)
@@ -84,12 +83,12 @@ void Compiler::compile(std::ostream& out) {
         assert(sym->is<ulam::Class>() || sym->is<ulam::ClassTpl>());
 
         for (auto cls : module->classes())
-            compile_class(out, eval, cls);
+            compile_class(os, eval, cls);
     }
 }
 
 void Compiler::compile_class(
-    std::ostream& out, Eval& eval, ulam::Ref<ulam::Class> cls) {
+    std::ostream& os, Eval& eval, ulam::Ref<ulam::Class> cls) {
     bool has_test = cls->has_fun("test");
 
     auto text = cls->name() + " foo; ";
@@ -105,8 +104,8 @@ void Compiler::compile_class(
         // NOTE: intentional double space after `{'
         auto test_postfix =
             has_test ? "Int test() {  " + eval.data() + " }" : "<NOMAIN>";
-        write_obj(out, std::move(obj), test_postfix, has_test);
-        out << "\n";
+        write_obj(os, std::move(obj), test_postfix, has_test);
+        os << "\n";
 
     } catch (ulam::sema::EvalExceptError& e) {
         std::cerr << "eval error: " << e.message() << "\n";
@@ -115,7 +114,7 @@ void Compiler::compile_class(
 }
 
 void Compiler::write_obj(
-    std::ostream& out,
+    std::ostream& os,
     ulam::sema::ExprRes&& obj,
     const std::string& test_postfix,
     bool is_main) {
@@ -123,55 +122,84 @@ void Compiler::write_obj(
     auto cls = obj.type()->as_class();
     auto val = obj.move_value();
 
-    out << class_name(cls);
-    write_class_parents(out, cls);
-    out << " { ";
-    write_class_type_defs(out, cls);
-    write_class_props(out, cls, val, is_main);
-    out << test_postfix << " }";
+    os << class_name(cls);
+    write_class_parents(os, cls);
+    os << " { ";
+    write_class_type_defs(os, cls);
+    write_class_consts(os, cls);
+    write_class_props(os, cls, val, is_main);
+    os << test_postfix << " }";
 }
 
 void Compiler::write_class_parents(
-    std::ostream& out, ulam::Ref<ulam::Class> cls) {
+    std::ostream& os, ulam::Ref<ulam::Class> cls) {
     auto parents = cls->parents();
     if (parents.size() < 2)
         return; // ignoring UrSelf
 
-    out << " : ";
+    os << " : ";
     bool first = true;
     for (auto anc : parents) {
         if (!first)
-            out << " + ";
+            os << " + ";
         auto name = anc->cls()->name();
         if (name != "UrSelf") {
-            out << name;
+            os << name;
             first = false;
         }
     }
 }
 
 void Compiler::write_class_type_defs(
-    std::ostream& out, ulam::Ref<ulam::Class> cls) {
+    std::ostream& os, ulam::Ref<ulam::Class> cls) {
     for (auto type_def : cls->type_defs())
-        write_class_type_def(out, type_def);
+        write_class_type_def(os, type_def);
 }
 
 void Compiler::write_class_type_def(
-    std::ostream& out, ulam::Ref<ulam::AliasType> alias) {
-    out << type_def_str(alias);
+    std::ostream& os, ulam::Ref<ulam::AliasType> alias) {
+    os << out::type_def_str(alias) << "; ";
+}
+
+void Compiler::write_class_consts(
+    std::ostream& os, ulam::Ref<ulam::Class> cls) {
+    for (auto var : cls->consts())
+        write_class_const(os, var);
+}
+
+void Compiler::write_class_const(std::ostream& os, ulam::Ref<ulam::Var> var) {
+    assert(_ast->program());
+    auto program = _ast->program();
+    auto& str_pool = program->str_pool();
+
+    Stringifier stringifier{program};
+    stringifier.options.use_unsigned_suffix = true;
+    stringifier.options.bits_use_unsigned_suffix = false;
+
+    os << out::var_str(str_pool, stringifier, var) << "; ";
 }
 
 void Compiler::write_class_props(
-    std::ostream& out,
+    std::ostream& os,
     ulam::Ref<ulam::Class> cls,
     ulam::Value& obj,
     bool is_main) {
     for (auto prop : cls->props())
-        write_class_prop(out, prop, obj, is_main);
+        write_class_prop(os, prop, obj, is_main);
+
+    for (auto parent : cls->parents()) {
+        auto props = parent->cls()->props();
+        if (props.empty())
+            continue;
+        os << ":" << parent->cls()->name() << "< ";
+        for (auto prop : props)
+            write_class_prop(os, prop, obj, is_main);
+        os << "> ";
+    }
 }
 
 void Compiler::write_class_prop(
-    std::ostream& out,
+    std::ostream& os,
     ulam::Ref<ulam::Prop> prop,
     ulam::Value& obj,
     bool is_main) {
@@ -184,5 +212,5 @@ void Compiler::write_class_prop(
     stringifier.options.bits_use_unsigned_suffix = false;
 
     auto rval_copy = obj.copy_rvalue(); // TMP
-    out << prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
+    os << out::prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
 }
