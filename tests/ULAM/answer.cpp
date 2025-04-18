@@ -27,6 +27,20 @@ void Answer::add_type_def(std::string alias, std::string text) {
     _type_defs.emplace(std::move(alias), std::move(text));
 }
 
+bool Answer::has_const(const std::string& name) const {
+    return _consts.count(name) > 0;
+}
+
+std::string Answer::const_(const std::string& name) const {
+    auto it = _consts.find(name);
+    return (it != _consts.end()) ? it->second : std::string{};
+}
+
+void Answer::add_const(std::string name, std::string text) {
+    assert(!has_const(name));
+    _consts.emplace(std::move(name), std::move(text));
+}
+
 bool Answer::has_prop(const std::string& name) const {
     return _props.count(name) > 0;
 }
@@ -143,10 +157,10 @@ Answer parse_answer(const std::string_view text) {
         return text.substr(start, pos - start);
     };
 
-    auto read_prop_name = [&]() {
+    auto read_data_mem_name = [&]() {
         auto start = pos;
         if (!is_lower())
-            error("prop name must start with lowercase letter");
+            error("constant or property name must start with lowercase letter");
         ++pos;
         while (is_ident())
             ++pos;
@@ -154,8 +168,7 @@ Answer parse_answer(const std::string_view text) {
     };
 
     // {name, text}
-    auto read_type_def = [&](const std::string& base_prefix)
-        -> std::pair<std::string, std::string> {
+    auto read_type_def = [&]() -> std::pair<std::string, std::string> {
         auto start = pos;
 
         // typedef
@@ -167,7 +180,7 @@ Answer parse_answer(const std::string_view text) {
         skip_spaces();
 
         // Type
-        std::string alias = base_prefix + std::string{read_type_ident()};
+        std::string alias{read_type_ident()};
         skip_spaces();
 
         // []
@@ -182,13 +195,13 @@ Answer parse_answer(const std::string_view text) {
         return {std::move(alias), std::move(type_def_text)};
     };
 
-    // {name, text}
-    auto read_prop = [&](const std::string& base_prefix)
-        -> std::pair<std::string, std::string> {
+    // {name, text, is_const}
+    auto read_data_mem = [&]() -> std::tuple<std::string, std::string, bool> {
         auto start = pos;
 
         // constant
-        if (at(Constant))
+        bool is_const = at(Constant);
+        if (is_const)
             skip(Constant);
 
         // Type()
@@ -197,14 +210,14 @@ Answer parse_answer(const std::string_view text) {
         skip_spaces();
 
         // ident
-        std::string name = base_prefix + std::string{read_prop_name()};
+        std::string name{read_data_mem_name()};
         skip_spaces();
 
         // []
         if (at("["))
             skip_brackets();
 
-        std::string prop_text{text.substr(start, pos - start)};
+        std::string data_mem_text{text.substr(start, pos - start)};
 
         // value
         skip_spaces();
@@ -229,7 +242,7 @@ Answer parse_answer(const std::string_view text) {
             } else {
                 value_str += "();";
             }
-            prop_text += value_str;
+            data_mem_text += value_str;
 
         } else if (at("=")) {
             skip("=");
@@ -240,7 +253,7 @@ Answer parse_answer(const std::string_view text) {
         skip_spaces();
         skip(";");
 
-        return {std::move(name), std::move(prop_text)};
+        return {std::move(name), std::move(data_mem_text), is_const};
     };
 
     // class name
@@ -289,12 +302,17 @@ Answer parse_answer(const std::string_view text) {
             skip(">");
 
         } else if (at(TypeDef)) {
-            auto [alias, type_def_text] = read_type_def(base_prefix);
-            answer.add_type_def(std::move(alias), base_prefix + type_def_text);
+            auto [alias, type_def_text] = read_type_def();
+            answer.add_type_def(base_prefix + alias, type_def_text);
 
         } else {
-            auto [name, prop_text] = read_prop(base_prefix);
-            answer.add_prop(std::move(name), base_prefix + prop_text);
+            auto [name, data_mem_text, is_const] = read_data_mem();
+            name = base_prefix + name;
+            if (is_const) {
+                answer.add_const(name, data_mem_text);
+            } else {
+                answer.add_prop(name, data_mem_text);
+            }
         }
         skip_spaces();
     }
@@ -356,6 +374,26 @@ void compare_answers(const Answer& truth, const Answer& answer) {
             auto message = std::string{"typedef `"} + alias +
                            "' in compiled class '" + answer.class_name() +
                            "` does not match the answer: `" + answer_text +
+                           "` vs `" + text + "`";
+            throw std::invalid_argument(message);
+        }
+    }
+
+    // constants
+    const auto& consts = answer.consts();
+    for (const auto& [name, text] : truth.consts()) {
+        auto it = consts.find(name);
+        if (it == consts.end()) {
+            auto message = std::string{"constant `"} + name +
+                           "' not found in compiled class `" +
+                           answer.class_name() + "'";
+            throw std::invalid_argument(message);
+        }
+        auto answer_text = it->second;
+        if (answer_text != text) {
+            auto message = std::string{"constant `"} + name +
+                           "' in compiled class `" + answer.class_name() +
+                           "' does not match the answer: `" + answer_text +
                            "` vs `" + text + "`";
             throw std::invalid_argument(message);
         }

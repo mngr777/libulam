@@ -1,13 +1,34 @@
 #include "./out.hpp"
+#include "libulam/semantic/value.hpp"
 #include <sstream>
 
 namespace out {
 
-std::string type_str(ulam::Ref<ulam::Type> type) {
+std::string type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type) {
     auto str = type_base_name(type) + type_dim_str(type);
+    if (type->is_class())
+        str += class_param_str(stringifier, type->as_class());
     if (type->is_ref())
         str += "&";
     return str;
+}
+
+std::string
+class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
+    auto params = cls->params();
+    if (params.empty())
+        return "";
+
+    std::string str;
+    for (auto param : params) {
+        if (!str.empty())
+            str += ",";
+        assert(param->has_value());
+        assert(param->has_type());
+        auto rval = param->value().copy_rvalue(); // TMP
+        str += stringifier.stringify(param->type(), rval);
+    }
+    return "(" + str + ")";
 }
 
 std::string type_base_name(ulam::Ref<ulam::Type> type) {
@@ -34,7 +55,7 @@ std::string type_dim_str(ulam::Ref<ulam::Type> type) {
 std::string type_def_str(ulam::Ref<ulam::AliasType> alias) {
     auto aliased = alias->aliased();
     return "typedef " + type_base_name(aliased) + " " + alias->name() +
-        type_dim_str(aliased);
+           type_dim_str(aliased);
 }
 
 std::string var_str(

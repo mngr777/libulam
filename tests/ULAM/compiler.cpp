@@ -1,5 +1,4 @@
 #include "./compiler.hpp"
-#include "./eval/stringifier.hpp"
 #include "./out.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
@@ -14,7 +13,11 @@
 
 namespace {
 
-std::string class_prefix(ulam::Ref<ulam::Class> cls) {
+bool is_urself(ulam::Ref<const ulam::Class> cls) {
+    return cls->name() == "UrSelf";
+}
+
+std::string class_prefix(ulam::Ref<const ulam::Class> cls) {
     switch (cls->kind()) {
     case ulam::ClassKind::Element:
         return "Ue_";
@@ -128,6 +131,7 @@ void Compiler::write_obj(
     write_class_type_defs(os, cls);
     write_class_consts(os, cls);
     write_class_props(os, cls, val, is_main);
+    write_class_parent_members(os, cls, val, is_main);
     os << test_postfix << " }";
 }
 
@@ -140,13 +144,38 @@ void Compiler::write_class_parents(
     os << " : ";
     bool first = true;
     for (auto anc : parents) {
+        auto parent = anc->cls();
+        if (is_urself(parent))
+            continue;
         if (!first)
             os << " + ";
-        auto name = anc->cls()->name();
-        if (name != "UrSelf") {
-            os << name;
-            first = false;
-        }
+        os << anc->cls()->name();
+        first = false;
+    }
+}
+
+void Compiler::write_class_parent_members(
+    std::ostream& os,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Value& obj,
+    bool is_main) {
+
+    Stringifier stringifier{program()};
+    stringifier.options.use_unsigned_suffix = is_main;
+    stringifier.options.bits_use_unsigned_suffix = false;
+
+    for (auto anc : cls->parents()) {
+        auto parent = anc->cls();
+        if (is_urself(parent) ||
+            (parent->type_defs().empty() && parent->consts().empty() &&
+             parent->props().empty()))
+            continue;
+
+        os << ":" << out::type_str(stringifier, parent) << "< ";
+        write_class_type_defs(os, parent);
+        write_class_consts(os, parent);
+        write_class_props(os, parent, obj, is_main);
+        os << "> ";
     }
 }
 
@@ -163,19 +192,22 @@ void Compiler::write_class_type_def(
 
 void Compiler::write_class_consts(
     std::ostream& os, ulam::Ref<ulam::Class> cls) {
-    for (auto var : cls->consts())
-        write_class_const(os, var);
-}
-
-void Compiler::write_class_const(std::ostream& os, ulam::Ref<ulam::Var> var) {
-    assert(_ast->program());
-    auto program = _ast->program();
-    auto& str_pool = program->str_pool();
-
-    Stringifier stringifier{program};
+    Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.bits_use_unsigned_suffix = false;
 
+    // params as consts (t3336)
+    for (auto var : cls->params())
+        write_class_const(os, stringifier, var);
+    // consts
+    for (auto var : cls->consts())
+        write_class_const(os, stringifier, var);
+}
+
+void Compiler::write_class_const(
+    std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var) {
+    assert(_ast->program());
+    auto& str_pool = program()->str_pool();
     os << out::var_str(str_pool, stringifier, var) << "; ";
 }
 
@@ -184,33 +216,26 @@ void Compiler::write_class_props(
     ulam::Ref<ulam::Class> cls,
     ulam::Value& obj,
     bool is_main) {
-    for (auto prop : cls->props())
-        write_class_prop(os, prop, obj, is_main);
 
-    for (auto parent : cls->parents()) {
-        auto props = parent->cls()->props();
-        if (props.empty())
-            continue;
-        os << ":" << parent->cls()->name() << "< ";
-        for (auto prop : props)
-            write_class_prop(os, prop, obj, is_main);
-        os << "> ";
-    }
+    Stringifier stringifier{program()};
+    stringifier.options.use_unsigned_suffix = is_main;
+    stringifier.options.bits_use_unsigned_suffix = false;
+
+    for (auto prop : cls->props())
+        write_class_prop(os, stringifier, prop, obj);
 }
 
 void Compiler::write_class_prop(
     std::ostream& os,
+    Stringifier& stringifier,
     ulam::Ref<ulam::Prop> prop,
-    ulam::Value& obj,
-    bool is_main) {
-    assert(_ast->program());
-    auto program = _ast->program();
-    auto& str_pool = program->str_pool();
-
-    Stringifier stringifier{program};
-    stringifier.options.use_unsigned_suffix = is_main;
-    stringifier.options.bits_use_unsigned_suffix = false;
-
+    ulam::Value& obj) {
+    auto& str_pool = program()->str_pool();
     auto rval_copy = obj.copy_rvalue(); // TMP
     os << out::prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
+}
+
+ulam::Ref<ulam::Program> Compiler::program() {
+    assert(_ast->program());
+    return _ast->program();
 }

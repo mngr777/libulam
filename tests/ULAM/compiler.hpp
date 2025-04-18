@@ -1,5 +1,6 @@
 #pragma once
 #include "./eval.hpp"
+#include "./eval/stringifier.hpp"
 #include <filesystem>
 #include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -41,12 +42,19 @@ private:
 
     void write_class_parents(std::ostream& os, ulam::Ref<ulam::Class> cls);
 
+    void write_class_parent_members(
+        std::ostream& os,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Value& obj,
+        bool is_main);
+
     void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
     void
     write_class_type_def(std::ostream& os, ulam::Ref<ulam::AliasType> alias);
 
     void write_class_consts(std::ostream& os, ulam::Ref<ulam::Class> cls);
-    void write_class_const(std::ostream& os, ulam::Ref<ulam::Var> var);
+    void write_class_const(
+        std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var);
 
     void write_class_props(
         std::ostream& os,
@@ -56,9 +64,11 @@ private:
 
     void write_class_prop(
         std::ostream& os,
+        Stringifier& stringifier,
         ulam::Ref<ulam::Prop> prop,
-        ulam::Value& obj,
-        bool is_main);
+        ulam::Value& obj);
+
+    ulam::Ref<ulam::Program> program();
 
     ulam::Context _ctx;
     ulam::Ptr<ulam::ast::Root> _ast;
