@@ -177,7 +177,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
         // x <op> | x Type is
         std::string op_str{ulam::ops::str(op)};
         if (type)
-            data = exp::data_combine(data, out::type_str(type));
+            data = exp::data_combine(data, out::type_str(_stringifier, type));
         data = exp::data_combine(data, op_str);
     }
 

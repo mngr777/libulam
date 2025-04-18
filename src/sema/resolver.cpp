@@ -37,6 +37,8 @@ void Resolver::resolve(Ref<Program> program) {
     for (auto cls : _classes) {
         for (auto type_def : cls->type_defs())
             resolve(type_def);
+        for (auto var : cls->consts())
+            resolve(var);
     }
     _classes.clear();
 }

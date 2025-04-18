@@ -9,7 +9,9 @@
 
 namespace out {
 
-std::string type_str(ulam::Ref<ulam::Type> type);
+std::string type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type);
+
+std::string class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls);
 
 std::string type_base_name(ulam::Ref<ulam::Type> type);
 

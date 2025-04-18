@@ -67,7 +67,8 @@ void TestCase::run() {
     AnswerMap answers;
     try {
         answers = parse_answers(compiled);
-        std::cout << "COMPILED:\n" << answers << "\n";
+        std::cout << "COMPILED:\n" << compiled << "\n";
+        // std::cout << "COMPILED:\n" << answers << "\n";
     } catch (std::exception& e) {
         std::cout << "COMPILED:\n" << compiled << "\n";
         throw e;

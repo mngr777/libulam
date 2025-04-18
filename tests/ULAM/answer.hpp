@@ -22,19 +22,26 @@ public:
     std::string type_def(const std::string& alias) const;
     void add_type_def(std::string alias, std::string text);
 
+    bool has_const(const std::string& name) const;
+    std::string const_(const std::string& name) const;
+    void add_const(std::string name, std::string text);
+
     bool has_prop(const std::string& name) const;
     std::string prop(const std::string& name) const;
     void add_prop(std::string name, std::string text);
 
     const auto& props() const { return _props; }
+    const auto& consts() const { return _consts; }
     const auto& type_defs() const { return _type_defs; }
 
 private:
     std::string _class_name;
     std::list<std::string> _parents;
     std::string _test_fun;
-    std::map<std::string, std::string> _props;
     std::map<std::string, std::string> _type_defs;
+    std::map<std::string, std::string> _consts;
+    std::map<std::string, std::string> _props;
+
 };
 
 using AnswerMap = std::map<std::string, Answer>;
