@@ -16,11 +16,9 @@ public:
     EvalExprVisitor(
         EvalVisitor& eval,
         ulam::Ref<ulam::Program> program,
-        Stringifier& stringifier,
         ulam::Ref<ulam::Scope> scope,
         ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
-        Base::EvalExprVisitor{eval, program, scope, flags},
-        _stringifier{stringifier} {}
+        Base::EvalExprVisitor{eval, program, scope, flags} {}
 
     ExprRes visit(ulam::Ref<ulam::ast::BoolLit> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::NumLit> node) override;
@@ -103,5 +101,5 @@ protected:
         ulam::Ref<ulam::FunSet> fset,
         ulam::sema::ExprRes&& obj) override;
 
-    Stringifier& _stringifier;
+    Stringifier make_stringifier();
 };

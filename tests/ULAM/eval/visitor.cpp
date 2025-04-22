@@ -214,8 +214,7 @@ ulam::sema::ExprRes EvalVisitor::funcall(
 
 ulam::Ptr<ulam::sema::EvalExprVisitor> EvalVisitor::_expr_visitor(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
-    return ulam::make<EvalExprVisitor>(
-        *this, program(), _stringifier, scope, flags);
+    return ulam::make<EvalExprVisitor>(*this, program(), scope, flags);
 }
 
 ulam::Ptr<ulam::sema::EvalInit> EvalVisitor::_init_helper(
