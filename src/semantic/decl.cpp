@@ -31,6 +31,18 @@ void Decl::set_cls(Ref<Class> cls) {
     _module = cls->module();
 }
 
+bool Decl::has_cls_tpl() const { return _cls_tpl; }
+
+Ref<ClassTpl> Decl::cls_tpl() const {
+    assert(_cls_tpl);
+    return _cls_tpl;
+}
+
+void Decl::set_cls_tpl(Ref<ClassTpl> cls_tpl) {
+    assert(!_cls_tpl);
+    _cls_tpl = cls_tpl;
+}
+
 ScopeVersion Decl::scope_version() const {
     assert(_scope_version != NoScopeVersion);
     return _scope_version;

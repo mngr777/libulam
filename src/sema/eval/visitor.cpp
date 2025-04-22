@@ -259,8 +259,8 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
-Ptr<Resolver> EvalVisitor::resolver(eval_flags_t flags_) {
-    return _resolver(flags() | flags_);
+Ptr<Resolver> EvalVisitor::resolver(bool in_expr, eval_flags_t flags_) {
+    return _resolver(in_expr, flags() | flags_);
 }
 
 Ptr<EvalExprVisitor>
@@ -340,8 +340,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
     return {builtins().void_type(), Value{RValue{}}};
 }
 
-Ptr<Resolver> EvalVisitor::_resolver(eval_flags_t flags) {
-    return make<Resolver>(*this, program(), flags);
+Ptr<Resolver> EvalVisitor::_resolver(bool in_expr, eval_flags_t flags) {
+    return make<Resolver>(*this, program(), in_expr, flags);
 }
 
 Ptr<EvalExprVisitor>
@@ -365,7 +365,7 @@ EvalVisitor::_funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
 Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type = make<AliasType>(str_pool(), builtins(), nullptr, node);
     auto ref = ulam::ref(type);
-    if (!resolver()->resolve(type->as_alias(), scope()))
+    if (!resolver(false)->resolve(type->as_alias(), scope()))
         throw EvalExceptError("failed to resolve type");
     scope()->set(type->name_id(), std::move(type));
     return ref->as_alias();
@@ -386,23 +386,23 @@ Ptr<Var> EvalVisitor::make_var(
     auto flags = is_const ? Var::Const : Var::NoFlags;
     auto var = make<Var>(type_name, node, Ref<Type>{}, flags);
     var->set_scope_lvl(_scope_stack.size());
-    if (!resolver()->resolve(ref(var), scope()))
+    if (!resolver(false)->resolve(ref(var), scope()))
         return {};
     return var;
 }
 
-void EvalVisitor::var_init_expr(Ref<Var> var, ExprRes&& init) {
+void EvalVisitor::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
     assert(init);
-    var_init(var);
+    var_init(var, in_expr);
     var->set_value(init.move_value());
 }
 
-void EvalVisitor::var_init_default(Ref<Var> var) {
-    var_init(var);
+void EvalVisitor::var_init_default(Ref<Var> var, bool in_expr) {
+    var_init(var, in_expr);
     var->set_value(Value{var->type()->construct()});
 }
 
-void EvalVisitor::var_init(Ref<Var> var) {
+void EvalVisitor::var_init(Ref<Var> var, bool in_expr) {
     assert(var && var->is_ready());
     assert(var->value().empty());
 }
@@ -420,7 +420,7 @@ ExprRes EvalVisitor::eval_as_cond_ident(Ref<ast::IfAs> node) {
 }
 
 Ref<Type> EvalVisitor::resolve_as_cond_type(Ref<ast::IfAs> node) {
-    auto type = resolver()->resolve_type_name(node->type_name(), scope());
+    auto type = resolver(false)->resolve_type_name(node->type_name(), scope());
     if (!type)
         throw EvalExceptError("failed to resolve type");
     if (!type->is_object()) {

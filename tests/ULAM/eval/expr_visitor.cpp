@@ -300,9 +300,16 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_var(
 
     auto res = Base::member_access_var(node, std::move(obj), var);
 
-    auto name = str(var->name_id());
     exp::set_data(res, data);
-    exp::add_member_access(res, name, is_self);
+    if (res.value().is_consteval()) {
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
+            auto val_str = _stringifier.stringify(res.type(), rval);
+            exp::add_member_access(res, val_str, is_self);
+        });
+    } else {
+        auto name = str(var->name_id());
+        exp::add_member_access(res, name, is_self);
+    }
     return res;
 }
 

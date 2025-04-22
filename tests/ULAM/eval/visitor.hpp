@@ -1,4 +1,5 @@
 #pragma once
+#include "./flags.hpp"
 #include "./stringifier.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -30,7 +31,6 @@ public:
     void visit(ulam::Ref<ulam::ast::EmptyStmt> node) override;
 
     bool in_main() const { return _stack.size() == 1; }
-
     bool codegen_enabled() const;
 
     const std::string& data() const { return _data; }
@@ -57,9 +57,11 @@ protected:
     type_def(ulam::Ref<ulam::ast::TypeDef> node) override;
 
     void var_init_expr(
-        ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) override;
-    void var_init_default(ulam::Ref<ulam::Var> var) override;
-    void var_init(ulam::Ref<ulam::Var> var) override;
+        ulam::Ref<ulam::Var> var,
+        ulam::sema::ExprRes&& init,
+        bool in_expr) override;
+    void var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) override;
+    void var_init(ulam::Ref<ulam::Var> var, bool in_expr) override;
 
     ulam::sema::ExprRes _eval_expr(
         ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;

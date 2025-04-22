@@ -123,10 +123,11 @@ Answer parse_answer(const std::string_view text) {
     // {name, is_tpl}
     auto read_class_name =
         [&](bool is_parent = false) -> std::pair<const std::string_view, bool> {
+        auto start = pos;
         if (!is_parent && text[pos] != 'U')
             error("class name must start with 'U'");
         // Type
-        auto start = pos++;
+        ++start;
         while (is_ident())
             ++pos;
         // ()
@@ -139,7 +140,7 @@ Answer parse_answer(const std::string_view text) {
     auto read_parent_class_name = std::bind(read_class_name, true);
 
     auto skip_type_ident = [&]() {
-        if (!is_upper())
+        if (!is_upper() && !at("holder"))
             error("type name must start with uppercase letter");
         ++pos;
         while (is_ident())
@@ -382,7 +383,7 @@ void compare_answers(const Answer& truth, const Answer& answer) {
             auto message = std::string{"typedef `"} + alias +
                            "' in compiled class '" + answer.class_name() +
                            "` does not match the answer:\n`" + answer_text +
-                           "`\n vs\n `" + text + "`";
+                           "`\n vs\n`" + text + "`";
             throw std::invalid_argument(message);
         }
     }
@@ -422,7 +423,7 @@ void compare_answers(const Answer& truth, const Answer& answer) {
             auto message = std::string{"property `"} + name +
                            "' in compiled class `" + answer.class_name() +
                            "' does not match the answer:\n`" + answer_text +
-                           "`\n vs \n`" + text + "`";
+                           "`\n vs\n`" + text + "`";
             throw std::invalid_argument(message);
         }
     }
@@ -431,7 +432,7 @@ void compare_answers(const Answer& truth, const Answer& answer) {
     if (answer.test_fun() != truth.test_fun()) {
         auto message = std::string{"`test' function text of compiled class `"} +
                        answer.class_name() + "' does not match the answer:\n`" +
-                       answer.test_fun() + "`\n vs \n`" + truth.test_fun() +
+                       answer.test_fun() + "`\n vs\n`" + truth.test_fun() +
                        "`";
         throw std::invalid_argument(message);
     }

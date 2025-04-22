@@ -51,7 +51,7 @@ public:
     void visit(Ref<ast::TypeOpExpr> node) override;
     void visit(Ref<ast::Ident> node) override;
 
-    Ptr<Resolver> resolver(eval_flags_t flags = evl::NoFlags);
+    Ptr<Resolver> resolver(bool in_expr, eval_flags_t flags = evl::NoFlags);
 
     Ptr<EvalExprVisitor>
     expr_visitor(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
@@ -68,7 +68,7 @@ public:
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
 protected:
-    virtual Ptr<Resolver> _resolver(eval_flags_t flags);
+    virtual Ptr<Resolver> _resolver(bool in_expr, eval_flags_t flags);
 
     virtual Ptr<EvalExprVisitor>
     _expr_visitor(Ref<Scope> scope, eval_flags_t flags);
@@ -88,9 +88,9 @@ protected:
     virtual Ptr<Var> make_var(
         Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const);
 
-    virtual void var_init_expr(Ref<Var> var, ExprRes&& init);
-    virtual void var_init_default(Ref<Var> var);
-    virtual void var_init(Ref<Var> var);
+    virtual void var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr);
+    virtual void var_init_default(Ref<Var> var, bool in_expr);
+    virtual void var_init(Ref<Var> var, bool in_expr);
 
     virtual ExprRes eval_as_cond_ident(Ref<ast::IfAs> node);
     virtual Ref<Type> resolve_as_cond_type(Ref<ast::IfAs> node);

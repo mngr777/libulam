@@ -24,11 +24,13 @@ public:
     Resolver(
         EvalVisitor& eval,
         Ref<Program> program,
+        bool in_expr,
         eval_flags_t flags = evl::NoFlags):
         _eval{eval},
         _diag{program->diag()},
         _builtins{program->builtins()},
         _str_pool{program->str_pool()},
+        _in_expr{in_expr},
         _flags{flags} {}
 
     void resolve(Ref<Program> program);
@@ -93,6 +95,7 @@ private:
     Diag& _diag;
     Builtins& _builtins;
     UniqStrPool& _str_pool;
+    bool _in_expr;
     eval_flags_t _flags;
     std::set<Ref<Class>> _classes;
 };

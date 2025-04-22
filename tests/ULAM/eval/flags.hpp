@@ -2,7 +2,9 @@
 #include <libulam/sema/eval/flags.hpp>
 
 namespace evl {
-static constexpr ulam::sema::eval_flags_t First = ulam::sema::evl::Last;
-static constexpr ulam::sema::eval_flags_t NoCodegen = First;
-static constexpr ulam::sema::eval_flags_t NoConstevalCast = First << 1;
-}
+using eval_flags_t = ulam::sema::eval_flags_t;
+static constexpr eval_flags_t First = ulam::sema::evl::Last;
+static constexpr eval_flags_t NoCodegen = First;
+static constexpr eval_flags_t NoConstevalCast = First << 1;
+static constexpr eval_flags_t InExpr = First << 2;
+} // namespace evl
