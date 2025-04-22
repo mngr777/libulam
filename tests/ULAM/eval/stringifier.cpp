@@ -9,14 +9,19 @@
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
     assert(!rval.empty());
+
     if (type->is_prim())
         return stringify_prim(type->as_prim(), rval);
+
     if (type->is_class())
         return stringify_class(type->as_class(), rval);
+
     if (type->is_array())
         return stringify_array(type->as_array(), rval);
+
     if (type->is_atom())
         return "";
+
     assert(false);
 }
 
@@ -60,12 +65,18 @@ std::string Stringifier::stringify_class(
     std::string str;
 
     // typedefs
+    bool use_unsigned_suffix = options.use_unsigned_suffix;
+    options.use_unsigned_suffix = false;
     for (auto type_def : cls->type_defs())
         str += " " + out::type_def_str(*this, type_def) + "; ";
+    options.use_unsigned_suffix = use_unsigned_suffix;
 
-    // consts
-    for (auto var : cls->params())
-        str += " " + out::var_str(_str_pool, *this, var) + "; ";
+    // params
+    // NOTE: see t3364, t3396 for property value with/without params
+    if (options.class_params_as_consts) {
+        for (auto var : cls->params())
+            str += " " + out::var_str(_str_pool, *this, var) + "; ";
+    }
 
     // props
     auto rval_copy = rval.copy(); // TMP

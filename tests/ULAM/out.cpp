@@ -25,6 +25,8 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
         return "";
 
     std::string str;
+    bool use_unsigned_suffix = stringifier.options.use_unsigned_suffix;
+    stringifier.options.use_unsigned_suffix = true;
     for (auto param : params) {
         if (!str.empty())
             str += ",";
@@ -33,6 +35,7 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
         auto rval = param->value().copy_rvalue(); // TMP
         str += stringifier.stringify(param->type(), rval);
     }
+    stringifier.options.use_unsigned_suffix = use_unsigned_suffix;
     return "(" + str + ")";
 }
 

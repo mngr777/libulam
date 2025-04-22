@@ -255,6 +255,7 @@ void Compiler::write_class_props(
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = is_main;
     stringifier.options.bits_use_unsigned_suffix = false;
+    stringifier.options.class_params_as_consts = is_main;
 
     for (auto prop : cls->props())
         write_class_prop(os, stringifier, prop, obj);
