@@ -53,6 +53,7 @@ public:
     using Symbol = SymbolTable::Symbol;
 
     using ClassList = std::list<Ref<Class>>;
+    using ClassTplList = std::list<Ref<ClassTpl>>;
 
     Module(Ref<Program> program, Ref<ast::ModuleDef> node);
     ~Module();
@@ -104,6 +105,7 @@ public:
     add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
 
     const ClassList classes() const { return _classes; }
+    const ClassTplList class_tpls() const { return _class_tpls; }
 
     bool resolve(sema::Resolver& resolver);
 
@@ -116,6 +118,7 @@ private:
     std::set<str_id_t> _deps;
     std::unordered_map<str_id_t, Import> _imports;
     ClassList _classes;
+    ClassTplList _class_tpls;
 };
 
 } // namespace ulam

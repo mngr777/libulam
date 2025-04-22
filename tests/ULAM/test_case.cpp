@@ -20,6 +20,8 @@ std::map<std::string, Answer> parse_answers(const std::string_view text) {
                                                   : text.substr(pos);
         pos += line.size() + 1;
         auto answer = parse_answer(line);
+        if (answer.is_tpl())
+            continue; // TODO: compare template postfix
         auto name = answer.class_name();
         assert(answers.count(name) == 0);
         answers.emplace(std::move(name), std::move(answer));

@@ -340,10 +340,8 @@ Ref<Type> Resolver::resolve_type_name(
     }
 
     // resolve first alias in current scope
-    if (type->is_alias()) {
-        if (!resolve(type->as_alias(), scope))
-            return {};
-    }
+    if (type->is_alias() && !resolve(type->as_alias(), scope))
+        return {};
 
     // follow rest of type idents, resolve aliases along the way
     // e.g. in `A(x).B.C`, `A(x)` and `A(x).B` must resolve to classes,

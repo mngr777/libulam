@@ -7,6 +7,9 @@
 
 class Answer {
 public:
+    bool is_tpl() const { return _is_tpl; }
+    void set_is_tpl(bool is_tpl) { _is_tpl = is_tpl; }
+
     const std::string& class_name() const { return _class_name; }
     void set_class_name(std::string name) { _class_name = std::move(name); }
 
@@ -35,6 +38,7 @@ public:
     const auto& type_defs() const { return _type_defs; }
 
 private:
+    bool _is_tpl{false};
     std::string _class_name;
     std::list<std::string> _parents;
     std::string _test_fun;

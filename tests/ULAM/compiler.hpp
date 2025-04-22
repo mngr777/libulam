@@ -34,6 +34,10 @@ private:
     void
     compile_class(std::ostream& os, Eval& eval, ulam::Ref<ulam::Class> cls);
 
+    void compile_class_tpl(std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
+
+    void write_class_tpl_params(std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
+
     void write_obj(
         std::ostream& os,
         ulam::sema::ExprRes&& obj,
