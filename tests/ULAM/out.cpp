@@ -4,11 +4,16 @@
 
 namespace out {
 
-std::string type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type) {
-    auto str = type_base_name(type) + type_dim_str(type);
+std::string
+type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type, bool with_dims) {
+    auto str = type_base_name(type);
+    bool is_ref = type->is_ref();
+    type = type->deref();
     if (type->is_class())
         str += class_param_str(stringifier, type->as_class());
-    if (type->is_ref())
+    if (with_dims)
+        str += type_dim_str(type);
+    if (is_ref)
         str += "&";
     return str;
 }
@@ -32,7 +37,7 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
 }
 
 std::string type_base_name(ulam::Ref<ulam::Type> type) {
-    type = type->canon();
+    type = type->canon()->deref();
     while (type->is_array())
         type = type->as_array()->item_type();
     return type->name();
@@ -79,7 +84,7 @@ std::string var_def_str(
     if (var->is_const())
         os << "constant ";
     std::string name{str_pool.get(var->name_id())};
-    os << type_str(stringifier, var->type()) << " " << name
+    os << type_str(stringifier, var->type(), false) << " " << name
        << type_dim_str(var->type());
     return os.str();
 }

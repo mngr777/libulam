@@ -80,7 +80,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
     auto type = resolve_as_cond_type(node);
     assert(!type->is_ref());
     append(exp::data(res));
-    append(out::type_str(_stringifier, type));
+    append(out::type_str(_stringifier, type, false));
     append("as");
     append("cond");
 
