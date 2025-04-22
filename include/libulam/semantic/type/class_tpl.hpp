@@ -32,9 +32,13 @@ class ClassTpl : public TypeTpl, public ClassBase, public Decl {
     friend Class;
 
 public:
-    ClassTpl(Ref<ast::ClassDef> node, Ref<Module> module);
+    ClassTpl(
+        const std::string_view name,
+        Ref<ast::ClassDef> node,
+        Ref<Module> module);
     ~ClassTpl();
 
+    std::string name() const { return std::string{_name}; }
     str_id_t name_id() const;
 
     using ClassBase::add_param;
@@ -64,6 +68,8 @@ private:
     Ref<ast::ClassDef> _node;
     std::unordered_map<std::string, Ptr<Class>> _classes;
     std::list<Member> _ordered_members;
+
+    std::string_view _name;
 };
 
 } // namespace ulam

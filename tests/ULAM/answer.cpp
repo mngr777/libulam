@@ -120,7 +120,9 @@ Answer parse_answer(const std::string_view text) {
     auto skip_brackets = std::bind(skip_block, '[', ']');
     auto skip_braces = std::bind(skip_block, '{', '}');
 
-    auto read_class_name = [&](bool is_parent = false) {
+    // {name, is_tpl}
+    auto read_class_name =
+        [&](bool is_parent = false) -> std::pair<const std::string_view, bool> {
         if (!is_parent && text[pos] != 'U')
             error("class name must start with 'U'");
         // Type
@@ -128,10 +130,10 @@ Answer parse_answer(const std::string_view text) {
         while (is_ident())
             ++pos;
         // ()
-        skip_spaces();
-        if (at("("))
+        bool is_tpl = at("(");
+        if (is_tpl)
             skip_parens();
-        return text.substr(start, pos - start);
+        return {text.substr(start, pos - start), is_tpl};
     };
 
     auto read_parent_class_name = std::bind(read_class_name, true);
@@ -258,7 +260,9 @@ Answer parse_answer(const std::string_view text) {
 
     // class name
     skip_spaces();
-    answer.set_class_name(std::string{read_class_name()});
+    auto [name, is_tpl] = read_class_name();
+    answer.set_is_tpl(is_tpl);
+    answer.set_class_name(std::string{name});
 
     // params (TODO)
     skip_spaces();
@@ -271,12 +275,15 @@ Answer parse_answer(const std::string_view text) {
         skip(":");
         skip_spaces();
 
-        answer.add_parent(std::string{read_parent_class_name()});
-        skip_spaces();
-        while (at("+")) {
-            skip("+");
+        bool done = false;
+        while (!done) {
+            auto [name, _] = read_parent_class_name();
+            answer.add_parent(std::string{name});
             skip_spaces();
-            answer.add_parent(std::string{read_parent_class_name()});
+
+            done = !at("+");
+            if (!done)
+                skip("+");
             skip_spaces();
         }
     }
@@ -292,7 +299,8 @@ Answer parse_answer(const std::string_view text) {
         if (at(":")) {
             assert(base_prefix.empty());
             skip(":");
-            base_prefix = std::string{read_parent_class_name()} + "::";
+            auto [name, _] = read_parent_class_name();
+            base_prefix = std::string{name} + "::";
             skip_spaces();
             skip("<");
 

@@ -7,18 +7,21 @@
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <stdexcept>
 #include <utility>
 
 namespace {
 
+constexpr char NoMain[] = "<NOMAIN>";
+
 bool is_urself(ulam::Ref<const ulam::Class> cls) {
     return cls->name() == "UrSelf";
 }
 
-std::string class_prefix(ulam::Ref<const ulam::Class> cls) {
-    switch (cls->kind()) {
+std::string class_prefix(ulam::ClassKind kind) {
+    switch (kind) {
     case ulam::ClassKind::Element:
         return "Ue_";
     case ulam::ClassKind::Transient:
@@ -29,7 +32,11 @@ std::string class_prefix(ulam::Ref<const ulam::Class> cls) {
 }
 
 std::string class_name(ulam::Ref<ulam::Class> cls) {
-    return class_prefix(cls) + cls->name();
+    return class_prefix(cls->kind()) + cls->name();
+}
+
+std::string class_tpl_name(ulam::Ref<ulam::ClassTpl> tpl) {
+    return class_prefix(tpl->kind()) + tpl->name();
 }
 
 } // namespace
@@ -87,6 +94,10 @@ void Compiler::compile(std::ostream& os) {
 
         for (auto cls : module->classes())
             compile_class(os, eval, cls);
+
+        // TODO
+        // for (auto tpl : module->class_tpls())
+        //     compile_class_tpl(os, eval, tpl);
     }
 }
 
@@ -106,7 +117,7 @@ void Compiler::compile_class(
         assert(obj.value().is_rvalue());
         // NOTE: intentional double space after `{'
         auto test_postfix =
-            has_test ? "Int test() {  " + eval.data() + " }" : "<NOMAIN>";
+            has_test ? "Int test() {  " + eval.data() + " }" : NoMain;
         write_obj(os, std::move(obj), test_postfix, has_test);
         os << "\n";
 
@@ -114,6 +125,28 @@ void Compiler::compile_class(
         std::cerr << "eval error: " << e.message() << "\n";
         throw e;
     }
+}
+
+void Compiler::compile_class_tpl(
+    std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl) {
+    os << class_tpl_name(tpl);
+    write_class_tpl_params(os, eval, tpl);
+    os << " { ";
+    os << " " << NoMain << " }\n";
+}
+
+void Compiler::write_class_tpl_params(
+    std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl) {
+    assert(!tpl->params().empty());
+    os << "(";
+    Stringifier stringifier{program()};
+    const auto& params = tpl->params();
+    for (auto param : params) {
+        if (param != *params.begin())
+            os << ", ";
+        // os << out::var_def_str(program()->str_pool(), stringifier, param);
+    }
+    os << ")";
 }
 
 void Compiler::write_obj(

@@ -76,8 +76,8 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
 Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     assert(node->params()->child_num() > 0);
 
-    auto name_id = node->name_id();
-    auto tpl = make<ClassTpl>(node, this);
+    auto name = program()->str_pool().get(node->name_id());
+    auto tpl = make<ClassTpl>(name, node, this);
     auto ref = ulam::ref(tpl);
     tpl->set_scope_version(scope()->version());
 
@@ -89,12 +89,14 @@ Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
         tpl->add_param(param);
     }
 
-    scope()->set(name_id, ref);
+    scope()->set(tpl->name_id(), ref);
     set(tpl->name_id(), std::move(tpl));
 
     assert(!node->has_scope_version());
     node->set_cls_tpl(ref);
     node->set_scope_version(scope()->version());
+
+    _class_tpls.push_back(ref);
     return ref;
 }
 

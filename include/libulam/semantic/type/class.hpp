@@ -35,8 +35,8 @@ class Class : public UserType, public ClassBase {
     friend cls::Ancestry;
 
 public:
-    Class(std::string_view name, Ref<ClassTpl> tpl);
-    Class(std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module);
+    Class(const std::string_view name, Ref<ClassTpl> tpl);
+    Class(const std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module);
     ~Class();
 
     std::string name() const override { return std::string{_name}; }
@@ -134,7 +134,7 @@ private:
     auto& convs() { return _convs; }
     auto& fsets() { return _fsets; }
 
-    std::string_view _name;
+    const std::string_view _name;
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
     std::list<Ref<AliasType>> _type_defs;
