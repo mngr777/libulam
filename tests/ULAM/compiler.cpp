@@ -214,13 +214,14 @@ void Compiler::write_class_parent_members(
 
 void Compiler::write_class_type_defs(
     std::ostream& os, ulam::Ref<ulam::Class> cls) {
+    Stringifier stringifier{program()};
     for (auto type_def : cls->type_defs())
-        write_class_type_def(os, type_def);
+        write_class_type_def(os, stringifier, type_def);
 }
 
 void Compiler::write_class_type_def(
-    std::ostream& os, ulam::Ref<ulam::AliasType> alias) {
-    os << out::type_def_str(alias) << "; ";
+    std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::AliasType> alias) {
+    os << out::type_def_str(stringifier, alias) << "; ";
 }
 
 void Compiler::write_class_consts(
@@ -232,6 +233,7 @@ void Compiler::write_class_consts(
     // params as consts (t3336)
     for (auto var : cls->params())
         write_class_const(os, stringifier, var);
+
     // consts
     for (auto var : cls->consts())
         write_class_const(os, stringifier, var);

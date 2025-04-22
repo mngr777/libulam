@@ -57,10 +57,11 @@ std::string type_dim_str(ulam::Ref<ulam::Type> type) {
     return out.str();
 }
 
-std::string type_def_str(ulam::Ref<ulam::AliasType> alias) {
+std::string
+type_def_str(Stringifier& stringifier, ulam::Ref<ulam::AliasType> alias) {
     auto aliased = alias->aliased();
-    return "typedef " + type_base_name(aliased) + " " + alias->name() +
-           type_dim_str(aliased);
+    return "typedef " + type_str(stringifier, aliased, false) + " " +
+           alias->name() + type_dim_str(aliased);
 }
 
 std::string var_str(
@@ -105,7 +106,7 @@ std::string prop_str(
         for (auto type_def : type_defs) {
             if (type_def != *type_defs.begin())
                 os << " ";
-            os << type_def_str(type_def) << "; ";
+            os << type_def_str(stringifier, type_def) << "; ";
         }
     }
     os << stringifier.stringify(type, rval) << ")";

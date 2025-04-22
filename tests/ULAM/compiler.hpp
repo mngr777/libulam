@@ -34,9 +34,11 @@ private:
     void
     compile_class(std::ostream& os, Eval& eval, ulam::Ref<ulam::Class> cls);
 
-    void compile_class_tpl(std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
+    void compile_class_tpl(
+        std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
 
-    void write_class_tpl_params(std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
+    void write_class_tpl_params(
+        std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
 
     void write_obj(
         std::ostream& os,
@@ -53,8 +55,10 @@ private:
         bool is_main);
 
     void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
-    void
-    write_class_type_def(std::ostream& os, ulam::Ref<ulam::AliasType> alias);
+    void write_class_type_def(
+        std::ostream& os,
+        Stringifier& stringifier,
+        ulam::Ref<ulam::AliasType> alias);
 
     void write_class_consts(std::ostream& os, ulam::Ref<ulam::Class> cls);
     void write_class_const(

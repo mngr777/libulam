@@ -3,7 +3,6 @@
 #include "./cast.hpp"
 #include "./expr_res.hpp"
 #include "./expr_visitor.hpp"
-#include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
 #include "libulam/sema/eval/flags.hpp"
@@ -238,29 +237,31 @@ ulam::Ref<ulam::AliasType>
 EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
     auto alias_type = Base::type_def(node);
     if (alias_type && codegen_enabled())
-        append(out::type_def_str(alias_type) + "; ");
+        append(out::type_def_str(_stringifier, alias_type) + "; ");
     return alias_type;
 }
 
 void EvalVisitor::var_init_expr(
-    ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init) {
-    auto data = exp::data(init);
-    Base::var_init_expr(var, std::move(init));
-    if (codegen_enabled()) {
+    ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init, bool in_expr) {
+    std::string data;
+    if (!in_expr && codegen_enabled())
+        data = exp::data(init);
+    Base::var_init_expr(var, std::move(init), in_expr);
+    if (!in_expr && codegen_enabled()) {
         append("=");
         append(data);
         append("; ", true);
     }
 }
 
-void EvalVisitor::var_init_default(ulam::Ref<ulam::Var> var) {
-    Base::var_init_default(var);
-    if (codegen_enabled())
+void EvalVisitor::var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) {
+    Base::var_init_default(var, in_expr);
+    if (!in_expr && codegen_enabled())
         append("; ", true);
 }
 
-void EvalVisitor::var_init(ulam::Ref<ulam::Var> var) {
-    if (codegen_enabled())
+void EvalVisitor::var_init(ulam::Ref<ulam::Var> var, bool in_expr) {
+    if (!in_expr && codegen_enabled())
         append(out::var_def_str(str_pool(), _stringifier, var));
 }
 

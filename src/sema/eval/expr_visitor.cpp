@@ -29,8 +29,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n" << line_at(node);
     ExprRes res;
     if (node->has_type_name()) {
-        auto type = eval().resolver()->resolve_type_name(
-            node->type_name(), scope(), true);
+        auto type = eval()
+                        .resolver(true, flags())
+                        ->resolve_type_name(node->type_name(), scope(), true);
         if (!type)
             return {ExprError::UnresolvableType};
         res = type_op(node, type);
@@ -116,8 +117,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
         return res;
 
     // resolve target type
-    auto cast_type = eval().resolver()->resolve_full_type_name(
-        node->full_type_name(), scope());
+    auto cast_type =
+        eval()
+            .resolver(true, flags())
+            ->resolve_full_type_name(node->full_type_name(), scope());
     if (!cast_type)
         return {ExprError::InvalidCast};
 
@@ -251,7 +254,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     debug() << __FUNCTION__ << "ClassConstAccess" << line_at(node);
 
-    auto resolver = eval().resolver();
+    auto resolver = eval().resolver(true, flags());
     auto type = resolver->resolve_class_name(node->type_name(), scope(), false);
     if (!type)
         return {ExprError::UnresolvableType};
@@ -393,7 +396,7 @@ Ref<Class> EvalExprVisitor::class_base(
 
     // resolve aliases
     if (type->is_alias()) {
-        auto resolver = eval().resolver();
+        auto resolver = eval().resolver(true, flags());
         if (!resolver->resolve(type->as_alias()))
             return {};
     }
@@ -515,7 +518,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     auto param_scope = make<BasicScope>(ref(param_scope_view));
     std::list<Ref<Var>> cls_params;
 
-    auto resolver = eval().resolver();
+    auto resolver = eval().resolver(true, flags());
     auto cast = eval().cast_helper(scope(), flags());
     std::pair<TypedValueList, bool> res;
     res.second = false;
@@ -709,7 +712,8 @@ ExprRes EvalExprVisitor::unary_op(
 
     Ref<Type> type{};
     if (type_name) {
-        type = eval().resolver()->resolve_type_name(type_name, scope());
+        auto resolver = eval().resolver(true, flags());
+        type = resolver->resolve_type_name(type_name, scope());
         if (!type)
             return {ExprError::UnresolvableType};
     }
@@ -850,8 +854,9 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
 }
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
-    // if (!eval().resolver()->resolve(var, scope()))
-    //     return {ExprError::UnresolvableVar};
+    if (!var->has_type() &&
+        !eval().resolver(true, flags())->resolve(var, scope()))
+        return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
 
@@ -954,8 +959,8 @@ EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
 
 ExprRes EvalExprVisitor::member_access_var(
     Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var) {
-    // if (!eval().resolver()->resolve(var))
-    //     return {ExprError::UnresolvableVar};
+    if (!var->has_type() && !eval().resolver(true, flags())->resolve(var))
+        return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
 

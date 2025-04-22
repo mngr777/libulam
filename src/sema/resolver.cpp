@@ -147,7 +147,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
             bool ok = init_res.ok();
             update_state(var, ok);
             if (ok)
-                _eval.var_init_expr(var, std::move(init_res));
+                _eval.var_init_expr(var, std::move(init_res), _in_expr);
             return ok;
 
         } else if (var->requires_value()) {
@@ -158,7 +158,7 @@ bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
 
         } else {
             update_state(var, true);
-            _eval.var_init_default(var);
+            _eval.var_init_default(var, _in_expr);
             return true;
         }
     }

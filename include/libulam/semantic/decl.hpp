@@ -4,6 +4,7 @@
 
 namespace ulam {
 
+class ClassTpl;
 class Class;
 class Module;
 
@@ -35,6 +36,10 @@ public:
     Ref<Class> cls() const;
     void set_cls(Ref<Class> cls);
 
+    bool has_cls_tpl() const;
+    Ref<ClassTpl> cls_tpl() const;
+    void set_cls_tpl(Ref<ClassTpl> cls_tpl);
+
     State state() const { return _state; }
     void set_state(State state) { _state = state; }
 
@@ -44,6 +49,7 @@ public:
 private:
     Ref<Module> _module{};
     Ref<Class> _cls{};
+    Ref<ClassTpl> _cls_tpl{};
     State _state{NotResolved};
     ScopeVersion _scope_version{NoScopeVersion};
 };

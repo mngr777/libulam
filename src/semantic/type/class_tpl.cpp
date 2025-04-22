@@ -33,12 +33,14 @@ ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
 Ref<AliasType> ClassTpl::add_type_def(Ref<ast::TypeDef> node) {
     auto alias = ClassBase::add_type_def(node);
+    alias->set_cls_tpl(this);
     _ordered_members.emplace_back(alias);
     return alias;
 }
 
 Ref<Fun> ClassTpl::add_fun(Ref<ast::FunDef> node) {
     auto fun = ClassBase::add_fun(node);
+    fun->set_cls_tpl(this);
     _ordered_members.emplace_back(fun);
     return fun;
 }
@@ -46,6 +48,7 @@ Ref<Fun> ClassTpl::add_fun(Ref<ast::FunDef> node) {
 Ref<Var>
 ClassTpl::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto var = ClassBase::add_const(type_node, node);
+    var->set_cls_tpl(this);
     var->set_flag(Var::Tpl);
     _ordered_members.emplace_back(var);
     return var;
@@ -54,6 +57,7 @@ ClassTpl::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 Ref<Prop>
 ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto prop = ClassBase::add_prop(type_node, node);
+    prop->set_cls_tpl(this);
     prop->set_flag(Var::Tpl);
     _ordered_members.emplace_back(prop);
     return prop;
@@ -88,16 +92,21 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
 
     // create other members
     for (auto& mem : _ordered_members) {
-        mem.accept(
-            [&](Ref<AliasType> alias) { cls->add_type_def(alias->node()); },
-            [&](Ref<Var> var) {
-                cls->add_const(var->type_node(), var->node());
+        auto decl = mem.accept(
+            [&](Ref<AliasType> alias) -> Ref<Decl> {
+                return cls->add_type_def(alias->node());
             },
-            [&](Ref<Prop> prop) {
-                cls->add_prop(prop->type_node(), prop->node());
+            [&](Ref<Var> var) -> Ref<Decl> {
+                return cls->add_const(var->type_node(), var->node());
             },
-            [&](Ref<Fun> fun) { cls->add_fun(fun->node()); },
-            [&](auto) { assert(false); });
+            [&](Ref<Prop> prop) -> Ref<Decl> {
+                return cls->add_prop(prop->type_node(), prop->node());
+            },
+            [&](Ref<Fun> fun) -> Ref<Decl> {
+                return cls->add_fun(fun->node());
+            },
+            [&](auto) -> Ref<Decl> { assert(false); });
+        decl->set_cls_tpl(this);
     }
     return cls;
 }
