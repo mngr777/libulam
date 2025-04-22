@@ -136,27 +136,41 @@ TypedValue BitsType::binary_op(
         return {boolean, Value{boolean->construct(val)}};
     }
     case Op::AssignShiftLeft: {
+        if (is_unknown)
+            return {this, Value{RValue{}}};
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() << shift};
         return {this, Value{RValue{std::move(bits), is_consteval}}};
     }
     case Op::ShiftLeft: {
-        Unsigned shift = r_rval.get<Unsigned>();
-        if (shift == 0)
-            return {this, Value{std::move(l_rval)}};
         bitsize_t max_size = 32;
         if (bitsize() > max_size)
             max_size = (bitsize() > 64) ? MaxSize : 64;
-        bitsize_t size = std::min<bitsize_t>(bitsize() + shift, max_size);
+        bitsize_t size = max_size;
+
+        Unsigned shift = 0;
+        if (!r_rval.empty()) {
+            shift = r_rval.get<Unsigned>();
+            size = std::min<bitsize_t>(
+                bitsize() + shift, max_size);
+        }
         auto type = builtins().bits_type(size);
+        if (is_unknown)
+            return {type, Value{RValue{}}};
+        if (shift == 0)
+            return {type, Value{std::move(l_rval)}};
+
         auto rval = type->construct();
         auto& bits = rval.get<Bits>();
         bits |= l_rval.get<Bits>();
         bits <<= shift;
+        rval.set_is_consteval(is_consteval);
         return {type, Value{std::move(rval)}};
     }
     case Op::AssignShiftRight:
     case Op::ShiftRight: {
+        if (is_unknown)
+            return {this, Value{RValue{}}};
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() >> shift};
         return {this, Value{RValue{std::move(bits), is_consteval}}};

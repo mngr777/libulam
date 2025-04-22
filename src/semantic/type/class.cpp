@@ -356,6 +356,8 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
     assert(convs(type, true).empty()); // must use conversion function otherwise
 
     auto rval = val.move_rvalue();
+    if (rval.empty())
+        return Value{RValue{}};
     assert(rval.is<DataPtr>());
 
     bool is_consteval = rval.is_consteval();
@@ -373,24 +375,16 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
 
     // to Atom
     if (type->is(AtomId)) {
-        auto atom_type = builtins().atom_type();
-        auto new_rval = atom_type->construct(std::move(obj->bits()));
-        new_rval.set_is_consteval(is_consteval);
-        return Value{std::move(new_rval)};
+        assert(is_element());
+        return Value{std::move(rval)};
     }
 
     assert(type->is_class());
     auto cls = type->as_class();
 
     // downcast
-    if (cls->is_base_of(this)) {
-        auto new_rval = cls->construct();
-        auto new_obj = new_rval.get<DataPtr>();
-        for (auto prop : cls->all_props())
-            prop->store(new_obj, prop->load(obj));
-        new_rval.set_is_consteval(is_consteval);
-        return Value{std::move(new_rval)};
-    }
+    if (cls->is_base_of(this))
+        return Value{std::move(rval)};
 
     // upcast
     assert(is_base_of(cls));

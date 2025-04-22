@@ -67,7 +67,7 @@ public:
 
     DataView() {}
 
-    operator bool() { return _storage.get(); }
+    operator bool() const { return _storage.get(); }
 
     void store(RValue&& rval);
     RValue load() const;

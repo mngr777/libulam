@@ -43,7 +43,8 @@ ExprRes EvalFuncall::funcall(
     const auto& bfset = val.lvalue().get<BoundFunSet>();
 
     auto fset = bfset.fset();
-    auto dyn_cls = bfset.self().type()->as_class();
+    auto dyn_cls =
+        bfset.has_self() ? bfset.self().type()->as_class() : fset->cls();
     auto [match_res, error] =
         find_match(node, fset, dyn_cls, args.typed_value_refs());
     if (error != ExprError::Ok)

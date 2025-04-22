@@ -21,11 +21,12 @@ class EvalFuncall;
 
 class EvalVisitor : public ast::Visitor, public EvalBase {
     friend Resolver;
+
 public:
     explicit EvalVisitor(
         Ref<Program> program, eval_flags_t flags = evl::NoFlags);
 
-    ExprRes eval(Ref<ast::Block> block);
+    virtual ExprRes eval(Ref<ast::Block> block);
 
     void visit(Ref<ast::TypeDef> node) override;
     void visit(Ref<ast::VarDefList> node) override;
@@ -90,6 +91,11 @@ protected:
     virtual void var_init_expr(Ref<Var> var, ExprRes&& init);
     virtual void var_init_default(Ref<Var> var);
     virtual void var_init(Ref<Var> var);
+
+    virtual ExprRes eval_as_cond_ident(Ref<ast::IfAs> node);
+    virtual Ref<Type> resolve_as_cond_type(Ref<ast::IfAs> node);
+    virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(
+        Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Ref<Scope> scope);
 
     virtual ExprRes ret_res(Ref<ast::Return> node);
 

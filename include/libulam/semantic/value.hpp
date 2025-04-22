@@ -28,6 +28,15 @@ class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
 public:
     using Variant::Variant;
 
+    template <typename T> LValue derived(T&& value) const {
+        LValue lval{std::forward<T>(value)};
+        lval._is_xvalue = _is_xvalue;
+        lval._scope_lvl = _scope_lvl;
+        return lval;
+    }
+
+    LValue derived() const { return derived(std::monostate{}); }
+
     bool has_rvalue() const;
     RValue rvalue() const;
     void with_rvalue(std::function<void(const RValue&)> cb) const;
@@ -61,13 +70,6 @@ public:
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
-    template <typename T> LValue derived(T&& value) {
-        LValue lval{std::forward<T>(value)};
-        lval._is_xvalue = _is_xvalue;
-        lval._scope_lvl = _scope_lvl;
-        return lval;
-    }
-
     bool _is_xvalue{true};
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };

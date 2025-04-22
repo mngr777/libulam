@@ -11,7 +11,8 @@ namespace out {
 
 std::string type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type);
 
-std::string class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls);
+std::string
+class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls);
 
 std::string type_base_name(ulam::Ref<ulam::Type> type);
 
@@ -24,7 +25,10 @@ std::string var_str(
     Stringifier& stringifier,
     ulam::Ref<ulam::Var> var);
 
-std::string var_def_str(ulam::UniqStrPool& str_pool, ulam::Ref<ulam::Var> var);
+std::string var_def_str(
+    ulam::UniqStrPool& str_pool,
+    Stringifier& stringifier,
+    ulam::Ref<ulam::Var> var);
 
 std::string prop_str(
     ulam::UniqStrPool& str_pool,
