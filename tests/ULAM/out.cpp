@@ -98,11 +98,15 @@ std::string prop_str(
     assert(str_pool.has_id(prop->name_id()));
     auto type = prop->type();
     auto rval = obj.prop(prop).rvalue(); // TMP
-    os << type_base_name(type) << " " << str_pool.get(prop->name_id())
-       << type_dim_str(type) << "(";
+    os << type_str(stringifier, type, false) << " "
+       << str_pool.get(prop->name_id()) << type_dim_str(type) << "(";
     if (type->is_class()) {
-        for (auto type_def : type->as_class()->type_defs())
+        const auto& type_defs = type->as_class()->type_defs();
+        for (auto type_def : type_defs) {
+            if (type_def != *type_defs.begin())
+                os << " ";
             os << type_def_str(type_def) << "; ";
+        }
     }
     os << stringifier.stringify(type, rval) << ")";
     return os.str();

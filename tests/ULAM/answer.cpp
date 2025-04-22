@@ -381,8 +381,8 @@ void compare_answers(const Answer& truth, const Answer& answer) {
         if (answer_text != text) {
             auto message = std::string{"typedef `"} + alias +
                            "' in compiled class '" + answer.class_name() +
-                           "` does not match the answer: `" + answer_text +
-                           "` vs `" + text + "`";
+                           "` does not match the answer:\n`" + answer_text +
+                           "`\n vs\n `" + text + "`";
             throw std::invalid_argument(message);
         }
     }
@@ -401,8 +401,8 @@ void compare_answers(const Answer& truth, const Answer& answer) {
         if (answer_text != text) {
             auto message = std::string{"constant `"} + name +
                            "' in compiled class `" + answer.class_name() +
-                           "' does not match the answer: `" + answer_text +
-                           "` vs `" + text + "`";
+                           "' does not match the answer:\n`" + answer_text +
+                           "`\n vs\n`" + text + "`";
             throw std::invalid_argument(message);
         }
     }
@@ -421,8 +421,8 @@ void compare_answers(const Answer& truth, const Answer& answer) {
         if (answer_text != text) {
             auto message = std::string{"property `"} + name +
                            "' in compiled class `" + answer.class_name() +
-                           "' does not match the answer: `" + answer_text +
-                           "` vs `" + text + "`";
+                           "' does not match the answer:\n`" + answer_text +
+                           "`\n vs \n`" + text + "`";
             throw std::invalid_argument(message);
         }
     }
