@@ -21,7 +21,7 @@ ExprRes EvalCast::cast(
 EvalCast::CastRes EvalCast::maybe_cast(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
     CastStatus status = NoCast;
-    if (to->is_ref() && !arg.value().is_lvalue()) {
+    if (to->is_ref()) {
         // taking or casting a reference
         assert(!arg.type()->is_ref());
         status = CastRef;

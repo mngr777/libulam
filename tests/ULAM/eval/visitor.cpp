@@ -3,6 +3,7 @@
 #include "./cast.hpp"
 #include "./expr_res.hpp"
 #include "./expr_visitor.hpp"
+#include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
 #include "libulam/sema/eval/flags.hpp"
