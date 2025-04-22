@@ -58,6 +58,9 @@ std::string Stringifier::stringify_prim(
 std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval, flags_t flags) {
     std::string str;
+    for (auto var : cls->params())
+        str += " " + out::var_str(_str_pool, *this, var) + "; ";
+
     auto rval_copy = rval.copy(); // TMP
     for (auto prop : cls->props())
         str += " " + out::prop_str(_str_pool, *this, prop, rval_copy) + "; ";
