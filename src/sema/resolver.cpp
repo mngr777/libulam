@@ -32,6 +32,8 @@ namespace ulam::sema {
 void Resolver::resolve(Ref<Program> program) {
     for (auto& module : program->modules())
         module->resolve(*this);
+
+    // TODO: loop
     for (auto cls : _classes)
         resolve(cls);
     for (auto cls : _classes) {
@@ -70,6 +72,9 @@ bool Resolver::resolve(Ref<Class> cls) {
         }
         assert(false);
     }
+
+    if (ok)
+        _classes.insert(cls);
     return ok;
 }
 

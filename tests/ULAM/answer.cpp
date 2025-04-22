@@ -127,7 +127,7 @@ Answer parse_answer(const std::string_view text) {
         if (!is_parent && text[pos] != 'U')
             error("class name must start with 'U'");
         // Type
-        ++start;
+        ++pos;
         while (is_ident())
             ++pos;
         // ()
@@ -140,7 +140,7 @@ Answer parse_answer(const std::string_view text) {
     auto read_parent_class_name = std::bind(read_class_name, true);
 
     auto skip_type_ident = [&]() {
-        if (!is_upper() && !at("holder"))
+        if (!is_upper() && !at("holder") && !at("unresolved"))
             error("type name must start with uppercase letter");
         ++pos;
         while (is_ident())
@@ -296,8 +296,11 @@ Answer parse_answer(const std::string_view text) {
     // props
     skip_spaces();
     std::string base_prefix;
-    while (!at(TestFunStart) && !at(NoMain)) {
-        if (at(":")) {
+    while (!at(TestFunStart) && !at(NoMain) && !at("}")) {
+        if (at("/*")) {
+            skip_until("*/");
+            skip("*/");
+        } else if (at(":")) {
             assert(base_prefix.empty());
             skip(":");
             auto [name, _] = read_parent_class_name();
@@ -341,8 +344,8 @@ Answer parse_answer(const std::string_view text) {
         answer.set_test_fun(std::move(test_fun));
 
     } else {
-        assert(at(NoMain));
-        skip(NoMain);
+        if (at(NoMain))
+            skip(NoMain);
         answer.set_test_fun(NoMain);
     }
 
@@ -432,8 +435,7 @@ void compare_answers(const Answer& truth, const Answer& answer) {
     if (answer.test_fun() != truth.test_fun()) {
         auto message = std::string{"`test' function text of compiled class `"} +
                        answer.class_name() + "' does not match the answer:\n`" +
-                       answer.test_fun() + "`\n vs\n`" + truth.test_fun() +
-                       "`";
+                       answer.test_fun() + "`\n vs\n`" + truth.test_fun() + "`";
         throw std::invalid_argument(message);
     }
 }
