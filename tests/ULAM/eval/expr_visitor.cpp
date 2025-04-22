@@ -56,7 +56,10 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
     auto res = Base::type_op(node, type);
     if (res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            exp::set_data(res, make_stringifier().stringify(res.type(), rval));
+            auto stringifier = make_stringifier();
+            stringifier.options.unary_as_unsigned_lit = true;
+            stringifier.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, stringifier.stringify(res.type(), rval));
         });
     }
     return res;
@@ -68,7 +71,10 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op_expr_default(
     auto res = Base::type_op_expr_default(node, std::move(arg));
     if (res.type()->is_prim() && res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            exp::set_data(res, make_stringifier().stringify(res.type(), rval));
+            auto stringifier = make_stringifier();
+            stringifier.options.unary_as_unsigned_lit = true;
+            stringifier.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, stringifier.stringify(res.type(), rval));
         });
     } else {
         exp::set_data(res, data);
@@ -184,7 +190,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
         // x <op> | x Type is
         std::string op_str{ulam::ops::str(op)};
         if (type) {
-            Stringifier stringifier = make_stringifier();
+            auto stringifier = make_stringifier();
             data = exp::data_combine(data, out::type_str(stringifier, type));
         }
         data = exp::data_combine(data, op_str);
@@ -193,7 +199,14 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
     auto res =
         Base::apply_unary_op(node, op, lval, arg_node, std::move(arg), type);
 
-    exp::set_data(res, data);
+    const auto& val = res.value();
+    if (val.is_consteval()) {
+        val.with_rvalue([&](const ulam::RValue& rval) {
+            exp::set_data(res, make_stringifier().stringify(res.type(), rval));
+        });
+    } else {
+        exp::set_data(res, data);
+    }
     return res;
 }
 
@@ -312,7 +325,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_var(
     exp::set_data(res, data);
     if (res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            Stringifier stringifier = make_stringifier();
+            auto stringifier = make_stringifier();
             stringifier.options.unary_as_unsigned_lit = true;
             stringifier.options.bool_as_unsigned_lit = true;
             auto val_str = stringifier.stringify(res.type(), rval);
@@ -374,5 +387,6 @@ EvalExprVisitor::ExprRes EvalExprVisitor::bind(
 }
 
 Stringifier EvalExprVisitor::make_stringifier() {
-    return Stringifier{program()};
+    Stringifier stringifier{program()};
+    return stringifier;
 }
