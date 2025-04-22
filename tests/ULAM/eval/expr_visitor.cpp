@@ -2,10 +2,10 @@
 #include "../out.hpp"
 #include "./expr_flags.hpp"
 #include "./expr_res.hpp"
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value.hpp>
 
@@ -169,8 +169,15 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
 
     } else if (op == ulam::Op::PreInc || op == ulam::Op::PreDec) {
         // x 1 [cast] += | x 1 [cast] -=
+        bool is_int = arg.type()->deref()->is_same(builtins().int_type());
+        std::string inc_str{is_int ? "1" : "1 cast"};
         std::string op_str{(op == ulam::Op::PreInc) ? "+=" : "-="};
-        std::string inc_str{arg.type()->is(ulam::IntId) ? "1" : "1 cast"};
+        data = exp::data_combine(data, inc_str, op_str);
+
+    } else if (op == ulam::Op::PostInc || op == ulam::Op::PostDec) {
+        bool is_int = arg.type()->deref()->is_same(builtins().int_type());
+        std::string inc_str{is_int ? "1" : "1 cast"};
+        std::string op_str{ulam::ops::str(op)};
         data = exp::data_combine(data, inc_str, op_str);
 
     } else {

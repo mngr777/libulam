@@ -335,8 +335,19 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
         return ret.move_res();
     }
     debug() << "}\n";
-    if (!fun->ret_type()->is(VoidId))
-        return {ExprError::NoReturn};
+
+    if (!fun->ret_type()->is(VoidId)) {
+        if (has_flag(evl::NoExec)) {
+            if (fun->ret_type()->is_ref()) {
+                LValue lval;
+                lval.set_is_xvalue(false);
+                return {fun->ret_type(), Value{lval}};
+            }
+            return {fun->ret_type(), Value{RValue{}}};
+        } else {
+            return {ExprError::NoReturn};
+        }
+    }
     return {builtins().void_type(), Value{RValue{}}};
 }
 

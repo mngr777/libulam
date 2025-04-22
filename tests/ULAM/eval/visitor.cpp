@@ -175,10 +175,9 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
             append(res.data<std::string>());
             append("return");
         }
-    }
-    // TODO: check scope, type
-    if (in_main() || !has_flag(ulam::sema::evl::NoExec))
+    } else {
         throw ulam::sema::EvalExceptReturn(node, std::move(res));
+    }
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {

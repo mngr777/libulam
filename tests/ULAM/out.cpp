@@ -96,20 +96,11 @@ std::string prop_str(
     ulam::Ref<ulam::Prop> prop,
     ulam::RValue& obj) {
     std::ostringstream os;
-    assert(str_pool.has_id(prop->name_id()));
     auto type = prop->type();
     auto rval = obj.prop(prop).rvalue(); // TMP
     os << type_str(stringifier, type, false) << " "
-       << str_pool.get(prop->name_id()) << type_dim_str(type) << "(";
-    if (type->is_class()) {
-        const auto& type_defs = type->as_class()->type_defs();
-        for (auto type_def : type_defs) {
-            if (type_def != *type_defs.begin())
-                os << " ";
-            os << type_def_str(stringifier, type_def) << "; ";
-        }
-    }
-    os << stringifier.stringify(type, rval) << ")";
+       << str_pool.get(prop->name_id()) << type_dim_str(type) << "("
+       << stringifier.stringify(type, rval) << ")";
     return os.str();
 }
 
