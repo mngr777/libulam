@@ -10,7 +10,8 @@ class BoundFunSet {
 public:
     BoundFunSet(DataView self, Ref<FunSet> fset);
 
-    DataView self() const { return _self; }
+    bool has_self() const;
+    DataView self() const;
 
     Ref<FunSet> fset() const { return _fset; }
 

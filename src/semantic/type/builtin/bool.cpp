@@ -48,6 +48,9 @@ Datum BoolType::to_datum(const RValue& rval) {
 }
 
 TypedValue BoolType::unary_op(Op op, RValue&& rval) {
+    if (rval.empty())
+        return {this, Value{std::move(rval)}};
+
     switch (op) {
     case Op::Negate:
         return {this, Value{construct(!is_true(rval))}};

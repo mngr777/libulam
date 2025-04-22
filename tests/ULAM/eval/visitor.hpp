@@ -12,13 +12,18 @@
 
 class EvalVisitor : public ulam::sema::EvalVisitor {
 public:
+    using Base = ulam::sema::EvalVisitor;
+
     explicit EvalVisitor(
         ulam::Ref<ulam::Program> program,
         ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
         ulam::sema::EvalVisitor{program, flags}, _stringifier{program} {}
 
+    ulam::sema::ExprRes eval(ulam::Ref<ulam::ast::Block> block) override;
+
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::If> node) override;
+    void visit(ulam::Ref<ulam::ast::IfAs> node) override;
     void visit(ulam::Ref<ulam::ast::For> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
@@ -27,11 +32,14 @@ public:
 
     bool in_main() const { return _stack.size() == 1; }
 
-    bool codegen_enabled() const {
-        return in_main() && !has_flag(evl::NoCodegen);
-    }
+    bool codegen_enabled() const;
 
     const std::string& data() const { return _data; }
+
+    ulam::sema::ExprRes funcall(
+        ulam::Ref<ulam::Fun> fun,
+        ulam::LValue self,
+        ulam::sema::ExprResList&& args) override;
 
 protected:
     ulam::Ptr<ulam::sema::EvalExprVisitor> _expr_visitor(
@@ -60,9 +68,15 @@ protected:
 private:
     unsigned next_loop_idx() { return ++_loop_idx; }
 
+    void block_open(bool nospace = false);
+    void block_close(bool nospace = false);
     void append(std::string data, bool nospace = false);
+
+    void set_next_prefix(std::string prefix);
+    std::string move_next_prefix();
 
     Stringifier _stringifier;
     std::string _data;
-    unsigned _loop_idx{0}; // ??
+    std::string _next_prefix;
+    unsigned _loop_idx{0};
 };

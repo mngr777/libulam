@@ -6,7 +6,14 @@ namespace ulam {
 
 BoundFunSet::BoundFunSet(DataView self, Ref<FunSet> fset):
     _self{self}, _fset{fset} {
-    assert(self.type()->is_class());
+    assert(!self || self.type()->is_class());
+}
+
+bool BoundFunSet::has_self() const { return _self; }
+
+DataView BoundFunSet::self() const {
+    assert(_self);
+    return _self;
 }
 
 } // namespace ulam

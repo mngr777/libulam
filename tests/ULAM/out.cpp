@@ -62,7 +62,7 @@ std::string var_str(
     ulam::UniqStrPool& str_pool,
     Stringifier& stringifier,
     ulam::Ref<ulam::Var> var) {
-    auto str = var_def_str(str_pool, var);
+    auto str = var_def_str(str_pool, stringifier, var);
     if (var->has_value()) {
         var->value().with_rvalue([&](const ulam::RValue& rval) {
             str += " = " + stringifier.stringify(var->type(), rval);
@@ -71,12 +71,15 @@ std::string var_str(
     return str;
 }
 
-std::string var_def_str(ulam::UniqStrPool& str_pool, ulam::Ref<ulam::Var> var) {
+std::string var_def_str(
+    ulam::UniqStrPool& str_pool,
+    Stringifier& stringifier,
+    ulam::Ref<ulam::Var> var) {
     std::ostringstream os;
     if (var->is_const())
         os << "constant ";
     std::string name{str_pool.get(var->name_id())};
-    os << type_base_name(var->type()) << " " << name
+    os << type_str(stringifier, var->type()) << " " << name
        << type_dim_str(var->type());
     return os.str();
 }

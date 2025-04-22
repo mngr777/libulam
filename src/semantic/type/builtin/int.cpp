@@ -184,7 +184,7 @@ TypedValue IntType::binary_op(
         auto type = builtins().boolean();
         if (is_unknown)
             return make_empty(type);
-        return {type, Value{type->construct(l_int > r_int)}};
+        return make_res(type, type->construct(l_int > r_int));
     }
     case Op::GreaterOrEq: {
         auto type = builtins().boolean();

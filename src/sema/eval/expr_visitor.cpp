@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -225,7 +226,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return check(node, member_access_op(node, std::move(obj)));
 
     // get symbol
-    auto cls = obj.type()->as_class();
+    auto cls = obj.type()->deref()->as_class();
     auto name = node->ident()->name();
     auto sym = cls->get(name.str_id());
     if (!sym) {
@@ -270,8 +271,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     auto var = sym->get<Var>();
     auto scope = cls->scope();
     auto scope_view = scope->view(var->scope_version());
-    if (!resolver->resolve(var, ref(scope_view)))
-        return {ExprError::UnresolvableClassConst};
+    // if (!resolver->resolve(var, ref(scope_view)))
+    //     return {ExprError::UnresolvableClassConst};
     return check(node, {var->type(), Value{var->rvalue()}});
 }
 
@@ -318,9 +319,17 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
 }
 
 ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
-    if (res && (flags() & evl::Consteval) && !res.value().is_consteval()) {
-        diag().error(node, "not consteval");
-        return {ExprError::NotConsteval};
+    if (res && !res.value().is_consteval()) {
+        if (has_flag(evl::Consteval)) {
+            diag().error(node, "not consteval");
+            return {ExprError::NotConsteval};
+        }
+        if (has_flag(evl::NoExec)) {
+            const auto& val = res.value();
+            auto empty = val.is_lvalue() ? Value{val.lvalue().derived()}
+                                         : Value{RValue{}};
+            return res.derived(res.type(), std::move(empty));
+        }
     }
     return std::move(res);
 }
@@ -841,8 +850,8 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
 }
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
-    if (!eval().resolver()->resolve(var, scope()))
-        return {ExprError::UnresolvableVar};
+    // if (!eval().resolver()->resolve(var, scope()))
+    //     return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
 
@@ -914,13 +923,17 @@ ExprRes EvalExprVisitor::array_access_array(
     assert(obj.type()->is_array());
     assert(idx.type()->is(IntId));
 
-    auto int_idx = idx.value().copy_rvalue().get<Integer>();
     auto array_type = obj.type()->non_alias()->deref()->non_alias()->as_array();
     assert(array_type);
     auto item_type = array_type->item_type();
     auto array_val = obj.move_value();
 
+    // empty array or index value?
+    if (array_val.empty() || idx.value().empty())
+        return {item_type, array_val.array_access(UnknownArrayIdx)};
+
     // check bounds
+    auto int_idx = idx.value().copy_rvalue().get<Integer>();
     if (int_idx < 0 || int_idx + 1 > array_type->array_size()) {
         diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
@@ -941,8 +954,8 @@ EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
 
 ExprRes EvalExprVisitor::member_access_var(
     Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var) {
-    if (!eval().resolver()->resolve(var))
-        return {ExprError::UnresolvableVar};
+    // if (!eval().resolver()->resolve(var))
+    //     return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
 
@@ -987,8 +1000,9 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
         return res;
 
     auto lval = to.move_value().lvalue();
-    if (flags() & evl::NoExec)
+    if (flags() & evl::NoExec) {
         return {to.type(), Value{lval}};
+    }
     return {to.type(), lval.assign(res.move_value().move_rvalue())};
 }
 

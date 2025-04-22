@@ -72,10 +72,12 @@ Ref<Type> LValue::dyn_obj_type(bool real) const {
 
 LValue LValue::self() {
     LValue lval{derived(accept(
-        [&](Ref<Var> var) { return var->data_view(); },
-        [&](DataView& data) { return data; },
-        [&](BoundFunSet& bfset) { return bfset.self(); },
-        [&](std::monostate&) -> DataView { assert(false); }))};
+        [&](Ref<Var> var) { return LValue{var->data_view()}; },
+        [&](DataView& data) { return LValue{data}; },
+        [&](BoundFunSet& bfset) {
+            return bfset.has_self() ? LValue{bfset.self()} : LValue{};
+        },
+        [&](std::monostate&) -> LValue { assert(false); }))};
     lval.set_scope_lvl(AutoScopeLvl);
     lval.set_is_xvalue(false);
     return lval;
@@ -101,7 +103,7 @@ LValue LValue::atom_of() {
 
 LValue LValue::array_access(array_idx_t idx) {
     auto data = data_view();
-    if (!data)
+    if (!data || idx == UnknownArrayIdx)
         return derived(std::monostate{});
     return derived(data.array_item(idx));
 }
@@ -180,9 +182,12 @@ Ref<Type> RValue::dyn_obj_type(bool real) const {
 }
 
 LValue RValue::self() {
-    LValue lval{accept(
-        [&](DataPtr& data) { return data->view(); },
-        [&](auto& other) -> DataView { assert(false); })};
+    LValue lval;
+    if (!empty()) {
+        lval = LValue{accept(
+            [&](DataPtr& data) { return data->view(); },
+            [&](auto& other) -> DataView { assert(false); })};
+    }
     lval.set_scope_lvl(AutoScopeLvl);
     lval.set_is_xvalue(false);
     return lval;
@@ -208,18 +213,24 @@ LValue RValue::atom_of() {
 LValue RValue::array_access(array_idx_t idx) {
     return accept(
         [&](DataPtr& data) { return LValue{data->array_item(idx)}; },
+        [&](std::monostate) {
+            assert(idx == UnknownArrayIdx);
+            return LValue{};
+        },
         [&](auto& other) -> LValue { assert(false); });
 }
 
 LValue RValue::prop(Ref<Prop> prop) {
     return accept(
         [&](DataPtr data) { return LValue{data->prop(prop)}; },
+        [&](std::monostate) { return LValue{}; },
         [&](auto& other) -> LValue { assert(false); });
 }
 
 LValue RValue::bound_fset(Ref<FunSet> fset) {
     return accept(
         [&](DataPtr data) { return LValue{BoundFunSet{data->view(), fset}}; },
+        [&](std::monostate) { return LValue{BoundFunSet{DataView{}, fset}}; },
         [&](auto& other) -> LValue { assert(false); });
 }
 

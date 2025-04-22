@@ -105,7 +105,7 @@ static const std::set<std::string> Skip = {
     "t41649_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocaldm_issue.test", // -"-
     "t41650_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedeflocals_issue.test", // -"-
     /* ---------- */
-    "t3249_test_compiler_elementandquark_conditionalas.test", // TODO: if-as Atom
+    // "t3249_test_compiler_elementandquark_conditionalas.test", // TODO: if-as Atom
     "t3255_test_compiler_self.test", // -"-
 };
 

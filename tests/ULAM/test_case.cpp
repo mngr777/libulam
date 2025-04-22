@@ -71,6 +71,7 @@ void TestCase::run() {
         // std::cout << "COMPILED:\n" << answers << "\n";
     } catch (std::exception& e) {
         std::cout << "COMPILED:\n" << compiled << "\n";
+        std::cout << "error: " << e.what() << "\n";
         throw e;
     }
 
