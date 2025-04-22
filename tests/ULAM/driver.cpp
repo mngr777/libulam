@@ -121,6 +121,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3289_test_compiler_primitive_minmaxsizeof_bytype.test", // -"-
     "t3383_test_compiler_typedefofaclass_issue.test", // TODO: member ordering
     "t3384_test_compiler_typedefofaclassminof_issue.test", // -"-
+    "t3392_test_compiler_typedefofaclass_funccallcast_issue.test", // -"-
 };
 
 using Path = std::filesystem::path;

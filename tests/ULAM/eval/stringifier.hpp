@@ -16,28 +16,25 @@ public:
         _str_pool{program->str_pool()},
         _text_pool{program->text_pool()} {}
 
-    std::string stringify(
-        ulam::Ref<ulam::Type> type,
-        const ulam::RValue& rval);
+    std::string stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval);
 
     struct {
         bool unary_as_unsigned_lit = false;
         bool bool_as_unsigned_lit = false;
         bool use_unsigned_suffix = true;
         bool bits_use_unsigned_suffix = true;
+        bool class_params_as_consts = true;
     } options;
 
 private:
-    std::string stringify_prim(
-        ulam::Ref<ulam::PrimType> type,
-        const ulam::RValue& rval);
+    std::string
+    stringify_prim(ulam::Ref<ulam::PrimType> type, const ulam::RValue& rval);
 
-    std::string stringify_class(
-        ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
+    std::string
+    stringify_class(ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
 
     std::string stringify_array(
-        ulam::Ref<ulam::ArrayType> array_type,
-        const ulam::RValue& rval);
+        ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
 
     std::string unsigned_to_str(ulam::Unsigned val);
     std::string bits_to_str(const ulam::Bits& bits);
