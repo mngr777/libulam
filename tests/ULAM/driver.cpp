@@ -110,19 +110,12 @@ static const std::set<std::string> Skip = {
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
-    "t3207_test_compiler_elementandquark_inside_a_quark.test", // TODO: member ordering
-    "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
-    // "t3230_test_compiler_elementandquarkarray_elementLocal.test", // TODO: quark array value format
-    "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
     "t3248_test_compiler_elementandquark_caarray_isparse.test", // TODO: non-ref `is`
     "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return
     "t3286_test_compiler_elementandquark_selfatomcasts.test", // TODO: non-ref `is`
     "t3287_test_compiler_primitive_minmaxsizeof.test", // TODO: Bool/Unary output as reinterp-d Unsigned (for native functions?)
     "t3289_test_compiler_primitive_minmaxsizeof_bytype.test", // -"-
-    "t3383_test_compiler_typedefofaclass_issue.test", // TODO: member ordering
-    "t3384_test_compiler_typedefofaclassminof_issue.test", // -"-
-    "t3392_test_compiler_typedefofaclass_funccallcast_issue.test", // -"-
-    "t3409_test_compiler_quarkwithelementcast.test", // -"-
+    "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
 };
 
 using Path = std::filesystem::path;
