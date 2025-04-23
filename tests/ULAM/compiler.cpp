@@ -1,6 +1,7 @@
 #include "./compiler.hpp"
 #include "./out.hpp"
 #include "tests/ast/print.hpp"
+#include <exception>
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
@@ -123,6 +124,9 @@ void Compiler::compile_class(
 
     } catch (ulam::sema::EvalExceptError& e) {
         std::cerr << "eval error: " << e.message() << "\n";
+        throw e;
+    } catch (std::exception& e) {
+        std::cerr << "eval error: " << e.what() << "\n";
         throw e;
     }
 }
