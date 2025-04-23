@@ -26,7 +26,10 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
 
     std::string str;
     bool use_unsigned_suffix = stringifier.options.use_unsigned_suffix;
+    bool unary_no_unsigned_suffix =
+        stringifier.options.unary_no_unsigned_suffix;
     stringifier.options.use_unsigned_suffix = true;
+    stringifier.options.unary_no_unsigned_suffix = true; // t3429 `Bar(3)`
     for (auto param : params) {
         if (!str.empty())
             str += ",";
@@ -36,6 +39,7 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
         str += stringifier.stringify(param->type(), rval);
     }
     stringifier.options.use_unsigned_suffix = use_unsigned_suffix;
+    stringifier.options.unary_no_unsigned_suffix = unary_no_unsigned_suffix;
     return "(" + str + ")";
 }
 
@@ -74,7 +78,10 @@ std::string var_str(
     auto str = var_def_str(str_pool, stringifier, var);
     if (var->has_value()) {
         var->value().with_rvalue([&](const ulam::RValue& rval) {
+            auto unary_as_unsigned_lit = stringifier.options.unary_as_unsigned_lit;
+            stringifier.options.unary_as_unsigned_lit = true;
             str += " = " + stringifier.stringify(var->type(), rval);
+            stringifier.options.unary_as_unsigned_lit = unary_as_unsigned_lit;
         });
     }
     return str;

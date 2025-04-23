@@ -16,7 +16,7 @@ public:
     explicit EvalVisitor(
         ulam::Ref<ulam::Program> program,
         ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
-        ulam::sema::EvalVisitor{program, flags}, _stringifier{program} {}
+        ulam::sema::EvalVisitor{program, flags} {}
 
     ulam::sema::ExprRes eval(ulam::Ref<ulam::ast::Block> block) override;
 
@@ -75,8 +75,9 @@ private:
     void set_next_prefix(std::string prefix);
     std::string move_next_prefix();
 
-    Stringifier _stringifier;
     std::string _data;
     std::string _next_prefix;
     unsigned _loop_idx{0};
+
+    Stringifier make_stringifier();
 };

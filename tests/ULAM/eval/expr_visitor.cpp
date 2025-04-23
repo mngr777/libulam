@@ -181,6 +181,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
         data = exp::data_combine(data, inc_str, op_str);
 
     } else if (op == ulam::Op::PostInc || op == ulam::Op::PostDec) {
+        // x 1 [cast] ++ | x 1 [cast] --
         bool is_int = arg.type()->deref()->is_same(builtins().int_type());
         std::string inc_str{is_int ? "1" : "1 cast"};
         std::string op_str{ulam::ops::str(op)};
