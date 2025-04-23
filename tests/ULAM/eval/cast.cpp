@@ -44,6 +44,7 @@ ulam::sema::ExprRes EvalCast::cast_class_default(
     bool is_element = type->is_class() && type->as_class()->is_element();
 
     auto res = Base::cast_class_default(node, to, std::move(arg), expl);
+    // omit cast from consteval element to Atom, t3416
     if (!expl && is_consteval && is_element && to->is(ulam::AtomId))
         res.set_flag(exp::OmitCast);
     return res;
