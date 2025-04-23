@@ -16,6 +16,7 @@ class VarDecl : public Tuple<Stmt, ExprList, InitValue>,
     ULAM_AST_REF_ATTR(Var, var)
     ULAM_AST_REF_ATTR(Prop, prop)
     ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_parameter, false)
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
 public:
     VarDecl(Str name, Ptr<ExprList>&& array_dims, Ptr<InitValue>&& init):

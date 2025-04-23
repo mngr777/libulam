@@ -35,7 +35,8 @@ private:
     using var_flags_t = std::uint8_t;
     static constexpr var_flags_t NoVarFlags = 0;
     static constexpr var_flags_t VarIsConst = 1;
-    static constexpr var_flags_t VarAllowConstructorInit = 2;
+    static constexpr var_flags_t VarIsParameter = 1 << 1;
+    static constexpr var_flags_t VarAllowConstructorInit = 1 << 2;
 
     using expr_flags_t = std::uint8_t;
     static constexpr expr_flags_t NoExprFlags = 0;

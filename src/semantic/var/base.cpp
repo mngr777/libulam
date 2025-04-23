@@ -29,6 +29,11 @@ Ref<ast::VarDecl> VarBase::node() {
     return _node;
 }
 
+Ref<const ast::VarDecl> VarBase::node() const {
+    assert(_node);
+    return _node;
+}
+
 bool VarBase::has_type() const { return _type; }
 
 Ref<Type> VarBase::type() const {
@@ -40,6 +45,10 @@ void VarBase::set_type(Ref<Type> type) {
     assert(type);
     assert(!_type);
     _type = type;
+}
+
+bool VarBase::is_parameter() const {
+    return has_node() && node()->is_parameter();
 }
 
 } // namespace ulam

@@ -168,6 +168,7 @@ public:
 class VarDefList : public Tuple<List<Stmt, VarDef>, TypeName> {
     ULAM_AST_NODE
     ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
+    ULAM_AST_SIMPLE_ATTR(bool, is_parameter, false)
 public:
     explicit VarDefList(Ptr<TypeName>&& type): Tuple{std::move(type)} {}
 

@@ -6,10 +6,11 @@
 
 namespace {
 
+constexpr char TypeDef[] = "typedef";
+constexpr char Constant[] = "constant";
+constexpr char Parameter[] = "parameter";
 constexpr char TestFunStart[] = "Int test()";
 constexpr char NoMain[] = "<NOMAIN>";
-constexpr char Constant[] = "constant";
-constexpr char TypeDef[] = "typedef";
 
 } // namespace
 
@@ -207,10 +208,15 @@ Answer parse_answer(const std::string_view text) {
         -> std::tuple<std::string, std::string, bool> {
         auto start = pos;
 
-        // constant
-        bool is_const = at(Constant);
-        if (is_const)
+        // constant/parameter
+        bool is_const = false;
+        if (at(Constant)) {
+            is_const = true;
             skip(Constant);
+        } else if (at(Parameter)) {
+            is_const = true;
+            skip(Parameter);
+        }
 
         // Type()
         skip_spaces();
@@ -317,7 +323,7 @@ Answer parse_answer(const std::string_view text) {
                 auto [alias, type_def_text] = read_type_def();
                 add_member(std::move(alias), std::move(type_def_text));
 
-            } else if (at(Constant) || is_upper()) {
+            } else if (at(Constant) || at(Parameter) || is_upper()) {
                 if (is_scalar_item) {
                     assert(is_array);
                     error("unexpected data member in array value");
@@ -514,14 +520,14 @@ void compare_answers(const Answer& truth, const Answer& answer) {
     for (const auto& [name, text] : truth.consts()) {
         auto it = consts.find(name);
         if (it == consts.end()) {
-            auto message = std::string{"constant `"} + name +
+            auto message = std::string{"constant or parameter `"} + name +
                            "' not found in compiled class `" +
                            answer.class_name() + "'";
             throw std::invalid_argument(message);
         }
         auto answer_text = it->second;
         if (answer_text != text) {
-            auto message = std::string{"constant `"} + name +
+            auto message = std::string{"constant or parameter `"} + name +
                            "' in compiled class `" + answer.class_name() +
                            "' does not match the answer:\n`" + answer_text +
                            "`\n vs\n`" + text + "`";
