@@ -20,6 +20,7 @@ public:
 
     struct {
         bool unary_as_unsigned_lit = false;
+        bool use_unsigned_suffix_zero = true;
         bool bool_as_unsigned_lit = false;
         bool use_unsigned_suffix = true;
         bool unary_no_unsigned_suffix = false;
