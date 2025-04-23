@@ -219,7 +219,6 @@ Answer parse_answer(const std::string_view text) {
 
         // ident
         std::string name{read_data_mem_name()};
-        skip_spaces();
 
         // []
         bool is_array = at("[");
@@ -338,7 +337,6 @@ Answer parse_answer(const std::string_view text) {
                     add_obj_item();
 
                 ++pos;
-                skip_spaces();
 
                 // ,?
                 if (text[pos] == ',') {
@@ -356,7 +354,6 @@ Answer parse_answer(const std::string_view text) {
                 if (!is_array && !is_scalar_item)
                     error("unexpected `,'");
                 ++pos;
-                skip_spaces();
 
             } else {
                 // scalar value
