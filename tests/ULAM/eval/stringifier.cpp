@@ -6,6 +6,7 @@
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <sstream>
+#include <string>
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
@@ -41,7 +42,7 @@ std::string Stringifier::stringify_prim(
             return unsigned_to_str(rval.get<ulam::Unsigned>());
         auto unary_type = _builtins.unary_type(type->bitsize());
         auto uns_val = unary_type->unsigned_value(rval);
-        return unsigned_to_str(uns_val);
+        return unary_to_str(uns_val);
     }
     case ulam::BoolId: {
         if (options.bool_as_unsigned_lit)
@@ -124,6 +125,13 @@ Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
 std::string Stringifier::unsigned_to_str(ulam::Unsigned val) const {
     auto str = std::to_string(val);
     if (options.use_unsigned_suffix)
+        str += "u";
+    return str;
+}
+
+std::string Stringifier::unary_to_str(ulam::Unsigned val) const {
+    auto str = std::to_string(val);
+    if (options.use_unsigned_suffix && !options.unary_no_unsigned_suffix)
         str += "u";
     return str;
 }

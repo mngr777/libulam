@@ -22,6 +22,7 @@ public:
         bool unary_as_unsigned_lit = false;
         bool bool_as_unsigned_lit = false;
         bool use_unsigned_suffix = true;
+        bool unary_no_unsigned_suffix = false;
         bool bits_use_unsigned_suffix = true;
         bool class_params_as_consts = true;
     } options;
@@ -38,6 +39,7 @@ private:
 
     std::string int_to_str(ulam::Integer val, ulam::bitsize_t size) const;
     std::string unsigned_to_str(ulam::Unsigned val) const;
+    std::string unary_to_str(ulam::Unsigned val) const;
     std::string bits_to_str(const ulam::Bits& bits) const;
 
     ulam::Builtins& _builtins;

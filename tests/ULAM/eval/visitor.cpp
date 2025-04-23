@@ -73,6 +73,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
         return;
     }
 
+    auto stringifier = make_stringifier();
     block_open();
 
     // ident and type
@@ -80,7 +81,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
     auto type = resolve_as_cond_type(node);
     assert(!type->is_ref());
     append(exp::data(res));
-    append(out::type_str(_stringifier, type, false));
+    append(out::type_str(stringifier, type, false));
     append("as");
     append("cond");
 
@@ -98,7 +99,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
             define_as_cond_var(node, std::move(res), type, scope());
 
         set_next_prefix(
-            " " + out::var_def_str(str_pool(), _stringifier, var) + "; ");
+            " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
         node->if_branch()->accept(*this);
         append("if");
     }
@@ -235,8 +236,10 @@ ulam::Ptr<ulam::sema::EvalFuncall> EvalVisitor::_funcall_helper(
 ulam::Ref<ulam::AliasType>
 EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
     auto alias_type = Base::type_def(node);
-    if (alias_type && codegen_enabled())
-        append(out::type_def_str(_stringifier, alias_type) + "; ");
+    if (alias_type && codegen_enabled()) {
+        auto stringifier = make_stringifier();
+        append(out::type_def_str(stringifier, alias_type) + "; ");
+    }
     return alias_type;
 }
 
@@ -260,8 +263,10 @@ void EvalVisitor::var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) {
 }
 
 void EvalVisitor::var_init(ulam::Ref<ulam::Var> var, bool in_expr) {
-    if (!in_expr && codegen_enabled())
-        append(out::var_def_str(str_pool(), _stringifier, var));
+    if (!in_expr && codegen_enabled()) {
+        auto stringifier = make_stringifier();
+        append(out::var_def_str(str_pool(), stringifier, var));
+    }
 }
 
 ulam::sema::ExprRes EvalVisitor::_eval_expr(
@@ -302,4 +307,9 @@ std::string EvalVisitor::move_next_prefix() {
     std::string prefix;
     std::swap(prefix, _next_prefix);
     return prefix;
+}
+
+Stringifier EvalVisitor::make_stringifier() {
+    Stringifier stringifier{program()};
+    return stringifier;
 }
