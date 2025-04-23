@@ -1,11 +1,10 @@
-#include "tests/ULAM/test_case.hpp"
-#include "tests/ULAM/answer.hpp"
-#include "tests/ULAM/compiler.hpp"
+#include "./test_case.hpp"
+#include "./compiler.hpp"
 #include <cassert>
-#include <exception>
 #include <fstream>
 #include <ios>
 #include <iostream> // TEST
+#include <libulam/sema/eval/except.hpp>
 #include <sstream>
 #include <stdexcept>
 
@@ -16,8 +15,9 @@ std::map<std::string, Answer> parse_answers(const std::string_view text) {
     std::size_t pos{0};
     while (pos < text.size()) {
         auto nl_pos = text.find('\n', pos);
-        auto line = (nl_pos != std::string::npos) ? text.substr(pos, nl_pos - pos)
-                                                  : text.substr(pos);
+        auto line = (nl_pos != std::string::npos)
+                        ? text.substr(pos, nl_pos - pos)
+                        : text.substr(pos);
         pos += line.size() + 1;
         auto answer = parse_answer(line);
         if (answer.is_tpl())
@@ -63,23 +63,27 @@ void TestCase::run() {
     if (!program)
         throw std::invalid_argument("failed to analyze program");
 
-    // compile
-    compiler.compile(out);
-    auto compiled = out.str();
-    AnswerMap answers;
     try {
-        answers = parse_answers(compiled);
+        // compile
+        compiler.compile(out);
+        auto compiled = out.str();
         std::cout << "COMPILED:\n" << compiled << "\n";
+        AnswerMap answers = parse_answers(compiled);
         // std::cout << "COMPILED:\n" << answers << "\n";
-    } catch (std::exception& e) {
-        std::cout << "COMPILED:\n" << compiled << "\n";
-        std::cout << "error: " << e.what() << "\n";
-        throw e;
-    }
 
-    // check
-    if (!(_flags & SkipAnswerCheck))
-        compare_answer_maps(_answers, answers);
+        // check
+        if (!(_flags & SkipAnswerCheck))
+            compare_answer_maps(_answers, answers);
+
+        return;
+
+    } catch (const ulam::sema::EvalExceptError& e) {
+        std::cout << "eval error: " << e.message() << "\n";
+
+    } catch (const std::exception& e) {
+        std::cout << "error: " << e.what() << "\n";
+    }
+    throw std::invalid_argument("test case failed");
 }
 
 void TestCase::load(const std::filesystem::path& path) {
@@ -220,8 +224,8 @@ void TestCase::parse() {
     }
     skip_comments();
 
-    // NOTE: main file is marked with #>, but is not necessarily the first one
-    // do we need to know which is main?
+    // NOTE: main file is marked with #>, but is not necessarily the first
+    // one do we need to know which is main?
 
     move_to_file_name();
     skip_spaces();
