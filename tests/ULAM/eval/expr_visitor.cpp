@@ -105,8 +105,14 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     case ulam::ops::Kind::Equality:
     case ulam::ops::Kind::Comparison:
         // cast right arg to exact type for comparison
-        if (r_type == l_type)
+        if (r_type == l_type) {
+            // boolean values are converted to Bool(1)
+            if (l_type->is(ulam::BoolId) && l_type->bitsize() != 1) {
+                exp::add_cast(left);
+                exp::add_cast(right);
+            }
             break;
+        }
         if (l_type->is_prim() && ulam::has_bitsize(l_type->bi_type_id())) {
             assert(r_type->is(l_type->bi_type_id()));
             if (l_type->bitsize() < r_type->bitsize()) {
