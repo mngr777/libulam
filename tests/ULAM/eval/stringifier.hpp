@@ -36,8 +36,9 @@ private:
     std::string stringify_array(
         ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
 
-    std::string unsigned_to_str(ulam::Unsigned val);
-    std::string bits_to_str(const ulam::Bits& bits);
+    std::string int_to_str(ulam::Integer val, ulam::bitsize_t size) const;
+    std::string unsigned_to_str(ulam::Unsigned val) const;
+    std::string bits_to_str(const ulam::Bits& bits) const;
 
     ulam::Builtins& _builtins;
     ulam::UniqStrPool& _str_pool;
