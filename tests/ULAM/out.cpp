@@ -102,8 +102,20 @@ std::string prop_str(
     auto type = prop->type();
     auto rval = obj.prop(prop).rvalue(); // TMP
     os << type_str(stringifier, type, false) << " "
-       << str_pool.get(prop->name_id()) << type_dim_str(type) << "("
-       << stringifier.stringify(type, rval) << ")";
+       << str_pool.get(prop->name_id()) << type_dim_str(type);
+
+    auto val_str = stringifier.stringify(type, rval);
+    // check if already parenthesized, workaround for object array format
+    // `Class a[2](Type prop1(val);), (Type prop1(val);)`
+    // (each object value individually wrapped, see `Poo.mbar` in t3230)
+    // alternative: do not add `(' for first and `)' for last item in
+    // `Stringifier::stringify_array`
+    if (!val_str.empty() && val_str[0] == '(') {
+        os << val_str;
+    } else {
+        os << "(" << val_str << ")";
+    }
+
     return os.str();
 }
 

@@ -97,7 +97,7 @@ Answer parse_answer(const std::string_view text) {
         pos = n;
     };
 
-    auto skip_block = [&](char open, char close) {
+    auto skip_block = [&](char open, char close, char esc = '\0') {
         if (text[pos] != open)
             error(std::string{"unexpectend char, expecting `"} + open + "'");
 
@@ -109,6 +109,8 @@ Answer parse_answer(const std::string_view text) {
                 ++opened;
             } else if (text[pos] == close) {
                 --opened;
+            } else if (text[pos] == esc) {
+                ++pos;
             }
             ++pos;
         }
@@ -119,6 +121,7 @@ Answer parse_answer(const std::string_view text) {
     auto skip_parens = std::bind(skip_block, '(', ')');
     auto skip_brackets = std::bind(skip_block, '[', ']');
     auto skip_braces = std::bind(skip_block, '{', '}');
+    auto skip_str_lit = std::bind(skip_block, '"', '"', '\\');
 
     // {name, is_tpl}
     auto read_class_name =
@@ -190,16 +193,18 @@ Answer parse_answer(const std::string_view text) {
         if (text[pos] == '[')
             skip_brackets();
 
+        std::string type_def_text{text.substr(start, pos - start)};
+
         // ;
         skip_spaces();
         skip(";");
 
-        std::string type_def_text{text.substr(start, pos - start)};
         return {std::move(alias), std::move(type_def_text)};
     };
 
     // {name, text, is_const}
-    auto read_data_mem = [&]() -> std::tuple<std::string, std::string, bool> {
+    auto _read_data_mem = [&](auto& self, auto& read_value_str)
+        -> std::tuple<std::string, std::string, bool> {
         auto start = pos;
 
         // constant
@@ -217,7 +222,8 @@ Answer parse_answer(const std::string_view text) {
         skip_spaces();
 
         // []
-        if (at("["))
+        bool is_array = at("[");
+        if (is_array)
             skip_brackets();
 
         std::string data_mem_text{text.substr(start, pos - start)};
@@ -225,31 +231,13 @@ Answer parse_answer(const std::string_view text) {
         // value
         skip_spaces();
         if (at("(")) {
-            auto start = pos;
-            skip_parens();
-            auto end = pos - 1;
-            assert(text[start] == '(' && text[end] == ')');
-            ++start;
-            --end;
-            // remove leading/trailing spaces:
-            // ULAM adds a leading space after `(' for non-main classes
-            while (start < end && text[start] == ' ')
-                ++start;
-            while (end > start && text[end] == ' ')
-                --end;
-            std::string value_str;
-            if (end >= start) {
-                value_str = "(" +
-                            std::string{text.substr(start, end + 1 - start)} +
-                            ");";
-            } else {
-                value_str += "();";
-            }
-            data_mem_text += value_str;
+            data_mem_text += read_value_str(read_value_str, self, is_array);
 
         } else if (at("=")) {
             skip("=");
-            skip_until(";");
+            skip_spaces();
+            data_mem_text +=
+                " = " + read_value_str(read_value_str, self, is_array);
         }
 
         // ;
@@ -258,6 +246,139 @@ Answer parse_answer(const std::string_view text) {
 
         return {std::move(name), std::move(data_mem_text), is_const};
     };
+
+    auto read_scalar_value_str = [&]() -> const std::string_view {
+        auto start = pos;
+        auto ch = text[pos];
+        if (ch == '"') {
+            skip_str_lit();
+        } else {
+            while (pos < text.size() && text[pos] != ';' && text[pos] != ')' &&
+                   text[pos] != ',' && text[pos] != ' ')
+                ++pos;
+            if (pos == text.size())
+                error("value not terminated", start);
+        }
+        return text.substr(start, pos - start);
+    };
+
+    auto _read_value_str = [&](auto& self, auto& read_data_mem,
+                               bool is_array) -> std::string {
+        std::string val;
+        bool is_obj_item = false;
+        bool is_scalar_item = false;
+
+        std::map<std::string, std::string> members;
+
+        auto add_member = [&](std::string&& name, std::string&& text) {
+            assert(!name.empty() && !text.empty());
+            if (members.count(name) > 0)
+                error("member `" + name + "' already exists");
+            members[std::move(name)] = std::move(text);
+        };
+
+        auto add_obj_item = [&]() {
+            assert(is_obj_item);
+            if (is_array && !val.empty())
+                val += ", ";
+            if (is_array)
+                val += "("; // wrap array item
+            // combine all members, ordered by name
+            auto mem_start = val.size();
+            for (auto [_, text] : members) {
+                if (val.size() > mem_start)
+                    val += " ";
+                val += text + ";";
+            }
+            if (is_array)
+                val += ")";  // wrap array item
+            members.clear(); // reset members for current array item
+        };
+
+        bool in_parens = at("(");
+        if (in_parens)
+            skip("(");
+        skip_spaces();
+
+        while (text[pos] != ';') {
+            if (at(TypeDef)) {
+                if (is_scalar_item) {
+                    assert(is_array);
+                    error("unexpected typedef in array value");
+                }
+                is_obj_item = true;
+                auto [alias, type_def_text] = read_type_def();
+                add_member(std::move(alias), std::move(type_def_text));
+
+            } else if (at(Constant) || is_upper()) {
+                if (is_scalar_item) {
+                    assert(is_array);
+                    error("unexpected data member in array value");
+                }
+                is_obj_item = true;
+                auto [name, data_mem_text, is_const] =
+                    read_data_mem(read_data_mem, self);
+                if (is_const || members.count(name) == 0) {
+                    add_member(std::move(name), std::move(data_mem_text));
+                } else {
+                    // workaround for t3143, t3145:
+                    // `Bar m_bar2[2](Bool val_b[3](...); Bool val_b[3](...);
+                    // );`
+                    assert(members.size() == 1);
+                    add_obj_item();
+                    add_member(std::move(name), std::move(data_mem_text));
+                }
+
+            } else if (text[pos] == ')') {
+                if (!in_parens)
+                    error("unexpected `)'");
+
+                // add current object?
+                if (is_obj_item)
+                    add_obj_item();
+
+                ++pos;
+                skip_spaces();
+
+                // ,?
+                if (text[pos] == ',') {
+                    // comma after closing `)' must be object array
+                    if (!(is_array && is_obj_item))
+                        error("unexpected `,'");
+                    ++pos;
+                    skip_spaces();
+                    skip("(");
+                } else {
+                    break; // done
+                }
+
+            } else if (text[pos] == ',') {
+                if (!is_array && !is_scalar_item)
+                    error("unexpected `,'");
+                ++pos;
+                skip_spaces();
+
+            } else {
+                // scalar value
+                if (is_obj_item)
+                    error("unexpected char in object value");
+                is_scalar_item = true;
+                if (!val.empty()) {
+                    // value string is already not empty, must be array item
+                    assert(is_array);
+                    val += ", ";
+                }
+                val += read_scalar_value_str();
+            }
+            skip_spaces();
+        }
+        assert(text[pos] == ';');
+        skip_spaces();
+        return in_parens ? "(" + val + ")" : val;
+    };
+
+    auto read_data_mem =
+        std::bind(_read_data_mem, _read_data_mem, _read_value_str);
 
     // class name
     skip_spaces();
@@ -293,13 +414,14 @@ Answer parse_answer(const std::string_view text) {
     // skip_spaces();
     skip("{");
 
-    // props
+    // non-fun members
     skip_spaces();
     std::string base_prefix;
     while (!at(TestFunStart) && !at(NoMain) && !at("}")) {
         if (at("/*")) {
             skip_until("*/");
             skip("*/");
+
         } else if (at(":")) {
             assert(base_prefix.empty());
             skip(":");
