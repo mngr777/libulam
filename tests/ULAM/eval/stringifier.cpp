@@ -124,14 +124,16 @@ Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
 
 std::string Stringifier::unsigned_to_str(ulam::Unsigned val) const {
     auto str = std::to_string(val);
-    if (options.use_unsigned_suffix)
+    if (options.use_unsigned_suffix &&
+        (val != 0 || options.use_unsigned_suffix_zero))
         str += "u";
     return str;
 }
 
 std::string Stringifier::unary_to_str(ulam::Unsigned val) const {
     auto str = std::to_string(val);
-    if (options.use_unsigned_suffix && !options.unary_no_unsigned_suffix)
+    if (options.use_unsigned_suffix && !options.unary_no_unsigned_suffix &&
+        (val != 0 || options.use_unsigned_suffix_zero))
         str += "u";
     return str;
 }

@@ -78,7 +78,8 @@ std::string var_str(
     auto str = var_def_str(str_pool, stringifier, var);
     if (var->has_value()) {
         var->value().with_rvalue([&](const ulam::RValue& rval) {
-            auto unary_as_unsigned_lit = stringifier.options.unary_as_unsigned_lit;
+            auto unary_as_unsigned_lit =
+                stringifier.options.unary_as_unsigned_lit;
             stringifier.options.unary_as_unsigned_lit = true;
             str += " = " + stringifier.stringify(var->type(), rval);
             stringifier.options.unary_as_unsigned_lit = unary_as_unsigned_lit;
@@ -104,7 +105,8 @@ std::string prop_str(
     ulam::UniqStrPool& str_pool,
     Stringifier& stringifier,
     ulam::Ref<ulam::Prop> prop,
-    ulam::RValue& obj) {
+    ulam::RValue& obj,
+    bool inner) {
     std::ostringstream os;
     auto type = prop->type();
     auto rval = obj.prop(prop).rvalue(); // TMP
@@ -112,6 +114,7 @@ std::string prop_str(
        << str_pool.get(prop->name_id()) << type_dim_str(type);
 
     auto val_str = stringifier.stringify(type, rval);
+
     // check if already parenthesized, workaround for object array format
     // `Class a[2](Type prop1(val);), (Type prop1(val);)`
     // (each object value individually wrapped, see `Poo.mbar` in t3230)

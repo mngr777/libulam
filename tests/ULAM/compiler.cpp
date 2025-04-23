@@ -215,7 +215,9 @@ void Compiler::write_class_type_defs(
 }
 
 void Compiler::write_class_type_def(
-    std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::AliasType> alias) {
+    std::ostream& os,
+    Stringifier& stringifier,
+    ulam::Ref<ulam::AliasType> alias) {
     os << out::type_def_str(stringifier, alias) << "; ";
 }
 
@@ -248,7 +250,8 @@ void Compiler::write_class_props(
     bool is_main) {
 
     Stringifier stringifier{program()};
-    stringifier.options.use_unsigned_suffix = is_main;
+    stringifier.options.use_unsigned_suffix = true;
+    stringifier.options.use_unsigned_suffix_zero = is_main;
     stringifier.options.bits_use_unsigned_suffix = false;
     stringifier.options.class_params_as_consts = is_main;
 

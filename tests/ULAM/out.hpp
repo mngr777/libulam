@@ -38,6 +38,7 @@ std::string prop_str(
     ulam::UniqStrPool& str_pool,
     Stringifier& stringifier,
     ulam::Ref<ulam::Prop> prop,
-    ulam::RValue& obj);
+    ulam::RValue& obj,
+    bool inner = false);
 
 } // namespace out
