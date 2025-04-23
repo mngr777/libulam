@@ -270,9 +270,13 @@ void Parser::parse_class_def_body(Ref<ast::ClassDef> node) {
         case tok::Override: {
             ok = parse_class_var_or_fun_def(node->body());
         } break;
-        case tok::Constant: {
+        case tok::Constant:
+        case tok::Parameter: {
+            auto flags = VarIsConst;
+            if (_tok.is(tok::Parameter))
+                flags |= VarIsParameter;
             consume();
-            auto vars = parse_var_def_list(VarIsConst);
+            auto vars = parse_var_def_list(flags);
             if (vars) {
                 node->body()->add(std::move(vars));
                 ok = true;
@@ -502,14 +506,15 @@ Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
     bool first_is_ref,
     var_flags_t flags) {
     bool is_const = flags & VarIsConst;
+    bool is_parameter = flags & VarIsParameter;
     auto node = tree<ast::VarDefList>(std::move(type));
     node->set_is_const(is_const);
+    node->set_is_parameter(is_parameter);
 
     // first var
     auto first = parse_var_def_rest(first_name, first_is_ref, flags);
     if (!first)
         return {};
-    node->set_is_const(is_const);
     node->add(std::move(first));
 
     // rest of vars
@@ -519,7 +524,10 @@ Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
             auto comma = _tok;
             consume();
             if (is_const) {
-                diag(comma, "constant lists are not allowed"); // keep going
+                auto message =
+                    std::string{is_parameter ? "parameter" : "constant"} +
+                    " lists are not allowed";
+                diag(comma, message); // keep going
             } else if (_tok.is(tok::Semicol)) {
                 diag(comma, "trailing comma in variable definition list");
                 break;
@@ -529,10 +537,9 @@ Ptr<ast::VarDefList> Parser::parse_var_def_list_rest(
         }
 
         // var
-        auto var_def = parse_var_def();
+        auto var_def = parse_var_def(flags);
         if (!var_def)
             break;
-        node->set_is_const(is_const);
         node->add(std::move(var_def));
     }
     // ;
@@ -547,7 +554,7 @@ Ptr<ast::VarDef> Parser::parse_var_def(var_flags_t flags) {
         return {};
     auto name = tok_ast_str();
     consume();
-    return parse_var_def_rest(name, is_ref);
+    return parse_var_def_rest(name, is_ref, flags);
 }
 
 Ptr<ast::VarDef>
@@ -568,6 +575,8 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
     auto node = tree_loc<ast::VarDef>(
         name.loc_id(), name, std::move(array_dims), std::move(init));
     node->set_is_ref(is_ref);
+    node->set_is_const(flags & VarIsConst);
+    node->set_is_parameter(flags & VarIsParameter);
     return node;
 }
 

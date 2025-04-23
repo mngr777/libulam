@@ -94,7 +94,7 @@ std::string var_def_str(
     ulam::Ref<ulam::Var> var) {
     std::ostringstream os;
     if (var->is_const())
-        os << "constant ";
+        os << (var->is_parameter() ? "parameter" : "constant") << " ";
     std::string name{str_pool.get(var->name_id())};
     os << type_str(stringifier, var->type(), false) << " " << name
        << type_dim_str(var->type());
