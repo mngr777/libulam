@@ -111,24 +111,15 @@ void Compiler::compile_class(
         text += "foo.test(); ";
     text += "foo;\n";
 
-    try {
-        auto obj = eval.eval(text);
-        assert(obj);
-        assert(obj.type()->is_class());
-        assert(obj.value().is_rvalue());
-        // NOTE: intentional double space after `{'
-        auto test_postfix =
-            has_test ? "Int test() {  " + eval.data() + " }" : NoMain;
-        write_obj(os, std::move(obj), test_postfix, has_test);
-        os << "\n";
-
-    } catch (ulam::sema::EvalExceptError& e) {
-        std::cerr << "eval error: " << e.message() << "\n";
-        throw e;
-    } catch (std::exception& e) {
-        std::cerr << "eval error: " << e.what() << "\n";
-        throw e;
-    }
+    auto obj = eval.eval(text);
+    assert(obj);
+    assert(obj.type()->is_class());
+    assert(obj.value().is_rvalue());
+    // NOTE: intentional double space after `{'
+    auto test_postfix =
+        has_test ? "Int test() {  " + eval.data() + " }" : NoMain;
+    write_obj(os, std::move(obj), test_postfix, has_test);
+    os << "\n";
 }
 
 void Compiler::compile_class_tpl(
