@@ -372,7 +372,18 @@ bitsize_t ArrayType::bitsize() const {
     return _array_size * _item_type->bitsize();
 }
 
-RValue ArrayType::construct() { return RValue{make_s<Data>(this)}; }
+RValue ArrayType::construct() {
+    auto data = make_s<Data>(this);
+    RValue rval;
+    if (array_size() > 0)
+        rval = item_type()->construct();
+    bitsize_t off = 0;
+    for (array_idx_t idx = 0; idx < array_size(); ++idx) {
+        item_type()->store(data->bits(), off, rval);
+        off += item_type()->bitsize();
+    }
+    return RValue{data, true};
+}
 
 RValue ArrayType::load(const BitsView data, bitsize_t off) {
     auto rval = construct();
