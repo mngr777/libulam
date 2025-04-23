@@ -232,7 +232,7 @@ void Compiler::write_class_consts(
     std::ostream& os, ulam::Ref<ulam::Class> cls) {
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
-    stringifier.options.bits_use_unsigned_suffix = false;
+    stringifier.options.bits_use_unsigned_suffix = true;
 
     // params as consts (t3336)
     for (auto var : cls->params())
