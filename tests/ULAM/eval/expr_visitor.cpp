@@ -78,7 +78,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op_expr_default(
         });
     } else {
         exp::set_data(res, data);
-        exp::append(res, ulam::ops::str(node->op()));
+        exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
     }
     return res;
 }

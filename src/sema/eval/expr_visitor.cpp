@@ -29,9 +29,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n" << line_at(node);
     ExprRes res;
     if (node->has_type_name()) {
-        auto type = eval()
-                        .resolver(true, flags())
-                        ->resolve_type_name(node->type_name(), scope(), true);
+        auto resolver = eval().resolver(true, flags());
+        auto type =
+            resolver->resolve_type_name(node->type_name(), scope(), true);
         if (!type)
             return {ExprError::UnresolvableType};
         res = type_op(node, type);

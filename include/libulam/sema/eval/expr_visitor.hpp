@@ -62,6 +62,8 @@ public:
     virtual std::pair<bool, bool>
     match(Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr);
 
+    // TODO: move to Resolver
+
     virtual bitsize_t
     bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 
