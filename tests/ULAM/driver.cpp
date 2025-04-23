@@ -115,6 +115,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3287_test_compiler_primitive_minmaxsizeof.test", // TODO: Bool/Unary output as reinterp-d Unsigned (for native functions?)
     "t3289_test_compiler_primitive_minmaxsizeof_bytype.test", // -"-
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
+    "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
 };
 
 using Path = std::filesystem::path;
