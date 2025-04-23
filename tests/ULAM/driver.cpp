@@ -112,7 +112,7 @@ static const std::set<std::string> Skip = {
 static const std::set<std::string> SkipAnswerCheck = {
     "t3207_test_compiler_elementandquark_inside_a_quark.test", // TODO: member ordering
     "t3208_test_compiler_elementandquark_accessaquarkinsideaquark.test", // -"-
-    "t3230_test_compiler_elementandquarkarray_elementLocal.test", // TODO: quark array value format
+    // "t3230_test_compiler_elementandquarkarray_elementLocal.test", // TODO: quark array value format
     "t3231_test_compiler_elementandquarkarray_elementLocalfunccall.test", // -"-
     "t3248_test_compiler_elementandquark_caarray_isparse.test", // TODO: non-ref `is`
     "t3257_test_compiler_arrayplusequal_issue.test", // TODO: ; after return

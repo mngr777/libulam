@@ -95,9 +95,13 @@ std::string Stringifier::stringify_array(
     auto data = rval.data_view();
     for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
         if (idx > 0)
-            str += item_type->is_class() ? "" : ",";
+            str += ", ";
+        if (item_type->is_class())
+            str += "(";
         auto item_rval = data.array_item(idx).load();
         str += stringify(item_type, item_rval);
+        if (item_type->is_class())
+            str += ")";
     }
     return str;
 }
