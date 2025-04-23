@@ -27,21 +27,22 @@ EvalCast::CastRes EvalCast::maybe_cast(
     auto arg_type = arg.type();
     if (to->is_ref()) {
         // taking or casting a reference
-        assert(!arg.type()->is_ref());
-        status = CastRef;
-        arg = take_ref(node, std::move(arg));
-        arg_type = arg.type();
-        if (!arg)
-            return {std::move(arg), InvalidCast};
+        if (!arg_type->is_ref()) {
+            status = CastRef;
+            arg = take_ref(node, std::move(arg));
+            arg_type = arg.type();
+            if (!arg)
+                return {std::move(arg), InvalidCast};
+        }
 
     } else if (arg.value().is_lvalue()) {
         // copy value from reference
         // NOTE: actual dereferecing is postponed in case the argument is an
         // object and custom conversion is used: conversion function must be
         // called on the same object, see t3411
-        if (arg.type()->is_ref()) {
+        if (arg_type->is_ref()) {
             status = CastDeref;
-            arg_type = arg.type()->deref();
+            arg_type = arg_type->deref();
         }
         deref_required = true;
     }
