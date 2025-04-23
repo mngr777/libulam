@@ -419,7 +419,8 @@ void Lex::lex_chr() {
             break;
         case '\'':
             advance();
-            goto Done;
+            if (!esc)
+                goto Done;
         case '\\':
             advance();
             if (!esc) {
