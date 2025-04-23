@@ -46,8 +46,12 @@ protected:
         ExprRes&& arg,
         bool expl);
 
-    virtual ExprRes
-    do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+    virtual ExprRes do_cast(
+        Ref<ast::Node> node,
+        Ref<Type> to,
+        ExprRes&& arg,
+        bool expl,
+        bool deref_required);
 
     virtual ExprRes do_cast(
         Ref<ast::Node> node,
@@ -55,8 +59,12 @@ protected:
         ExprRes&& arg,
         bool expl);
 
-    virtual ExprRes
-    cast_class(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+    virtual ExprRes cast_class(
+        Ref<ast::Node> node,
+        Ref<Type> to,
+        ExprRes&& arg,
+        bool expl,
+        bool deref_required);
 
     virtual ExprRes cast_class_default(
         Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);

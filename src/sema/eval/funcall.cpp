@@ -70,6 +70,7 @@ ExprRes EvalFuncall::funcall_callable(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& callable, ExprResList&& args) {
     assert(callable.type()->is(FunId));
     auto val = callable.move_value();
+    assert(!val.empty());
     return do_funcall(node, fun, val.self(), std::move(args));
 }
 
@@ -77,7 +78,8 @@ ExprRes EvalFuncall::funcall_obj(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     assert(obj.type()->is_class());
     auto val = obj.move_value();
-    return do_funcall(node, fun, val.self(), std::move(args));
+    auto self = val.empty() ? LValue{} : val.self();
+    return do_funcall(node, fun, self, std::move(args));
 }
 
 ExprRes EvalFuncall::do_funcall(
@@ -94,7 +96,8 @@ ExprRes EvalFuncall::do_funcall(
     assert(fun->node()->has_body());
     if (flags() & evl::NoExec)
         return empty_ret_val(node, fun);
-    return eval().funcall(fun, self.self(), std::move(args));
+    assert(!self.empty());
+    return eval().funcall(fun, self, std::move(args));
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
