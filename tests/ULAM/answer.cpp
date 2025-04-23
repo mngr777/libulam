@@ -269,13 +269,6 @@ Answer parse_answer(const std::string_view text) {
 
         std::map<std::string, std::string> members;
 
-        auto add_member = [&](std::string&& name, std::string&& text) {
-            assert(!name.empty() && !text.empty());
-            if (members.count(name) > 0)
-                error("member `" + name + "' already exists");
-            members[std::move(name)] = std::move(text);
-        };
-
         auto add_obj_item = [&]() {
             assert(is_obj_item);
             if (is_array && !val.empty())
@@ -292,6 +285,21 @@ Answer parse_answer(const std::string_view text) {
             if (is_array)
                 val += ")";  // wrap array item
             members.clear(); // reset members for current array item
+        };
+
+        auto add_member = [&](std::string&& name, std::string&& text) {
+            assert(!name.empty() && !text.empty());
+            if (members.count(name) > 0) {
+                if (is_array) {
+                    // workaround for t3143, t3145:
+                    // `Bar m_bar2[2](Bool val_b[3](...); Bool val_b[3](...);
+                    // );`
+                    add_obj_item();
+                } else {
+                    error("member `" + name + "' already exists");
+                }
+            }
+            members[std::move(name)] = std::move(text);
         };
 
         bool in_parens = at("(");
@@ -315,18 +323,9 @@ Answer parse_answer(const std::string_view text) {
                     error("unexpected data member in array value");
                 }
                 is_obj_item = true;
-                auto [name, data_mem_text, is_const] =
+                auto [name, data_mem_text, _] =
                     read_data_mem(read_data_mem, self);
-                if (is_const || members.count(name) == 0) {
-                    add_member(std::move(name), std::move(data_mem_text));
-                } else {
-                    // workaround for t3143, t3145:
-                    // `Bar m_bar2[2](Bool val_b[3](...); Bool val_b[3](...);
-                    // );`
-                    assert(members.size() == 1);
-                    add_obj_item();
-                    add_member(std::move(name), std::move(data_mem_text));
-                }
+                add_member(std::move(name), std::move(data_mem_text));
 
             } else if (text[pos] == ')') {
                 if (!in_parens)
