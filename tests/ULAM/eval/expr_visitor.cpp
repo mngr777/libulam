@@ -126,7 +126,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
             auto l_size = l_type->bitsize();
             auto r_size = r_type->bitsize();
             auto size = std::max(l_size, r_size);
-            assert(size < 64);
+            assert(size <= 64);
             size = (size > 32) ? 64 : 32;
             if (l_size != size)
                 exp::add_cast(left);

@@ -5,6 +5,7 @@
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <sstream>
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
@@ -30,7 +31,7 @@ std::string Stringifier::stringify_prim(
     switch (type->bi_type_id()) {
     case ulam::IntId: {
         auto int_val = rval.get<ulam::Integer>();
-        return std::to_string(int_val);
+        return int_to_str(int_val, type->bitsize());
     }
     case ulam::UnsignedId: {
         return unsigned_to_str(rval.get<ulam::Unsigned>());
@@ -106,14 +107,28 @@ std::string Stringifier::stringify_array(
     return str;
 }
 
-std::string Stringifier::unsigned_to_str(ulam::Unsigned val) {
+std::string
+Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
+    // TODO: Unsigned, Bits
+    std::ostringstream ss;
+    if (size > 32) {
+        std::uint32_t hi = val >> 32;
+        std::uint32_t lo = (val << 32) >> 32;
+        ss << "HexU64(" << std::hex << "0x" << hi << ", 0x" << lo << ")";
+    } else {
+        ss << val;
+    }
+    return ss.str();
+}
+
+std::string Stringifier::unsigned_to_str(ulam::Unsigned val) const {
     auto str = std::to_string(val);
     if (options.use_unsigned_suffix)
         str += "u";
     return str;
 }
 
-std::string Stringifier::bits_to_str(const ulam::Bits& bits) {
+std::string Stringifier::bits_to_str(const ulam::Bits& bits) const {
     assert(bits.len() <= sizeof(ulam::Datum) * 8);
     auto datum = bits.read(0, bits.len());
     auto str = std::to_string((ulam::Unsigned)datum);
