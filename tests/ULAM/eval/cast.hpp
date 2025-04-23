@@ -6,7 +6,8 @@
 
 class EvalCast : public ulam::sema::EvalCast {
 public:
-    using ulam::sema::EvalCast::EvalCast;
+    using Base = ulam::sema::EvalCast;
+    using Base::EvalCast;
 
     ulam::sema::ExprRes cast(
         ulam::Ref<ulam::ast::Node> node,
@@ -21,6 +22,12 @@ public:
         bool expl = false) override;
 
 protected:
+    ulam::sema::ExprRes cast_class_default(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Type> to,
+        ulam::sema::ExprRes&& arg,
+        bool expl) override;
+
     virtual ulam::sema::ExprRes cast_class_fun(
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
