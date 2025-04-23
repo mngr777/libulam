@@ -9,6 +9,8 @@
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value.hpp>
 
+// TODO: refactoring: stringifying consteval values
+
 #ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[compiler/EvalExprVisitor] "
@@ -230,7 +232,10 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_var(
     auto res = Base::ident_var(node, var);
     if (res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            exp::set_data(res, make_stringifier().stringify(res.type(), rval));
+            auto stringifier = make_stringifier();
+            stringifier.options.unary_as_unsigned_lit = true;
+            stringifier.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, stringifier.stringify(res.type(), rval));
         });
     } else {
         exp::set_data(res, str(var->name_id()));
