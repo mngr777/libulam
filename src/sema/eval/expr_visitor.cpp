@@ -554,7 +554,8 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
         // create var in tmp scope
         auto var = make<Var>(
-            param->type_node(), param->node(), type, arg_res.move_value());
+            param->type_node(), param->node(), type, arg_res.move_value(),
+            Var::Const);
         cls_params.push_back(ref(var)); // add to list
         param_scope->set(param->name_id(), std::move(var));
     }
