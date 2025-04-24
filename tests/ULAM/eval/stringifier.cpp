@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 
+// TODO: remove definitions from stringified objects (moved to ../out.*)
+
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
     assert(!rval.empty());
@@ -66,24 +68,26 @@ std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
     std::string str;
 
-    // typedefs
-    bool use_unsigned_suffix = options.use_unsigned_suffix;
-    options.use_unsigned_suffix = false;
-    for (auto type_def : cls->type_defs())
-        str += " " + out::type_def_str(*this, type_def) + "; ";
-    options.use_unsigned_suffix = use_unsigned_suffix;
+    // TODO
+    // // typedefs
+    // bool use_unsigned_suffix = options.use_unsigned_suffix;
+    // options.use_unsigned_suffix = false;
+    // for (auto type_def : cls->type_defs())
+    //     str += " " + out::type_def_str(*this, type_def) + "; ";
+    // options.use_unsigned_suffix = use_unsigned_suffix;
 
-    // params
-    // NOTE: see t3364, t3396 for property value with/without params
-    if (options.class_params_as_consts) {
-        for (auto var : cls->params())
-            str += " " + out::var_str(_str_pool, *this, var) + "; ";
-    }
+    // // params
+    // // NOTE: see t3364, t3396 for property value with/without params
+    // if (options.class_params_as_consts) {
+    //     for (auto var : cls->params())
+    //         str += " " + out::var_str(_str_pool, *this, var) + "; ";
+    // }
 
-    // props
-    auto rval_copy = rval.copy(); // TMP
-    for (auto prop : cls->props())
-        str += " " + out::prop_str(_str_pool, *this, prop, rval_copy) + "; ";
+    // // props
+    // auto rval_copy = rval.copy(); // TMP
+    // for (auto prop : cls->props())
+    //     str += " " + out::prop_str(_str_pool, *this, prop, rval_copy) + "; ";
+
     return str;
 }
 

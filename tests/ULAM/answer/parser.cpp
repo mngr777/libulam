@@ -126,7 +126,7 @@ AnswerParser::DataMemData AnswerParser::read_data_mem() {
     } else if (at('=')) {
         advance();
         skip_spaces();
-        text += read_value_str(is_array);
+        text += " = " + read_value_str(is_array);
     }
 
     // ;

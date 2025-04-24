@@ -34,11 +34,4 @@ std::string var_def_str(
     Stringifier& stringifier,
     ulam::Ref<ulam::Var> var);
 
-std::string prop_str(
-    ulam::UniqStrPool& str_pool,
-    Stringifier& stringifier,
-    ulam::Ref<ulam::Prop> prop,
-    ulam::RValue& obj,
-    bool inner = false);
-
 } // namespace out

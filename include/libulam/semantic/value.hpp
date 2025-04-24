@@ -54,7 +54,10 @@ public:
     LValue atom_of();
 
     LValue array_access(array_idx_t idx);
+
     LValue prop(Ref<Prop> prop);
+    const LValue prop(Ref<Prop> prop) const;
+
     LValue bound_fset(Ref<FunSet> fset);
 
     Value assign(RValue&& rval);
@@ -99,7 +102,10 @@ public:
     LValue atom_of();
 
     LValue array_access(array_idx_t idx);
+
     LValue prop(Ref<Prop> prop);
+    const LValue prop(Ref<Prop> prop) const;
+
     LValue bound_fset(Ref<FunSet> fset);
 
     bool is_consteval() const { return _is_consteval; }
@@ -147,7 +153,10 @@ public:
     bitsize_t position_of();
 
     Value array_access(array_idx_t index);
+
     Value prop(Ref<Prop> prop);
+    const Value prop(Ref<Prop> prop) const;
+
     Value bound_fset(Ref<FunSet> fset);
 
     Value copy() const;
