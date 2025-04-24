@@ -185,6 +185,35 @@ void compare_answer_maps(
 void compare_answers(const Answer& truth, const Answer& answer) {
     assert(truth.class_name() == answer.class_name());
 
+    // parents
+    {
+        const auto& parents = answer.parents();
+        auto size = parents.size();
+        auto truth_size = truth.parents().size();
+        if (size != truth_size) {
+            auto message = std::string{"class `"} + answer.class_name() +
+                           "' has " + std::to_string(size) +
+                           " parents, correct number is " +
+                           std::to_string(truth_size);
+            throw std::invalid_argument(message);
+        }
+
+        auto it = parents.begin();
+        auto truth_it = truth.parents().begin();
+        unsigned n = 1;
+        for (; truth_it != truth.parents().end(); ++truth_it, ++it) {
+            assert(it != parents.end());
+            assert(truth_it != truth.parents().end());
+            if (*it != *truth_it) {
+                auto message = std::string{
+                    "class `" + answer.class_name() +
+                    "': parent lists do not match (#" + std::to_string(n) +
+                    " is `" + *it + "' vs `" + *truth_it + "')"};
+                throw std::invalid_argument(message);
+            }
+        }
+    }
+
     // typedefs
     const auto& type_defs = answer.type_defs();
     for (const auto& [alias, text] : truth.type_defs()) {

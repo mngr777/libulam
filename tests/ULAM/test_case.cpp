@@ -68,7 +68,7 @@ void TestCase::run() {
         // compile
         compiler.compile(out);
         auto compiled = out.str();
-        std::cout << "COMPILED:\n" << compiled << "\n";
+        std::cout << "COMPILED (raw):\n" << compiled << "\n";
         AnswerMap answers = parse_answers(compiled);
         // std::cout << "COMPILED:\n" << answers << "\n";
 
