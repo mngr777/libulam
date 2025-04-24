@@ -538,7 +538,7 @@ bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
     // eval
     auto res = _eval_expr(expr, flags);
     if (!res)
-        return false;
+        throw EvalExceptError("failed to eval condition");
 
     // cast to Bool(1)
     auto boolean = builtins().boolean();

@@ -732,11 +732,12 @@ ExprRes EvalExprVisitor::apply_unary_op(
 
     auto arg_type = arg.type()->deref();
     if (arg_type->is_prim()) {
+        RValue orig_rval;
+        if (op == Op::PostInc || op == Op::PostDec)
+            orig_rval = arg.value().copy_rvalue();
+
         auto tv =
             arg_type->as_prim()->unary_op(op, arg.move_value().move_rvalue());
-        RValue orig_rval;
-        if (ops::is_unary_pre_op(op))
-            orig_rval = tv.value().copy_rvalue();
 
         if (ops::is_inc_dec(op)) {
             if (!lval.empty() && !tv.value().empty())
