@@ -843,7 +843,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 
 ExprRes EvalExprVisitor::ident_self(Ref<ast::Ident> node) {
     auto self = scope()->self();
-    return {scope()->eff_self_cls(), Value{self}};
+    return {scope()->eff_self_cls()->ref_type(), Value{self}};
 }
 
 ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
