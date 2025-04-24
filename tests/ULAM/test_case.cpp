@@ -112,11 +112,13 @@ void TestCase::parse() {
     p.skip_comments();
 
     // "Exit status: <status>\n"
-    p.move_to("Exit status:");
-    p.skip("Exit status:");
-    p.skip_spaces();
-    _exit_status = p.read_int();
-    p.skip('\n');
+    // p.move_to("Exit status:");
+    while (p.at("Exit status:")) {
+        p.skip("Exit status:");
+        p.skip_spaces();
+        _exit_statuses.push_back(p.read_int());
+        p.skip('\n');
+    }
 
     // parse answers
     {

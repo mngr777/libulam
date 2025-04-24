@@ -26,7 +26,7 @@ private:
     std::string _text;
     std::string_view _answers_text;
     AnswerMap _answers;
-    int _exit_status{0};
+    std::vector<int> _exit_statuses;
     // {filename, text}
     std::vector<std::pair<Path, std::string_view>> _srcs;
     std::vector<std::pair<Path, std::string_view>> _inc_srcs;
