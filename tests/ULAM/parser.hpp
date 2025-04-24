@@ -34,12 +34,19 @@ public:
     void skip_spaces();
 
     const std::string_view read_line(bool with_nl = false);
+    const std::string_view read_block(char open, char close, char esc = '\0');
+
+    const std::string_view read_parens() { return read_block('(', ')'); }
+    const std::string_view read_brackets() { return read_block('[', ']'); }
+    const std::string_view read_braces() { return read_block('{', '}'); }
+    const std::string_view read_str_lit() { return read_block('"', '"', '\\'); }
 
     int read_int();
 
     const std::string_view substr_from(std::size_t start) const;
 
-    void error(const std::string& message) const;
+    void error(
+        const std::string& message, std::size_t pos = std::string::npos) const;
 
     std::string not_found_str(const std::string& str) const;
     std::string not_found_str(char ch) const;

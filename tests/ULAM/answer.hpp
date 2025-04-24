@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <stack>
 
 class Answer {
 public:
@@ -45,10 +46,20 @@ private:
     std::map<std::string, std::string> _type_defs;
     std::map<std::string, std::string> _consts;
     std::map<std::string, std::string> _props;
-
 };
 
 using AnswerMap = std::map<std::string, Answer>;
+
+class AnswerBasePrefixStack {
+public:
+    std::string add_prefix(std::string name);
+
+    void push(std::string name);
+    void pop();
+
+private:
+    std::stack<std::string> _stack;
+};
 
 Answer parse_answer(const std::string_view text);
 
