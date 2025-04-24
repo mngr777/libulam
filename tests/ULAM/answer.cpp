@@ -1,7 +1,6 @@
 #include "./answer.hpp"
 #include "./answer/parser.hpp"
 #include <cassert>
-#include <functional>
 #include <iostream>
 #include <stack>
 #include <stdexcept>
@@ -9,8 +8,6 @@
 namespace {
 
 constexpr char TypeDef[] = "typedef";
-constexpr char Constant[] = "constant";
-constexpr char Parameter[] = "parameter";
 constexpr char TestFunStart[] = "Int test()";
 constexpr char NoMain[] = "<NOMAIN>";
 
@@ -61,6 +58,10 @@ void Answer::add_prop(std::string name, std::string text) {
 }
 
 // AnswerBasePrefixStack
+
+std::string AnswerBasePrefixStack::add_prefix(const std::string_view name) {
+    return add_prefix(std::string{name});
+}
 
 std::string AnswerBasePrefixStack::add_prefix(std::string name) {
     return !_stack.empty() ? _stack.top() + name : std::move(name);
@@ -130,16 +131,15 @@ Answer parse_answer(const std::string_view text) {
 
         } else if (p.at(TypeDef)) {
             auto [alias, text] = p.read_type_def();
-            answer.add_type_def(std::string{alias}, text);
+            answer.add_type_def(pref.add_prefix(alias), text);
 
         } else {
             // must be a constant/property
             auto [name, text, is_const] = p.read_data_mem();
-            auto name_str = pref.add_prefix(std::string{name});
             if (is_const) {
-                answer.add_const(name_str, text);
+                answer.add_const(pref.add_prefix(name), text);
             } else {
-                answer.add_prop(name_str, text);
+                answer.add_prop(pref.add_prefix(name), text);
             }
         }
         p.skip_spaces();

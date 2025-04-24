@@ -143,7 +143,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
     bool is_scalar_item = false;
 
     // {name, text}
-    std::map<const std::string_view, std::string> members;
+    std::map<std::string, std::string> members;
 
     auto add_obj_item = [&]() {
         assert(is_obj_item);
@@ -163,7 +163,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
         members.clear(); // reset members for current array item
     };
 
-    auto add_member = [&](const std::string_view name, std::string&& text) {
+    auto add_member = [&](std::string&& name, std::string&& text) {
         assert(!name.empty() && !text.empty());
         if (members.count(name) > 0) {
             if (is_array) {
@@ -172,10 +172,10 @@ std::string AnswerParser::read_value_str(bool is_array) {
                 // );` -- objects not separated
                 add_obj_item();
             } else {
-                error("member `" + std::string{name} + "' already exists");
+                error("member `" + name + "' already exists");
             }
         }
-        members[name] = std::move(text);
+        members[std::move(name)] = std::move(text);
     };
 
     bool in_parens = at('(');
@@ -206,7 +206,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
             }
             is_obj_item = true;
             auto [alias, type_def_text] = read_type_def();
-            add_member(alias, std::move(type_def_text));
+            add_member(pref.add_prefix(alias), std::move(type_def_text));
 
         } else if (at(Constant) || at(Parameter) || at_upper()) {
             // constant/property
@@ -216,7 +216,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
             }
             is_obj_item = true;
             auto [name, data_mem_text, _] = read_data_mem();
-            add_member(name, std::move(data_mem_text));
+            add_member(pref.add_prefix(name), std::move(data_mem_text));
 
         } else if (at(')')) {
             // end of parenthesized value or object item in array
