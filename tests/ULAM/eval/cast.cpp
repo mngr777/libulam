@@ -2,6 +2,7 @@
 #include "./expr_flags.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
+#include "./stringifier.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
@@ -86,6 +87,16 @@ void EvalCast::update_res(
         status == EvalCast::CastConsteval && (flags() & evl::NoConstevalCast);
     res.uns_flag(exp::OmitCast);
 
-    if (expl || (!is_conv && !is_consteval))
+    if (expl || (!is_conv && !is_consteval)) {
         exp::add_cast(res, expl);
+
+    } else if (is_consteval) {
+        assert(res.value().is_consteval());
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
+            Stringifier stringifier{program()};
+            stringifier.options.unary_as_unsigned_lit = true;
+            stringifier.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, stringifier.stringify(res.type(), rval));
+        });
+    }
 }
