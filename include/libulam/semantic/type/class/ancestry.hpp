@@ -81,7 +81,8 @@ private:
     std::map<type_id_t, Ref<Ancestor>> _map;
     std::map<str_id_t, Ref<Ancestor>> _name_id_map;
     std::vector<Ref<Ancestor>> _parents;
-    std::vector<Ptr<Ancestor>> _ancestors;
+    std::vector<Ref<Ancestor>> _ancestors;
+    std::vector<Ptr<Ancestor>> _ancestor_ptrs;
 };
 
 } // namespace ulam::cls

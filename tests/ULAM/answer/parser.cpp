@@ -153,9 +153,11 @@ std::string AnswerParser::read_value_str(bool is_array) {
             str += "("; // wrap array item
         // combine all members, ordered by name
         auto mem_start = str.size();
-        for (auto [_, text] : members) {
+        for (auto [name, text] : members) {
             if (str.size() > mem_start)
                 str += " ";
+            if (name.rfind('.') != std::string::npos)
+                str += "<" + name + ">";
             str += text + ";";
         }
         if (is_array)

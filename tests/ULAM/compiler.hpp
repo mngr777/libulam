@@ -38,7 +38,7 @@ private:
         std::ostream& os,
         ulam::sema::ExprRes&& obj,
         const std::string& test_postfix,
-        bool is_main);
+        bool in_main);
 
     void write_class_parents(std::ostream& os, ulam::Ref<ulam::Class> cls);
 
@@ -46,15 +46,16 @@ private:
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
         const ulam::RValue& rval,
-        bool is_main,
-        bool is_top);
+        bool in_main,
+        bool is_outer,
+        bool is_base);
 
     void write_obj_parent_members(
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
         const ulam::RValue& obj,
-        bool is_main,
-        bool is_top);
+        bool in_main,
+        bool is_outer);
 
     void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
     void write_class_type_def(
@@ -70,14 +71,14 @@ private:
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
         const ulam::RValue& obj,
-        bool is_main);
+        bool in_main);
 
     void write_obj_prop(
         std::ostream& os,
         Stringifier& stringifier,
         ulam::Ref<ulam::Prop> prop,
         const ulam::RValue& obj,
-        bool is_main);
+        bool in_main);
 
     ulam::Ref<ulam::Program> program();
 

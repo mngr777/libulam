@@ -60,10 +60,11 @@ Ancestry::do_add(Ref<Class> cls, Ref<ast::TypeName> node) {
     auto ref = ulam::ref(anc);
     _map[cls->id()] = ref;
     _name_id_map[cls->name_id()] = ref;
-    _ancestors.push_back(std::move(anc));
+    _ancestors.push_back(ref);
+    _ancestor_ptrs.push_back(std::move(anc));
 
     // add grandparents
-    for (auto& parent : cls->_ancestry.ancestors()) {
+    for (auto parent : cls->_ancestry.ancestors()) {
         auto [grandpa, added] = do_add(parent->cls(), parent->node());
         if (added)
             ref->add_dep_added(grandpa);
@@ -74,7 +75,7 @@ Ancestry::do_add(Ref<Class> cls, Ref<ast::TypeName> node) {
 void Ancestry::init() {
     bitsize_t off = 0;
     std::set<type_id_t> added_ids{};
-    for (auto& anc : _ancestors) {
+    for (auto anc : _ancestors) {
         auto cls = anc->cls();
         anc->set_data_off(off);
         auto direct = cls->direct_bitsize();

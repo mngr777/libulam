@@ -521,7 +521,7 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     }
 
     // add inherited properties
-    for (auto& anc : _ancestry.ancestors()) {
+    for (auto anc : _ancestry.ancestors()) {
         for (auto prop : anc->cls()->props())
             _all_props.push_back(prop);
     }
@@ -592,7 +592,7 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
         return;
 
     // import ancestor types
-    for (auto& anc : cls->_ancestry.ancestors()) {
+    for (auto anc : cls->_ancestry.ancestors()) {
         auto name_id = anc->cls()->name_id();
         if (!inh_scope()->has(name_id))
             inh_scope()->set(name_id, anc->cls());
