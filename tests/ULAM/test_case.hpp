@@ -20,6 +20,8 @@ private:
     void load(const Path& path);
     void parse();
 
+    void add_src(Path path, const std::string_view text);
+
     Path _stdlib_dir;
     std::string _text;
     AnswerMap _answers;

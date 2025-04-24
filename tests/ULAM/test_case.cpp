@@ -1,5 +1,6 @@
 #include "./test_case.hpp"
 #include "./compiler.hpp"
+#include "./test_case/parser.hpp"
 #include <cassert>
 #include <fstream>
 #include <ios>
@@ -101,146 +102,57 @@ void TestCase::load(const std::filesystem::path& path) {
 }
 
 void TestCase::parse() {
-    std::size_t pos{0}; // , end_pos{0};
-    std::string_view text{_text};
-
-    auto error = [&](const std::string& str) {
-        throw std::invalid_argument(
-            str + ", around (chr:" + std::to_string(pos) + ") '" +
-            std::string{text.substr(pos, 16)} + "'");
-    };
-
-    auto move_to = [&](const std::string& str) {
-        auto n = text.find(str, pos);
-        if (n == std::string::npos)
-            error(str + " not found");
-        pos = n;
-    };
-
-    auto read_until = [&](const std::string& str) -> std::string_view {
-        auto n = text.find(str, pos);
-        if (n == std::string::npos)
-            error(str + " not found");
-        auto sub = text.substr(pos, (n - pos));
-        pos = n;
-        return sub;
-    };
-
-    auto skip_spaces = [&]() {
-        while (text[pos] == ' ')
-            ++pos;
-    };
-
-    auto skip_line = [&]() {
-        move_to("\n");
-        ++pos;
-    };
-
-    auto skip_comments = [&]() {
-        while (text[pos] == '#' && text[pos + 1] == '#')
-            skip_line();
-    };
-
-    auto is_digit = [&]() { return '0' <= text[pos] && text[pos] <= '9'; };
-    auto is_upper = [&]() { return 'A' <= text[pos] && text[pos] <= 'Z'; };
-    auto is_lower = [&]() { return 'a' <= text[pos] && text[pos] <= 'z'; };
-    auto is_alpha = [&]() { return is_upper() || is_lower(); };
-    auto is_alnum = [&]() { return is_alpha() || is_digit(); };
-
-    auto at = [&](const std::string& str) {
-        return str == text.substr(pos, str.size());
-    };
-
-    auto skip = [&](const std::string& str) {
-        if (!at(str))
-            error(str + " not found");
-        pos += str.size();
-    };
-
-    auto read_int = [&]() -> int {
-        int sign = 1;
-        if (text[pos] == '-') {
-            sign = -1;
-            ++pos;
-        }
-        if (!is_digit())
-            error("not an integer");
-        int value = 0;
-        while (is_digit())
-            value = value * 10 + (text[pos++] - '0');
-        return sign * value;
-    };
-
-    auto move_to_file_name = [&]() {
-        while (true) {
-            move_to("#");
-            if (text[pos] == '#' &&
-                (text[pos + 1] == ':' || text[pos + 1] == '>')) {
-                pos += 2;
-                break;
-            }
-            skip("#");
-        }
-    };
-
-    auto read_file_name = [&]() -> std::string_view {
-        if (!is_upper())
-            error("file name must start with upper case letter");
-        auto start = pos++;
-        while (is_alnum() || text[pos] == '_' || text[pos] == '.')
-            ++pos;
-        return text.substr(start, pos - start);
-    };
-
-    auto add_src = [&](Path path, std::string_view text) {
-        auto ext = path.extension();
-        if (ext == ".ulam") {
-            _srcs.emplace_back(std::move(path), text);
-        } else if (ext == ".inc") {
-            _inc_srcs.emplace_back(std::move(path), text);
-        } else {
-            error("source file extension must be `.ulam' or `.inc'");
-        }
-    };
+    TestCaseParser p{_text};
 
     // answer mark
-    move_to("#!");
-    skip("#!\n");
-    skip_comments();
+    p.move_to("#!");
+    p.skip_line();
+    p.skip_comments();
 
     // "Exit status: <status>\n"
-    move_to("Exit status:");
-    skip("Exit status:");
-    skip_spaces();
-    _exit_status = read_int();
-    skip("\n");
+    p.move_to("Exit status:");
+    p.skip("Exit status:");
+    p.skip_spaces();
+    _exit_status = p.read_int();
+    p.skip('\n');
 
     // parse answers
     {
-        auto start = pos;
-        move_to("#");
+        auto start = p.pos();
+        p.move_to('#');
         if (!(_flags & SkipAnswerCheck))
-            _answers = parse_answers(text.substr(start, pos - start));
+            _answers = parse_answers(p.substr_from(start));
     }
-    skip_comments();
+    p.skip_comments();
 
-    // NOTE: main file is marked with #>, but is not necessarily the first
-    // one do we need to know which is main?
-
-    move_to_file_name();
-    skip_spaces();
     while (true) {
-        auto name = read_file_name();
-        skip_spaces();
-        skip("\n");
-        auto src = read_until("\n#");
-        ++pos;
+        // name
+        p.move_to_file_name();
+        auto name = p.read_file_name();
+        p.skip_line();
+
+        // src
+        auto src_start = p.pos();
+        p.move_to("\n#"); // # at start of line
+        auto src = p.substr_from(src_start);
         add_src(name, src);
-        skip_comments();
-        if (text[pos] == '#' && text[pos + 1] == '.')
-            break; // #.
-        // next file
-        move_to_file_name();
-        skip_spaces();
+        p.skip('\n'); // at #
+
+        p.skip_comments();
+        if (p.at("#.")) // end marker
+            break;
+    }
+
+}
+
+void TestCase::add_src(Path path, const std::string_view text) {
+    auto ext = path.extension();
+    if (ext == ".ulam") {
+        _srcs.emplace_back(std::move(path), text);
+    } else if (ext == ".inc") {
+        _inc_srcs.emplace_back(std::move(path), text);
+    } else {
+        throw std::invalid_argument(
+            "source file extension must be `.ulam' or `.inc'");
     }
 }
