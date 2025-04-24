@@ -2,6 +2,7 @@
 #include <cassert>
 #include <functional>
 #include <iostream>
+#include <stack>
 #include <stdexcept>
 
 namespace {
@@ -56,6 +57,7 @@ void Answer::add_prop(std::string name, std::string text) {
     _props.emplace(std::move(name), std::move(text));
 }
 
+// TODO: probably write a parser at this point
 Answer parse_answer(const std::string_view text) {
     Answer answer;
     std::size_t pos{0};
@@ -416,34 +418,48 @@ Answer parse_answer(const std::string_view text) {
     // skip_spaces();
     skip("{");
 
+    std::stack<std::string> base_prefix_stack;
+
+    auto add_base_prefix = [&](std::string name) -> std::string {
+        return !base_prefix_stack.empty() ? base_prefix_stack.top() + name
+                                          : std::move(name);
+    };
+
+    auto push_base_prefix = [&](std::string base) {
+        base_prefix_stack.push(add_base_prefix(std::move(base)) + ".");
+    };
+
+    auto pop_base_prefix = [&]() {
+        assert(!base_prefix_stack.empty());
+        base_prefix_stack.pop();
+    };
+
     // non-fun members
     skip_spaces();
-    std::string base_prefix;
     while (!at(TestFunStart) && !at(NoMain) && !at("}")) {
         if (at("/*")) {
             skip_until("*/");
             skip("*/");
 
-        } else if (at(":")) {
-            assert(base_prefix.empty());
-            skip(":");
+        } else if (at(":") || at("^")) {
+            bool is_parent = at(":");
+            ++pos;
             auto [name, _] = read_parent_class_name();
-            base_prefix = std::string{name} + "::";
+            push_base_prefix((is_parent ? "" : "^") + std::string{name});
             skip_spaces();
             skip("<");
 
         } else if (at(">")) {
-            assert(!base_prefix.empty());
-            base_prefix.clear();
+            pop_base_prefix();
             skip(">");
 
         } else if (at(TypeDef)) {
             auto [alias, type_def_text] = read_type_def();
-            answer.add_type_def(base_prefix + alias, type_def_text);
+            answer.add_type_def(add_base_prefix(alias), type_def_text);
 
         } else {
             auto [name, data_mem_text, is_const] = read_data_mem();
-            name = base_prefix + name;
+            name = add_base_prefix(name);
             if (is_const) {
                 answer.add_const(name, data_mem_text);
             } else {
