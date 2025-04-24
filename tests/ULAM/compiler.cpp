@@ -121,7 +121,7 @@ void Compiler::write_obj(
     std::ostream& os,
     ulam::sema::ExprRes&& obj,
     const std::string& test_postfix,
-    bool is_main) {
+    bool in_main) {
 
     assert(obj.type()->is_class());
     auto cls = obj.type()->as_class();
@@ -130,7 +130,7 @@ void Compiler::write_obj(
     os << class_name(cls);
     write_class_parents(os, cls);
     os << " { ";
-    write_obj_members(os, cls, rval, is_main, true);
+    write_obj_members(os, cls, rval, in_main, true, false);
     os << test_postfix;
     os << " }";
 }
@@ -161,27 +161,29 @@ void Compiler::write_obj_members(
     std::ostream& os,
     ulam::Ref<ulam::Class> cls,
     const ulam::RValue& rval,
-    bool is_main,
-    bool is_top) {
+    bool in_main,
+    bool is_outer,
+    bool is_base) {
     write_class_type_defs(os, cls);
-    if (is_main || is_top)
+    if (in_main || is_outer)
         write_class_consts(os, cls);
-    write_obj_props(os, cls, rval, is_main);
-    write_obj_parent_members(os, cls, rval, is_main, is_top);
+    write_obj_props(os, cls, rval, in_main);
+    if (in_main || !is_base)
+        write_obj_parent_members(os, cls, rval, in_main, is_outer);
 }
 
 void Compiler::write_obj_parent_members(
     std::ostream& os,
     ulam::Ref<ulam::Class> cls,
     const ulam::RValue& obj,
-    bool is_main,
-    bool is_top) {
+    bool in_main,
+    bool is_outer) {
 
     Stringifier stringifier{program()};
-    stringifier.options.use_unsigned_suffix = is_main;
+    stringifier.options.use_unsigned_suffix = in_main;
     stringifier.options.bits_use_unsigned_suffix = false;
 
-    for (const auto& anc : cls->ancestors()) {
+    for (const auto anc : cls->ancestors()) {
         auto parent = anc->cls();
         if (is_urself(parent) ||
             (parent->params().empty() && parent->type_defs().empty() &&
@@ -190,7 +192,7 @@ void Compiler::write_obj_parent_members(
 
         os << (anc->is_parent() ? ':' : '^')
            << out::type_str(stringifier, parent) << "< ";
-        write_obj_members(os, parent, obj, is_main, is_top);
+        write_obj_members(os, parent, obj, in_main, is_outer, true);
         os << "> ";
     }
 }
@@ -235,16 +237,16 @@ void Compiler::write_obj_props(
     std::ostream& os,
     ulam::Ref<ulam::Class> cls,
     const ulam::RValue& obj,
-    bool is_main) {
+    bool in_main) {
 
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
-    stringifier.options.use_unsigned_suffix_zero = is_main;
+    stringifier.options.use_unsigned_suffix_zero = in_main;
     stringifier.options.bits_use_unsigned_suffix = false;
-    stringifier.options.class_params_as_consts = is_main;
+    stringifier.options.class_params_as_consts = in_main;
 
     for (auto prop : cls->props())
-        write_obj_prop(os, stringifier, prop, obj, is_main);
+        write_obj_prop(os, stringifier, prop, obj, in_main);
 }
 
 void Compiler::write_obj_prop(
@@ -252,7 +254,7 @@ void Compiler::write_obj_prop(
     Stringifier& stringifier,
     ulam::Ref<ulam::Prop> prop,
     const ulam::RValue& obj,
-    bool is_main) {
+    bool in_main) {
     auto& str_pool = program()->str_pool();
     auto type = prop->type();
     auto lval = obj.prop(prop);
@@ -270,8 +272,8 @@ void Compiler::write_obj_prop(
                         if (idx > 0)
                             os << "), (";
                         write_obj_members(
-                            os, item_type->as_class(), item_rval, is_main,
-                            false);
+                            os, item_type->as_class(), item_rval, in_main,
+                            false, false);
 
                     } else {
                         assert(!item_type->is_array());
@@ -282,7 +284,8 @@ void Compiler::write_obj_prop(
                 });
             }
         } else if (type->is_class()) {
-            write_obj_members(os, type->as_class(), rval, is_main, false);
+            write_obj_members(
+                os, type->as_class(), rval, in_main, false, false);
         } else {
             os << stringifier.stringify(type, rval);
         }

@@ -285,10 +285,24 @@ void compare_answers(const Answer& truth, const Answer& answer) {
 
 std::ostream& operator<<(std::ostream& os, const Answer& answer) {
     os << answer.class_name() << " { ";
-    for (const auto& [_, text] : answer.type_defs())
+
+    auto write_full_name = [&](const std::string& name) {
+        if (name.rfind('.') != std::string::npos)
+            os << "<" << name << ">";
+    };
+
+    for (const auto& [name, text] : answer.type_defs()) {
+        write_full_name(name);
         os << text << " ";
-    for (const auto& [_, text] : answer.props())
+    }
+    for (const auto& [name, text] : answer.consts()) {
+        write_full_name(name);
         os << text << " ";
+    }
+    for (const auto& [name, text] : answer.props()) {
+        write_full_name(name);
+        os << text << " ";
+    }
     os << answer.test_fun();
     os << " }";
     return os;

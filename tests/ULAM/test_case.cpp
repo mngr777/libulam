@@ -83,6 +83,8 @@ void TestCase::run() {
 
     } catch (const std::exception& e) {
         std::cout << "error: " << e.what() << "\n";
+        std::cout << "\nANSWER (raw):\n" << _answers_text << "\n";
+        std::cout << "ANSWER (parsed:)\n" << _answers << "\n";
     }
     throw std::invalid_argument("test case failed");
 }
