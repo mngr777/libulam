@@ -1,4 +1,5 @@
 #include "./answer.hpp"
+#include "./answer/parser.hpp"
 #include <cassert>
 #include <functional>
 #include <iostream>
@@ -14,6 +15,8 @@ constexpr char TestFunStart[] = "Int test()";
 constexpr char NoMain[] = "<NOMAIN>";
 
 } // namespace
+
+// Answer
 
 bool Answer::has_type_def(const std::string& alias) const {
     return _type_defs.count(alias) > 0;
@@ -57,440 +60,111 @@ void Answer::add_prop(std::string name, std::string text) {
     _props.emplace(std::move(name), std::move(text));
 }
 
-// TODO: probably write a parser at this point
+// AnswerBasePrefixStack
+
+std::string AnswerBasePrefixStack::add_prefix(std::string name) {
+    return !_stack.empty() ? _stack.top() + name : std::move(name);
+}
+
+void AnswerBasePrefixStack::push(std::string name) {
+    _stack.push(add_prefix(name) + '.');
+}
+
+void AnswerBasePrefixStack::pop() {
+    assert(!_stack.empty());
+    _stack.pop();
+}
+
 Answer parse_answer(const std::string_view text) {
+    AnswerParser p{text};
     Answer answer;
-    std::size_t pos{0};
-
-    auto error = [&](const std::string& str,
-                     std::size_t error_pos = std::string::npos) {
-        if (error_pos == std::string::npos)
-            error_pos = pos;
-        throw std::invalid_argument(
-            str + ", around (chr:" + std::to_string(error_pos) + ") '" +
-            std::string{text.substr(error_pos, 16)} + "'");
-    };
-
-    auto skip_spaces = [&]() {
-        while (text[pos] == ' ')
-            ++pos;
-    };
-
-    auto is_digit = [&]() { return '0' <= text[pos] && text[pos] <= '9'; };
-    auto is_upper = [&]() { return 'A' <= text[pos] && text[pos] <= 'Z'; };
-    auto is_lower = [&]() { return 'a' <= text[pos] && text[pos] <= 'z'; };
-    auto is_alpha = [&]() { return is_upper() || is_lower(); };
-    auto is_alnum = [&]() { return is_alpha() || is_digit(); };
-    auto is_ident = [&]() { return is_alnum() || text[pos] == '_'; };
-
-    auto at = [&](const std::string& str) {
-        return str == text.substr(pos, str.size());
-    };
-
-    auto skip = [&](const std::string& str) {
-        if (!at(str))
-            error(str + " not found");
-        pos += str.size();
-    };
-
-    auto skip_until = [&](const std::string& str) {
-        auto n = text.find(str, pos);
-        if (n == std::string::npos)
-            error(str + " not found");
-        pos = n;
-    };
-
-    auto skip_block = [&](char open, char close, char esc = '\0') {
-        if (text[pos] != open)
-            error(std::string{"unexpectend char, expecting `"} + open + "'");
-
-        auto start = pos;
-        ++pos;
-        int opened = 1;
-        while (opened > 0 && pos < text.size()) {
-            if (text[pos] == open) {
-                ++opened;
-            } else if (text[pos] == close) {
-                --opened;
-            } else if (text[pos] == esc) {
-                ++pos;
-            }
-            ++pos;
-        }
-        if (pos == text.size())
-            error("not closed", start);
-    };
-
-    auto skip_parens = std::bind(skip_block, '(', ')');
-    auto skip_brackets = std::bind(skip_block, '[', ']');
-    auto skip_braces = std::bind(skip_block, '{', '}');
-    auto skip_str_lit = std::bind(skip_block, '"', '"', '\\');
-
-    // {name, is_tpl}
-    auto read_class_name =
-        [&](bool is_parent = false) -> std::pair<const std::string_view, bool> {
-        auto start = pos;
-        if (!is_parent && text[pos] != 'U')
-            error("class name must start with 'U'");
-        // Type
-        ++pos;
-        while (is_ident())
-            ++pos;
-        // ()
-        bool is_tpl = at("(");
-        if (is_tpl)
-            skip_parens();
-        return {text.substr(start, pos - start), is_tpl};
-    };
-
-    auto read_parent_class_name = std::bind(read_class_name, true);
-
-    auto skip_type_ident = [&]() {
-        if (!is_upper() && !at("holder") && !at("unresolved"))
-            error("type name must start with uppercase letter");
-        ++pos;
-        while (is_ident())
-            ++pos;
-    };
-
-    auto skip_type_name = [&]() {
-        skip_type_ident();
-        // ()
-        if (text[pos] == '(')
-            skip_parens();
-    };
-
-    auto read_type_ident = [&]() {
-        auto start = pos;
-        skip_type_ident();
-        return text.substr(start, pos - start);
-    };
-
-    auto read_data_mem_name = [&]() {
-        auto start = pos;
-        if (!is_lower())
-            error("constant or property name must start with lowercase letter");
-        ++pos;
-        while (is_ident())
-            ++pos;
-        return text.substr(start, pos - start);
-    };
-
-    // {name, text}
-    auto read_type_def = [&]() -> std::pair<std::string, std::string> {
-        auto start = pos;
-
-        // typedef
-        skip(TypeDef);
-        skip_spaces();
-
-        // Type()
-        skip_type_name();
-        skip_spaces();
-
-        // Type
-        std::string alias{read_type_ident()};
-        skip_spaces();
-
-        // []
-        if (text[pos] == '[')
-            skip_brackets();
-
-        std::string type_def_text{text.substr(start, pos - start)};
-
-        // ;
-        skip_spaces();
-        skip(";");
-
-        return {std::move(alias), std::move(type_def_text)};
-    };
-
-    // {name, text, is_const}
-    auto _read_data_mem = [&](auto& self, auto& read_value_str)
-        -> std::tuple<std::string, std::string, bool> {
-        auto start = pos;
-
-        // constant/parameter
-        bool is_const = false;
-        if (at(Constant)) {
-            is_const = true;
-            skip(Constant);
-        } else if (at(Parameter)) {
-            is_const = true;
-            skip(Parameter);
-        }
-
-        // Type()
-        skip_spaces();
-        skip_type_name();
-        skip_spaces();
-
-        // ident
-        std::string name{read_data_mem_name()};
-
-        // []
-        bool is_array = at("[");
-        if (is_array)
-            skip_brackets();
-
-        std::string data_mem_text{text.substr(start, pos - start)};
-
-        // value
-        skip_spaces();
-        if (at("(")) {
-            data_mem_text += read_value_str(read_value_str, self, is_array);
-
-        } else if (at("=")) {
-            skip("=");
-            skip_spaces();
-            data_mem_text +=
-                " = " + read_value_str(read_value_str, self, is_array);
-        }
-
-        // ;
-        skip_spaces();
-        skip(";");
-
-        return {std::move(name), std::move(data_mem_text), is_const};
-    };
-
-    auto read_scalar_value_str = [&]() -> const std::string_view {
-        auto start = pos;
-        auto ch = text[pos];
-        if (ch == '"') {
-            skip_str_lit();
-        } else {
-            while (pos < text.size() && text[pos] != ';' && text[pos] != ')' &&
-                   text[pos] != ',' && text[pos] != ' ')
-                ++pos;
-            if (pos == text.size())
-                error("value not terminated", start);
-        }
-        return text.substr(start, pos - start);
-    };
-
-    auto _read_value_str = [&](auto& self, auto& read_data_mem,
-                               bool is_array) -> std::string {
-        std::string val;
-        bool is_obj_item = false;
-        bool is_scalar_item = false;
-
-        std::map<std::string, std::string> members;
-
-        auto add_obj_item = [&]() {
-            assert(is_obj_item);
-            if (is_array && !val.empty())
-                val += ", ";
-            if (is_array)
-                val += "("; // wrap array item
-            // combine all members, ordered by name
-            auto mem_start = val.size();
-            for (auto [_, text] : members) {
-                if (val.size() > mem_start)
-                    val += " ";
-                val += text + ";";
-            }
-            if (is_array)
-                val += ")";  // wrap array item
-            members.clear(); // reset members for current array item
-        };
-
-        auto add_member = [&](std::string&& name, std::string&& text) {
-            assert(!name.empty() && !text.empty());
-            if (members.count(name) > 0) {
-                if (is_array) {
-                    // workaround for t3143, t3145:
-                    // `Bar m_bar2[2](Bool val_b[3](...); Bool val_b[3](...);
-                    // );`
-                    add_obj_item();
-                } else {
-                    error("member `" + name + "' already exists");
-                }
-            }
-            members[std::move(name)] = std::move(text);
-        };
-
-        bool in_parens = at("(");
-        if (in_parens)
-            skip("(");
-        skip_spaces();
-
-        while (text[pos] != ';') {
-            if (at(TypeDef)) {
-                if (is_scalar_item) {
-                    assert(is_array);
-                    error("unexpected typedef in array value");
-                }
-                is_obj_item = true;
-                auto [alias, type_def_text] = read_type_def();
-                add_member(std::move(alias), std::move(type_def_text));
-
-            } else if (at(Constant) || at(Parameter) || is_upper()) {
-                if (is_scalar_item) {
-                    assert(is_array);
-                    error("unexpected data member in array value");
-                }
-                is_obj_item = true;
-                auto [name, data_mem_text, _] =
-                    read_data_mem(read_data_mem, self);
-                add_member(std::move(name), std::move(data_mem_text));
-
-            } else if (text[pos] == ')') {
-                if (!in_parens)
-                    error("unexpected `)'");
-
-                // add current object?
-                if (is_obj_item)
-                    add_obj_item();
-
-                ++pos;
-
-                // ,?
-                if (text[pos] == ',') {
-                    // comma after closing `)' must be object array
-                    if (!(is_array && is_obj_item))
-                        error("unexpected `,'");
-                    ++pos;
-                    skip_spaces();
-                    skip("(");
-                } else {
-                    break; // done
-                }
-
-            } else if (text[pos] == ',') {
-                if (!is_array && !is_scalar_item)
-                    error("unexpected `,'");
-                ++pos;
-
-            } else {
-                // scalar value
-                if (is_obj_item)
-                    error("unexpected char in object value");
-                is_scalar_item = true;
-                if (!val.empty()) {
-                    // value string is already not empty, must be array item
-                    assert(is_array);
-                    val += ", ";
-                }
-                val += read_scalar_value_str();
-            }
-            skip_spaces();
-        }
-        assert(text[pos] == ';');
-        skip_spaces();
-        return in_parens ? "(" + val + ")" : val;
-    };
-
-    auto read_data_mem =
-        std::bind(_read_data_mem, _read_data_mem, _read_value_str);
 
     // class name
-    skip_spaces();
-    auto [name, is_tpl] = read_class_name();
+    p.skip_spaces();
+    auto [name, is_tpl] = p.read_class_name();
     answer.set_is_tpl(is_tpl);
     answer.set_class_name(std::string{name});
+    p.skip_spaces();
 
-    // params (TODO)
-    skip_spaces();
-    if (at("("))
-        skip_parens();
+    // params (TODO: needed for templates)
+    if (p.at('('))
+        p.skip_parens();
+    p.skip_spaces();
 
     // parents
-    skip_spaces();
-    if (at(":")) {
-        skip(":");
-        skip_spaces();
-
-        bool done = false;
-        while (!done) {
-            auto [name, _] = read_parent_class_name();
+    if (p.at(':')) {
+        p.advance();
+        while (true) {
+            p.skip_spaces();
+            auto [name, _] = p.read_parent_class_name();
             answer.add_parent(std::string{name});
-            skip_spaces();
-
-            done = !at("+");
-            if (!done)
-                skip("+");
-            skip_spaces();
+            p.skip_spaces();
+            if (!p.at('+'))
+                break;
         }
+        p.skip_spaces();
     }
 
-    // {
-    // skip_spaces();
-    skip("{");
-
-    std::stack<std::string> base_prefix_stack;
-
-    auto add_base_prefix = [&](std::string name) -> std::string {
-        return !base_prefix_stack.empty() ? base_prefix_stack.top() + name
-                                          : std::move(name);
-    };
-
-    auto push_base_prefix = [&](std::string base) {
-        base_prefix_stack.push(add_base_prefix(std::move(base)) + ".");
-    };
-
-    auto pop_base_prefix = [&]() {
-        assert(!base_prefix_stack.empty());
-        base_prefix_stack.pop();
-    };
+    p.skip('{');
+    p.skip_spaces();
 
     // non-fun members
-    skip_spaces();
-    while (!at(TestFunStart) && !at(NoMain) && !at("}")) {
-        if (at("/*")) {
-            skip_until("*/");
-            skip("*/");
+    AnswerBasePrefixStack pref;
+    while (!p.at(TestFunStart) && !p.at(NoMain) && !p.at('}')) {
+        if (p.at("/*")) {
+            p.skip_comment();
 
-        } else if (at(":") || at("^")) {
-            bool is_parent = at(":");
-            ++pos;
-            auto [name, _] = read_parent_class_name();
-            push_base_prefix((is_parent ? "" : "^") + std::string{name});
-            skip_spaces();
-            skip("<");
+        } else if (p.at(':') || p.at('^')) {
+            // :ParentType< ... > | ^GrandparentType< ... >
+            bool is_grandarent = p.at('^');
+            p.advance();
+            auto [name, _] = p.read_parent_class_name();
+            pref.push((is_grandarent ? "^" : "") + std::string{name});
+            p.skip_spaces();
+            p.skip('<');
 
-        } else if (at(">")) {
-            pop_base_prefix();
-            skip(">");
+        } else if (p.at('>')) {
+            pref.pop();
+            p.advance();
+            p.skip_spaces();
 
-        } else if (at(TypeDef)) {
-            auto [alias, type_def_text] = read_type_def();
-            answer.add_type_def(add_base_prefix(alias), type_def_text);
+        } else if (p.at(TypeDef)) {
+            auto [alias, text] = p.read_type_def();
+            answer.add_type_def(std::string{alias}, text);
 
         } else {
-            auto [name, data_mem_text, is_const] = read_data_mem();
-            name = add_base_prefix(name);
+            // must be a constant/property
+            auto [name, text, is_const] = p.read_data_mem();
+            auto name_str = pref.add_prefix(std::string{name});
             if (is_const) {
-                answer.add_const(name, data_mem_text);
+                answer.add_const(name_str, text);
             } else {
-                answer.add_prop(name, data_mem_text);
+                answer.add_prop(name_str, text);
             }
         }
-        skip_spaces();
+        p.skip_spaces();
     }
 
     // `test` fun text
-    if (at(TestFunStart)) {
-        auto start = pos;
+    if (p.at(TestFunStart)) {
+        auto start = p.pos();
 
         // Int test()
-        skip(TestFunStart);
-        skip_spaces();
+        p.skip(TestFunStart);
+        p.skip_spaces();
 
-        // {}
-        skip_braces();
+        // {...}
+        p.skip_braces();
 
-        std::string test_fun{text.substr(start, pos - start)};
-        answer.set_test_fun(std::move(test_fun));
+        answer.set_test_fun(std::string{p.substr_from(start)});
 
     } else {
-        if (at(NoMain))
-            skip(NoMain);
+        if (p.at(NoMain))
+            p.skip(NoMain);
         answer.set_test_fun(NoMain);
     }
-
-    skip_spaces();
-    skip("}");
+    p.skip_spaces();
+    p.skip('}');
 
     return answer;
 }

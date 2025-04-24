@@ -255,6 +255,8 @@ test_ulam_SOURCES = \
 	tests/ast/print.cpp \
 	tests/ULAM/answer.hpp \
 	tests/ULAM/answer.cpp \
+	tests/ULAM/answer/parser.hpp \
+	tests/ULAM/answer/parser.cpp \
 	tests/ULAM/compiler.hpp \
 	tests/ULAM/compiler.cpp \
 	tests/ULAM/driver.cpp \

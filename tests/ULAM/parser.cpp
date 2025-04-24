@@ -109,6 +109,31 @@ const std::string_view Parser::read_line(bool with_nl) {
     return line;
 }
 
+const std::string_view Parser::read_block(char open, char close, char esc) {
+    if (!at(open))
+        error(not_found_str(open));
+    auto start = _pos;
+    advance();
+    unsigned opened = 1;
+    while (!eof() && opened > 0) {
+        if (at(open)) {
+            ++opened;
+        } else if (at(close)) {
+            assert(opened > 0);
+            --opened;
+        } else if (at(esc)) {
+            advance();
+        }
+        advance();
+    }
+    if (eof()) {
+        auto message =
+            std::string{"closing `"} + close + "' not found opened at";
+        error(message, start);
+    }
+    return substr_from(start);
+}
+
 int Parser::read_int() {
     int sign = 1;
     if (at('-')) {
@@ -130,9 +155,12 @@ const std::string_view Parser::substr_from(std::size_t start) const {
     return _text.substr(start, _pos - start);
 }
 
-void Parser::error(const std::string& message) const {
+void Parser::error(const std::string& message, std::size_t pos) const {
+    if (pos == std::string::npos)
+        pos = _pos;
+    assert(pos <= _pos);
     throw std::invalid_argument(
-        message + ", around (chr:" + std::to_string(_pos) + ") `" +
+        message + " (chr:" + std::to_string(_pos) + ") `" +
         std::string{_text.substr(_pos, 16)} + "'");
 }
 
