@@ -19,7 +19,8 @@ ulam::sema::ExprRes EvalCast::cast(
     bool expl) {
     arg.uns_flag(exp::OmitCast);
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
-    update_res(res, status, expl);
+    if (!has_flag(evl::NoCodegen))
+        update_res(res, status, expl);
     return std::move(res);
 }
 
@@ -30,7 +31,8 @@ ulam::sema::ExprRes EvalCast::cast(
     bool expl) {
     arg.uns_flag(exp::OmitCast);
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
-    update_res(res, status, expl);
+    if (!has_flag(evl::NoCodegen))
+        update_res(res, status, expl);
     return std::move(res);
 }
 

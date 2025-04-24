@@ -129,11 +129,11 @@ TypedValue Type::type_op(TypeOp op, Value& val) {
     case TypeOp::AtomOf: {
         if (val.empty())
             return {};
-        auto atom_type = builtins().atom_type();
         auto lval = val.atom_of();
         if (lval.empty())
             return {};
-        return {atom_type, Value{lval.as(atom_type)}};
+        assert(lval.type()->is_atom());
+        return {lval.type(), Value{lval}};
     }
     case TypeOp::PositionOf: {
         if (val.empty())
@@ -533,11 +533,15 @@ conv_cost_t RefType::conv_cost(
     return refd()->conv_cost(type->actual(), val, allow_cast); // ??
 }
 
+// TODO: review
 Value RefType::cast_to(Ref<Type> type, Value&& val) {
     assert(val.is_lvalue());
     if (!type->is_ref())
         return refd()->cast_to(type, std::move(val));
     assert(is_expl_castable_to(type));
+    assert(refd()->is_object() && type->deref()->is_object()); // ??
+    if (refd()->is_impl_castable_to(type->deref()))
+        return std::move(val);
     return Value{val.lvalue().as(type->deref())};
 }
 
