@@ -138,9 +138,12 @@ void Compiler::write_obj(
 void Compiler::write_class_parents(
     std::ostream& os, ulam::Ref<ulam::Class> cls) {
     auto parents = cls->parents();
-    if (parents.size() < 2)
+    if (parents.size() == 0)
+        return;
+    if (parents.size() == 1 && is_urself(parents.front()->cls()))
         return; // ignoring UrSelf
 
+    Stringifier stringifier{program()};
     os << " : ";
     bool first = true;
     for (auto anc : parents) {
@@ -149,7 +152,7 @@ void Compiler::write_class_parents(
             continue;
         if (!first)
             os << " + ";
-        os << anc->cls()->name();
+        os << out::type_str(stringifier, anc->cls());
         first = false;
     }
 }

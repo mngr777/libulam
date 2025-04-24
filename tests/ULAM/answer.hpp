@@ -14,7 +14,7 @@ public:
     const std::string& class_name() const { return _class_name; }
     void set_class_name(std::string name) { _class_name = std::move(name); }
 
-    const std::list<std::string> parents() { return _parents; }
+    const std::list<std::string>& parents() const { return _parents; }
     void add_parent(std::string parent) {
         _parents.push_back(std::move(parent));
     }
