@@ -1,7 +1,6 @@
 #include "./compiler.hpp"
 #include "./out.hpp"
 #include "tests/ast/print.hpp"
-#include <exception>
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
@@ -34,10 +33,6 @@ std::string class_prefix(ulam::ClassKind kind) {
 
 std::string class_name(ulam::Ref<ulam::Class> cls) {
     return class_prefix(cls->kind()) + cls->name();
-}
-
-std::string class_tpl_name(ulam::Ref<ulam::ClassTpl> tpl) {
-    return class_prefix(tpl->kind()) + tpl->name();
 }
 
 } // namespace
@@ -122,45 +117,22 @@ void Compiler::compile_class(
     os << "\n";
 }
 
-void Compiler::compile_class_tpl(
-    std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl) {
-    os << class_tpl_name(tpl);
-    write_class_tpl_params(os, eval, tpl);
-    os << " { ";
-    os << " " << NoMain << " }\n";
-}
-
-void Compiler::write_class_tpl_params(
-    std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl) {
-    assert(!tpl->params().empty());
-    os << "(";
-    Stringifier stringifier{program()};
-    const auto& params = tpl->params();
-    for (auto param : params) {
-        if (param != *params.begin())
-            os << ", ";
-        // os << out::var_def_str(program()->str_pool(), stringifier, param);
-    }
-    os << ")";
-}
-
 void Compiler::write_obj(
     std::ostream& os,
     ulam::sema::ExprRes&& obj,
     const std::string& test_postfix,
     bool is_main) {
+
     assert(obj.type()->is_class());
     auto cls = obj.type()->as_class();
-    auto val = obj.move_value();
+    auto rval = obj.move_value().move_rvalue();
 
     os << class_name(cls);
     write_class_parents(os, cls);
     os << " { ";
-    write_class_type_defs(os, cls);
-    write_class_consts(os, cls);
-    write_class_props(os, cls, val, is_main);
-    write_class_parent_members(os, cls, val, is_main);
-    os << test_postfix << " }";
+    write_obj_members(os, cls, rval, is_main, true);
+    os << test_postfix;
+    os << " }";
 }
 
 void Compiler::write_class_parents(
@@ -182,11 +154,25 @@ void Compiler::write_class_parents(
     }
 }
 
-void Compiler::write_class_parent_members(
+void Compiler::write_obj_members(
     std::ostream& os,
     ulam::Ref<ulam::Class> cls,
-    ulam::Value& obj,
-    bool is_main) {
+    const ulam::RValue& rval,
+    bool is_main,
+    bool is_top) {
+    write_class_type_defs(os, cls);
+    if (is_main || is_top)
+        write_class_consts(os, cls);
+    write_obj_props(os, cls, rval, is_main);
+    write_obj_parent_members(os, cls, rval, is_main, is_top);
+}
+
+void Compiler::write_obj_parent_members(
+    std::ostream& os,
+    ulam::Ref<ulam::Class> cls,
+    const ulam::RValue& obj,
+    bool is_main,
+    bool is_top) {
 
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = is_main;
@@ -200,9 +186,7 @@ void Compiler::write_class_parent_members(
             continue;
 
         os << ":" << out::type_str(stringifier, parent) << "< ";
-        write_class_type_defs(os, parent);
-        write_class_consts(os, parent);
-        write_class_props(os, parent, obj, is_main);
+        write_obj_members(os, parent, obj, is_main, is_top);
         os << "> ";
     }
 }
@@ -243,10 +227,10 @@ void Compiler::write_class_const(
     os << out::var_str(str_pool, stringifier, var) << "; ";
 }
 
-void Compiler::write_class_props(
+void Compiler::write_obj_props(
     std::ostream& os,
     ulam::Ref<ulam::Class> cls,
-    ulam::Value& obj,
+    const ulam::RValue& obj,
     bool is_main) {
 
     Stringifier stringifier{program()};
@@ -256,17 +240,50 @@ void Compiler::write_class_props(
     stringifier.options.class_params_as_consts = is_main;
 
     for (auto prop : cls->props())
-        write_class_prop(os, stringifier, prop, obj);
+        write_obj_prop(os, stringifier, prop, obj, is_main);
 }
 
-void Compiler::write_class_prop(
+void Compiler::write_obj_prop(
     std::ostream& os,
     Stringifier& stringifier,
     ulam::Ref<ulam::Prop> prop,
-    ulam::Value& obj) {
+    const ulam::RValue& obj,
+    bool is_main) {
     auto& str_pool = program()->str_pool();
-    auto rval_copy = obj.copy_rvalue(); // TMP
-    os << out::prop_str(str_pool, stringifier, prop, rval_copy) << "; ";
+    auto type = prop->type();
+    auto lval = obj.prop(prop);
+    os << out::type_str(stringifier, type, false) << " "
+       << str_pool.get(prop->name_id()) << out::type_dim_str(type) << "(";
+    lval.with_rvalue([&](const auto& rval) {
+        if (type->is_array()) {
+            auto array_type = type->as_array();
+            auto item_type = array_type->item_type();
+            for (ulam::array_idx_t idx = 0; idx < array_type->array_size();
+                 ++idx) {
+                const auto item_lval = lval.array_access(idx);
+                item_lval.with_rvalue([&](const auto& item_rval) {
+                    if (item_type->is_class()) {
+                        if (idx > 0)
+                            os << "), (";
+                        write_obj_members(
+                            os, item_type->as_class(), item_rval, is_main,
+                            false);
+
+                    } else {
+                        assert(!item_type->is_array());
+                        if (idx > 0)
+                            os << ", ";
+                        os << stringifier.stringify(item_type, item_rval);
+                    }
+                });
+            }
+        } else if (type->is_class()) {
+            write_obj_members(os, type->as_class(), rval, is_main, false);
+        } else {
+            os << stringifier.stringify(type, rval);
+        }
+    });
+    os << "); ";
 }
 
 ulam::Ref<ulam::Program> Compiler::program() {

@@ -34,12 +34,6 @@ private:
     void
     compile_class(std::ostream& os, Eval& eval, ulam::Ref<ulam::Class> cls);
 
-    void compile_class_tpl(
-        std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
-
-    void write_class_tpl_params(
-        std::ostream& os, Eval& eval, ulam::Ref<ulam::ClassTpl> tpl);
-
     void write_obj(
         std::ostream& os,
         ulam::sema::ExprRes&& obj,
@@ -48,11 +42,19 @@ private:
 
     void write_class_parents(std::ostream& os, ulam::Ref<ulam::Class> cls);
 
-    void write_class_parent_members(
+    void write_obj_members(
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
-        ulam::Value& obj,
-        bool is_main);
+        const ulam::RValue& rval,
+        bool is_main,
+        bool is_top);
+
+    void write_obj_parent_members(
+        std::ostream& os,
+        ulam::Ref<ulam::Class> cls,
+        const ulam::RValue& obj,
+        bool is_main,
+        bool is_top);
 
     void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
     void write_class_type_def(
@@ -64,17 +66,18 @@ private:
     void write_class_const(
         std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var);
 
-    void write_class_props(
+    void write_obj_props(
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
-        ulam::Value& obj,
+        const ulam::RValue& obj,
         bool is_main);
 
-    void write_class_prop(
+    void write_obj_prop(
         std::ostream& os,
         Stringifier& stringifier,
         ulam::Ref<ulam::Prop> prop,
-        ulam::Value& obj);
+        const ulam::RValue& obj,
+        bool is_main);
 
     ulam::Ref<ulam::Program> program();
 

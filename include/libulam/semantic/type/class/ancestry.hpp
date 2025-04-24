@@ -21,12 +21,18 @@ class Ancestor {
 
 public:
     Ancestor(Ref<Class> cls, Ref<ast::TypeName> node):
-        _cls{cls}, _node{node}, _data_off{NoBitsize}, _size_added{NoBitsize} {}
+        _cls{cls},
+        _node{node},
+        _is_parent{false},
+        _data_off{NoBitsize},
+        _size_added{NoBitsize} {}
 
     Ref<Class> cls() const { return _cls; }
 
     Ref<ast::TypeName> node() { return _node; }
     Ref<const ast::TypeName> node() const { return _node; }
+
+    bool is_parent() const { return _is_parent; }
 
     bool has_data_off() const;
     bitsize_t data_off() const;
@@ -35,12 +41,15 @@ public:
     bitsize_t size_added() const;
 
 private:
+    void set_is_parent(bool is_parent) { _is_parent = is_parent; }
+
     void set_data_off(bitsize_t data_off);
     void set_size_added(bitsize_t size);
     void add_dep_added(Ref<Ancestor> anc);
 
     Ref<Class> _cls;
     Ref<ast::TypeName> _node;
+    bool _is_parent;
     bitsize_t _data_off; // NOTE: offset is relative to start of inherited data
                          // section
     bitsize_t _size_added;

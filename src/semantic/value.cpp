@@ -115,6 +115,10 @@ LValue LValue::prop(Ref<Prop> prop) {
     return derived(data_view().prop(prop));
 }
 
+const LValue LValue::prop(Ref<Prop> prop) const {
+    return const_cast<LValue*>(this)->prop(prop);
+}
+
 LValue LValue::bound_fset(Ref<FunSet> fset) {
     return derived(BoundFunSet{data_view(), fset});
 }
@@ -227,6 +231,10 @@ LValue RValue::prop(Ref<Prop> prop) {
         [&](auto& other) -> LValue { assert(false); });
 }
 
+const LValue RValue::prop(Ref<Prop> prop) const {
+    return const_cast<RValue*>(this)->prop(prop);
+}
+
 LValue RValue::bound_fset(Ref<FunSet> fset) {
     return accept(
         [&](DataPtr data) { return LValue{BoundFunSet{data->view(), fset}}; },
@@ -285,6 +293,10 @@ Value Value::array_access(array_idx_t idx) {
 
 Value Value::prop(Ref<Prop> prop) {
     return accept([&](auto& val) { return Value{val.prop(prop)}; });
+}
+
+const Value Value::prop(Ref<Prop> prop) const {
+    return const_cast<Value*>(this)->prop(prop);
 }
 
 Value Value::bound_fset(Ref<FunSet> fset) {

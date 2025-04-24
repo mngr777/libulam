@@ -1,5 +1,6 @@
 #include "./out.hpp"
 #include "libulam/semantic/value.hpp"
+#include "libulam/str_pool.hpp"
 #include <sstream>
 
 namespace out {
@@ -98,34 +99,6 @@ std::string var_def_str(
     std::string name{str_pool.get(var->name_id())};
     os << type_str(stringifier, var->type(), false) << " " << name
        << type_dim_str(var->type());
-    return os.str();
-}
-
-std::string prop_str(
-    ulam::UniqStrPool& str_pool,
-    Stringifier& stringifier,
-    ulam::Ref<ulam::Prop> prop,
-    ulam::RValue& obj,
-    bool inner) {
-    std::ostringstream os;
-    auto type = prop->type();
-    auto rval = obj.prop(prop).rvalue(); // TMP
-    os << type_str(stringifier, type, false) << " "
-       << str_pool.get(prop->name_id()) << type_dim_str(type);
-
-    auto val_str = stringifier.stringify(type, rval);
-
-    // check if already parenthesized, workaround for object array format
-    // `Class a[2](Type prop1(val);), (Type prop1(val);)`
-    // (each object value individually wrapped, see `Poo.mbar` in t3230)
-    // alternative: do not add `(' for first and `)' for last item in
-    // `Stringifier::stringify_array`
-    if (!val_str.empty() && val_str[0] == '(') {
-        os << val_str;
-    } else {
-        os << "(" << val_str << ")";
-    }
-
     return os.str();
 }
 
