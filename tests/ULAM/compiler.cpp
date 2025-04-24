@@ -195,8 +195,8 @@ void Compiler::write_class_parent_members(
     for (auto anc : cls->parents()) {
         auto parent = anc->cls();
         if (is_urself(parent) ||
-            (parent->type_defs().empty() && parent->consts().empty() &&
-             parent->props().empty()))
+            (parent->params().empty() && parent->type_defs().empty() &&
+             parent->consts().empty() && parent->props().empty()))
             continue;
 
         os << ":" << out::type_str(stringifier, parent) << "< ";

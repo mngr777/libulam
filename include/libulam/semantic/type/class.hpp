@@ -72,8 +72,8 @@ public:
 
     bitsize_t base_off(Ref<const Class> base) const;
 
-    auto& parents() { return _ancestry.parents(); }
     const auto& parents() const { return _ancestry.parents(); }
+    const auto& ancestors() const { return _ancestry.ancestors(); }
 
     bitsize_t bitsize() const override;
     bitsize_t required_bitsize() const;
