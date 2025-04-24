@@ -178,14 +178,15 @@ void Compiler::write_obj_parent_members(
     stringifier.options.use_unsigned_suffix = is_main;
     stringifier.options.bits_use_unsigned_suffix = false;
 
-    for (auto anc : cls->parents()) {
+    for (const auto& anc : cls->ancestors()) {
         auto parent = anc->cls();
         if (is_urself(parent) ||
             (parent->params().empty() && parent->type_defs().empty() &&
              parent->consts().empty() && parent->props().empty()))
             continue;
 
-        os << ":" << out::type_str(stringifier, parent) << "< ";
+        os << (anc->is_parent() ? ':' : '^')
+           << out::type_str(stringifier, parent) << "< ";
         write_obj_members(os, parent, obj, is_main, is_top);
         os << "> ";
     }
