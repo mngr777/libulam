@@ -185,15 +185,16 @@ void Compiler::write_obj_parent_members(
 
     for (const auto anc : cls->ancestors()) {
         auto parent = anc->cls();
-        if (is_urself(parent) ||
-            (parent->params().empty() && parent->type_defs().empty() &&
-             parent->consts().empty() && parent->props().empty()))
+        if (is_urself(parent))
             continue;
 
-        os << (anc->is_parent() ? ':' : '^')
-           << out::type_str(stringifier, parent) << "< ";
-        write_obj_members(os, parent, obj, in_main, is_outer, true);
-        os << "> ";
+        std::stringstream buf;
+        write_obj_members(buf, parent, obj, in_main, is_outer, true);
+        std::string mem_str{std::move(*(buf.rdbuf())).str()};
+        if (!mem_str.empty()) {
+            os << (anc->is_parent() ? ':' : '^')
+               << out::type_str(stringifier, parent) << "< " << mem_str << "> ";
+        }
     }
 }
 
