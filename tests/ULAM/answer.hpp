@@ -52,6 +52,7 @@ using AnswerMap = std::map<std::string, Answer>;
 
 class AnswerBasePrefixStack {
 public:
+    std::string add_prefix(const std::string_view name);
     std::string add_prefix(std::string name);
 
     void push(std::string name);

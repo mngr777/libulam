@@ -70,7 +70,7 @@ void TestCase::run() {
         auto compiled = out.str();
         std::cout << "COMPILED (raw):\n" << compiled << "\n";
         AnswerMap answers = parse_answers(compiled);
-        // std::cout << "COMPILED:\n" << answers << "\n";
+        std::cout << "COMPILED (parsed):\n" << answers << "\n";
 
         // check
         if (!(_flags & SkipAnswerCheck))
@@ -120,8 +120,10 @@ void TestCase::parse() {
     {
         auto start = p.pos();
         p.move_to('#');
-        if (!(_flags & SkipAnswerCheck))
-            _answers = parse_answers(p.substr_from(start));
+        if (!(_flags & SkipAnswerCheck)) {
+            _answers_text = p.substr_from(start);
+            _answers = parse_answers(_answers_text);
+        }
     }
     p.skip_comments();
 
@@ -142,7 +144,6 @@ void TestCase::parse() {
         if (p.at("#.")) // end marker
             break;
     }
-
 }
 
 void TestCase::add_src(Path path, const std::string_view text) {

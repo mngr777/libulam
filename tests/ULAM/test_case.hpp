@@ -24,6 +24,7 @@ private:
 
     Path _stdlib_dir;
     std::string _text;
+    std::string_view _answers_text;
     AnswerMap _answers;
     int _exit_status{0};
     // {filename, text}
