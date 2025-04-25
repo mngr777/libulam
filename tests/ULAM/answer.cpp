@@ -284,7 +284,17 @@ void compare_answers(const Answer& truth, const Answer& answer) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Answer& answer) {
-    os << answer.class_name() << " { ";
+    os << answer.class_name();
+    if (!answer.parents().empty()) {
+        os << " : ";
+        unsigned n = 0;
+        for (const auto& parent : answer.parents()) {
+            if (n++ > 0)
+                os << " + ";
+            os << parent;
+        }
+    }
+    os << " { ";
 
     auto write_full_name = [&](const std::string& name) {
         if (name.rfind('.') != std::string::npos)
