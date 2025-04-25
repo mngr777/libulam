@@ -2,21 +2,28 @@
 
 static const char* Program = R"END(
 quark A : B {
-  @Override Int foo() {
-    return 1;
+
+}
+
+quark B : C {
+  virtual Int foo() {
+    return 2;
   }
 }
 
-quark B {
-  virtual Int foo();
-
-  Int bar() {
-    return foo();
+quark C {
+  virtual Int foo() {
+    return 1;
   }
 }
 
 )END";
 
 int main() {
-    analyze_print_and_run(Program, "A", "A a; a.bar();");
+    analyze_print_and_run(Program, "A", R"END(
+A a;
+if (a as C) {
+  a.foo();
+}
+)END");
 }
