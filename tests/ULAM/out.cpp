@@ -1,15 +1,27 @@
 #include "./out.hpp"
 #include <sstream>
 
+namespace {
+
+ulam::Ref<ulam::Type> type_base(ulam::Ref<ulam::Type> type) {
+    type = type->canon()->deref();
+    while (type->is_array())
+        type = type->as_array()->item_type();
+    return type;
+}
+
+} // namespace
+
 namespace out {
 
 std::string
 type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type, bool with_dims) {
-    auto str = type_base_name(type);
+    auto base = type_base(type);
+    auto str = base->name();
     bool is_ref = type->is_ref();
     type = type->deref();
-    if (type->is_class())
-        str += class_param_str(stringifier, type->as_class());
+    if (base->is_class())
+        str += class_param_str(stringifier, base->as_class());
     if (with_dims)
         str += type_dim_str(type);
     if (is_ref)
@@ -30,7 +42,7 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
     bool short_bits_as_str = stringifier.options.short_bits_as_str;
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.unary_no_unsigned_suffix = true; // t3429 `Bar(3)`
-    stringifier.options.short_bits_as_str = true; // t3640
+    stringifier.options.short_bits_as_str = true;        // t3640
 
     for (auto param : params) {
         if (!str.empty())
@@ -48,15 +60,9 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
     return "(" + str + ")";
 }
 
-std::string type_base_name(ulam::Ref<ulam::Type> type) {
-    type = type->canon()->deref();
-    while (type->is_array())
-        type = type->as_array()->item_type();
-    return type->name();
-}
-
 std::string type_dim_str(ulam::Ref<ulam::Type> type) {
-    type = type->actual(); // NOTE: adding dimensions for array reference types, t3634
+    type = type->actual(); // NOTE: adding dimensions for array reference types,
+                           // t3634
     std::list<ulam::array_size_t> dims;
     while (type->is_array()) {
         auto array_type = type->as_array();
