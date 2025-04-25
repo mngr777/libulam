@@ -127,8 +127,9 @@ TypedValue Type::type_op(TypeOp op) {
 TypedValue Type::type_op(TypeOp op, Value& val) {
     switch (op) {
     case TypeOp::AtomOf: {
+        auto type = is_atom() ? this : builtins().atom_type();
         if (val.empty())
-            return {};
+            return {type, Value{LValue{}}};
         auto lval = val.atom_of();
         if (lval.empty())
             return {};

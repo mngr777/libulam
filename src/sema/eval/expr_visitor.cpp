@@ -1015,9 +1015,8 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
         return res;
 
     auto lval = to.move_value().lvalue();
-    if (flags() & evl::NoExec) {
+    if (has_flag(evl::NoExec))
         return {to.type(), Value{lval}};
-    }
     return {to.type(), lval.assign(res.move_value().move_rvalue())};
 }
 
