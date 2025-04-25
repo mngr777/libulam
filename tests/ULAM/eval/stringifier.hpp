@@ -25,6 +25,7 @@ public:
         bool use_unsigned_suffix = true;
         bool unary_no_unsigned_suffix = false;
         bool bits_use_unsigned_suffix = true;
+        bool short_bits_as_str = false;
         bool class_params_as_consts = true;
     } options;
 

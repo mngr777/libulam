@@ -1,6 +1,4 @@
 #include "./out.hpp"
-#include "libulam/semantic/value.hpp"
-#include "libulam/str_pool.hpp"
 #include <sstream>
 
 namespace out {
@@ -21,16 +19,19 @@ type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type, bool with_dims) {
 
 std::string
 class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
+    std::string str;
     auto params = cls->params();
     if (params.empty())
-        return "";
+        return str;
 
-    std::string str;
     bool use_unsigned_suffix = stringifier.options.use_unsigned_suffix;
     bool unary_no_unsigned_suffix =
         stringifier.options.unary_no_unsigned_suffix;
+    bool short_bits_as_str = stringifier.options.short_bits_as_str;
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.unary_no_unsigned_suffix = true; // t3429 `Bar(3)`
+    stringifier.options.short_bits_as_str = true; // t3640
+
     for (auto param : params) {
         if (!str.empty())
             str += ",";
@@ -39,8 +40,11 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
         auto rval = param->value().copy_rvalue(); // TMP
         str += stringifier.stringify(param->type(), rval);
     }
+
     stringifier.options.use_unsigned_suffix = use_unsigned_suffix;
     stringifier.options.unary_no_unsigned_suffix = unary_no_unsigned_suffix;
+    stringifier.options.short_bits_as_str = short_bits_as_str;
+
     return "(" + str + ")";
 }
 
@@ -52,7 +56,7 @@ std::string type_base_name(ulam::Ref<ulam::Type> type) {
 }
 
 std::string type_dim_str(ulam::Ref<ulam::Type> type) {
-    type = type->canon();
+    type = type->actual(); // NOTE: adding dimensions for array reference types, t3634
     std::list<ulam::array_size_t> dims;
     while (type->is_array()) {
         auto array_type = type->as_array();

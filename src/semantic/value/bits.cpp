@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/semantic/value/bits.hpp>
 #include <limits>
+#include <sstream>
 
 // NOTE: keeping it simple for now
 // TODO: (maybe) optimize, see MFM::BitVector impl, use
@@ -403,35 +404,42 @@ Bits Bits::operator>>(size_t shift) {
     return bv;
 }
 
-void Bits::hex_str(std::ostream& out) const {
+void Bits::write_hex(std::ostream& out) const {
     out << "0x";
-    if (_len == 0) {
-        out << "0";
-        return;
-    }
-    const size_t pad = _len % 4; // left padding
-    const unit_t Mask = make_mask(pad, 0);
-    const size_t rem = (_len + pad) % UnitSize;
+
+    const size_t NibbleSize = 4;
+    const size_t Pad = (NibbleSize - _len % NibbleSize) % NibbleSize;
+    const unit_t RightPadMask = make_mask(Pad, 0);
+    const size_t NibbleShift = UnitSize - NibbleSize;
+    const unit_t LeftNibbleMask = make_mask(NibbleSize, NibbleShift);
     unit_t prev = 0;
+    unsigned digit_num = 0;
     for (size_t n = 0; n < _bits.size(); ++n) {
         unit_t unit = _bits[n];
-        if (pad > 0) {
+        if (Pad > 0) {
             // pad right, prepend with bits from prev unit
-            unit_t next_prev = (unit & Mask) << (UnitSize - pad);
-            unit = (unit >> pad) | prev;
+            unit_t next_prev = (unit & RightPadMask) << (UnitSize - Pad);
+            unit = (unit >> Pad) | prev;
             prev = next_prev;
-        }
-        auto bytes = (std::uint8_t*)&unit;
-        size_t nibble_num = sizeof(unit) * 2;
-        if (rem > 0 && (n + 1u == _bits.size()))
-            nibble_num = rem / 4;
-        for (size_t i = 0; i < nibble_num * 2; ++i) {
-            std::uint8_t byte = bytes[i / 2];
-            std::uint8_t nibble = (i % 2 == 0) ? byte >> 4 : byte & 0xf;
-            char ch = (nibble < 0xA) ? '0' + nibble : 'a' + (nibble - 0xA);
-            out << ch;
+        };
+        const auto size = _len + Pad - UnitSize * n;
+        for (size_t shift = 0; shift < size; shift += NibbleSize) {
+            std::uint8_t nibble = (unit << shift & LeftNibbleMask) >> NibbleShift;
+            if (digit_num > 0 || nibble != 0) {
+                ++digit_num;
+                char digit = (nibble < 0xa) ? '0' + nibble : 'a' - 0xa + nibble;
+                out << digit;
+            }
         }
     }
+    if (digit_num == 0)
+        out << "0";
+}
+
+std::string Bits::hex() const {
+    std::ostringstream os;
+    write_hex(os);
+    return os.str();
 }
 
 void Bits::clear() { std::fill(_bits.begin(), _bits.end(), 0); }

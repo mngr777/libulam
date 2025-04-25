@@ -53,11 +53,7 @@ std::string Stringifier::stringify_prim(
         return bool_type->is_true(rval) ? "true" : "false";
     }
     case ulam::BitsId: {
-        if (type->bitsize() < sizeof(ulam::Datum) * 8) {
-            return bits_to_str(rval.get<ulam::Bits>());
-        } else {
-            assert(false); // TODO
-        }
+        return bits_to_str(rval.get<ulam::Bits>());
     }
     default:
         assert(false); // TODO
@@ -143,10 +139,12 @@ std::string Stringifier::unary_to_str(ulam::Unsigned val) const {
 }
 
 std::string Stringifier::bits_to_str(const ulam::Bits& bits) const {
-    assert(bits.len() <= sizeof(ulam::Datum) * 8);
-    auto datum = bits.read(0, bits.len());
-    auto str = std::to_string((ulam::Unsigned)datum);
-    if (options.bits_use_unsigned_suffix)
-        str += "u";
-    return str;
+    if (!options.short_bits_as_str && bits.len() <= sizeof(ulam::Datum) * 8) {
+        auto datum = bits.read(0, bits.len());
+        auto str = std::to_string((ulam::Unsigned)datum);
+        if (options.bits_use_unsigned_suffix)
+            str += "u";
+        return str;
+    }
+    return bits.hex();
 }
