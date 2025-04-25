@@ -53,16 +53,20 @@ EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::type_op(
+EvalExprVisitor::ExprRes EvalExprVisitor::type_op_default(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
-    auto res = Base::type_op(node, type);
-    if (res.value().is_consteval()) {
+    auto res = Base::type_op_default(node, type);
+    auto stringifier = make_stringifier();
+    if (res.type()->is_prim() && res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            auto stringifier = make_stringifier();
             stringifier.options.unary_as_unsigned_lit = true;
             stringifier.options.bool_as_unsigned_lit = true;
             exp::set_data(res, stringifier.stringify(res.type(), rval));
         });
+    } else {
+        bool is_self = node->type_name()->is_self();
+        exp::append(res, is_self ? "Self" : out::type_str(stringifier, type));
+        exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
     }
     return res;
 }

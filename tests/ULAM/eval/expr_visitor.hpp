@@ -42,7 +42,7 @@ protected:
         ExprRes&& arg,
         ulam::Ref<ulam::Type> type) override;
 
-    ExprRes type_op(
+    ExprRes type_op_default(
         ulam::Ref<ulam::ast::TypeOpExpr> node,
         ulam::Ref<ulam::Type> type) override;
 
