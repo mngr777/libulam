@@ -21,6 +21,9 @@ public:
         ulam::sema::ExprRes&& arg,
         bool expl = false) override;
 
+    ulam::sema::ExprRes cast_to_idx(
+        ulam::Ref<ulam::ast::Node> node, ulam::sema::ExprRes&& arg) override;
+
 protected:
     ulam::sema::ExprRes cast_class_default(
         ulam::Ref<ulam::ast::Node> node,

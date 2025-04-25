@@ -36,6 +36,8 @@ public:
         ExprRes&& arg,
         bool expl = false);
 
+    virtual ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
+
 protected:
     virtual CastRes
     maybe_cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl);
@@ -98,6 +100,8 @@ protected:
 
     ExprRes take_ref(Ref<ast::Node> node, ExprRes&& arg);
     ExprRes deref(ExprRes&& arg);
+
+    Ref<Type> idx_type();
 };
 
 } // namespace ulam::sema

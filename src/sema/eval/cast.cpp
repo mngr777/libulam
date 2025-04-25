@@ -1,6 +1,7 @@
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/prim.hpp>
 
@@ -15,6 +16,11 @@ EvalCast::cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl) {
 ExprRes EvalCast::cast(
     Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
     auto [res, _] = maybe_cast(node, bi_type_id, std::move(arg), expl);
+    return std::move(res);
+}
+
+ExprRes EvalCast::cast_to_idx(Ref<ast::Node> node, ExprRes&& arg) {
+    auto [res, _] = maybe_cast(node, idx_type(), std::move(arg), false);
     return std::move(res);
 }
 
@@ -272,5 +278,7 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
 
     return arg.derived(type, std::move(val));
 }
+
+Ref<Type> EvalCast::idx_type() { return builtins().int_type(); }
 
 } // namespace ulam::sema
