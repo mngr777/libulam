@@ -787,15 +787,23 @@ ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
     if (type->is_class()) {
         // instanceof with arguments?
         auto cls = type->as_class();
-        if (node->op() == TypeOp::InstanceOf && node->has_args()) {
-            auto args = eval_args(node->args());
-            if (!args)
-                return {args.error()};
-            auto funcall = eval().funcall_helper(scope(), flags());
-            return funcall->construct(node, cls, std::move(args));
-        }
+        if (node->op() == TypeOp::InstanceOf && node->has_args())
+            return type_op_construct(node, cls);
     }
+    return type_op_default(node, type);
+}
 
+ExprRes
+EvalExprVisitor::type_op_construct(Ref<ast::TypeOpExpr> node, Ref<Class> cls) {
+    auto args = eval_args(node->args());
+    if (!args)
+        return {args.error()};
+    auto funcall = eval().funcall_helper(scope(), flags());
+    return funcall->construct(node, cls, std::move(args));
+}
+
+ExprRes
+EvalExprVisitor::type_op_default(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
     auto tv = type->actual()->type_op(node->op());
     if (!tv) {
         diag().error(node, "invalid type operator");
