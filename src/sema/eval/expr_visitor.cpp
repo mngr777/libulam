@@ -1,4 +1,3 @@
-#include "libulam/sema/eval/flags.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
