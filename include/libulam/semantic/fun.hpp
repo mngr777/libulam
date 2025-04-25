@@ -84,7 +84,11 @@ public:
     Ref<ast::FunDefBody> body_node() const;
 
 private:
-    void add_override(Ref<Fun> fun);
+    void add_override(Ref<Fun> fun, Ref<Class> cls);
+
+    bool has_overridden() const;
+    Ref<Fun> overridden();
+    void set_overridden(Ref<Fun> fun);
 
     std::string key() const;
 
@@ -149,7 +153,7 @@ public:
 
     void init_map(Diag& diag, UniqStrPool& str_pool);
 
-    void merge(Ref<FunSet> other);
+    void merge(Ref<FunSet> other, Ref<Class> cls);
 
 private:
     using ParamTypeMap = std::unordered_map<std::string, Ref<Fun>>;

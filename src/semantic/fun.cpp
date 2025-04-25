@@ -123,23 +123,35 @@ Ref<ast::ParamList> Fun::params_node() const {
 
 Ref<ast::FunDefBody> Fun::body_node() const { return _node->body(); }
 
-void Fun::add_override(Ref<Fun> fun) {
+void Fun::add_override(Ref<Fun> fun, Ref<Class> cls) {
     assert(is_virtual());        // must be already marked as virtual
     assert(fun->key() == key()); // parameters must match
 
-    if (_overrides.count(fun->cls()->id()) == 1) {
+    if (_overrides.count(cls->id()) == 1) {
         // can happen with multible inheritance
-        assert(_overrides[fun->cls()->id()] == fun);
+        assert(_overrides[cls->id()] == fun);
         return;
     }
 
     fun->set_is_virtual(true);
-    if (!fun->_overridden)
-        fun->_overridden = this;
-    _overrides[fun->cls()->id()] = fun;
+    if (!fun->has_overridden())
+        fun->set_overridden(this);
+    _overrides[cls->id()] = fun;
 
-    if (_overridden)
-        _overridden->add_override(fun);
+    if (has_overridden())
+        overridden()->add_override(fun, cls);
+}
+
+bool Fun::has_overridden() const { return _overridden; }
+
+Ref<Fun> Fun::overridden() {
+    assert(_overridden);
+    return _overridden;
+}
+
+void Fun::set_overridden(Ref<Fun> fun) {
+    assert(!_overridden);
+    _overridden = fun;
 }
 
 std::string Fun::key() const {
@@ -268,14 +280,17 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     }
 }
 
-void FunSet::merge(Ref<FunSet> other) {
+void FunSet::merge(Ref<FunSet> other, Ref<Class> cls) {
     assert(_map.has_value());
     for (auto fun : *other) {
         auto [it, added] = _map.value().emplace(fun->key(), fun);
         if (added) {
             _funs.push_back(fun);
-        } else if (fun->is_virtual() && !it->second->_overridden) {
-            fun->add_override(it->second);
+            if (fun->is_virtual() && fun->has_overridden())
+                fun->overridden()->add_override(fun, cls);
+
+        } else if (fun->is_virtual() && !it->second->has_overridden()) {
+            fun->add_override(it->second, cls);
         }
     }
 }

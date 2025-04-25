@@ -616,18 +616,18 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 void Class::merge_fsets() {
     for (auto parent : parents()) {
         // constructors
-        constructors()->merge(parent->cls()->constructors());
+        constructors()->merge(parent->cls()->constructors(), this);
 
         // methods
         for (auto [name_id, fset] : parent->cls()->fsets()) {
             auto sym = get(name_id);
             if (!sym || sym->is<FunSet>())
-                find_fset(name_id)->merge(fset);
+                find_fset(name_id)->merge(fset, this);
         }
 
         // operators
         for (auto& [op, fset] : parent->cls()->ops())
-            find_op_fset(op)->merge(ref(fset));
+            find_op_fset(op)->merge(ref(fset), this);
 
         // conversions
         for (auto [type_id, fun] : parent->cls()->convs()) {
