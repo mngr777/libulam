@@ -193,13 +193,13 @@ ExprRes EvalCast::cast_class(
 
 ExprRes EvalCast::cast_class_default(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    assert(arg.type()->is_class());
+    assert(arg.type()->deref()->is_class());
     return cast_default(node, to, std::move(arg), expl);
 }
 
 ExprRes EvalCast::cast_class_fun(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl) {
-    assert(arg.type()->is_class());
+    assert(arg.type()->deref()->is_class());
     auto funcall = eval().funcall_helper(scope(), flags());
     ExprRes res = funcall->funcall(node, fun, std::move(arg), {});
     if (!res)

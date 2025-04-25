@@ -76,7 +76,7 @@ ExprRes EvalFuncall::funcall_callable(
 
 ExprRes EvalFuncall::funcall_obj(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
-    assert(obj.type()->is_class());
+    assert(obj.type()->actual()->is_class());
     auto val = obj.move_value();
     auto self = val.empty() ? LValue{} : val.self();
     return do_funcall(node, fun, self, std::move(args));
