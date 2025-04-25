@@ -64,6 +64,7 @@ void TestCase::run() {
     if (!program)
         throw std::invalid_argument("failed to analyze program");
 
+    bool ok = false;
     try {
         // compile
         compiler.compile(out);
@@ -75,18 +76,20 @@ void TestCase::run() {
         // check
         if (!(_flags & SkipAnswerCheck))
             compare_answer_maps(_answers, answers);
-
-        return;
+        ok = true;
 
     } catch (const ulam::sema::EvalExceptError& e) {
         std::cout << "eval error: " << e.message() << "\n";
 
     } catch (const std::exception& e) {
         std::cout << "error: " << e.what() << "\n";
-        std::cout << "\nANSWER (raw):\n" << _answers_text << "\n";
-        std::cout << "ANSWER (parsed:)\n" << _answers << "\n";
     }
-    throw std::invalid_argument("test case failed");
+
+    std::cout << "\nANSWER (raw):\n" << _answers_text << "\n";
+    std::cout << "ANSWER (parsed:)\n" << _answers << "\n";
+
+    if (!ok)
+        throw std::invalid_argument("test case failed");
 }
 
 void TestCase::load(const std::filesystem::path& path) {
