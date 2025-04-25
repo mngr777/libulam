@@ -100,6 +100,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
 
     auto l_type = left.type()->actual();
     auto r_type = right.type()->actual();
+    bool l_is_ref = left.type()->is_ref();
+    bool r_is_ref = right.type()->is_ref();
 
     switch (ulam::ops::kind(op)) {
     case ulam::ops::Kind::Assign:
@@ -109,6 +111,10 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     case ulam::ops::Kind::Equality:
     case ulam::ops::Kind::Comparison:
         // cast right arg to exact type for comparison
+        // deref, t3695
+        if (l_is_ref != r_is_ref) {
+            exp::add_cast(l_is_ref ? left : right);
+        }
         if (r_type == l_type) {
             // boolean values are converted to Bool(1)
             if (l_type->is(ulam::BoolId) && l_type->bitsize() != 1) {
