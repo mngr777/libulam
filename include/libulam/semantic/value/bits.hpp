@@ -139,7 +139,8 @@ public:
     Bits operator|(const BitsView other) const;
     Bits operator^(const BitsView other) const;
 
-    void hex_str(std::ostream& out) const;
+    void write_hex(std::ostream& out) const;
+    std::string hex() const;
 
 private:
     unit_t read(unit_idx_t unit_idx, size_t start, size_t len) const;
