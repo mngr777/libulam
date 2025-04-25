@@ -6,9 +6,6 @@
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
-#include "libulam/sema/eval/flags.hpp"
-#include "libulam/sema/eval/visitor.hpp"
-#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -28,14 +25,16 @@ ulam::sema::ExprRes EvalVisitor::eval(ulam::Ref<ulam::ast::Block> block) {
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
+    bool has_pref = false;
     std::size_t size{0};
     if (codegen_enabled()) {
+        has_pref = !_next_prefix.empty();
         block_open();
         size = _data.size();
     }
     Base::visit(node);
     if (codegen_enabled()) {
-        bool nospace = _data.size() == size;
+        bool nospace = !has_pref && (_data.size() == size);
         block_close(nospace);
     }
 }
