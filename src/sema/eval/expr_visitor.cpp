@@ -986,7 +986,7 @@ ExprRes EvalExprVisitor::member_access_fset(
 
 ExprRes
 EvalExprVisitor::bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj) {
-    assert(obj.type()->is_class());
+    assert(obj.type()->actual()->is_class());
     return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
 }
 
