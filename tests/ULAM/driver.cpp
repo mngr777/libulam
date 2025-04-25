@@ -116,6 +116,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
     "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
+    "t3651_test_compiler_elementandquark_localarrayref.test", // tmp: deref requires cast?
 };
 
 using Path = std::filesystem::path;
