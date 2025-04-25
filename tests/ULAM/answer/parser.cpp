@@ -70,9 +70,13 @@ AnswerParser::TypeDefData AnswerParser::read_type_def() {
     skip(TypeDef);
     skip_spaces();
 
-    // Type()
+    // Type(...)&
     skip_type_name();
     skip_spaces();
+    if (at('&')) {
+        advance();
+        skip_spaces();
+    }
 
     // alias
     auto alias = read_type_ident();
