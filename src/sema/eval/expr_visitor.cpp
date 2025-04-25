@@ -302,7 +302,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
 
     // cast to index type
     auto cast = eval().cast_helper(scope(), flags());
-    idx = cast->cast(node->index(), IntId, std::move(idx));
+    idx = cast->cast_to_idx(node->index(), std::move(idx));
     if (!idx)
         return idx;
 

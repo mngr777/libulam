@@ -18,10 +18,8 @@ ulam::sema::ExprRes EvalCast::cast(
     ulam::Ref<ulam::Type> type,
     ulam::sema::ExprRes&& arg,
     bool expl) {
-    arg.uns_flag(exp::OmitCast);
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
-    if (!has_flag(evl::NoCodegen))
-        update_res(res, status, expl);
+    update_res(res, status, expl);
     return std::move(res);
 }
 
@@ -30,10 +28,23 @@ ulam::sema::ExprRes EvalCast::cast(
     ulam::BuiltinTypeId bi_type_id,
     ulam::sema::ExprRes&& arg,
     bool expl) {
-    arg.uns_flag(exp::OmitCast);
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
-    if (!has_flag(evl::NoCodegen))
-        update_res(res, status, expl);
+    update_res(res, status, expl);
+    return std::move(res);
+}
+
+ulam::sema::ExprRes EvalCast::cast_to_idx(
+    ulam::Ref<ulam::ast::Node> node, ulam::sema::ExprRes&& arg) {
+    auto no_consteval_cast = flags_raii(flags() | evl::NoConstevalCast);
+    auto type = idx_type();
+    if (!has_flag(evl::NoCodegen)) {
+        auto arg_type = arg.type()->deref();
+        if ((arg_type->is(ulam::UnsignedId) || arg.type()->is(ulam::IntId)) &&
+            arg_type->is_impl_castable_to(type))
+            arg.set_flag(exp::OmitCastInternal);
+    }
+    auto [res, status] = maybe_cast(node, idx_type(), std::move(arg), false);
+    update_res(res, status, false);
     return std::move(res);
 }
 
@@ -48,8 +59,10 @@ ulam::sema::ExprRes EvalCast::cast_class_default(
 
     auto res = Base::cast_class_default(node, to, std::move(arg), expl);
     // omit cast from consteval element to Atom, t3416
-    if (!expl && is_consteval && is_element && to->is(ulam::AtomId))
-        res.set_flag(exp::OmitCast);
+    if (!has_flag(evl::NoCodegen)) {
+        if (!expl && is_consteval && is_element && to->is(ulam::AtomId))
+            res.set_flag(exp::OmitCastInternal);
+    }
     return res;
 }
 
@@ -61,7 +74,8 @@ ulam::sema::ExprRes EvalCast::cast_class_fun(
     auto res = Base::cast_class_fun(node, fun, std::move(arg), expl);
     // no need to add "cast" unless second cast is required (or cast is
     // explicit)
-    res.set_flag(exp::OmitCast);
+    if (!has_flag(evl::NoCodegen) && !expl)
+        res.set_flag(exp::OmitCastInternal);
     return res;
 }
 
@@ -71,23 +85,28 @@ ulam::sema::ExprRes EvalCast::cast_class_fun_after(
     ulam::sema::ExprRes&& arg,
     bool expl) {
     // needs a second cast after conversion
-    arg.uns_flag(exp::OmitCast);
+    arg.uns_flag(exp::OmitCastInternal);
     return Base::cast_class_fun_after(node, to, std::move(arg), expl);
 }
 
 void EvalCast::update_res(
     ulam::sema::ExprRes& res, EvalCast::CastStatus status, bool expl) {
-    if (!res || (!expl && status == EvalCast::NoCast))
+    bool omit_cast = res.has_flag(exp::OmitCastInternal);
+    res.uns_flag(exp::OmitCastInternal);
+
+    if (has_flag(evl::NoCodegen))
+        return;
+    if (!res)
+        return;
+    if (omit_cast || (!expl && status == EvalCast::NoCast))
         return;
     assert(status != EvalCast::InvalidCast && status != EvalCast::CastError);
 
     auto data = exp::data(res);
-    bool is_conv = res.has_flag(exp::OmitCast);
     bool is_consteval =
-        status == EvalCast::CastConsteval && (flags() & evl::NoConstevalCast);
-    res.uns_flag(exp::OmitCast);
+        status == EvalCast::CastConsteval && has_flag(evl::NoConstevalCast);
 
-    if (expl || (!is_conv && !is_consteval)) {
+    if (expl || !is_consteval) {
         exp::add_cast(res, expl);
 
     } else if (is_consteval) {
