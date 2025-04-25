@@ -127,10 +127,13 @@ TypedValue Type::type_op(TypeOp op) {
 TypedValue Type::type_op(TypeOp op, Value& val) {
     switch (op) {
     case TypeOp::AtomOf: {
+        LValue lval;
         auto type = is_atom() ? this : builtins().atom_type();
-        if (val.empty())
-            return {type, Value{LValue{}}};
-        auto lval = val.atom_of();
+        if (val.empty()) {
+            lval.set_is_xvalue(false);
+            return {type, Value{std::move(lval)}};
+        }
+        lval = val.atom_of();
         if (lval.empty())
             return {};
         assert(lval.type()->is_atom());
