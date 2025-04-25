@@ -884,7 +884,7 @@ ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
 
 ExprRes EvalExprVisitor::array_access_class(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
-    assert(obj.type()->is_class());
+    assert(obj.type()->actual()->is_class());
 
     // op fset
     auto cls = obj.type()->actual()->as_class();
@@ -910,8 +910,8 @@ ExprRes EvalExprVisitor::array_access_class(
 
 ExprRes EvalExprVisitor::array_access_string(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
-    assert(obj.type()->is(StringId));
-    assert(idx.type()->is(IntId));
+    assert(obj.type()->actual()->is(StringId));
+    assert(idx.type()->actual()->is(IntId));
 
     auto int_idx = idx.value().copy_rvalue().get<Integer>();
     auto type = builtins().string_type();
@@ -927,8 +927,8 @@ ExprRes EvalExprVisitor::array_access_string(
 
 ExprRes EvalExprVisitor::array_access_array(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
-    assert(obj.type()->is_array());
-    assert(idx.type()->is(IntId));
+    assert(obj.type()->actual()->is_array());
+    assert(idx.type()->actual()->is(IntId));
 
     auto array_type = obj.type()->non_alias()->deref()->non_alias()->as_array();
     assert(array_type);
