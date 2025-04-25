@@ -303,15 +303,15 @@ std::ostream& operator<<(std::ostream& os, const Answer& answer) {
 
     for (const auto& [name, text] : answer.type_defs()) {
         write_full_name(name);
-        os << text << " ";
+        os << text << "; ";
     }
     for (const auto& [name, text] : answer.consts()) {
         write_full_name(name);
-        os << text << " ";
+        os << text << "; ";
     }
     for (const auto& [name, text] : answer.props()) {
         write_full_name(name);
-        os << text << " ";
+        os << text << "; ";
     }
     os << answer.test_fun();
     os << " }";
