@@ -26,6 +26,7 @@ namespace ulam {
 
 class Class;
 class Module;
+class Program;
 class Scope;
 
 class ClassTpl : public TypeTpl, public ClassBase, public Decl {
@@ -64,6 +65,8 @@ private:
     Ptr<Class> inst(TypedValueList&& args);
 
     std::string type_args_str(const TypedValueList& args);
+
+    Ref<Program> program();
 
     Ref<ast::ClassDef> _node;
     std::unordered_map<std::string, Ptr<Class>> _classes;

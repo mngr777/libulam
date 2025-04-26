@@ -43,4 +43,17 @@ Ref<Module> Program::add_module(Ref<ast::ModuleDef> node) {
     return ref;
 }
 
+elt_id_t Program::add_element(Ref<Class> cls) {
+    assert(
+        std::find(_elements.begin(), _elements.end(), cls) == _elements.end());
+    _elements.push_back(cls);
+    return _elements.size();
+}
+
+Ref<Class> Program::element(elt_id_t id) {
+    assert(id != NoEltId);
+    assert(0 < id && id <= _elements.size());
+    return _elements[id - 1];
+}
+
 } // namespace ulam

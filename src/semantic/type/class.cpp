@@ -9,7 +9,6 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
-#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -18,7 +17,6 @@
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>
-#include <libulam/semantic/value/types.hpp>
 
 #ifdef DEBUG_CLASS
 #    define ULAM_DEBUG
@@ -29,15 +27,15 @@
 namespace ulam {
 
 Class::Class(std::string_view name, Ref<ClassTpl> tpl):
-    UserType{
-        tpl->module()->program()->builtins(),
-        &tpl->module()->program()->type_id_gen()},
+    UserType{tpl->program()->builtins(), &tpl->program()->type_id_gen()},
     ClassBase{tpl->node(), tpl->module(), scp::Class},
     _name{name},
     _tpl{tpl},
     _init_bits{0} {
-    set_module(tpl->module());
     scope()->set_self_cls(this);
+    set_module(tpl->module());
+    if (is_element())
+        register_element(tpl->program());
 }
 
 Class::Class(
@@ -47,13 +45,21 @@ Class::Class(
     _name{name},
     _tpl{},
     _init_bits{0} {
-    set_module(module);
     scope()->set_self_cls(this);
+    set_module(module);
+    if (is_element())
+        register_element(module->program());
 }
 
 Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
+
+elt_id_t Class::element_id() const {
+    assert(is_element());
+    assert(_elt_id != NoEltId);
+    return _elt_id;
+}
 
 Ref<Var>
 Class::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
@@ -501,6 +507,12 @@ Ref<FunSet> Class::add_op_fset(Op op) {
     auto fset = ClassBase::add_op_fset(op);
     fset->set_cls(this);
     return fset;
+}
+
+void Class::register_element(Ref<Program> program) {
+    assert(is_element());
+    assert(_elt_id == NoEltId);
+    _elt_id = program->add_element(this);
 }
 
 bool Class::resolve_params(sema::Resolver& resolver) {

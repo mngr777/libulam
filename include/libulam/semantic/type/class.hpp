@@ -1,11 +1,12 @@
 #pragma once
-#include "libulam/semantic/type.hpp"
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/value/bits.hpp>
+#include <libulam/semantic/value/types.hpp>
 #include <list>
 #include <map>
 #include <string_view>
@@ -27,6 +28,7 @@ namespace ulam {
 class ConvList;
 class Diag;
 class ClassTpl;
+class Program;
 class Type;
 class Value;
 
@@ -36,11 +38,16 @@ class Class : public UserType, public ClassBase {
 
 public:
     Class(const std::string_view name, Ref<ClassTpl> tpl);
-    Class(const std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module);
+    Class(
+        const std::string_view name,
+        Ref<ast::ClassDef> node,
+        Ref<Module> module);
     ~Class();
 
     std::string name() const override { return std::string{_name}; }
     str_id_t name_id() const override;
+
+    elt_id_t element_id() const;
 
     Ref<Var>
     add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
@@ -122,6 +129,8 @@ protected:
     Ref<FunSet> add_op_fset(Op op) override;
 
 private:
+    void register_element(Ref<Program> program);
+
     bool resolve_params(sema::Resolver& resolver);
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
     bool resolve_props(sema::Resolver& resolver);
@@ -137,6 +146,7 @@ private:
     auto& fsets() { return _fsets; }
 
     const std::string_view _name;
+    elt_id_t _elt_id{NoEltId};
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
     std::list<Ref<AliasType>> _type_defs;
