@@ -422,9 +422,11 @@ void Bits::write_hex(std::ostream& out) const {
             unit = (unit >> Pad) | prev;
             prev = next_prev;
         };
-        const auto size = _len + Pad - UnitSize * n;
+        auto size =
+            (n + 1u == _bits.size()) ? (_len + Pad) % UnitSize : UnitSize;
         for (size_t shift = 0; shift < size; shift += NibbleSize) {
-            std::uint8_t nibble = (unit << shift & LeftNibbleMask) >> NibbleShift;
+            std::uint8_t nibble =
+                (unit << shift & LeftNibbleMask) >> NibbleShift;
             if (digit_num > 0 || nibble != 0) {
                 ++digit_num;
                 char digit = (nibble < 0xa) ? '0' + nibble : 'a' - 0xa + nibble;
