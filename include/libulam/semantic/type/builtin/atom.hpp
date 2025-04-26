@@ -26,6 +26,8 @@ public:
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
+    Ref<Type> data_type(const BitsView data, bitsize_t off);
+
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
     conv_cost_t
@@ -34,7 +36,7 @@ public:
     Value cast_to(Ref<Type> type, Value&& val) override;
 
 private:
-    elt_id_t read_element_id(const BitsView data);
+    elt_id_t read_element_id(const BitsView data, bitsize_t off);
 
     ElementRegistry& _elements;
 };
