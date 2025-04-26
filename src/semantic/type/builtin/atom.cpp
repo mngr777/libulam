@@ -21,6 +21,15 @@ void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) {
     data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
+Ref<Type> AtomType::data_type(const BitsView data, bitsize_t off) {
+    assert(data.len() - off >= ULAM_ATOM_SIZE);
+    Ref<Type> type{this};
+    auto elt_id = read_element_id(data, off);
+    if (elt_id != NoEltId)
+        type = _elements.get(elt_id);
+    return type;
+}
+
 RValue AtomType::construct() {
     auto data = make_s<Data>(this);
     data->bits().write(AtomEltIdOff, AtomEltIdSize, NoEltId);
@@ -29,12 +38,7 @@ RValue AtomType::construct() {
 
 RValue AtomType::construct(Bits&& bits) {
     assert(bits.len() == bitsize());
-
-    Ref<Type> type{this};
-    auto elt_id = read_element_id(bits.view());
-    if (elt_id != NoEltId)
-        type = _elements.get(elt_id);
-
+    auto type = data_type(bits.view(), 0);
     return RValue{make_s<Data>(type, std::move(bits))};
 }
 
@@ -68,7 +72,7 @@ Value AtomType::cast_to(Ref<Type> type, Value&& val) {
     return Value{std::move(elt_rval)};
 }
 
-elt_id_t AtomType::read_element_id(const BitsView data) {
+elt_id_t AtomType::read_element_id(const BitsView data, bitsize_t off) {
     return data.read(AtomEltIdOff, AtomEltIdSize);
 }
 

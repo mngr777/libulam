@@ -1,5 +1,6 @@
 #include <cassert>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/value.hpp>
@@ -108,7 +109,14 @@ DataView DataView::array_item(array_idx_t idx) {
     auto array_type = _view_type->as_array();
     auto item_type = _view_type->as_array()->item_type();
     bitsize_t off = _off + array_type->item_off(idx);
-    return {_storage, item_type, off, Ref<Type>{}, _atom.off, _atom.type};
+
+    if (item_type->is(AtomId)) {
+        // TODO: type visitor
+        auto atom_type = dynamic_cast<AtomType*>(item_type->canon());
+        item_type = atom_type->data_type(_storage->bits().view(), off);
+    }
+
+    return {_storage, item_type, off, item_type, _atom.off, _atom.type};
 }
 
 const DataView DataView::array_item(array_idx_t idx) const {
@@ -124,12 +132,17 @@ DataView DataView::prop(Ref<Prop> prop_) {
         assert(_type->is(AtomId));
         cls = _view_type->as_class();
     }
-    return {_storage,
-            prop_->type(),
-            (bitsize_t)(_off + prop_->data_off_in(cls)),
-            prop_->type(),
-            _atom.off,
-            _atom.type};
+
+    bitsize_t off = _off + prop_->data_off_in(cls);
+    auto type = prop_->type();
+
+    if (type->is(AtomId)) {
+        // TODO: type visitor
+        auto atom_type = dynamic_cast<AtomType*>(type->canon());
+        type = atom_type->data_type(_storage->bits().view(), off);
+    }
+
+    return {_storage, type, off, type, _atom.off, _atom.type};
 }
 
 const DataView DataView::prop(Ref<Prop> prop_) const {

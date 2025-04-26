@@ -301,18 +301,18 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(type->is_class());
     auto cls = obj_data->type()->as_class();
 
+    // same class
+    if (is_same(cls)) {
+        if (bitsize() > 0)
+            data.write(off, obj_data->bits().view());
+        return;
+    }
+
     // element data to other element (via Atom&, see t3986)
     if (is_element() && cls->is_element()) {
         data.write(
             off + AtomDataOff,
             obj_data->bits().view(data_off(), data_bitsize()));
-        return;
-    }
-
-    // same class
-    if (is_same(cls)) {
-        if (bitsize() > 0)
-            data.write(off, obj_data->bits().view());
         return;
     }
 
