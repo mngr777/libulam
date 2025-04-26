@@ -75,7 +75,7 @@ Ref<Class> ClassTpl::type(TypedValueList&& args) {
 }
 
 Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
-    auto& str_pool = module()->program()->str_pool();
+    auto& str_pool = program()->str_pool();
     auto cls = make<Class>(str_pool.get(name_id()), this);
 
     // create params
@@ -112,7 +112,11 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
 }
 
 std::string ClassTpl::type_args_str(const TypedValueList& args) {
-    return module()->program()->mangler().mangled(args);
+    return program()->mangler().mangled(args);
+}
+
+Ref<Program> ClassTpl::program() {
+    return module()->program();
 }
 
 } // namespace ulam
