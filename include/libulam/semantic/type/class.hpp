@@ -83,6 +83,7 @@ public:
     const auto& ancestors() const { return _ancestry.ancestors(); }
 
     bitsize_t bitsize() const override;
+    bitsize_t data_bitsize() const;
     bitsize_t required_bitsize() const;
     bitsize_t direct_bitsize() const;
     bitsize_t max_bitsize() const;
@@ -130,6 +131,7 @@ protected:
 
 private:
     void register_element(Ref<Program> program);
+    elt_id_t read_element_id(const BitsView data, bitsize_t off = 0);
 
     bool resolve_params(sema::Resolver& resolver);
     bool init_ancestors(sema::Resolver& resolver, bool resolve);
