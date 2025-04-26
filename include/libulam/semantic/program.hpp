@@ -36,7 +36,7 @@ public:
 
     Mangler& mangler() { return _mangler; }
 
-    const ModuleList& modules() { return _module_refs; }
+    const ModuleList& modules() { return _modules; }
 
     Ref<Module> module(const std::string_view name);
     Ref<Module> module(str_id_t name_id);
@@ -53,8 +53,8 @@ private:
     TypeIdGen _type_id_gen;
     Builtins _builtins;
     Mangler _mangler;
-    std::list<Ptr<Module>> _modules;
-    std::list<Ref<Module>> _module_refs;
+    std::list<Ptr<Module>> _module_ptr;
+    std::list<Ref<Module>> _modules;
     std::map<str_id_t, Ref<Module>> _modules_by_name_id;
 };
 

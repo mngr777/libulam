@@ -37,8 +37,8 @@ Ref<Module> Program::add_module(Ref<ast::ModuleDef> node) {
     assert(_modules_by_name_id.count(node->name_id()) == 0);
     auto mod = make<Module>(this, node);
     auto ref = ulam::ref(mod);
-    _modules.push_back(std::move(mod));
-    _module_refs.push_back(ref);
+    _module_ptr.push_back(std::move(mod));
+    _modules.push_back(ref);
     _modules_by_name_id[ref->name_id()] = ref;
     return ref;
 }

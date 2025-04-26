@@ -78,6 +78,8 @@ public:
     bitsize_t bitsize() const override;
     bitsize_t required_bitsize() const;
     bitsize_t direct_bitsize() const;
+    bitsize_t max_bitsize() const;
+    bitsize_t data_off() const;
 
     Ref<cls::Ancestor> first_parent_over_max_bitsize();
     Ref<Prop> first_prop_over_max_bitsize();
