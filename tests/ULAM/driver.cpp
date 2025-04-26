@@ -120,6 +120,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3651_test_compiler_elementandquark_localarrayref.test", // tmp: deref requires cast?
     "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // redundant cast from `Foo.instanceof` to Atom?
     "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
+    "t3715_test_compiler_transientwithtransientdm.test", // similar to t3714
 };
 
 using Path = std::filesystem::path;

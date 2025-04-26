@@ -90,10 +90,6 @@ void Compiler::compile(std::ostream& os) {
 
         for (auto cls : module->classes())
             compile_class(os, eval, cls);
-
-        // TODO
-        // for (auto tpl : module->class_tpls())
-        //     compile_class_tpl(os, eval, tpl);
     }
 }
 
@@ -167,7 +163,7 @@ void Compiler::write_obj_members(
     write_class_type_defs(os, cls);
     if (in_main || is_outer)
         write_class_consts(os, cls);
-    write_obj_props(os, cls, rval, in_main);
+    write_obj_props(os, cls, rval, in_main, is_outer);
     if (in_main || !is_base)
         write_obj_parent_members(os, cls, rval, in_main, is_outer);
 }
@@ -238,12 +234,14 @@ void Compiler::write_obj_props(
     std::ostream& os,
     ulam::Ref<ulam::Class> cls,
     const ulam::RValue& obj,
-    bool in_main) {
+    bool in_main,
+    bool is_outer) {
 
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.use_unsigned_suffix_zero = in_main;
-    stringifier.options.bits_use_unsigned_suffix = false;
+    // stringifier.options.bits_use_unsigned_suffix = false
+    stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.class_params_as_consts = in_main;
 
     for (auto prop : cls->props())
