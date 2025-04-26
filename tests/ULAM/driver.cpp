@@ -118,7 +118,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
     "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
     "t3651_test_compiler_elementandquark_localarrayref.test", // tmp: deref requires cast?
-    "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // seems to be a redundant cast from `Foo.instanceof` to Atom
+    "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // redundant cast from `Foo.instanceof` to Atom?
+    "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
 };
 
 using Path = std::filesystem::path;
