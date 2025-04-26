@@ -1,6 +1,8 @@
 #pragma once
+#include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type/element.hpp>
 #include <string>
 
 namespace ulam {
@@ -9,7 +11,7 @@ class Builtins;
 
 class AtomType : public Type {
 public:
-    AtomType(Builtins& builtins, TypeIdGen& id_gen): Type{builtins, &id_gen} {}
+    AtomType(Builtins& builtins, TypeIdGen& id_gen, ElementRegistry& elements);
 
     std::string name() const override { return "Atom"; }
 
@@ -30,6 +32,11 @@ public:
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 
     Value cast_to(Ref<Type> type, Value&& val) override;
+
+private:
+    elt_id_t read_element_id(const BitsView data);
+
+    ElementRegistry& _elements;
 };
 
 } // namespace ulam

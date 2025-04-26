@@ -5,12 +5,11 @@
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
-#include <libulam/semantic/value/types.hpp>
+#include <libulam/semantic/type/element.hpp>
 #include <libulam/src_mngr.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 #include <map>
-#include <vector>
 
 namespace ulam::ast {
 class Root;
@@ -34,6 +33,7 @@ public:
 
     SrcMngr& sm() { return _sm; }
     TypeIdGen& type_id_gen() { return _type_id_gen; }
+    ElementRegistry& elements() { return _elements; }
     auto& builtins() { return _builtins; }
     Mangler& mangler() { return _mangler; }
 
@@ -51,12 +51,12 @@ private:
     UniqStrPool& _text_pool;
     SrcMngr& _sm;
     TypeIdGen _type_id_gen;
+    ElementRegistry _elements;
     Builtins _builtins;
     Mangler _mangler;
     std::list<Ptr<Module>> _module_ptr;
     std::list<Ref<Module>> _modules;
     std::map<str_id_t, Ref<Module>> _modules_by_name_id;
-    std::vector<Ref<Class>> _elements;
 };
 
 } // namespace ulam
