@@ -71,7 +71,8 @@ private:
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
         const ulam::RValue& obj,
-        bool in_main);
+        bool in_main,
+        bool is_outer);
 
     void write_obj_prop(
         std::ostream& os,
