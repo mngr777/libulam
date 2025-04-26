@@ -206,7 +206,7 @@ bitsize_t Class::bitsize() const {
     case ClassKind::Transient:
         return required;
     default:
-        return std::min<bitsize_t>(ULAM_ATOM_SIZE, required);
+        return std::min<bitsize_t>(AtomDataMaxSize, required);
     }
 }
 
@@ -218,7 +218,7 @@ bitsize_t Class::required_bitsize() const {
 }
 
 bitsize_t Class::direct_bitsize() const {
-    bitsize_t total = 0;
+    bitsize_t total = data_off();
     for (auto prop : props()) {
         if (is_union()) {
             total = std::max(total, prop->bitsize());
@@ -229,13 +229,19 @@ bitsize_t Class::direct_bitsize() const {
     return total;
 }
 
+bitsize_t Class::max_bitsize() const {
+    return is_element() ? ULAM_ATOM_SIZE : AtomDataMaxSize;
+}
+
+bitsize_t Class::data_off() const { return is_element() ? AtomDataOff : 0; }
+
 Ref<cls::Ancestor> Class::first_parent_over_max_bitsize() {
     if (is_transient())
         return {};
     bitsize_t size = direct_bitsize();
     for (auto parent : parents()) {
         size += parent->size_added();
-        if (size > ULAM_ATOM_SIZE)
+        if (size > max_bitsize())
             return parent;
     }
     return {};
@@ -247,7 +253,7 @@ Ref<Prop> Class::first_prop_over_max_bitsize() {
     bitsize_t size = direct_bitsize();
     for (auto prop : _props) {
         size += prop->type()->bitsize();
-        if (size > ULAM_ATOM_SIZE)
+        if (size > max_bitsize())
             return prop;
     }
     return {};
@@ -638,7 +644,7 @@ void Class::merge_fsets() {
 }
 
 void Class::init_layout() {
-    bitsize_t off = 0;
+    bitsize_t off = data_off();
     for (auto prop : props()) {
         prop->set_data_off(off);
         if (!is_union())

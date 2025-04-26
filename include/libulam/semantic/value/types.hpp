@@ -22,6 +22,10 @@ using ArrayDimList = std::vector<array_size_t>;
 using str_len_t = std::uint16_t;
 constexpr str_len_t NoStrLen = -1;
 
+using elt_id_t = std::uint16_t;
+constexpr bitsize_t AtomDataOff = sizeof(elt_id_t) * 8;
+constexpr bitsize_t AtomDataMaxSize = ULAM_ATOM_SIZE - AtomDataOff;
+
 #if ULAM_INT_64
 using Integer = std::int64_t;
 using Unsigned = std::uint64_t;
