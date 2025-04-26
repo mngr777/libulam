@@ -6,6 +6,8 @@
 
 namespace ulam {
 
+class Program;
+
 class AtomType;
 class BoolType;
 class BoolTypeTpl;
@@ -23,7 +25,7 @@ class VoidType;
 
 class Builtins {
 public:
-    Builtins(TypeIdGen& id_gen, UniqStrPool& text_pool);
+    Builtins(Ref<Program> program);
     ~Builtins();
 
     Builtins(Builtins&&) = default;

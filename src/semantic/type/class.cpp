@@ -521,7 +521,7 @@ Ref<FunSet> Class::add_op_fset(Op op) {
 void Class::register_element(Ref<Program> program) {
     assert(is_element());
     assert(_elt_id == NoEltId);
-    _elt_id = program->add_element(this);
+    _elt_id = program->elements().add(this);
 }
 
 elt_id_t Class::read_element_id(const BitsView data, bitsize_t off) {

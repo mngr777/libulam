@@ -105,10 +105,10 @@ const DataView DataView::as(Ref<Type> type) const {
 
 DataView DataView::array_item(array_idx_t idx) {
     assert(is_array());
-    auto array = _view_type->as_array();
-    bitsize_t off = _off + array->item_off(idx);
-    return {_storage,    array->item_type(), off,
-            Ref<Type>{}, _atom.off,          _atom.type};
+    auto array_type = _view_type->as_array();
+    auto item_type = _view_type->as_array()->item_type();
+    bitsize_t off = _off + array_type->item_off(idx);
+    return {_storage, item_type, off, Ref<Type>{}, _atom.off, _atom.type};
 }
 
 const DataView DataView::array_item(array_idx_t idx) const {

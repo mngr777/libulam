@@ -14,7 +14,8 @@ Program::Program(
     _text_pool{text_pool},
     _sm{sm},
     _type_id_gen{},
-    _builtins{_type_id_gen, text_pool},
+    _elements{},
+    _builtins{this},
     _mangler{_text_pool} {}
 
 Program::~Program() {}
@@ -41,19 +42,6 @@ Ref<Module> Program::add_module(Ref<ast::ModuleDef> node) {
     _modules.push_back(ref);
     _modules_by_name_id[ref->name_id()] = ref;
     return ref;
-}
-
-elt_id_t Program::add_element(Ref<Class> cls) {
-    assert(
-        std::find(_elements.begin(), _elements.end(), cls) == _elements.end());
-    _elements.push_back(cls);
-    return _elements.size();
-}
-
-Ref<Class> Program::element(elt_id_t id) {
-    assert(id != NoEltId);
-    assert(0 < id && id <= _elements.size());
-    return _elements[id - 1];
 }
 
 } // namespace ulam
