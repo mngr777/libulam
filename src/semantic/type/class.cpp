@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/types.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
@@ -216,6 +217,11 @@ bitsize_t Class::bitsize() const {
     }
 }
 
+bitsize_t Class::data_bitsize() const {
+    assert(bitsize() >= data_off());
+    return bitsize() - data_off();
+}
+
 bitsize_t Class::required_bitsize() const {
     auto size = direct_bitsize();
     for (const auto& anc : _ancestry.ancestors())
@@ -275,6 +281,7 @@ RValue Class::construct(Bits&& bits) {
 }
 
 RValue Class::load(const BitsView data, bitsize_t off) {
+    assert(!is_element() || read_element_id(data, off) == _elt_id);
     return RValue{make_s<Data>(this, data.view(off, bitsize()).copy())};
 }
 
@@ -296,7 +303,9 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
 
     // element data to other element (via Atom&, see t3986)
     if (is_element() && cls->is_element()) {
-        data.write(off, obj_data->bits().view());
+        data.write(
+            off + AtomDataOff,
+            obj_data->bits().view(data_off(), data_bitsize()));
         return;
     }
 
@@ -515,6 +524,10 @@ void Class::register_element(Ref<Program> program) {
     _elt_id = program->add_element(this);
 }
 
+elt_id_t Class::read_element_id(const BitsView data, bitsize_t off) {
+    return data.read(off + AtomEltIdOff, AtomEltIdSize);
+}
+
 bool Class::resolve_params(sema::Resolver& resolver) {
     auto scope = param_scope();
     for (auto param : params()) {
@@ -591,6 +604,11 @@ bool Class::resolve_funs(sema::Resolver& resolver) {
 
 void Class::init_default_data(sema::Resolver& resolver) {
     _init_bits = Bits(bitsize());
+
+    // element ID
+    if (is_element())
+        _init_bits.write(AtomEltIdOff, AtomEltIdSize, _elt_id);
+
     TypeIdSet unions; // initialized Unions
     for (auto prop : all_props()) {
         auto cls = prop->cls();

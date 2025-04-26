@@ -26,7 +26,8 @@ using elt_id_t = std::uint16_t;
 constexpr elt_id_t NoEltId = 0;
 
 constexpr bitsize_t AtomEltIdOff = 0;
-constexpr bitsize_t AtomDataOff = sizeof(elt_id_t) * 8;
+constexpr bitsize_t AtomEltIdSize = sizeof(elt_id_t) * 8;
+constexpr bitsize_t AtomDataOff = AtomEltIdSize;
 constexpr bitsize_t AtomDataMaxSize = ULAM_ATOM_SIZE - AtomDataOff;
 
 #if ULAM_INT_64
