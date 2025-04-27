@@ -166,7 +166,8 @@ HEADER_FILES = \
 	include/libulam/src_loc.hpp \
 	include/libulam/src_mngr.hpp \
 	include/libulam/str_pool.hpp \
-	include/libulam/token.hpp
+	include/libulam/token.hpp \
+	include/libulam/types.hpp
 
 SOURCE_FILES = \
 	$(HEADER_FILES) \

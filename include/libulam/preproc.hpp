@@ -3,6 +3,7 @@
 #include <libulam/lex.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/token.hpp>
+#include <libulam/types.hpp>
 #include <stack>
 
 namespace ulam {
@@ -17,7 +18,7 @@ class Preproc {
 public:
     using Path = std::filesystem::path;
 
-    explicit Preproc(Context& ctx): _ctx{ctx} {}
+    explicit Preproc(Context& ctx): _ctx{ctx}, _version{DefaultVersion} {}
 
     Preproc(const Preproc&) = delete;
     Preproc& operator=(Preproc) = delete;
@@ -31,11 +32,9 @@ public:
 
     const Path& current_path() const;
 
-private:
-    struct {
-        Version version;
-    } _state;
+    Version version() const { return _version; }
 
+private:
     void push(Src* src);
     void pop();
 
@@ -52,7 +51,10 @@ private:
     void preproc_use();
     bool preproc_load();
 
+    const std::string_view tok_str(const Token& token);
+
     Context& _ctx;
+    Version _version;
     std::stack<std::pair<Src*, Lex>> _stack;
 };
 

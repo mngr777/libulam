@@ -160,7 +160,7 @@ private:
     std::string str_lit_text();
     Number num_lit_number();
 
-    std::string_view tok_str();
+    const std::string_view tok_str();
     ast::Str tok_ast_str();
     str_id_t tok_str_id();
 

@@ -118,6 +118,7 @@ void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
 
 Ptr<ast::ModuleDef> Parser::parse_module(const std::string_view name) {
     auto node = tree_loc<ast::ModuleDef>(_tok.loc_id);
+    node->set_ulam_version(_pp.version());
     node->set_name_id(_str_pool.put(name));
     while (!_tok.is(tok::Eof)) {
         switch (_tok.type) {
@@ -2101,7 +2102,7 @@ Ptr<N> Parser::tree_loc(loc_id_t loc_id, Args&&... args) {
     return node;
 }
 
-std::string_view Parser::tok_str() {
+const std::string_view Parser::tok_str() {
     assert(_tok.in(
         tok::Ident, tok::TypeIdent, tok::Number, tok::Char, tok::String));
     return _ctx.sm().str_at(_tok.loc_id, _tok.size);

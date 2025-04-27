@@ -121,6 +121,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // redundant cast from `Foo.instanceof` to Atom?
     "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
     "t3715_test_compiler_transientwithtransientdm.test", // similar to t3714
+    "t3748_test_compiler_elementinheritedquark_sizeof_withsuper.test", // Bits "u" suffix
+    "t3749_test_compiler_elementinheritedquark_datamember_withsuper.test", // -"-
 };
 
 using Path = std::filesystem::path;

@@ -240,7 +240,6 @@ void Compiler::write_obj_props(
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.use_unsigned_suffix_zero = in_main;
-    // stringifier.options.bits_use_unsigned_suffix = false
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.class_params_as_consts = in_main;
 

@@ -4,6 +4,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/str_pool.hpp>
+#include <libulam/types.hpp>
 #include <list>
 #include <set>
 #include <string_view>
@@ -70,6 +71,8 @@ public:
 
     str_id_t name_id() const;
     const std::string_view name() const;
+
+    version_t ulam_version() const;
 
     Ref<ast::ModuleDef> node() { return _node; }
     Ref<const ast::ModuleDef> node() const { return _node; }
