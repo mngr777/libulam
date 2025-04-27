@@ -22,6 +22,10 @@ const std::string_view Module::name() const {
     return _program->str_pool().get(name_id());
 }
 
+version_t Module::ulam_version() const {
+    return node()->ulam_version();
+}
+
 Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
     Ptr<UserType> type = make<AliasType>(

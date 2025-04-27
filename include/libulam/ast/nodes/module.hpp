@@ -16,6 +16,7 @@
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
+#include <libulam/types.hpp>
 #include <utility>
 
 namespace ulam {
@@ -36,6 +37,7 @@ class VarDefList;
 class ModuleDef : public ListOf<Stmt, TypeDef, VarDefList, ClassDef> {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Module, module)
+    ULAM_AST_SIMPLE_ATTR(version_t, ulam_version, 0)
     ULAM_AST_SIMPLE_ATTR(str_id_t, name_id, NoStrId)
 };
 

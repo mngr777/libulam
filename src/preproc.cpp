@@ -1,5 +1,6 @@
 #include "src/parser/string.hpp"
 #include <cassert>
+#include <charconv>
 #include <libulam/context.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/src_mngr.hpp>
@@ -123,7 +124,14 @@ bool Preproc::expect(Token& token, tok::Type type, Ts... stop) {
 void Preproc::preproc_ulam() {
     Token token;
     if (expect(token, tok::Number, tok::Semicol, tok::Eof)) {
-        _state.version = 5; // TODO
+        auto str = tok_str(token);
+        version_t version{};
+        auto [_, ec] = std::from_chars(str.begin(), str.end(), version);
+        if (ec == std::errc{}) {
+            _version = version;
+        } else {
+            diag(token.loc_id, "invalid version number");
+        }
         expect(token, tok::Semicol, tok::Eof);
     }
 }
@@ -142,7 +150,7 @@ bool Preproc::preproc_load() {
     Token path_tok;
     lexer().lex_path(path_tok);
 
-    auto path = sm.str_at(path_tok.loc_id, path_tok.size);
+    std::string path{tok_str(path_tok)};
     // bool global = (path[0] == '<'); // TODO
     path = detail::parse_str(diag, path_tok.loc_id, path);
 
@@ -156,6 +164,10 @@ bool Preproc::preproc_load() {
         return false;
     }
     return true;
+}
+
+const std::string_view Preproc::tok_str(const Token& token) {
+    return _ctx.sm().str_at(token.loc_id, token.size);
 }
 
 } // namespace ulam
