@@ -8,7 +8,6 @@ namespace {
 constexpr char TypeDef[] = "typedef";
 constexpr char Constant[] = "constant";
 constexpr char Parameter[] = "parameter";
-constexpr char Atom[] = "Atom";
 constexpr char Holder[] = "holder";
 constexpr char Unresolved[] = "unresolved";
 
@@ -186,19 +185,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
     };
 
     bool in_parens = at('(');
-    if (in_parens) {
+    if (in_parens)
         advance();
-
-        // special case: `Atom x(Atom);`, t3802
-        if (at(Atom)) {
-            skip(Atom);
-            skip_spaces();
-            if (at(')')) {
-                advance();
-                return Atom;
-            }
-        }
-    }
     skip_spaces();
 
     AnswerBasePrefixStack pref;
@@ -226,7 +214,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
             auto [alias, type_def_text] = read_type_def();
             add_member(pref.add_prefix(alias), std::move(type_def_text));
 
-        } else if (at(Constant) || at(Parameter) || at_upper()) {
+        } else if (at(Constant) || at(Parameter) || (at_upper() && !at("Atom,") && !at("Atom)"))) {
             // constant/property
             if (is_scalar_item) {
                 assert(is_array);
@@ -264,7 +252,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
             advance();
 
         } else {
-            // everything else must be scalar value
+            // everything else must be scalar value (treating `Atom` as scalar)
             if (is_obj_item)
                 error("unexpected char in object value");
             is_scalar_item = true;
