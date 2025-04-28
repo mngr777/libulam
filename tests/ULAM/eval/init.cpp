@@ -38,7 +38,7 @@ ulam::sema::ExprRes EvalInit::array_set(
     bool autofill) {
 
     if (!autofill)
-        exp::append(array, exp::data(item), ",");
+        exp::append(array, exp::data(item), ", ");
     std::string data = exp::data(array);
 
     array = Base::array_set(std::move(array), idx, std::move(item), autofill);
