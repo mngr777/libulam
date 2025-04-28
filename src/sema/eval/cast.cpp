@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -172,6 +173,7 @@ ExprRes EvalCast::cast_class(
     bool deref_required) {
     assert(arg.type()->deref()->is_class());
     auto cls = arg.type()->deref()->as_class();
+
     auto convs = cls->convs(to, true);
     if (convs.size() == 0) {
         assert(cls->is_castable_to(to, true));
@@ -179,6 +181,8 @@ ExprRes EvalCast::cast_class(
             // dereference object value
             arg = deref(std::move(arg));
         }
+        if (arg.type()->is_same(to))
+            return std::move(arg);
         return cast_class_default(node, to, std::move(arg), expl);
 
     } else {
@@ -273,7 +277,7 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     auto val = arg.move_value();
     val = val.deref();
     type = type->deref();
-    if (arg.type()->is_class() && arg.value().has_rvalue())
+    if (type->is_class() && val.has_rvalue())
         type = val.dyn_obj_type();
 
     return arg.derived(type, std::move(val));
