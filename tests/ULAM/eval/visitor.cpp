@@ -97,8 +97,14 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
         auto [var_def, var] =
             define_as_cond_var(node, std::move(res), type, scope());
 
-        set_next_prefix(
-            " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
+        if (node->ident()->is_self()) {
+            set_next_prefix(
+                " " + out::type_str(stringifier, type->ref_type()) + " self; ");
+        } else {
+            assert(var);
+            set_next_prefix(
+                " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
+        }
         node->if_branch()->accept(*this);
         append("if");
     }
