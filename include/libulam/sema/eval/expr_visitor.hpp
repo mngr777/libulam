@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/access.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -140,6 +141,9 @@ protected:
         Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Prop> prop);
     virtual ExprRes member_access_fset(
         Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset);
+
+    virtual ExprRes
+    class_const_access(Ref<ast::ClassConstAccess> node, Ref<Var> var);
 
     virtual ExprRes bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj);
 
