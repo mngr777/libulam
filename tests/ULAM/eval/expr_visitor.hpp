@@ -96,6 +96,10 @@ protected:
         ExprRes&& obj,
         ulam::Ref<ulam::FunSet> fset) override;
 
+    ExprRes class_const_access(
+        ulam::Ref<ulam::ast::ClassConstAccess> node,
+        ulam::Ref<ulam::Var> var) override;
+
     ExprRes bind(
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Ref<ulam::FunSet> fset,

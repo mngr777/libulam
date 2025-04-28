@@ -1,3 +1,4 @@
+#include "libulam/semantic/value.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -268,14 +269,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
         diag().error(node->ident(), "not a class constant");
         return {ExprError::NotClassConst};
     }
-    // TODO: base class prop/fun
-    // TODO: move resolution to class?
+
     auto var = sym->get<Var>();
-    auto scope = cls->scope();
-    auto scope_view = scope->view(var->scope_version());
-    // if (!resolver->resolve(var, ref(scope_view)))
-    //     return {ExprError::UnresolvableClassConst};
-    return check(node, {var->type(), Value{var->rvalue()}});
+    auto res = class_const_access(node, var);
+    return check(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
@@ -981,6 +978,16 @@ ExprRes EvalExprVisitor::member_access_prop(
 ExprRes EvalExprVisitor::member_access_fset(
     Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset) {
     return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+}
+
+ExprRes EvalExprVisitor::class_const_access(
+    Ref<ast::ClassConstAccess> node, Ref<Var> var) {
+    assert(var->has_cls());
+    assert(var->is_const());
+    LValue lval{var};
+    lval.set_is_xvalue(false);
+    lval.set_scope_lvl(NoScopeLvl);
+    return {var->type(), Value{LValue{var}}};
 }
 
 ExprRes

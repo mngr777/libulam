@@ -393,6 +393,18 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_fset(
     return res;
 }
 
+EvalExprVisitor::ExprRes EvalExprVisitor::class_const_access(
+    ulam::Ref<ulam::ast::ClassConstAccess> node, ulam::Ref<ulam::Var> var) {
+    auto res = Base::class_const_access(node, var);
+    assert(!res.value().empty());
+    assert(res.value().is_consteval());
+    res.value().with_rvalue([&](const auto& rval) {
+        auto stringifier = make_stringifier();
+        exp::set_data(res, stringifier.stringify(var->type(), rval));
+    });
+    return res;
+}
+
 EvalExprVisitor::ExprRes EvalExprVisitor::bind(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Ref<ulam::FunSet> fset,
