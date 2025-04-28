@@ -73,7 +73,7 @@ Value AtomType::cast_to(Ref<Type> type, Value&& val) {
 }
 
 elt_id_t AtomType::read_element_id(const BitsView data, bitsize_t off) {
-    return data.read(AtomEltIdOff, AtomEltIdSize);
+    return data.read(off + AtomEltIdOff, AtomEltIdSize);
 }
 
 } // namespace ulam
