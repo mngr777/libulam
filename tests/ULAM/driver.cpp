@@ -125,6 +125,13 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3749_test_compiler_elementinheritedquark_datamember_withsuper.test", // -"-
     "t3805_test_compiler_transientsandelements_virtualfuncsandrefargs.test", // cannot use `System.assert(false)` without evaluating native funs
     "t3811_test_compiler_transientarraywithelementarraydm_funccallrefarg.test", // b(true), c(true) are correct (tested in MFM)
+    "t3812_test_compiler_transientarraywithatomarraydm_funccallrefarg.test", // tmp: similar to t3811
+    "t3814_test_compiler_transientarraywithelementarrayref.test", // -"-
+    "t3816_test_compiler_transientarraywithelementarrayref_typedefref.test", // -"-
+    "t3817_test_compiler_transientarraywithprimitivearrayref_typedefref.test", // -"-
+    "t3818_test_compiler_transientarraywithatomarrayref_typedefref.test", // -"-
+    "t3819_test_compiler_transientwithelementdmwithquarkarrayref_typedefref.test", // -"-
+    "t3820_test_compiler_transientwithatomdm_typedefref.test", // -"-
 };
 
 using Path = std::filesystem::path;
