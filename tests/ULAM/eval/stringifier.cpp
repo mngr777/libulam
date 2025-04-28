@@ -24,7 +24,7 @@ Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
         return stringify_array(type->as_array(), rval);
 
     if (type->is_atom())
-        return "";
+        return "Atom";
 
     assert(false);
 }

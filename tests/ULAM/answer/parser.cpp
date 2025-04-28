@@ -8,6 +8,7 @@ namespace {
 constexpr char TypeDef[] = "typedef";
 constexpr char Constant[] = "constant";
 constexpr char Parameter[] = "parameter";
+constexpr char Atom[] = "Atom";
 constexpr char Holder[] = "holder";
 constexpr char Unresolved[] = "unresolved";
 
@@ -185,8 +186,19 @@ std::string AnswerParser::read_value_str(bool is_array) {
     };
 
     bool in_parens = at('(');
-    if (in_parens)
+    if (in_parens) {
         advance();
+
+        // special case: `Atom x(Atom);`, t3802
+        if (at(Atom)) {
+            skip(Atom);
+            skip_spaces();
+            if (at(')')) {
+                advance();
+                return Atom;
+            }
+        }
+    }
     skip_spaces();
 
     AnswerBasePrefixStack pref;
