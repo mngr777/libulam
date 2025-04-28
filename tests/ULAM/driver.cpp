@@ -123,6 +123,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3715_test_compiler_transientwithtransientdm.test", // similar to t3714
     "t3748_test_compiler_elementinheritedquark_sizeof_withsuper.test", // Bits "u" suffix
     "t3749_test_compiler_elementinheritedquark_datamember_withsuper.test", // -"-
+    "t3805_test_compiler_transientsandelements_virtualfuncsandrefargs.test", // cannot use `System.assert(false)` without evaluating native funs
 };
 
 using Path = std::filesystem::path;

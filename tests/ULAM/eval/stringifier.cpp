@@ -1,14 +1,20 @@
 #include "./stringifier.hpp"
-#include "../out.hpp"
 #include <cassert>
+#include <cstdint>
 #include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <limits>
 #include <sstream>
 #include <string>
 
-// TODO: remove definitions from stringified objects (moved to ../out.*)
+namespace {
+
+constexpr ulam::Unsigned UInt16Max = std::numeric_limits<std::uint16_t>::max();
+constexpr ulam::Unsigned UInt32Max = std::numeric_limits<std::uint32_t>::max();
+
+} // namespace
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
@@ -123,7 +129,7 @@ Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
 }
 
 std::string Stringifier::unsigned_to_str(ulam::Unsigned val) const {
-    auto str = std::to_string(val);
+    std::string str = std::to_string(val);
     if (options.use_unsigned_suffix &&
         (val != 0 || options.use_unsigned_suffix_zero))
         str += "u";
@@ -139,12 +145,18 @@ std::string Stringifier::unary_to_str(ulam::Unsigned val) const {
 }
 
 std::string Stringifier::bits_to_str(const ulam::Bits& bits) const {
-    if (!options.short_bits_as_str && bits.len() <= sizeof(ulam::Datum) * 8) {
-        auto datum = bits.read(0, bits.len());
-        auto str = std::to_string((ulam::Unsigned)datum);
-        if (options.bits_use_unsigned_suffix)
-            str += "u";
-        return str;
+    if (options.short_bits_as_str || bits.len() > sizeof(ulam::Datum) * 8)
+        return bits.hex();
+
+    std::string str;
+    auto datum = bits.read(0, bits.len());
+    if (options.bits_32_as_signed_int && bits.len() == 32) { // t3806
+        auto int_val = ulam::detail::integer_from_datum(datum, bits.len());
+        str = std::to_string(int_val);
+    } else {
+        str = std::to_string((ulam::Unsigned)datum);
     }
-    return bits.hex();
+    if (options.bits_use_unsigned_suffix)
+        str += "u";
+    return str;
 }

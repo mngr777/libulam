@@ -63,7 +63,8 @@ private:
         Stringifier& stringifier,
         ulam::Ref<ulam::AliasType> alias);
 
-    void write_class_consts(std::ostream& os, ulam::Ref<ulam::Class> cls);
+    void write_class_consts(
+        std::ostream& os, ulam::Ref<ulam::Class> cls, bool in_main);
     void write_class_const(
         std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var);
 
