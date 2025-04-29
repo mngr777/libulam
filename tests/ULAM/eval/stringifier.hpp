@@ -11,6 +11,8 @@
 
 class Stringifier {
 public:
+    enum class ArrayFmt {Chunks, Leximited, Default};
+
     explicit Stringifier(ulam::Ref<ulam::Program> program):
         _builtins{program->builtins()},
         _str_pool{program->str_pool()},
@@ -28,7 +30,7 @@ public:
         bool short_bits_as_str = false;
         bool bits_32_as_signed_int = false;
         bool class_params_as_consts = true;
-        bool array_as_32_bit_chunks = false;
+        ArrayFmt array_fmt = ArrayFmt::Default;
     } options;
 
 private:
