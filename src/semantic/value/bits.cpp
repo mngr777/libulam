@@ -7,24 +7,108 @@
 // NOTE: keeping it simple for now
 // TODO: (maybe) optimize, see MFM::BitVector impl, use
 // variant<uint32_t,vector>, use small vector
-// TODO: naming: size/len, capitalize consts
+// TODO: naming: size/len
 
 namespace ulam {
+
 namespace {
-static constexpr Bits::unit_t UnitMax =
-    std::numeric_limits<Bits::unit_t>::max();
 
-static constexpr Bits::unit_t MSB = UnitMax & ~(UnitMax >> 1);
+constexpr _Bits::unit_t UnitMax = std::numeric_limits<Bits::unit_t>::max();
 
-Bits::unit_t make_mask(Bits::size_t len, Bits::size_t shift) {
-    return ((len < Bits::UnitSize) ? ((Bits::unit_t)1 << len) - 1
-                                   : (Bits::unit_t)-1)
+constexpr _Bits::unit_t MSB = UnitMax & ~(UnitMax >> 1);
+
+constexpr _Bits::size_t NibbleSize = 4;
+constexpr size_t LeftNibbleShift = _Bits::UnitSize - NibbleSize;
+
+constexpr _Bits::unit_t make_mask(Bits::size_t len, _Bits::size_t shift) {
+    return ((len < Bits::UnitSize) ? ((_Bits::unit_t)1 << len) - 1
+                                   : (_Bits::unit_t)-1)
            << shift;
 }
 
-Bits::unit_idx_t to_unit_idx(Bits::size_t idx) { return idx / Bits::UnitSize; }
+constexpr _Bits::unit_t LeftNibbleMask = make_mask(NibbleSize, LeftNibbleShift);
 
-Bits::size_t to_off(Bits::size_t idx) { return idx % Bits::UnitSize; }
+constexpr Bits::unit_idx_t to_unit_idx(Bits::size_t idx) {
+    return idx / Bits::UnitSize;
+}
+
+constexpr Bits::size_t to_off(Bits::size_t idx) { return idx % Bits::UnitSize; }
+
+// void Bits::write_hex(std::ostream& out) const {
+//     out << "0x";
+//
+//     const size_t NibbleSize = 4;
+//     const size_t Pad = (NibbleSize - _len % NibbleSize) % NibbleSize;
+//     const unit_t RightPadMask = make_mask(Pad, 0);
+//     const size_t NibbleShift = UnitSize - NibbleSize;
+//     const unit_t LeftNibbleMask = make_mask(NibbleSize, NibbleShift);
+//     unit_t prev = 0;
+//     unsigned digit_num = 0;
+//     for (size_t n = 0; n < _bits.size(); ++n) {
+//         unit_t unit = _bits[n];
+//         if (Pad > 0) {
+//             // pad right, prepend with bits from prev unit
+//             unit_t next_prev = (unit & RightPadMask) << (UnitSize - Pad);
+//             unit = (unit >> Pad) | prev;
+//             prev = next_prev;
+//         };
+//         auto size =
+//             (n + 1u == _bits.size()) ? (_len + Pad) % UnitSize : UnitSize;
+//         for (size_t shift = 0; shift < size; shift += NibbleSize) {
+//             std::uint8_t nibble =
+//                 (unit << shift & LeftNibbleMask) >> NibbleShift;
+//             if (digit_num > 0 || nibble != 0) {
+//                 ++digit_num;
+//                 char digit = (nibble < 0xa) ? '0' + nibble : 'a' - 0xa +
+//                 nibble; out << digit;
+//             }
+//         }
+//     }
+//     if (digit_num == 0)
+//         out << "0";
+// }
+
+template <typename T> void _write_hex(std::ostream& out, const T& bits) {
+    out << "0x";
+
+    using size_t = typename T::size_t;
+    using unit_t = typename T::unit_t;
+    const size_t UnitSize = T::UnitSize;
+
+    const size_t Pad = (NibbleSize - bits.len() % NibbleSize) % NibbleSize;
+    const unit_t RightPadMask = make_mask(Pad, 0);
+    const size_t UnitNum = (bits.len() + Pad + UnitSize - 1) / UnitSize;
+    const size_t LastUnitSize =
+        (bits.len() % UnitSize > 0) ? bits.len() % UnitSize : UnitSize;
+    unit_t prev = 0;
+    unsigned digit_num = 0;
+    for (size_t n = 0; n < UnitNum; ++n) {
+        // read next unit
+        size_t size = (n + 1 == UnitNum) ? LastUnitSize : UnitSize;
+        unit_t unit = bits.read(UnitSize * n, size);
+
+        // pad right, prepend with bits from prev unit
+        if (Pad > 0) {
+            unit_t next_prev = (unit & RightPadMask) << (UnitSize - Pad);
+            unit = (unit >> Pad) | prev;
+            prev = next_prev;
+        }
+
+        // write nibbles
+        unit <<= UnitSize - size;
+        for (size_t shift = 0; shift < size; shift += NibbleSize) {
+            std::uint8_t nibble =
+                ((unit << shift) & LeftNibbleMask) >> LeftNibbleShift;
+            if (digit_num > 0 || nibble != 0) {
+                ++digit_num;
+                char digit = (nibble < 0xa) ? '0' + nibble : 'a' - 0xa + nibble;
+                out << digit;
+            }
+        }
+    }
+    if (digit_num == 0)
+        out << "0";
+}
 
 } // namespace
 
@@ -131,6 +215,14 @@ Bits BitsView::operator^(const BitsView& other) const {
     auto bv = copy();
     bv.view() ^= other;
     return bv;
+}
+
+void BitsView::write_hex(std::ostream& out) const { _write_hex(out, *this); }
+
+std::string BitsView::hex() const {
+    std::ostringstream os;
+    write_hex(os);
+    return os.str();
 }
 
 void BitsView::bin_op(const BitsView& other, UnitBinOp op) {
@@ -404,39 +496,7 @@ Bits Bits::operator>>(size_t shift) {
     return bv;
 }
 
-void Bits::write_hex(std::ostream& out) const {
-    out << "0x";
-
-    const size_t NibbleSize = 4;
-    const size_t Pad = (NibbleSize - _len % NibbleSize) % NibbleSize;
-    const unit_t RightPadMask = make_mask(Pad, 0);
-    const size_t NibbleShift = UnitSize - NibbleSize;
-    const unit_t LeftNibbleMask = make_mask(NibbleSize, NibbleShift);
-    unit_t prev = 0;
-    unsigned digit_num = 0;
-    for (size_t n = 0; n < _bits.size(); ++n) {
-        unit_t unit = _bits[n];
-        if (Pad > 0) {
-            // pad right, prepend with bits from prev unit
-            unit_t next_prev = (unit & RightPadMask) << (UnitSize - Pad);
-            unit = (unit >> Pad) | prev;
-            prev = next_prev;
-        };
-        auto size =
-            (n + 1u == _bits.size()) ? (_len + Pad) % UnitSize : UnitSize;
-        for (size_t shift = 0; shift < size; shift += NibbleSize) {
-            std::uint8_t nibble =
-                (unit << shift & LeftNibbleMask) >> NibbleShift;
-            if (digit_num > 0 || nibble != 0) {
-                ++digit_num;
-                char digit = (nibble < 0xa) ? '0' + nibble : 'a' - 0xa + nibble;
-                out << digit;
-            }
-        }
-    }
-    if (digit_num == 0)
-        out << "0";
-}
+void Bits::write_hex(std::ostream& out) const { _write_hex(out, *this); }
 
 std::string Bits::hex() const {
     std::ostringstream os;

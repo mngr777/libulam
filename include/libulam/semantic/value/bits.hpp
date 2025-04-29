@@ -64,6 +64,9 @@ public:
     Bits operator|(const BitsView& other) const;
     Bits operator^(const BitsView& other) const;
 
+    void write_hex(std::ostream& out) const;
+    std::string hex() const;
+
 private:
     using UnitBinOp = std::function<unit_t(unit_t, unit_t)>;
 

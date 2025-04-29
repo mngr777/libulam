@@ -90,20 +90,37 @@ std::string Stringifier::stringify_array(
     if (array_type->array_size() == 0)
         return " ";
 
-    std::string str;
-    auto item_type = array_type->item_type();
-    auto data = rval.data_view();
-    for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
-        if (idx > 0)
-            str += ", ";
-        if (item_type->is_class())
-            str += "(";
-        auto item_rval = data.array_item(idx).load();
-        str += stringify(item_type, item_rval);
-        if (item_type->is_class())
-            str += ")";
+    std::stringstream ss;
+    if (options.array_as_32_bit_chunks) {
+        const auto& bits = rval.data_view().bits();
+        ss << "{ ";
+        ulam::Bits::size_t num = bits.len() / 32;
+        for (ulam::Bits::size_t i = 0; i < num; ++i) {
+            const ulam::Bits::size_t size = (i + 1 < num) ? 32 : num % 32;
+            auto chunk = bits.view(32u * i, size);
+            chunk.write_hex(ss);
+        }
+        ss << ((bits.len() > 0) ? "" : " ") << "}";
+
+    } else {
+        auto item_type = array_type->item_type();
+        auto data = rval.data_view();
+        if (!item_type->is_class())
+            ss << "{ ";
+        for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
+            if (idx > 0)
+                ss << ", ";
+            if (item_type->is_class())
+                ss << "(";
+            auto item_rval = data.array_item(idx).load();
+            ss << stringify(item_type, item_rval);
+            if (item_type->is_class())
+                ss << ")";
+        }
+        if (!item_type->is_class())
+            ss << ((array_type->array_size() > 0) ? " " : "") << "}";
     }
-    return str;
+    return ss.str();
 }
 
 std::string
