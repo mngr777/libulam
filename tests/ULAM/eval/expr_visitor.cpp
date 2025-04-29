@@ -243,7 +243,8 @@ ExprRes EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
 ExprRes EvalExprVisitor::ident_var(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Var> var) {
     auto res = Base::ident_var(node, var);
-    if (res.value().is_consteval()) {
+    if (res.value().is_consteval() && !var->type()->is_array() &&
+        !var->type()->is_class()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
             auto stringifier = make_stringifier();
             stringifier.options.unary_as_unsigned_lit = true;
@@ -336,7 +337,8 @@ ExprRes EvalExprVisitor::member_access_var(
     auto res = Base::member_access_var(node, std::move(obj), var);
 
     exp::set_data(res, data);
-    if (res.value().is_consteval()) {
+    if (res.value().is_consteval() && !var->type()->is_array() &&
+        !var->type()->is_class()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
             auto stringifier = make_stringifier();
             stringifier.options.unary_as_unsigned_lit = true;
