@@ -214,7 +214,9 @@ std::string AnswerParser::read_value_str(bool is_array) {
             auto [alias, type_def_text] = read_type_def();
             add_member(pref.add_prefix(alias), std::move(type_def_text));
 
-        } else if (at(Constant) || at(Parameter) || (at_upper() && !at("Atom,") && !at("Atom)"))) {
+        } else if (
+            at(Constant) || at(Parameter) ||
+            (at_upper() && !at("Atom,") && !at("Atom)") && !at("HexU64"))) {
             // constant/property
             if (is_scalar_item) {
                 assert(is_array);
@@ -270,9 +272,18 @@ std::string AnswerParser::read_value_str(bool is_array) {
 }
 
 std::string AnswerParser::read_scalar_value_str() {
+    // string literal
     if (at('"'))
         return std::string{read_str_lit()};
+
+    // Hex64U(0x..., 0x...)
     auto start = pos();
+    if (at("HexU64(")) {
+        skip("HexU64");
+        skip_parens();
+        return std::string{substr_from(start)};
+    }
+
     while (!eof() && !at(';') && !at(')') && !at(',') && !at(' '))
         advance();
     return std::string{substr_from(start)};
