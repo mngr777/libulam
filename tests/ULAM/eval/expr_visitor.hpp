@@ -1,3 +1,4 @@
+#pragma once
 #include "./stringifier.hpp"
 #include "./visitor.hpp"
 #include <libulam/memory/ptr.hpp>
@@ -104,6 +105,11 @@ protected:
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Ref<ulam::FunSet> fset,
         ulam::sema::ExprRes&& obj) override;
+
+    ExprRes as_base(
+        ulam::Ref<ulam::ast::Expr> node,
+        ulam::Ref<ulam::ast::TypeIdent> base,
+        ExprRes&& obj) override;
 
     Stringifier make_stringifier();
 };
