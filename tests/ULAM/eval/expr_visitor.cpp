@@ -20,18 +20,20 @@
 #define DBG_LINE(node) debug() << _program->sm().line_at(node->loc_id())
 
 namespace {
-constexpr char FuncallPh[] = "{args}{fun}";
-}
 
-EvalExprVisitor::ExprRes
-EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
+using ExprRes = EvalExprVisitor::ExprRes;
+
+constexpr char FuncallPh[] = "{args}{fun}";
+
+} // namespace
+
+ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
     auto res = Base::visit(node);
     exp::set_data(res, std::string{node->value() ? "true" : "false"});
     return res;
 }
 
-EvalExprVisitor::ExprRes
-EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
+ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     auto res = Base::visit(node);
 
     const auto& num = node->value();
@@ -46,14 +48,13 @@ EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     return res;
 }
 
-EvalExprVisitor::ExprRes
-EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
+ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
     auto res = Base::visit(node);
     exp::set_data(res, std::string{text(node->value().id)});
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::type_op_default(
+ExprRes EvalExprVisitor::type_op_default(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
     auto res = Base::type_op_default(node, type);
     auto stringifier = make_stringifier();
@@ -71,7 +72,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op_default(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::type_op_expr_default(
+ExprRes EvalExprVisitor::type_op_expr_default(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
     auto data = exp::data(arg);
     auto res = Base::type_op_expr_default(node, std::move(arg));
@@ -89,14 +90,14 @@ EvalExprVisitor::ExprRes EvalExprVisitor::type_op_expr_default(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
+ExprRes EvalExprVisitor::apply_binary_op(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Op op,
     ulam::LValue lval,
     ulam::Ref<ulam::ast::Expr> l_node,
-    EvalExprVisitor::ExprRes&& left,
+    ExprRes&& left,
     ulam::Ref<ulam::ast::Expr> r_node,
-    EvalExprVisitor::ExprRes&& right) {
+    ExprRes&& right) {
 
     auto l_type = left.type()->actual();
     auto r_type = right.type()->actual();
@@ -176,12 +177,12 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_binary_op(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
+ExprRes EvalExprVisitor::apply_unary_op(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Op op,
     ulam::LValue lval,
     ulam::Ref<ulam::ast::Expr> arg_node,
-    EvalExprVisitor::ExprRes&& arg,
+    ExprRes&& arg,
     ulam::Ref<ulam::Type> type) {
 
     auto data = exp::data(arg);
@@ -229,21 +230,19 @@ EvalExprVisitor::ExprRes EvalExprVisitor::apply_unary_op(
     return res;
 }
 
-EvalExprVisitor::ExprRes
-EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
+ExprRes EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
     auto res = Base::ident_self(node);
     exp::set_self(res);
     return res;
 }
 
-EvalExprVisitor::ExprRes
-EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
+ExprRes EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
     auto res = Base::ident_super(node);
     exp::set_data(res, "super");
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::ident_var(
+ExprRes EvalExprVisitor::ident_var(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Var> var) {
     auto res = Base::ident_var(node, var);
     if (res.value().is_consteval()) {
@@ -259,7 +258,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_var(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::ident_prop(
+ExprRes EvalExprVisitor::ident_prop(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Prop> prop) {
     auto res = Base::ident_prop(node, prop);
     exp::set_self(res);
@@ -267,7 +266,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_prop(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::ident_fset(
+ExprRes EvalExprVisitor::ident_fset(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::FunSet> fset) {
     auto res = Base::ident_fset(node, fset);
     exp::set_self(res);
@@ -275,10 +274,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::ident_fset(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
-    ulam::Ref<ulam::ast::ArrayAccess> node,
-    EvalExprVisitor::ExprRes&& obj,
-    EvalExprVisitor::ExprRes&& idx) {
+ExprRes EvalExprVisitor::array_access_class(
+    ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     bool before_member_access = obj.has_flag(exp::MemberAccess);
     if (before_member_access)
         exp::remove_member_access_op(obj);
@@ -290,10 +287,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_class(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
-    ulam::Ref<ulam::ast::ArrayAccess> node,
-    EvalExprVisitor::ExprRes&& obj,
-    EvalExprVisitor::ExprRes&& idx) {
+ExprRes EvalExprVisitor::array_access_string(
+    ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     auto data = exp::data(obj);
     bool before_member_access = obj.has_flag(exp::MemberAccess);
 
@@ -304,10 +299,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_string(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::array_access_array(
-    ulam::Ref<ulam::ast::ArrayAccess> node,
-    EvalExprVisitor::ExprRes&& obj,
-    EvalExprVisitor::ExprRes&& idx) {
+ExprRes EvalExprVisitor::array_access_array(
+    ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     auto data = exp::data(obj);
     auto idx_data = exp::data(idx);
     bool before_member_access = obj.has_flag(exp::MemberAccess);
@@ -319,8 +312,8 @@ EvalExprVisitor::ExprRes EvalExprVisitor::array_access_array(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::member_access_op(
-    ulam::Ref<ulam::ast::MemberAccess> node, EvalExprVisitor::ExprRes&& obj) {
+ExprRes EvalExprVisitor::member_access_op(
+    ulam::Ref<ulam::ast::MemberAccess> node, ExprRes&& obj) {
     if (!obj)
         return std::move(obj);
     auto data = exp::data(obj);
@@ -333,9 +326,9 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_op(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::member_access_var(
+ExprRes EvalExprVisitor::member_access_var(
     ulam::Ref<ulam::ast::MemberAccess> node,
-    EvalExprVisitor::ExprRes&& obj,
+    ExprRes&& obj,
     ulam::Ref<ulam::Var> var) {
     if (!obj)
         return std::move(obj);
@@ -360,9 +353,9 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_var(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
+ExprRes EvalExprVisitor::member_access_prop(
     ulam::Ref<ulam::ast::MemberAccess> node,
-    EvalExprVisitor::ExprRes&& obj,
+    ExprRes&& obj,
     ulam::Ref<ulam::Prop> prop) {
     if (!obj)
         return std::move(obj);
@@ -377,9 +370,9 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_prop(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::member_access_fset(
+ExprRes EvalExprVisitor::member_access_fset(
     ulam::Ref<ulam::ast::MemberAccess> node,
-    EvalExprVisitor::ExprRes&& obj,
+    ExprRes&& obj,
     ulam::Ref<ulam::FunSet> fset) {
     if (!obj)
         return std::move(obj);
@@ -393,7 +386,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::member_access_fset(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::class_const_access(
+ExprRes EvalExprVisitor::class_const_access(
     ulam::Ref<ulam::ast::ClassConstAccess> node, ulam::Ref<ulam::Var> var) {
     auto res = Base::class_const_access(node, var);
     assert(!res.value().empty());
@@ -405,7 +398,7 @@ EvalExprVisitor::ExprRes EvalExprVisitor::class_const_access(
     return res;
 }
 
-EvalExprVisitor::ExprRes EvalExprVisitor::bind(
+ExprRes EvalExprVisitor::bind(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Ref<ulam::FunSet> fset,
     ulam::sema::ExprRes&& obj) {
@@ -417,6 +410,16 @@ EvalExprVisitor::ExprRes EvalExprVisitor::bind(
 
     exp::set_data(res, data);
     exp::add_member_access(res, FuncallPh, is_self);
+    return res;
+}
+
+ExprRes EvalExprVisitor::as_base(
+    ulam::Ref<ulam::ast::Expr> node,
+    ulam::Ref<ulam::ast::TypeIdent> base,
+    ExprRes&& obj) {
+    auto data = exp::data(obj);
+    auto res = Base::as_base(node, base, std::move(obj));
+    exp::set_data(res, exp::data_combine(data, str(base->name_id()), "."));
     return res;
 }
 
