@@ -11,6 +11,8 @@
 
 namespace ulam {
 
+// TODO: replace boolean flags with int flags
+
 using scope_lvl_t = std::uint16_t;
 constexpr scope_lvl_t NoScopeLvl = -1;
 constexpr scope_lvl_t AutoScopeLvl = -2;
