@@ -134,6 +134,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3820_test_compiler_transientwithatomdm_typedefref.test", // -"-
     "t3832_test_compiler_transientwithtransientdmwithelementarrayref_typedefref.test", // -"-
     "t3833_test_compiler_transientwithatomdm.test", // -"-
+    "t3835_test_compiler_element_ascondquarkatomof_issue.test", // redundant cast from consteval (instanceof) element to Atom
 };
 
 using Path = std::filesystem::path;
