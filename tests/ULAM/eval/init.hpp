@@ -3,6 +3,7 @@
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
+#include <libulam/semantic/var.hpp>
 
 class EvalInit : public ulam::sema::EvalInit {
 public:
@@ -12,22 +13,27 @@ public:
     virtual ulam::sema::ExprRes eval_init(
         ulam::Ref<ulam::Type> type,
         ulam::Ref<ulam::ast::InitValue> init,
-        bool is_const) override;
+        ulam::Var::flags_t var_flags) override;
 
 protected:
     ulam::sema::ExprRes eval_array_list(
         ulam::Ref<ulam::ArrayType> array_type,
         ulam::Ref<ulam::ast::InitList> list,
-        unsigned depth) override;
+        unsigned depth,
+        ulam::Var::flags_t var_flags) override;
 
     ulam::sema::ExprRes eval_array_list_item(
-        ulam::Ref<ulam::Type> type, Variant& item_v, unsigned depth) override;
+        ulam::Ref<ulam::Type> type,
+        Variant& item_v,
+        unsigned depth,
+        ulam::Var::flags_t var_flags) override;
 
     virtual ulam::sema::ExprRes array_set(
         ulam::sema::ExprRes&& array,
         ulam::array_idx_t idx,
         ulam::sema::ExprRes&& item,
-        bool autofill) override;
+        bool autofill,
+        ulam::Var::flags_t var_flags) override;
 
     // virtual ulam::sema::ExprRes make_obj(ulam::Ref<ulam::Class> cls);
 
