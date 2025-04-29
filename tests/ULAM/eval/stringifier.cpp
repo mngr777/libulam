@@ -91,16 +91,24 @@ std::string Stringifier::stringify_array(
         return " ";
 
     std::stringstream ss;
-    if (options.array_as_32_bit_chunks) {
+    if (options.array_as_32_bit_chunks) { // t3881
         const auto& bits = rval.data_view().bits();
         ss << "{ ";
-        ulam::Bits::size_t num = bits.len() / 32;
-        for (ulam::Bits::size_t i = 0; i < num; ++i) {
-            const ulam::Bits::size_t size = (i + 1 < num) ? 32 : num % 32;
-            auto chunk = bits.view(32u * i, size);
+
+        using size_t = ulam::Bits::size_t;
+        const size_t ChunkSize = 32;
+        const size_t Num = (bits.len() + ChunkSize - 1) / ChunkSize;
+        const size_t LastChunkSize =
+            (bits.len() % ChunkSize > 0) ? bits.len() % ChunkSize : ChunkSize;
+        for (size_t i = 0; i < Num; ++i) {
+            if (i > 0)
+                ss << ", ";
+            const ulam::Bits::size_t size =
+                (i + 1 < Num) ? ChunkSize : LastChunkSize;
+            auto chunk = bits.view(ChunkSize * i, size);
             chunk.write_hex(ss);
         }
-        ss << ((bits.len() > 0) ? "" : " ") << "}";
+        ss << ((bits.len() > 0) ? " " : "") << "}";
 
     } else {
         auto item_type = array_type->item_type();
