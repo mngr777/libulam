@@ -438,10 +438,11 @@ Value ArrayType::cast_to(Ref<Type> type, Value&& val) {
     auto rval = type->construct();
     rval.set_is_consteval(val.is_consteval());
     for (array_idx_t i = 0; i < array_size(); ++i) {
-        auto item_lval = rval.array_access(i);
+        auto item_lval = rval.array_access(i, true);
         auto item_rval =
             item_type()
-                ->cast_to(array_type->item_type(), Value{val.array_access(i)})
+                ->cast_to(
+                    array_type->item_type(), Value{val.array_access(i, true)})
                 .move_rvalue();
         item_lval.assign(std::move(item_rval));
     }

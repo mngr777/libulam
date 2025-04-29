@@ -248,7 +248,7 @@ ExprRes EvalInit::array_set(
     auto rval = array.move_value().move_rvalue();
     auto item_rval = item.move_value().move_rvalue();
     rval.set_is_consteval(rval.is_consteval() && item_rval.is_consteval());
-    rval.array_access(idx).assign(std::move(item_rval));
+    rval.array_access(idx, true).assign(std::move(item_rval));
     return {array.type(), Value{std::move(rval)}};
 }
 

@@ -268,7 +268,7 @@ void Compiler::write_obj_prop(
             auto item_type = array_type->item_type();
             for (ulam::array_idx_t idx = 0; idx < array_type->array_size();
                  ++idx) {
-                const auto item_lval = lval.array_access(idx);
+                const auto item_lval = lval.array_access(idx, true);
                 item_lval.with_rvalue([&](const auto& item_rval) {
                     if (item_type->is_class()) {
                         if (idx > 0)

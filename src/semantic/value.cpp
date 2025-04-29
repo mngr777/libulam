@@ -8,6 +8,16 @@ namespace ulam {
 
 // LValue
 
+LValue::LValue(): Base{std::monostate{}} {}
+
+LValue::LValue(std::monostate): Base{std::monostate{}} {}
+
+LValue::LValue(Ref<Var> var): Base{var}, _is_consteval{var->is_consteval()} {}
+
+LValue::LValue(DataView data): Base{data} {}
+
+LValue::LValue(BoundFunSet bfset): Base{bfset} {}
+
 bool LValue::has_rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->value().has_rvalue(); },
@@ -19,7 +29,11 @@ bool LValue::has_rvalue() const {
 RValue LValue::rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->rvalue(); },
-        [&](const DataView& data) { return data.load(); },
+        [&](const DataView& data) {
+            auto rval = data.load();
+            rval.set_is_consteval(is_consteval());
+            return rval;
+        },
         [&](const BoundFunSet&) -> RValue { assert(false); },
         [&](const std::monostate&) { return RValue{}; });
 }
@@ -29,6 +43,7 @@ void LValue::with_rvalue(std::function<void(const RValue&)> cb) const {
         [&](Ref<const Var> var) { var->value().with_rvalue(cb); },
         [&](const DataView& data) {
             RValue rval = data.load();
+            rval.set_is_consteval(_is_consteval);
             cb(rval);
         },
         [&](const BoundFunSet& bound_fset) { assert(false); },
@@ -101,11 +116,14 @@ LValue LValue::atom_of() {
     return derived(data_view);
 }
 
-LValue LValue::array_access(array_idx_t idx) {
+LValue LValue::array_access(array_idx_t idx, bool is_consteval_idx) {
     auto data = data_view();
     if (!data || idx == UnknownArrayIdx)
         return derived(std::monostate{});
-    return derived(data.array_item(idx));
+
+    auto lval = derived(data.array_item(idx));
+    lval.set_is_consteval(is_consteval() && is_consteval_idx);
+    return lval;
 }
 
 LValue LValue::prop(Ref<Prop> prop) {
@@ -127,29 +145,19 @@ Value LValue::assign(RValue&& rval) {
     return accept(
         [&](Ref<Var> var) {
             var->set_value(Value{std::move(rval)});
-            return Value{var->lvalue()};
+            return Value{derived(var->lvalue())};
         },
         [&](DataView& data) {
             data.store(std::move(rval));
-            return Value{derived(data)};
+            LValue lval = derived(data);
+            lval.set_is_consteval(false);
+            return Value{lval};
         },
         [&](const BoundFunSet&) -> Value { assert(false); },
-        [&](const std::monostate& none) -> Value {
+        [&](const std::monostate&) -> Value {
             // pretend assign for empty value
-            return Value{derived(none)};
+            return Value{derived(std::monostate{})};
         });
-}
-
-bool LValue::is_consteval() const {
-    return accept(
-        [&](Ref<const Var> var) { return var->is_consteval(); },
-        [&](const DataView& data) {
-            return false; // TODO
-        },
-        [&](const BoundFunSet&) {
-            return true; // ??
-        },
-        [&](const std::monostate&) { return false; });
 }
 
 // RValue
@@ -214,9 +222,14 @@ LValue RValue::atom_of() {
     return LValue{data.atom_of()};
 }
 
-LValue RValue::array_access(array_idx_t idx) {
+LValue RValue::array_access(array_idx_t idx, bool is_consteval_idx) {
+    bool is_consteval_ = is_consteval() && is_consteval_idx;
     return accept(
-        [&](DataPtr& data) { return LValue{data->array_item(idx)}; },
+        [&](DataPtr& data) {
+            LValue lval{data->array_item(idx)};
+            lval.set_is_consteval(is_consteval_);
+            return lval;
+        },
         [&](std::monostate) {
             assert(idx == UnknownArrayIdx);
             return LValue{};
@@ -226,7 +239,11 @@ LValue RValue::array_access(array_idx_t idx) {
 
 LValue RValue::prop(Ref<Prop> prop) {
     return accept(
-        [&](DataPtr data) { return LValue{data->prop(prop)}; },
+        [&](DataPtr data) {
+            LValue lval{data->prop(prop)};
+            lval.set_is_consteval(is_consteval());
+            return lval;
+        },
         [&](std::monostate) { return LValue{}; },
         [&](auto& other) -> LValue { assert(false); });
 }
@@ -287,8 +304,10 @@ bitsize_t Value::position_of() {
     return data ? data.position_of() : NoBitsize;
 }
 
-Value Value::array_access(array_idx_t idx) {
-    return accept([&](auto& val) { return Value{val.array_access(idx)}; });
+Value Value::array_access(array_idx_t idx, bool is_consteval_idx) {
+    return accept([&](auto& val) {
+        return Value{val.array_access(idx, is_consteval_idx)};
+    });
 }
 
 Value Value::prop(Ref<Prop> prop) {

@@ -1,4 +1,3 @@
-#include "libulam/semantic/value.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -318,13 +317,14 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
 }
 
 ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
-    if (res && !res.value().is_consteval()) {
+    const auto& val = res.value();
+    if (res && !val.is_consteval()) {
         if (has_flag(evl::Consteval)) {
             diag().error(node, "not consteval");
             return {ExprError::NotConsteval};
         }
-        if (has_flag(evl::NoExec)) {
-            const auto& val = res.value();
+        if (has_flag(evl::NoExec) &&
+            !(val.is_lvalue() && val.lvalue().is<BoundFunSet>())) {
             auto empty = val.is_lvalue() ? Value{val.lvalue().derived()}
                                          : Value{RValue{}};
             return res.derived(res.type(), std::move(empty));
@@ -941,15 +941,16 @@ ExprRes EvalExprVisitor::array_access_array(
 
     // empty array or index value?
     if (array_val.empty() || idx.value().empty())
-        return {item_type, array_val.array_access(UnknownArrayIdx)};
+        return {item_type, array_val.array_access(UnknownArrayIdx, false)};
 
     // check bounds
+    bool is_consteval_idx = idx.value().is_consteval();
     auto int_idx = idx.value().copy_rvalue().get<Integer>();
     if (int_idx < 0 || int_idx + 1 > array_type->array_size()) {
         diag().error(node->index(), "array index is out of range");
         return {ExprError::ArrayIndexOutOfRange};
     }
-    return {item_type, array_val.array_access(int_idx)};
+    return {item_type, array_val.array_access(int_idx, is_consteval_idx)};
 }
 
 ExprRes

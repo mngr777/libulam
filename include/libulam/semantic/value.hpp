@@ -7,6 +7,7 @@
 #include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
+#include <variant>
 
 namespace ulam {
 
@@ -25,11 +26,18 @@ class RValue;
 class Value;
 
 class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
+    using Base = detail::NullableVariant<Ref<Var>, DataView, BoundFunSet>;
+
 public:
-    using Variant::Variant;
+    LValue();
+    LValue(std::monostate);
+    LValue(Ref<Var> var);
+    LValue(DataView data);
+    LValue(BoundFunSet bfset);
 
     template <typename T> LValue derived(T&& value) const {
         LValue lval{std::forward<T>(value)};
+        lval._is_consteval = _is_consteval;
         lval._is_xvalue = _is_xvalue;
         lval._scope_lvl = _scope_lvl;
         return lval;
@@ -53,7 +61,7 @@ public:
     LValue as(Ref<Type> type);
     LValue atom_of();
 
-    LValue array_access(array_idx_t idx);
+    LValue array_access(array_idx_t idx, bool is_consteval_idx);
 
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
@@ -62,7 +70,8 @@ public:
 
     Value assign(RValue&& rval);
 
-    bool is_consteval() const;
+    bool is_consteval() const { return _is_consteval; }
+    void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; }
 
     bool is_xvalue() const { return _is_xvalue; }
     void set_is_xvalue(bool is_xvalue) { _is_xvalue = is_xvalue; }
@@ -73,18 +82,22 @@ public:
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
+    bool _is_consteval{false};
     bool _is_xvalue{true};
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 
 class RValue
     : public detail::NullableVariant<Integer, Unsigned, Bits, String, DataPtr> {
+    using Base =
+        detail::NullableVariant<Integer, Unsigned, Bits, String, DataPtr>;
+
 public:
     template <typename T>
     explicit RValue(T&& value, bool is_consteval = false):
-        Variant{std::forward<T>(value)}, _is_consteval{is_consteval} {}
+        Base{std::forward<T>(value)}, _is_consteval{is_consteval} {}
 
-    RValue(): Variant{}, _is_consteval{false} {}
+    RValue(): Base{}, _is_consteval{false} {}
 
     RValue(RValue&&) = default;
     RValue& operator=(RValue&&) = default;
@@ -101,7 +114,7 @@ public:
     LValue as(Ref<Type> type);
     LValue atom_of();
 
-    LValue array_access(array_idx_t idx);
+    LValue array_access(array_idx_t idx, bool is_consteval_idx);
 
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
@@ -152,7 +165,7 @@ public:
 
     bitsize_t position_of();
 
-    Value array_access(array_idx_t index);
+    Value array_access(array_idx_t idx, bool is_consteval_idx);
 
     Value prop(Ref<Prop> prop);
     const Value prop(Ref<Prop> prop) const;
