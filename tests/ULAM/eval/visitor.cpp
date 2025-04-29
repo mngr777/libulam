@@ -298,7 +298,7 @@ void EvalVisitor::append(std::string data, bool nospace) {
     if (!nospace && !_data.empty())
         _data += " ";
     if (!_next_prefix.empty())
-        _data += _next_prefix;
+        _data += move_next_prefix();
     _data += std::move(data);
 }
 
