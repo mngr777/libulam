@@ -157,7 +157,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
         auto def = node->def(n);
         if (!sync_scope(def)) {
             // local variable
-            Var::Flag flags = Var::NoFlags;
+            Var::flags_t flags = Var::NoFlags;
             if (node->is_const())
                 flags |= Var::Const;
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);

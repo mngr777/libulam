@@ -14,19 +14,19 @@ namespace ulam {
 
 class VarBase : public Decl {
 public:
-    using Flag = std::uint8_t;
-    static constexpr Flag NoFlags = 0;
-    static constexpr Flag Const = 1;
-    static constexpr Flag ClassParam = 1 << 1;
-    static constexpr Flag FunParam = 1 << 2;
-    static constexpr Flag TmpFunParam = 1 << 3;
-    static constexpr Flag Tpl = 1 << 4;
+    using flags_t = std::uint8_t;
+    static constexpr flags_t NoFlags = 0;
+    static constexpr flags_t Const = 1;
+    static constexpr flags_t ClassParam = 1 << 1;
+    static constexpr flags_t FunParam = 1 << 2;
+    static constexpr flags_t TmpFunParam = 1 << 3;
+    static constexpr flags_t Tpl = 1 << 4;
 
     VarBase(
         Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
         Ref<Type> type,
-        Flag flags = NoFlags):
+        flags_t flags = NoFlags):
         _type_node{type_node}, _node{node}, _type{type}, _flags{flags} {}
 
     bool has_name() const;
@@ -48,16 +48,16 @@ public:
     bool is_const() const { return is(Const); }
     bool is_parameter() const;
 
-    bool is(Flag flags) const { return (_flags & flags) == flags; }
-    Flag flags() { return _flags; }
-    void set_flag(Flag flag) { _flags |= flag; };
-    void unset_flag(Flag flag) { _flags &= ~flag; };
+    bool is(flags_t flags) const { return (_flags & flags) == flags; }
+    flags_t flags() { return _flags; }
+    void set_flag(flags_t flag) { _flags |= flag; };
+    void unset_flag(flags_t flag) { _flags &= ~flag; };
 
 private:
     Ref<ast::TypeName> _type_node;
     Ref<ast::VarDecl> _node;
     Ref<Type> _type{};
-    Flag _flags;
+    flags_t _flags;
 };
 
 } // namespace ulam

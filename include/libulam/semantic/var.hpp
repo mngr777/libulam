@@ -12,19 +12,19 @@ public:
     using VarBase::VarBase;
 
     // tmp variables, type is required
-    Var(Ref<Type> type, Value&& value, Flag flags = NoFlags);
-    Var(TypedValue&& tv, Flag flags = NoFlags);
+    Var(Ref<Type> type, Value&& value, flags_t flags = NoFlags);
+    Var(TypedValue&& tv, flags_t flags = NoFlags);
 
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
         Ref<Type> type,
         Value&& val,
-        Flag flags = NoFlags);
+        flags_t flags = NoFlags);
 
     Var(Ref<ast::TypeName> type_node,
         Ref<ast::VarDecl> node,
         TypedValue&& tv,
-        Flag flags = NoFlags);
+        flags_t flags = NoFlags);
 
     bool requires_value() const {
         return type()->is_ref() || (is_const() && !is(Tpl) && !is(ClassParam));
