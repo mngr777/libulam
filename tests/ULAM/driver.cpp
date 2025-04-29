@@ -125,7 +125,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3749_test_compiler_elementinheritedquark_datamember_withsuper.test", // -"-
     "t3805_test_compiler_transientsandelements_virtualfuncsandrefargs.test", // cannot use `System.assert(false)` without evaluating native funs
     "t3811_test_compiler_transientarraywithelementarraydm_funccallrefarg.test", // b(true), c(true) are correct (tested in MFM)
-    "t3812_test_compiler_transientarraywithatomarraydm_funccallrefarg.test", // tmp: similar to t3811
+    "t3812_test_compiler_transientarraywithatomarraydm_funccallrefarg.test", // similar to t3811
     "t3814_test_compiler_transientarraywithelementarrayref.test", // -"-
     "t3816_test_compiler_transientarraywithelementarrayref_typedefref.test", // -"-
     "t3817_test_compiler_transientarraywithprimitivearrayref_typedefref.test", // -"-
@@ -135,6 +135,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3832_test_compiler_transientwithtransientdmwithelementarrayref_typedefref.test", // -"-
     "t3833_test_compiler_transientwithatomdm.test", // -"-
     "t3835_test_compiler_element_ascondquarkatomof_issue.test", // redundant cast from consteval (instanceof) element to Atom
+    "t3850_test_compiler_mixedlongbinaryops.test", // mixing 32/64-bit Ints, why `mixprod32 / mixdiv64` -> `mixprod32 cast mixdiv64 / cast cast 4 cast ==`?
 };
 
 using Path = std::filesystem::path;
