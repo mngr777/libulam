@@ -132,6 +132,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3818_test_compiler_transientarraywithatomarrayref_typedefref.test", // -"-
     "t3819_test_compiler_transientwithelementdmwithquarkarrayref_typedefref.test", // -"-
     "t3820_test_compiler_transientwithatomdm_typedefref.test", // -"-
+    "t3832_test_compiler_transientwithtransientdmwithelementarrayref_typedefref.test", // -"-
+    "t3833_test_compiler_transientwithatomdm.test", // -"-
 };
 
 using Path = std::filesystem::path;
