@@ -41,7 +41,7 @@ private:
         ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
 
     std::string int_to_str(ulam::Integer val, ulam::bitsize_t size) const;
-    std::string unsigned_to_str(ulam::Unsigned val) const;
+    std::string unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const;
     std::string unary_to_str(ulam::Unsigned val) const;
     std::string bits_to_str(const ulam::Bits& bits) const;
 

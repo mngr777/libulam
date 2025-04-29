@@ -1,6 +1,7 @@
 #include "./init.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
+#include "./stringifier.hpp"
 #include <string>
 
 ulam::sema::ExprRes EvalInit::eval_init(
@@ -29,7 +30,14 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
 ulam::sema::ExprRes EvalInit::eval_array_list_item(
     ulam::Ref<ulam::Type> type, Variant& item_v, unsigned depth) {
     auto no_consteval_cast = flags_raii(flags() | evl::NoConstevalCast);
-    return Base::eval_array_list_item(type, item_v, depth);
+    auto res = Base::eval_array_list_item(type, item_v, depth);
+    if (res.value().is_consteval()) {
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
+            Stringifier stringifier{program()};
+            exp::set_data(res, stringifier.stringify(res.type(), rval));
+        });
+    }
+    return res;
 }
 
 ulam::sema::ExprRes EvalInit::array_set(
@@ -41,9 +49,7 @@ ulam::sema::ExprRes EvalInit::array_set(
     if (!autofill)
         exp::append(array, exp::data(item), ", ");
     std::string data = exp::data(array);
-
     array = Base::array_set(std::move(array), idx, std::move(item), autofill);
-
     exp::set_data(array, data);
     return std::move(array);
 }
