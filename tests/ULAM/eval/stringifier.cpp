@@ -5,16 +5,8 @@
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/value/types.hpp>
-#include <limits>
 #include <sstream>
 #include <string>
-
-namespace {
-
-constexpr ulam::Unsigned UInt16Max = std::numeric_limits<std::uint16_t>::max();
-constexpr ulam::Unsigned UInt32Max = std::numeric_limits<std::uint32_t>::max();
-
-} // namespace
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
@@ -43,18 +35,18 @@ std::string Stringifier::stringify_prim(
         return int_to_str(int_val, type->bitsize());
     }
     case ulam::UnsignedId: {
-        return unsigned_to_str(rval.get<ulam::Unsigned>());
+        return unsigned_to_str(rval.get<ulam::Unsigned>(), type->bitsize());
     }
     case ulam::UnaryId: {
         if (options.unary_as_unsigned_lit)
-            return unsigned_to_str(rval.get<ulam::Unsigned>());
+            return unsigned_to_str(rval.get<ulam::Unsigned>(), type->bitsize());
         auto unary_type = _builtins.unary_type(type->bitsize());
         auto uns_val = unary_type->unsigned_value(rval);
         return unary_to_str(uns_val);
     }
     case ulam::BoolId: {
         if (options.bool_as_unsigned_lit)
-            return unsigned_to_str(rval.get<ulam::Unsigned>());
+            return unsigned_to_str(rval.get<ulam::Unsigned>(), type->bitsize());
         auto bool_type = _builtins.bool_type(type->bitsize());
         return bool_type->is_true(rval) ? "true" : "false";
     }
@@ -116,7 +108,6 @@ std::string Stringifier::stringify_array(
 
 std::string
 Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
-    // TODO: Unsigned, Bits
     std::ostringstream ss;
     if (size > 32) {
         std::uint32_t hi = val >> 32;
@@ -128,12 +119,20 @@ Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
     return ss.str();
 }
 
-std::string Stringifier::unsigned_to_str(ulam::Unsigned val) const {
-    std::string str = std::to_string(val);
-    if (options.use_unsigned_suffix &&
-        (val != 0 || options.use_unsigned_suffix_zero))
-        str += "u";
-    return str;
+std::string
+Stringifier::unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const {
+    std::ostringstream ss;
+    if (size > 32) {
+        std::uint32_t hi = val >> 32;
+        std::uint32_t lo = (val << 32) >> 32;
+        ss << "HexU64(" << std::hex << "0x" << hi << ", 0x" << lo << ")";
+    } else {
+        ss << val;
+        if (options.use_unsigned_suffix &&
+            (val != 0 || options.use_unsigned_suffix_zero))
+            ss << "u";
+    }
+    return ss.str();
 }
 
 std::string Stringifier::unary_to_str(ulam::Unsigned val) const {

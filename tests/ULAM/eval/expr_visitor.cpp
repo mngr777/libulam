@@ -35,15 +35,13 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     auto res = Base::visit(node);
-
-    const auto& num = node->value();
-    ulam::Number dec_num;
-    if (num.is_signed()) {
-        dec_num = {ulam::Radix::Decimal, num.value<ulam::Integer>()};
-    } else {
-        dec_num = {ulam::Radix::Decimal, num.value<ulam::Unsigned>()};
-    }
-    exp::set_data(res, dec_num.str());
+    assert(res.value().is_consteval());
+    res.value().with_rvalue([&](const auto& rval) {
+        auto stringifier = make_stringifier();
+        stringifier.options.unary_as_unsigned_lit = true;
+        stringifier.options.bool_as_unsigned_lit = true;
+        exp::set_data(res, stringifier.stringify(res.type(), rval));
+    });
     res.set_flag(exp::NumLit);
     return res;
 }
@@ -59,7 +57,7 @@ ExprRes EvalExprVisitor::type_op_default(
     auto res = Base::type_op_default(node, type);
     auto stringifier = make_stringifier();
     if (res.type()->is_prim() && res.value().is_consteval()) {
-        res.value().with_rvalue([&](const ulam::RValue& rval) {
+        res.value().with_rvalue([&](const auto& rval) {
             stringifier.options.unary_as_unsigned_lit = true;
             stringifier.options.bool_as_unsigned_lit = true;
             exp::set_data(res, stringifier.stringify(res.type(), rval));
