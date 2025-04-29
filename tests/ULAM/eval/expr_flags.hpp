@@ -12,5 +12,6 @@ static constexpr flags_t Self = 1 << 3;
 static constexpr flags_t SelfMemberAccess = 1 << 4;
 static constexpr flags_t MemberAccess = 1 << 5;
 static constexpr flags_t NumLit = 1 << 6;
+static constexpr flags_t NoConstFold = 1 << 7;
 
 } // namespace exp
