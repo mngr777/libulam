@@ -214,6 +214,7 @@ void Compiler::write_class_consts(
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.bits_use_unsigned_suffix = true;
     stringifier.options.bits_32_as_signed_int = in_main;
+    stringifier.options.array_as_32_bit_chunks = true;
 
     // params as consts (t3336)
     for (auto var : cls->params())
