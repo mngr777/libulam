@@ -20,7 +20,8 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
     auto array = Base::eval_array_list(array_type, list, depth);
-    auto data = exp::data_combine("{", exp::data(array), "}");
+    auto array_data = array.has_data() ? exp::data(array) : std::string{};
+    auto data = exp::data_combine("{ " + array_data + " }");
     exp::set_data(array, data);
     return array;
 }
