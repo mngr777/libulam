@@ -28,6 +28,7 @@ public:
         bool short_bits_as_str = false;
         bool bits_32_as_signed_int = false;
         bool class_params_as_consts = true;
+        bool array_as_32_bit_chunks = false;
     } options;
 
 private:

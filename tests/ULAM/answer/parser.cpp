@@ -184,8 +184,16 @@ std::string AnswerParser::read_value_str(bool is_array) {
         members[std::move(name)] = std::move(text);
     };
 
-    bool in_parens = at('(');
-    if (in_parens)
+    char open = '\0';
+    char close = '\0';
+    if (at('(')) {
+        open = '(';
+        close = ')';
+    } else if (at('{')) {
+        open = '{';
+        close = '}';
+    }
+    if (open != '\0')
         advance();
     skip_spaces();
 
@@ -226,10 +234,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
             auto [name, data_mem_text, _] = read_data_mem();
             add_member(pref.add_prefix(name), std::move(data_mem_text));
 
-        } else if (at(')')) {
-            // end of parenthesized value or object item in array
-            if (!in_parens)
-                error("unexpected `)'");
+        } else if (at(close)) {
+            // end of parenthesized/braced value or object item in array
             advance();
 
             // add current object?
@@ -237,13 +243,13 @@ std::string AnswerParser::read_value_str(bool is_array) {
                 add_obj_item();
 
             // ,?
-            if (at(',')) {
+            if (open == '(' && at(',')) {
                 // comma after closing `)' must be an object array
                 if (!(is_array && is_obj_item))
                     error("unexpected `,'");
                 advance();
                 skip_spaces();
-                skip("(");
+                skip('(');
             } else {
                 break; // done!
             }
@@ -263,15 +269,15 @@ std::string AnswerParser::read_value_str(bool is_array) {
                 assert(is_array);
                 str += ", ";
             }
-            str += read_scalar_value_str();
+            str += read_scalar_value_str(close);
         }
         skip_spaces();
     }
     assert(at(';'));
-    return in_parens ? '(' + str + ')' : str;
+    return open != '\0' ? open + str + close : str;
 }
 
-std::string AnswerParser::read_scalar_value_str() {
+std::string AnswerParser::read_scalar_value_str(char close) {
     // string literal
     if (at('"'))
         return std::string{read_str_lit()};
@@ -284,7 +290,7 @@ std::string AnswerParser::read_scalar_value_str() {
         return std::string{substr_from(start)};
     }
 
-    while (!eof() && !at(';') && !at(')') && !at(',') && !at(' '))
+    while (!eof() && !at(close) && !at(';') && !at(',') && !at(' '))
         advance();
     return std::string{substr_from(start)};
 }

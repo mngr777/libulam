@@ -39,7 +39,7 @@ public:
     DataMemData read_data_mem();
 
     std::string read_value_str(bool is_array);
-    std::string read_scalar_value_str();
+    std::string read_scalar_value_str(char close = '\0');
 
     void skip_parens() { read_parens(); }
     void skip_brackets() { read_brackets(); }
