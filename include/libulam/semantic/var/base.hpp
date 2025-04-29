@@ -45,7 +45,7 @@ public:
     Ref<Type> type() const;
     void set_type(Ref<Type> type);
 
-    bool is_const() const { return is(Const); }
+    bool is_const() const { return is(Const) || is(ClassParam); }
     bool is_parameter() const;
 
     bool is(flags_t flags) const { return (_flags & flags) == flags; }
