@@ -40,9 +40,11 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
     bool unary_no_unsigned_suffix =
         stringifier.options.unary_no_unsigned_suffix;
     bool short_bits_as_str = stringifier.options.short_bits_as_str;
+    auto array_fmt = stringifier.options.array_fmt;
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.unary_no_unsigned_suffix = true; // t3429 `Bar(3)`
     stringifier.options.short_bits_as_str = true;        // t3640
+    stringifier.options.array_fmt = Stringifier::ArrayFmt::Leximited;
 
     for (auto param : params) {
         if (!str.empty())
@@ -56,6 +58,7 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
     stringifier.options.use_unsigned_suffix = use_unsigned_suffix;
     stringifier.options.unary_no_unsigned_suffix = unary_no_unsigned_suffix;
     stringifier.options.short_bits_as_str = short_bits_as_str;
+    stringifier.options.array_fmt = array_fmt;
 
     return "(" + str + ")";
 }

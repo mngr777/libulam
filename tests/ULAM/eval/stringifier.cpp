@@ -1,4 +1,5 @@
 #include "./stringifier.hpp"
+#include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <cstdint>
 #include <libulam/semantic/detail/integer.hpp>
@@ -91,8 +92,10 @@ std::string Stringifier::stringify_array(
         return " ";
 
     std::stringstream ss;
-    if (options.array_as_32_bit_chunks) { // t3881
-        const auto& bits = rval.data_view().bits();
+    auto data = rval.data_view();
+    switch (options.array_fmt) {
+    case ArrayFmt::Chunks: { // t3881
+        const auto& bits = data.bits();
         ss << "{ ";
 
         using size_t = ulam::Bits::size_t;
@@ -109,10 +112,26 @@ std::string Stringifier::stringify_array(
             chunk.write_hex(ss);
         }
         ss << ((bits.len() > 0) ? " " : "") << "}";
-
-    } else {
+        break;
+    }
+    case ArrayFmt::Leximited: { // t3894
+        const auto item_size = array_type->item_type()->bitsize();
+        assert(item_size < sizeof(ulam::Unsigned) * 8);
+        for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
+            auto item_rval = data.array_item(idx).load();
+            item_rval.accept(
+                [&](ulam::Unsigned val) {
+                    ulam::detail::write_leximited(ss, val);
+                },
+                [&](ulam::Integer val) {
+                    ulam::detail::write_leximited(ss, val);
+                },
+                [&](auto&&) { assert(false); });
+        }
+        break;
+    }
+    default: {
         auto item_type = array_type->item_type();
-        auto data = rval.data_view();
         if (!item_type->is_class())
             ss << "{ ";
         for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
@@ -127,6 +146,7 @@ std::string Stringifier::stringify_array(
         }
         if (!item_type->is_class())
             ss << ((array_type->array_size() > 0) ? " " : "") << "}";
+    }
     }
     return ss.str();
 }
