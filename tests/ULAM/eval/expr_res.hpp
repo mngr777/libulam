@@ -21,7 +21,7 @@ void add_member_access(
 void add_member_access(
     ulam::sema::ExprRes& res, const char* data, bool is_self);
 
-void remove_member_access_op(ulam::sema::ExprRes& res);
+void remove_member_access_op(ulam::sema::ExprRes& res, bool remove_ident = false);
 
 void add_array_access(
     ulam::sema::ExprRes& res,

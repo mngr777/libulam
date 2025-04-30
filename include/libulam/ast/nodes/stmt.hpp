@@ -3,7 +3,10 @@
 
 namespace ulam::ast {
 
-class Stmt : public Node {};
+class Stmt : public Node {
+public:
+    virtual bool is_block() const { return false; }
+};
 
 class EmptyStmt : public Stmt {
     ULAM_AST_NODE

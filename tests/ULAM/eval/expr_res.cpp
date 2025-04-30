@@ -66,11 +66,22 @@ void add_member_access(
     add_member_access(res, std::string{data}, is_self);
 }
 
-void remove_member_access_op(ulam::sema::ExprRes& res) {
+void remove_member_access_op(ulam::sema::ExprRes& res, bool remove_ident) {
     auto data = exp::data(res);
     auto size = data.size();
+
+    // .
     assert(size > 2 && data[size - 2] == ' ' && data[size - 1] == '.');
-    set_data(res, data.substr(0, size - 2));
+    data = data.substr(0, size - 2);
+
+    // member ident
+    if (remove_ident) {
+        auto pos = data.rfind(' ');
+        assert(pos != std::string::npos);
+        data = data.substr(0, pos);
+    }
+
+    set_data(res, data);
 }
 
 void add_array_access(
