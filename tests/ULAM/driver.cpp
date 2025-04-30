@@ -144,7 +144,6 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3909_test_compiler_elementandquark_atomofmemberselectarrayitemlval_clobberingType.test", // -"-
     "t3916_test_compiler_elementandquark_memberselectoncustomarray.test", // similar to t3811, b(true) is correct?
     "t3930_test_compiler_string_ascii.test", // .lenghtof is not consteval, since string var is not const, would require constrol flow analysis
-    "t3941_test_compiler_stringitem_novar.test", // redundant cast in `ASCII asc = "bar"[1]; b1 = (asc == 'a');`, `"bar"[]` is already `Unsigned(8)` aka `ASCII`
 };
 
 using Path = std::filesystem::path;
