@@ -26,14 +26,22 @@ std::string parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
         }
         if (ch == '\\') {
             assert(cur + 1 < str.size());
+            unsigned short base = 0;
+            unsigned digit_num = 0;
             if (detail::is_digit(str[cur])) {
-                const unsigned short Base = 8;
-                const unsigned DigitNum = 3;
+                base = 8;
+                digit_num = 3;
+            } else if (str[cur] == 'x') {
+                ++cur;
+                base = 16;
+                digit_num = 2;
+            }
 
-                auto end = cur + DigitNum;
+            if (base != 0) {
+                auto end = cur + digit_num;
                 if (end > str.size()) {
                     // not enough digits
-                    diag.error(loc_id, cur, 0, "invalid char code");
+                    diag.error(loc_id, cur, 0, "incomplete char code");
                     cur = str.size();
 
                 } else {
@@ -43,19 +51,20 @@ std::string parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
                         if (code < 0)
                             continue;
                         unsigned short dv = digit_value(str[cur]);
-                        if (dv == NotDigit || dv + 1 > Base) {
+                        if (dv == NotDigit || dv + 1 > base) {
                             diag.error(loc_id, cur, 0, "invalid digit");
                             code = -1;
                             continue;
                         }
-                        code = code * Base + dv;
+                        code = code * base + dv;
                         if (code > CharMax) {
                             diag.error(loc_id, cur, 0, "invalid char code");
                             code = -1;
                             continue;
                         }
                     }
-                    parsed += (char)code;
+                    if (code >= 0)
+                        parsed += (char)code;
                 }
 
             } else {
