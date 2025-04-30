@@ -246,7 +246,6 @@ void Compiler::write_obj_props(
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
-    stringifier.options.empty_string_as_empty = true;
 
     for (auto prop : cls->props())
         write_obj_prop(os, stringifier, prop, obj, in_main);
@@ -265,6 +264,9 @@ void Compiler::write_obj_prop(
        << str_pool.get(prop->name_id()) << out::type_dim_str(type) << "(";
     lval.with_rvalue([&](const auto& rval) {
         if (type->is_array()) {
+            bool empty_string_as_empty = stringifier.options.empty_string_as_empty;
+            stringifier.options.empty_string_as_empty = true;
+
             auto array_type = type->as_array();
             auto item_type = array_type->item_type();
             for (ulam::array_idx_t idx = 0; idx < array_type->array_size();
@@ -286,6 +288,8 @@ void Compiler::write_obj_prop(
                     }
                 });
             }
+            stringifier.options.empty_string_as_empty = empty_string_as_empty;
+
         } else if (type->is_class()) {
             write_obj_members(
                 os, type->as_class(), rval, in_main, false, false);
