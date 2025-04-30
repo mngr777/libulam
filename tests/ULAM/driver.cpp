@@ -108,6 +108,7 @@ static const std::set<std::string> Skip = {
     "t3255_test_compiler_self.test",
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
     "t3663_test_compiler_element_castatomfromselfatomof_templateinstancewithinforloop.test", // tmp: Atom assigned to element without a cast?
+    "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -142,6 +143,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3908_test_compiler_elementandquark_atomofmemberselectarrayitemlval.test", // -"-
     "t3909_test_compiler_elementandquark_atomofmemberselectarrayitemlval_clobberingType.test", // -"-
     "t3916_test_compiler_elementandquark_memberselectoncustomarray.test", // similar to t3811, b(true) is correct?
+    "t3930_test_compiler_string_ascii.test", // .lenghtof is not consteval, since string var is not const, would require constrol flow analysis
+    "t3941_test_compiler_stringitem_novar.test", // redundant cast in `ASCII asc = "bar"[1]; b1 = (asc == 'a');`, `"bar"[]` is already `Unsigned(8)` aka `ASCII`
 };
 
 using Path = std::filesystem::path;
