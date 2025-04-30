@@ -149,9 +149,12 @@ std::string AnswerParser::read_value_str(bool is_array) {
     // {name, text}
     std::map<std::string, std::string> members;
 
+    unsigned added = 0;
     auto add_obj_item = [&]() {
         assert(is_obj_item);
-        if (is_array && !str.empty())
+        // NOTE: empty strings are printed for empty string values, we still
+        // want to separate them, see t3945
+        if (is_array && added > 0)
             str += ", ";
         if (is_array)
             str += "("; // wrap array item
@@ -165,7 +168,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
             str += text + ";";
         }
         if (is_array)
-            str += ")";  // wrap array item
+            str += ")"; // wrap array item
+        ++added;
         members.clear(); // reset members for current array item
     };
 
@@ -184,14 +188,11 @@ std::string AnswerParser::read_value_str(bool is_array) {
         members[std::move(name)] = std::move(text);
     };
 
-    char open = '\0';
-    char close = '\0';
+    char open = '\0', close = '\0';
     if (at('(')) {
-        open = '(';
-        close = ')';
+        open = '(', close = ')';
     } else if (at('{')) {
-        open = '{';
-        close = '}';
+        open = '{', close = '}';
     }
     if (open != '\0')
         advance();

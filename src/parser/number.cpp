@@ -134,9 +134,12 @@ Number parse_char_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     Unsigned value = 0;
     Radix radix = Radix::Decimal;
 
+    const bitsize_t Size = 8;
+    const Unsigned Max = (1 << Size) - 1;
+
     if (str.size() < 2) {
         diag.error(loc_id, 1, "unterminated char literal");
-        return Number{radix, value};
+        return Number{radix, value, Size};
     }
 
     auto check_closed_after = [&](std::size_t pos) {
@@ -151,7 +154,7 @@ Number parse_char_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     if (str[1] != '\\') {
         value = str[1];
         check_closed_after(1);
-        return Number{radix, value};
+        return Number{radix, value, Size};
     }
 
     std::size_t cur = 2;
@@ -163,35 +166,34 @@ Number parse_char_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     } else {
         value = escaped(str[cur]);
         check_closed_after(cur);
-        return Number{radix, value};
+        return Number{radix, value, Size};
     }
 
-    const Unsigned Max = 255;
     for (; cur < str.size() && str[cur] != '\''; ++cur) {
         std::uint8_t dv = digit_value(str[cur]);
         // is digit?
         if (dv == NotDigit) {
             diag.error(loc_id, cur, 1, "unexpected character in char literal");
-            return Number{radix, (Unsigned)0};
+            return Number{radix, (Unsigned)0, Size};
         }
         // is valid for radix?
         if (dv + 1 > radix_to_int(radix)) {
             auto message = std::string{"invalid digit in "} +
                            radix_to_str(radix) + " number";
             diag.error(loc_id, cur, 1, std::move(message));
-            return Number{radix, (Unsigned)0};
+            return Number{radix, (Unsigned)0, Size};
         }
         // update value
         value = value * radix_to_int(radix) + dv;
         // overflown?
         if (value > Max) {
             diag.error(loc_id, cur, 1, "value is too large");
-            return Number{radix, (Unsigned)0};
+            return Number{radix, (Unsigned)0, Size};
         }
     }
     if (cur == str.size())
         diag.error(loc_id, cur, "unterminated char literal");
-    return Number{radix, value};
+    return Number{radix, value, Size};
 }
 
 } // namespace ulam::detail
