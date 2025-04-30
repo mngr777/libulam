@@ -362,7 +362,7 @@ RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     }
     case BoolId: {
         assert(bitsize() == 1);
-        auto rval = builtins().bool_type(type->bitsize())->construct();
+        auto rval = builtins().bool_type(type->bitsize())->construct(uns_val > 0);
         rval.set_is_consteval(is_consteval);
         return rval;
     }
