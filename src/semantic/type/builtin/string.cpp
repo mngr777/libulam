@@ -7,7 +7,11 @@
 
 namespace ulam {
 
-bitsize_t StringType::bitsize() const { return sizeof(String::id) * 8; }
+bitsize_t StringType::bitsize() const {
+    // TODO: compiler context option
+    // return sizeof(String::id) * 8;
+    return 18;
+}
 
 TypedValue StringType::type_op(TypeOp op) {
     switch (op) {
