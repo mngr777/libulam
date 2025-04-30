@@ -148,6 +148,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3949_test_compiler_array2Dstring_lengthof.test", // .lengthof, similar to t3930
     "t3953_test_compiler_stringascii_constantarray_lengthof.test", // -"-
     "t3954_test_compiler_stringascii_constantarray_filescope.test", // -"-
+    "t3957_test_compiler_stringascii_dbldigitlength_reflengthof_cast.test", // -"-
 };
 
 using Path = std::filesystem::path;
