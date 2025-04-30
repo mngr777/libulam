@@ -272,7 +272,7 @@ std::string Stringifier::str_lit(const std::string_view str) {
             if (' ' <= ch && ch <= '~') {
                 ss << ch;
             } else {
-                ss << '\\' << std::oct << (int)ch;
+                ss << '\\' << std::oct << ch;
             }
         }
     }
