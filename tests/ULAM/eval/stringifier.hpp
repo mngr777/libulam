@@ -44,6 +44,15 @@ private:
     std::string stringify_array(
         ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
 
+    std::string stringify_array_chunks(
+        ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
+
+    std::string stringify_array_leximited(
+        ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
+
+    std::string stringify_array_default(
+        ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
+
     std::string int_to_str(ulam::Integer val, ulam::bitsize_t size) const;
     std::string unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const;
     std::string unary_to_str(ulam::Unsigned val) const;

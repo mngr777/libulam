@@ -98,63 +98,87 @@ std::string Stringifier::stringify_array(
     if (array_type->array_size() == 0)
         return " ";
 
+    // always used default format for string arrays, t3953
+    auto fmt = options.array_fmt;
+    if (array_type->item_type()->canon()->is(ulam::StringId))
+        fmt = ArrayFmt::Default;
+
+    switch (fmt) {
+    case ArrayFmt::Chunks:
+        return stringify_array_chunks(array_type, rval);
+    case ArrayFmt::Leximited:
+        return stringify_array_leximited(array_type, rval);
+    default:
+        return stringify_array_default(array_type, rval);
+    }
+}
+
+std::string Stringifier::stringify_array_chunks(
+    ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
     std::stringstream ss;
     auto data = rval.data_view();
-    switch (options.array_fmt) {
-    case ArrayFmt::Chunks: { // t3881
-        const auto& bits = data.bits();
-        ss << "{ ";
+    const auto& bits = data.bits();
 
-        using size_t = ulam::Bits::size_t;
-        const size_t ChunkSize = 32;
-        const size_t Num = (bits.len() + ChunkSize - 1) / ChunkSize;
-        const size_t LastChunkSize =
-            (bits.len() % ChunkSize > 0) ? bits.len() % ChunkSize : ChunkSize;
-        for (size_t i = 0; i < Num; ++i) {
-            if (i > 0)
-                ss << ", ";
-            const ulam::Bits::size_t size =
-                (i + 1 < Num) ? ChunkSize : LastChunkSize;
-            auto chunk = bits.view(ChunkSize * i, size);
-            chunk.write_hex(ss);
-        }
-        ss << ((bits.len() > 0) ? " " : "") << "}";
-        break;
+    // t3881
+    ss << "{ ";
+    using size_t = ulam::Bits::size_t;
+    const size_t ChunkSize = 32;
+    const size_t Num = (bits.len() + ChunkSize - 1) / ChunkSize;
+    const size_t LastChunkSize =
+        (bits.len() % ChunkSize > 0) ? bits.len() % ChunkSize : ChunkSize;
+    for (size_t i = 0; i < Num; ++i) {
+        if (i > 0)
+            ss << ", ";
+        const ulam::Bits::size_t size =
+            (i + 1 < Num) ? ChunkSize : LastChunkSize;
+        auto chunk = bits.view(ChunkSize * i, size);
+        chunk.write_hex(ss);
     }
-    case ArrayFmt::Leximited: { // t3894
-        const auto item_size = array_type->item_type()->bitsize();
-        assert(item_size < sizeof(ulam::Unsigned) * 8);
-        for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
-            auto item_rval = data.array_item(idx).load();
-            item_rval.accept(
-                [&](ulam::Unsigned val) {
-                    ulam::detail::write_leximited(ss, val);
-                },
-                [&](ulam::Integer val) {
-                    ulam::detail::write_leximited(ss, val);
-                },
-                [&](auto&&) { assert(false); });
-        }
-        break;
+    ss << ((bits.len() > 0) ? " " : "") << "}";
+    return ss.str();
+}
+
+std::string Stringifier::stringify_array_leximited(
+    ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
+    std::stringstream ss;
+    auto data = rval.data_view();
+
+    // t3894
+    const auto item_size = array_type->item_type()->bitsize();
+    assert(item_size < sizeof(ulam::Unsigned) * 8);
+    for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
+        auto item_rval = data.array_item(idx).load();
+        item_rval.accept(
+            [&](ulam::Unsigned val) {
+                ulam::detail::write_leximited(ss, val);
+            },
+            [&](ulam::Integer val) {
+                ulam::detail::write_leximited(ss, val);
+            },
+            [&](auto&&) { assert(false); });
     }
-    default: {
-        auto item_type = array_type->item_type();
-        if (!item_type->is_class())
-            ss << "{ ";
-        for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
-            if (idx > 0)
-                ss << ", ";
-            if (item_type->is_class())
-                ss << "(";
-            auto item_rval = data.array_item(idx).load();
-            ss << stringify(item_type, item_rval);
-            if (item_type->is_class())
-                ss << ")";
-        }
-        if (!item_type->is_class())
-            ss << ((array_type->array_size() > 0) ? " " : "") << "}";
+    return ss.str();
+}
+
+std::string Stringifier::stringify_array_default(
+    ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
+    std::stringstream ss;
+    auto data = rval.data_view();
+    auto item_type = array_type->item_type();
+    if (!item_type->is_class())
+        ss << "{ ";
+    for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
+        if (idx > 0)
+            ss << ", ";
+        if (item_type->is_class())
+            ss << "(";
+        auto item_rval = data.array_item(idx).load();
+        ss << stringify(item_type, item_rval);
+        if (item_type->is_class())
+            ss << ")";
     }
-    }
+    if (!item_type->is_class())
+        ss << ((array_type->array_size() > 0) ? " " : "") << "}";
     return ss.str();
 }
 
