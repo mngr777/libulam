@@ -239,8 +239,12 @@ std::string AnswerParser::read_value_str(bool is_array) {
             advance();
 
             // add current object?
-            if (is_obj_item)
+            // NOTE: array may consist of empty objects in `Type
+            // name[](),(),...()` format, t3942
+            if (is_obj_item || (is_array && !is_scalar_item)) {
+                is_obj_item = true;
                 add_obj_item();
+            }
 
             // ,?
             if (open == '(' && at(',')) {
