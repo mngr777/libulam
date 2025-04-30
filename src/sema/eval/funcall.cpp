@@ -84,6 +84,9 @@ ExprRes EvalFuncall::funcall_obj(
 
 ExprRes EvalFuncall::do_funcall(
     Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
+    if (has_flag(evl::NoExec))
+        return empty_ret_val(node, fun);
+
     if (fun->is_native()) {
         // can't eval, return empty value
         diag().notice(node, "cannot evaluate native function");
@@ -93,9 +96,8 @@ ExprRes EvalFuncall::do_funcall(
         diag().error(node, "function is pure virtual");
         return {ExprError::FunctionIsPureVirtual};
     }
+
     assert(fun->node()->has_body());
-    if (flags() & evl::NoExec)
-        return empty_ret_val(node, fun);
     assert(!self.empty());
     return eval().funcall(fun, self, std::move(args));
 }
