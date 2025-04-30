@@ -9,7 +9,21 @@ std::ostream& operator<<(std::ostream& os, const ulam::Number& number) {
 
 namespace ulam {
 
+Number::Number(Radix radix, Integer value, bitsize_t size):
+    _radix{radix}, _value{value}, _size{size} {
+    assert(size == 0 || size >= detail::bitsize(value));
+}
+
+Number::Number(Radix radix, Unsigned value, bitsize_t size):
+    _radix{radix}, _value{value}, _size{size} {
+    assert(size == 0 || size >= detail::bitsize(value));
+}
+
+Number::Number(): Number{Radix::Decimal, (Integer)0} {}
+
 std::uint8_t Number::bitsize() const {
+    if (_size != 0)
+        return _size;
     return is_signed() ? detail::bitsize(value<Integer>())
                        : detail::bitsize(value<Unsigned>());
 }

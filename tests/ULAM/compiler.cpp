@@ -246,6 +246,7 @@ void Compiler::write_obj_props(
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
+    stringifier.options.empty_string_as_empty = true;
 
     for (auto prop : cls->props())
         write_obj_prop(os, stringifier, prop, obj, in_main);

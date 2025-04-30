@@ -8,7 +8,6 @@
 #include <libulam/semantic/value/types.hpp>
 #include <sstream>
 #include <string>
-#include <iomanip>
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
@@ -57,7 +56,10 @@ std::string Stringifier::stringify_prim(
     }
     case ulam::StringId: {
         auto str_id = rval.get<ulam::String>().id;
-        return str_lit(_text_pool.get(str_id));
+        auto str = _text_pool.get(str_id);
+        if (options.empty_string_as_empty && str.empty())
+            return {};
+        return str_lit(str);
     }
     default:
         assert(false); // TODO

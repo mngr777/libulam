@@ -17,9 +17,9 @@ enum class Radix { Binary, Octal, Decimal, Hexadecimal };
 
 class Number {
 public:
-    Number(Radix radix, Integer value): _radix{radix}, _value{value} {}
-    Number(Radix radix, Unsigned value): _radix{radix}, _value{value} {}
-    Number(): Number{Radix::Decimal, (Integer)0} {}
+    Number(Radix radix, Integer value, bitsize_t size = 0);
+    Number(Radix radix, Unsigned value, bitsize_t size = 0);
+    Number();
 
     Radix radix() const { return _radix; }
 
@@ -47,6 +47,7 @@ public:
 private:
     Radix _radix;
     std::variant<Integer, Unsigned> _value;
+    bitsize_t _size;
 };
 
 constexpr std::uint8_t radix_to_int(Radix radix) {
