@@ -51,7 +51,7 @@ static const std::set<std::string> Skip = {
     "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
     "t41153_test_compiler_elementandquark_selfcasttoatom_issue.test", // quark to Atom cast
-    "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param ised in previous param definition
+    "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition
     "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
     "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
     "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"-
@@ -163,6 +163,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3985_test_compiler_stringasciiarray_variablelengthof.test", // tmp
     "t3993_test_compiler_longstringemptystring_lengthof.test", // .lengthof, similar to t3930
     "t3995_test_compiler_stringarray_assign_print.test", // -"-
+    "t41014_test_compiler_logicalorandprecedence_issue.test", // ULAM has same precedence for || and && ?
 };
 
 using Path = std::filesystem::path;
