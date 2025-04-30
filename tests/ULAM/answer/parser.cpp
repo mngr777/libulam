@@ -188,14 +188,20 @@ std::string AnswerParser::read_value_str(bool is_array) {
         members[std::move(name)] = std::move(text);
     };
 
+    // NOTE: array values can be in `({<item1>, <item2>, ...})` format, see
+    // t3946
     char open = '\0', close = '\0';
+    bool in_parens = false;
     if (at('(')) {
+        in_parens = true;
         open = '(', close = ')';
-    } else if (at('{')) {
-        open = '{', close = '}';
-    }
-    if (open != '\0')
         advance();
+        skip_spaces();
+    }
+    if (at('{')) {
+        open = '{', close = '}';
+        advance();
+    }
     skip_spaces();
 
     AnswerBasePrefixStack pref;
@@ -255,7 +261,13 @@ std::string AnswerParser::read_value_str(bool is_array) {
                 advance();
                 skip_spaces();
                 skip('(');
+
             } else {
+                // array value in `({...})` format, see t3946
+                if (close == '}' && in_parens) {
+                    skip_spaces();
+                    skip(')');
+                }
                 break; // done!
             }
 
@@ -279,6 +291,9 @@ std::string AnswerParser::read_value_str(bool is_array) {
         skip_spaces();
     }
     assert(at(';'));
+
+    if (in_parens)
+        open = '(', close = ')';
     return open != '\0' ? open + str + close : str;
 }
 
