@@ -917,6 +917,17 @@ ExprRes EvalExprVisitor::array_access_string(
     assert(obj.type()->actual()->is(StringId));
     assert(idx.type()->actual()->is(IntId));
 
+    auto char_type = builtins().char_type();
+
+    // empty string or index value?
+    if (obj.value().empty() || idx.value().empty()) {
+        if (obj.value().is_rvalue())
+            return {char_type, Value{RValue{}}};
+        auto lval = obj.value().lvalue().derived();
+        lval.set_is_consteval(false);
+        return {char_type, Value{lval}};
+    }
+
     auto int_idx = idx.value().copy_rvalue().get<Integer>();
     auto type = builtins().string_type();
     auto len = type->len(obj.value());
@@ -926,7 +937,7 @@ ExprRes EvalExprVisitor::array_access_string(
     }
     auto chr = type->chr(obj.value(), int_idx);
     bool is_consteval = obj.value().is_consteval();
-    return {builtins().char_type(), Value{RValue{(Unsigned)chr, is_consteval}}};
+    return {char_type, Value{RValue{(Unsigned)chr, is_consteval}}};
 }
 
 ExprRes EvalExprVisitor::array_access_array(
