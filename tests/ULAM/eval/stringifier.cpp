@@ -8,6 +8,7 @@
 #include <libulam/semantic/value/types.hpp>
 #include <sstream>
 #include <string>
+#include <iomanip>
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
@@ -53,6 +54,10 @@ std::string Stringifier::stringify_prim(
     }
     case ulam::BitsId: {
         return bits_to_str(rval.get<ulam::Bits>());
+    }
+    case ulam::StringId: {
+        auto str_id = rval.get<ulam::String>().id;
+        return str_lit(_text_pool.get(str_id));
     }
     default:
         assert(false); // TODO
@@ -203,4 +208,48 @@ std::string Stringifier::bits_to_str(const ulam::Bits& bits) const {
     if (options.bits_use_unsigned_suffix)
         str += "u";
     return str;
+}
+
+std::string Stringifier::str_lit(const std::string_view str) {
+    std::ostringstream ss;
+    ss << '"';
+    for (auto ch : str) {
+        switch (ch) {
+        case '"':
+            ss << "\\\"";
+            break;
+        case '\0':
+            ss << "\\0";
+            break;
+        case '\a':
+            ss << "\\a";
+            break;
+        case '\b':
+            ss << "\\b";
+            break;
+        case '\f':
+            ss << "\\f";
+            break;
+        case '\n':
+            ss << "\\n";
+            break;
+        case '\r':
+            ss << "\\r";
+            break;
+        case '\t':
+            ss << "\\t";
+            break;
+        case '\v':
+            ss << "\\v";
+            break;
+        default:
+            if (' ' <= ch && ch <= '~') {
+                ss << ch;
+            } else {
+                ss << '\\' << std::oct << (int)ch;
+            }
+        }
+    }
+    ss << '"';
+    return ss.str();
 }

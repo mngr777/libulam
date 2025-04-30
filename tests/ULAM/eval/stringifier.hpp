@@ -47,6 +47,7 @@ private:
     std::string unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const;
     std::string unary_to_str(ulam::Unsigned val) const;
     std::string bits_to_str(const ulam::Bits& bits) const;
+    std::string str_lit(const std::string_view str);
 
     ulam::Builtins& _builtins;
     ulam::UniqStrPool& _str_pool;

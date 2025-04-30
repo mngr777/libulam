@@ -2,6 +2,7 @@
 #include "../out.hpp"
 #include "./expr_flags.hpp"
 #include "./expr_res.hpp"
+#include "tests/ULAM/eval/stringifier.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
@@ -46,7 +47,10 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
     auto res = Base::visit(node);
-    exp::set_data(res, std::string{text(node->value().id)});
+    res.value().with_rvalue([&](const auto& rval) {
+        auto stringifier = make_stringifier();
+        exp::set_data(res, stringifier.stringify(res.type(), rval));
+    });
     return res;
 }
 
@@ -71,7 +75,8 @@ ExprRes EvalExprVisitor::type_op_default(
 ExprRes EvalExprVisitor::type_op_expr_default(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
     if (node->op() == ulam::TypeOp::AtomOf && !arg.type()->deref()->is_atom()) {
-        // NOTE: a hack to remove _single_ redundand member access before calling
+        // NOTE: a hack to remove _single_ redundand member access before
+        // calling
         // `.atomof`, t3905
         if (arg.has_flag(exp::MemberAccess) ||
             arg.has_flag(exp::SelfMemberAccess))
