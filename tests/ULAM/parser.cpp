@@ -116,11 +116,12 @@ const std::string_view Parser::read_block(char open, char close, char esc) {
     advance();
     unsigned opened = 1;
     while (!eof() && opened > 0) {
-        if (at(open)) {
-            ++opened;
-        } else if (at(close)) {
+        if (at(close)) {
             assert(opened > 0);
             --opened;
+        } else if (at(open)) {
+            assert(close != open);
+            ++opened;
         } else if (at(esc)) {
             advance();
         }
