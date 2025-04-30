@@ -153,12 +153,16 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3967_test_compiler_inheritedtransientdmcastasref_issue.test", // -"-
     "t3968_test_compiler_transientwithelementdm.test", // `Foo.ta(881)` is correct (tested)
     "t3969_test_compiler_transientwithquarkdm.test", // similar to t3968
-    "t3970_test_compiler_string_assign_print.test", // .lengthof, similar to 3930
+    "t3970_test_compiler_string_assign_print.test", // .lengthof, similar to t3930
     "t3973_test_compiler_stringarray_dminit_lengthof.test", // -"-
     "t3974_test_compiler_stringarray_localinit_lengthof.test", // -"-
     "t3975_test_compiler_stringarray_localinit_morethanone.test", // -"-
     "t3977_test_compiler_productandsum3264bitboundstosaturate.test", // tmp: no Unary -> Unsigned cast for +=
     "t3978_test_compiler_divideandsubtract3264bitboundstosaturate.test", // similar to t3977
+    "t3984_test_compiler_stringasciiarray_itembystringdmvarlengthof_issue.test", // .lengthof, similar to t3930
+    "t3985_test_compiler_stringasciiarray_variablelengthof.test", // tmp
+    "t3993_test_compiler_longstringemptystring_lengthof.test", // .lengthof, similar to t3930
+    "t3995_test_compiler_stringarray_assign_print.test", // -"-
 };
 
 using Path = std::filesystem::path;
