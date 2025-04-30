@@ -138,12 +138,14 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3835_test_compiler_element_ascondquarkatomof_issue.test", // redundant cast from consteval (instanceof) element to Atom
     "t3850_test_compiler_mixedlongbinaryops.test", // mixing 32/64-bit Ints, why `mixprod32 / mixdiv64` -> `mixprod32 cast mixdiv64 / cast cast 4 cast ==`?
     "t3887_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefshadow.test", // local `b` used instead of tpl parameter, TODO: address in compat mode
-    "t3902_test_compiler_funcdef_forloopcontinue_issue.test", // `d(0)` is correct (tested)? `d(5)` means `--i` is ignored?
+    "t3902_test_compiler_funcdef_forloopcontinue_issue.test", // `d(0)` is correct (tested) `d(5)` means `--i` is ignored?
     "t3906_test_compiler_elementandquark_atomofmemberselectarrayitem.test", // tmp, .atomof
     "t3908_test_compiler_elementandquark_atomofmemberselectarrayitemlval.test", // -"-
     "t3909_test_compiler_elementandquark_atomofmemberselectarrayitemlval_clobberingType.test", // -"-
     "t3916_test_compiler_elementandquark_memberselectoncustomarray.test", // similar to t3811, b(true) is correct?
     "t3930_test_compiler_string_ascii.test", // .lenghtof is not consteval, since string var is not const, would require constrol flow analysis
+    "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // `mi_i(120)` is correct (tested)
+    "t3949_test_compiler_array2Dstring_lengthof.test", // similar to t3930
 };
 
 using Path = std::filesystem::path;
