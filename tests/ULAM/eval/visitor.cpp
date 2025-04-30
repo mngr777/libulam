@@ -97,6 +97,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
         auto [var_def, var] =
             define_as_cond_var(node, std::move(res), type, scope());
 
+        // add tmp variable def
         if (node->ident()->is_self()) {
             set_next_prefix(
                 " " + out::type_str(stringifier, type->ref_type()) + " self; ");
@@ -105,7 +106,15 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
             set_next_prefix(
                 " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
         }
+
+        // if-branch, always in {} because of tmp var def
+        bool is_block = node->if_branch()->is_block();
+        if (!is_block)
+            block_open();
         node->if_branch()->accept(*this);
+        if (!is_block)
+            block_close();
+
         append("if");
     }
 

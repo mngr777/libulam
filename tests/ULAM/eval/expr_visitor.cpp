@@ -70,7 +70,15 @@ ExprRes EvalExprVisitor::type_op_default(
 
 ExprRes EvalExprVisitor::type_op_expr_default(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
+    if (node->op() == ulam::TypeOp::AtomOf && !arg.type()->deref()->is_atom()) {
+        // NOTE: a hack to remove _single_ redundand member access before calling
+        // `.atomof`, t3905
+        if (arg.has_flag(exp::MemberAccess) ||
+            arg.has_flag(exp::SelfMemberAccess))
+            exp::remove_member_access_op(arg, true);
+    }
     auto data = exp::data(arg);
+
     auto res = Base::type_op_expr_default(node, std::move(arg));
     if (res.type()->is_prim() && res.value().is_consteval()) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {

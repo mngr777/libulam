@@ -8,6 +8,8 @@ namespace ulam::ast {
 
 class Block : public List<Stmt, Stmt> {
     ULAM_AST_NODE
+
+    bool is_block() const override { return true; }
 };
 
 class ExprStmt : public Tuple<Stmt, Expr> {
