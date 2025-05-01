@@ -267,6 +267,7 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval.cpp \
 	tests/ULAM/eval/cast.hpp \
 	tests/ULAM/eval/cast.cpp \
+	tests/ULAM/eval/constext_stack.hpp \
 	tests/ULAM/eval/expr_flags.hpp \
 	tests/ULAM/eval/expr_res.hpp \
 	tests/ULAM/eval/expr_res.cpp \

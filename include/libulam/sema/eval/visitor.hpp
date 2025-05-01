@@ -92,6 +92,16 @@ protected:
     virtual void var_init_default(Ref<Var> var, bool in_expr);
     virtual void var_init(Ref<Var> var, bool in_expr);
 
+    virtual Ptr<Var> make_which_tmp_var(Ref<ast::Which> node);
+    virtual ExprRes eval_which_expr(Ref<ast::Which> node);
+    virtual ExprRes eval_which_match(
+        Ref<ast::Expr> expr,
+        Ref<ast::Expr> case_expr,
+        ExprRes&& expr_res,
+        ExprRes&& case_res);
+    virtual std::optional<bool> which_match(
+        Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> var);
+
     virtual ExprRes eval_as_cond_ident(Ref<ast::IfAs> node);
     virtual Ref<Type> resolve_as_cond_type(Ref<ast::IfAs> node);
     virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(

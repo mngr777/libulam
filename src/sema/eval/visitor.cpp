@@ -19,6 +19,8 @@
 #endif
 #include "src/debug.hpp"
 
+// TODO: handle evl::NoExec flag?
+
 namespace ulam::sema {
 
 EvalVisitor::EvalVisitor(Ref<Program> program, eval_flags_t flags):
@@ -210,29 +212,18 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
     assert(node->has_expr());
 
     auto scope_raii{_scope_stack.raii(scp::Break)};
-    bool matched = false;
-
-    // eval switch expr, store result in tmp var
-    auto ev = expr_visitor(scope());
-    Ptr<Var> var{};
-    {
-        ExprRes res = node->expr()->accept(*ev);
-        if (!res)
-            throw EvalExceptError("cannot eval which expr");
-        var = make<Var>(res.move_typed_value());
-    }
-
+    auto var = make_which_tmp_var(node);
     try {
+        bool matched = false;
         for (unsigned n = 0; n < node->case_num(); ++n) {
             // does current case match (or previous fall through)?
             auto case_ = node->case_(n);
             matched = matched || case_->is_default();
             if (!matched) {
-                auto [is_match, ok] =
-                    ev->match(node->expr(), ref(var), case_->expr());
-                if (!ok)
-                    throw EvalExceptError("cannot eval case expr");
-                matched = is_match;
+                auto is_match =
+                    which_match(node->expr(), case_->expr(), ref(var));
+                assert(is_match.has_value());
+                matched = is_match.value();
             }
 
             // eval case stmt
@@ -415,6 +406,58 @@ void EvalVisitor::var_init_default(Ref<Var> var, bool in_expr) {
 void EvalVisitor::var_init(Ref<Var> var, bool in_expr) {
     assert(var && var->is_ready());
     assert(var->value().empty());
+}
+
+Ptr<Var> EvalVisitor::make_which_tmp_var(Ref<ast::Which> node) {
+    auto res = eval_which_expr(node);
+    return make<Var>(res.move_typed_value());
+}
+
+ExprRes EvalVisitor::eval_which_expr(Ref<ast::Which> node) {
+    assert(node->has_expr());
+    return eval_expr(node->expr());
+}
+
+ExprRes EvalVisitor::eval_which_match(
+    Ref<ast::Expr> expr,
+    Ref<ast::Expr> case_expr,
+    ExprRes&& expr_res,
+    ExprRes&& case_res) {
+    auto res = expr_visitor(scope())->binary_op(
+        case_expr, Op::Equal, expr, std::move(expr_res), case_expr,
+        std::move(case_res));
+    if (!res || (!has_flag(evl::NoExec) && res.value().empty()))
+        throw EvalExceptError("failed to match eval which case");
+    return res;
+
+    // cast to Bool(1) just in case
+    auto boolean = builtins().boolean();
+    auto cast = cast_helper(scope(), flags());
+    res = cast->cast(case_expr, boolean, res.move_typed_value());
+    if (!res)
+        throw EvalExceptError("failed to cast match result to Bool");
+    return res;
+}
+
+std::optional<bool> EvalVisitor::which_match(
+    Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> tmp_var) {
+    assert(case_expr);
+    ExprRes expr_res{tmp_var->type(), Value{tmp_var->lvalue()}};
+    auto ev = expr_visitor(scope(), evl::Consteval);
+    auto case_res = case_expr->accept(*ev);
+    if (!case_res)
+        throw EvalExceptError("failed to eval which case");
+
+    auto res = eval_which_match(
+        expr, case_expr, std::move(expr_res), std::move(case_res));
+    if (res.value().empty()) {
+        assert(has_flag(evl::NoExec));
+        return {};
+    }
+
+    auto boolean = builtins().boolean();
+    assert(res.type() == boolean);
+    return boolean->is_true(res.move_value().move_rvalue());
 }
 
 ExprRes EvalVisitor::eval_as_cond_ident(Ref<ast::IfAs> node) {

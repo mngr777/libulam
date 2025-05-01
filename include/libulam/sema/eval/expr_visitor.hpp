@@ -20,6 +20,7 @@ namespace ulam::sema {
 class EvalVisitor;
 
 class EvalExprVisitor : public EvalHelper, public ast::ExprVisitor {
+    friend EvalVisitor;
 public:
     EvalExprVisitor(
         EvalVisitor& eval,

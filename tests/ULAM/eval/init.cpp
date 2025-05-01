@@ -23,6 +23,9 @@ ulam::sema::ExprRes EvalInit::eval_array_list(
     unsigned depth,
     ulam::Var::flags_t var_flags) {
     auto array = Base::eval_array_list(array_type, list, depth, var_flags);
+    if (has_flag(evl::NoCodegen))
+        return array;
+
     auto array_data = array.has_data() ? exp::data(array) : std::string{};
     auto data = exp::data_combine("{ " + array_data + " }");
     exp::set_data(array, data);
@@ -35,6 +38,9 @@ ulam::sema::ExprRes EvalInit::eval_array_list_item(
     unsigned depth,
     ulam::Var::flags_t var_flags) {
     auto res = Base::eval_array_list_item(type, item_v, depth, var_flags);
+    if (has_flag(evl::NoCodegen))
+        return res;
+
     // NOTE: _not_ replacing _const_ var consteval variables, see t3250, t3882
     if (res.value().is_consteval() && !(var_flags & ulam::Var::Const)) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
@@ -51,13 +57,16 @@ ulam::sema::ExprRes EvalInit::array_set(
     ulam::sema::ExprRes&& item,
     bool autofill,
     ulam::Var::flags_t var_flags) {
-
-    if (!autofill)
-        exp::append(array, exp::data(item), ", ");
-    std::string data = exp::data(array);
+    std::string data;
+    if (!has_flag(evl::NoCodegen)) {
+        if (!autofill)
+            exp::append(array, exp::data(item), ", ");
+        data = exp::data(array);
+    }
     array = Base::array_set(
         std::move(array), idx, std::move(item), autofill, var_flags);
-    exp::set_data(array, data);
+    if (!data.empty())
+        exp::set_data(array, data);
     return std::move(array);
 }
 

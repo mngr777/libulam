@@ -1,6 +1,7 @@
 #include "./funcall.hpp"
 #include "./expr_res.hpp"
-#include "tests/ULAM/eval/flags.hpp"
+#include "./flags.hpp"
+#include <libulam/sema/eval/flags.hpp>
 #include <string>
 
 namespace {
@@ -19,20 +20,21 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
     ulam::Ref<ulam::Fun> fun,
     ulam::sema::ExprRes&& callable,
     ulam::sema::ExprResList&& args) {
+    std::string data;
+    if (!has_flag(evl::NoCodegen)) {
+        data = exp::data(callable);
+        replace(data, "{args}", arg_data(args));
 
-    auto data = exp::data(callable);
-    replace(data, "{args}", arg_data(args));
-
-    if (!fun->is_op() || fun->is_op_alias()) {
-        replace(data, "{fun}", str(fun->name_id()));
-    } else {
-        // TODO: operators
+        if (!fun->is_op() || fun->is_op_alias()) {
+            replace(data, "{fun}", str(fun->name_id()));
+        } else {
+            // TODO: operators
+        }
     }
-
     auto res =
         Base::funcall_callable(node, fun, std::move(callable), std::move(args));
-
-    exp::set_data(res, data);
+    if (!data.empty())
+        exp::set_data(res, data);
     return res;
 }
 
@@ -42,14 +44,15 @@ ulam::sema::ExprRes EvalFuncall::funcall_obj(
     ulam::sema::ExprRes&& obj,
     ulam::sema::ExprResList&& args) {
     assert(!fun->is_op() || fun->is_op_alias());
-
-    auto data = exp::data(obj);
-    auto call_data = arg_data(args) + std::string{str(fun->name_id())};
-    data = exp::data_combine(data, call_data, ".");
-
+    std::string data;
+    if (!has_flag(evl::NoCodegen)) {
+        data = exp::data(obj);
+        auto call_data = arg_data(args) + std::string{str(fun->name_id())};
+        data = exp::data_combine(data, call_data, ".");
+    }
     auto res = Base::funcall_obj(node, fun, std::move(obj), std::move(args));
-
-    res.set_data(data);
+    if (!data.empty())
+        res.set_data(data);
     return res;
 }
 

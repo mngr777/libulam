@@ -6,6 +6,7 @@
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
+#include "src/semantic/detail/leximited.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -13,6 +14,18 @@
 #    define ULAM_DEBUG_PREFIX "[compiler/EvalVisitor] "
 #endif
 #include "src/debug.hpp"
+
+namespace {
+
+std::string which_tmp_type_name(const std::string& idx) {
+    return "_SWITCHTYPEDEF" + idx;
+}
+
+std::string which_tmp_var_name(const std::string& idx) {
+    return "Uh_switchcond" + idx;
+}
+
+} // namespace
 
 ulam::sema::ExprRes EvalVisitor::eval(ulam::Ref<ulam::ast::Block> block) {
     // codegen
@@ -66,7 +79,6 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
-    // codegen
     if (!codegen_enabled()) {
         Base::visit(node);
         return;
@@ -146,7 +158,39 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     // body
     node->body()->accept(*this);
 
-    append("_" + std::to_string(next_loop_idx()) + ": while");
+    append("_" + std::to_string(next_tmp_idx()) + ": while");
+    block_close();
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
+    if (!codegen_enabled()) {
+        Base::visit(node);
+        return;
+    }
+
+    auto label_idx = std::to_string(next_tmp_idx());
+    auto tmp_idx = ulam::detail::leximited((ulam::Unsigned)next_tmp_idx());
+    auto ctx_raii = _ctx_stack.raii<std::string>(tmp_idx);
+
+    auto scope_raii{_scope_stack.raii(ulam::scp::Break)};
+    block_open();
+
+    ulam::Ptr<ulam::Var> var = make_which_tmp_var(node);
+    assert(var);
+
+    for (unsigned n = 0; n < node->case_num(); ++n) {
+        auto case_ = node->case_(n);
+        if (case_->expr())
+            which_match(node->expr(), case_->expr(), ulam::ref(var));
+        if (case_->has_branch()) {
+            case_->branch()->accept(*this);
+        }
+        if (!case_->is_default()) {
+            append("if");
+        } else {
+            append("else else _" + label_idx + ":");
+        }
+    }
     block_close();
 }
 
@@ -174,7 +218,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     // body
     node->body()->accept(*this);
 
-    append("_" + std::to_string(next_loop_idx()) + ":");
+    append("_" + std::to_string(next_tmp_idx()) + ":");
     if (node->has_upd()) {
         auto upd_res = eval_expr(node->upd());
         if (upd_res.has_data())
@@ -194,6 +238,22 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
     } else {
         throw ulam::sema::EvalExceptReturn(node, std::move(res));
     }
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::Break> node) {
+    if (!codegen_enabled()) {
+        Base::visit(node);
+        return;
+    }
+    append("break");
+}
+
+void EvalVisitor::visit(ulam::Ref<ulam::ast::Continue> node) {
+    if (!codegen_enabled()) {
+        Base::visit(node);
+        return;
+    }
+    append("continue");
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
@@ -265,8 +325,7 @@ void EvalVisitor::var_init_expr(
     Base::var_init_expr(var, std::move(init), in_expr);
     if (!in_expr && codegen_enabled()) {
         append("=");
-        append(data);
-        append("; ", true);
+        append(data + "; ");
     }
 }
 
@@ -283,14 +342,61 @@ void EvalVisitor::var_init(ulam::Ref<ulam::Var> var, bool in_expr) {
     }
 }
 
+ulam::Ptr<ulam::Var>
+EvalVisitor::make_which_tmp_var(ulam::Ref<ulam::ast::Which> node) {
+    if (!codegen_enabled())
+        return Base::make_which_tmp_var(node);
+
+    const auto& tmp_idx = _ctx_stack.top<std::string>();
+    auto res = Base::eval_which_expr(node);
+    assert(res);
+
+    auto stringifier = make_stringifier();
+    auto type = res.type()->canon();
+    auto type_str = out::type_str(stringifier, type);
+    auto type_dim_str = out::type_dim_str(type);
+
+    // tmp typedef
+    append("typedef");
+    append(type_str);
+    append(which_tmp_type_name(tmp_idx) + type_dim_str + "; ");
+    // tmp var def
+    append(type_str);
+    append(which_tmp_var_name(tmp_idx) + type_dim_str);
+    append("=");
+    append(exp::data(res) + "; ");
+
+    return ulam::make<ulam::Var>(res.move_typed_value());
+}
+
+ulam::sema::ExprRes EvalVisitor::eval_which_match(
+    ulam::Ref<ulam::ast::Expr> expr,
+    ulam::Ref<ulam::ast::Expr> case_expr,
+    ulam::sema::ExprRes&& expr_res,
+    ulam::sema::ExprRes&& case_res) {
+    if (codegen_enabled()) {
+        const auto& idx = _ctx_stack.top<std::string>();
+        exp::set_data(expr_res, which_tmp_var_name(idx));
+    }
+    auto res = Base::eval_which_match(
+        expr, case_expr, std::move(expr_res), std::move(case_res));
+    if (codegen_enabled()) {
+        append(exp::data(res));
+        append("cond");
+    }
+    return res;
+}
+
 ulam::sema::ExprRes EvalVisitor::_eval_expr(
     ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t flags) {
     auto res = Base::_eval_expr(expr, flags);
     assert(res);
-    debug() << "expr: "
-            << (res.has_data() ? res.data<std::string>()
-                               : std::string{"no data"})
-            << "\n";
+    if (codegen_enabled()) {
+        debug() << "expr: "
+                << (res.has_data() ? res.data<std::string>()
+                    : std::string{"no data"})
+                << "\n";
+    } 
     return res;
 }
 
