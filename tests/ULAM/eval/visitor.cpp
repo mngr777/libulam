@@ -389,8 +389,8 @@ ulam::sema::ExprRes EvalVisitor::eval_which_match(
 }
 
 ulam::sema::ExprRes EvalVisitor::_eval_expr(
-    ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t flags) {
-    auto res = Base::_eval_expr(expr, flags);
+    ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t flags_) {
+    auto res = Base::_eval_expr(expr, flags_);
     assert(res);
     if (codegen_enabled()) {
         debug() << "expr: "
@@ -399,6 +399,13 @@ ulam::sema::ExprRes EvalVisitor::_eval_expr(
                 << "\n";
     }
     return res;
+}
+
+ulam::sema::ExprRes EvalVisitor::_to_boolean(
+    ulam::Ref<ulam::ast::Expr> expr,
+    ulam::sema::ExprRes&& res,
+    ulam::sema::eval_flags_t flags_) {
+    return Base::_to_boolean(expr, std::move(res), flags_ | evl::NoCodegen);
 }
 
 void EvalVisitor::block_open(bool nospace) {
