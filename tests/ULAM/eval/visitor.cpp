@@ -8,6 +8,7 @@
 #include "./init.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <libulam/sema/eval/except.hpp>
+#include <list>
 
 #ifdef DEBUG_EVAL
 #    define ULAM_DEBUG
@@ -17,13 +18,34 @@
 
 namespace {
 
-std::string which_tmp_type_name(const std::string& idx) {
-    return "_SWITCHTYPEDEF" + idx;
-}
+class WhichContext {
+public:
+    WhichContext(const std::string& idx):
+        _tmp_type_name{"_SWITCHTYPEDEF" + idx},
+        _tmp_var_name{"Uh_switchcond" + idx} {}
 
-std::string which_tmp_var_name(const std::string& idx) {
-    return "Uh_switchcond" + idx;
-}
+    const std::string& tmp_type_name() const { return _tmp_type_name; }
+    const std::string& tmp_var_name() const { return _tmp_var_name; }
+
+    unsigned cond_num() const { return _conds.size(); }
+
+    std::string cond_str() {
+        std::string str;
+        for (const auto& cond : _conds)
+            str += (str.empty() ? "" : " ") + cond;
+        for (unsigned i = 1; i < _conds.size(); ++i)
+            str += " ||";
+        _conds.clear();
+        return str;
+    }
+
+    void add_cond(std::string&& cond) { _conds.push_back(std::move(cond)); }
+
+private:
+    std::string _tmp_type_name;
+    std::string _tmp_var_name;
+    std::list<std::string> _conds;
+};
 
 } // namespace
 
@@ -171,7 +193,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
 
     auto label_idx = std::to_string(next_tmp_idx());
     auto tmp_idx = ulam::detail::leximited((ulam::Unsigned)next_tmp_idx());
-    auto ctx_raii = _ctx_stack.raii<std::string>(tmp_idx);
+    auto ctx_raii = _ctx_stack.raii<WhichContext>(tmp_idx);
+    auto& ctx = _ctx_stack.top<WhichContext>();
 
     auto scope_raii{_scope_stack.raii(ulam::scp::Break)};
     block_open();
@@ -183,15 +206,21 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
         auto case_ = node->case_(n);
         if (case_->expr())
             which_match(node->expr(), case_->expr(), ulam::ref(var));
+        if (!case_->is_default() && case_->has_branch()) {
+            append(ctx.cond_str());
+            append("cond");
+        }
+
         if (case_->has_branch()) {
             case_->branch()->accept(*this);
-        }
-        if (!case_->is_default()) {
-            append("if");
-        } else {
-            append("else else _" + label_idx + ":");
+            if (!case_->is_default()) {
+                append("if");
+            } else if (ctx.cond_num() == 0) {
+                append("else");
+            }
         }
     }
+    append("else _" + label_idx + ":");
     block_close();
 }
 
@@ -348,7 +377,7 @@ EvalVisitor::make_which_tmp_var(ulam::Ref<ulam::ast::Which> node) {
     if (!codegen_enabled())
         return Base::make_which_tmp_var(node);
 
-    const auto& tmp_idx = _ctx_stack.top<std::string>();
+    auto& ctx = _ctx_stack.top<WhichContext>();
     auto res = Base::eval_which_expr(node);
     assert(res);
 
@@ -360,10 +389,10 @@ EvalVisitor::make_which_tmp_var(ulam::Ref<ulam::ast::Which> node) {
     // tmp typedef
     append("typedef");
     append(type_str);
-    append(which_tmp_type_name(tmp_idx) + type_dim_str + "; ");
+    append(ctx.tmp_type_name() + type_dim_str + "; ");
     // tmp var def
     append(type_str);
-    append(which_tmp_var_name(tmp_idx) + type_dim_str);
+    append(ctx.tmp_var_name() + type_dim_str);
     append("=");
     append(exp::data(res) + "; ");
 
@@ -376,14 +405,14 @@ ulam::sema::ExprRes EvalVisitor::eval_which_match(
     ulam::sema::ExprRes&& expr_res,
     ulam::sema::ExprRes&& case_res) {
     if (codegen_enabled()) {
-        const auto& idx = _ctx_stack.top<std::string>();
-        exp::set_data(expr_res, which_tmp_var_name(idx));
+        const auto& ctx = _ctx_stack.top<WhichContext>();
+        exp::set_data(expr_res, ctx.tmp_var_name());
     }
     auto res = Base::eval_which_match(
         expr, case_expr, std::move(expr_res), std::move(case_res));
     if (codegen_enabled()) {
-        append(exp::data(res));
-        append("cond");
+        auto& ctx = _ctx_stack.top<WhichContext>();
+        ctx.add_cond(exp::data(res));
     }
     return res;
 }
