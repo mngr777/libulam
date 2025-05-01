@@ -1,4 +1,5 @@
 #pragma once
+#include "./context_stack.hpp"
 #include "./stringifier.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -25,7 +26,10 @@ public:
     void visit(ulam::Ref<ulam::ast::IfAs> node) override;
     void visit(ulam::Ref<ulam::ast::For> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
+    void visit(ulam::Ref<ulam::ast::Which> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
+    void visit(ulam::Ref<ulam::ast::Break> node) override;
+    void visit(ulam::Ref<ulam::ast::Continue> node) override;
     void visit(ulam::Ref<ulam::ast::ExprStmt> node) override;
     void visit(ulam::Ref<ulam::ast::EmptyStmt> node) override;
 
@@ -62,11 +66,20 @@ protected:
     void var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) override;
     void var_init(ulam::Ref<ulam::Var> var, bool in_expr) override;
 
+    ulam::Ptr<ulam::Var>
+    make_which_tmp_var(ulam::Ref<ulam::ast::Which> node) override;
+
+    ulam::sema::ExprRes eval_which_match(
+        ulam::Ref<ulam::ast::Expr> expr,
+        ulam::Ref<ulam::ast::Expr> case_expr,
+        ulam::sema::ExprRes&& expr_res,
+        ulam::sema::ExprRes&& case_res) override;
+
     ulam::sema::ExprRes _eval_expr(
         ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;
 
 private:
-    unsigned next_loop_idx() { return ++_loop_idx; }
+    unsigned next_tmp_idx() { return ++_tmp_idx; }
 
     void block_open(bool nospace = false);
     void block_close(bool nospace = false);
@@ -75,9 +88,10 @@ private:
     void set_next_prefix(std::string prefix);
     std::string move_next_prefix();
 
+    Stringifier make_stringifier();
+
     std::string _data;
     std::string _next_prefix;
-    unsigned _loop_idx{0};
-
-    Stringifier make_stringifier();
+    unsigned _tmp_idx{0};
+    EvalContextStack _ctx_stack;
 };

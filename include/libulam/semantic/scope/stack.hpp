@@ -27,8 +27,8 @@ public:
 
     ScopeStack() {}
 
-    ScopeStack(ScopeStack&&) = default;
-    ScopeStack& operator=(ScopeStack&&) = default;
+    ScopeStack(const ScopeStack&) = default;
+    ScopeStack& operator=(const ScopeStack&) = default;
 
     std::size_t size() const { return _stack.size(); }
     bool empty() const { return _stack.empty(); }
