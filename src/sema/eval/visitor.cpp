@@ -428,15 +428,9 @@ ExprRes EvalVisitor::eval_which_match(
         std::move(case_res));
     if (!res || (!has_flag(evl::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to match eval which case");
-    return res;
 
     // cast to Bool(1) just in case
-    auto boolean = builtins().boolean();
-    auto cast = cast_helper(scope(), flags());
-    res = cast->cast(case_expr, boolean, res.move_typed_value());
-    if (!res)
-        throw EvalExceptError("failed to cast match result to Bool");
-    return res;
+    return to_boolean(case_expr, std::move(res));
 }
 
 std::optional<bool> EvalVisitor::which_match(
@@ -581,16 +575,24 @@ bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
     auto res = _eval_expr(expr, flags);
     if (!res)
         throw EvalExceptError("failed to eval condition");
+    res = to_boolean(expr, std::move(res), flags);
+    assert(res);
+    return builtins().boolean()->is_true(res.move_value().move_rvalue());
+}
 
-    // cast to Bool(1)
+ExprRes EvalVisitor::to_boolean(
+    Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags_) {
+    return _to_boolean(expr, std::move(res), flags() | flags_);
+}
+
+ExprRes EvalVisitor::_to_boolean(
+    Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags) {
     auto boolean = builtins().boolean();
     auto cast = cast_helper(scope(), flags);
-    res = cast->cast(expr, boolean, std::move(res), true);
-    if (!res)
-        return false;
-    if (!(flags & evl::NoExec) && res.value().empty())
-        throw EvalExceptError("empty value in condition");
-    return boolean->is_true(res.move_value().move_rvalue());
+    res = cast->cast(expr, boolean, std::move(res), false);
+    if (!res || (!(flags & evl::NoExec) && res.value().empty()))
+        throw EvalExceptError("failed to cast to boolean value");
+    return std::move(res);
 }
 
 } // namespace ulam::sema

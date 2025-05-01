@@ -76,7 +76,12 @@ protected:
         ulam::sema::ExprRes&& case_res) override;
 
     ulam::sema::ExprRes _eval_expr(
-        ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t) override;
+        ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t flags_) override;
+
+    ulam::sema::ExprRes _to_boolean(
+        ulam::Ref<ulam::ast::Expr> expr,
+        ulam::sema::ExprRes&& res,
+        ulam::sema::eval_flags_t flags_) override;
 
 private:
     unsigned next_tmp_idx() { return ++_tmp_idx; }

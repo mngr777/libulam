@@ -115,6 +115,9 @@ protected:
     bool eval_cond(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
     virtual bool _eval_cond(Ref<ast::Expr> expr, eval_flags_t flags);
 
+    ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
+
     Ref<Scope> scope() { return _scope_stack.top(); }
 
     EvalStack _stack;
