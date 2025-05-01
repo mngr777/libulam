@@ -149,14 +149,19 @@ ExprRes EvalExprVisitor::apply_binary_op(
         if (l_is_ref != r_is_ref) {
             exp::add_cast(l_is_ref ? left : right);
         }
-        if (r_type == l_type) {
-            // boolean values are converted to Bool(1)
-            if (l_type->is(ulam::BoolId) && l_type->bitsize() != 1) {
+
+        if (l_type->is(ulam::BoolId) && r_type->is(ulam::BoolId)) {
+            // Bool types are converted to Bool(1)
+            if (l_type->bitsize() != 1)
                 exp::add_cast(left);
+            if (r_type->bitsize() != 1)
                 exp::add_cast(right);
-            }
             break;
         }
+
+        if (l_type == r_type)
+            break;
+
         if (l_type->is_prim() && ulam::has_bitsize(l_type->bi_type_id())) {
             assert(r_type->is(l_type->bi_type_id()));
             if (l_type->bitsize() < r_type->bitsize()) {

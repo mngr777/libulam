@@ -65,7 +65,7 @@ TypedValue BoolType::binary_op(
     assert(l_rval.empty() || l_rval.is<Unsigned>());
     assert(r_rval.empty() || r_rval.is<Unsigned>());
 
-    auto type = builtins().bool_type(std::max(bitsize(), r_type->bitsize()));
+    auto type = builtins().bool_type(std::max(bitsize(), bitsize()));
     bool is_unknown = l_rval.empty() || r_rval.empty();
     if (is_unknown)
         return {type, Value{RValue{}}};
