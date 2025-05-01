@@ -145,6 +145,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
         return;
     }
 
+    auto tmp_idx = std::to_string(next_tmp_idx());
     auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
     block_open();
 
@@ -158,7 +159,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     // body
     node->body()->accept(*this);
 
-    append("_" + std::to_string(next_tmp_idx()) + ": while");
+    append("_" + tmp_idx + ": while");
     block_close();
 }
 
@@ -253,7 +254,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Continue> node) {
         Base::visit(node);
         return;
     }
-    append("continue");
+    append("goto");
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
@@ -394,9 +395,9 @@ ulam::sema::ExprRes EvalVisitor::_eval_expr(
     if (codegen_enabled()) {
         debug() << "expr: "
                 << (res.has_data() ? res.data<std::string>()
-                    : std::string{"no data"})
+                                   : std::string{"no data"})
                 << "\n";
-    } 
+    }
     return res;
 }
 
