@@ -129,7 +129,11 @@ prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
     } break;
     case ops::Kind::Equality: {
         if (!is_numeric(l_type)) {
-            errors.second = check_type_match(r_type, r_tv.value(), l_type);
+            // NOTE: any Bool(a), Bool(b) values can be checked for equality
+            errors.second =
+                l_type->is(BoolId)
+                    ? check_type_match(r_type, r_tv.value(), BoolId)
+                    : check_type_match(r_type, r_tv.value(), l_type);
             return errors;
         }
         [[fallthrough]];
