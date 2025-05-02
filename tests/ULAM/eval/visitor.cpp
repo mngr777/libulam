@@ -6,6 +6,7 @@
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <libulam/sema/eval/except.hpp>
 #include <list>
@@ -20,9 +21,19 @@ namespace {
 
 using ctx_type_t = EvalContextStack::type_t;
 
-class WhichContext {
+class ForContext {
 public:
     static constexpr ctx_type_t Type = 1;
+};
+
+class WhileContext {
+public:
+    static constexpr ctx_type_t Type = 2;
+};
+
+class WhichContext {
+public:
+    static constexpr ctx_type_t Type = 3;
 
     WhichContext(const std::string& idx):
         _tmp_type_name{"_SWITCHTYPEDEF" + idx},
@@ -45,13 +56,20 @@ public:
 
     void add_cond(std::string&& cond) { _conds.push_back(std::move(cond)); }
 
+    bool case_has_breaks() const { return _case_has_breaks; }
+
+    void set_case_has_breaks(bool has_breaks) {
+        _case_has_breaks = has_breaks;
+        _has_breaks = _has_breaks || has_breaks;
+    }
+
     bool has_breaks() const { return _has_breaks; }
-    void set_has_breaks(bool has_breaks) { _has_breaks = has_breaks; }
 
 private:
     std::string _tmp_type_name;
     std::string _tmp_var_name;
     std::list<std::string> _conds;
+    bool _case_has_breaks{false};
     bool _has_breaks{false};
 };
 
@@ -169,6 +187,41 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
     block_close();
 }
 
+void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
+    if (!codegen_enabled()) {
+        Base::visit(node);
+        return;
+    }
+
+    auto ctx_raii = _ctx_stack.raii<ForContext>({});
+    auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
+    block_open();
+
+    // init
+    if (node->has_init())
+        node->init()->accept(*this);
+
+    // cond, TODO: cast to Bool
+    if (node->has_cond()) {
+        auto cond_res = eval_expr(node->cond());
+        if (cond_res.has_data())
+            append(cond_res.data<std::string>());
+    }
+    append("cond");
+
+    // body
+    node->body()->accept(*this);
+
+    append("_" + std::to_string(next_tmp_idx()) + ":");
+    if (node->has_upd()) {
+        auto upd_res = eval_expr(node->upd());
+        if (upd_res.has_data())
+            append(upd_res.data<std::string>());
+    }
+    append("while");
+    block_close();
+}
+
 void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
@@ -176,6 +229,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     }
 
     auto tmp_idx = std::to_string(next_tmp_idx());
+    auto ctx_raii = _ctx_stack.raii<WhileContext>({});
     auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
     block_open();
 
@@ -210,61 +264,48 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
     ulam::Ptr<ulam::Var> var = make_which_tmp_var(node);
     assert(var);
 
+    bool fallthru = false;
+    unsigned non_default_num = 0;
     for (unsigned n = 0; n < node->case_num(); ++n) {
         auto case_ = node->case_(n);
+        bool is_default = case_->is_default();
+        bool has_branch = case_->has_branch();
+        ctx.set_case_has_breaks(false);
+        if (!is_default)
+            ++non_default_num;
+
         if (case_->expr())
             which_match(node->expr(), case_->expr(), ulam::ref(var));
-        if (!case_->is_default() && case_->has_branch()) {
+
+        bool has_cond = fallthru;
+        if (!is_default && has_branch) {
             append(ctx.cond_str());
             append("cond");
+            has_cond = true;
+
+        } else if (is_default && n == 0) {
+            // default case is the only one, t41038
+            append("true");
+            append("cond");
+            has_cond = true;
         }
 
-        if (case_->has_branch()) {
+        if (has_branch) {
             case_->branch()->accept(*this);
-            if (!case_->is_default()) {
-                append("if");
-            } else if (ctx.cond_num() == 0) {
+            if (has_cond) {
+                if (!is_default || !fallthru)
+                    append("if");
+            } else {
                 append("else");
             }
         }
+        fallthru = !has_branch;
     }
-    append("else");
+
+    if (non_default_num > 0)
+        append("else");
     if (ctx.has_breaks())
         append("_" + label_idx + ":");
-    block_close();
-}
-
-void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
-    if (!codegen_enabled()) {
-        Base::visit(node);
-        return;
-    }
-
-    auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
-    block_open();
-
-    // init
-    if (node->has_init())
-        node->init()->accept(*this);
-
-    // cond, TODO: cast to Bool
-    if (node->has_cond()) {
-        auto cond_res = eval_expr(node->cond());
-        if (cond_res.has_data())
-            append(cond_res.data<std::string>());
-    }
-    append("cond");
-
-    // body
-    node->body()->accept(*this);
-
-    append("_" + std::to_string(next_tmp_idx()) + ":");
-    if (node->has_upd()) {
-        auto upd_res = eval_expr(node->upd());
-        if (upd_res.has_data())
-            append(upd_res.data<std::string>());
-    }
-    append("while");
     block_close();
 }
 
@@ -286,7 +327,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Break> node) {
         return;
     }
     if (_ctx_stack.top_type_is(WhichContext::Type))
-        _ctx_stack.top<WhichContext>().set_has_breaks(true);
+        _ctx_stack.top<WhichContext>().set_case_has_breaks(true);
     append("break");
 }
 
