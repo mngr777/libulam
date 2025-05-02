@@ -227,8 +227,10 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
             }
 
             // eval case stmt
-            if (matched && case_->has_branch())
+            if (matched && case_->has_branch()) {
                 case_->branch()->accept(*this);
+                break; // implicit break, to fallthru
+            }
         }
     } catch (const EvalExceptBreak&) {
         debug() << "break\n";
