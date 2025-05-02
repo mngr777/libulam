@@ -5,6 +5,7 @@ namespace ulam::sema {
 enum class ExprError {
     Ok,
     Error,
+    Nil,
     NoSelf,
     NoSuper,
     BaseNotFound,
@@ -16,7 +17,6 @@ enum class ExprError {
     UnresolvableProp,
     UnresolvableFunSet,
     NotAssignable,
-    NotImplemented,
     NotFunction,
     NotClassConst,
     NotArray,
@@ -47,7 +47,8 @@ enum class ExprError {
     InitNotEnoughItems,
     InitTooManyItems,
     InitPropNotInClass,
-    InitNotProp
+    InitNotProp,
+    TernaryNonMatchingTypes
 };
 
 }

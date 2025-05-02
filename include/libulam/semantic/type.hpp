@@ -69,6 +69,7 @@ public:
 
     virtual bool is_constructible() const { return false; }
     virtual RValue construct();
+    Value empty_value() const;
 
     RValue load(const Bits& data, bitsize_t off);
     void store(Bits& data, bitsize_t off, const RValue& rval);
@@ -121,6 +122,9 @@ public:
 
     bool is_same(Ref<const Type> type) const;
     bool is_same_actual(Ref<const Type> type) const;
+
+    virtual Ref<Type> common(Ref<Type> type);
+    virtual Ref<Type> common(const Value& val1, Ref<Type> type, const Value& val2);
 
     bool is_expl_castable_to(Ref<const Type> type) const;
     bool is_impl_castable_to(Ref<const Type> type) const;

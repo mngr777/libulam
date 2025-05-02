@@ -17,6 +17,10 @@ Type::~Type() {}
 
 RValue Type::construct() { assert(false); }
 
+Value Type::empty_value() const {
+    return is_ref() ? Value{LValue{}} : Value{RValue{}};
+}
+
 RValue Type::load(const Bits& data, bitsize_t off) {
     return load(data.view(), off);
 }
@@ -177,6 +181,18 @@ bool Type::is_same(Ref<const Type> type) const {
 
 bool Type::is_same_actual(Ref<const Type> type) const {
     return actual() == type->actual();
+}
+
+Ref<Type> Type::common(Ref<Type> type) {
+    if (is_same(type))
+        return this;
+    return {};
+}
+
+Ref<Type> Type::common(const Value& val1, Ref<Type> type, const Value& val2) {
+    if (is_same(type))
+        return this;
+    return {};
 }
 
 bool Type::is_expl_castable_to(Ref<const Type> type) const {
@@ -538,7 +554,7 @@ conv_cost_t RefType::conv_cost(
     return refd()->conv_cost(type->actual(), val, allow_cast); // ??
 }
 
-// TODO: review
+// TODO: Type::is_refable_as()
 Value RefType::cast_to(Ref<Type> type, Value&& val) {
     assert(val.is_lvalue());
     if (!type->is_ref())

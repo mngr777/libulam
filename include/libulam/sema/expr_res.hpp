@@ -1,7 +1,5 @@
 #pragma once
-#include <algorithm>
 #include <any>
-#include <cassert>
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/expr_error.hpp>
@@ -23,50 +21,27 @@ public:
     ExprRes(TypedValue&& tv):
         _typed_value{std::move(tv)}, _error{ExprError::Ok}, _flags{0} {}
 
-    ExprRes(Ref<Type> type, Value&& value):
-        ExprRes{{type, std::move(value)}} {}
+    ExprRes(Ref<Type> type, Value&& value): ExprRes{{type, std::move(value)}} {}
 
-    ExprRes(ExprError error = ExprError::NotImplemented):
-        _error{error}, _flags{0} {}
+    ExprRes(ExprError error = ExprError::Nil): _error{error}, _flags{0} {}
 
     ExprRes(ExprRes&&) = default;
     ExprRes& operator=(ExprRes&&) = default;
 
-    ExprRes copy() const {
-        ExprRes res;
-        if (ok()) {
-            res = {type(), value().copy()};
-        } else {
-            res = {error()};
-        }
-        res._data = _data;
-        res._flags = _flags;
-        return res;
-    }
+    ExprRes copy() const;
 
-    ExprRes derived(TypedValue&& tv) {
-        ExprRes res{std::move(tv)};
-        res._data = _data;
-        res._flags = _flags;
-        return res;
-    }
-
-    ExprRes derived(Ref<Type> type, Value&& val) {
-        return derived({type, std::move(val)});
-    }
+    ExprRes derived(TypedValue&& tv);
+    ExprRes derived(Ref<Type> type, Value&& val);
 
     bool ok() const { return _error == ExprError::Ok; }
+    bool is_nil() const { return _error == ExprError::Nil; }
     operator bool() const { return ok(); }
 
     Ref<Type> type() const { return _typed_value.type(); }
     const Value& value() const { return _typed_value.value(); }
     const TypedValue& typed_value() const { return _typed_value; }
 
-    TypedValue move_typed_value() {
-        TypedValue tv;
-        std::swap(tv, _typed_value);
-        return tv;
-    }
+    TypedValue move_typed_value();
 
     Value move_value() { return _typed_value.move_value(); }
 
@@ -119,7 +94,10 @@ public:
         return _list.back().error();
     }
 
-    void push_back(ExprRes&& res) { _list.push_back(std::move(res)); }
+    void push_back(ExprRes&& res) {
+        assert(ok());
+        _list.push_back(std::move(res));
+    }
 
     ExprRes pop_front() {
         assert(!empty());
@@ -137,15 +115,13 @@ public:
     std::size_t size() const { return _list.size(); }
     bool empty() const { return _list.empty(); }
 
-    TypedValueRefList typed_value_refs() const {
-        TypedValueRefList list;
-        for (const auto& res : _list)
-            list.push_back(std::cref(res.typed_value()));
-        return list;
-    }
+    // TODO: iterator
+    TypedValueRefList typed_value_refs() const;
 
 private:
     std::list<ExprRes> _list;
 };
+
+using ExprResPair = std::pair<ExprRes, ExprRes>;
 
 } // namespace ulam::sema

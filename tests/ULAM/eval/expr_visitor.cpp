@@ -3,8 +3,8 @@
 #include "./expr_flags.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
-#include "libulam/sema/eval/flags.hpp"
-#include "tests/ULAM/eval/stringifier.hpp"
+#include "./stringifier.hpp"
+#include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
@@ -27,6 +27,43 @@ using ExprRes = EvalExprVisitor::ExprRes;
 constexpr char FuncallPh[] = "{args}{fun}";
 
 } // namespace
+
+ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
+    if (has_flag(evl::NoCodegen))
+        return Base::visit(node);
+
+    auto cond_res = ternary_eval_cond(node);
+    if (!cond_res)
+        return cond_res;
+
+    auto [if_true_res, if_false_res] = ternary_eval_branches_noexec(node);
+    if (!if_true_res)
+        return std::move(if_true_res);
+    if (!if_false_res)
+        return std::move(if_false_res);
+
+    auto type = common_type(if_true_res, if_false_res);
+    if (!type)
+        return {ExprError::TernaryNonMatchingTypes};
+
+    auto cast = eval().cast_helper(scope(), flags());
+    if_true_res = cast->cast(node->if_true(), type, std::move(if_true_res));
+    if_false_res = cast->cast(node->if_false(), type, std::move(if_false_res));
+    if (!if_true_res)
+        return std::move(if_true_res);
+    if (!if_false_res)
+        return std::move(if_false_res);
+    assert(if_true_res.type() == if_false_res.type());
+
+    auto cond_res_data = exp::data(cond_res);
+    auto res = ternary_eval_branch(node, std::move(cond_res), type);
+    exp::append(res, cond_res_data);
+    exp::append(res, "? ");
+    exp::append(res, exp::data(if_true_res));
+    exp::append(res, ": ");
+    exp::append(res, exp::data(if_false_res));
+    return res;
+}
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
     auto res = Base::visit(node);

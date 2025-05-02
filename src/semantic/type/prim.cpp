@@ -1,7 +1,7 @@
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/prim.hpp>
-#include <sstream>
 
 namespace ulam {
 
@@ -23,11 +23,23 @@ void PrimType::store(BitsView data, bitsize_t off, const RValue& rval) {
     data.write(off, bitsize(), to_datum(rval));
 }
 
+Ref<Type> PrimType::common(Ref<Type> type) {
+    if (!type->is_prim())
+        return {};
+    return common_prim(type->as_prim());
+}
+
+Ref<Type>
+PrimType::common(const Value& val1, Ref<Type> type, const Value& val2) {
+    if (!type->is_prim())
+        return {};
+    return common_prim(val1, type->as_prim(), val2);
+}
+
 bool PrimType::is_castable_to(Ref<const Type> type, bool expl) const {
-    auto canon = type->canon();
-    if (!canon->is_prim())
+    if (!type->is_prim())
         return false;
-    return is_castable_to_prim(canon->as_prim(), expl);
+    return is_castable_to_prim(type->as_prim(), expl);
 }
 
 bool PrimType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
@@ -38,10 +50,9 @@ bool PrimType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 
 bool PrimType::is_impl_castable_to(
     Ref<const Type> type, const Value& val) const {
-    auto canon = type->canon();
-    if (!canon->is_prim())
+    if (!type->is_prim())
         return false;
-    return is_impl_castable_to_prim(canon->as_prim(), val);
+    return is_impl_castable_to_prim(type->as_prim(), val);
 }
 
 bool PrimType::is_impl_castable_to(
@@ -79,6 +90,31 @@ conv_cost_t PrimType::conv_cost(
         return prim_cast_cost(this, type->as_prim());
     ;
     return MaxConvCost;
+}
+
+Ref<Type> PrimType::common_prim(Ref<PrimType> type) {
+    if (type == this)
+        return this;
+    if (type->bi_type_id() != bi_type_id())
+        return {};
+    if (type->is_castable_to_prim(this, false))
+        return this;
+    if (is_castable_to_prim(type, false))
+        return type;
+    return {};
+}
+
+Ref<Type> PrimType::common_prim(
+    const Value& val1, Ref<PrimType> type, const Value& val2) {
+    if (type == this)
+        return this;
+    if (type->bi_type_id() != bi_type_id())
+        return {};
+    if (type->is_impl_castable_to_prim(this, val2))
+        return this;
+    if (is_impl_castable_to_prim(type, val1))
+        return type;
+    return {};
 }
 
 bool PrimType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {

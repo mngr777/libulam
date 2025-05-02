@@ -36,6 +36,10 @@ public:
     virtual RValue from_datum(Datum datum) { assert(false); }
     virtual Datum to_datum(const RValue& rval) { assert(false); }
 
+    Ref<Type> common(Ref<Type> type) override;
+    Ref<Type>
+    common(const Value& val1, Ref<Type> type, const Value& val2) override;
+
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
 
     bool
@@ -69,6 +73,11 @@ public:
     };
 
 protected:
+    Ref<Type> common_prim(Ref<PrimType> type);
+
+    Ref<Type>
+    common_prim(const Value& val1, Ref<PrimType> type, const Value& val2);
+
     virtual bool is_castable_to_prim(Ref<const PrimType> type, bool expl) const;
 
     virtual bool is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const;
@@ -127,8 +136,6 @@ public:
 
     BuiltinTypeId bi_type_id() const override { return TypeId; }
     bitsize_t bitsize() const override { return _bitsize; }
-
-
 
 protected:
     Ref<PrimTypeTpl> tpl() { return _tpl; }

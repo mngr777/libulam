@@ -144,6 +144,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/eval/init.cpp \
 	src/sema/eval/stack.cpp \
 	src/sema/eval/visitor.cpp \
+	src/sema/expr_res.cpp \
 	src/sema/out.hpp \
 	src/sema/out.cpp \
 	src/sema/init.cpp \
