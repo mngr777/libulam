@@ -16,13 +16,6 @@ public:
         ulam::Var::flags_t var_flags) override;
 
 protected:
-    ulam::sema::ExprRes cast_expr_res(
-        ulam::Ref<ulam::Type> type,
-        ulam::Ref<ulam::ast::Expr> expr,
-        ulam::sema::ExprRes&& res,
-        unsigned depth,
-        ulam::Var::flags_t var_flags) override;
-
     ulam::sema::ExprRes eval_array_list(
         ulam::Ref<ulam::ArrayType> array_type,
         ulam::Ref<ulam::ast::InitList> list,

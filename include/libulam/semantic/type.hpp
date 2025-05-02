@@ -69,7 +69,6 @@ public:
 
     virtual bool is_constructible() const { return false; }
     virtual RValue construct();
-    Value empty_value() const;
 
     RValue load(const Bits& data, bitsize_t off);
     void store(Bits& data, bitsize_t off, const RValue& rval);

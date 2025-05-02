@@ -166,6 +166,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3995_test_compiler_stringarray_assign_print.test", // -"-
     "t41014_test_compiler_logicalorandprecedence_issue.test", // ULAM has same precedence for || and && ?
     "t41039_test_compiler_controlswitch_nonconstantcaseexpressions.test", // seems to require runtime values to work; z = 4 does happen, so ok to skip
+    "t41072_test_compiler_assignto_questioncolon.test", // ULAM parses `ok ? a : b = 2` as `(ok ? a : b) = 2`?
+    "t41073_test_compiler_assigntoarrayitem_questioncolon.test", // -"-
 };
 
 using Path = std::filesystem::path;

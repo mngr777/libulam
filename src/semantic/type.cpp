@@ -17,10 +17,6 @@ Type::~Type() {}
 
 RValue Type::construct() { assert(false); }
 
-Value Type::empty_value() const {
-    return is_ref() ? Value{LValue{}} : Value{RValue{}};
-}
-
 RValue Type::load(const Bits& data, bitsize_t off) {
     return load(data.view(), off);
 }

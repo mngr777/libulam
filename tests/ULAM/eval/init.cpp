@@ -4,16 +4,6 @@
 #include "./stringifier.hpp"
 #include <string>
 
-ulam::sema::ExprRes EvalInit::cast_expr_res(
-    ulam::Ref<ulam::Type> type,
-    ulam::Ref<ulam::ast::Expr> expr,
-    ulam::sema::ExprRes&& res,
-    unsigned depth,
-    ulam::Var::flags_t var_flags) {
-    auto no_deref_cast = flags_raii(flags() | evl::NoDerefCast);
-    return Base::cast_expr_res(type, expr, std::move(res), depth, var_flags);
-}
-
 ulam::sema::ExprRes EvalInit::eval_init(
     ulam::Ref<ulam::Type> type,
     ulam::Ref<ulam::ast::InitValue> init,

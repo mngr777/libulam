@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -165,10 +166,6 @@ EvalExprVisitor::common_type(const ExprRes& res1, const ExprRes& res2) {
     auto type2 = res2.type();
     const auto& val1 = res1.value();
     const auto& val2 = res2.value();
-    if (val1.is_lvalue() && val2.is_lvalue()) {
-        type1 = type1->ref_type();
-        type2 = type2->ref_type();
-    }
     return (!val1.empty() && !val2.empty()) ? type1->common(val1, type2, val2)
                                             : type1->common(type2);
 }
@@ -802,12 +799,9 @@ ExprRes EvalExprVisitor::ternary_eval(
     if (cond_res.value().empty()) {
         auto if_true_val = if_true_res.move_value();
         auto if_false_val = if_false_res.move_value();
-        auto val = type->empty_value();
-
-        assert(val.is_lvalue() == type->is_ref());
-        assert(val.is_lvalue() == if_true_val.is_lvalue());
-        assert(val.is_lvalue() == if_false_val.is_lvalue());
-
+        auto val = (if_true_val.is_lvalue() && if_false_val.is_lvalue())
+                       ? Value{LValue{}}
+                       : Value{RValue{}};
         if (val.is_lvalue()) {
             bool is_xvalue = if_true_val.is_tmp() || if_false_val.is_tmp();
             val.lvalue().set_is_xvalue(is_xvalue);
@@ -815,12 +809,22 @@ ExprRes EvalExprVisitor::ternary_eval(
         return {type, std::move(val)};
     }
 
+    auto cast = eval().cast_helper(scope(), flags() | evl::NoDerefCast);
     auto cond_rval = cond_res.move_value().move_rvalue();
     bool cond_bool = builtins().boolean()->is_true(cond_rval);
+
+    // use noexec result if possible
+    if (cond_bool && (has_flag(evl::NoExec) || !if_true_res.value().empty())) {
+        return cast->cast(node->if_true(), type, std::move(if_true_res));
+    }
+    if (!cond_bool &&
+        (has_flag(evl::NoExec) || !if_false_res.value().empty())) {
+        return cast->cast(node->if_false(), type, std::move(if_false_res));
+    }
+
+    // exec branch
     auto branch = cond_bool ? node->if_true() : node->if_false();
     auto res = branch->accept(*this);
-
-    auto cast = eval().cast_helper(scope(), flags());
     return cast->cast(branch, type, std::move(res));
 }
 
