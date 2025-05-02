@@ -38,6 +38,13 @@ protected:
         unsigned depth,
         Var::flags_t var_flags);
 
+    virtual ExprRes cast_expr_res(
+        Ref<Type> type,
+        Ref<ast::Expr> expr,
+        ExprRes&& res,
+        unsigned depth,
+        Var::flags_t var_flags);
+
     virtual ExprRes eval_list(
         Ref<Type> type,
         Ref<ast::InitList> list,

@@ -65,13 +65,18 @@ ExprRes EvalInit::eval_expr(
     // eval
     auto ev = eval().expr_visitor(scope(), flags());
     auto res = expr->accept(*ev);
+    return cast_expr_res(type, expr, std::move(res), depth, var_flags);
+}
 
-    // cast
-    if (res) {
-        auto cast = eval().cast_helper(scope(), flags());
-        res = cast->cast(expr, type, std::move(res));
-    }
-    return res;
+ExprRes EvalInit::cast_expr_res(
+    Ref<Type> type,
+    Ref<ast::Expr> expr,
+    ExprRes&& res,
+    unsigned depth,
+    Var::flags_t var_flags) {
+    assert(res);
+    auto cast = eval().cast_helper(scope(), flags());
+    return cast->cast(expr, type, std::move(res));
 }
 
 ExprRes EvalInit::eval_list(
