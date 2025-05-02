@@ -410,29 +410,6 @@ Ref<Class> EvalExprVisitor::class_base(
     return base;
 }
 
-std::pair<bool, bool> EvalExprVisitor::match(
-    Ref<ast::Expr> var_expr, Ref<Var> var, Ref<ast::Expr> expr) {
-    ExprRes l_res{var->type(), Value{var->lvalue()}};
-    ExprRes r_res = expr->accept(*this);
-    if (!r_res)
-        return {false, false};
-
-    // apply == op
-    ExprRes res = binary_op(
-        expr, Op::Equal, var_expr, std::move(l_res), expr, std::move(r_res));
-    if (!res)
-        return {false, false};
-
-    // cast to Bool(1) just in case
-    auto boolean = builtins().boolean();
-    auto cast = eval().cast_helper(scope(), flags());
-    res = cast->cast(expr, boolean, res.move_typed_value());
-    if (!res)
-        return {false, false};
-
-    return {boolean->is_true(res.move_value().move_rvalue()), true};
-}
-
 bitsize_t
 EvalExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     debug() << __FUNCTION__ << "\n" << line_at(expr);
