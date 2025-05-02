@@ -21,6 +21,7 @@ class EvalVisitor;
 
 class EvalExprVisitor : public EvalHelper, public ast::ExprVisitor {
     friend EvalVisitor;
+
 public:
     EvalExprVisitor(
         EvalVisitor& eval,
@@ -104,8 +105,12 @@ protected:
 
     virtual ExprRes ternary_eval_cond(Ref<ast::Ternary> node);
     virtual ExprResPair ternary_eval_branches_noexec(Ref<ast::Ternary> node);
-    virtual ExprRes ternary_eval_branch(
-        Ref<ast::Ternary> node, ExprRes&& cond_res, Ref<Type> type);
+    virtual ExprRes ternary_eval(
+        Ref<ast::Ternary> node,
+        ExprRes&& cond_res,
+        Ref<Type> type,
+        ExprRes&& if_true_res,
+        ExprRes&& if_false_res);
 
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
     virtual ExprRes

@@ -182,6 +182,7 @@ public:
     Value deref();
 
     bool is_consteval() const;
+    void set_is_consteval(bool is_consteval);
 
     void with_rvalue(std::function<void(const RValue&)> cb) const;
 };

@@ -186,13 +186,13 @@ bool Type::is_same_actual(Ref<const Type> type) const {
 Ref<Type> Type::common(Ref<Type> type) {
     if (is_same(type))
         return this;
+    if (is_ref() != type->is_ref())
+        return deref()->common(type->deref());
     return {};
 }
 
 Ref<Type> Type::common(const Value& val1, Ref<Type> type, const Value& val2) {
-    if (is_same(type))
-        return this;
-    return {};
+    return common(type);
 }
 
 bool Type::is_expl_castable_to(Ref<const Type> type) const {
