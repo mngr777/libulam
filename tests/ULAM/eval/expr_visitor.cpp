@@ -55,13 +55,19 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
         return std::move(if_false_res);
     assert(if_true_res.type() == if_false_res.type());
 
-    auto cond_res_data = exp::data(cond_res);
-    auto res = ternary_eval_branch(node, std::move(cond_res), type);
-    exp::append(res, cond_res_data);
+    auto cond_data = exp::data(cond_res);
+    auto if_true_data = exp::data(if_true_res);
+    auto if_false_data = exp::data(if_false_res);
+
+    auto res = ternary_eval(
+        node, std::move(cond_res), type, std::move(if_true_res),
+        std::move(if_false_res));
+
+    exp::append(res, cond_data);
     exp::append(res, "? ");
-    exp::append(res, exp::data(if_true_res));
+    exp::append(res, if_true_data);
     exp::append(res, ": ");
-    exp::append(res, exp::data(if_false_res));
+    exp::append(res, if_false_data);
     return res;
 }
 

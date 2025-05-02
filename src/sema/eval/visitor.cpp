@@ -19,8 +19,6 @@
 #endif
 #include "src/debug.hpp"
 
-// TODO: handle evl::NoExec flag?
-
 namespace ulam::sema {
 
 EvalVisitor::EvalVisitor(Ref<Program> program, eval_flags_t flags):
@@ -457,9 +455,7 @@ std::optional<bool> EvalVisitor::which_match(
 }
 
 ExprRes EvalVisitor::eval_as_cond_ident(Ref<ast::IfAs> node) {
-    ExprRes res = node->ident()->accept(*expr_visitor(scope()));
-    if (!res)
-        throw EvalExceptError("failed to eval if-as ident");
+    auto res = eval_expr(node->ident());
     auto arg_type = res.type()->actual();
     if (!arg_type->is_object()) {
         diag().error(node->ident(), "not a class or Atom");

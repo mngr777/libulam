@@ -151,7 +151,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
     if (!type)
         return {ExprError::TernaryNonMatchingTypes};
 
-    return ternary_eval_branch(node, std::move(cond_res), type);
+    return ternary_eval(
+        node, std::move(cond_res), type, std::move(if_true_res),
+        std::move(if_false_res));
 }
 
 Ref<Type>
@@ -163,7 +165,10 @@ EvalExprVisitor::common_type(const ExprRes& res1, const ExprRes& res2) {
     auto type2 = res2.type();
     const auto& val1 = res1.value();
     const auto& val2 = res2.value();
-
+    if (val1.is_lvalue() && val2.is_lvalue()) {
+        type1 = type1->ref_type();
+        type2 = type2->ref_type();
+    }
     return (!val1.empty() && !val2.empty()) ? type1->common(val1, type2, val2)
                                             : type1->common(type2);
 }
@@ -788,10 +793,27 @@ EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
     return {node->if_true()->accept(*this), node->if_false()->accept(*this)};
 }
 
-ExprRes EvalExprVisitor::ternary_eval_branch(
-    Ref<ast::Ternary> node, ExprRes&& cond_res, Ref<Type> type) {
-    if (cond_res.value().empty())
-        return {type, type->empty_value()};
+ExprRes EvalExprVisitor::ternary_eval(
+    Ref<ast::Ternary> node,
+    ExprRes&& cond_res,
+    Ref<Type> type,
+    ExprRes&& if_true_res,
+    ExprRes&& if_false_res) {
+    if (cond_res.value().empty()) {
+        auto if_true_val = if_true_res.move_value();
+        auto if_false_val = if_false_res.move_value();
+        auto val = type->empty_value();
+
+        assert(val.is_lvalue() == type->is_ref());
+        assert(val.is_lvalue() == if_true_val.is_lvalue());
+        assert(val.is_lvalue() == if_false_val.is_lvalue());
+
+        if (val.is_lvalue()) {
+            bool is_xvalue = if_true_val.is_tmp() || if_false_val.is_tmp();
+            val.lvalue().set_is_xvalue(is_xvalue);
+        }
+        return {type, std::move(val)};
+    }
 
     auto cond_rval = cond_res.move_value().move_rvalue();
     bool cond_bool = builtins().boolean()->is_true(cond_rval);

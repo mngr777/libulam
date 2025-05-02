@@ -348,6 +348,10 @@ bool Value::is_consteval() const {
     return accept([&](const auto& val) { return val.is_consteval(); });
 }
 
+void Value::set_is_consteval(bool is_consteval) {
+    accept([&](auto& val) { val.set_is_consteval(is_consteval); });
+}
+
 void Value::with_rvalue(std::function<void(const RValue&)> cb) const {
     accept(
         [&](const LValue& lval) { lval.with_rvalue(cb); },
