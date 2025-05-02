@@ -4,6 +4,7 @@
 #include "./expr_res.hpp"
 #include "./flags.hpp"
 #include "./stringifier.hpp"
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -46,7 +47,8 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
     if (!type)
         return {ExprError::TernaryNonMatchingTypes};
 
-    auto cast = eval().cast_helper(scope(), flags());
+    auto cast_flags = flags() | ulam::sema::evl::NoDerefCast;
+    auto cast = eval().cast_helper(scope(), cast_flags);
     if_true_res = cast->cast(node->if_true(), type, std::move(if_true_res));
     if_false_res = cast->cast(node->if_false(), type, std::move(if_false_res));
     if (!if_true_res)

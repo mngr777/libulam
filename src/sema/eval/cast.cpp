@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -43,14 +44,16 @@ EvalCast::CastRes EvalCast::maybe_cast(
 
     } else if (arg.value().is_lvalue()) {
         // copy value from reference
-        // NOTE: actual dereferecing is postponed in case the argument is an
+        // NOTE: actual dereferencing is postponed in case the argument is an
         // object and custom conversion is used: conversion function must be
         // called on the same object, see t3411
+        auto no_deref = has_flag(evl::NoDerefCast);
         if (arg_type->is_ref()) {
-            status = CastDeref;
+            if (!no_deref)
+                status = CastDeref;
             arg_type = arg_type->deref();
         }
-        deref_required = true;
+        deref_required = !no_deref;
     }
 
     if (to->is_same(arg_type)) {
