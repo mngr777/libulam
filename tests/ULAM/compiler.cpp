@@ -161,8 +161,8 @@ void Compiler::write_obj_members(
     bool is_outer,
     bool is_base) {
     write_class_type_defs(os, cls);
-    if (in_main || is_outer)
-        write_class_consts(os, cls, in_main);
+    // if (in_main || is_outer)
+    write_class_consts(os, cls, in_main, is_outer);
     write_obj_props(os, cls, rval, in_main, is_outer);
     if (in_main || !is_base)
         write_obj_parent_members(os, cls, rval, in_main, is_outer);
@@ -209,20 +209,26 @@ void Compiler::write_class_type_def(
 }
 
 void Compiler::write_class_consts(
-    std::ostream& os, ulam::Ref<ulam::Class> cls, bool in_main) {
+    std::ostream& os, ulam::Ref<ulam::Class> cls, bool in_main, bool is_outer) {
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.bits_use_unsigned_suffix = true;
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.array_fmt = Stringifier::ArrayFmt::Chunks;
 
+    bool tpl_only = !(in_main || is_outer);
+
     // params as consts (t3336)
-    for (auto var : cls->params())
-        write_class_const(os, stringifier, var);
+    if (!tpl_only) {
+        for (auto var : cls->params())
+            write_class_const(os, stringifier, var);
+    }
 
     // consts
-    for (auto var : cls->consts())
-        write_class_const(os, stringifier, var);
+    for (auto var : cls->consts()) {
+        if (!tpl_only || var->node()->is_in_tpl())
+            write_class_const(os, stringifier, var);
+    }
 }
 
 void Compiler::write_class_const(

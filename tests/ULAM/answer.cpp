@@ -85,6 +85,8 @@ Answer parse_answer(const std::string_view text) {
     auto [name, is_tpl] = p.read_class_name();
     answer.set_is_tpl(is_tpl);
     answer.set_class_name(std::string{name});
+    if (is_tpl)
+        return answer; // to further parsing for templates
     p.skip_spaces();
 
     // params (TODO: needed for templates)

@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/module.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
@@ -172,8 +173,8 @@ private:
     Token _tok;
     std::stack<Token> _back;
 
-    str_id_t _cur_cls_name_id{NoStrId};
-    str_id_t _cur_fun_name_id{NoStrId};
+    Ref<ast::ClassDef> _cur_cls_def{};
+    Ref<ast::FunDef> _cur_fun_def{};
 };
 
 } // namespace ulam

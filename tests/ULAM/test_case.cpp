@@ -86,7 +86,7 @@ void TestCase::run() {
     }
 
     std::cout << "\nANSWER (raw):\n" << _answers_text << "\n";
-    std::cout << "ANSWER (parsed:)\n" << _answers << "\n";
+    std::cout << "ANSWER (parsed):\n" << _answers << "\n";
 
     if (!ok)
         throw std::invalid_argument("test case failed");
