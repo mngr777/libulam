@@ -18,8 +18,12 @@
 
 namespace {
 
+using ctx_type_t = EvalContextStack::type_t;
+
 class WhichContext {
 public:
+    static constexpr ctx_type_t Type = 1;
+
     WhichContext(const std::string& idx):
         _tmp_type_name{"_SWITCHTYPEDEF" + idx},
         _tmp_var_name{"Uh_switchcond" + idx} {}
@@ -41,10 +45,14 @@ public:
 
     void add_cond(std::string&& cond) { _conds.push_back(std::move(cond)); }
 
+    bool has_breaks() const { return _has_breaks; }
+    void set_has_breaks(bool has_breaks) { _has_breaks = has_breaks; }
+
 private:
     std::string _tmp_type_name;
     std::string _tmp_var_name;
     std::list<std::string> _conds;
+    bool _has_breaks{false};
 };
 
 } // namespace
@@ -220,7 +228,9 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
             }
         }
     }
-    append("else _" + label_idx + ":");
+    append("else");
+    if (ctx.has_breaks())
+        append("_" + label_idx + ":");
     block_close();
 }
 
@@ -275,6 +285,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Break> node) {
         Base::visit(node);
         return;
     }
+    if (_ctx_stack.top_type_is(WhichContext::Type))
+        _ctx_stack.top<WhichContext>().set_has_breaks(true);
     append("break");
 }
 
@@ -390,6 +402,7 @@ EvalVisitor::make_which_tmp_var(ulam::Ref<ulam::ast::Which> node) {
     append("typedef");
     append(type_str);
     append(ctx.tmp_type_name() + type_dim_str + "; ");
+
     // tmp var def
     append(type_str);
     append(ctx.tmp_var_name() + type_dim_str);
