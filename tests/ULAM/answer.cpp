@@ -133,7 +133,13 @@ Answer parse_answer(const std::string_view text) {
 
         } else if (p.at(TypeDef)) {
             auto [alias, text] = p.read_type_def();
-            answer.add_type_def(pref.add_prefix(alias), text);
+            auto alias_str = pref.add_prefix(alias);
+            // t41058: `Ue_Content` has 2 `Dir` typedefs
+            assert(
+                !answer.has_type_def(alias_str) ||
+                answer.type_def(alias_str) == text);
+            if (!answer.has_type_def(alias_str))
+                answer.add_type_def(alias_str, text);
 
         } else {
             // must be a constant/property
