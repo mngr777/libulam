@@ -134,24 +134,38 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
     debug() << __FUNCTION__ << " Ternary\n" << line_at(node);
-
-    // eval condition
-    assert(node->has_cond());
-    auto cond_res = node->cond()->accept(*this);
-    if (!cond_res)
-        return cond_res;
-
-    // cast bo Bool(1)
     auto boolean = builtins().boolean();
-    auto cast = eval().cast_helper(scope(), flags());
-    cond_res = cast->cast(node, boolean, cond_res.move_typed_value());
+
+    auto cond_res = ternary_eval_cond(node);
     if (!cond_res)
         return cond_res;
+    assert(cond_res.type()->is_same(boolean));
 
-    // select and eval expr
-    if (boolean->is_true(cond_res.move_value().move_rvalue()))
-        return node->if_true()->accept(*this);
-    return node->if_false()->accept(*this);
+    auto [if_true_res, if_false_res] = ternary_eval_branches_noexec(node);
+    if (!if_true_res)
+        return std::move(if_true_res);
+    if (!if_false_res)
+        return std::move(if_false_res);
+
+    auto type = common_type(if_true_res, if_false_res);
+    if (!type)
+        return {ExprError::TernaryNonMatchingTypes};
+
+    return ternary_eval_branch(node, std::move(cond_res), type);
+}
+
+Ref<Type>
+EvalExprVisitor::common_type(const ExprRes& res1, const ExprRes& res2) {
+    assert(res1);
+    assert(res2);
+
+    auto type1 = res1.type();
+    auto type2 = res2.type();
+    const auto& val1 = res1.value();
+    const auto& val2 = res2.value();
+
+    return (!val1.empty() && !val2.empty()) ? type1->common(val1, type2, val2)
+                                            : type1->common(type2);
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::BoolLit> node) {
@@ -754,6 +768,38 @@ ExprRes EvalExprVisitor::apply_unary_op(
         }
     }
     assert(false);
+}
+
+ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {
+    assert(node->has_cond());
+    auto cond_res = node->cond()->accept(*this);
+    if (!cond_res)
+        return cond_res;
+
+    // cast bo Bool(1)
+    auto cast = eval().cast_helper(scope(), flags());
+    auto boolean = builtins().boolean();
+    return cast->cast(node, boolean, std::move(cond_res));
+}
+
+ExprResPair
+EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
+    auto no_exec_raii = flags_raii(flags() | evl::NoExec);
+    return {node->if_true()->accept(*this), node->if_false()->accept(*this)};
+}
+
+ExprRes EvalExprVisitor::ternary_eval_branch(
+    Ref<ast::Ternary> node, ExprRes&& cond_res, Ref<Type> type) {
+    if (cond_res.value().empty())
+        return {type, type->empty_value()};
+
+    auto cond_rval = cond_res.move_value().move_rvalue();
+    bool cond_bool = builtins().boolean()->is_true(cond_rval);
+    auto branch = cond_bool ? node->if_true() : node->if_false();
+    auto res = branch->accept(*this);
+
+    auto cast = eval().cast_helper(scope(), flags());
+    return cast->cast(branch, type, std::move(res));
 }
 
 ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {

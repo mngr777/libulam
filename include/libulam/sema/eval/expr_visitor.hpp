@@ -102,6 +102,11 @@ protected:
         ExprRes&& arg,
         Ref<Type> type = {});
 
+    virtual ExprRes ternary_eval_cond(Ref<ast::Ternary> node);
+    virtual ExprResPair ternary_eval_branches_noexec(Ref<ast::Ternary> node);
+    virtual ExprRes ternary_eval_branch(
+        Ref<ast::Ternary> node, ExprRes&& cond_res, Ref<Type> type);
+
     virtual ExprRes type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type);
     virtual ExprRes
     type_op_construct(Ref<ast::TypeOpExpr> node, Ref<Class> cls);
@@ -150,6 +155,8 @@ protected:
     assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
 
     virtual ExprResList eval_args(Ref<ast::ArgList> args);
+
+    Ref<Type> common_type(const ExprRes& res1, const ExprRes& res2);
 };
 
 } // namespace ulam::sema
