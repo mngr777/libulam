@@ -439,7 +439,7 @@ std::optional<bool> EvalVisitor::which_match(
     Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> tmp_var) {
     assert(case_expr);
     ExprRes expr_res{tmp_var->type(), Value{tmp_var->lvalue()}};
-    auto ev = expr_visitor(scope(), evl::Consteval);
+    auto ev = expr_visitor(scope());
     auto case_res = case_expr->accept(*ev);
     if (!case_res)
         throw EvalExceptError("failed to eval which case");

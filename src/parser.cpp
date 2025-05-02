@@ -182,9 +182,9 @@ void Parser::parse_module_var_or_type_def(Ref<ast::ModuleDef> node) {
 Ptr<ast::ClassDef> Parser::parse_class_def() {
     auto node = parse_class_def_head();
     if (node) {
-        _cur_cls_name_id = node->name_id();
+        _cur_cls_def = ref(node);
         parse_class_def_body(ref(node));
-        _cur_cls_name_id = NoStrId;
+        _cur_cls_def = {};
     }
     return node;
 }
@@ -306,6 +306,7 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
 
     Ptr<ast::TypeName> type_name{};
     Ptr<ast::TypeExpr> type_expr{};
+    Ptr<ast::TypeDef> node{};
 
     // type
     type_name = parse_type_name();
@@ -319,7 +320,10 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
 
     // ;
     expect(tok::Semicol);
-    return tree<ast::TypeDef>(std::move(type_name), std::move(type_expr));
+    node = tree<ast::TypeDef>(std::move(type_name), std::move(type_expr));
+    if (_cur_cls_def)
+        node->set_is_in_tpl(_cur_cls_def->is_tpl());
+    return node;
 
 Panic:
     panic(tok::Semicol);
@@ -578,6 +582,8 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
     node->set_is_ref(is_ref);
     node->set_is_const(flags & VarIsConst);
     node->set_is_parameter(flags & VarIsParameter);
+    if (_cur_cls_def)
+        node->set_is_in_tpl(_cur_cls_def->is_tpl());
     return node;
 }
 
@@ -606,6 +612,9 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         return {};
     }
 
+    auto fun = tree<ast::FunDef>(
+        name, std::move(ret_type), std::move(params), Ptr<ast::FunDefBody>{});
+
     // body
     Ptr<ast::FunDefBody> body;
     if (_tok.is(tok::BraceL)) {
@@ -614,10 +623,10 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
             diag("function with a body is marked as native");
             ok = false;
         }
-        _cur_fun_name_id = name.str_id();
+        _cur_fun_def = ref(fun);
         body = make<ast::FunDefBody>();
         parse_as_block(ref(body));
-        _cur_fun_name_id = NoStrId;
+        _cur_fun_def = {};
     } else {
         // no body (must be either native or pure virtual)
         assert(_tok.is(tok::Semicol));
@@ -636,8 +645,9 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
     if (!ok)
         return {};
 
-    auto fun = tree<ast::FunDef>(
-        name, std::move(ret_type), std::move(params), std::move(body));
+    if (body)
+        fun->replace_body(std::move(body));
+
     // handle operator aliases, e.g. `aref`
     Op op = ops::fun_name_op(_str_pool.get(fun->name_id()));
     if (op != Op::None) {
@@ -645,6 +655,8 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         fun->set_op(op);
     }
     fun->set_is_native(is_native);
+    if (_cur_cls_def)
+        fun->set_is_in_tpl(_cur_cls_def->is_tpl());
     return fun;
 }
 
@@ -2075,17 +2087,17 @@ std::string Parser::str_lit_text() {
     case tok::__FilePath:
         return _pp.current_path();
     case tok::__Class:
-        if (_cur_cls_name_id == NoStrId) {
+        if (!_cur_cls_def) {
             diag("__CLASS__ macro defined outside of class body");
             return {};
         }
-        return std::string{_str_pool.get(_cur_cls_name_id)};
+        return std::string{_str_pool.get(_cur_cls_def->name_id())};
     case tok::__Func:
-        if (_cur_fun_name_id == NoStrId) {
+        if (!_cur_fun_def) {
             diag("__FUN__ macro outside of function body");
             return {};
         }
-        return std::string{_str_pool.get(_cur_fun_name_id)};
+        return std::string{_str_pool.get(_cur_fun_def->name_id())};
     default:
         assert(false);
     }

@@ -67,6 +67,11 @@ public:
 
     ClassKind kind() const { return _kind; }
 
+    bool is_tpl() const {
+        assert(!has_params() || params()->child_num() > 0);
+        return has_params();
+    }
+
     Ref<ClassBase> cls_or_tpl() {
         if (cls())
             return cls();
