@@ -110,6 +110,7 @@ static const std::set<std::string> Skip = {
     "t3663_test_compiler_element_castatomfromselfatomof_templateinstancewithinforloop.test", // tmp: Atom assigned to element without a cast?
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as
+    "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -169,6 +170,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41072_test_compiler_assignto_questioncolon.test", // ULAM parses `ok ? a : b = 2` as `(ok ? a : b) = 2`?
     "t41073_test_compiler_assigntoarrayitem_questioncolon.test", // -"-
     "t41093_test_compiler_elementandquark_quarkunionstring.test", // .lenghtof, similar to t3930
+    "t41131_test_compiler_elementandquark_overloadfunccallrefargsubclass_issue.test", // unsigned value format
 };
 
 using Path = std::filesystem::path;

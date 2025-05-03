@@ -1031,7 +1031,7 @@ ExprRes EvalExprVisitor::array_access_array(
 
 ExprRes
 EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
-    auto cls = obj.type()->as_class();
+    auto cls = obj.type()->deref()->as_class();
     auto fset = cls->op(node->op());
     if (!fset) {
         diag().error(node, "operator not found");
