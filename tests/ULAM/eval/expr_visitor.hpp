@@ -87,9 +87,6 @@ protected:
         ExprRes&& obj,
         ExprRes&& idx) override;
 
-    ExprRes member_access_op(
-        ulam::Ref<ulam::ast::MemberAccess> node, ExprRes&& obj) override;
-
     ExprRes member_access_var(
         ulam::Ref<ulam::ast::MemberAccess> node,
         ExprRes&& obj,
