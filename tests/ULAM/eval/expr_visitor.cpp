@@ -188,19 +188,25 @@ ExprRes EvalExprVisitor::apply_binary_op(
     } // do nothing
     }
 
-    std::string op_str{ulam::ops::str(op)};
-    if (op == ulam::Op::Sum || op == ulam::Op::Diff)
-        op_str += "b";
-    auto data = exp::data_combine(exp::data(left), exp::data(right), op_str);
+    std::string data;
+    bool is_class_op = l_type->is_class() && l_type->as_class()->has_op(op);
+    if (!is_class_op) {
+        // NOTE: class op is a funcall, no need to update data
+        std::string op_str{ulam::ops::str(op)};
+        if (op == ulam::Op::Sum || op == ulam::Op::Diff)
+            op_str += "b";
+        data = exp::data_combine(exp::data(left), exp::data(right), op_str);
+    }
 
     auto res = Base::apply_binary_op(
         node, op, lval, l_node, std::move(left), r_node, std::move(right));
+
     const auto& val = res.value();
     if (!no_fold && val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
             exp::set_data(res, make_stringifier().stringify(res.type(), rval));
         });
-    } else {
+    } else if (!empty(data)) {
         exp::set_data(res, data);
     }
     if (no_fold)
@@ -446,24 +452,6 @@ ExprRes EvalExprVisitor::array_access_array(
         exp::set_data(res, std::move(data));
         exp::add_array_access(res, idx_data, before_member_access);
         res.set_flag(exp::NoConstFold); // do not folt result of [], t3881
-    }
-    return res;
-}
-
-ExprRes EvalExprVisitor::member_access_op(
-    ulam::Ref<ulam::ast::MemberAccess> node, ExprRes&& obj) {
-    if (!obj)
-        return std::move(obj);
-
-    std::string data;
-    if (!has_flag(evl::NoCodegen)) {
-        data = exp::data(obj);
-    }
-    auto res = Base::member_access_op(node, std::move(obj));
-    if (!data.empty()) {
-        auto op_str = ulam::ops::str(node->op());
-        exp::set_data(res, data);
-        exp::append(res, exp::data_combine("operator", op_str, "."));
     }
     return res;
 }

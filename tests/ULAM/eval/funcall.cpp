@@ -25,9 +25,8 @@ ExprRes EvalFuncall::construct_funcall(
     ulam::RValue&& rval,
     ExprResList&& args) {
     std::string data;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(evl::NoCodegen))
         data = arg_data(args) + "Self";
-    }
     auto res = Base::construct_funcall(node, cls, fun, std::move(rval), std::move(args));
     if (!data.empty())
         exp::set_data(res, data);
@@ -43,12 +42,7 @@ ExprRes EvalFuncall::funcall_callable(
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(callable);
         replace(data, "{args}", arg_data(args));
-
-        if (!fun->is_op() || fun->is_op_alias()) {
-            replace(data, "{fun}", str(fun->name_id()));
-        } else {
-            // TODO: operators
-        }
+        replace(data, "{fun}", str(fun->name_id()));
     }
     auto res =
         Base::funcall_callable(node, fun, std::move(callable), std::move(args));
@@ -62,7 +56,6 @@ ExprRes EvalFuncall::funcall_obj(
     ulam::Ref<ulam::Fun> fun,
     ExprRes&& obj,
     ExprResList&& args) {
-    assert(!fun->is_op() || fun->is_op_alias());
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(obj);
