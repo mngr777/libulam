@@ -4,7 +4,11 @@
 #include "./stringifier.hpp"
 #include <string>
 
-ulam::sema::ExprRes EvalInit::eval_init(
+namespace {
+using ExprRes = EvalInit::ExprRes;
+}
+
+ExprRes EvalInit::eval_init(
     ulam::Ref<ulam::VarBase> var, ulam::Ref<ulam::ast::InitValue> init) {
     auto type = var->type();
     // for constants, omit consteval cast for scalars
@@ -15,22 +19,35 @@ ulam::sema::ExprRes EvalInit::eval_init(
     return Base::eval_init(var, std::move(init));
 }
 
-ulam::sema::ExprRes EvalInit::eval_array_list(
+ExprRes EvalInit::eval_class_list(
+    ulam::Ref<ulam::VarBase> var,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Ref<ulam::ast::InitList> list,
+    unsigned depth) {
+    auto res = Base::eval_class_list(var, cls, list, depth);
+    if (!has_flag(evl::NoCodegen) && depth == 1) {
+        // var_name ( args ) Self .
+        auto data = exp::data_combine(str(var->name_id()), exp::data(res), ".");
+        exp::set_data(res, data);
+    }
+    return res;
+}
+
+ExprRes EvalInit::eval_array_list(
     ulam::Ref<ulam::VarBase> var,
     ulam::Ref<ulam::ArrayType> array_type,
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
     auto array = Base::eval_array_list(var, array_type, list, depth);
-    if (has_flag(evl::NoCodegen))
-        return array;
-
-    auto array_data = array.has_data() ? exp::data(array) : std::string{};
-    auto data = exp::data_combine("{ " + array_data + " }");
-    exp::set_data(array, data);
+    if (!has_flag(evl::NoCodegen)) {
+        auto array_data = array.has_data() ? exp::data(array) : std::string{};
+        auto data = exp::data_combine("{ " + array_data + " }");
+        exp::set_data(array, data);
+    }
     return array;
 }
 
-ulam::sema::ExprRes EvalInit::eval_array_list_item(
+ExprRes EvalInit::eval_array_list_item(
     ulam::Ref<ulam::VarBase> var,
     ulam::Ref<ulam::Type> type,
     Variant& item_v,
@@ -49,11 +66,11 @@ ulam::sema::ExprRes EvalInit::eval_array_list_item(
     return res;
 }
 
-ulam::sema::ExprRes EvalInit::array_set(
+ExprRes EvalInit::array_set(
     ulam::Ref<ulam::VarBase> var,
-    ulam::sema::ExprRes&& array,
+    ExprRes&& array,
     ulam::array_idx_t idx,
-    ulam::sema::ExprRes&& item,
+    ExprRes&& item,
     bool autofill) {
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
@@ -68,13 +85,13 @@ ulam::sema::ExprRes EvalInit::array_set(
     return std::move(array);
 }
 
-// ulam::sema::ExprRes EvalInit::make_obj(ulam::Ref<ulam::Class> cls) {
+// ExprRes EvalInit::make_obj(ulam::Ref<ulam::Class> cls) {
 //     return {}; // TODO
 // }
 
-// ulam::sema::ExprRes EvalInit::obj_set(
-//     ulam::sema::ExprRes&& obj,
+// ExprRes EvalInit::obj_set(
+//     ExprRes&& obj,
 //     ulam::Ref<ulam::Prop> prop,
-//     ulam::sema::ExprRes&& prop_res) {
+//     ExprRes&& prop_res) {
 //     return {}; // TODO
 // }
