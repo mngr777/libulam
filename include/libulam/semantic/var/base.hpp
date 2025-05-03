@@ -50,6 +50,8 @@ public:
 
     bool is(flags_t flags) const { return (_flags & flags) == flags; }
     flags_t flags() { return _flags; }
+
+    bool has_flag(flags_t flag) const { return _flags & flag; }
     void set_flag(flags_t flag) { _flags |= flag; };
     void unset_flag(flags_t flag) { _flags &= ~flag; };
 

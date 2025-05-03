@@ -514,10 +514,9 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     unsigned n = 0;
     for (auto param : tpl->params()) {
         // param type
-        auto type =
-            resolver->resolve_type_name(param->type_node(), ref(param_scope));
-        if (!type)
+        if (!resolver->resolve(param, ref(param_scope)))
             return res;
+        auto type = param->type();
 
         // value
         ExprRes arg_res;
@@ -531,7 +530,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         } else if (param->node()->has_init()) {
             // default argument
             auto init = eval().init_helper(ref(param_scope), flags());
-            arg_res = init->eval_init(type, param->node()->init(), true);
+            arg_res = init->eval_init(param, param->node()->init());
 
         } else {
             diag().error(args, "not enough arguments");

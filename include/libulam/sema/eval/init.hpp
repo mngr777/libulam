@@ -8,6 +8,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/semantic/var/base.hpp>
 
 namespace ulam::sema {
 
@@ -21,8 +22,7 @@ public:
     std::pair<ArrayDimList, bool>
     array_dims(unsigned num, Ref<ast::InitValue> init);
 
-    virtual ExprRes
-    eval_init(Ref<Type> type, Ref<ast::InitValue> init, Var::flags_t var_flags);
+    virtual ExprRes eval_init(Ref<VarBase> var, Ref<ast::InitValue> init);
 
 protected:
     using Variant = ast::InitValue::ItemT;
@@ -30,74 +30,64 @@ protected:
     static_assert(std::is_same<Variant, ast::InitMap::ItemT>());
 
     ExprRes
-    eval_v(Ref<Type> type, Variant& v, unsigned depth, Var::flags_t var_flags);
+    eval_v(Ref<VarBase> var, Ref<Type> type, Variant& v, unsigned depth);
 
     virtual ExprRes eval_expr(
-        Ref<Type> type,
-        Ref<ast::Expr> expr,
-        unsigned depth,
-        Var::flags_t var_flags);
+        Ref<VarBase> var, Ref<Type> type, Ref<ast::Expr> expr, unsigned depth);
 
     virtual ExprRes cast_expr_res(
+        Ref<VarBase> var,
         Ref<Type> type,
         Ref<ast::Expr> expr,
         ExprRes&& res,
-        unsigned depth,
-        Var::flags_t var_flags);
+        unsigned depth);
 
     virtual ExprRes eval_list(
+        Ref<VarBase> var,
         Ref<Type> type,
         Ref<ast::InitList> list,
-        unsigned depth,
-        Var::flags_t flags);
+        unsigned depth);
 
     virtual ExprRes eval_map(
+        Ref<VarBase> var,
         Ref<Type> type,
         Ref<ast::InitMap> map,
-        unsigned depth,
-        Var::flags_t var_flags);
+        unsigned depth);
 
     virtual ExprRes eval_class_list(
+        Ref<VarBase> var,
         Ref<Class> cls,
         Ref<ast::InitList> list,
-        unsigned depth,
-        Var::flags_t var_flags);
+        unsigned depth);
 
     virtual ExprRes eval_array_list(
+        Ref<VarBase> var,
         Ref<ArrayType> array_type,
         Ref<ast::InitList> list,
-        unsigned depth,
-        Var::flags_t var_flags);
+        unsigned depth);
 
     virtual ExprRes eval_class_map(
+        Ref<VarBase> var,
         Ref<Class> cls,
         Ref<ast::InitMap> map,
-        unsigned depth,
-        Var::flags_t flags);
+        unsigned depth);
 
     virtual ExprRes eval_array_list_item(
-        Ref<Type> type,
-        Variant& item_v,
-        unsigned depth,
-        Var::flags_t var_flags);
+        Ref<VarBase> var, Ref<Type> type, Variant& item_v, unsigned depth);
 
-    virtual ExprRes
-    make_array(Ref<ArrayType> array_type, Var::flags_t var_flags);
+    virtual ExprRes make_array(Ref<VarBase> var, Ref<ArrayType> array_type);
 
     virtual ExprRes array_set(
+        Ref<VarBase> var,
         ExprRes&& array,
         array_idx_t idx,
         ExprRes&& item,
-        bool autofill,
-        Var::flags_t var_flags);
+        bool autofill);
 
-    virtual ExprRes make_obj(Ref<Class> cls, Var::flags_t var_flags);
+    virtual ExprRes make_obj(Ref<VarBase> var, Ref<Class> cls);
 
     virtual ExprRes obj_set(
-        ExprRes&& obj,
-        Ref<Prop> prop,
-        ExprRes&& prop_res,
-        Var::flags_t var_flags);
+        Ref<VarBase> var, ExprRes&& obj, Ref<Prop> prop, ExprRes&& prop_res);
 };
 
 } // namespace ulam::sema
