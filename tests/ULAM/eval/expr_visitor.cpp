@@ -126,6 +126,13 @@ ExprRes EvalExprVisitor::apply_binary_op(
     bool l_is_ref = left.type()->is_ref();
     bool r_is_ref = right.type()->is_ref();
 
+    bool is_class_op = l_type->is_class() && l_type->as_class()->has_op(op);
+    if (is_class_op) {
+        // class op is a funcall, no need to update data
+        return Base::apply_binary_op(
+            node, op, lval, l_node, std::move(left), r_node, std::move(right));
+    }
+
     bool no_fold =
         left.has_flag(exp::NoConstFold) || right.has_flag(exp::NoConstFold);
 
@@ -188,15 +195,10 @@ ExprRes EvalExprVisitor::apply_binary_op(
     } // do nothing
     }
 
-    std::string data;
-    bool is_class_op = l_type->is_class() && l_type->as_class()->has_op(op);
-    if (!is_class_op) {
-        // NOTE: class op is a funcall, no need to update data
-        std::string op_str{ulam::ops::str(op)};
-        if (op == ulam::Op::Sum || op == ulam::Op::Diff)
-            op_str += "b";
-        data = exp::data_combine(exp::data(left), exp::data(right), op_str);
-    }
+    std::string op_str{ulam::ops::str(op)};
+    if (op == ulam::Op::Sum || op == ulam::Op::Diff)
+        op_str += "b";
+    auto data = exp::data_combine(exp::data(left), exp::data(right), op_str);
 
     auto res = Base::apply_binary_op(
         node, op, lval, l_node, std::move(left), r_node, std::move(right));
@@ -222,6 +224,14 @@ ExprRes EvalExprVisitor::apply_unary_op(
     ExprRes&& arg,
     ulam::Ref<ulam::Type> type) {
     if (has_flag(evl::NoCodegen)) {
+        return Base::apply_unary_op(
+            node, op, lval, arg_node, std::move(arg), type);
+    }
+
+    auto arg_type = arg.type()->actual();
+    bool is_class_op = arg_type->is_class() && arg_type->as_class()->has_op(op);
+    if (is_class_op) {
+        // class op is a funcall, no need to update data
         return Base::apply_unary_op(
             node, op, lval, arg_node, std::move(arg), type);
     }
@@ -271,6 +281,13 @@ ExprRes EvalExprVisitor::apply_unary_op(
     }
     if (no_fold)
         res.set_flag(exp::NoConstFold);
+    return res;
+}
+
+ExprRes EvalExprVisitor::post_inc_dec_dummy() {
+    auto res = Base::post_inc_dec_dummy();
+    if (!has_flag(evl::NoCodegen))
+        exp::set_data(res, "1");
     return res;
 }
 

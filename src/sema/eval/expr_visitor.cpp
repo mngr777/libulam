@@ -756,19 +756,21 @@ ExprRes EvalExprVisitor::apply_unary_op(
             auto fset = cls->op(op);
             assert(fset);
             ExprResList args;
-            if (op == Op::PostInc || op == Op::PostDec) {
-                // dummy argument for post inc/dec
-                auto int_type = builtins().int_type();
-                auto rval = int_type->construct();
-                rval.set_is_consteval(true);
-                args.push_back({int_type, Value{std::move(rval)}});
-            }
+            if (op == Op::PostInc || op == Op::PostDec)
+                args.push_back(post_inc_dec_dummy());
             arg = bind(node, fset, std::move(arg));
             auto funcall = eval().funcall_helper(scope(), flags());
             return funcall->funcall(node, std::move(arg), std::move(args));
         }
     }
     assert(false);
+}
+
+ExprRes EvalExprVisitor::post_inc_dec_dummy() {
+    auto int_type = builtins().int_type();
+    auto rval = int_type->construct(1);
+    rval.set_is_consteval(true);
+    return {int_type, Value{std::move(rval)}};
 }
 
 ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {

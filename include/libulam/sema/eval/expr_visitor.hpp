@@ -97,6 +97,8 @@ protected:
         ExprRes&& arg,
         Ref<ast::TypeName> type_name = {});
 
+    virtual ExprRes post_inc_dec_dummy();
+
     virtual ExprRes apply_unary_op(
         Ref<ast::Expr> node,
         Op op,
@@ -120,7 +122,8 @@ protected:
     virtual ExprRes type_op_default(Ref<ast::TypeOpExpr> node, Ref<Type> type);
 
     virtual ExprRes type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
-    virtual ExprRes type_op_expr_construct(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
+    virtual ExprRes
+    type_op_expr_construct(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
     virtual ExprRes type_op_expr_fun(
         Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg);
     virtual ExprRes
