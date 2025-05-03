@@ -231,7 +231,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
         } else if (
             at(Constant) || at(Parameter) ||
-            (at_upper() && !at("Atom,") && !at("Atom)") && !at("HexU64"))) {
+            (at_upper() && !at("Atom,") && !at("Atom)") && !at("HexU64") &&
+             !at("UNINITIALIZED_STRING"))) {
             // constant/property
             if (is_scalar_item) {
                 assert(is_array);
@@ -312,7 +313,13 @@ std::string AnswerParser::read_scalar_value_str(char close) {
 
     while (!eof() && !at(close) && !at(';') && !at(',') && !at(' '))
         advance();
-    return std::string{substr_from(start)};
+    std::string str{substr_from(start)};
+
+    // skip " cast", see t41101: expression strings are not available at compile
+    // time (why is there a cast?)
+    skip_if(" cast");
+
+    return str;
 }
 
 void AnswerParser::skip_comment() {

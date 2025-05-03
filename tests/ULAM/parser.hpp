@@ -31,6 +31,8 @@ public:
 
     void skip(const std::string& str);
     void skip(char ch);
+    bool skip_if(const std::string& str);
+    bool skip_if(char ch);
     void skip_spaces();
 
     const std::string_view read_line(bool with_nl = false);

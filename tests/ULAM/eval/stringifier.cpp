@@ -56,6 +56,11 @@ std::string Stringifier::stringify_prim(
     }
     case ulam::StringId: {
         auto str_id = rval.get<ulam::String>().id;
+
+        // NOTE: union String props can have "invalid" IDs
+        if (!_text_pool.has_id(str_id))
+            return options.invalid_string_id_as_empty ? "" : "UNINITIALIZED_STRING";
+
         auto str = _text_pool.get(str_id);
         if (options.empty_string_as_empty && str.empty())
             return {};
