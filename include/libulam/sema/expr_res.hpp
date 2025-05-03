@@ -17,6 +17,7 @@ namespace ulam::sema {
 class ExprRes {
 public:
     using flags_t = std::uint16_t;
+    using Data = std::any;
 
     ExprRes(TypedValue&& tv):
         _typed_value{std::move(tv)}, _error{ExprError::Ok}, _flags{0} {}
@@ -69,8 +70,8 @@ public:
 
     template <typename T> void set_data(T data) { _data = std::move(data); }
 
-    std::any move_data() {
-        std::any data;
+    Data move_data() {
+        Data data;
         std::swap(_data, data);
         return data;
     }
@@ -81,7 +82,7 @@ private:
     TypedValue _typed_value;
     ExprError _error;
     flags_t _flags;
-    std::any _data;
+    Data _data;
 };
 
 class ExprResList {
@@ -117,6 +118,8 @@ public:
 
     // TODO: iterator
     TypedValueRefList typed_value_refs() const;
+
+    bool is_consteval() const;
 
 private:
     std::list<ExprRes> _list;

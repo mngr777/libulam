@@ -26,6 +26,13 @@ public:
         Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
 
 protected:
+    virtual ExprRes construct_funcall(
+        Ref<ast::Node> node,
+        Ref<Class> cls,
+        Ref<Fun> fun,
+        RValue&& rval,
+        ExprResList&& args);
+
     virtual ExprRes funcall_callable(
         Ref<ast::Node> node,
         Ref<Fun> fun,

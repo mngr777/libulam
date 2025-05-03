@@ -14,17 +14,28 @@ namespace ulam::sema {
 
 ExprRes EvalFuncall::construct(
     Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args) {
-    auto rval = cls->construct();
-    if (cls->has_constructors()) {
-        auto [match_res, error] =
-            find_match(node, cls->constructors(), cls, args.typed_value_refs());
-        if (error != ExprError::Ok)
-            return {error};
-        auto fun = *match_res.begin();
+    if (!cls->has_constructors())
+        return {ExprError::NoMatchingFunction};
 
-        args = cast_args(node, fun, std::move(args));
-        return do_funcall(node, fun, rval.self(), std::move(args));
-    }
+    auto rval = cls->construct();
+    auto [match_res, error] =
+        find_match(node, cls->constructors(), cls, args.typed_value_refs());
+    if (error != ExprError::Ok)
+        return {error};
+    auto fun = *match_res.begin();
+
+    args = cast_args(node, fun, std::move(args));
+    return construct_funcall(node, cls, fun, std::move(rval), std::move(args));
+}
+
+ExprRes EvalFuncall::construct_funcall(
+    Ref<ast::Node> node,
+    Ref<Class> cls,
+    Ref<Fun> fun,
+    RValue&& rval,
+    ExprResList&& args) {
+    rval.set_is_consteval(args.is_consteval());
+    do_funcall(node, fun, rval.self(), std::move(args));
     return {cls, Value{std::move(rval)}};
 }
 

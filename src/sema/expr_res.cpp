@@ -46,4 +46,10 @@ TypedValueRefList ExprResList::typed_value_refs() const {
     return list;
 }
 
+bool ExprResList::is_consteval() const {
+    return std::all_of(begin(), end(), [](const auto& arg) {
+        return arg.value().is_consteval();
+    });
+}
+
 } // namespace ulam::sema
