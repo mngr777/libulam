@@ -6,6 +6,9 @@
 
 namespace {
 
+using ExprRes = EvalFuncall::ExprRes;
+using ExprResList = EvalFuncall::ExprResList;
+
 void replace(
     std::string& data, const std::string_view ph, const std::string_view repl) {
     auto pos = data.rfind(ph);
@@ -15,11 +18,27 @@ void replace(
 
 } // namespace
 
-ulam::sema::ExprRes EvalFuncall::funcall_callable(
+ExprRes EvalFuncall::construct_funcall(
+    ulam::Ref<ulam::ast::Node> node,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Ref<ulam::Fun> fun,
+    ulam::RValue&& rval,
+    ExprResList&& args) {
+    std::string data;
+    if (!has_flag(evl::NoCodegen)) {
+        data = arg_data(args) + "Self";
+    }
+    auto res = Base::construct_funcall(node, cls, fun, std::move(rval), std::move(args));
+    if (!data.empty())
+        exp::set_data(res, data);
+    return res;
+}
+
+ExprRes EvalFuncall::funcall_callable(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
-    ulam::sema::ExprRes&& callable,
-    ulam::sema::ExprResList&& args) {
+    ExprRes&& callable,
+    ExprResList&& args) {
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(callable);
@@ -38,11 +57,11 @@ ulam::sema::ExprRes EvalFuncall::funcall_callable(
     return res;
 }
 
-ulam::sema::ExprRes EvalFuncall::funcall_obj(
+ExprRes EvalFuncall::funcall_obj(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
-    ulam::sema::ExprRes&& obj,
-    ulam::sema::ExprResList&& args) {
+    ExprRes&& obj,
+    ExprResList&& args) {
     assert(!fun->is_op() || fun->is_op_alias());
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
@@ -56,16 +75,16 @@ ulam::sema::ExprRes EvalFuncall::funcall_obj(
     return res;
 }
 
-ulam::sema::ExprResList EvalFuncall::cast_args(
+ExprResList EvalFuncall::cast_args(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
-    ulam::sema::ExprResList&& args) {
+    ExprResList&& args) {
     // do not omit consteval casts for arguments (t3233)
     auto consteval_cast_raii = flags_raii(flags() & ~evl::NoConstevalCast);
     return Base::cast_args(node, fun, std::move(args));
 }
 
-std::string EvalFuncall::arg_data(const ulam::sema::ExprResList& args) {
+std::string EvalFuncall::arg_data(const ExprResList& args) {
     if (args.empty())
         return "( )";
 

@@ -10,25 +10,35 @@
 class EvalFuncall : public ulam::sema::EvalFuncall {
 public:
     using Base = ulam::sema::EvalFuncall;
+    using ExprRes = ulam::sema::ExprRes;
+    using ExprResList = ulam::sema::ExprResList;
+
     using Base::EvalFuncall;
 
 protected:
-    virtual ulam::sema::ExprRes funcall_callable(
+    ExprRes construct_funcall(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Ref<ulam::Fun> fun,
+        ulam::RValue&& rval,
+        ExprResList&& args) override;
+
+    ExprRes funcall_callable(
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
-        ulam::sema::ExprRes&& callable,
-        ulam::sema::ExprResList&& args);
+        ExprRes&& callable,
+        ExprResList&& args) override;
 
-    virtual ulam::sema::ExprRes funcall_obj(
+    ExprRes funcall_obj(
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
-        ulam::sema::ExprRes&& obj,
-        ulam::sema::ExprResList&& args);
+        ExprRes&& obj,
+        ExprResList&& args) override;
 
-    virtual ulam::sema::ExprResList cast_args(
+    ExprResList cast_args(
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
-        ulam::sema::ExprResList&& args);
+        ExprResList&& args) override;
 
-    std::string arg_data(const ulam::sema::ExprResList& args);
+    std::string arg_data(const ExprResList& args);
 };
