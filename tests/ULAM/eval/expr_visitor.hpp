@@ -44,9 +44,16 @@ protected:
         ExprRes&& arg,
         ulam::Ref<ulam::Type> type) override;
 
+    ExprRes type_op_construct(
+        ulam::Ref<ulam::ast::TypeOpExpr> node,
+        ulam::Ref<ulam::Class> cls) override;
+
     ExprRes type_op_default(
         ulam::Ref<ulam::ast::TypeOpExpr> node,
         ulam::Ref<ulam::Type> type) override;
+
+    ExprRes type_op_expr_construct(
+        ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) override;
 
     ExprRes type_op_expr_default(
         ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) override;

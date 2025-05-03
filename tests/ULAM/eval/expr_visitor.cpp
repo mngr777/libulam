@@ -108,59 +108,6 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
     return res;
 }
 
-ExprRes EvalExprVisitor::type_op_default(
-    ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
-    auto res = Base::type_op_default(node, type);
-    if (has_flag(evl::NoCodegen))
-        return res;
-
-    auto stringifier = make_stringifier();
-    if (res.type()->is_prim() && res.value().is_consteval()) {
-        res.value().with_rvalue([&](const auto& rval) {
-            stringifier.options.unary_as_unsigned_lit = true;
-            stringifier.options.bool_as_unsigned_lit = true;
-            exp::set_data(res, stringifier.stringify(res.type(), rval));
-        });
-    } else {
-        bool is_self = node->type_name()->is_self();
-        exp::append(res, is_self ? "Self" : out::type_str(stringifier, type));
-        exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
-    }
-    return res;
-}
-
-ExprRes EvalExprVisitor::type_op_expr_default(
-    ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
-    std::string data;
-    if (!has_flag(evl::NoCodegen)) {
-        if (node->op() == ulam::TypeOp::AtomOf &&
-            !arg.type()->deref()->is_atom()) {
-            // NOTE: a hack to remove _single_ redundand member access before
-            // calling
-            // `.atomof`, t3905
-            if (arg.has_flag(exp::MemberAccess) ||
-                arg.has_flag(exp::SelfMemberAccess))
-                exp::remove_member_access_op(arg, true);
-        }
-        data = exp::data(arg);
-    }
-    auto res = Base::type_op_expr_default(node, std::move(arg));
-    if (!data.empty()) {
-        if (res.type()->is_prim() && res.value().is_consteval()) {
-            res.value().with_rvalue([&](const ulam::RValue& rval) {
-                auto stringifier = make_stringifier();
-                stringifier.options.unary_as_unsigned_lit = true;
-                stringifier.options.bool_as_unsigned_lit = true;
-                exp::set_data(res, stringifier.stringify(res.type(), rval));
-            });
-        } else {
-            exp::set_data(res, data);
-            exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
-        }
-    }
-    return res;
-}
-
 ExprRes EvalExprVisitor::apply_binary_op(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Op op,
@@ -318,6 +265,84 @@ ExprRes EvalExprVisitor::apply_unary_op(
     }
     if (no_fold)
         res.set_flag(exp::NoConstFold);
+    return res;
+}
+
+ExprRes EvalExprVisitor::type_op_construct(
+    ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Class> cls) {
+    auto res = Base::type_op_construct(node, cls);
+    if (!has_flag(evl::NoCodegen)) {
+        // Class.instanceof ( args )Self .
+        auto stringifier = make_stringifier();
+        auto op_str = out::type_str(stringifier, cls) + ".instanceof";
+        exp::set_data(res, exp::data_combine(op_str, exp::data(res), "."));
+    }
+    return res;
+}
+
+ExprRes EvalExprVisitor::type_op_default(
+    ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
+    auto res = Base::type_op_default(node, type);
+    if (has_flag(evl::NoCodegen))
+        return res;
+
+    auto stringifier = make_stringifier();
+    if (res.type()->is_prim() && res.value().is_consteval()) {
+        res.value().with_rvalue([&](const auto& rval) {
+            stringifier.options.unary_as_unsigned_lit = true;
+            stringifier.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, stringifier.stringify(res.type(), rval));
+        });
+    } else {
+        bool is_self = node->type_name()->is_self();
+        exp::append(res, is_self ? "Self" : out::type_str(stringifier, type));
+        exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
+    }
+    return res;
+}
+
+ExprRes EvalExprVisitor::type_op_expr_construct(
+    ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
+    std::string data;
+    if (!has_flag(evl::NoCodegen))
+        data = exp::data(arg);
+    auto res = Base::type_op_expr_construct(node, std::move(arg));
+    if (!data.empty()) {
+        auto op_str = data + ".instanceof";
+        exp::set_data(res, exp::data_combine(op_str, exp::data(res), "."));
+    }
+    return res;
+}
+
+ExprRes EvalExprVisitor::type_op_expr_default(
+    ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
+    std::string data;
+    if (!has_flag(evl::NoCodegen)) {
+        if (node->op() == ulam::TypeOp::AtomOf &&
+            !arg.type()->deref()->is_atom()) {
+            // NOTE: a hack to remove _single_ redundand member access before
+            // calling
+            // `.atomof`, t3905
+            if (arg.has_flag(exp::MemberAccess) ||
+                arg.has_flag(exp::SelfMemberAccess))
+                exp::remove_member_access_op(arg, true);
+        }
+        data = exp::data(arg);
+    }
+    auto res = Base::type_op_expr_default(node, std::move(arg));
+    if (!data.empty()) {
+        if (res.type()->is_prim() && res.value().is_consteval()) {
+            res.value().with_rvalue([&](const ulam::RValue& rval) {
+                auto stringifier = make_stringifier();
+                stringifier.options.unary_as_unsigned_lit = true;
+                stringifier.options.bool_as_unsigned_lit = true;
+                exp::set_data(res, stringifier.stringify(res.type(), rval));
+            });
+        } else {
+            exp::set_data(res, data);
+            exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
+        }
+    }
     return res;
 }
 

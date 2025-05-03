@@ -869,12 +869,27 @@ EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     if (arg.type()->is_class()) {
         // custom lengthof?
         auto cls = arg.type()->as_class();
-        if (node->op() == TypeOp::LengthOf && cls->has_fun("alengthof")) {
-            return type_op_expr_fun(
-                node, cls->fun("alengthof"), std::move(arg));
+        if (node->op() == TypeOp::InstanceOf) {
+            if (node->has_args()) {
+                return type_op_expr_construct(node, std::move(arg));
+            }
+        } else if (node->op() == TypeOp::LengthOf) {
+            if (cls->has_fun("alengthof")) {
+                return type_op_expr_fun(
+                    node, cls->fun("alengthof"), std::move(arg));
+            }
         }
     }
     return type_op_expr_default(node, std::move(arg));
+}
+
+ExprRes EvalExprVisitor::type_op_expr_construct(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
+    assert(arg.type()->is_class());
+    auto args = eval_args(node->args());
+    if (!args)
+        return {args.error()};
+    auto funcall = eval().funcall_helper(scope(), flags());
+    return funcall->construct(node, arg.type()->as_class(), std::move(args));
 }
 
 ExprRes EvalExprVisitor::type_op_expr_fun(
