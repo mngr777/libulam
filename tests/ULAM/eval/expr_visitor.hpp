@@ -44,6 +44,8 @@ protected:
         ExprRes&& arg,
         ulam::Ref<ulam::Type> type) override;
 
+    ExprRes post_inc_dec_dummy() override;
+
     ExprRes type_op_construct(
         ulam::Ref<ulam::ast::TypeOpExpr> node,
         ulam::Ref<ulam::Class> cls) override;
