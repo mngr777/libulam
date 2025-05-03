@@ -148,8 +148,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
         return std::move(if_false_res);
 
     auto type = common_type(if_true_res, if_false_res);
-    if (!type)
+    if (!type) {
+        diag().error(node, "no common type");
         return {ExprError::TernaryNonMatchingTypes};
+    }
 
     return ternary_eval(
         node, std::move(cond_res), type, std::move(if_true_res),
