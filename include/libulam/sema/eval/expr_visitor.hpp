@@ -108,7 +108,9 @@ protected:
         Ref<Type> type = {});
 
     virtual ExprRes ternary_eval_cond(Ref<ast::Ternary> node);
+
     virtual ExprResPair ternary_eval_branches_noexec(Ref<ast::Ternary> node);
+
     virtual ExprRes ternary_eval(
         Ref<ast::Ternary> node,
         ExprRes&& cond_res,

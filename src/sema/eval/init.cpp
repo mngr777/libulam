@@ -62,6 +62,8 @@ ExprRes EvalInit::eval_expr(
     // eval
     auto ev = eval().expr_visitor(scope(), flags());
     auto res = expr->accept(*ev);
+    if (!res)
+        return res;
     return cast_expr_res(var, type, expr, std::move(res), depth);
 }
 

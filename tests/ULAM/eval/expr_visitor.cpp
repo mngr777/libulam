@@ -44,8 +44,10 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
         return std::move(if_false_res);
 
     auto type = common_type(if_true_res, if_false_res);
-    if (!type)
+    if (!type) {
+        diag().error(node, "no common type");
         return {ExprError::TernaryNonMatchingTypes};
+    }
 
     auto cast_flags = flags() | ulam::sema::evl::NoDerefCast;
     auto cast = eval().cast_helper(scope(), cast_flags);
