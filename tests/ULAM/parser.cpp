@@ -92,6 +92,20 @@ void Parser::skip(char ch) {
     advance();
 }
 
+bool Parser::skip_if(const std::string& str) {
+    bool is_match = at(str);
+    if (is_match)
+        advance(str.size());
+    return is_match;
+}
+
+bool Parser::skip_if(char ch) {
+    bool is_match = at(ch);
+    if (is_match)
+        advance();
+    return is_match;
+}
+
 void Parser::skip_spaces() {
     while (at(' '))
         advance();

@@ -30,6 +30,7 @@ public:
         bool short_bits_as_str = false;
         bool bits_32_as_signed_int = false;
         bool empty_string_as_empty = false;
+        bool invalid_string_id_as_empty = true;
         bool class_params_as_consts = true;
         ArrayFmt array_fmt = ArrayFmt::Default;
     } options;

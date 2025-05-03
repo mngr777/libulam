@@ -106,7 +106,6 @@ void Compiler::compile_class(
     assert(obj);
     assert(obj.type()->is_class());
     assert(obj.value().is_rvalue());
-    // NOTE: intentional double space after `{'
     auto test_postfix =
         has_test ? "Int test() {  " + eval.data() + " }" : NoMain;
     write_obj(os, std::move(obj), test_postfix, has_test);
@@ -161,7 +160,6 @@ void Compiler::write_obj_members(
     bool is_outer,
     bool is_base) {
     write_class_type_defs(os, cls);
-    // if (in_main || is_outer)
     write_class_consts(os, cls, in_main, is_outer);
     write_obj_props(os, cls, rval, in_main, is_outer);
     if (in_main || !is_base)
@@ -214,7 +212,8 @@ void Compiler::write_class_consts(
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.bits_use_unsigned_suffix = true;
     stringifier.options.bits_32_as_signed_int = in_main;
-    stringifier.options.array_fmt = Stringifier::ArrayFmt::Chunks;
+    stringifier.options.array_fmt = in_main ? Stringifier::ArrayFmt::Chunks
+                                            : Stringifier::ArrayFmt::Default;
 
     bool tpl_only = !(in_main || is_outer);
 
@@ -268,10 +267,12 @@ void Compiler::write_obj_prop(
     auto lval = obj.prop(prop);
     os << out::type_str(stringifier, type, false) << " "
        << str_pool.get(prop->name_id()) << out::type_dim_str(type) << "(";
+
     lval.with_rvalue([&](const auto& rval) {
+        bool empty_string_as_empty = stringifier.options.empty_string_as_empty;
+        stringifier.options.empty_string_as_empty = true;
+
         if (type->is_array()) {
-            bool empty_string_as_empty = stringifier.options.empty_string_as_empty;
-            stringifier.options.empty_string_as_empty = true;
 
             auto array_type = type->as_array();
             auto item_type = array_type->item_type();
@@ -294,7 +295,6 @@ void Compiler::write_obj_prop(
                     }
                 });
             }
-            stringifier.options.empty_string_as_empty = empty_string_as_empty;
 
         } else if (type->is_class()) {
             write_obj_members(
@@ -302,6 +302,8 @@ void Compiler::write_obj_prop(
         } else {
             os << stringifier.stringify(type, rval);
         }
+
+        stringifier.options.empty_string_as_empty = empty_string_as_empty;
     });
     os << "); ";
 }
