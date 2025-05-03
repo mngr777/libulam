@@ -48,6 +48,8 @@ public:
     ExprRes visit(Ref<ast::ClassConstAccess> node) override;
     ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
+    // TODO: protected
+
     virtual ExprRes check(Ref<ast::Expr> node, ExprRes&& res);
 
     virtual bool check_is_assignable(Ref<ast::Expr> node, const Value& value);

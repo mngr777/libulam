@@ -38,56 +38,50 @@ EvalInit::array_dims(unsigned num, Ref<ast::InitValue> init) {
     return {std::move(dims), ok};
 }
 
-ExprRes EvalInit::eval_init(
-    Ref<Type> type, Ref<ast::InitValue> init, Var::flags_t var_flags) {
-    return eval_v(type, init->get(), 1, var_flags);
+ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
+    assert(var->has_type());
+    return eval_v(var, var->type(), init->get(), 1);
 }
 
 ExprRes EvalInit::eval_v(
-    Ref<Type> type, Variant& init, unsigned depth, Var::flags_t var_flags) {
+    Ref<VarBase> var, Ref<Type> type, Variant& init, unsigned depth) {
     return init.accept(
         [&](Ptr<ast::Expr>& expr) {
-            return eval_expr(type, ref(expr), depth, var_flags);
+            return eval_expr(var, type, ref(expr), depth);
         },
         [&](Ptr<ast::InitList>& list) {
-            return eval_list(type, ref(list), depth, var_flags);
+            return eval_list(var, type, ref(list), depth);
         },
         [&](Ptr<ast::InitMap>& map) {
-            return eval_map(type, ref(map), depth, var_flags);
+            return eval_map(var, type, ref(map), depth);
         });
 }
 
 ExprRes EvalInit::eval_expr(
-    Ref<Type> type,
-    Ref<ast::Expr> expr,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    Ref<VarBase> var, Ref<Type> type, Ref<ast::Expr> expr, unsigned depth) {
     // eval
     auto ev = eval().expr_visitor(scope(), flags());
     auto res = expr->accept(*ev);
-    return cast_expr_res(type, expr, std::move(res), depth, var_flags);
+    return cast_expr_res(var, type, expr, std::move(res), depth);
 }
 
 ExprRes EvalInit::cast_expr_res(
+    Ref<VarBase> var,
     Ref<Type> type,
     Ref<ast::Expr> expr,
     ExprRes&& res,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    unsigned depth) {
     assert(res);
     auto cast = eval().cast_helper(scope(), flags());
     return cast->cast(expr, type, std::move(res));
 }
 
 ExprRes EvalInit::eval_list(
-    Ref<Type> type,
-    Ref<ast::InitList> list,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    Ref<VarBase> var, Ref<Type> type, Ref<ast::InitList> list, unsigned depth) {
     if (type->is_class()) {
-        return eval_class_list(type->as_class(), list, depth, var_flags);
+        return eval_class_list(var, type->as_class(), list, depth);
     } else if (type->is_array()) {
-        return eval_array_list(type->as_array(), list, depth, var_flags);
+        return eval_array_list(var, type->as_array(), list, depth);
     } else {
         diag().error(
             list, "variable of scalar type cannot have initializer list");
@@ -96,12 +90,9 @@ ExprRes EvalInit::eval_list(
 }
 
 ExprRes EvalInit::eval_map(
-    Ref<Type> type,
-    Ref<ast::InitMap> map,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    Ref<VarBase> var, Ref<Type> type, Ref<ast::InitMap> map, unsigned depth) {
     if (type->is_class()) {
-        return eval_class_map(type->as_class(), map, depth, var_flags);
+        return eval_class_map(var, type->as_class(), map, depth);
     } else {
         diag().error(
             map, "designated initializers are only supported for classes");
@@ -110,10 +101,7 @@ ExprRes EvalInit::eval_map(
 }
 
 ExprRes EvalInit::eval_class_list(
-    Ref<Class> cls,
-    Ref<ast::InitList> list,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    Ref<VarBase> var, Ref<Class> cls, Ref<ast::InitList> list, unsigned depth) {
     // eval args
     auto ev = eval().expr_visitor(scope(), flags());
     ExprResList args;
@@ -137,10 +125,10 @@ ExprRes EvalInit::eval_class_list(
 }
 
 ExprRes EvalInit::eval_array_list(
+    Ref<VarBase> var,
     Ref<ArrayType> array_type,
     Ref<ast::InitList> list,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    unsigned depth) {
     auto item_type = array_type->item_type();
     auto size = array_type->array_size();
 
@@ -161,22 +149,21 @@ ExprRes EvalInit::eval_array_list(
     }
 
     // construct
-    auto array = make_array(array_type, var_flags);
+    auto array = make_array(var, array_type);
     unsigned n = 0;
     ExprRes item;
     // fill with list items
     for (; n < std::min<unsigned>(list->size(), size); ++n) {
         // eval item
-        item =
-            eval_array_list_item(item_type, list->get(n), depth + 1, var_flags);
+        item = eval_array_list_item(var, item_type, list->get(n), depth + 1);
         if (!item)
             return item;
         // assign to array item
         bool copy = (n + 1 == list->size() && size > list->size());
         if (!item.value().empty()) {
             array = array_set(
-                std::move(array), n, copy ? item.copy() : std::move(item),
-                false, var_flags);
+                var, std::move(array), n, copy ? item.copy() : std::move(item),
+                false);
         }
     }
     // fill rest with copies of the last value
@@ -184,20 +171,17 @@ ExprRes EvalInit::eval_array_list(
         for (; n < size; ++n) {
             bool copy = (n + 1 < size);
             array = array_set(
-                std::move(array), n, copy ? item.copy() : std::move(item), true,
-                var_flags);
+                var, std::move(array), n, copy ? item.copy() : std::move(item),
+                true);
         }
     }
     return array;
 }
 
 ExprRes EvalInit::eval_class_map(
-    Ref<Class> cls,
-    Ref<ast::InitMap> map,
-    unsigned depth,
-    Var::flags_t var_flags) {
+    Ref<VarBase> var, Ref<Class> cls, Ref<ast::InitMap> map, unsigned depth) {
     // construct
-    auto obj = make_obj(cls, var_flags);
+    auto obj = make_obj(var, cls);
     assert(map->size() > 0);
 
     for (auto key : map->keys()) {
@@ -219,34 +203,33 @@ ExprRes EvalInit::eval_class_map(
 
         // eval item
         auto prop = sym->get<Prop>();
-        auto prop_res = eval_v(prop->type(), map->get(key), 1, var_flags);
+        auto prop_res = eval_v(var, prop->type(), map->get(key), 1);
         if (!prop_res)
             return prop_res;
 
         // assign
-        obj = obj_set(std::move(obj), prop, std::move(prop_res), var_flags);
+        obj = obj_set(var, std::move(obj), prop, std::move(prop_res));
     }
     return obj;
 }
 
 ExprRes EvalInit::eval_array_list_item(
-    Ref<Type> type, Variant& item_v, unsigned depth, Var::flags_t var_flags) {
-    return eval_v(type, item_v, depth, var_flags);
+    Ref<VarBase> var, Ref<Type> type, Variant& item_v, unsigned depth) {
+    return eval_v(var, type, item_v, depth);
 }
 
-ExprRes
-EvalInit::make_array(Ref<ArrayType> array_type, Var::flags_t var_flags) {
+ExprRes EvalInit::make_array(Ref<VarBase> var, Ref<ArrayType> array_type) {
     RValue rval = array_type->construct();
     rval.set_is_consteval(true);
     return {array_type, Value{std::move(rval)}};
 }
 
 ExprRes EvalInit::array_set(
+    Ref<VarBase> var,
     ExprRes&& array,
     array_idx_t idx,
     ExprRes&& item,
-    bool autofill,
-    Var::flags_t var_flags) {
+    bool autofill) {
     assert(array.type()->is_array());
     assert(idx < array.type()->as_array()->array_size());
 
@@ -257,14 +240,14 @@ ExprRes EvalInit::array_set(
     return {array.type(), Value{std::move(rval)}};
 }
 
-ExprRes EvalInit::make_obj(Ref<Class> cls, Var::flags_t var_flags) {
+ExprRes EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls) {
     RValue rval = cls->construct();
     rval.set_is_consteval(true);
     return {cls, Value{std::move(rval)}};
 }
 
 ExprRes EvalInit::obj_set(
-    ExprRes&& obj, Ref<Prop> prop, ExprRes&& prop_res, Var::flags_t var_flags) {
+    Ref<VarBase> var, ExprRes&& obj, Ref<Prop> prop, ExprRes&& prop_res) {
     assert(obj.type()->is_class());
     assert(prop_res.type() == prop->type());
 
