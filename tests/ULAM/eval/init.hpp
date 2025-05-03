@@ -8,6 +8,8 @@
 class EvalInit : public ulam::sema::EvalInit {
 public:
     using Base = ulam::sema::EvalInit;
+    using ExprRes = ulam::sema::ExprRes;
+
     using Base::EvalInit;
 
     ulam::sema::ExprRes eval_init(
@@ -15,21 +17,27 @@ public:
         ulam::Ref<ulam::ast::InitValue> init) override;
 
 protected:
-    ulam::sema::ExprRes eval_array_list(
+    ExprRes eval_class_list(
+        ulam::Ref<ulam::VarBase> var,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Ref<ulam::ast::InitList> list,
+        unsigned depth) override;
+
+    ExprRes eval_array_list(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::ArrayType> array_type,
         ulam::Ref<ulam::ast::InitList> list,
         unsigned depth) override;
 
-    ulam::sema::ExprRes eval_array_list_item(
+    ExprRes eval_array_list_item(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::Type> type,
         Variant& item_v,
         unsigned depth) override;
 
-    virtual ulam::sema::ExprRes array_set(
+    ExprRes array_set(
         ulam::Ref<ulam::VarBase> var,
-        ulam::sema::ExprRes&& array,
+        ExprRes&& array,
         ulam::array_idx_t idx,
         ulam::sema::ExprRes&& item,
         bool autofill) override;
