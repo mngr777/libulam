@@ -64,16 +64,6 @@ EvalCast::CastRes EvalCast::maybe_cast(
         return {arg.derived(to, std::move(arg).move_value()), status};
     }
 
-    // implicit cast to base class
-    if (!expl && to->is_ref() && to->actual()->is_class() &&
-        arg_type->actual()->is_class()) {
-        assert(arg_type->is_ref());
-        auto to_cls = to->actual()->as_class();
-        auto from_cls = arg.type()->actual()->as_class();
-        if (to_cls->is_base_of(from_cls))
-            return {arg.derived(to, arg.move_value()), CastDowncast};
-    }
-
     if (!expl && arg_type->is_impl_castable_to(to, arg.value())) {
         auto res = do_cast(node, to, std::move(arg), expl, deref_required);
         auto status = CastError;
