@@ -334,6 +334,20 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
     }
 }
 
+Ref<Type> Class::common(Ref<Type> type) {
+    type = type->deref();
+    if (is_same(type))
+        return this;
+    // use user-define conversion, t41140
+    if (!convs(type, false).empty())
+        return type;
+    return this;
+}
+
+Ref<Type> Class::common(const Value& val1, Ref<Type> type, const Value& val2) {
+    return common(type);
+}
+
 // NOTE: for ambiguous conversion truth is returned,
 // the error is to be catched when applying conversions
 

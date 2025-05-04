@@ -52,8 +52,10 @@ EvalCast::CastRes EvalCast::maybe_cast(
             if (!no_deref)
                 status = CastDeref;
             arg_type = arg_type->deref();
+            deref_required = true;
+        } else {
+            deref_required = !no_deref;
         }
-        deref_required = !no_deref;
     }
 
     if (to->is_same(arg_type)) {
@@ -104,8 +106,6 @@ ExprRes EvalCast::do_cast(
     if (deref_required)
         from = arg.type()->deref();
 
-    assert(!to->is_ref() || (from->is_ref() && !arg.value().is_tmp()));
-    assert(to->is_ref() || !from->is_ref());
     assert(!to->is_same(from));
     assert(from->is_expl_castable_to(to));
 
