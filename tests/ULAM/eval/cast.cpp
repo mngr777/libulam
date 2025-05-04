@@ -13,28 +13,33 @@
 #endif
 #include "src/debug.hpp"
 
-ulam::sema::ExprRes EvalCast::cast(
+namespace {
+
+using ExprRes = ulam::sema::ExprRes;
+
+}
+
+ExprRes EvalCast::cast(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Type> type,
-    ulam::sema::ExprRes&& arg,
+    ExprRes&& arg,
     bool expl) {
     auto [res, status] = maybe_cast(node, type, std::move(arg), expl);
     update_res(res, status, expl);
     return std::move(res);
 }
 
-ulam::sema::ExprRes EvalCast::cast(
+ExprRes EvalCast::cast(
     ulam::Ref<ulam::ast::Node> node,
     ulam::BuiltinTypeId bi_type_id,
-    ulam::sema::ExprRes&& arg,
+    ExprRes&& arg,
     bool expl) {
     auto [res, status] = maybe_cast(node, bi_type_id, std::move(arg), expl);
     update_res(res, status, expl);
     return std::move(res);
 }
 
-ulam::sema::ExprRes EvalCast::cast_to_idx(
-    ulam::Ref<ulam::ast::Node> node, ulam::sema::ExprRes&& arg) {
+ExprRes EvalCast::cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
     auto no_consteval_cast = flags_raii(flags() | evl::NoConstevalCast);
     auto type = idx_type();
     if (!has_flag(evl::NoCodegen)) {
@@ -48,10 +53,21 @@ ulam::sema::ExprRes EvalCast::cast_to_idx(
     return std::move(res);
 }
 
-ulam::sema::ExprRes EvalCast::cast_class_default(
+ExprRes EvalCast::cast_atom_to_quark_noexec(
+    ulam::Ref<ulam::ast::Node> node, ulam::Ref<ulam::Class> to, ExprRes&& arg) {
+    std::string data;
+    if (!has_flag(evl::NoCodegen))
+        data = exp::data(arg);
+    auto res = Base::cast_atom_to_quark_noexec(node, to, std::move(arg));
+    if (!data.empty())
+        exp::set_data(res, data);
+    return res;
+}
+
+ExprRes EvalCast::cast_class_default(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Type> to,
-    ulam::sema::ExprRes&& arg,
+    ExprRes&& arg,
     bool expl) {
     auto type = arg.type();
     bool is_consteval = arg.value().is_consteval();
@@ -66,10 +82,10 @@ ulam::sema::ExprRes EvalCast::cast_class_default(
     return res;
 }
 
-ulam::sema::ExprRes EvalCast::cast_class_fun(
+ExprRes EvalCast::cast_class_fun(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
-    ulam::sema::ExprRes&& arg,
+    ExprRes&& arg,
     bool expl) {
     auto res = Base::cast_class_fun(node, fun, std::move(arg), expl);
     // no need to add "cast" unless second cast is required (or cast is
@@ -79,10 +95,10 @@ ulam::sema::ExprRes EvalCast::cast_class_fun(
     return res;
 }
 
-ulam::sema::ExprRes EvalCast::cast_class_fun_after(
+ExprRes EvalCast::cast_class_fun_after(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Type> to,
-    ulam::sema::ExprRes&& arg,
+    ExprRes&& arg,
     bool expl) {
     // needs a second cast after conversion
     arg.uns_flag(exp::OmitCastInternal);
@@ -90,7 +106,7 @@ ulam::sema::ExprRes EvalCast::cast_class_fun_after(
 }
 
 void EvalCast::update_res(
-    ulam::sema::ExprRes& res, EvalCast::CastStatus status, bool expl) {
+    ExprRes& res, EvalCast::CastStatus status, bool expl) {
     bool omit_cast = res.has_flag(exp::OmitCastInternal);
     res.uns_flag(exp::OmitCastInternal);
 

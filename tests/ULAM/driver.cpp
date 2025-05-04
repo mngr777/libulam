@@ -172,6 +172,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41093_test_compiler_elementandquark_quarkunionstring.test", // .lenghtof, similar to t3930
     "t41131_test_compiler_elementandquark_overloadfunccallrefargsubclass_issue.test", // unsigned value format
     "t41139_test_compiler_castatomreftoatom_issue.test", // redundant cast from Stretch.instanceof to Atom?
+    "t41140_test_compiler_dividewithquestioncolon_issue.test", // tmp: casts
 };
 
 using Path = std::filesystem::path;

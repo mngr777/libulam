@@ -145,10 +145,15 @@ ExprRes EvalExprVisitor::apply_binary_op(
         break;
     case ulam::ops::Kind::Equality:
     case ulam::ops::Kind::Comparison:
-        // cast right arg to exact type for comparison
-        // deref, t3695
-        if (l_is_ref != r_is_ref) {
-            exp::add_cast(l_is_ref ? left : right);
+        if (l_is_ref || r_is_ref) {
+            if (l_is_ref != r_is_ref) {
+                // cast an arg to exact type for comparison
+                // deref, t3695
+                exp::add_cast(l_is_ref ? left : right);
+            } else {
+                exp::add_cast(left);
+                exp::add_cast(right);
+            }
         }
 
         if (l_type->is(ulam::BoolId) && r_type->is(ulam::BoolId)) {
