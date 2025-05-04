@@ -30,8 +30,8 @@ EvalCast::CastRes EvalCast::maybe_cast(
     CastStatus status = NoCast;
     assert(arg);
 
-    bool deref_required = false;
     auto arg_type = arg.type();
+    bool deref_required = false;
     if (to->is_ref()) {
         // taking or casting a reference
         if (!arg_type->is_ref()) {
@@ -92,6 +92,17 @@ EvalCast::CastRes EvalCast::maybe_cast(
         }
         diag().error(node, "suggest explicit cast");
     }
+
+    // unknown Atom to quark, t41143, TODO: ref types
+    if (arg.value().empty() && arg_type->is(AtomId) && to->is_class() &&
+        to->as_class()->is_quark()) {
+        auto res =
+            cast_atom_to_quark_noexec(node, to->as_class(), std::move(arg));
+        assert(res);
+        // NOTE: assuming quark must be a base class of element value at runtime
+        return {std::move(res), CastDowncast};
+    }
+
     diag().error(node, "invalid cast");
     return {ExprRes{ExprError::InvalidCast}, InvalidCast};
 }
@@ -166,6 +177,16 @@ ExprRes EvalCast::do_cast(
         return std::move(arg);
     }
     assert(false);
+}
+
+ExprRes EvalCast::cast_atom_to_quark_noexec(
+    Ref<ast::Node> node, Ref<Class> to, ExprRes&& arg) {
+    assert(arg.value().empty());
+    assert(to->is_quark());
+    assert(has_flag(evl::NoExec));
+    auto val = arg.value().is_lvalue() ? Value{arg.value().lvalue().derived()}
+                                       : Value{RValue{}};
+    return {to, std::move(val)};
 }
 
 ExprRes EvalCast::cast_class(
@@ -267,8 +288,9 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
         diag().error(node, "cannot take a reference to xvalue");
         return {ExprError::InvalidCast};
     }
+
     if (type->deref()->is_class() && val.has_rvalue())
-        type = val.dyn_obj_type()->ref_type();
+        type = val.dyn_obj_type(true)->ref_type();
     type = type->ref_type();
 
     return arg.derived(type, arg.move_value());
@@ -281,7 +303,7 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     val = val.deref();
     type = type->deref();
     if (type->is_class() && val.has_rvalue())
-        type = val.dyn_obj_type();
+        type = val.dyn_obj_type(true);
 
     return arg.derived(type, std::move(val));
 }

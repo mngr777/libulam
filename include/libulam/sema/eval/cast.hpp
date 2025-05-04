@@ -61,6 +61,9 @@ protected:
         ExprRes&& arg,
         bool expl);
 
+    virtual ExprRes
+    cast_atom_to_quark_noexec(Ref<ast::Node> node, Ref<Class> to, ExprRes&& arg);
+
     virtual ExprRes cast_class(
         Ref<ast::Node> node,
         Ref<Type> to,
