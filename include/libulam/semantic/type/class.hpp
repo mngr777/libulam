@@ -100,6 +100,10 @@ public:
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
+    Ref<Type> common(Ref<Type> type) override;
+    Ref<Type>
+    common(const Value& val1, Ref<Type> type, const Value& val2) override;
+
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
     bool is_castable_to(
         BuiltinTypeId builtin_type_id, bool expl = true) const override;
