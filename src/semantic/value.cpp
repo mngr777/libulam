@@ -130,7 +130,7 @@ LValue LValue::prop(Ref<Prop> prop) {
     auto data = data_view();
     if (!data)
         return derived(std::monostate{});
-    return derived(data_view().prop(prop));
+    return derived(data.prop(prop));
 }
 
 const LValue LValue::prop(Ref<Prop> prop) const {

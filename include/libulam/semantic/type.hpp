@@ -123,7 +123,18 @@ public:
     bool is_same_actual(Ref<const Type> type) const;
 
     virtual Ref<Type> common(Ref<Type> type);
-    virtual Ref<Type> common(const Value& val1, Ref<Type> type, const Value& val2);
+    virtual Ref<Type>
+    common(const Value& val1, Ref<Type> type, const Value& val2);
+
+    bool is_expl_castable_to(Ref<const Type> type, const Value& val) const;
+    bool is_impl_castable_to(Ref<const Type> type, const Value& val) const;
+    virtual bool is_castable_to(
+        Ref<const Type> type, const Value& val, bool expl = true) const;
+
+    bool is_expl_castable_to(BuiltinTypeId bi_type_id, const Value& val) const;
+    bool is_impl_castable_to(BuiltinTypeId bi_type_id, const Value& val) const;
+    virtual bool is_castable_to(
+        BuiltinTypeId bi_type_id, const Value& val, bool expl = true) const;
 
     bool is_expl_castable_to(Ref<const Type> type) const;
     bool is_impl_castable_to(Ref<const Type> type) const;
@@ -133,13 +144,6 @@ public:
     bool is_expl_castable_to(BuiltinTypeId bi_type_id) const;
     virtual bool
     is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const;
-
-    // NOTE: these overloads allow e.g. auto-casting Int to Unsigned if value is
-    // consteval and  >= 0: `Unsigned a = 1;`
-    virtual bool
-    is_impl_castable_to(Ref<const Type> type, const Value& val) const;
-    virtual bool
-    is_impl_castable_to(BuiltinTypeId bi_type_id, const Value& val) const;
 
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;
@@ -198,6 +202,8 @@ public:
 
 class AliasType : public UserType {
 public:
+    using UserType::is_castable_to;
+
     AliasType(
         UniqStrPool& str_pool,
         Builtins& builtins,
@@ -222,16 +228,15 @@ public:
 
     BuiltinTypeId bi_type_id() const override;
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool is_castable_to(
+        Ref<const Type> type,
+        const Value& val,
+        bool expl = true) const override;
 
-    bool
-    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
-
-    bool
-    is_impl_castable_to(Ref<const Type> type, const Value& val) const override;
-
-    bool is_impl_castable_to(
-        BuiltinTypeId bi_type_id, const Value& val) const override;
+    bool is_castable_to(
+        BuiltinTypeId bi_type_id,
+        const Value& val,
+        bool expl = true) const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
@@ -289,6 +294,8 @@ class ArrayType : public Type {
     friend AliasType;
 
 public:
+    using Type::is_castable_to;
+
     ArrayType(
         Builtins& builtins,
         TypeIdGen* id_gen,
@@ -337,6 +344,8 @@ class RefType : public Type {
     friend AliasType;
 
 public:
+    using Type::is_castable_to;
+
     RefType(Builtins& builtins, TypeIdGen* id_gen, Ref<Type> refd):
         Type{builtins, id_gen},
         _refd{refd},
@@ -357,14 +366,20 @@ public:
 
     Ref<RefType> ref_type() override { return this; }
 
+    bool is_castable_to(
+        Ref<const Type> type,
+        const Value& val,
+        bool expl = true) const override;
+
+    bool is_castable_to(
+        BuiltinTypeId bi_type_id,
+        const Value& val,
+        bool expl = true) const override;
+
     bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
-    bool
-    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
 
     bool
-    is_impl_castable_to(Ref<const Type> type, const Value& val) const override;
-    bool is_impl_castable_to(
-        BuiltinTypeId bi_type_id, const Value& val) const override;
+    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;

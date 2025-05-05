@@ -4,6 +4,10 @@
 
 namespace ulam::sema {
 
+namespace {
+constexpr ExprRes::flags_t NonStickyFlags = ExprRes::Self;
+}
+
 // ExprRes
 
 ExprRes ExprRes::copy() const {
@@ -14,19 +18,19 @@ ExprRes ExprRes::copy() const {
         res = {error()};
     }
     res._data = _data;
-    res._flags = _flags;
+    res._flags = _flags & ~NonStickyFlags;
     return res;
 }
 
-ExprRes ExprRes::derived(TypedValue&& tv) {
+ExprRes ExprRes::derived(TypedValue&& tv, bool keep_all_flags) {
     ExprRes res{std::move(tv)};
     res._data = _data;
-    res._flags = _flags;
+    res._flags = keep_all_flags ? _flags : _flags & ~NonStickyFlags;
     return res;
 }
 
-ExprRes ExprRes::derived(Ref<Type> type, Value&& val) {
-    return derived({type, std::move(val)});
+ExprRes ExprRes::derived(Ref<Type> type, Value&& val, bool keep_all_flags) {
+    return derived({type, std::move(val)}, keep_all_flags);
 }
 
 TypedValue ExprRes::move_typed_value() {

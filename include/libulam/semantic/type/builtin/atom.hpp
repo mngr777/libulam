@@ -11,6 +11,8 @@ class Builtins;
 
 class AtomType : public Type {
 public:
+    using Type::is_castable_to;
+
     AtomType(Builtins& builtins, TypeIdGen& id_gen, ElementRegistry& elements);
 
     std::string name() const override { return "Atom"; }
@@ -28,7 +30,10 @@ public:
 
     Ref<Type> data_type(const BitsView data, bitsize_t off);
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool is_castable_to(
+        Ref<const Type> type,
+        const Value& val,
+        bool expl = true) const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;

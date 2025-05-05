@@ -42,10 +42,23 @@ RValue AtomType::construct(Bits&& bits) {
     return RValue{make_s<Data>(type, std::move(bits))};
 }
 
-bool AtomType::is_castable_to(Ref<const Type> type, bool expl) const {
-    if (type->is_class())
-        return type->as_class()->is_element() && expl; // only to element?
-    return false;
+bool AtomType::is_castable_to(
+    Ref<const Type> type, const Value& val, bool expl) const {
+    if (is_same(type))
+        return true;
+
+    if (!type->is_class())
+        return false;
+
+    if (!val.empty()) {
+        auto dyn_type = val.dyn_obj_type();
+        if (dyn_type->is_class())
+            return dyn_type->as_class()->is_castable_to(type, val, expl);
+        return type->as_class()->is_element() && expl;
+    }
+    // unknown object value, assuming element, TODO: check if `type` as element
+    // descendants
+    return true;
 }
 
 conv_cost_t AtomType::conv_cost(Ref<const Type> type, bool allow_cast) const {

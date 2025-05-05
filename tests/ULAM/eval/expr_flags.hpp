@@ -4,14 +4,16 @@
 namespace exp {
 
 using flags_t = ulam::sema::ExprRes::flags_t;
-static constexpr flags_t NoFlags = 0;
-static constexpr flags_t ImplCast = 1;
-static constexpr flags_t ExplCast = 1 << 1;
-static constexpr flags_t OmitCastInternal = 1 << 2;
-static constexpr flags_t Self = 1 << 3;
-static constexpr flags_t SelfMemberAccess = 1 << 4;
-static constexpr flags_t MemberAccess = 1 << 5;
-static constexpr flags_t NumLit = 1 << 6;
-static constexpr flags_t NoConstFold = 1 << 7;
+static constexpr flags_t NoFlags = ulam::sema::ExprRes::NoFlags;
+static constexpr flags_t Self = ulam::sema::ExprRes::Self;
+static constexpr flags_t First = ulam::sema::ExprRes::Last;
+static constexpr flags_t ImplCast = First;
+static constexpr flags_t ExplCast = First << 1;
+static constexpr flags_t RefCastInternal = First << 2;
+static constexpr flags_t OmitCastInternal = First << 3;
+static constexpr flags_t SelfMemberAccess = First << 4;
+static constexpr flags_t MemberAccess = First << 5;
+static constexpr flags_t NumLit = First << 6;
+static constexpr flags_t NoConstFold = First << 7;
 
 } // namespace exp

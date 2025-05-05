@@ -37,6 +37,8 @@ class Class : public UserType, public ClassBase {
     friend cls::Ancestry;
 
 public:
+    using UserType::is_castable_to;
+
     Class(const std::string_view name, Ref<ClassTpl> tpl);
     Class(
         const std::string_view name,
@@ -104,9 +106,15 @@ public:
     Ref<Type>
     common(const Value& val1, Ref<Type> type, const Value& val2) override;
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
     bool is_castable_to(
-        BuiltinTypeId builtin_type_id, bool expl = true) const override;
+        Ref<const Type> type,
+        const Value& val,
+        bool expl = true) const override;
+
+    bool is_castable_to(
+        BuiltinTypeId builtin_type_id,
+        const Value& val,
+        bool expl = true) const override;
 
     Value cast_to(Ref<Type> type, Value&& val) override;
 

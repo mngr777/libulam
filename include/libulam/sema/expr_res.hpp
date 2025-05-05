@@ -17,6 +17,10 @@ namespace ulam::sema {
 class ExprRes {
 public:
     using flags_t = std::uint16_t;
+    static constexpr flags_t NoFlags = 0;
+    static constexpr flags_t Self = 1;
+    static constexpr flags_t Last = 1 << 1;
+
     using Data = std::any;
 
     ExprRes(TypedValue&& tv):
@@ -31,12 +35,15 @@ public:
 
     ExprRes copy() const;
 
-    ExprRes derived(TypedValue&& tv);
-    ExprRes derived(Ref<Type> type, Value&& val);
+    ExprRes derived(TypedValue&& tv, bool keep_all_flags = false);
+    ExprRes derived(Ref<Type> type, Value&& val, bool keep_all_flags = false);
 
     bool ok() const { return _error == ExprError::Ok; }
     bool is_nil() const { return _error == ExprError::Nil; }
     operator bool() const { return ok(); }
+
+    bool is_self() const { return has_flag(Self); }
+    void set_is_self(bool is_self) { set_flag(Self); }
 
     Ref<Type> type() const { return _typed_value.type(); }
     const Value& value() const { return _typed_value.value(); }

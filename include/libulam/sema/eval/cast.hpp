@@ -15,13 +15,8 @@ class EvalCast : public EvalHelper {
 public:
     enum CastStatus {
         CastOk,
-        InvalidCast,
         CastError,
-        NoCast,
-        CastRef,
-        CastDeref,
-        CastDowncast,
-        CastConsteval
+        NoCast
     };
     using CastRes = std::pair<ExprRes, CastStatus>;
 
@@ -40,54 +35,16 @@ public:
 
 protected:
     virtual CastRes
-    maybe_cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl);
+    do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
-    virtual CastRes maybe_cast(
+    virtual CastRes do_cast(
         Ref<ast::Node> node,
         BuiltinTypeId bi_type_id,
         ExprRes&& arg,
         bool expl);
-
-    virtual ExprRes do_cast(
-        Ref<ast::Node> node,
-        Ref<Type> to,
-        ExprRes&& arg,
-        bool expl,
-        bool deref_required);
-
-    virtual ExprRes do_cast(
-        Ref<ast::Node> node,
-        BuiltinTypeId bi_type_id,
-        ExprRes&& arg,
-        bool expl);
-
-    virtual ExprRes
-    cast_atom_to_quark_noexec(Ref<ast::Node> node, Ref<Class> to, ExprRes&& arg);
-
-    virtual ExprRes cast_class(
-        Ref<ast::Node> node,
-        Ref<Type> to,
-        ExprRes&& arg,
-        bool expl,
-        bool deref_required);
-
-    virtual ExprRes cast_class_default(
-        Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
-
-    virtual ExprRes
-    cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl);
-
-    virtual ExprRes cast_class_fun_after(
-        Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
     cast_prim(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
-
-    virtual ExprRes cast_prim(
-        Ref<ast::Node> node,
-        BuiltinTypeId bi_type_id,
-        ExprRes&& arg,
-        bool expl);
 
     virtual ExprRes
     cast_array(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
@@ -96,13 +53,28 @@ protected:
     cast_atom(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
+    cast_class(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
+
+    virtual ExprRes
     cast_ref(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
     virtual ExprRes
     cast_default(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl);
 
-    ExprRes take_ref(Ref<ast::Node> node, ExprRes&& arg);
-    ExprRes deref(ExprRes&& arg);
+    virtual ExprRes cast_default(
+        Ref<ast::Node> node,
+        BuiltinTypeId bi_type_id,
+        ExprRes&& arg,
+        bool expl);
+
+    virtual ExprRes cast_atom_to_nonelement_empty(
+        Ref<ast::Node> node, Ref<Class> to, ExprRes&& arg);
+
+    virtual ExprRes
+    cast_class_fun(Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl);
+
+    virtual ExprRes take_ref(Ref<ast::Node> node, ExprRes&& arg);
+    virtual ExprRes deref(ExprRes&& arg);
 
     Ref<Type> idx_type();
 };
