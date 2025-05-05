@@ -21,7 +21,7 @@ class Builtins;
 // TODO: make virtual methods pure
 class PrimType : public Type {
 public:
-    using Type::is_impl_castable_to;
+    using Type::is_castable_to;
 
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
@@ -40,16 +40,15 @@ public:
     Ref<Type>
     common(const Value& val1, Ref<Type> type, const Value& val2) override;
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool is_castable_to(
+        Ref<const Type> type,
+        const Value& val,
+        bool expl = true) const override;
 
-    bool
-    is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
-
-    bool
-    is_impl_castable_to(Ref<const Type> type, const Value& val) const override;
-
-    bool is_impl_castable_to(
-        BuiltinTypeId bi_type_id, const Value& val) const override;
+    bool is_castable_to(
+        BuiltinTypeId bi_type_id,
+        const Value& val,
+        bool expl = true) const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
@@ -82,9 +81,10 @@ protected:
 
     virtual bool is_castable_to_prim(BuiltinTypeId bi_type_id, bool expl) const;
 
+    // NOTE: these allow e.g. auto-casting Int to Unsigned if value is
+    // consteval and  >= 0: `Unsigned a = 1;`
     virtual bool
     is_impl_castable_to_prim(Ref<const PrimType> type, const Value& val) const;
-
     virtual bool
     is_impl_castable_to_prim(BuiltinTypeId bi_type_id, const Value& val) const;
 

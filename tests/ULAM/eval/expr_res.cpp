@@ -8,36 +8,40 @@
 #endif
 #include "src/debug.hpp"
 
+namespace {
+using ExprRes = ulam::sema::ExprRes;
+}
+
 namespace exp {
 
-std::string data(const ulam::sema::ExprRes& res) {
+std::string data(const ExprRes& res) {
     assert(res.has_data());
     assert(!res.data<std::string>().empty());
     auto data = res.data<std::string>();
     return data;
 }
 
-void set_data(ulam::sema::ExprRes& res, std::string data) {
+void set_data(ExprRes& res, std::string data) {
     assert(!data.empty());
     res.set_flags(exp::NoFlags);
     res.set_data<std::string>(std::move(data));
 }
 
-void set_data(ulam::sema::ExprRes& res, const std::string_view data) {
+void set_data(ExprRes& res, const std::string_view data) {
     set_data(res, std::string{data});
 }
 
-void set_data(ulam::sema::ExprRes& res, const char* data) {
+void set_data(ExprRes& res, const char* data) {
     set_data(res, std::string{data});
 }
 
-void set_self(ulam::sema::ExprRes& res) {
+void set_self(ExprRes& res) {
     assert(!res.has_data());
     set_data(res, "self");
     res.set_flag(exp::Self);
 }
 
-bool add_cast(ulam::sema::ExprRes& res, bool expl) {
+bool add_cast(ExprRes& res, bool expl) {
     // add cast unless it's an implicit cast on implicit cast result
     bool added = expl || !res.has_flag(ImplCast);
     res.uns_flag(ExplCast);
@@ -49,24 +53,22 @@ bool add_cast(ulam::sema::ExprRes& res, bool expl) {
     return added;
 }
 
-void add_member_access(
-    ulam::sema::ExprRes& res, const std::string& name, bool is_self) {
+void add_member_access(ExprRes& res, const std::string& name, bool is_self) {
     append(res, name);
     append(res, ".");
     res.set_flag(is_self ? SelfMemberAccess : MemberAccess);
 }
 
 void add_member_access(
-    ulam::sema::ExprRes& res, const std::string_view name, bool is_self) {
+    ExprRes& res, const std::string_view name, bool is_self) {
     add_member_access(res, std::string{name}, is_self);
 }
 
-void add_member_access(
-    ulam::sema::ExprRes& res, const char* data, bool is_self) {
+void add_member_access(ExprRes& res, const char* data, bool is_self) {
     add_member_access(res, std::string{data}, is_self);
 }
 
-void remove_member_access_op(ulam::sema::ExprRes& res, bool remove_ident) {
+void remove_member_access_op(ExprRes& res, bool remove_ident) {
     auto data = exp::data(res);
     auto size = data.size();
 
@@ -85,9 +87,7 @@ void remove_member_access_op(ulam::sema::ExprRes& res, bool remove_ident) {
 }
 
 void add_array_access(
-    ulam::sema::ExprRes& res,
-    const std::string& idx,
-    bool before_member_access) {
+    ExprRes& res, const std::string& idx, bool before_member_access) {
     // ULAM quirk:
     // `a.b[c] -> `a b c [] .`, but
     // `/* self. */ b[c]` -> `self b . c []`
@@ -104,8 +104,7 @@ void add_array_access(
     append(res, ".");
 }
 
-void append(
-    ulam::sema::ExprRes& res, const std::string& data, const std::string& sep) {
+void append(ExprRes& res, const std::string& data, const std::string& sep) {
     if (res.has_data()) {
         set_data(res, data_append(exp::data(res), data, sep));
     } else {

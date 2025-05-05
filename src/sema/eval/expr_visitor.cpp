@@ -344,7 +344,7 @@ ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
             !(val.is_lvalue() && val.lvalue().is<BoundFunSet>())) {
             auto empty = val.is_lvalue() ? Value{val.lvalue().derived()}
                                          : Value{RValue{}};
-            return res.derived(res.type(), std::move(empty));
+            return res.derived(res.type(), std::move(empty), true);
         }
     }
     return std::move(res);
@@ -747,8 +747,10 @@ ExprRes EvalExprVisitor::apply_unary_op(
             if (!arg.value().has_rvalue())
                 return {builtins().boolean(), Value{RValue{}}};
             auto dyn_type = arg.value().dyn_obj_type();
+            assert(type->is_class()); // TODO: check upstream
             bool is =
-                dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type);
+                dyn_type->is_class() &&
+                type->as_class()->is_same_or_base_of(dyn_type->as_class());
             auto boolean = builtins().boolean();
             return {boolean, Value{boolean->construct(is)}};
 
@@ -886,7 +888,8 @@ EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     return type_op_expr_default(node, std::move(arg));
 }
 
-ExprRes EvalExprVisitor::type_op_expr_construct(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
+ExprRes EvalExprVisitor::type_op_expr_construct(
+    Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     assert(arg.type()->is_class());
     auto args = eval_args(node->args());
     if (!args)
@@ -904,16 +907,38 @@ ExprRes EvalExprVisitor::type_op_expr_fun(
 
 ExprRes EvalExprVisitor::type_op_expr_default(
     Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
+    // NOTE: self has known type at compile time
+    bool is_consteval =
+        node->op() != TypeOp::AtomOf && node->op() != TypeOp::LengthOf;
+    if (node->op() == TypeOp::InstanceOf)
+        is_consteval = arg.value().is_consteval() || arg.is_self();
+
+    // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
+    bool use_dyn_type =
+        (node->op() == TypeOp::InstanceOf || node->op() == TypeOp::AtomOf);
+    auto type = arg.type()->deref();
     auto val = arg.move_value();
-    auto tv = arg.type()->actual()->type_op(node->op(), val);
+
+    if (use_dyn_type) {
+        if (type->is_object() && !val.empty())
+            type = val.dyn_obj_type();
+    }
+
+    auto tv = type->type_op(node->op(), val);
     if (!tv)
         return {ExprError::InvalidTypeOperator};
-    return tv;
+
+    type = tv.type();
+    val = tv.move_value();
+    val.set_is_consteval(is_consteval);
+    return {type, std::move(val)};
 }
 
 ExprRes EvalExprVisitor::ident_self(Ref<ast::Ident> node) {
     auto self = scope()->self();
-    return {scope()->eff_self_cls()->ref_type(), Value{self}};
+    ExprRes res = {scope()->eff_self_cls()->ref_type(), Value{self}};
+    res.set_is_self(true);
+    return res;
 }
 
 ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {

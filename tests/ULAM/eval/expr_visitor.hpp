@@ -21,6 +21,7 @@ public:
         ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
         Base::EvalExprVisitor{eval, program, scope, flags} {}
 
+    ExprRes visit(ulam::Ref<ulam::ast::Cast> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::Ternary> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::BoolLit> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::NumLit> node) override;

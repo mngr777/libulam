@@ -29,6 +29,15 @@ constexpr char FuncallPh[] = "{args}{fun}";
 
 } // namespace
 
+ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Cast> node) {
+    auto res = Base::visit(node);
+    if (!has_flag(evl::NoCodegen)) {
+        if (!res.has_flag(exp::ExplCast) && !res.has_flag(exp::ImplCast))
+            exp::add_cast(res, true);
+    }
+    return res;
+}
+
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
     if (has_flag(evl::NoCodegen))
         return Base::visit(node);
@@ -360,6 +369,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
         data = exp::data(arg);
     }
     auto res = Base::type_op_expr_default(node, std::move(arg));
+
     if (!data.empty()) {
         if (res.type()->is_prim() && res.value().is_consteval()) {
             res.value().with_rvalue([&](const ulam::RValue& rval) {

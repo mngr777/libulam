@@ -310,14 +310,13 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
 }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
+    if (!codegen_enabled())
+        return Base::visit(node);
+
     auto res = ret_res(node);
-    if (codegen_enabled()) {
-        if (res.has_data()) {
-            append(res.data<std::string>());
-            append("return");
-        }
-    } else {
-        throw ulam::sema::EvalExceptReturn(node, std::move(res));
+    if (res.has_data()) {
+        append(res.data<std::string>());
+        append("return");
     }
 }
 

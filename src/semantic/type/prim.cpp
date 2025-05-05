@@ -36,30 +36,21 @@ PrimType::common(const Value& val1, Ref<Type> type, const Value& val2) {
     return common_prim(val1, type->as_prim(), val2);
 }
 
-bool PrimType::is_castable_to(Ref<const Type> type, bool expl) const {
+bool PrimType::is_castable_to(
+    Ref<const Type> type, const Value& val, bool expl) const {
     if (!type->is_prim())
         return false;
-    return is_castable_to_prim(type->as_prim(), expl);
+    return (!val.empty() && !expl)
+               ? is_impl_castable_to_prim(type->as_prim(), val)
+               : is_castable_to_prim(type->as_prim(), expl);
 }
 
-bool PrimType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
+bool PrimType::is_castable_to(
+    BuiltinTypeId bi_type_id, const Value& val, bool expl) const {
     if (!ulam::is_prim(bi_type_id))
         return false;
-    return is_castable_to_prim(bi_type_id, expl);
-}
-
-bool PrimType::is_impl_castable_to(
-    Ref<const Type> type, const Value& val) const {
-    if (!type->is_prim())
-        return false;
-    return is_impl_castable_to_prim(type->as_prim(), val);
-}
-
-bool PrimType::is_impl_castable_to(
-    BuiltinTypeId bi_type_id, const Value& val) const {
-    if (!ulam::is_prim(bi_type_id))
-        return false;
-    return is_impl_castable_to_prim(bi_type_id, val);
+    return (!val.empty() && !expl) ? is_impl_castable_to_prim(bi_type_id, val)
+                                   : is_castable_to_prim(bi_type_id, expl);
 }
 
 Value PrimType::cast_to(Ref<Type> type, Value&& val) {

@@ -351,8 +351,11 @@ Ref<Type> Class::common(const Value& val1, Ref<Type> type, const Value& val2) {
 // NOTE: for ambiguous conversion truth is returned,
 // the error is to be catched when applying conversions
 
-bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
-    assert(!is_same(type));
+bool Class::is_castable_to(
+    Ref<const Type> type, const Value& val, bool expl) const {
+    if (is_same(type))
+        return true;
+
     if (!convs(type, expl).empty())
         return true;
 
@@ -361,8 +364,10 @@ bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
         return expl && (type->bitsize() == bitsize()); // too strict??
 
     // to Atom
+    // NOTE: assuming element dyn type for unknown values, TODO: check if `type`
+    // has element descendants
     if (type->is(AtomId))
-        return is_element();
+        return is_element() || val.empty();
 
     if (!type->is_class())
         return false;
@@ -379,9 +384,11 @@ bool Class::is_castable_to(Ref<const Type> type, bool expl) const {
 
     // object of same size
     return expl && type->bitsize() == bitsize();
+    return is_castable_to(type, expl);
 }
 
-bool Class::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
+bool Class::is_castable_to(
+    BuiltinTypeId bi_type_id, const Value& val, bool expl) const {
     // NOTE: must be conv or cast to exact type otherwise
     return !convs(bi_type_id, expl).empty();
 }
