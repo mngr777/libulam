@@ -35,12 +35,6 @@ protected:
         ulam::Ref<ulam::ast::InitMap> map,
         unsigned depth) override;
 
-    ExprRes eval_array_list_item(
-        ulam::Ref<ulam::VarBase> var,
-        ulam::Ref<ulam::Type> type,
-        Variant& item_v,
-        unsigned depth) override;
-
     ExprRes array_set(
         ulam::Ref<ulam::VarBase> var,
         ExprRes&& array,
@@ -48,9 +42,12 @@ protected:
         ulam::sema::ExprRes&& item,
         bool autofill) override;
 
-    virtual ulam::sema::ExprRes obj_set(
+    ExprRes obj_set(
         ulam::Ref<ulam::VarBase> var,
-        ulam::sema::ExprRes&& obj,
+        ExprRes&& obj,
         ulam::Ref<ulam::Prop> prop,
-        ulam::sema::ExprRes&& prop_res) override;
+        ExprRes&& prop_res) override;
+
+private:
+    std::string value_str(ulam::Ref<ulam::VarBase> var, const ExprRes& res);
 };

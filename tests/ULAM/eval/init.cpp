@@ -59,25 +59,6 @@ ExprRes EvalInit::eval_class_map(
     return obj;
 }
 
-ExprRes EvalInit::eval_array_list_item(
-    ulam::Ref<ulam::VarBase> var,
-    ulam::Ref<ulam::Type> type,
-    Variant& item_v,
-    unsigned depth) {
-    auto res = Base::eval_array_list_item(var, type, item_v, depth);
-    if (has_flag(evl::NoCodegen))
-        return res;
-
-    // NOTE: _not_ replacing _const_ var consteval variables, see t3250, t3882
-    if (res.value().is_consteval() && !(var->is_const())) {
-        res.value().with_rvalue([&](const ulam::RValue& rval) {
-            Stringifier stringifier{program()};
-            exp::set_data(res, stringifier.stringify(res.type(), rval));
-        });
-    }
-    return res;
-}
-
 ExprRes EvalInit::array_set(
     ulam::Ref<ulam::VarBase> var,
     ExprRes&& array,
@@ -87,7 +68,7 @@ ExprRes EvalInit::array_set(
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
         if (!autofill)
-            exp::append(array, exp::data(item), ", ");
+            exp::append(array, value_str(var, item), ", ");
         data = exp::data(array);
     }
     array =
@@ -105,11 +86,25 @@ ExprRes EvalInit::obj_set(
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
         auto label = "." + std::string{str(prop->name_id())};
-        exp::append(obj, exp::data_combine(label, "=", exp::data(prop_res)));
+        auto value = value_str(var, prop_res);
+        exp::append(obj, exp::data_combine(label, "=", value), ", ");
         data = exp::data(obj);
     }
     obj = Base::obj_set(var, std::move(obj), prop, std::move(prop_res));
     if (!data.empty())
         exp::set_data(obj, data);
     return std::move(obj);
+}
+
+std::string
+EvalInit::value_str(ulam::Ref<ulam::VarBase> var, const ExprRes& res) {
+    auto data = exp::data(res);
+    if (res.value().is_consteval() && !(var->is_const())) {
+        res.value().with_rvalue([&](const ulam::RValue& rval) {
+            Stringifier stringifier{program()};
+            stringifier.options.unary_as_unsigned_lit = true;
+            data = stringifier.stringify(res.type(), rval);
+        });
+    }
+    return data;
 }
