@@ -158,6 +158,8 @@ public:
     virtual Ref<ArrayType> array_type(array_size_t size);
     virtual Ref<RefType> ref_type();
 
+    Builtins& builtins() { return _builtins; } // hack for Data
+
 protected:
     virtual Ref<PrimType> _as_prim() { return {}; }
     virtual Ref<const PrimType> _as_prim() const { return {}; }
@@ -177,7 +179,6 @@ protected:
     virtual Ptr<ArrayType> make_array_type(array_size_t size);
     virtual Ptr<RefType> make_ref_type();
 
-    Builtins& builtins() { return _builtins; }
     TypeIdGen* id_gen() { return _id_gen; }
 
 private:
