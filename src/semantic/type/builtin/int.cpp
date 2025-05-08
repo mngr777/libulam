@@ -271,8 +271,7 @@ bool IntType::is_impl_castable_to_prim(
 
 bool IntType::is_impl_castable_to_prim(
     BuiltinTypeId bi_type_id, const Value& val) const {
-    if (bi_type_id != UnsignedId && bi_type_id != UnaryId &&
-        bi_type_id != BitsId)
+    if (bi_type_id != UnsignedId && bi_type_id != UnaryId)
         return is_castable_to_prim(bi_type_id, false);
 
     auto rval = val.copy_rvalue();

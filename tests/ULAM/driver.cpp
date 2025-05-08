@@ -22,8 +22,6 @@ static const std::set<std::string> Skip = {
     "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
-    // "t3834_test_compiler_atomreffromsuperquarkrefwithcast.test", // quark element base to Atom&: use (Atom&)(Elt&)q ?
-    // "t3837_test_compiler_element_quarkrefatomof_issue.test", // Atom to quark element base reference: use (QPerc&)(Elt&) ?
     "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use
     "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition
     "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
@@ -134,6 +132,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3832_test_compiler_transientwithtransientdmwithelementarrayref_typedefref.test", // -"-
     "t3833_test_compiler_transientwithatomdm.test", // -"-
     "t3835_test_compiler_element_ascondquarkatomof_issue.test", // redundant cast from consteval (instanceof) element to Atom
+    "t3837_test_compiler_element_quarkrefatomof_issue.test", // -"-
     "t3850_test_compiler_mixedlongbinaryops.test", // mixing 32/64-bit Ints, why `mixprod32 / mixdiv64` -> `mixprod32 cast mixdiv64 / cast cast 4 cast ==`?
     "t3887_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefshadow.test", // local `b` used instead of tpl parameter, TODO: address in compat mode
     "t3902_test_compiler_funcdef_forloopcontinue_issue.test", // `d(0)` is correct (tested) `d(5)` means `--i` is ignored?
