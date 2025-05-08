@@ -82,12 +82,17 @@ protected:
         ExprRes&& array,
         array_idx_t idx,
         ExprRes&& item,
-        bool autofill);
+        bool autofill,
+        unsigned depth);
 
     virtual ExprRes make_obj(Ref<VarBase> var, Ref<Class> cls);
 
     virtual ExprRes obj_set(
-        Ref<VarBase> var, ExprRes&& obj, Ref<Prop> prop, ExprRes&& prop_res);
+        Ref<VarBase> var,
+        ExprRes&& obj,
+        Ref<Prop> prop,
+        ExprRes&& prop_res,
+        unsigned depth);
 };
 
 } // namespace ulam::sema

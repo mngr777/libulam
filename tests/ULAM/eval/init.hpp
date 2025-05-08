@@ -40,14 +40,17 @@ protected:
         ExprRes&& array,
         ulam::array_idx_t idx,
         ulam::sema::ExprRes&& item,
-        bool autofill) override;
+        bool autofill,
+        unsigned depth) override;
 
     ExprRes obj_set(
         ulam::Ref<ulam::VarBase> var,
         ExprRes&& obj,
         ulam::Ref<ulam::Prop> prop,
-        ExprRes&& prop_res) override;
+        ExprRes&& prop_res,
+        unsigned depth) override;
 
 private:
-    std::string value_str(ulam::Ref<ulam::VarBase> var, const ExprRes& res);
+    std::string
+    value_str(ulam::Ref<ulam::VarBase> var, const ExprRes& res, unsigned depth);
 };

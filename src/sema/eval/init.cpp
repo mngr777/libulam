@@ -139,7 +139,7 @@ ExprRes EvalInit::eval_array_list(
     // * if not enough items -- use last item in list (default construct for
     // empty list);
     // * if too many items -- ignore the rest. ?? only when array size is 0?
-    bool autofill = (depth == 1) && !item_type->is_array();
+    bool autofill = !item_type->is_array();
     if (!autofill) {
         if (list->size() < size) {
             diag().error(list, "not enough items");
@@ -163,18 +163,18 @@ ExprRes EvalInit::eval_array_list(
         // assign to array item
         bool copy = (n + 1 == list->size() && size > list->size());
         if (!item.value().empty()) {
+            auto item_copy = copy ? item.copy() : std::move(item);
             array = array_set(
-                var, std::move(array), n, copy ? item.copy() : std::move(item),
-                false);
+                var, std::move(array), n, std::move(item_copy), false, depth);
         }
     }
     // fill rest with copies of the last value
     if (!item.value().empty()) {
         for (; n < size; ++n) {
             bool copy = (n + 1 < size);
+            auto item_copy = copy ? item.copy() : std::move(item);
             array = array_set(
-                var, std::move(array), n, copy ? item.copy() : std::move(item),
-                true);
+                var, std::move(array), n, std::move(item_copy), true, depth);
         }
     }
     return array;
@@ -205,12 +205,12 @@ ExprRes EvalInit::eval_class_map(
 
         // eval item
         auto prop = sym->get<Prop>();
-        auto prop_res = eval_v(var, prop->type(), map->get(key), 1);
+        auto prop_res = eval_v(var, prop->type(), map->get(key), depth + 1);
         if (!prop_res)
             return prop_res;
 
         // assign
-        obj = obj_set(var, std::move(obj), prop, std::move(prop_res));
+        obj = obj_set(var, std::move(obj), prop, std::move(prop_res), depth);
     }
     return obj;
 }
@@ -231,7 +231,8 @@ ExprRes EvalInit::array_set(
     ExprRes&& array,
     array_idx_t idx,
     ExprRes&& item,
-    bool autofill) {
+    bool autofill,
+    unsigned depth) {
     assert(array.type()->is_array());
     assert(idx < array.type()->as_array()->array_size());
 
@@ -249,7 +250,11 @@ ExprRes EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls) {
 }
 
 ExprRes EvalInit::obj_set(
-    Ref<VarBase> var, ExprRes&& obj, Ref<Prop> prop, ExprRes&& prop_res) {
+    Ref<VarBase> var,
+    ExprRes&& obj,
+    Ref<Prop> prop,
+    ExprRes&& prop_res,
+    unsigned depth) {
     assert(obj.type()->is_class());
     assert(prop_res.type() == prop->type());
 
