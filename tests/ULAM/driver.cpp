@@ -114,7 +114,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
     "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
-    "t3651_test_compiler_elementandquark_localarrayref.test", // tmp: deref requires cast?
+    // "t3651_test_compiler_elementandquark_localarrayref.test", // tmp: deref requires cast?
+    "t3652_test_compiler_elementandquarksinherited_unseentypedef_unaryclassarg_ish.test", // classid of non-const expr
     "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // redundant cast from `Foo.instanceof` to Atom?
     "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
     "t3715_test_compiler_transientwithtransientdm.test", // similar to t3714

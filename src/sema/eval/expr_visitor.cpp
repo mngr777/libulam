@@ -907,18 +907,35 @@ ExprRes EvalExprVisitor::type_op_expr_fun(
 
 ExprRes EvalExprVisitor::type_op_expr_default(
     Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
-    // NOTE: self has known type at compile time
-    bool is_consteval =
-        node->op() != TypeOp::AtomOf && node->op() != TypeOp::LengthOf;
-    if (node->op() == TypeOp::InstanceOf)
+    bool is_consteval = true;
+    bool use_dyn_type = false;
+    switch (node->op()) {
+    case TypeOp::MaxOf:
+    case TypeOp::MinOf:
+    case TypeOp::SizeOf:
+        break;
+    case TypeOp::LengthOf:
+        is_consteval = arg.type()->is_array() ||
+                       (arg.type()->is(StringId) && arg.value().is_consteval());
+        break;
+    case TypeOp::AtomOf:
+        is_consteval = false;
+        use_dyn_type = true;
+        break;
+    case TypeOp::ClassIdOf:
+    case TypeOp::InstanceOf:
+        // NOTE: self has known type at compile time
         is_consteval = arg.value().is_consteval() || arg.is_self();
+        use_dyn_type = true;
+        break;
+    default:
+        is_consteval = arg.value().is_consteval();
+    }
 
-    // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
-    bool use_dyn_type =
-        (node->op() == TypeOp::InstanceOf || node->op() == TypeOp::AtomOf);
     auto type = arg.type()->deref();
     auto val = arg.move_value();
 
+    // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
     if (use_dyn_type) {
         if (type->is_object() && !val.empty())
             type = val.dyn_obj_type();
