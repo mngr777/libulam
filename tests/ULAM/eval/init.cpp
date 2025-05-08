@@ -41,10 +41,22 @@ ExprRes EvalInit::eval_array_list(
     auto array = Base::eval_array_list(var, array_type, list, depth);
     if (!has_flag(evl::NoCodegen)) {
         auto array_data = array.has_data() ? exp::data(array) : std::string{};
-        auto data = exp::data_combine("{ " + array_data + " }");
-        exp::set_data(array, data);
+        exp::set_data(array, "{ " + array_data + " }");
     }
     return array;
+}
+
+ExprRes EvalInit::eval_class_map(
+    ulam::Ref<ulam::VarBase> var,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Ref<ulam::ast::InitMap> map,
+    unsigned depth) {
+    auto obj = Base::eval_class_map(var, cls, map, depth);
+    if (!has_flag(evl::NoCodegen)) {
+        auto obj_data = obj.has_data() ? exp::data(obj) : std::string{};
+        exp::set_data(obj, "{ " + obj_data + " }");
+    }
+    return obj;
 }
 
 ExprRes EvalInit::eval_array_list_item(
@@ -85,13 +97,19 @@ ExprRes EvalInit::array_set(
     return std::move(array);
 }
 
-// ExprRes EvalInit::make_obj(ulam::Ref<ulam::Class> cls) {
-//     return {}; // TODO
-// }
-
-// ExprRes EvalInit::obj_set(
-//     ExprRes&& obj,
-//     ulam::Ref<ulam::Prop> prop,
-//     ExprRes&& prop_res) {
-//     return {}; // TODO
-// }
+ExprRes EvalInit::obj_set(
+    ulam::Ref<ulam::VarBase> var,
+    ExprRes&& obj,
+    ulam::Ref<ulam::Prop> prop,
+    ExprRes&& prop_res) {
+    std::string data;
+    if (!has_flag(evl::NoCodegen)) {
+        auto label = "." + std::string{str(prop->name_id())};
+        exp::append(obj, exp::data_combine(label, "=", exp::data(prop_res)));
+        data = exp::data(obj);
+    }
+    obj = Base::obj_set(var, std::move(obj), prop, std::move(prop_res));
+    if (!data.empty())
+        exp::set_data(obj, data);
+    return std::move(obj);
+}
