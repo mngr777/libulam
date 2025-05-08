@@ -29,6 +29,12 @@ protected:
         ulam::Ref<ulam::ast::InitList> list,
         unsigned depth) override;
 
+    ExprRes eval_class_map(
+        ulam::Ref<ulam::VarBase> var,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Ref<ulam::ast::InitMap> map,
+        unsigned depth) override;
+
     ExprRes eval_array_list_item(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::Type> type,
@@ -42,10 +48,9 @@ protected:
         ulam::sema::ExprRes&& item,
         bool autofill) override;
 
-    // virtual ulam::sema::ExprRes make_obj(ulam::Ref<ulam::Class> cls);
-
-    // virtual ulam::sema::ExprRes obj_set(
-    //     ulam::sema::ExprRes&& obj,
-    //     ulam::Ref<ulam::Prop> prop,
-    //     ulam::sema::ExprRes&& prop_res);
+    virtual ulam::sema::ExprRes obj_set(
+        ulam::Ref<ulam::VarBase> var,
+        ulam::sema::ExprRes&& obj,
+        ulam::Ref<ulam::Prop> prop,
+        ulam::sema::ExprRes&& prop_res) override;
 };
