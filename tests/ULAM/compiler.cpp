@@ -252,8 +252,13 @@ void Compiler::write_obj_props(
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
 
-    for (auto prop : cls->props())
+    for (auto prop : cls->props()) {
+        auto type = prop->type();
+        // t41005, t41006
+        stringifier.options.use_unsigned_suffix_zero_force =
+            !in_main && type->is(ulam::UnsignedId) && type->bitsize() == 8;
         write_obj_prop(os, stringifier, prop, obj, in_main);
+    }
 }
 
 void Compiler::write_obj_prop(

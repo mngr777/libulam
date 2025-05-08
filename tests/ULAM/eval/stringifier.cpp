@@ -209,8 +209,13 @@ Stringifier::unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const {
         ss << "HexU64(" << std::hex << "0x" << hi << ", 0x" << lo << ")";
     } else {
         ss << val;
-        if (options.use_unsigned_suffix &&
-            (val != 0 || options.use_unsigned_suffix_zero))
+        bool is_zero = val == 0;
+        bool add_suffix = false;
+        if (options.use_unsigned_suffix)
+            add_suffix = (!is_zero || options.use_unsigned_suffix_zero);
+        if (!add_suffix)
+            add_suffix = (is_zero && options.use_unsigned_suffix_zero_force);
+        if (add_suffix)
             ss << "u";
     }
     return ss.str();
