@@ -61,7 +61,6 @@ public:
         DataPtr storage,
         Ref<Type> type,
         bitsize_t off,
-        Ref<Type> view_type = Ref<Type>{},
         bitsize_t atom_off = NoBitsize,
         Ref<Type> atom_type = Ref<Type>{});
 
@@ -75,8 +74,8 @@ public:
     DataPtr storage() { return _storage; }
     ConstDataPtr storage() const { return _storage; }
 
-    DataView as(Ref<Type> view_type);
-    const DataView as(Ref<Type> view_type) const;
+    DataView as(Ref<Type> type);
+    const DataView as(Ref<Type> type) const;
 
     DataView array_item(array_idx_t idx);
     const DataView array_item(array_idx_t idx) const;
@@ -94,9 +93,7 @@ public:
     bool is_atom() const;
     bool is_class() const;
 
-    Ref<Type> type(bool real = false) const {
-        return real ? _type : _view_type;
-    }
+    Ref<Type> type() const { return _type; }
 
     BitsView bits();
     const BitsView bits() const;
@@ -105,7 +102,6 @@ private:
     DataPtr _storage{};
     Ref<Type> _type{};
     bitsize_t _off{};
-    Ref<Type> _view_type{};
     struct {
         bitsize_t off{NoBitsize};
         Ref<Type> type{};

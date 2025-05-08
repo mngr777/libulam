@@ -260,7 +260,7 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
     }
 
     if (type->deref()->is_object() && val.has_rvalue())
-        type = val.dyn_obj_type(true)->ref_type();
+        type = val.dyn_obj_type()->ref_type();
     type = type->ref_type();
 
     return arg.derived(type, arg.move_value());
@@ -272,7 +272,7 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     auto val = arg.move_value().deref();
 
     if (type->is_object() && val.has_rvalue())
-        type = val.dyn_obj_type(true);
+        type = val.dyn_obj_type();
 
     return arg.derived(type, std::move(val));
 }
