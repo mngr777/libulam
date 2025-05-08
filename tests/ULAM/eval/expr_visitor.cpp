@@ -144,8 +144,9 @@ ExprRes EvalExprVisitor::apply_binary_op(
             node, op, lval, l_node, std::move(left), r_node, std::move(right));
     }
 
-    bool no_fold =
-        left.has_flag(exp::NoConstFold) || right.has_flag(exp::NoConstFold);
+    bool no_fold = has_flag(evl::NoConstFold) ||
+                   left.has_flag(exp::NoConstFold) ||
+                   right.has_flag(exp::NoConstFold);
 
     switch (ulam::ops::kind(op)) {
     case ulam::ops::Kind::Assign:
@@ -253,7 +254,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
     }
 
     auto data = exp::data(arg);
-    bool no_fold = arg.has_flag(exp::NoConstFold);
+    bool no_fold = has_flag(evl::NoConstFold) || arg.has_flag(exp::NoConstFold);
 
     if (arg.has_flag(exp::NumLit) &&
         (op == ulam::Op::UnaryMinus || op == ulam::Op::UnaryPlus)) {
@@ -502,7 +503,7 @@ ExprRes EvalExprVisitor::member_access_var(
     bool is_self = false;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_var(node, std::move(obj), var);
@@ -539,7 +540,7 @@ ExprRes EvalExprVisitor::member_access_prop(
     bool is_self = false;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_prop(node, std::move(obj), prop);
@@ -565,7 +566,7 @@ ExprRes EvalExprVisitor::member_access_fset(
     bool is_self = false;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_fset(node, std::move(obj), fset);

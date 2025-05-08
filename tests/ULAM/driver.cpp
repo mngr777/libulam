@@ -177,6 +177,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41168_test_compiler_classdminitarrays.test", // ok, autofilled array format: exact init expr not available at compile time
     "t41169_test_compiler_classdminitarraysinclass.test", // -"-
     "t41170_test_compiler_classdminitarrayofquarks.test", // -"-
+    "t41172_test_compiler_classdminitarrays_localvar.test", // -"-
+    "t41173_test_compiler_classdminitarraysinclass_localvar.test", // -"-
+    "t41174_test_compiler_classdminitarrayofquarks_localvar.test", // -"-
 };
 
 using Path = std::filesystem::path;
