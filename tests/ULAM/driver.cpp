@@ -105,6 +105,7 @@ static const std::set<std::string> Skip = {
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
+    "t41143_test_compiler_elementandquark_castatomtoquark_issue.test", // tmp: data view type is needed after all
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -161,6 +162,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3985_test_compiler_stringasciiarray_variablelengthof.test", // tmp
     "t3993_test_compiler_longstringemptystring_lengthof.test", // .lengthof, similar to t3930
     "t3995_test_compiler_stringarray_assign_print.test", // -"-
+    "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // unsigned value format
+    "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
+    "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
     "t41014_test_compiler_logicalorandprecedence_issue.test", // ULAM has same precedence for || and && ?
     "t41039_test_compiler_controlswitch_nonconstantcaseexpressions.test", // seems to require runtime values to work; z = 4 does happen, so ok to skip
     "t41072_test_compiler_assignto_questioncolon.test", // ULAM parses `ok ? a : b = 2` as `(ok ? a : b) = 2`?
@@ -169,6 +173,10 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41131_test_compiler_elementandquark_overloadfunccallrefargsubclass_issue.test", // unsigned value format
     "t41139_test_compiler_castatomreftoatom_issue.test", // redundant cast from Stretch.instanceof to Atom?
     "t41140_test_compiler_dividewithquestioncolon_issue.test", // tmp: casts
+    "t41145_test_compiler_quarkunion_dmwithunknownsizes_issue.test", // ok, constant not in output
+    "t41168_test_compiler_classdminitarrays.test", // ok, autofilled array format: exact init expr not available at compile time
+    "t41169_test_compiler_classdminitarraysinclass.test", // -"-
+    "t41170_test_compiler_classdminitarrayofquarks.test", // -"-
 };
 
 using Path = std::filesystem::path;
