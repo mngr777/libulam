@@ -56,8 +56,8 @@ public:
     DataView data_view();
     const DataView data_view() const;
 
-    Ref<Class> dyn_cls(bool real = false) const;
-    Ref<Type> dyn_obj_type(bool real = false) const;
+    Ref<Class> dyn_cls() const;
+    Ref<Type> dyn_obj_type() const;
 
     LValue self();
     LValue as(Ref<Type> type);
@@ -109,8 +109,8 @@ public:
     DataView data_view();
     const DataView data_view() const;
 
-    Ref<Class> dyn_cls(bool real = false) const;
-    Ref<Type> dyn_obj_type(bool real = false) const;
+    Ref<Class> dyn_cls() const;
+    Ref<Type> dyn_obj_type() const;
 
     LValue self();
     LValue as(Ref<Type> type);
@@ -158,8 +158,8 @@ public:
     DataView data_view();
     const DataView data_view() const;
 
-    Ref<Class> dyn_cls(bool real = false) const;
-    Ref<Type> dyn_obj_type(bool real = false) const;
+    Ref<Class> dyn_cls() const;
+    Ref<Type> dyn_obj_type() const;
 
     LValue self();
     LValue as(Ref<Type> type);
