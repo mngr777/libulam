@@ -66,7 +66,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
         return std::move(if_true_res);
     if (!if_false_res)
         return std::move(if_false_res);
-    assert(if_true_res.type() == if_false_res.type());
+    assert(if_true_res.type()->is_same(if_false_res.type()));
 
     auto cond_data = exp::data(cond_res);
     auto if_true_data = exp::data(if_true_res);
