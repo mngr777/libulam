@@ -45,7 +45,7 @@ public:
     bool is_atom() const;
     bool is_class() const;
 
-    Ref<Type> type() const { return _type; }
+    Ref<Type> type() const;
 
     Bits& bits() { return _bits; }
     const Bits& bits() const { return _bits; }
@@ -93,7 +93,7 @@ public:
     bool is_atom() const;
     bool is_class() const;
 
-    Ref<Type> type() const { return _type; }
+    Ref<Type> type() const;
 
     BitsView bits();
     const BitsView bits() const;
