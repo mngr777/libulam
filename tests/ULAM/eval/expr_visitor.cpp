@@ -503,7 +503,8 @@ ExprRes EvalExprVisitor::member_access_var(
     bool is_self = false;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(evl::NoConstFold) ||
+                  obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_var(node, std::move(obj), var);
@@ -517,6 +518,7 @@ ExprRes EvalExprVisitor::member_access_var(
                 stringifier.options.bool_as_unsigned_lit = true;
                 auto val_str = stringifier.stringify(res.type(), rval);
                 exp::add_member_access(res, val_str, is_self);
+                res.set_flag(exp::NoConstFold); // e.g. t41221
             });
         } else {
             auto name = str(var->name_id());
