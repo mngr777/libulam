@@ -11,6 +11,13 @@ constexpr char Parameter[] = "parameter";
 constexpr char Holder[] = "holder";
 constexpr char Unresolved[] = "unresolved";
 
+enum ValueType {
+    NoValueType,
+    ScalarValue,
+    ObjValue,
+    ObjMapValue
+};
+
 } // namespace
 
 AnswerParser::ClassNameData AnswerParser::read_class_name(bool is_parent) {
@@ -143,15 +150,14 @@ AnswerParser::DataMemData AnswerParser::read_data_mem() {
 std::string AnswerParser::read_value_str(bool is_array) {
     std::string str;
 
-    bool is_obj_item = false;
-    bool is_scalar_item = false;
+    ValueType val_type = NoValueType;
 
     // {name, text}
     std::map<std::string, std::string> members;
 
     unsigned added = 0;
     auto add_obj_item = [&]() {
-        assert(is_obj_item);
+        assert(val_type == ObjValue);
         // NOTE: empty strings are printed for empty string values, we still
         // want to separate them, see t3945
         if (is_array && added > 0)
@@ -192,6 +198,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
     // t3946
     char open = '\0', close = '\0';
     bool in_parens = false;
+    auto open_brace_pos = std::string::npos;
     if (at('(')) {
         in_parens = true;
         open = '(', close = ')';
@@ -200,6 +207,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
     }
     if (at('{')) {
         open = '{', close = '}';
+        open_brace_pos = _pos;
         advance();
     }
     skip_spaces();
@@ -221,11 +229,11 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
         } else if (at(TypeDef)) {
             // typedef
-            if (is_scalar_item) {
+            if (val_type == ScalarValue) {
                 assert(is_array);
                 error("unexpected typedef in array value");
             }
-            is_obj_item = true;
+            val_type = ObjValue;
             auto [alias, type_def_text] = read_type_def();
             add_member(pref.add_prefix(alias), std::move(type_def_text));
 
@@ -234,13 +242,26 @@ std::string AnswerParser::read_value_str(bool is_array) {
             (at_upper() && !at("Atom,") && !at("Atom)") && !at("HexU64") &&
              !at("UNINITIALIZED_STRING"))) {
             // constant/property
-            if (is_scalar_item) {
+            if (val_type == ScalarValue) {
                 assert(is_array);
                 error("unexpected data member in array value");
             }
-            is_obj_item = true;
+            val_type = ObjValue;
             auto [name, data_mem_text, _] = read_data_mem();
             add_member(pref.add_prefix(name), std::move(data_mem_text));
+
+        } else if (at(".")) {
+            // object map
+            assert(val_type == NoValueType);
+            assert(open_brace_pos != std::string::npos);
+            val_type = ObjMapValue;
+            _pos = open_brace_pos;
+            str = read_braces();
+            if (in_parens) {
+                skip_spaces();
+                skip(")");
+            }
+            break; // done!
 
         } else if (at(close)) {
             // end of parenthesized/braced value or object item in array
@@ -249,15 +270,16 @@ std::string AnswerParser::read_value_str(bool is_array) {
             // add current object?
             // NOTE: array may consist of empty objects in `Type
             // name[](),(),...()` format, t3942
-            if (is_obj_item || (is_array && !is_scalar_item)) {
-                is_obj_item = true;
+            if (val_type == ObjValue || (is_array && val_type != ScalarValue)) {
+                assert(val_type != ObjMapValue);
+                val_type = ObjValue;
                 add_obj_item();
             }
 
             // ,?
             if (open == '(' && at(',')) {
                 // comma after closing `)' must be an object array
-                if (!(is_array && is_obj_item))
+                if (!(is_array && val_type == ObjValue))
                     error("unexpected `,'");
                 advance();
                 skip_spaces();
@@ -273,15 +295,15 @@ std::string AnswerParser::read_value_str(bool is_array) {
             }
 
         } else if (at(',')) {
-            if (!is_array && !is_scalar_item)
+            if (!is_array && val_type != ScalarValue)
                 error("unexpected `,'");
             advance();
 
         } else {
             // everything else must be scalar value (treating `Atom` as scalar)
-            if (is_obj_item)
+            if (val_type == ObjValue)
                 error("unexpected char in object value");
-            is_scalar_item = true;
+            val_type = ScalarValue;
             if (!str.empty()) {
                 // value string is already not empty, must be array item
                 assert(is_array);
