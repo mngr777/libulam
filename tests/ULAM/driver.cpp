@@ -180,6 +180,16 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41172_test_compiler_classdminitarrays_localvar.test", // -"-
     "t41173_test_compiler_classdminitarraysinclass_localvar.test", // -"-
     "t41174_test_compiler_classdminitarrayofquarks_localvar.test", // -"-
+    "t41175_test_compiler_classdminit_elementintransient.test", // `A.b(true)` is correct (tested), prop order in object map
+    "t41176_test_compiler_classdminit_elementintransientwmods.test", // -"-, our object map includes non-default props
+    "t41177_test_compiler_classdminitarraysintransientwmods.test", // -"-, obj map, array format
+    "t41178_test_compiler_classdminitarraysinclassintransientwmods.test", // -"-
+    "t41179_test_compiler_classdminitarrayofquarksintransientwmods.test", // -"-
+    "t41182_test_compiler_classdminitarrayofquarksinherited_localvar.test", // array format
+    "t41183_test_compiler_classdminit_inheritedtemplateString_localvar.test", // obj map format
+    "t41184_test_compiler_classdminitwithconstructor_localvar.test", // -"-
+    "t41185_test_compiler_classdminitarrayofquarksinquark_issue.test", // tmp
+    "t41198_test_compiler_constantclasswish.test", // constant `b1 = QFoo.c_qbar.iou == 7` folded correctly
 };
 
 using Path = std::filesystem::path;

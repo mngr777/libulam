@@ -1,5 +1,6 @@
 #include "./compiler.hpp"
 #include "./out.hpp"
+#include "libulam/ast/nodes/init.hpp"
 #include "tests/ast/print.hpp"
 #include <iostream> // TEST
 #include <libulam/sema.hpp>
@@ -303,8 +304,14 @@ void Compiler::write_obj_prop(
             }
 
         } else if (type->is_class()) {
-            write_obj_members(
-                os, type->as_class(), rval, in_main, false, false);
+            auto node = prop->node();
+            if (!in_main && node->has_init() && node->init()->is<ulam::ast::InitMap>()) {
+                // output as map if prop has init map
+                os << stringifier.stringify(prop->type(), rval);
+            } else {
+                write_obj_members(
+                    os, type->as_class(), rval, in_main, false, false);
+            }
         } else {
             os << stringifier.stringify(type, rval);
         }

@@ -581,14 +581,21 @@ ExprRes EvalExprVisitor::member_access_fset(
 
 ExprRes EvalExprVisitor::class_const_access(
     ulam::Ref<ulam::ast::ClassConstAccess> node, ulam::Ref<ulam::Var> var) {
+    std::string data;
     auto res = Base::class_const_access(node, var);
     if (!has_flag(evl::NoCodegen)) {
-        assert(!res.value().empty());
-        assert(res.value().is_consteval());
-        res.value().with_rvalue([&](const auto& rval) {
-            auto stringifier = make_stringifier();
-            exp::set_data(res, stringifier.stringify(var->type(), rval));
-        });
+        auto type = var->type();
+        if (type->is_array() || type->is_class()) {
+            exp::set_data(res, str(var->name_id()));
+            res.set_flag(exp::NoConstFold);
+        } else {
+            assert(!res.value().empty());
+            assert(res.value().is_consteval());
+            res.value().with_rvalue([&](const auto& rval) {
+                auto stringifier = make_stringifier();
+                exp::set_data(res, stringifier.stringify(type, rval));
+            });
+        }
     }
     return res;
 }

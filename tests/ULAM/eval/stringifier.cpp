@@ -74,28 +74,17 @@ std::string Stringifier::stringify_prim(
 std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
     std::string str;
-
-    // TODO
-    // // typedefs
-    // bool use_unsigned_suffix = options.use_unsigned_suffix;
-    // options.use_unsigned_suffix = false;
-    // for (auto type_def : cls->type_defs())
-    //     str += " " + out::type_def_str(*this, type_def) + "; ";
-    // options.use_unsigned_suffix = use_unsigned_suffix;
-
-    // // params
-    // // NOTE: see t3364, t3396 for property value with/without params
-    // if (options.class_params_as_consts) {
-    //     for (auto var : cls->params())
-    //         str += " " + out::var_str(_str_pool, *this, var) + "; ";
-    // }
-
-    // // props
-    // auto rval_copy = rval.copy(); // TMP
-    // for (auto prop : cls->props())
-    //     str += " " + out::prop_str(_str_pool, *this, prop, rval_copy) + "; ";
-
-    return str;
+    for (auto prop : cls->props()) {
+        auto lval = rval.prop(prop);
+        lval.with_rvalue([&](const auto& prop_rval) {
+            if (!str.empty())
+                str += ", ";
+            auto label = "." + std::string{_str_pool.get(prop->name_id())};
+            auto val = stringify(prop->type(), prop_rval);
+            str += label + " = " + val;
+        });
+    }
+    return "{ " + str + " }";
 }
 
 std::string Stringifier::stringify_array(
