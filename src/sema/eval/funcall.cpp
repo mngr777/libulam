@@ -145,8 +145,6 @@ EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
     assert(fun->has_ellipsis() || fun->params().size() == args.size());
     assert(!fun->has_ellipsis() || fun->params().size() <= args.size());
 
-    auto cast = eval().cast_helper(scope(), flags());
-
     auto arg_it = args.begin();
     auto param_it = fun->params().begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
@@ -164,10 +162,20 @@ EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
             param_type = param_type->deref(); // cast to non-ref type if casting
         }
 
-        arg = cast->cast(node, param_type, std::move(arg));
+        arg = cast_arg(node, fun, ref(param), param_type, std::move(arg));
         assert(arg);
     }
     return std::move(args);
+}
+
+ExprRes EvalFuncall::cast_arg(
+    Ref<ast::Node> node,
+    Ref<Fun> fun,
+    Ref<Var> param,
+    Ref<Type> to,
+    ExprRes&& arg) {
+    auto cast = eval().cast_helper(scope(), flags());
+    return cast->cast(node, to, std::move(arg));
 }
 
 } // namespace ulam::sema
