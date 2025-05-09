@@ -121,9 +121,8 @@ ExprRes EvalInit::eval_class_list(
         args.push_back(std::move(expr_res));
     }
 
-    // call constructor
-    auto funcall = eval().funcall_helper(scope(), flags());
-    return funcall->construct(list, cls, std::move(args));
+    // call constructor or default-construct
+    return construct_obj(var, cls, list, std::move(args));
 }
 
 ExprRes EvalInit::eval_array_list(
@@ -247,6 +246,20 @@ ExprRes EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls) {
     RValue rval = cls->construct();
     rval.set_is_consteval(true);
     return {cls, Value{std::move(rval)}};
+}
+
+ExprRes EvalInit::construct_obj(
+    Ref<VarBase> var,
+    Ref<Class> cls,
+    Ref<ast::InitList> arg_list,
+    ExprResList&& args) {
+    if (args.size() == 0) {
+        RValue rval = cls->construct();
+        rval.set_is_consteval(true);
+        return {cls, Value{std::move(rval)}};
+    }
+    auto funcall = eval().funcall_helper(scope(), flags());
+    return funcall->construct(arg_list, cls, std::move(args));
 }
 
 ExprRes EvalInit::obj_set(

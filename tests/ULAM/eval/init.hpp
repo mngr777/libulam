@@ -9,6 +9,7 @@ class EvalInit : public ulam::sema::EvalInit {
 public:
     using Base = ulam::sema::EvalInit;
     using ExprRes = ulam::sema::ExprRes;
+    using ExprResList = ulam::sema::ExprResList;
 
     using Base::EvalInit;
 
@@ -42,6 +43,12 @@ protected:
         ulam::sema::ExprRes&& item,
         bool autofill,
         unsigned depth) override;
+
+    ExprRes construct_obj(
+        ulam::Ref<ulam::VarBase> var,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Ref<ulam::ast::InitList> arg_list,
+        ExprResList&& args) override;
 
     ExprRes obj_set(
         ulam::Ref<ulam::VarBase> var,
