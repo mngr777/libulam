@@ -87,6 +87,12 @@ protected:
 
     virtual ExprRes make_obj(Ref<VarBase> var, Ref<Class> cls);
 
+    virtual ExprRes construct_obj(
+        Ref<VarBase> var,
+        Ref<Class> cls,
+        Ref<ast::InitList> arg_list,
+        ExprResList&& args);
+
     virtual ExprRes obj_set(
         Ref<VarBase> var,
         ExprRes&& obj,

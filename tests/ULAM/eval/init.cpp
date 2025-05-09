@@ -26,9 +26,12 @@ ExprRes EvalInit::eval_class_list(
     unsigned depth) {
     auto res = Base::eval_class_list(var, cls, list, depth);
     if (!has_flag(evl::NoCodegen) && depth == 1) {
-        // var_name ( args ) Self .
-        auto data = exp::data_combine(str(var->name_id()), exp::data(res), ".");
-        exp::set_data(res, data);
+        if (list->child_num() > 0) {
+            // var_name ( args ) Self .
+            auto data =
+                exp::data_combine(str(var->name_id()), exp::data(res), ".");
+            exp::set_data(res, data);
+        }
     }
     return res;
 }
@@ -44,8 +47,9 @@ ExprRes EvalInit::eval_array_list(
     auto no_fold_raii = flags_raii(flags_);
     auto array = Base::eval_array_list(var, array_type, list, depth);
     if (!has_flag(evl::NoCodegen)) {
-        auto array_data = array.has_data() ? exp::data(array) : std::string{};
-        exp::set_data(array, "{ " + array_data + " }");
+        auto data = array.has_data() ? "{ " + exp::data(array) + " }"
+                                     : std::string{"{ }"};
+        exp::set_data(array, data);
     }
     return array;
 }
@@ -85,6 +89,20 @@ ExprRes EvalInit::array_set(
     if (!data.empty())
         exp::set_data(array, data);
     return std::move(array);
+}
+
+ExprRes EvalInit::construct_obj(
+    ulam::Ref<ulam::VarBase> var,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Ref<ulam::ast::InitList> arg_list,
+    ExprResList&& args) {
+    bool is_default = args.empty();
+    auto res = Base::construct_obj(var, cls, arg_list, std::move(args));
+    if (!has_flag(evl::NoCodegen)) {
+        if (is_default)
+            exp::set_data(res, "{ }");
+    }
+    return res;
 }
 
 ExprRes EvalInit::obj_set(
