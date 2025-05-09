@@ -24,10 +24,11 @@ RValue BitsType::construct(Bits&& bits) {
     return RValue{std::move(bits)};
 }
 
-bool BitsType::is_castable_to(Ref<const Type> type, bool expl) const {
+bool BitsType::is_castable_to(
+    Ref<const Type> type, const Value& value, bool expl) const {
     if (type->is_class())
         return expl && type->bitsize();
-    return _PrimType::is_castable_to(type, expl);
+    return _PrimType::is_castable_to(type, value, expl);
 }
 
 Value BitsType::cast_to(Ref<Type> type, Value&& val) {
@@ -151,8 +152,7 @@ TypedValue BitsType::binary_op(
         Unsigned shift = 0;
         if (!r_rval.empty()) {
             shift = r_rval.get<Unsigned>();
-            size = std::min<bitsize_t>(
-                bitsize() + shift, max_size);
+            size = std::min<bitsize_t>(bitsize() + shift, max_size);
         }
         auto type = builtins().bits_type(size);
         if (is_unknown)
