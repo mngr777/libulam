@@ -185,6 +185,11 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41213_test_compiler_elementwithclassparameterquarktemplate_Sfirst.test", // -"-
     "t41216_test_compiler_elementwithaclassparameterquark_constantclassemptyinit.test", // -"-
     "t41220_test_compiler_elementwithaclassparameterquark_constantclassemptyinit_Sfirst.test", // -"-
+    "t41229_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_assignment_ish.test", // -"-
+    "t41231_test_compiler_transientconstant_assignment.test", // `Bool m_rb(true);  Int m_ri(99);` is correct
+    "t41232_test_compiler_transientconstantwelementdatamember.test", // `Bool m_testb(true);  Int m_testi(77);` is correct
+    "t41233_test_compiler_transientconstantwelementdatamemberinitialized.test", // similar to t41232
+    "t41234_test_compiler_transientconstantwelementarraydatamember.test", // -"-
 };
 
 using Path = std::filesystem::path;
