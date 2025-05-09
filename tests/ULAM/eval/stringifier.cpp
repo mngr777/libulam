@@ -12,6 +12,7 @@
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
     assert(!rval.empty());
+    type = type->deref();
 
     if (type->is_prim())
         return stringify_prim(type->as_prim(), rval);
