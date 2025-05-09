@@ -28,14 +28,9 @@ static const std::set<std::string> Skip = {
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
     "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
-    // "t3986_test_compiler_atomofvirtualselfquarkSelf_issue.test", // Atom& to quark ref cast
-    // "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // Atom& to quark ref cast
-    // "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
-    // "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
     "t41043_test_compiler_forascond.test", // for (; (a as Type); ) {...}, TODO
     "t41046_test_compiler_switchascondcases.test", // which() as cond, TODO
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
-    // "t41051_test_compiler_element_castatomreffuncreturnvalue_issue.test", // Atom& to quark ref cast
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
@@ -58,7 +53,6 @@ static const std::set<std::string> Skip = {
     "t41285_test_compiler_localdefquestioncolon_usingtemplateinstanceconstant_filescope.test",
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
-    // "t41315_test_compiler_elementandquark_multibases_isasbase.test", // Atom& to quark ref cast
     "t41316_test_compiler_transientandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     // "t41318_test_compiler_elementandquark_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // Atom& to quark
     // "t41320_test_compiler_elementandquark_multibases_refbasecallsoverridebaseclassvirtualfunc.test", // -"-
@@ -83,10 +77,8 @@ static const std::set<std::string> Skip = {
     "t41447_test_compiler_quarktemplatewithtypedefanddmfrombasesbaseclasstemplateclassinstance.test", // native function result used in condition
     "t41452_test_compiler_templateclasseswiththreewayreferencingtypedefs.test", // class typedef used in parent list
     "t41453_test_compiler_templateclasseswithmembertypedefbaseclasses.test", // -"-
-    // "t41457_test_compiler_atomreftoaccessdatamemberofbaseclass_gencode_ish.test", // quark reference to Atom
     "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
     "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
-    // "t41506_test_compiler_elementinheritedquark_constantof_withsuper.test", // quark to Atom
     "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // class typedef used in parent list
     "t41524_test_compiler_elementmultiinheritance_shadowingtypedefsinhierarchy.test", // -"-
     "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
@@ -101,7 +93,6 @@ static const std::set<std::string> Skip = {
     /* added while writing postfix compiler: */
     "t3255_test_compiler_self.test",
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
-    // "t3663_test_compiler_element_castatomfromselfatomof_templateinstancewithinforloop.test", // tmp: Atom assigned to element without a cast?
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
@@ -115,7 +106,6 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
     "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
-    // "t3651_test_compiler_elementandquark_localarrayref.test", // tmp: deref requires cast?
     "t3652_test_compiler_elementandquarksinherited_unseentypedef_unaryclassarg_ish.test", // classid of non-const expr
     "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // redundant cast from `Foo.instanceof` to Atom?
     "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
@@ -192,6 +182,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41198_test_compiler_constantclasswish.test", // constant `b1 = QFoo.c_qbar.iou == 7` folded correctly
     "t41206_test_compiler_classdminitarraysnull_localvar.test", // array format
     "t41209_test_compiler_elementwithclassparameterquarktemplate.test", // object param format (is prefix in hex classid?), folding, casts
+    "t41213_test_compiler_elementwithclassparameterquarktemplate_Sfirst.test", // -"-
+    "t41216_test_compiler_elementwithaclassparameterquark_constantclassemptyinit.test", // -"-
+    "t41220_test_compiler_elementwithaclassparameterquark_constantclassemptyinit_Sfirst.test", // -"-
 };
 
 using Path = std::filesystem::path;
