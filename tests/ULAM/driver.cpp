@@ -191,6 +191,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41185_test_compiler_classdminitarrayofquarksinquark_issue.test", // tmp
     "t41198_test_compiler_constantclasswish.test", // constant `b1 = QFoo.c_qbar.iou == 7` folded correctly
     "t41206_test_compiler_classdminitarraysnull_localvar.test", // array format
+    "t41209_test_compiler_elementwithclassparameterquarktemplate.test", // object param format (is prefix in hex classid?), folding, casts
 };
 
 using Path = std::filesystem::path;

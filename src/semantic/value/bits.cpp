@@ -62,7 +62,6 @@ template <typename T> void _write_hex(std::ostream& out, const T& bits) {
         }
 
         // write nibbles
-        // unit <<= UnitSize - size;
         for (size_t shift = 0; shift < size; shift += NibbleSize) {
             std::uint8_t nibble =
                 ((unit << shift) & LeftNibbleMask) >> LeftNibbleShift;

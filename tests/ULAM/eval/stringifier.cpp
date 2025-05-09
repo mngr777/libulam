@@ -59,7 +59,8 @@ std::string Stringifier::stringify_prim(
 
         // NOTE: union String props can have "invalid" IDs
         if (!_text_pool.has_id(str_id))
-            return options.invalid_string_id_as_empty ? "" : "UNINITIALIZED_STRING";
+            return options.invalid_string_id_as_empty ? ""
+                                                      : "UNINITIALIZED_STRING";
 
         auto str = _text_pool.get(str_id);
         if (options.empty_string_as_empty && str.empty())
@@ -73,6 +74,14 @@ std::string Stringifier::stringify_prim(
 
 std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
+    if (options.obj_as_str) {
+        assert(rval.is<ulam::DataPtr>());
+        auto data = rval.get<ulam::DataPtr>();
+        auto data_view =
+            data->bits().view(cls->data_off(), cls->data_bitsize());
+        return data_view.hex();
+    }
+
     std::string str;
     for (auto prop : cls->props()) {
         auto lval = rval.prop(prop);
@@ -143,12 +152,8 @@ std::string Stringifier::stringify_array_leximited(
     for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
         auto item_rval = data.array_item(idx).load();
         item_rval.accept(
-            [&](ulam::Unsigned val) {
-                ulam::detail::write_leximited(ss, val);
-            },
-            [&](ulam::Integer val) {
-                ulam::detail::write_leximited(ss, val);
-            },
+            [&](ulam::Unsigned val) { ulam::detail::write_leximited(ss, val); },
+            [&](ulam::Integer val) { ulam::detail::write_leximited(ss, val); },
             [&](auto&&) { assert(false); });
     }
     return ss.str();
