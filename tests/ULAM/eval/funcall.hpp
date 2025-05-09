@@ -40,5 +40,12 @@ protected:
         ulam::Ref<ulam::Fun> fun,
         ExprResList&& args) override;
 
+    ExprRes cast_arg(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Fun> fun,
+        ulam::Ref<ulam::Var> param,
+        ulam::Ref<ulam::Type> to,
+        ExprRes&& arg) override;
+
     std::string arg_data(const ExprResList& args);
 };

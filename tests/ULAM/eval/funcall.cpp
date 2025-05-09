@@ -27,7 +27,8 @@ ExprRes EvalFuncall::construct_funcall(
     std::string data;
     if (!has_flag(evl::NoCodegen))
         data = arg_data(args) + "Self";
-    auto res = Base::construct_funcall(node, cls, fun, std::move(rval), std::move(args));
+    auto res = Base::construct_funcall(
+        node, cls, fun, std::move(rval), std::move(args));
     if (!data.empty())
         exp::set_data(res, data);
     return res;
@@ -75,6 +76,22 @@ ExprResList EvalFuncall::cast_args(
     // do not omit consteval casts for arguments (t3233)
     auto consteval_cast_raii = flags_raii(flags() & ~evl::NoConstevalCast);
     return Base::cast_args(node, fun, std::move(args));
+}
+
+ExprRes EvalFuncall::cast_arg(
+    ulam::Ref<ulam::ast::Node> node,
+    ulam::Ref<ulam::Fun> fun,
+    ulam::Ref<ulam::Var> param,
+    ulam::Ref<ulam::Type> to,
+    ExprRes&& arg) {
+    arg = Base::cast_arg(node, fun, param, to, std::move(arg));
+    if (!has_flag(evl::NoCodegen)) {
+        auto data = exp::data(arg);
+        if (!arg.type()->is_same(param->type()) ||
+            (to->is_ref() && param->is_const() && !arg.value().is_consteval()))
+            exp::add_cast(arg);
+    }
+    return std::move(arg);
 }
 
 std::string EvalFuncall::arg_data(const ExprResList& args) {

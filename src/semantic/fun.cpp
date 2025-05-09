@@ -54,7 +54,10 @@ void Fun::add_param(Ptr<Var>&& param) {
 }
 
 void Fun::add_param(Ref<ast::Param> node) {
-    auto param = make<Var>(node->type_name(), node, Ref<Type>{}, Var::FunParam);
+    auto flags = Var::FunParam;
+    if (node->is_const())
+        flags |= Var::Const;
+    auto param = make<Var>(node->type_name(), node, Ref<Type>{}, flags);
     add_param(std::move(param));
 }
 

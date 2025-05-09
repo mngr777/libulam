@@ -55,6 +55,13 @@ protected:
 
     virtual ExprResList
     cast_args(Ref<ast::Node>, Ref<Fun> fun, ExprResList&& args);
+
+    virtual ExprRes cast_arg(
+        Ref<ast::Node> node,
+        Ref<Fun> fun,
+        Ref<Var> param,
+        Ref<Type> to,
+        ExprRes&& arg);
 };
 
 } // namespace ulam::sema
