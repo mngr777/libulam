@@ -34,40 +34,6 @@ constexpr Bits::unit_idx_t to_unit_idx(Bits::size_t idx) {
 
 constexpr Bits::size_t to_off(Bits::size_t idx) { return idx % Bits::UnitSize; }
 
-// void Bits::write_hex(std::ostream& out) const {
-//     out << "0x";
-//
-//     const size_t NibbleSize = 4;
-//     const size_t Pad = (NibbleSize - _len % NibbleSize) % NibbleSize;
-//     const unit_t RightPadMask = make_mask(Pad, 0);
-//     const size_t NibbleShift = UnitSize - NibbleSize;
-//     const unit_t LeftNibbleMask = make_mask(NibbleSize, NibbleShift);
-//     unit_t prev = 0;
-//     unsigned digit_num = 0;
-//     for (size_t n = 0; n < _bits.size(); ++n) {
-//         unit_t unit = _bits[n];
-//         if (Pad > 0) {
-//             // pad right, prepend with bits from prev unit
-//             unit_t next_prev = (unit & RightPadMask) << (UnitSize - Pad);
-//             unit = (unit >> Pad) | prev;
-//             prev = next_prev;
-//         };
-//         auto size =
-//             (n + 1u == _bits.size()) ? (_len + Pad) % UnitSize : UnitSize;
-//         for (size_t shift = 0; shift < size; shift += NibbleSize) {
-//             std::uint8_t nibble =
-//                 (unit << shift & LeftNibbleMask) >> NibbleShift;
-//             if (digit_num > 0 || nibble != 0) {
-//                 ++digit_num;
-//                 char digit = (nibble < 0xa) ? '0' + nibble : 'a' - 0xa +
-//                 nibble; out << digit;
-//             }
-//         }
-//     }
-//     if (digit_num == 0)
-//         out << "0";
-// }
-
 template <typename T> void _write_hex(std::ostream& out, const T& bits) {
     out << "0x";
 
@@ -83,9 +49,10 @@ template <typename T> void _write_hex(std::ostream& out, const T& bits) {
     unit_t prev = 0;
     unsigned digit_num = 0;
     for (size_t n = 0; n < UnitNum; ++n) {
+        bool is_last = (n + 1 == UnitNum);
         // read next unit
-        size_t size = (n + 1 == UnitNum) ? LastUnitSize : UnitSize;
-        unit_t unit = bits.read(UnitSize * n, size);
+        size_t size = is_last ? LastUnitSize : UnitSize;
+        unit_t unit = bits.read(UnitSize * n, size) << (UnitSize - size);
 
         // pad right, prepend with bits from prev unit
         if (Pad > 0) {
@@ -95,7 +62,7 @@ template <typename T> void _write_hex(std::ostream& out, const T& bits) {
         }
 
         // write nibbles
-        unit <<= UnitSize - size;
+        // unit <<= UnitSize - size;
         for (size_t shift = 0; shift < size; shift += NibbleSize) {
             std::uint8_t nibble =
                 ((unit << shift) & LeftNibbleMask) >> LeftNibbleShift;
