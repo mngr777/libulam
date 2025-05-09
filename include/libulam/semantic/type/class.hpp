@@ -51,10 +51,11 @@ public:
 
     elt_id_t element_id() const;
 
-    Ref<Var>
-    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
-    Ref<Var> add_param(
-        Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val);
+    // Ref<Var>
+    // add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    // Ref<Var> add_param(
+    //     Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val);
+    Ref<Var> add_param(Ptr<Var>&& var) override;
 
     Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
     Ref<Fun> add_fun(Ref<ast::FunDef> node) override;

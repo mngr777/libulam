@@ -42,10 +42,9 @@ public:
     std::string name() const { return std::string{_name}; }
     str_id_t name_id() const;
 
-    using ClassBase::add_param;
-
+    Ref<Var> add_param(Ref<ast::Param> node);
     Ref<Var>
-    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
 
     Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
 
@@ -58,6 +57,9 @@ public:
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
     Ref<Class> type(TypedValueList&& args);
+
+protected:
+    using ClassBase::add_param;
 
 private:
     using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
