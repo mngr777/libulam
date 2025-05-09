@@ -513,40 +513,35 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     std::pair<TypedValueList, bool> res;
     res.second = false;
     unsigned n = 0;
-    for (auto param : tpl->params()) {
+    for (auto tpl_param : tpl->params()) {
+        auto param = make<Var>(
+            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
+            Value{RValue{}}, tpl_param->flags());
+
         // param type
-        if (!resolver->resolve(param, ref(param_scope)))
+        if (!resolver->resolve(ref(param), ref(param_scope)))
             return res;
         auto type = param->type();
 
         // value
-        ExprRes arg_res;
         if (n < args->child_num()) {
             // argument provided
             auto arg = args->get(n);
-            arg_res = arg->accept(*this);
+            auto arg_res = arg->accept(*this);
             if (arg_res)
                 arg_res = cast->cast(arg, type, std::move(arg_res), false);
+            if (!arg_res)
+                return res;
+            param->set_value(arg_res.move_value());
 
-        } else if (param->node()->has_init()) {
-            // default argument
-            auto init = eval().init_helper(ref(param_scope), flags());
-            arg_res = init->eval_init(param, param->node()->init());
-
-        } else {
+        } else if (!param->has_value()) {
             diag().error(args, "not enough arguments");
             return res;
         }
         ++n;
-        if (!arg_res)
-            return res;
 
-        // create var in tmp scope
-        auto var = make<Var>(
-            param->type_node(), param->node(), type, arg_res.move_value(),
-            Var::Const);
-        cls_params.push_back(ref(var)); // add to list
-        param_scope->set(param->name_id(), std::move(var));
+        cls_params.push_back(ref(param)); // add to list
+        param_scope->set(param->name_id(), std::move(param));
     }
     res.second = true;
 

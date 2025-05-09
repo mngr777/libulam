@@ -62,19 +62,26 @@ elt_id_t Class::element_id() const {
     return _elt_id;
 }
 
-Ref<Var>
-Class::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
-    auto var = ClassBase::add_param(type_node, node);
-    var->set_cls(this);
-    return var;
+Ref<Var> Class::add_param(Ptr<Var>&& var) {
+    assert(var->has_value());
+    auto ref = ClassBase::add_param(std::move(var));
+    ref->set_cls(this);
+    return ref;
 }
 
-Ref<Var> Class::add_param(
-    Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val) {
-    auto var = add_param(type_node, node);
-    var->set_value(std::move(val));
-    return var;
-}
+// Ref<Var>
+// Class::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+//     auto var = ClassBase::add_param(type_node, node);
+//     var->set_cls(this);
+//     return var;
+// }
+
+// Ref<Var> Class::add_param(
+//     Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val) {
+//     auto var = add_param(type_node, node);
+//     var->set_value(std::move(val));
+//     return var;
+// }
 
 Ref<AliasType> Class::add_type_def(Ref<ast::TypeDef> node) {
     auto type = ClassBase::add_type_def(node);

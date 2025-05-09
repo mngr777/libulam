@@ -70,24 +70,18 @@ Ref<FunSet> ClassBase::op(Op op) {
     return (it != _ops.end()) ? ref(it->second) : Ref<FunSet>{};
 }
 
-Ref<Var> ClassBase::add_param(Ref<ast::Param> node) {
-    return add_param(node->type_name(), node);
-}
-
-Ref<Var>
-ClassBase::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
-    auto name_id = node->name_id();
+Ref<Var> ClassBase::add_param(Ptr<Var>&& var) {
+    auto ref = ulam::ref(var);
+    auto name_id = ref->name_id();
     assert(!has(name_id));
 
-    auto var =
-        make<Var>(type_node, node, Ref<Type>{}, Var::ClassParam | Var::Const);
-    auto ref = ulam::ref(var);
-    var->set_scope_version(param_scope()->version());
+    ref->set_scope_version(param_scope()->version());
 
     param_scope()->set(name_id, ref);
     set(name_id, std::move(var));
     _params.push_back(ref);
 
+    auto node = ref->node();
     if (!node->has_scope_version()) {
         node->set_var(ref);
         node->set_scope_version(param_scope()->version());

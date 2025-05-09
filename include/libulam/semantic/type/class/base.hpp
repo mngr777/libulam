@@ -68,10 +68,6 @@ public:
     bool has_op(Op op) const;
     Ref<FunSet> op(Op op);
 
-    Ref<Var> add_param(Ref<ast::Param> node);
-    virtual Ref<Var>
-    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
-
     virtual Ref<AliasType> add_type_def(Ref<ast::TypeDef> node);
 
     virtual Ref<Fun> add_fun(Ref<ast::FunDef> node);
@@ -111,6 +107,8 @@ protected:
 
     virtual Ref<FunSet> add_fset(str_id_t name_id);
     virtual Ref<FunSet> add_op_fset(Op op);
+
+    virtual Ref<Var> add_param(Ptr<Var>&& var);
 
     auto& ops() { return _ops; }
 

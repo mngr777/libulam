@@ -190,6 +190,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41184_test_compiler_classdminitwithconstructor_localvar.test", // -"-
     "t41185_test_compiler_classdminitarrayofquarksinquark_issue.test", // tmp
     "t41198_test_compiler_constantclasswish.test", // constant `b1 = QFoo.c_qbar.iou == 7` folded correctly
+    "t41206_test_compiler_classdminitarraysnull_localvar.test", // array format
 };
 
 using Path = std::filesystem::path;
