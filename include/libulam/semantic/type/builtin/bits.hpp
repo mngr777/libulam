@@ -12,6 +12,8 @@ namespace ulam {
 
 class BitsType : public _PrimType<BitsId, 1, 4096, 32> {
 public:
+    using _PrimType::is_castable_to;
+
     BitsType(
         Builtins& builtins,
         TypeIdGen& id_gen,
@@ -26,7 +28,10 @@ public:
 
     RValue construct(Bits&& bits);
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool is_castable_to(
+        Ref<const Type> type,
+        const Value& value,
+        bool expl = true) const override;
 
     Value cast_to(Ref<Type> type, Value&& val) override;
 
