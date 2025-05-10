@@ -269,7 +269,7 @@ ExprRes EvalInit::obj_set(
     ExprRes&& prop_res,
     unsigned depth) {
     assert(obj.type()->is_class());
-    assert(prop_res.type() == prop->type());
+    assert(prop_res.type()->is_same(prop->type()));
 
     auto rval = obj.move_value().move_rvalue();
     auto prop_rval = prop_res.move_value().move_rvalue();
