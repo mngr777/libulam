@@ -2,6 +2,7 @@
 #include "./expr_res.hpp"
 #include "./flags.hpp"
 #include "./stringifier.hpp"
+#include "./util.hpp"
 #include <string>
 
 namespace {
@@ -129,7 +130,8 @@ std::string EvalInit::value_str(
     auto data = exp::data(res);
     auto type = res.type();
     bool no_fold = depth > 1 || type->is_array() || type->is_class();
-    if (!no_fold && res.value().is_consteval() && !(var->is_const())) {
+    // NOTE: not folding for const var values
+    if (!no_fold && util::can_fold(res) && !(var->is_const())) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
             Stringifier stringifier{program()};
             stringifier.options.unary_as_unsigned_lit = true;
