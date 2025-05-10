@@ -3,6 +3,7 @@
 #include "./expr_res.hpp"
 #include "./flags.hpp"
 #include "./stringifier.hpp"
+#include "./util.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
@@ -133,10 +134,9 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
         return;
 
     auto data = exp::data(res);
-    bool is_consteval =
-        res.value().is_consteval() && has_flag(evl::NoConstevalCast);
+    bool no_const_cast = has_flag(evl::NoConstevalCast);
 
-    if (expl || !is_consteval) {
+    if (expl || !(no_const_cast && util::can_fold(res))) {
         if (!res.has_flag(exp::RefCastInternal)) {
             exp::add_cast(res, expl);
         } else {
@@ -146,13 +146,16 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
             res.set_flag(expl ? exp::ExplCast : exp::ImplCast);
         }
 
-    } else if (is_consteval) {
-        assert(res.value().is_consteval());
-        res.value().with_rvalue([&](const ulam::RValue& rval) {
-            Stringifier stringifier{program()};
-            stringifier.options.unary_as_unsigned_lit = true;
-            stringifier.options.bool_as_unsigned_lit = true;
-            exp::set_data(res, stringifier.stringify(res.type(), rval));
-        });
+    } else {
+        auto no_fold = has_flag(evl::NoConstFold);
+        if (!no_fold && util::can_fold(res)) {
+            assert(res.value().is_consteval());
+            res.value().with_rvalue([&](const ulam::RValue& rval) {
+                Stringifier stringifier{program()};
+                stringifier.options.unary_as_unsigned_lit = true;
+                stringifier.options.bool_as_unsigned_lit = true;
+                exp::set_data(res, stringifier.stringify(res.type(), rval));
+            });
+        }
     }
 }

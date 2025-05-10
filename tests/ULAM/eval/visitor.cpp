@@ -399,6 +399,17 @@ EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
     return alias_type;
 }
 
+ulam::Ptr<ulam::Var> EvalVisitor::make_var(
+    ulam::Ref<ulam::ast::TypeName> type_name,
+    ulam::Ref<ulam::ast::VarDef> node,
+    bool is_const) {
+    // auto flags_ = flags();
+    // if (is_const)
+    //     flags_ |= evl::NoConstFold;
+    // auto no_fold = flags_raii(flags_);
+    return Base::make_var(type_name, node, is_const);
+}
+
 void EvalVisitor::var_init_expr(
     ulam::Ref<ulam::Var> var, ulam::sema::ExprRes&& init, bool in_expr) {
     std::string data;
