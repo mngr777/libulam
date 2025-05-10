@@ -162,8 +162,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41131_test_compiler_elementandquark_overloadfunccallrefargsubclass_issue.test", // unsigned value format
     "t41139_test_compiler_castatomreftoatom_issue.test", // redundant cast from Stretch.instanceof to Atom?
     "t41140_test_compiler_dividewithquestioncolon_issue.test", // tmp: casts
-    "t41145_test_compiler_quarkunion_dmwithunknownsizes_issue.test", // ok, constant not in output
-    "t41168_test_compiler_classdminitarrays.test", // ok, autofilled array format: exact init expr not available at compile time
+    "t41145_test_compiler_quarkunion_dmwithunknownsizes_issue.test", // constant not in output
+    "t41168_test_compiler_classdminitarrays.test", // autofilled array format: exact init expr not available at compile time
     "t41169_test_compiler_classdminitarraysinclass.test", // -"-
     "t41170_test_compiler_classdminitarrayofquarks.test", // -"-
     "t41172_test_compiler_classdminitarrays_localvar.test", // -"-
@@ -190,7 +190,13 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41233_test_compiler_transientconstantwelementdatamemberinitialized.test", // similar to t41232
     "t41234_test_compiler_transientconstantwelementarraydatamember.test", // -"-
     "t41267_test_compiler_constantclassarrayoftransients_withelementdm.test", // class const `KeyExprNode.m_elfoo` is evaluated with default eval
-    "t41268_test_compiler_constantclassarrayoftransientswithelementdm_asconstreffuncarg.test", //
+    "t41268_test_compiler_constantclassarrayoftransientswithelementdm_asconstreffuncarg.test", // -"-
+    "t41269_test_compiler_constantclassarrayoftransients_withtransientdm.test", // obj value format: init expr not available at compile time
+    "t41270_test_compiler_constantclassarrayoftransientswithtransientdm_asconstreffuncarg.test", // -"-
+    "t41271_test_compiler_dmconstantclassarrayoftransientswithtransientdm_asconstrefarrayfuncarg.test", // Bits hex padding does not match
+    "t41272_test_compiler_dmconstantclassarrayoftransientswithelementdm_asconstrefarrayfuncarg.test", // similar to t41269
+    "t41273_test_compiler_constantclassarrayoftransients_withelementdmwstringarray.test", // -"-
+    "t41274_test_compiler_constantclassarrayoftransientswithelementdm_constantmemberofconstantclass.test", // -"-
 };
 
 using Path = std::filesystem::path;

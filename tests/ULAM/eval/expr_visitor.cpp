@@ -487,7 +487,7 @@ ExprRes EvalExprVisitor::array_access_array(
     if (!data.empty()) {
         exp::set_data(res, std::move(data));
         exp::add_array_access(res, idx_data, before_member_access);
-        res.set_flag(exp::NoConstFold); // do not folt result of [], t3881
+        res.set_flag(exp::NoConstFold); // do not fold result of [], t3881
     }
     return res;
 }
@@ -516,7 +516,12 @@ ExprRes EvalExprVisitor::member_access_var(
                 stringifier.options.unary_as_unsigned_lit = true;
                 stringifier.options.bool_as_unsigned_lit = true;
                 auto val_str = stringifier.stringify(res.type(), rval);
-                exp::add_member_access(res, val_str, is_self);
+                if (res.type()->is(ulam::StringId)) {
+                    // t41273
+                    exp::set_data(res, val_str);
+                } else {
+                    exp::add_member_access(res, val_str, is_self);
+                }
                 res.set_flag(exp::NoConstFold); // e.g. t41221
             });
         } else {

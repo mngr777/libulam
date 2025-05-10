@@ -27,7 +27,7 @@ TypedValue StringType::type_op(TypeOp op, Value& val) {
     case TypeOp::LengthOf: {
         auto type = builtins().unsigned_type();
         if (val.empty())
-            return {type, Value{type->construct()}};
+            return {type, Value{RValue{}}};
         str_len_t len_ = len(val);
         assert(len_ != NoStrLen);
         return {type, Value{RValue{(Unsigned)len_, true}}};
