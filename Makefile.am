@@ -281,6 +281,7 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/init.cpp \
 	tests/ULAM/eval/stringifier.hpp \
 	tests/ULAM/eval/stringifier.cpp \
+	tests/ULAM/eval/util.hpp \
 	tests/ULAM/eval/visitor.hpp \
 	tests/ULAM/eval/visitor.cpp \
 	tests/ULAM/out.hpp \

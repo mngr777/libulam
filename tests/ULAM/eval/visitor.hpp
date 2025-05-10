@@ -59,6 +59,11 @@ protected:
     ulam::Ref<ulam::AliasType>
     type_def(ulam::Ref<ulam::ast::TypeDef> node) override;
 
+    ulam::Ptr<ulam::Var> make_var(
+        ulam::Ref<ulam::ast::TypeName> type_name,
+        ulam::Ref<ulam::ast::VarDef> node,
+        bool is_const) override;
+
     void var_init_expr(
         ulam::Ref<ulam::Var> var,
         ulam::sema::ExprRes&& init,
@@ -76,7 +81,8 @@ protected:
         ulam::sema::ExprRes&& case_res) override;
 
     ulam::sema::ExprRes _eval_expr(
-        ulam::Ref<ulam::ast::Expr> expr, ulam::sema::eval_flags_t flags_) override;
+        ulam::Ref<ulam::ast::Expr> expr,
+        ulam::sema::eval_flags_t flags_) override;
 
     ulam::sema::ExprRes _to_boolean(
         ulam::Ref<ulam::ast::Expr> expr,

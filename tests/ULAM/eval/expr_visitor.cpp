@@ -4,6 +4,7 @@
 #include "./expr_res.hpp"
 #include "./flags.hpp"
 #include "./stringifier.hpp"
+#include "./util.hpp"
 #include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -372,7 +373,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     auto res = Base::type_op_expr_default(node, std::move(arg));
 
     if (!data.empty()) {
-        if (res.type()->is_prim() && res.value().is_consteval()) {
+        if (util::can_fold(res)) {
             res.value().with_rvalue([&](const ulam::RValue& rval) {
                 auto stringifier = make_stringifier();
                 stringifier.options.unary_as_unsigned_lit = true;
@@ -407,8 +408,8 @@ ExprRes EvalExprVisitor::ident_var(
     if (has_flag(evl::NoCodegen))
         return res;
 
-    if (res.value().is_consteval() && !var->type()->is_array() &&
-        !var->type()->is_class()) {
+    bool no_fold = has_flag(evl::NoConstFold);
+    if (!no_fold && util::can_fold(res)) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
             auto stringifier = make_stringifier();
             stringifier.options.unary_as_unsigned_lit = true;
@@ -503,15 +504,13 @@ ExprRes EvalExprVisitor::member_access_var(
     bool is_self = false;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = has_flag(evl::NoConstFold) ||
-                  obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_var(node, std::move(obj), var);
     if (!data.empty()) {
         exp::set_data(res, data);
-        if (!no_fold && res.value().is_consteval() &&
-            !var->type()->is_array() && !var->type()->is_class()) {
+        if (!no_fold && util::can_fold(res)) {
             res.value().with_rvalue([&](const ulam::RValue& rval) {
                 auto stringifier = make_stringifier();
                 stringifier.options.unary_as_unsigned_lit = true;
@@ -587,7 +586,7 @@ ExprRes EvalExprVisitor::class_const_access(
     auto res = Base::class_const_access(node, var);
     if (!has_flag(evl::NoCodegen)) {
         auto type = var->type();
-        if (type->is_array() || type->is_class()) {
+        if (!util::can_fold(type)) {
             exp::set_data(res, str(var->name_id()));
             res.set_flag(exp::NoConstFold);
         } else {

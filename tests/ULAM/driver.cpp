@@ -190,6 +190,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41232_test_compiler_transientconstantwelementdatamember.test", // `Bool m_testb(true);  Int m_testi(77);` is correct
     "t41233_test_compiler_transientconstantwelementdatamemberinitialized.test", // similar to t41232
     "t41234_test_compiler_transientconstantwelementarraydatamember.test", // -"-
+    // "t41242_test_compiler_element_constantrefprimitive.test", // folding
 };
 
 using Path = std::filesystem::path;
