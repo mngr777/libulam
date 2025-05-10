@@ -8,7 +8,8 @@ inline bool can_fold(ulam::Ref<const ulam::Type> type) {
 }
 
 inline bool can_fold(const ulam::sema::ExprRes& res) {
-    return res.value().is_consteval() && can_fold(res.type());
+    return !res.value().empty() && res.value().is_consteval() &&
+           can_fold(res.type());
 }
 
 } // namespace util
