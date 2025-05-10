@@ -306,7 +306,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
             val_type = ScalarValue;
             if (!str.empty()) {
                 // value string is already not empty, must be array item
-                assert(is_array);
+                // assert(is_array)
+                is_array = true; // t41277, class as Bits chunk array
                 str += ", ";
             }
             str += read_scalar_value_str(close);

@@ -1,4 +1,5 @@
 #include "./stringifier.hpp"
+#include "libulam/semantic/value/data.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <cstdint>
@@ -75,14 +76,36 @@ std::string Stringifier::stringify_prim(
 
 std::string Stringifier::stringify_class(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
-    if (options.obj_as_str) {
-        assert(rval.is<ulam::DataPtr>());
-        auto data = rval.get<ulam::DataPtr>();
-        auto data_view =
-            data->bits().view(cls->data_off(), cls->data_bitsize());
-        return data_view.hex();
+    switch (options.object_fmt) {
+    case ObjectFmt::Chunks:
+        return stringify_class_chunks(cls, rval);
+    case ObjectFmt::HexStr:
+        return stringify_class_hex_str(cls, rval);
+    case ObjectFmt::Map:
+        return stringify_class_map(cls, rval);
+    default:
+        assert(false);
     }
+}
 
+// t41277
+std::string Stringifier::stringify_class_chunks(
+    ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
+    auto bits =
+        rval.data_view().bits().view(cls->data_off(), cls->data_bitsize());
+    return "{ " + data_as_chunks(bits) + (bits.len() > 0 ? " " : "") + "}";
+}
+
+std::string Stringifier::stringify_class_hex_str(
+    ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
+    assert(rval.is<ulam::DataPtr>());
+    auto data = rval.get<ulam::DataPtr>();
+    auto data_view = data->bits().view(cls->data_off(), cls->data_bitsize());
+    return data_view.hex();
+}
+
+std::string Stringifier::stringify_class_map(
+    ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
     std::string str;
     for (auto prop : cls->props()) {
         auto lval = rval.prop(prop);
@@ -117,29 +140,11 @@ std::string Stringifier::stringify_array(
     }
 }
 
+// t3881
 std::string Stringifier::stringify_array_chunks(
     ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval) {
-    std::stringstream ss;
-    auto data = rval.data_view();
-    const auto& bits = data.bits();
-
-    // t3881
-    ss << "{ ";
-    using size_t = ulam::Bits::size_t;
-    const size_t ChunkSize = 32;
-    const size_t Num = (bits.len() + ChunkSize - 1) / ChunkSize;
-    const size_t LastChunkSize =
-        (bits.len() % ChunkSize > 0) ? bits.len() % ChunkSize : ChunkSize;
-    for (size_t i = 0; i < Num; ++i) {
-        if (i > 0)
-            ss << ", ";
-        const ulam::Bits::size_t size =
-            (i + 1 < Num) ? ChunkSize : LastChunkSize;
-        auto chunk = bits.view(ChunkSize * i, size);
-        chunk.write_hex(ss);
-    }
-    ss << ((bits.len() > 0) ? " " : "") << "}";
-    return ss.str();
+    auto bits = rval.data_view().bits().view();
+    return "{ " + data_as_chunks(bits) + (bits.len() > 0 ? " " : "") + "}";
 }
 
 std::string Stringifier::stringify_array_leximited(
@@ -282,5 +287,23 @@ std::string Stringifier::str_lit(const std::string_view str) {
         }
     }
     ss << '"';
+    return ss.str();
+}
+
+std::string Stringifier::data_as_chunks(const ulam::BitsView bits) const {
+    std::ostringstream ss;
+    using size_t = ulam::Bits::size_t;
+    const size_t ChunkSize = 32;
+    const size_t Num = (bits.len() + ChunkSize - 1) / ChunkSize;
+    const size_t LastChunkSize =
+        (bits.len() % ChunkSize > 0) ? bits.len() % ChunkSize : ChunkSize;
+    for (size_t i = 0; i < Num; ++i) {
+        if (i > 0)
+            ss << ", ";
+        const ulam::Bits::size_t size =
+            (i + 1 < Num) ? ChunkSize : LastChunkSize;
+        auto chunk = bits.view(ChunkSize * i, size);
+        chunk.write_hex(ss);
+    }
     return ss.str();
 }
