@@ -44,6 +44,9 @@ public:
         ulam::sema::ExprResList&& args) override;
 
 protected:
+    ulam::Ptr<ulam::sema::Resolver>
+    _resolver(bool in_expr, ulam::sema::eval_flags_t flags) override;
+
     ulam::Ptr<ulam::sema::EvalExprVisitor> _expr_visitor(
         ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) override;
 

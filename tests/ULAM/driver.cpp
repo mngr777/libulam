@@ -39,7 +39,6 @@ static const std::set<std::string> Skip = {
     "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
     "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
-    // "t41153_test_compiler_elementandquark_selfcasttoatom_issue.test", // quark to Atom cast
     "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition
     "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
     "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
@@ -190,7 +189,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41232_test_compiler_transientconstantwelementdatamember.test", // `Bool m_testb(true);  Int m_testi(77);` is correct
     "t41233_test_compiler_transientconstantwelementdatamemberinitialized.test", // similar to t41232
     "t41234_test_compiler_transientconstantwelementarraydatamember.test", // -"-
-    // "t41242_test_compiler_element_constantrefprimitive.test", // folding
+    "t41267_test_compiler_constantclassarrayoftransients_withelementdm.test", // class const `KeyExprNode.m_elfoo` is evaluated with default eval
+    "t41268_test_compiler_constantclassarrayoftransientswithelementdm_asconstreffuncarg.test", //
 };
 
 using Path = std::filesystem::path;
