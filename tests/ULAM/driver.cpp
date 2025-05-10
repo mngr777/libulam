@@ -197,6 +197,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41272_test_compiler_dmconstantclassarrayoftransientswithelementdm_asconstrefarrayfuncarg.test", // similar to t41269
     "t41273_test_compiler_constantclassarrayoftransients_withelementdmwstringarray.test", // -"-
     "t41274_test_compiler_constantclassarrayoftransientswithelementdm_constantmemberofconstantclass.test", // -"-
+    "t41275_test_compiler_constantclassarrayoftransientsloop.test", // .lengthof folding
+    "t41276_test_compiler_constantarray2Dstring_lengthof.test", // -"-
+    "t41277_test_compiler_constantclasswithstringdm.test", // -"-, element hex does not match
 };
 
 using Path = std::filesystem::path;

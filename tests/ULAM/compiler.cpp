@@ -215,6 +215,8 @@ void Compiler::write_class_consts(
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.array_fmt = in_main ? Stringifier::ArrayFmt::Chunks
                                             : Stringifier::ArrayFmt::Default;
+    stringifier.options.object_fmt =
+        in_main ? Stringifier::ObjectFmt::Chunks : Stringifier::ObjectFmt::Map;
 
     bool tpl_only = !(in_main || is_outer);
 
@@ -305,8 +307,12 @@ void Compiler::write_obj_prop(
 
         } else if (type->is_class()) {
             auto node = prop->node();
-            if (!in_main && node->has_init() && node->init()->is<ulam::ast::InitMap>()) {
+            if (!in_main && node->has_init() &&
+                node->init()->is<ulam::ast::InitMap>()) {
                 // output as map if prop has init map
+                // NOTE: this doesn't work in general, ULAM tests show only
+                // values that are in init map (which we don't have at this
+                // point)
                 os << stringifier.stringify(prop->type(), rval);
             } else {
                 write_obj_members(

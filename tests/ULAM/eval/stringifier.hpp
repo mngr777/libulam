@@ -6,12 +6,14 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/semantic/value/bits.hpp>
 #include <libulam/str_pool.hpp>
 #include <string>
 
 class Stringifier {
 public:
-    enum class ArrayFmt {Chunks, Leximited, Default};
+    enum class ArrayFmt { Chunks, Leximited, Default };
+    enum class ObjectFmt { Chunks, HexStr, Map };
 
     explicit Stringifier(ulam::Ref<ulam::Program> program):
         _builtins{program->builtins()},
@@ -33,8 +35,8 @@ public:
         bool empty_string_as_empty = false;
         bool invalid_string_id_as_empty = true;
         bool class_params_as_consts = true;
-        bool obj_as_str = false;
         ArrayFmt array_fmt = ArrayFmt::Default;
+        ObjectFmt object_fmt = ObjectFmt::Map;
     } options;
 
 private:
@@ -43,6 +45,15 @@ private:
 
     std::string
     stringify_class(ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
+
+    std::string stringify_class_chunks(
+        ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
+
+    std::string stringify_class_hex_str(
+        ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
+
+    std::string
+    stringify_class_map(ulam::Ref<ulam::Class> cls, const ulam::RValue& rval);
 
     std::string stringify_array(
         ulam::Ref<ulam::ArrayType> array_type, const ulam::RValue& rval);
@@ -61,6 +72,8 @@ private:
     std::string unary_to_str(ulam::Unsigned val) const;
     std::string bits_to_str(const ulam::Bits& bits) const;
     std::string str_lit(const std::string_view str);
+
+    std::string data_as_chunks(const ulam::BitsView bits) const;
 
     ulam::Builtins& _builtins;
     ulam::UniqStrPool& _str_pool;
