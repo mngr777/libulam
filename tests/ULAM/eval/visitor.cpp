@@ -369,6 +369,11 @@ ulam::sema::ExprRes EvalVisitor::funcall(
     }
 }
 
+ulam::Ptr<ulam::sema::Resolver>
+EvalVisitor::_resolver(bool in_expr, ulam::sema::eval_flags_t flags) {
+    return ulam::make<ulam::sema::Resolver>(*this, program(), in_expr, flags);
+}
+
 ulam::Ptr<ulam::sema::EvalExprVisitor> EvalVisitor::_expr_visitor(
     ulam::Ref<ulam::Scope> scope, ulam::sema::eval_flags_t flags) {
     return ulam::make<EvalExprVisitor>(*this, program(), scope, flags);
