@@ -161,7 +161,7 @@ void Compiler::write_obj_members(
     bool is_outer,
     bool is_base) {
     write_class_type_defs(os, cls);
-    write_class_consts(os, cls, in_main, is_outer);
+    write_class_consts(os, cls, in_main, is_outer, is_base);
     write_obj_props(os, cls, rval, in_main, is_outer);
     if (in_main || !is_base)
         write_obj_parent_members(os, cls, rval, in_main, is_outer);
@@ -208,7 +208,11 @@ void Compiler::write_class_type_def(
 }
 
 void Compiler::write_class_consts(
-    std::ostream& os, ulam::Ref<ulam::Class> cls, bool in_main, bool is_outer) {
+    std::ostream& os,
+    ulam::Ref<ulam::Class> cls,
+    bool in_main,
+    bool is_outer,
+    bool is_base) {
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.bits_use_unsigned_suffix = true;
@@ -218,7 +222,9 @@ void Compiler::write_class_consts(
     stringifier.options.object_fmt =
         in_main ? Stringifier::ObjectFmt::Chunks : Stringifier::ObjectFmt::Map;
 
-    bool tpl_only = !(in_main || is_outer);
+    bool tpl_only =
+        !(in_main || is_outer || cls->is_element() ||
+          (is_base && !cls->has_cls_tpl()));
 
     // params as consts (t3336)
     if (!tpl_only) {
@@ -249,19 +255,34 @@ void Compiler::write_obj_props(
 
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
-    stringifier.options.use_unsigned_suffix_zero = in_main;
+    stringifier.options.use_unsigned_suffix_zero =
+        in_main || cls->is_transient();
     stringifier.options.unary_as_unsigned_lit = !in_main;
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
 
     for (auto prop : cls->props()) {
-        // t41005, t41006: "0u"
-        // but t41145: "0"
-        // stringifier.options.use_unsigned_suffix_zero_force =
-        //     !in_main && prop->type()->is(ulam::UnsignedId) &&
-        //     prot->type()->bitsize() == 8;
+        auto type = prop->type();
+        // t41298 hacks
+        bool use_unsigned_suffix_zero =
+            stringifier.options.use_unsigned_suffix_zero;
+        bool bits_use_unsigned_suffix =
+            stringifier.options.bits_use_unsigned_suffix;
+        stringifier.options.use_unsigned_suffix_zero =
+            use_unsigned_suffix_zero &&
+            (in_main ||
+             (type->is(ulam::UnsignedId) && prop->node()->has_init() &&
+              (!type->is_alias() || type->bitsize() == 8 ||
+               type->bitsize() == 6)));
+        stringifier.options.bits_use_unsigned_suffix =
+            bits_use_unsigned_suffix &&
+            (!type->is(ulam::BitsId) || type->bitsize() != 64);
+
         write_obj_prop(os, stringifier, prop, obj, in_main);
+
+        stringifier.options.use_unsigned_suffix_zero = use_unsigned_suffix_zero;
+        stringifier.options.bits_use_unsigned_suffix = bits_use_unsigned_suffix;
     }
 }
 

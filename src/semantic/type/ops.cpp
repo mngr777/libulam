@@ -1,3 +1,4 @@
+#include "libulam/semantic/ops.hpp"
 #include <cassert>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -60,8 +61,9 @@ check_type_match(Ref<const Type> type, const Value& val, Ref<Type> target) {
 
 TypeErrorPair numeric_prim_binary_op_type_check_prim(
     Op op,
-    Ref<const PrimType> l_type,
-    Ref<const PrimType> r_type,
+    Ref<PrimType> l_type,
+    const Value& l_val,
+    Ref<PrimType> r_type,
     const Value& r_val) {
     assert(is_numeric(r_type));
     TypeErrorPair errors;
@@ -71,11 +73,23 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
             errors.second = check_type_match(r_type, r_val, target);
             return true;
         } else if (r_type->is(target)) {
-            errors.first = check_type_match(l_type, target);
+            errors.first = check_type_match(l_type, l_val, target);
             return true;
         }
         return false;
     };
+
+    // for equality op, avoid casting to commont type if possible, t41292
+    // if (ops::kind(op) == ops::Kind::Equality &&
+    //     (l_val.is_consteval() || r_val.is_consteval())) {
+    //     if (r_val.is_consteval() && r_type->is_impl_castable_to(l_type, r_val)) {
+    //         errors.second = {TypeError::ImplCastRequired, l_type};
+    //         return errors;
+    //     } else if (l_val.is_consteval() && l_type->is_impl_castable_to(r_type, l_val)) {
+    //         errors.first = {TypeError::ImplCastRequired, r_type};
+    //         return errors;
+    //     }
+    // }
 
     if (is_numeric(l_type) || is_numeric(l_type)) {
         // same type?
@@ -119,21 +133,23 @@ TypeErrorPair numeric_prim_binary_op_type_check_class(
     return errors;
 }
 
-TypeErrorPair
-prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
-    auto r_type = r_tv.type()->actual();
+TypeErrorPair prim_binary_op_type_check(
+    Op op,
+    Ref<PrimType> l_type,
+    const Value& l_val,
+    Ref<Type> r_type,
+    const Value& r_val) {
     TypeErrorPair errors;
     switch (ops::kind(op)) {
     case ops::Kind::Assign: {
-        errors.second = check_type_match(r_tv.type(), r_tv.value(), l_type);
+        errors.second = check_type_match(r_type, r_val, l_type);
     } break;
     case ops::Kind::Equality: {
         if (!is_numeric(l_type)) {
             // NOTE: any Bool(a), Bool(b) values can be checked for equality
-            errors.second =
-                l_type->is(BoolId)
-                    ? check_type_match(r_type, r_tv.value(), BoolId)
-                    : check_type_match(r_type, r_tv.value(), l_type);
+            errors.second = l_type->is(BoolId)
+                                ? check_type_match(r_type, r_val, BoolId)
+                                : check_type_match(r_type, r_val, l_type);
             return errors;
         }
         [[fallthrough]];
@@ -142,7 +158,7 @@ prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
     case ops::Kind::Numeric: {
         if (r_type->is_prim())
             return numeric_prim_binary_op_type_check_prim(
-                op, l_type, r_type->as_prim(), r_tv.value());
+                op, l_type, l_val, r_type->as_prim(), r_val);
         if (r_type->is_class())
             return numeric_prim_binary_op_type_check_class(
                 op, l_type, r_type->as_class());
@@ -155,8 +171,8 @@ prim_binary_op_type_check(Op op, Ref<PrimType> l_type, const TypedValue& r_tv) {
     } break;
     case ops::Kind::Bitwise: {
         errors.first = check_type_match(l_type, BitsId);
-        errors.second = check_type_match(
-            r_type, r_tv.value(), is_shift(op) ? UnsignedId : BitsId);
+        errors.second =
+            check_type_match(r_type, r_val, is_shift(op) ? UnsignedId : BitsId);
     } break;
     default:
         errors.first = {TypeError::Incompatible};
@@ -243,21 +259,32 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
     }
 }
 
-TypeErrorPair
-binary_op_type_check(Op op, Ref<Type> l_type, const TypedValue& r_tv) {
+TypeErrorPair binary_op_type_check(
+    Op op, const sema::ExprRes& left, const sema::ExprRes& right) {
+    return binary_op_type_check(
+        op, left.type(), left.value(), right.type(), right.value());
+}
+
+TypeErrorPair binary_op_type_check(
+    Op op,
+    Ref<Type> l_type,
+    const Value& l_val,
+    Ref<Type> r_type,
+    const Value& r_val) {
     auto l_actual = l_type->actual();
     if (l_actual->is_prim())
-        return prim_binary_op_type_check(op, l_actual->as_prim(), r_tv);
+        return prim_binary_op_type_check(
+            op, l_actual->as_prim(), l_val, r_type->actual(), r_val);
 
     if (l_actual->is_class())
         return class_binary_op_type_check(
-            op, l_actual->as_class(), r_tv.type()->actual());
+            op, l_actual->as_class(), r_type->actual());
 
     if (l_actual->is(AtomId))
-        return atom_binary_op_type_check(op, l_actual, r_tv.type()->deref());
+        return atom_binary_op_type_check(op, l_actual, r_type->deref());
 
     TypeErrorPair errors;
-    if (op == Op::Assign && l_type->is_same(r_tv.type()))
+    if (op == Op::Assign && l_type->is_same(r_type))
         return errors;
     errors.first.status = TypeError::Incompatible;
     errors.second.status = TypeError::Incompatible;
