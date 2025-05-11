@@ -105,12 +105,9 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     auto type = resolve_as_cond_type(node);
     assert(!type->is_ref());
 
-    // TODO: check if types are compatible
-
     Ptr<ast::VarDef> def{};
     if (!res.value().empty()) {
-        auto dyn_type = res.value().dyn_obj_type();
-        if (dyn_type->is_same(type) || dyn_type->is_impl_castable_to(type)) {
+        if (res.type()->deref()->is_impl_refable_as(type, res.value())) {
             auto scope_raii{_scope_stack.raii(scp::NoFlags)};
             auto [var_def, var] =
                 define_as_cond_var(node, std::move(res), type, scope());
