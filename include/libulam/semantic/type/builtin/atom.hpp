@@ -35,6 +35,9 @@ public:
         const Value& val,
         bool expl = true) const override;
 
+    bool is_refable_as(Ref<const Type> type, const Value& val, bool expl = true)
+        const override;
+
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
 

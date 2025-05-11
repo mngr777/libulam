@@ -117,6 +117,9 @@ public:
         const Value& val,
         bool expl = true) const override;
 
+    bool is_refable_as(Ref<const Type> type, const Value& val, bool expl = true)
+        const override;
+
     Value cast_to(Ref<Type> type, Value&& val) override;
 
     conv_cost_t

@@ -140,10 +140,15 @@ public:
     bool is_impl_castable_to(Ref<const Type> type) const;
     virtual bool is_castable_to(Ref<const Type> type, bool expl = true) const;
 
-    bool is_impl_castable_to(BuiltinTypeId bi_type_id) const;
     bool is_expl_castable_to(BuiltinTypeId bi_type_id) const;
+    bool is_impl_castable_to(BuiltinTypeId bi_type_id) const;
     virtual bool
     is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const;
+
+    bool is_expl_refable_as(Ref<const Type> type, const Value& val) const;
+    bool is_impl_refable_as(Ref<const Type> type, const Value& val) const;
+    virtual bool is_refable_as(
+        Ref<const Type> type, const Value& val, bool expl = true) const;
 
     virtual conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const;
@@ -238,6 +243,9 @@ public:
         BuiltinTypeId bi_type_id,
         const Value& val,
         bool expl = true) const override;
+
+    bool is_refable_as(Ref<const Type> type, const Value& val, bool expl = true)
+        const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;
@@ -377,10 +385,11 @@ public:
         const Value& val,
         bool expl = true) const override;
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
-
     bool
     is_castable_to(BuiltinTypeId bi_type_id, bool expl = true) const override;
+
+    bool is_refable_as(Ref<const Type> type, const Value& val, bool expl = true)
+        const override;
 
     conv_cost_t
     conv_cost(Ref<const Type> type, bool allow_cast = false) const override;

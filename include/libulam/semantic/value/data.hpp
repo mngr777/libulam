@@ -101,6 +101,7 @@ public:
 private:
     DataPtr _storage{};
     Ref<Type> _type{};
+    Ref<Type> _view_type{};
     bitsize_t _off{};
     struct {
         bitsize_t off{NoBitsize};
