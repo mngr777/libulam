@@ -102,7 +102,7 @@ Answer parse_answer(const std::string_view text) {
             auto [name, _] = p.read_parent_class_name();
             answer.add_parent(std::string{name});
             p.skip_spaces();
-            if (!p.at('+'))
+            if (!p.skip_if('+'))
                 break;
         }
         p.skip_spaces();
@@ -117,7 +117,7 @@ Answer parse_answer(const std::string_view text) {
         if (p.at("/*")) {
             p.skip_comment();
 
-        } else if (p.at(':') || p.at('^')) {
+        } else if (p.at(':') || p.at('^') || p.at('+')) {
             // :ParentType< ... > | ^GrandparentType< ... >
             bool is_grandarent = p.at('^');
             p.advance();
