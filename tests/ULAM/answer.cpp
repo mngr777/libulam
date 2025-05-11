@@ -95,7 +95,7 @@ Answer parse_answer(const std::string_view text) {
     p.skip_spaces();
 
     // parents
-    if (p.at(':')) {
+    if (p.at(':') || p.at('+')) {
         p.advance();
         while (true) {
             p.skip_spaces();
