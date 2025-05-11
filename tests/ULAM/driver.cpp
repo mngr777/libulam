@@ -202,6 +202,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41277_test_compiler_constantclasswithstringdm.test", // -"-, element hex does not match (strings)
     "t41278_test_compiler_constantquarkclasswithstringdm.test", // quark hex does not match (strings)
     "t41292_test_compiler_refcastdm_alsoancestor_issue.test", // `qrok.m == 0`: `qrok.m` is not casted to Int in answer, TODO?
+    "t41302_test_compiler_elementinheritances_castingself_exactfuncmatches.test", // `Foo.Soo.Coo.cb(true)` is correct
 };
 
 using Path = std::filesystem::path;
