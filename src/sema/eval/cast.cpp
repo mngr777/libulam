@@ -261,22 +261,12 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
         return {ExprError::InvalidCast};
     }
 
-    if (type->deref()->is_object() && val.has_rvalue())
-        type = val.dyn_obj_type()->ref_type();
-    type = type->ref_type();
-
-    return arg.derived(type, arg.move_value());
+    return arg.derived(type->ref_type(), arg.move_value());
 }
 
 ExprRes EvalCast::deref(ExprRes&& arg) {
     assert(arg.value().is_lvalue());
-    auto type = arg.type()->deref();
-    auto val = arg.move_value().deref();
-
-    if (type->is_object() && val.has_rvalue())
-        type = val.dyn_obj_type();
-
-    return arg.derived(type, std::move(val));
+    return arg.derived(arg.type()->deref(), arg.move_value().deref());
 }
 
 Ref<Type> EvalCast::idx_type() { return builtins().int_type(); }

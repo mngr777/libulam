@@ -70,20 +70,6 @@ Ref<Var> Class::add_param(Ptr<Var>&& var) {
     return ref;
 }
 
-// Ref<Var>
-// Class::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
-//     auto var = ClassBase::add_param(type_node, node);
-//     var->set_cls(this);
-//     return var;
-// }
-
-// Ref<Var> Class::add_param(
-//     Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val) {
-//     auto var = add_param(type_node, node);
-//     var->set_value(std::move(val));
-//     return var;
-// }
-
 Ref<AliasType> Class::add_type_def(Ref<ast::TypeDef> node) {
     auto type = ClassBase::add_type_def(node);
     type->set_cls(this);
@@ -364,6 +350,12 @@ bool Class::is_castable_to(
     if (is_same(type))
         return true;
 
+    if (!val.empty()) {
+        auto dyn_type = val.dyn_obj_type();
+        if (!is_same(dyn_type))
+            return dyn_type->is_castable_to(type, std::move(val), expl);
+    }
+
     if (!convs(type, expl).empty())
         return true;
 
@@ -388,11 +380,10 @@ bool Class::is_castable_to(
 
     // upcast
     if (is_base_of(cls))
-        return expl && is_base_of(cls);
+        return expl;
 
     // object of same size
     return expl && type->bitsize() == bitsize();
-    return is_castable_to(type, expl);
 }
 
 bool Class::is_castable_to(
@@ -401,9 +392,22 @@ bool Class::is_castable_to(
     return !convs(bi_type_id, expl).empty();
 }
 
+bool Class::is_refable_as(
+    Ref<const Type> type, const Value& val, bool expl) const {
+    return is_castable_to(type, val, expl);
+}
+
 Value Class::cast_to(Ref<Type> type, Value&& val) {
-    assert(!is_same(type));
+    if (is_same(type))
+        return std::move(val);
+
     assert(convs(type, true).empty()); // must use conversion function otherwise
+
+    if (!val.empty()) {
+        auto dyn_type = val.dyn_obj_type();
+        if (!is_same(dyn_type))
+            return dyn_type->cast_to(type, std::move(val));
+    }
 
     auto rval = val.move_rvalue();
     if (rval.empty())

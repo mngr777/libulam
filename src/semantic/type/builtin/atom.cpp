@@ -61,6 +61,11 @@ bool AtomType::is_castable_to(
     return true;
 }
 
+bool AtomType::is_refable_as(
+    Ref<const Type> type, const Value& val, bool expl) const {
+    return is_castable_to(type, val, expl);
+}
+
 conv_cost_t AtomType::conv_cost(Ref<const Type> type, bool allow_cast) const {
     if (type->is(AtomId))
         return 0;
@@ -72,6 +77,12 @@ conv_cost_t AtomType::conv_cost(Ref<const Type> type, bool allow_cast) const {
 }
 
 Value AtomType::cast_to(Ref<Type> type, Value&& val) {
+    if (!val.empty()) {
+        auto dyn_type = val.dyn_obj_type();
+        if (!is_same(dyn_type))
+            return dyn_type->cast_to(type, std::move(val));
+    }
+
     assert(is_expl_castable_to(type));
     assert(type->is_class() && type->as_class()->is_element());
     if (val.empty())
