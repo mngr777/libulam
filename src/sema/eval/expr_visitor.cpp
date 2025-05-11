@@ -567,8 +567,7 @@ ExprRes EvalExprVisitor::binary_op(
     }
 
     auto cast = eval().cast_helper(scope(), flags());
-    auto type_errors =
-        binary_op_type_check(op, left.type(), right.typed_value());
+    auto type_errors = binary_op_type_check(op, left, right);
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
                       ExprRes&& arg) -> ExprRes {
         switch (error.status) {

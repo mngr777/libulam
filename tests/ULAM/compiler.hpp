@@ -58,13 +58,19 @@ private:
         bool is_outer);
 
     void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
+
     void write_class_type_def(
         std::ostream& os,
         Stringifier& stringifier,
         ulam::Ref<ulam::AliasType> alias);
 
     void write_class_consts(
-        std::ostream& os, ulam::Ref<ulam::Class> cls, bool in_main, bool is_outer);
+        std::ostream& os,
+        ulam::Ref<ulam::Class> cls,
+        bool in_main,
+        bool is_outer,
+        bool is_base);
+
     void write_class_const(
         std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var);
 

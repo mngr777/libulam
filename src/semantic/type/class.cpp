@@ -35,6 +35,7 @@ Class::Class(std::string_view name, Ref<ClassTpl> tpl):
     _init_bits{0} {
     scope()->set_self_cls(this);
     set_module(tpl->module());
+    set_cls_tpl(tpl);
     if (is_element())
         register_element(tpl->program());
 }
