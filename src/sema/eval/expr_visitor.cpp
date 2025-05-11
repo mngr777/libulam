@@ -1112,7 +1112,7 @@ EvalExprVisitor::bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj) {
 
 ExprRes EvalExprVisitor::as_base(
     Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj) {
-    auto cls = obj.type()->as_class();
+    auto cls = obj.type()->deref()->as_class();
     cls = class_base(node, cls, base);
     if (!cls) {
         auto error =

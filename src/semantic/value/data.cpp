@@ -91,8 +91,10 @@ void DataView::store(RValue&& rval) {
 
 RValue DataView::load() const { return type()->load(_storage->bits(), _off); }
 
-DataView DataView::as(Ref<Type> type) {
-    return {_storage, type, _off, _atom.off, _atom.type};
+DataView DataView::as(Ref<Type> view_type) {
+    DataView view{*this};
+    view.set_view_type(view_type);
+    return view;
 }
 
 const DataView DataView::as(Ref<Type> type) const {
@@ -113,7 +115,7 @@ const DataView DataView::array_item(array_idx_t idx) const {
 }
 
 DataView DataView::prop(Ref<Prop> prop_) {
-    auto type_ = type();
+    auto type_ = dyn_type();
     assert(type_->is_class());
     auto cls = type_->as_class();
     bitsize_t off = _off + prop_->data_off_in(cls);
@@ -147,9 +149,7 @@ bool DataView::is_atom() const { return type()->is_atom(); }
 Bool DataView::is_class() const { return type()->is_class(); }
 
 Ref<Type> DataView::type() const {
-    return _type->is(AtomId)
-               ? dynamic_cast<AtomType*>(_type)->data_type(bits(), 0)
-               : _type;
+    return _view_type ? _view_type : dyn_type();
 }
 
 BitsView DataView::bits() {
@@ -158,6 +158,17 @@ BitsView DataView::bits() {
 
 const BitsView DataView::bits() const {
     return _storage->bits().view(_off, _type->bitsize());
+}
+
+void DataView::set_view_type(Ref<Type> view_type) {
+    assert(type()->is_expl_refable_as(view_type, Value{RValue{}}));
+    _view_type = view_type;
+}
+
+Ref<Type> DataView::dyn_type() const {
+    return _type->is(AtomId)
+               ? dynamic_cast<AtomType*>(_type)->data_type(bits(), 0)
+               : _type;
 }
 
 } // namespace ulam
