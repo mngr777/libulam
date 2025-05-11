@@ -39,7 +39,7 @@ void Ancestor::add_dep_added(Ref<Ancestor> anc) {
 
 bool Ancestry::add(Ref<Class> cls, Ref<ast::TypeName> node) {
     auto [anc, added] = do_add(cls, node);
-    if (added) {
+    if (added || !anc->is_parent()) {
         anc->set_is_parent(true);
         _parents.push_back(anc);
     }
