@@ -1,50 +1,58 @@
 #pragma once
+#include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/flags.hpp>
+#include <libulam/semantic/scope/view.hpp>
 #include <stack>
+#include <type_traits>
 
 namespace ulam {
 
 class ScopeStack {
 public:
-    class Raii {
+    using Variant = detail::Variant<BasicScope*, PersScope*, PersScopeView*>;
+
+    template <typename T> class Raii {
+        static_assert(std::is_base_of_v<Scope, T>);
         friend ScopeStack;
+
     private:
-        Raii(ScopeStack& stack, Ptr<Scope>&& scope);
-        Raii(ScopeStack& stack, scope_flags_t flags);
+        template <typename... Ts>
+        Raii(ScopeStack& stack, Ts&&... args):
+            _stack{stack}, _scope{std::forward<Ts>(args)...} {
+            _stack.push(Variant{get()});
+        }
 
     public:
-        ~Raii();
+        ~Raii() { _stack.pop(); }
 
-        Raii(Raii&&) = default;
-        Raii& operator=(Raii&&) = delete;
+        T* get() { return &_scope; }
 
     private:
         ScopeStack& _stack;
-        Ref<Scope> _scope;
+        T _scope;
     };
 
-    ScopeStack() {}
+    template <typename T, typename... Ts> Raii<T> raii(Ts&&... args) {
+        return Raii<T>(*this, std::forward<Ts>(args)...);
+    }
 
-    ScopeStack(const ScopeStack&) = default;
-    ScopeStack& operator=(const ScopeStack&) = default;
+    Scope* top() {
+        assert(!empty());
+        return _stack.top().accept([&](auto scope) -> Scope* { return scope; });
+    }
+
+    Variant& top_v() { return _stack.top(); }
+
+    void push(Variant&& scope_v) { _stack.push(std::move(scope_v)); }
+    void pop() { _stack.pop(); }
 
     std::size_t size() const { return _stack.size(); }
     bool empty() const { return _stack.empty(); }
 
-    Ref<Scope> top();
-
-    Raii raii(Ptr<Scope>&& scope);
-    Raii raii(scope_flags_t flags);
-
-    void push(Ptr<Scope>&& scope);
-    void push(scope_flags_t flags);
-
-    void pop();
-
-private:
-    std::stack<Ptr<Scope>> _stack;
+public:
+    std::stack<Variant> _stack;
 };
 
 } // namespace ulam

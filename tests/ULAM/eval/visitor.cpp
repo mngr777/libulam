@@ -147,7 +147,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
     // make tmp var
     {
         ulam::Ptr<ulam::ast::VarDef> def{};
-        auto scope_raii{_scope_stack.raii(ulam::scp::NoFlags)};
+        auto scope_raii =
+            _scope_stack.raii<ulam::BasicScope>(scope(), ulam::scp::NoFlags);
         if (!res.value().empty()) {
             auto dyn_type = res.value().dyn_obj_type();
             if (!dyn_type->is_same(type) &&
@@ -194,7 +195,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     }
 
     auto ctx_raii = _ctx_stack.raii<ForContext>({});
-    auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
+    auto scope_raii = _scope_stack.raii<ulam::BasicScope>(
+        scope(), ulam::scp::BreakAndContinue);
     block_open();
 
     // init
@@ -230,7 +232,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
 
     auto tmp_idx = std::to_string(next_tmp_idx());
     auto ctx_raii = _ctx_stack.raii<WhileContext>({});
-    auto scope_raii = _scope_stack.raii(ulam::scp::Break | ulam::scp::Continue);
+    auto scope_raii = _scope_stack.raii<ulam::BasicScope>(
+        scope(), ulam::scp::BreakAndContinue);
     block_open();
 
     // cond, TODO: cast to Bool
@@ -258,7 +261,8 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Which> node) {
     auto ctx_raii = _ctx_stack.raii<WhichContext>(tmp_idx);
     auto& ctx = _ctx_stack.top<WhichContext>();
 
-    auto scope_raii{_scope_stack.raii(ulam::scp::Break)};
+    auto scope_raii =
+        _scope_stack.raii<ulam::BasicScope>(scope(), ulam::scp::Break);
     block_open();
 
     ulam::Ptr<ulam::Var> var = make_which_tmp_var(node);

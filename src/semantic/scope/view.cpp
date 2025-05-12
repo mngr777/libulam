@@ -4,7 +4,9 @@
 namespace ulam {
 
 PersScopeView::PersScopeView(Ref<PersScope> scope, ScopeVersion version):
-    Scope{}, _scope{scope}, _version{version} {}
+    Scope{},
+    _scope{scope},
+    _version{version != NoScopeVersion ? version : scope->version()} {}
 
 void PersScopeView::sync() { set_version(_scope->version()); }
 
