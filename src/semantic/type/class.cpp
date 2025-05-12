@@ -585,9 +585,17 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
     }
 
     // add inherited properties
-    for (auto anc : _ancestry.ancestors()) {
-        for (auto prop : anc->cls()->props())
+    // parents first
+    for (auto parent : parents()) {
+        for (auto prop : parent->cls()->props())
             _all_props.push_back(prop);
+    }
+    // grandparents
+    for (auto anc : ancestors()) {
+        if (!anc->is_parent()) {
+            for (auto prop : anc->cls()->props())
+                _all_props.push_back(prop);
+        }
     }
 
     // TODO: refactoring
@@ -683,26 +691,39 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 }
 
 void Class::merge_fsets() {
-    for (auto parent : parents()) {
-        // constructors
-        constructors()->merge(parent->cls()->constructors(), this);
-
+    auto merge_methods_and_ops = [&](Ref<Class> other) {
         // methods
-        for (auto [name_id, fset] : parent->cls()->fsets()) {
+        for (auto [name_id, fset] : other->fsets()) {
             auto sym = get(name_id);
             if (!sym || sym->is<FunSet>())
-                find_fset(name_id)->merge(fset, this);
+                find_fset(name_id)->merge(fset, this, other);
         }
 
         // operators
-        for (auto& [op, fset] : parent->cls()->ops())
-            find_op_fset(op)->merge(ref(fset), this);
+        for (auto& [op, fset] : other->ops())
+            find_op_fset(op)->merge(ref(fset), this, other);
+    };
+
+    // parents first
+    for (auto parent : parents()) {
+        auto other = parent->cls();
+
+        // constructors
+        constructors()->merge(other->constructors(), this);
+
+        merge_methods_and_ops(other);
 
         // conversions
-        for (auto [type_id, fun] : parent->cls()->convs()) {
+        for (auto [type_id, fun] : other->convs()) {
             if (_convs.count(type_id) == 0)
                 add_conv(fun);
         }
+    }
+
+    // grandparents
+    for (auto anc : ancestors()) {
+        if (!anc->is_parent())
+            merge_methods_and_ops(anc->cls());
     }
 }
 
