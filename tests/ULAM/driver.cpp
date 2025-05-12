@@ -90,23 +90,17 @@ static const std::set<std::string> Skip = {
     "t41649_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocaldm_issue.test", // -"-
     "t41650_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedeflocals_issue.test", // -"-
     /* added while writing postfix compiler: */
-    "t3255_test_compiler_self.test",
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
-    // "t41143_test_compiler_elementandquark_castatomtoquark_issue.test", // tmp: data view type is needed after all
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
-    "t3286_test_compiler_elementandquark_selfatomcasts.test", // TODO: non-ref `is`
-    "t3287_test_compiler_primitive_minmaxsizeof.test", // TODO: Bool/Unary output as reinterp-d Unsigned (for native functions?)
-    "t3289_test_compiler_primitive_minmaxsizeof_bytype.test", // -"-
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
     "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
     "t3652_test_compiler_elementandquarksinherited_unseentypedef_unaryclassarg_ish.test", // classid of non-const expr
-    "t3657_test_compiler_element_castatomfromquarkrefimmediate.test", // redundant cast from `Foo.instanceof` to Atom?
     "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
     "t3715_test_compiler_transientwithtransientdm.test", // similar to t3714
     "t3748_test_compiler_elementinheritedquark_sizeof_withsuper.test", // Bits "u" suffix
@@ -122,7 +116,6 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3820_test_compiler_transientwithatomdm_typedefref.test", // -"-
     "t3832_test_compiler_transientwithtransientdmwithelementarrayref_typedefref.test", // -"-
     "t3833_test_compiler_transientwithatomdm.test", // -"-
-    "t3835_test_compiler_element_ascondquarkatomof_issue.test", // redundant cast from consteval (instanceof) element to Atom
     "t3837_test_compiler_element_quarkrefatomof_issue.test", // -"-
     "t3850_test_compiler_mixedlongbinaryops.test", // mixing 32/64-bit Ints, why `mixprod32 / mixdiv64` -> `mixprod32 cast mixdiv64 / cast cast 4 cast ==`?
     "t3887_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefshadow.test", // local `b` used instead of tpl parameter, TODO: address in compat mode
@@ -189,7 +182,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41232_test_compiler_transientconstantwelementdatamember.test", // `Bool m_testb(true);  Int m_testi(77);` is correct
     "t41233_test_compiler_transientconstantwelementdatamemberinitialized.test", // similar to t41232
     "t41234_test_compiler_transientconstantwelementarraydatamember.test", // -"-
-    "t41267_test_compiler_constantclassarrayoftransients_withelementdm.test", // class const `KeyExprNode.m_elfoo` is evaluated with default eval
+    "t41267_test_compiler_constantclassarrayoftransients_withelementdm.test", // class const `KeyExprNode.m_elfoo` is evaluated with default eval, no codegen
     "t41268_test_compiler_constantclassarrayoftransientswithelementdm_asconstreffuncarg.test", // -"-
     "t41269_test_compiler_constantclassarrayoftransients_withtransientdm.test", // obj value format: init expr not available at compile time
     "t41270_test_compiler_constantclassarrayoftransientswithtransientdm_asconstreffuncarg.test", // -"-
