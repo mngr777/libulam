@@ -953,7 +953,7 @@ ExprRes EvalExprVisitor::ident_self(Ref<ast::Ident> node) {
 }
 
 ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
-    auto self_cls = scope()->self_cls();
+    auto self_cls = scope()->eff_self_cls();
     auto sup = class_super(node, self_cls);
     if (!sup)
         return {ExprError::NoSuper};

@@ -37,8 +37,7 @@ public:
     Scope& operator=(Scope&&) = default;
 
     virtual Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) = 0;
-    // TODO: remove const version
-    virtual Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const = 0;
+    Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const;
 
     bool has_version() const { return version() != NoScopeVersion; }
     virtual ScopeVersion version() const { return NoScopeVersion; }
@@ -58,16 +57,12 @@ public:
     virtual Ref<Class> self_cls() { assert(false); }
     virtual void set_self_cls(Ref<Class> cls) { assert(false); }
 
-    bool is(scope_flags_t flags_) { return flags() & flags_; }
-    bool in(scope_flags_t flags_) {
-        return is(flags_) || (parent() && parent()->in(flags_));
-    }
+    bool is(scope_flags_t flags_) const;
+    bool in(scope_flags_t flags_) const;
 
-    virtual bool has(str_id_t name_id, bool current = false) {
-        return get(name_id, current);
-    }
-
+    virtual bool has(str_id_t name_id, bool current = false) const;
     virtual Symbol* get(str_id_t name_id, bool current = false) = 0;
+    const Symbol* get(str_id_t name_id, bool current = false) const;
 
     Symbol* get_local(str_id_t name_id);
 
@@ -89,7 +84,6 @@ public:
         Scope{}, _parent{parent}, _flags{flags}, _self{} {}
 
     Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) override;
-    Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const override;
 
     scope_flags_t flags() const override { return _flags; }
 
@@ -180,7 +174,8 @@ private:
 
 public:
     explicit PersScope(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
-        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)}, _version{0} {}
+        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)},
+        _version{0} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
@@ -191,16 +186,14 @@ public:
     PersScopeIterator begin();
     PersScopeIterator end();
 
-    bool has(str_id_t name_id, bool current = false) override {
-        return has(name_id, version(), current);
-    }
-
-    bool has(str_id_t name_id, Version version, bool current = false) {
-        return get(name_id, version, current);
-    }
+    bool has(str_id_t name_id, bool current = false) const override;
+    bool has(str_id_t name_id, Version version, bool current = false) const;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
+
     Symbol* get(str_id_t name_id, Version version, bool current = false);
+    const Symbol*
+    get(str_id_t name_id, Version version, bool current = false) const;
 
     str_id_t last_change(Version version) const;
     str_id_t last_change() const { return last_change(_version); }

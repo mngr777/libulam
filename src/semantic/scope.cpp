@@ -10,6 +10,24 @@ namespace ulam {
 
 // Scope
 
+Ref<const Scope> Scope::parent(scope_flags_t flags) const {
+    return const_cast<Scope*>(this)->parent(flags);
+}
+
+bool Scope::is(scope_flags_t flags_) const { return flags() & flags_; }
+
+bool Scope::in(scope_flags_t flags_) const {
+    return is(flags_) || (parent() && parent()->in(flags_));
+}
+
+bool Scope::has(str_id_t name_id, bool current) const {
+    return get(name_id, current);
+}
+
+const Scope::Symbol* Scope::get(str_id_t name_id, bool current) const {
+    return const_cast<Scope*>(this)->get(name_id, current);
+}
+
 Scope::Symbol* Scope::get_local(str_id_t name_id) {
     // ??
     if (is(scp::Class)) {
@@ -23,12 +41,6 @@ Scope::Symbol* Scope::get_local(str_id_t name_id) {
 // ScopeBase
 
 Ref<Scope> ScopeBase::parent(scope_flags_t flags) {
-    return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
-               ? _parent
-               : _parent->parent(flags);
-}
-
-Ref<const Scope> ScopeBase::parent(scope_flags_t flags) const {
     return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
                ? _parent
                : _parent->parent(flags);
@@ -100,6 +112,19 @@ Scope::Symbol* PersScope::get(str_id_t name_id, Version version, bool current) {
         }
     }
     return (sym || current || !parent()) ? sym : parent()->get(name_id);
+}
+
+bool PersScope::has(str_id_t name_id, bool current) const {
+    return has(name_id, version(), current);
+}
+
+bool PersScope::has(str_id_t name_id, Version version, bool current) const {
+    return get(name_id, version, current);
+}
+
+const Scope::Symbol*
+PersScope::get(str_id_t name_id, Version version, bool current) const {
+    return const_cast<PersScope*>(this)->get(name_id, version, current);
 }
 
 str_id_t PersScope::last_change(Version version) const {
