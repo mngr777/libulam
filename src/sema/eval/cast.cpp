@@ -167,11 +167,6 @@ ExprRes EvalCast::cast_class(
         if (arg.type()->is_same(to))
             return std::move(arg);
 
-        if (arg.value().is_consteval() && cls->is_element() && to->is(AtomId)) {
-            auto type = builtins().atom_type();
-            return arg.derived(type, arg.move_value());
-        }
-
         return cast_default(node, to, std::move(arg), expl);
 
     } else {
