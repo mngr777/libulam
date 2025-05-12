@@ -505,7 +505,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     // tmp param eval scope
     auto param_scope_view = tpl->param_scope()->view(0);
-    auto param_scope = make<BasicScope>(ref(param_scope_view));
+    BasicScope param_scope{&param_scope_view};
     std::list<Ref<Var>> cls_params;
 
     auto resolver = eval().resolver(true, flags());
@@ -519,7 +519,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             Value{RValue{}}, tpl_param->flags());
 
         // param type
-        if (!resolver->resolve(ref(param), ref(param_scope)))
+        if (!resolver->resolve(ref(param), &param_scope))
             return res;
         auto type = param->type();
 
@@ -541,7 +541,7 @@ EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         ++n;
 
         cls_params.push_back(ref(param)); // add to list
-        param_scope->set(param->name_id(), std::move(param));
+        param_scope.set(param->name_id(), std::move(param));
     }
     res.second = true;
 

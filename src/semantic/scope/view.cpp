@@ -3,7 +3,7 @@
 
 namespace ulam {
 
-PersScopeView::PersScopeView(Ref<PersScope> scope, ScopeVersion version):
+PersScopeView::PersScopeView(PersScope* scope, ScopeVersion version):
     Scope{},
     _scope{scope},
     _version{version != NoScopeVersion ? version : scope->version()} {}
@@ -20,7 +20,7 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     return {name_id, get(name_id)};
 }
 
-Ref<Scope> PersScopeView::parent(scope_flags_t flags) {
+Scope* PersScopeView::parent(scope_flags_t flags) {
     return scope()->parent(flags);
 }
 
@@ -47,13 +47,6 @@ void PersScopeView::set_version_after(ScopeVersion version) {
     set_version(version + 1);
 }
 
-Ptr<PersScopeView> PersScopeView::view(ScopeVersion version) {
-    // assert(version <= this->version());
-    return _scope->view(version);
-}
-
-Ptr<PersScopeView> PersScopeView::view() { return _scope->view(version()); }
-
 PersScopeIterator PersScopeView::begin() {
     return PersScopeIterator(PersScopeView{_scope, 0});
 }
@@ -75,12 +68,12 @@ Scope::Symbol* PersScopeView::do_set(str_id_t name_id, Symbol&& symbol) {
     return sym;
 }
 
-Ref<PersScope> PersScopeView::scope() {
+PersScope* PersScopeView::scope() {
     assert(_scope);
     return _scope;
 }
 
-Ref<const PersScope> PersScopeView::scope() const {
+const PersScope* PersScopeView::scope() const {
     assert(_scope);
     return _scope;
 }

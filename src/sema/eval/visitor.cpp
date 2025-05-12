@@ -256,20 +256,20 @@ Ptr<Resolver> EvalVisitor::resolver(bool in_expr, eval_flags_t flags_) {
 }
 
 Ptr<EvalExprVisitor>
-EvalVisitor::expr_visitor(Ref<Scope> scope, eval_flags_t flags_) {
+EvalVisitor::expr_visitor(Scope* scope, eval_flags_t flags_) {
     return _expr_visitor(scope, flags() | flags_);
 }
 
-Ptr<EvalInit> EvalVisitor::init_helper(Ref<Scope> scope, eval_flags_t flags_) {
+Ptr<EvalInit> EvalVisitor::init_helper(Scope* scope, eval_flags_t flags_) {
     return _init_helper(scope, flags() | flags_);
 }
 
-Ptr<EvalCast> EvalVisitor::cast_helper(Ref<Scope> scope, eval_flags_t flags_) {
+Ptr<EvalCast> EvalVisitor::cast_helper(Scope* scope, eval_flags_t flags_) {
     return _cast_helper(scope, flags() | flags_);
 }
 
 Ptr<EvalFuncall>
-EvalVisitor::funcall_helper(Ref<Scope> scope, eval_flags_t flags_) {
+EvalVisitor::funcall_helper(Scope* scope, eval_flags_t flags_) {
     return _funcall_helper(scope, flags() | flags_);
 }
 
@@ -348,20 +348,20 @@ Ptr<Resolver> EvalVisitor::_resolver(bool in_expr, eval_flags_t flags) {
 }
 
 Ptr<EvalExprVisitor>
-EvalVisitor::_expr_visitor(Ref<Scope> scope, eval_flags_t flags) {
+EvalVisitor::_expr_visitor(Scope* scope, eval_flags_t flags) {
     return make<EvalExprVisitor>(*this, program(), scope, flags);
 }
 
-Ptr<EvalInit> EvalVisitor::_init_helper(Ref<Scope> scope, eval_flags_t flags) {
+Ptr<EvalInit> EvalVisitor::_init_helper(Scope* scope, eval_flags_t flags) {
     return make<EvalInit>(*this, program(), scope, flags);
 }
 
-Ptr<EvalCast> EvalVisitor::_cast_helper(Ref<Scope> scope, eval_flags_t flags) {
+Ptr<EvalCast> EvalVisitor::_cast_helper(Scope* scope, eval_flags_t flags) {
     return make<EvalCast>(*this, program(), scope, flags);
 }
 
 Ptr<EvalFuncall>
-EvalVisitor::_funcall_helper(Ref<Scope> scope, eval_flags_t flags) {
+EvalVisitor::_funcall_helper(Scope* scope, eval_flags_t flags) {
     return make<EvalFuncall>(*this, program(), scope, flags);
 }
 
@@ -478,7 +478,7 @@ Ref<Type> EvalVisitor::resolve_as_cond_type(Ref<ast::IfAs> node) {
 }
 
 std::pair<Ptr<ast::VarDef>, Ref<Var>> EvalVisitor::define_as_cond_var(
-    Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Ref<Scope> scope) {
+    Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Scope* scope) {
     Ptr<ast::VarDef> def{};
     Ref<Var> ref{};
 

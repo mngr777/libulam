@@ -1,4 +1,3 @@
-#include "libulam/sema/eval/flags.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
@@ -78,15 +77,15 @@ bool Resolver::resolve(Ref<Class> cls) {
     return ok;
 }
 
-bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
+bool Resolver::resolve(Ref<AliasType> alias, Scope* scope) {
     CHECK_STATE(alias);
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
-    Ptr<PersScopeView> scope_view{};
+    PersScopeView scope_view{};
     if (!alias->is_local()) {
         scope_view = decl_scope_view(alias);
-        scope = ref(scope_view);
+        scope = &scope_view;
     }
     assert(scope);
 
@@ -109,15 +108,15 @@ bool Resolver::resolve(Ref<AliasType> alias, Ref<Scope> scope) {
     RET_UPD_STATE(alias, true);
 }
 
-bool Resolver::resolve(Ref<Var> var, Ref<Scope> scope) {
+bool Resolver::resolve(Ref<Var> var, Scope* scope) {
     CHECK_STATE(var);
     auto node = var->node();
     auto type_name = var->type_node();
 
-    Ptr<PersScopeView> scope_view{};
+    PersScopeView scope_view{};
     if (!var->is_local()) {
         scope_view = decl_scope_view(var);
-        scope = ref(scope_view);
+        scope = &scope_view;
     }
     assert(scope);
 
@@ -180,7 +179,7 @@ bool Resolver::resolve(Ref<Prop> prop) {
 
     // type
     auto type = resolve_var_decl_type(
-        prop->type_node(), prop->node(), ref(scope_view), true);
+        prop->type_node(), prop->node(), &scope_view, true);
     if (!type)
         RET_UPD_STATE(prop, false);
     // TODO: more type checks, e.g. for Void
@@ -206,7 +205,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
 
     if (node->has_init()) {
         auto flags = _flags | evl::Consteval;
-        auto init = _eval.init_helper(ref(scope_view), flags);
+        auto init = _eval.init_helper(&scope_view, flags);
         auto init_res = init->eval_init(prop, node->init());
         if (!init_res)
             RET_UPD_STATE(prop, false);
@@ -262,7 +261,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
         fun->set_ret_type(_builtins.void_type());
     } else {
         auto ret_type_node = fun->ret_type_node();
-        auto ret_type = resolve_fun_ret_type(ret_type_node, ref(scope_view));
+        auto ret_type = resolve_fun_ret_type(ret_type_node, &scope_view);
         if (ret_type) {
             fun->set_ret_type(ret_type);
         } else {
@@ -274,7 +273,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
     // params
     for (auto& param : fun->params()) {
         auto type = resolve_var_decl_type(
-            param->type_node(), param->node(), ref(scope_view));
+            param->type_node(), param->node(), &scope_view);
         if (!type) {
             is_resolved = false;
             continue;
@@ -286,7 +285,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
 }
 
 Ref<Class> Resolver::resolve_class_name(
-    Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
+    Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class) {
     auto type = resolve_type_name(type_name, scope, resolve_class);
     if (!type)
         return {};
@@ -302,7 +301,7 @@ Ref<Class> Resolver::resolve_class_name(
 
 Ref<Type> Resolver::resolve_full_type_name(
     Ref<ast::FullTypeName> full_type_name,
-    Ref<Scope> scope,
+    Scope* scope,
     bool resolve_class) {
 
     // type
@@ -325,7 +324,7 @@ Ref<Type> Resolver::resolve_full_type_name(
 }
 
 Ref<Type> Resolver::resolve_type_name(
-    Ref<ast::TypeName> type_name, Ref<Scope> scope, bool resolve_class) {
+    Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class) {
     auto type_spec = type_name->first();
     auto type = resolve_type_spec(type_spec, scope);
     if (!type)
@@ -409,7 +408,7 @@ Ref<Type> Resolver::resolve_type_name(
 }
 
 Ref<Type>
-Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
+Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
     // builtin type?
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();
@@ -475,7 +474,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope) {
     return sym->get<UserType>();
 }
 
-Ptr<PersScopeView> Resolver::decl_scope_view(Ref<Decl> decl) {
+PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
     assert(!decl->is_local());
     auto scope =
         decl->has_cls() ? decl->cls()->scope() : decl->module()->scope();
@@ -495,7 +494,7 @@ bool Resolver::resolve_class_deps(Ref<Type> type) {
 Ref<Type> Resolver::resolve_var_decl_type(
     Ref<ast::TypeName> type_name,
     Ref<ast::VarDecl> node,
-    Ref<Scope> scope,
+    Scope* scope,
     bool resolve_class) {
     assert(scope);
 
@@ -516,7 +515,7 @@ Ref<Type> Resolver::resolve_var_decl_type(
 }
 
 Ref<Type>
-Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope) {
+Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Scope* scope) {
     assert(scope);
 
     // base type
@@ -539,7 +538,7 @@ Ref<Type> Resolver::apply_array_dims(
     Ref<Type> type,
     Ref<ast::ExprList> dims,
     Ref<ast::InitValue> init,
-    Ref<Scope> scope) {
+    Scope* scope) {
     assert(type);
     assert(dims && dims->child_num() > 0);
     assert(!dims->has_empty() || init);

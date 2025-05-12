@@ -11,7 +11,7 @@ namespace ulam {
 Module::Module(Ref<Program> program, Ref<ast::ModuleDef> node):
     _program{program},
     _node{node},
-    _env_scope{make<PersScope>(Ref<Scope>{}, scp::ModuleEnv)},
+    _env_scope{make<PersScope>(nullptr, scp::ModuleEnv)},
     _scope{make<PersScope>(ref(_env_scope), scp::Module)} {}
 
 Module::~Module() {}
@@ -22,9 +22,7 @@ const std::string_view Module::name() const {
     return _program->str_pool().get(name_id());
 }
 
-version_t Module::ulam_version() const {
-    return node()->ulam_version();
-}
+version_t Module::ulam_version() const { return node()->ulam_version(); }
 
 Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
@@ -104,7 +102,7 @@ Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     return ref;
 }
 
-void Module::export_symbols(Ref<Scope> scope) {
+void Module::export_symbols(Scope* scope) {
     for (auto& pair : _symbols) {
         auto& [name_id, sym] = pair;
         if (sym.is<Class>()) {
@@ -158,8 +156,7 @@ bool Module::resolve(sema::Resolver& resolver) {
                     assert(type->is_alias());
                     auto scope_version = type->as_alias()->scope_version();
                     auto scope_view = scope()->view(scope_version);
-                    return resolver.resolve(
-                               type->as_alias(), ref(scope_view)) &&
+                    return resolver.resolve(type->as_alias(), &scope_view) &&
                            ok;
                 } else {
                     return resolver.init(type->as_class());
@@ -167,9 +164,8 @@ bool Module::resolve(sema::Resolver& resolver) {
             },
             [&](Ref<ClassTpl> tpl) { return true; },
             [&](Ref<Var> var) {
-                auto scope_version = var->scope_version();
-                auto scope_view = scope()->view(scope_version);
-                return resolver.resolve(var, ref(scope_view));
+                auto scope_view = scope()->view(var->scope_version());
+                return resolver.resolve(var, &scope_view);
             },
             [&](auto) -> bool { assert(false); });
         ok = ok && resolved;

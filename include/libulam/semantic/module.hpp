@@ -86,9 +86,9 @@ public:
     auto begin() { return _symbols.begin(); }
     auto end() { return _symbols.end(); }
 
-    void export_symbols(Ref<Scope> scope);
+    void export_symbols(Scope* scope);
 
-    Ref<PersScope> scope() { return ref(_scope); }
+    PersScope* scope() { return ref(_scope); }
 
     Symbol* get(const std::string_view name);
     const Symbol* get(const std::string_view name) const;
