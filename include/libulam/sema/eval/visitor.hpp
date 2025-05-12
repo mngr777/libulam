@@ -54,16 +54,14 @@ public:
     Ptr<Resolver> resolver(bool in_expr, eval_flags_t flags = evl::NoFlags);
 
     Ptr<EvalExprVisitor>
-    expr_visitor(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+    expr_visitor(Scope* scope, eval_flags_t flags = evl::NoFlags);
 
-    Ptr<EvalInit>
-    init_helper(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+    Ptr<EvalInit> init_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
 
-    Ptr<EvalCast>
-    cast_helper(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+    Ptr<EvalCast> cast_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
 
     Ptr<EvalFuncall>
-    funcall_helper(Ref<Scope> scope, eval_flags_t flags = evl::NoFlags);
+    funcall_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
 
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
@@ -71,14 +69,13 @@ protected:
     virtual Ptr<Resolver> _resolver(bool in_expr, eval_flags_t flags);
 
     virtual Ptr<EvalExprVisitor>
-    _expr_visitor(Ref<Scope> scope, eval_flags_t flags);
+    _expr_visitor(Scope* scope, eval_flags_t flags);
 
-    virtual Ptr<EvalInit> _init_helper(Ref<Scope> scope, eval_flags_t flags);
+    virtual Ptr<EvalInit> _init_helper(Scope* scope, eval_flags_t flags);
 
-    virtual Ptr<EvalCast> _cast_helper(Ref<Scope> scope, eval_flags_t flags);
+    virtual Ptr<EvalCast> _cast_helper(Scope* scope, eval_flags_t flags);
 
-    virtual Ptr<EvalFuncall>
-    _funcall_helper(Ref<Scope> scope, eval_flags_t flags);
+    virtual Ptr<EvalFuncall> _funcall_helper(Scope* scope, eval_flags_t flags);
 
     virtual Ref<AliasType> type_def(Ref<ast::TypeDef> node);
 
@@ -105,7 +102,7 @@ protected:
     virtual ExprRes eval_as_cond_ident(Ref<ast::IfAs> node);
     virtual Ref<Type> resolve_as_cond_type(Ref<ast::IfAs> node);
     virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(
-        Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Ref<Scope> scope);
+        Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Scope* scope);
 
     virtual ExprRes ret_res(Ref<ast::Return> node);
 
@@ -120,7 +117,7 @@ protected:
     virtual ExprRes
     _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
 
-    Ref<Scope> scope() { return _scope_stack.top(); }
+    Scope* scope() { return _scope_stack.top(); }
 
     EvalStack _stack;
     BasicScope _program_scope;

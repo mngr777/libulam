@@ -12,14 +12,14 @@ class PersScopeIterator;
 class PersScopeView : public Scope {
 public:
     explicit PersScopeView(
-        Ref<PersScope> scope, ScopeVersion version = NoScopeVersion);
+        PersScope* scope, ScopeVersion version = NoScopeVersion);
     PersScopeView(): Scope{}, _scope{}, _version{NoScopeVersion} {}
 
     void reset() { set_version(0); }
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
-    Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) override;
+    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
 
     Ref<Class> self_cls() override;
 
@@ -31,12 +31,9 @@ public:
 
     str_id_t last_change() const;
 
-    ScopeVersion version() const override { return _version; }
-    void set_version(ScopeVersion version) override;
-    void set_version_after(ScopeVersion version) override;
-
-    Ptr<PersScopeView> view(ScopeVersion version) override;
-    Ptr<PersScopeView> view() override;
+    ScopeVersion version() const { return _version; }
+    void set_version(ScopeVersion version);
+    void set_version_after(ScopeVersion version);
 
     PersScopeIterator begin();
     PersScopeIterator end();
@@ -48,10 +45,10 @@ protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
 private:
-    Ref<PersScope> scope();
-    Ref<const PersScope> scope() const;
+    PersScope* scope();
+    const PersScope* scope() const;
 
-    Ref<PersScope> _scope;
+    PersScope* _scope;
     ScopeVersion _version;
 };
 

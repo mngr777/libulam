@@ -36,8 +36,8 @@ public:
     void resolve(Ref<Program> program);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
-    bool resolve(Ref<AliasType> alias, Ref<Scope> scope);
-    bool resolve(Ref<Var> var, Ref<Scope> scope);
+    bool resolve(Ref<AliasType> alias, Scope* scope);
+    bool resolve(Ref<Var> var, Scope* scope);
     bool resolve(Ref<AliasType> alias);
     bool resolve(Ref<Var> var);
     bool resolve(Ref<Prop> prop);
@@ -46,37 +46,33 @@ public:
     bool resolve(Ref<Fun> fun);
 
     Ref<Class> resolve_class_name(
-        Ref<ast::TypeName> type_name,
-        Ref<Scope> scope,
-        bool resolve_class = false);
+        Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class = false);
 
     Ref<Type> resolve_full_type_name(
         Ref<ast::FullTypeName> full_type_name,
-        Ref<Scope> scope,
+        Scope* scope,
         bool resolve_class = false);
 
     Ref<Type> resolve_type_name(
-        Ref<ast::TypeName> type_name,
-        Ref<Scope> scope,
-        bool resolve_class = false);
+        Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class = false);
 
-    Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Ref<Scope> scope);
+    Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope);
 
 private:
-    Ptr<PersScopeView> decl_scope_view(Ref<Decl> decl);
+    PersScopeView decl_scope_view(Ref<Decl> decl);
 
     bool resolve_class_deps(Ref<Type> type);
 
     Ref<Type> resolve_var_decl_type(
         Ref<ast::TypeName> type_name,
         Ref<ast::VarDecl> node,
-        Ref<Scope> scope,
+        Scope* scope,
         bool resolve_class = false);
 
-    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Ref<Scope> scope);
+    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Scope* scope);
 
-    Ref<Type> apply_array_dims(
-        Ref<Type> type, Ref<ast::ExprList> dims, Ref<Scope> scope) {
+    Ref<Type>
+    apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Scope* scope) {
         return apply_array_dims(type, dims, Ref<ast::InitValue>{}, scope);
     }
 
@@ -84,7 +80,7 @@ private:
         Ref<Type> type,
         Ref<ast::ExprList> dims,
         Ref<ast::InitValue> init,
-        Ref<Scope> scope);
+        Scope* scope);
 
     std::optional<bool> check_state(Ref<Decl> decl);
     void update_state(Ref<Decl> decl, bool is_resolved);

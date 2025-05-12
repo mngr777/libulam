@@ -36,16 +36,8 @@ public:
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
-    virtual Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) = 0;
-    Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const;
-
-    bool has_version() const { return version() != NoScopeVersion; }
-    virtual ScopeVersion version() const { return NoScopeVersion; }
-    virtual void set_version(ScopeVersion version) { assert(false); }
-    virtual void set_version_after(ScopeVersion version) { assert(false); }
-
-    virtual Ptr<PersScopeView> view(ScopeVersion version) { assert(false); }
-    virtual Ptr<PersScopeView> view() { assert(false); }
+    virtual Scope* parent(scope_flags_t flags = scp::NoFlags) = 0;
+    const Scope* parent(scope_flags_t flags = scp::NoFlags) const;
 
     virtual scope_flags_t flags() const = 0;
 
@@ -80,10 +72,10 @@ protected:
 
 class ScopeBase : public Scope {
 public:
-    ScopeBase(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
+    ScopeBase(Scope* parent, scope_flags_t flags = scp::NoFlags):
         Scope{}, _parent{parent}, _flags{flags}, _self{} {}
 
-    Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) override;
+    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
 
     scope_flags_t flags() const override { return _flags; }
 
@@ -96,7 +88,7 @@ public:
     void set_self_cls(Ref<Class> cls) override;
 
 private:
-    Ref<Scope> _parent;
+    Scope* _parent;
     scope_flags_t _flags;
     struct {
         LValue lval;
@@ -109,7 +101,7 @@ private:
 
 class BasicScope : public ScopeBase {
 public:
-    explicit BasicScope(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
+    explicit BasicScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
         ScopeBase{parent, flags} {
         assert((flags & scp::Persistent) == 0);
     }
@@ -173,15 +165,15 @@ private:
     using Map = std::unordered_map<str_id_t, SymbolVersionList>;
 
 public:
-    explicit PersScope(Ref<Scope> parent, scope_flags_t flags = scp::NoFlags):
+    explicit PersScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
         ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)},
         _version{0} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
 
-    Ptr<PersScopeView> view(ScopeVersion version) override;
-    Ptr<PersScopeView> view() override;
+    PersScopeView view(ScopeVersion version);
+    PersScopeView view();
 
     PersScopeIterator begin();
     PersScopeIterator end();
@@ -198,7 +190,7 @@ public:
     str_id_t last_change(Version version) const;
     str_id_t last_change() const { return last_change(_version); }
 
-    ScopeVersion version() const override { return _version; }
+    ScopeVersion version() const { return _version; }
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;

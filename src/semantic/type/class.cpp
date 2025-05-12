@@ -125,7 +125,7 @@ Class::init_type_def(sema::Resolver& resolver, str_id_t name_id) {
     auto alias = sym->get<UserType>()->as_alias();
     auto scope = alias->cls()->scope();
     auto scope_view = scope->view(alias->scope_version());
-    resolver.resolve(alias, ref(scope_view));
+    resolver.resolve(alias, &scope_view);
     return alias;
 }
 
@@ -565,7 +565,7 @@ bool Class::resolve_params(sema::Resolver& resolver) {
     auto scope = param_scope();
     for (auto param : params()) {
         auto scope_view = scope->view(param->scope_version());
-        if (!resolver.resolve(param, ref(scope_view)))
+        if (!resolver.resolve(param, &scope_view))
             return false;
     }
     return true;

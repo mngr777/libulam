@@ -10,7 +10,7 @@ namespace ulam {
 
 // Scope
 
-Ref<const Scope> Scope::parent(scope_flags_t flags) const {
+const Scope* Scope::parent(scope_flags_t flags) const {
     return const_cast<Scope*>(this)->parent(flags);
 }
 
@@ -40,7 +40,7 @@ Scope::Symbol* Scope::get_local(str_id_t name_id) {
 
 // ScopeBase
 
-Ref<Scope> ScopeBase::parent(scope_flags_t flags) {
+Scope* ScopeBase::parent(scope_flags_t flags) {
     return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
                ? _parent
                : _parent->parent(flags);
@@ -82,13 +82,11 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
 
 // PersScope
 
-Ptr<PersScopeView> PersScope::view(ScopeVersion version) {
-    return make<PersScopeView>(this, version);
+PersScopeView PersScope::view(ScopeVersion version) {
+    return PersScopeView{this, version};
 }
 
-Ptr<PersScopeView> PersScope::view() {
-    return make<PersScopeView>(this, version());
-}
+PersScopeView PersScope::view() { return PersScopeView{this, version()}; }
 
 PersScopeIterator PersScope::begin() {
     return PersScopeIterator(PersScopeView{this, 0});
