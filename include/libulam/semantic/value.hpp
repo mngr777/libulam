@@ -56,11 +56,11 @@ public:
     DataView data_view();
     const DataView data_view() const;
 
-    Ref<Class> dyn_cls() const;
-    Ref<Type> dyn_obj_type() const;
+    Ref<Class> dyn_cls(bool real = false) const;
+    Ref<Type> dyn_obj_type(bool real = false) const;
 
     LValue self();
-    LValue as(Ref<Type> type);
+    LValue as(Ref<Type> type, bool self = false);
     LValue atom_of();
 
     LValue array_access(array_idx_t idx, bool is_consteval_idx);
@@ -109,11 +109,11 @@ public:
     DataView data_view();
     const DataView data_view() const;
 
-    Ref<Class> dyn_cls() const;
-    Ref<Type> dyn_obj_type() const;
+    Ref<Class> dyn_cls(bool self = false) const;
+    Ref<Type> dyn_obj_type(bool self = false) const;
 
     LValue self();
-    LValue as(Ref<Type> type);
+    LValue as(Ref<Type> type, bool self = false);
     LValue atom_of();
 
     LValue array_access(array_idx_t idx, bool is_consteval_idx);
@@ -158,11 +158,11 @@ public:
     DataView data_view();
     const DataView data_view() const;
 
-    Ref<Class> dyn_cls() const;
-    Ref<Type> dyn_obj_type() const;
+    Ref<Class> dyn_cls(bool real = false) const;
+    Ref<Type> dyn_obj_type(bool real = false) const;
 
     LValue self();
-    LValue as(Ref<Type> type);
+    LValue as(Ref<Type> type, bool self = false);
     LValue atom_of();
 
     bitsize_t position_of();

@@ -55,7 +55,7 @@ ExprRes EvalFuncall::funcall(
 
     auto fset = bfset.fset();
     auto dyn_cls =
-        bfset.has_self() ? bfset.self().type()->as_class() : fset->cls();
+        bfset.has_self() ? bfset.self().type(true)->as_class() : fset->cls();
     auto [match_res, error] =
         find_match(node, fset, dyn_cls, args.typed_value_refs());
     if (error != ExprError::Ok)
