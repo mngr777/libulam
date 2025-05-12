@@ -176,7 +176,7 @@ const BitsView DataView::bits() const {
 }
 
 void DataView::set_view_type(Ref<Type> view_type, bool self) {
-    assert(type()->is_expl_refable_as(view_type, Value{RValue{}}));
+    assert(dyn_type()->is_expl_refable_as(view_type, Value{RValue{}}));
     _view_type = view_type;
     _is_view_type_self = self;
 }
