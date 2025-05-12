@@ -6,7 +6,7 @@
 #include "./util.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
-#include <libulam/semantic/type/builtin_type_id.hpp>
+#include <libulam/semantic/type/builtin/atom.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
@@ -91,8 +91,13 @@ ExprRes EvalCast::cast_default(
     ulam::Ref<ulam::Type> to,
     ExprRes&& arg,
     bool expl) {
+    // hack for t3416
+    bool self_instanceof_to_atom = false;
+    if (!has_flag(evl::NoCodegen))
+        self_instanceof_to_atom = exp::data(arg) == "self.instanceof";
     auto res = Base::cast_default(node, to, std::move(arg), expl);
-    update_res(res, expl);
+    if (!self_instanceof_to_atom)
+        update_res(res, expl);
     return res;
 }
 
