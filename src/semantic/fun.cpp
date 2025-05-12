@@ -283,9 +283,11 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     }
 }
 
-void FunSet::merge(Ref<FunSet> other, Ref<Class> cls) {
+void FunSet::merge(Ref<FunSet> other, Ref<Class> cls, Ref<Class> from_cls) {
     assert(_map.has_value());
     for (auto fun : *other) {
+        if (from_cls && fun->cls() != from_cls)
+            continue;
         auto [it, added] = _map.value().emplace(fun->key(), fun);
         if (added) {
             _funs.push_back(fun);

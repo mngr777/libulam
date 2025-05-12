@@ -153,7 +153,7 @@ public:
 
     void init_map(Diag& diag, UniqStrPool& str_pool);
 
-    void merge(Ref<FunSet> other, Ref<Class> cls);
+    void merge(Ref<FunSet> other, Ref<Class> cls, Ref<Class> from_cls = {});
 
 private:
     using ParamTypeMap = std::unordered_map<std::string, Ref<Fun>>;
