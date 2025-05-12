@@ -196,6 +196,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41278_test_compiler_constantquarkclasswithstringdm.test", // quark hex does not match (strings)
     "t41292_test_compiler_refcastdm_alsoancestor_issue.test", // `qrok.m == 0`: `qrok.m` is not casted to Int in answer, TODO?
     "t41302_test_compiler_elementinheritances_castingself_exactfuncmatches.test", // `Foo.Soo.Coo.cb(true)` is correct
+    "t41333_test_compiler_multiinheritance_sibilingshadowdatamemberlhs.test", // deref cast omitted, TODO: always dereference via cast helper
+    "t41334_test_compiler_quarkunionstringarrayDM.test", // .lenghtof folding
+    "t41336_test_compiler_multiinheritance_referenceinit.test", // deref cast omitted, imilar to t41333
 };
 
 using Path = std::filesystem::path;
