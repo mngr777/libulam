@@ -22,10 +22,6 @@ Ref<Scope> PersScopeView::parent(scope_flags_t flags) {
     return scope()->parent(flags);
 }
 
-Ref<const Scope> PersScopeView::parent(scope_flags_t flags) const {
-    return scope()->parent(flags);
-}
-
 Ref<Class> PersScopeView::self_cls() { return scope()->self_cls(); }
 
 scope_flags_t PersScopeView::flags() const { return scope()->flags(); }

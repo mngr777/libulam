@@ -18,7 +18,6 @@ public:
     std::pair<str_id_t, Symbol*> advance();
 
     Ref<Scope> parent(scope_flags_t flags = scp::NoFlags) override;
-    Ref<const Scope> parent(scope_flags_t flags = scp::NoFlags) const override;
 
     Ref<Class> self_cls() override;
 
