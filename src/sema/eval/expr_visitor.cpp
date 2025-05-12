@@ -958,7 +958,7 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
     if (!sup)
         return {ExprError::NoSuper};
     auto self = scope()->self();
-    return {sup, Value{self.as(sup)}};
+    return {sup, Value{self.as(sup, true)}};
 }
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
@@ -1119,7 +1119,7 @@ ExprRes EvalExprVisitor::as_base(
             base->is_super() ? ExprError::NoSuper : ExprError::BaseNotFound;
         return {error};
     }
-    return {cls, Value{obj.move_value().as(cls)}};
+    return {cls, Value{obj.move_value().as(cls, true)}};
 }
 
 ExprRes

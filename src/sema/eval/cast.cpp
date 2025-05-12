@@ -149,7 +149,6 @@ ExprRes EvalCast::cast_atom(
         // class
         if (arg.value().empty())
             return cast_atom_to_nonelement_empty(node, cls, std::move(arg));
-        assert(false);
     }
     return cast_default(node, to, std::move(arg), expl);
 }

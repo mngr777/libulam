@@ -73,16 +73,15 @@ const DataView LValue::data_view() const {
     return const_cast<LValue*>(this)->data_view();
 }
 
-Ref<Class> LValue::dyn_cls() const {
-    auto data = data_view();
-    return data.is_class() ? data.type()->as_class()
-                           : Ref<Class>{};
+Ref<Class> LValue::dyn_cls(bool real) const {
+    auto type = dyn_obj_type(real);
+    return type->is_class() ? type->as_class() : Ref<Class>{};
 }
 
-Ref<Type> LValue::dyn_obj_type() const {
-    auto data = data_view();
-    assert(data.is_object());
-    return data.type();
+Ref<Type> LValue::dyn_obj_type(bool real) const {
+    auto type = data_view().type(real);
+    assert(type->is_object());
+    return type;
 }
 
 LValue LValue::self() {
@@ -98,10 +97,10 @@ LValue LValue::self() {
     return lval;
 }
 
-LValue LValue::as(Ref<Type> type) {
+LValue LValue::as(Ref<Type> type, bool self) {
     auto data = data_view();
     if (data)
-        data = data.as(type);
+        data = data.as(type, self);
     return derived(data);
 }
 
@@ -181,16 +180,15 @@ const DataView RValue::data_view() const {
     return const_cast<RValue*>(this)->data_view();
 }
 
-Ref<Class> RValue::dyn_cls() const {
-    auto data = data_view();
-    return data.is_class() ? data.type()->as_class()
-                           : Ref<Class>{};
+Ref<Class> RValue::dyn_cls(bool real) const {
+    auto type = dyn_obj_type(real);
+    return type->is_class() ? type->as_class() : Ref<Class>{};
 }
 
-Ref<Type> RValue::dyn_obj_type() const {
-    auto data = data_view();
-    assert(data.is_object());
-    return data.type();
+Ref<Type> RValue::dyn_obj_type(bool real) const {
+    auto type = data_view().type(real);
+    assert(type->is_object());
+    return type;
 }
 
 LValue RValue::self() {
@@ -205,9 +203,9 @@ LValue RValue::self() {
     return lval;
 }
 
-LValue RValue::as(Ref<Type> type) {
+LValue RValue::as(Ref<Type> type, bool self) {
     LValue lval{accept(
-        [&](DataPtr& data) { return data->view(); },
+        [&](DataPtr& data) { return data->view().as(type, self); },
         [&](auto& other) -> DataView { assert(false); })};
     lval.set_scope_lvl(AutoScopeLvl);
     return lval;
@@ -279,20 +277,20 @@ const DataView Value::data_view() const {
     return accept([&](const auto& val) { return val.data_view(); });
 }
 
-Ref<Class> Value::dyn_cls() const {
-    return accept([&](const auto& val) { return val.dyn_cls(); });
+Ref<Class> Value::dyn_cls(bool real) const {
+    return accept([&](const auto& val) { return val.dyn_cls(real); });
 }
 
-Ref<Type> Value::dyn_obj_type() const {
-    return accept([&](const auto& val) { return val.dyn_obj_type(); });
+Ref<Type> Value::dyn_obj_type(bool real) const {
+    return accept([&](const auto& val) { return val.dyn_obj_type(real); });
 }
 
 LValue Value::self() {
     return accept([&](auto& val) { return val.self(); });
 }
 
-LValue Value::as(Ref<Type> type) {
-    return accept([&](auto& val) { return val.as(type); });
+LValue Value::as(Ref<Type> type, bool self) {
+    return accept([&](auto& val) { return val.as(type, self); });
 }
 
 LValue Value::atom_of() {

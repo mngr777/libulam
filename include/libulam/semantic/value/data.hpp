@@ -40,11 +40,6 @@ public:
     DataView atom_of();
     const DataView atom_of() const;
 
-    bool is_array() const;
-    bool is_object() const;
-    bool is_atom() const;
-    bool is_class() const;
-
     Ref<Type> type() const;
 
     Bits& bits() { return _bits; }
@@ -74,8 +69,8 @@ public:
     DataPtr storage() { return _storage; }
     ConstDataPtr storage() const { return _storage; }
 
-    DataView as(Ref<Type> view_type);
-    const DataView as(Ref<Type> view_type) const;
+    DataView as(Ref<Type> view_type, bool self = false);
+    const DataView as(Ref<Type> view_type, bool self = false) const;
 
     DataView array_item(array_idx_t idx);
     const DataView array_item(array_idx_t idx) const;
@@ -88,18 +83,13 @@ public:
 
     bitsize_t position_of() const;
 
-    bool is_array() const;
-    bool is_object() const;
-    bool is_atom() const;
-    bool is_class() const;
-
-    Ref<Type> type() const;
+    Ref<Type> type(bool self = false) const;
 
     BitsView bits();
     const BitsView bits() const;
 
 private:
-    void set_view_type(Ref<Type> view_type);
+    void set_view_type(Ref<Type> view_type, bool self);
     Ref<Type> dyn_type() const;
 
     DataPtr _storage{};
@@ -110,6 +100,7 @@ private:
         bitsize_t off{NoBitsize};
         Ref<Type> type{};
     } _atom;
+    bool _is_view_type_self{false};
 };
 
 } // namespace ulam

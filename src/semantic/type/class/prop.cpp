@@ -22,7 +22,7 @@ bitsize_t Prop::data_off_in(Ref<Class> derived) const {
 }
 
 bitsize_t Prop::data_off_in(DataPtr obj) const {
-    assert(obj->is_class());
+    assert(obj->type()->is_class());
     auto obj_cls = obj->type()->as_class();
     assert(cls()->is_same_or_base_of(obj_cls));
     return data_off_in(obj_cls);

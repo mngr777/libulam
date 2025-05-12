@@ -480,7 +480,7 @@ std::pair<Ptr<ast::VarDef>, Ref<Var>> EvalVisitor::define_as_cond_var(
     LValue lval;
     if (!res.value().empty()) {
         assert(res.value().is_lvalue());
-        lval = res.move_value().lvalue();
+        lval = res.move_value().lvalue().as(type);
     } else {
         if (!has_flag(evl::NoExec)) {
             diag().error(node, "empty value");

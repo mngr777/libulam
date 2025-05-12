@@ -12,10 +12,10 @@ namespace ulam {
 // Data
 
 Data::Data(Ref<Type> type, Bits&& bits): _type{}, _bits{std::move(bits)} {
+    assert(type->is_array() || type->is_object());
     if (type->is_atom())
         type = type->builtins().atom_type();
     _type = type;
-    assert(is_array() || is_object());
 }
 
 Data::Data(Ref<Type> type): Data{type, Bits{type->bitsize()}} {}
@@ -48,16 +48,11 @@ const DataView Data::prop(Ref<Prop> prop_) const {
     return const_cast<Data*>(this)->prop(prop_);
 }
 
-DataView Data::atom_of() { return is_atom() ? view() : DataView{}; }
+DataView Data::atom_of() { return type()->is_atom() ? view() : DataView{}; }
 
 const DataView Data::atom_of() const {
     return const_cast<Data*>(this)->atom_of();
 }
-
-bool Data::is_array() const { return type()->is_array(); }
-bool Data::is_object() const { return type()->is_object(); }
-bool Data::is_atom() const { return type()->is_atom(); }
-Bool Data::is_class() const { return type()->is_class(); }
 
 Ref<Type> Data::type() const {
     return _type->is(AtomId)
@@ -86,23 +81,37 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    type()->store(_storage->bits(), _off, std::move(rval));
+    if (_view_type && !_view_type->is_same(_type)) {
+        assert(_view_type->is_expl_castable_to(_type));
+        auto val = _view_type->cast_to(_type, Value{std::move(rval)});
+        _type->store(_storage->bits(), _off, val.move_rvalue());
+    }
+    _type->store(_storage->bits(), _off, std::move(rval));
 }
 
-RValue DataView::load() const { return type()->load(_storage->bits(), _off); }
+RValue DataView::load() const {
+    auto rval = _type->load(_storage->bits(), _off);
+    auto type = dyn_type();
+    if (_view_type && !_view_type->is_same(type)) {
+        assert(type->is_expl_castable_to(_view_type));
+        auto val = type->cast_to(_view_type, Value{std::move(rval)});
+        return val.move_rvalue();
+    }
+    return rval;
+}
 
-DataView DataView::as(Ref<Type> view_type) {
+DataView DataView::as(Ref<Type> view_type, bool self) {
     DataView view{*this};
-    view.set_view_type(view_type);
+    view.set_view_type(view_type, self);
     return view;
 }
 
-const DataView DataView::as(Ref<Type> type) const {
-    return const_cast<DataView*>(this)->as(type);
+const DataView DataView::as(Ref<Type> type, bool self) const {
+    return const_cast<DataView*>(this)->as(type, self);
 }
 
 DataView DataView::array_item(array_idx_t idx) {
-    assert(is_array());
+    assert(type()->is_array());
     auto type_ = type();
     auto array_type = type_->as_array();
     auto item_type = type_->as_array()->item_type();
@@ -115,10 +124,20 @@ const DataView DataView::array_item(array_idx_t idx) const {
 }
 
 DataView DataView::prop(Ref<Prop> prop_) {
+    // NOTE: it is possible use a property of unrelated (element) class by
+    // rewriting `atomof` with an element or raw Atom (t3909)
     auto type_ = dyn_type();
-    assert(type_->is_class());
-    auto cls = type_->as_class();
-    bitsize_t off = _off + prop_->data_off_in(cls);
+    bitsize_t off = _off + prop_->data_off();
+    assert(
+        type_->is_class() || (type_->is(AtomId) && prop_->cls()->is_element()));
+    if (type_->is_class()) {
+        auto cls = type_->as_class();
+        assert(
+            prop_->cls()->is_same_or_base_of(cls) ||
+            (cls->is_element() && prop_->cls()->is_element()));
+        if (prop_->cls()->is_base_of(cls))
+            off = _off + prop_->data_off_in(cls);
+    }
     auto type = prop_->type();
     return {_storage, type, off, _atom.off, _atom.type};
 }
@@ -143,13 +162,9 @@ bitsize_t DataView::position_of() const {
     return _off;
 }
 
-bool DataView::is_array() const { return type()->is_array(); }
-bool DataView::is_object() const { return type()->is_object(); }
-bool DataView::is_atom() const { return type()->is_atom(); }
-Bool DataView::is_class() const { return type()->is_class(); }
-
-Ref<Type> DataView::type() const {
-    return _view_type ? _view_type : dyn_type();
+Ref<Type> DataView::type(bool self) const {
+    return (_view_type && (!self || _is_view_type_self)) ? _view_type
+                                                         : dyn_type();
 }
 
 BitsView DataView::bits() {
@@ -160,9 +175,10 @@ const BitsView DataView::bits() const {
     return _storage->bits().view(_off, _type->bitsize());
 }
 
-void DataView::set_view_type(Ref<Type> view_type) {
+void DataView::set_view_type(Ref<Type> view_type, bool self) {
     assert(type()->is_expl_refable_as(view_type, Value{RValue{}}));
     _view_type = view_type;
+    _is_view_type_self = self;
 }
 
 Ref<Type> DataView::dyn_type() const {

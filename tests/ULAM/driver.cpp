@@ -95,7 +95,7 @@ static const std::set<std::string> Skip = {
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
-    "t41143_test_compiler_elementandquark_castatomtoquark_issue.test", // tmp: data view type is needed after all
+    // "t41143_test_compiler_elementandquark_castatomtoquark_issue.test", // tmp: data view type is needed after all
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
