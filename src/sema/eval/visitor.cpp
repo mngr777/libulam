@@ -22,9 +22,9 @@
 namespace ulam::sema {
 
 EvalVisitor::EvalVisitor(Ref<Program> program, eval_flags_t flags):
-    EvalBase{program, flags} {
+    EvalBase{program, flags}, _program_scope{nullptr, scp::Program} {
     // init global scope
-    _scope_stack.push(scp::Program);
+    _scope_stack.push(ScopeStack::Variant{&_program_scope});
     for (auto& mod : program->modules())
         mod->export_symbols(scope());
 }
@@ -66,7 +66,7 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
 
 void EvalVisitor::visit(Ref<ast::Block> node) {
     debug() << __FUNCTION__ << " Block\n";
-    auto scope_raii{_scope_stack.raii(scp::NoFlags)};
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
     for (unsigned n = 0; n < node->child_num(); ++n)
         node->get(n)->accept(*this);
 }
@@ -108,7 +108,8 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
     Ptr<ast::VarDef> def{};
     if (!res.value().empty()) {
         if (res.type()->deref()->is_impl_refable_as(type, res.value())) {
-            auto scope_raii{_scope_stack.raii(scp::NoFlags)};
+            auto scope_raii =
+                _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
             auto [var_def, var] =
                 define_as_cond_var(node, std::move(res), type, scope());
             node->if_branch()->accept(*this);
@@ -122,7 +123,9 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
 void EvalVisitor::visit(Ref<ast::For> node) {
     debug() << __FUNCTION__ << " For\n";
 
-    auto scope_raii{_scope_stack.raii(scp::Break | scp::Continue)};
+    auto scope_raii =
+        _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
+
     if (node->has_init())
         node->init()->accept(*this);
     unsigned loop_count = 0;
@@ -183,7 +186,9 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     debug() << __FUNCTION__ << " While\n";
     assert(node->has_cond());
 
-    auto scope_raii{_scope_stack.raii(scp::Break | scp::Continue)};
+    auto scope_raii =
+        _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
+
     unsigned loop_count = 0;
     while (eval_cond(node->cond())) {
         if (loop_count++ == 100) // TODO: max loops option
@@ -206,7 +211,7 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
     debug() << __FUNCTION__ << "Which\n";
     assert(node->has_expr());
 
-    auto scope_raii{_scope_stack.raii(scp::Break)};
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::Break);
     auto var = make_which_tmp_var(node);
     try {
         bool matched = false;
@@ -278,7 +283,7 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
     // push fun scope
     scope_lvl_t scope_lvl = _scope_stack.size();
     auto scope_raii =
-        _scope_stack.raii(make<BasicScope>(fun->cls()->scope(), scp::Fun));
+        _scope_stack.raii<BasicScope>(fun->cls()->scope(), scp::Fun);
 
     // bind `self`, set `Self`
     scope()->set_self(self);

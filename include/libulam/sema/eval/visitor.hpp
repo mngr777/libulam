@@ -99,8 +99,8 @@ protected:
         Ref<ast::Expr> case_expr,
         ExprRes&& expr_res,
         ExprRes&& case_res);
-    virtual std::optional<bool> which_match(
-        Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> var);
+    virtual std::optional<bool>
+    which_match(Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> var);
 
     virtual ExprRes eval_as_cond_ident(Ref<ast::IfAs> node);
     virtual Ref<Type> resolve_as_cond_type(Ref<ast::IfAs> node);
@@ -115,12 +115,15 @@ protected:
     bool eval_cond(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
     virtual bool _eval_cond(Ref<ast::Expr> expr, eval_flags_t flags);
 
-    ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags = evl::NoFlags);
-    virtual ExprRes _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
+    ExprRes to_boolean(
+        Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes
+    _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
 
     Ref<Scope> scope() { return _scope_stack.top(); }
 
     EvalStack _stack;
+    BasicScope _program_scope;
     ScopeStack _scope_stack;
 };
 

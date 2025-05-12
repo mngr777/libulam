@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/flags.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -7,6 +8,7 @@
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 
@@ -37,7 +39,8 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
     assert(node->module());
     auto mod = node->module();
     _module_def = node;
-    enter_module_scope(mod);
+    auto scope_raii =
+        _scope_stack.raii<PersScopeView>(mod->scope(), ScopeVersion{0});
     if (do_visit(node)) {
         _pass = Pass::Module;
         traverse(node);
@@ -49,7 +52,6 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
         }
     }
     assert(scope()->is(scp::Module));
-    exit_scope();
     _module_def = {};
 }
 
@@ -74,22 +76,18 @@ void RecVisitor::visit(Ref<ast::ClassDef> node) {
 void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
     assert(pass() == Pass::Classes || pass() == Pass::FunBodies);
     assert(_class_def);
-    // enter scope
-    if (_class_def->cls()) {
-        enter_class_scope(_class_def->cls());
-    } else {
-        assert(_class_def->cls_tpl());
-        enter_class_tpl_scope(_class_def->cls_tpl());
-    }
+    assert((bool)_class_def->cls() != (bool)_class_def->cls_tpl());
+
+    auto scope_version = (pass() == Pass::Classes) ? 0 : NoScopeVersion;
+    auto scope_raii = _scope_stack.raii<PersScopeView>(
+        _class_def->cls_or_tpl()->scope(), scope_version);
+
     // traverse
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto& child_v = node->get(n);
         if (pass() == Pass::Classes || child_v.is<Ptr<ast::FunDef>>())
             child_v.accept([&](auto&& ptr) { ptr->accept(*this); });
     }
-    // exit scope
-    assert(scope()->is(scp::Class) || scope()->is(scp::ClassTpl));
-    exit_scope();
 }
 
 void RecVisitor::visit(Ref<ast::FunDef> node) {
@@ -106,32 +104,30 @@ void RecVisitor::visit(Ref<ast::FunDef> node) {
 void RecVisitor::visit(Ref<ast::FunDefBody> node) {
     assert(pass() == Pass::FunBodies);
     assert(_fun_def);
-    enter_scope(scp::Fun);
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::Fun);
     if (do_visit(node))
         traverse(node);
     assert(scope()->is(scp::Fun));
-    exit_scope();
 }
 
 void RecVisitor::visit(Ref<ast::Block> node) {
-    enter_scope();
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope());
     if (do_visit(node))
         traverse(node);
-    exit_scope();
 }
 
 void RecVisitor::visit(Ref<ast::For> node) {
-    enter_scope(scp::Break | scp::Continue);
+    auto scope_raii =
+        _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
     if (do_visit(node))
         traverse(node);
-    exit_scope();
 }
 
 void RecVisitor::visit(Ref<ast::While> node) {
-    enter_scope(scp::Break | scp::Continue);
+    auto scope_raii =
+        _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
     if (do_visit(node))
         traverse(node);
-    exit_scope();
 }
 
 bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
@@ -174,42 +170,16 @@ bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
 }
 
 bool RecVisitor::sync_scope(Ref<ast::DefNode> node) {
-    auto scope = _scopes.top();
-    assert(scope->has_version() == (node->scope_version() != NoScopeVersion));
-    if (scope->has_version()) {
-        scope->set_version(node->scope_version());
-        return true;
-    }
-    return false;
+    auto scope_v = _scope_stack.top_v();
+    return scope_v.accept(
+        [&](PersScopeView* scope_view) {
+            scope_view->set_version(node->scope_version());
+            return true;
+        },
+        [&](auto) { return false; });
 }
 
-void RecVisitor::enter_module_scope(Ref<Module> mod) {
-    enter_scope(mod->scope()->view(0));
-}
-
-void RecVisitor::enter_class_scope(Ref<Class> cls) {
-    auto scope = cls->scope()->view();
-    if (pass() == Pass::Classes)
-        scope->reset();
-    enter_scope(std::move(scope));
-}
-
-void RecVisitor::enter_class_tpl_scope(Ref<ClassTpl> tpl) {
-    auto scope = tpl->scope()->view();
-    if (pass() == Pass::Classes)
-        scope->reset();
-    enter_scope(std::move(scope));
-}
-
-void RecVisitor::enter_scope(scope_flags_t flags) { _scopes.push(flags); }
-
-void RecVisitor::enter_scope(Ptr<Scope>&& scope) {
-    _scopes.push(std::move(scope));
-}
-
-void RecVisitor::exit_scope() { _scopes.pop(); }
-
-Scope* RecVisitor::scope() { return _scopes.top(); }
+Scope* RecVisitor::scope() { return _scope_stack.top(); }
 
 Diag& RecVisitor::diag() { return _diag; }
 

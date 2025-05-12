@@ -17,6 +17,8 @@ static constexpr scope_flags_t Fun = 1 << 6;       // 64
 static constexpr scope_flags_t Break = 1 << 7;     // 128
 static constexpr scope_flags_t Continue = 1 << 8;  // 256
 static constexpr scope_flags_t Last = 1 << 9;
+// combined
+static constexpr scope_flags_t BreakAndContinue = Break | Continue;
 } // namespace scp
 
 } // namespace ulam

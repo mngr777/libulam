@@ -9,7 +9,6 @@ namespace ulam::sema {
 
 class Init : public RecVisitor {
     using RecVisitor::do_visit;
-    using RecVisitor::enter_scope;
     using RecVisitor::visit;
 
 public:

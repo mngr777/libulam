@@ -51,18 +51,9 @@ protected:
 
     bool sync_scope(Ref<ast::DefNode> node);
 
-    // Handling persistent scopes
-    void enter_module_scope(Ref<Module> module);
-    void enter_class_scope(Ref<Class> cls);
-    void enter_class_tpl_scope(Ref<ClassTpl> tpl);
-
-    void enter_scope(Ptr<Scope>&& scope);
-    void enter_scope(scope_flags_t flags = scp::NoFlags);
-    void exit_scope();
-
     Diag& diag();
-    ScopeStack& scopes() { return _scopes; }
-    Ref<Scope> scope();
+    ScopeStack& scope_stack() { return _scope_stack; }
+    Scope* scope();
 
     Pass pass() { return _pass; }
 
@@ -75,7 +66,6 @@ protected:
         assert(_program);
         return _program;
     }
-
 
     Ref<Module> module() {
         assert(module_def());
@@ -104,7 +94,7 @@ private:
     Ref<ast::ClassDef> _class_def{};
     Ref<ast::FunDef> _fun_def{};
 
-    ScopeStack _scopes;
+    ScopeStack _scope_stack;
 };
 
 } // namespace ulam::sema

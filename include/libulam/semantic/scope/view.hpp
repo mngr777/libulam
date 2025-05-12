@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/version.hpp>
 #include <libulam/str_pool.hpp>
 #include <utility>
 
@@ -10,7 +11,8 @@ class PersScopeIterator;
 
 class PersScopeView : public Scope {
 public:
-    PersScopeView(Ref<PersScope> scope, ScopeVersion version);
+    explicit PersScopeView(
+        Ref<PersScope> scope, ScopeVersion version = NoScopeVersion);
     PersScopeView(): Scope{}, _scope{}, _version{NoScopeVersion} {}
 
     void reset() { set_version(0); }
