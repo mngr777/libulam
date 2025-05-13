@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/context.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/str_pool.hpp>
 #include <utility>
@@ -20,7 +21,7 @@ public:
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
-    Scope* parent() override;
+    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
 
     operator bool() const { return _scope; }
 

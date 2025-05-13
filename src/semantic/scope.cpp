@@ -11,8 +11,8 @@ namespace ulam {
 
 // Scope
 
-const Scope* Scope::parent() const {
-    return const_cast<Scope*>(this)->parent();
+const Scope* Scope::parent(scope_flags_t flags) const {
+    return const_cast<Scope*>(this)->parent(flags);
 }
 
 bool Scope::is(scope_flags_t flags_) const { return flags() & flags_; }
@@ -43,7 +43,20 @@ const ScopeContextProxy Scope::ctx() const {
     return const_cast<Scope*>(this)->ctx();
 }
 
+// ScopeBase
+
+Scope* ScopeBase::parent(scope_flags_t flags) {
+    return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
+               ? _parent
+               : nullptr;
+}
+
 // BasicScope
+
+BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
+    ScopeBase{parent, flags} {
+    assert(!is(scp::Persistent));
+}
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
     return current ? _symbols.get(name_id) : do_get(name_id, ctx().eff_cls());

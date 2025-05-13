@@ -20,7 +20,9 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     return {name_id, get(name_id)};
 }
 
-Scope* PersScopeView::parent() { return scope()->parent(); }
+Scope* PersScopeView::parent(scope_flags_t flags) {
+    return scope()->parent(flags);
+}
 
 scope_flags_t PersScopeView::flags() const { return scope()->flags(); }
 
