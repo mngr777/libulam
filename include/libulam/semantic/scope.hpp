@@ -3,6 +3,7 @@
 #include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
+#include <libulam/semantic/scope/context.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/symbol.hpp>
@@ -36,18 +37,10 @@ public:
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
-    virtual Scope* parent(scope_flags_t flags = scp::NoFlags) = 0;
-    const Scope* parent(scope_flags_t flags = scp::NoFlags) const;
+    virtual Scope* parent() = 0;
+    const Scope* parent() const;
 
     virtual scope_flags_t flags() const = 0;
-
-    virtual bool has_self() const { assert(false); }
-    virtual LValue self() { assert(false); }
-    virtual void set_self(LValue self, Ref<Class> cls = {}) { assert(false); }
-    virtual Ref<Class> eff_self_cls() { assert(false); }
-
-    virtual Ref<Class> self_cls() { assert(false); }
-    virtual void set_self_cls(Ref<Class> cls) { assert(false); }
 
     bool is(scope_flags_t flags_) const;
     bool in(scope_flags_t flags_) const;
@@ -66,50 +59,34 @@ public:
         return do_set(name_id, Symbol{value});
     }
 
+    virtual ScopeContextProxy ctx() = 0;
+    const ScopeContextProxy ctx() const;
+
 protected:
     virtual Symbol* do_set(str_id_t name_id, Symbol&& symbol) = 0;
 };
 
-class ScopeBase : public Scope {
-public:
-    ScopeBase(Scope* parent, scope_flags_t flags = scp::NoFlags):
-        Scope{}, _parent{parent}, _flags{flags}, _self{} {}
-
-    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
-
-    scope_flags_t flags() const override { return _flags; }
-
-    bool has_self() const override;
-    LValue self() override;
-    void set_self(LValue self, Ref<Class> cls = {}) override;
-    Ref<Class> eff_self_cls() override;
-
-    Ref<Class> self_cls() override;
-    void set_self_cls(Ref<Class> cls) override;
-
-private:
-    Scope* _parent;
-    scope_flags_t _flags;
-    struct {
-        LValue lval;
-        Ref<Class> cls{}; // effective self class for `if (self as Class) {}`
-    } _self;
-    Ref<Class> _self_cls{}; // Self
-};
-
 // Transient
 
-class BasicScope : public ScopeBase {
+class BasicScope : public Scope {
 public:
     explicit BasicScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
-        ScopeBase{parent, flags} {
+        _parent{parent}, _flags{flags} {
         assert((flags & scp::Persistent) == 0);
     }
 
     BasicScope(BasicScope&&) = default;
     BasicScope& operator=(BasicScope&&) = default;
 
+    Scope* parent() override { return _parent; }
+    scope_flags_t flags() const override { return _flags; }
+
+    Ref<Class> self_cls();
+    void set_self_cls(Ref<Class> cls);
+
     Symbol* get(str_id_t name_id, bool current = false) override;
+
+    ScopeContextProxy ctx() override;
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override {
@@ -117,6 +94,9 @@ protected:
     }
 
 private:
+    Scope* _parent;
+    scope_flags_t _flags;
+    BasicScopeContext _ctx;
     SymbolTable _symbols;
 };
 
@@ -147,7 +127,7 @@ private:
 class PersScopeIterator;
 class PersScopeView;
 
-class PersScope : public ScopeBase {
+class PersScope : public Scope {
     friend PersScopeView;
 
 public:
@@ -157,6 +137,7 @@ public:
 private:
     struct SymbolVersion {
         SymbolVersion(Version version, Symbol&& symbol):
+
             version{version}, symbol{std::move(symbol)} {}
         std::uint32_t version;
         Symbol symbol;
@@ -165,12 +146,21 @@ private:
     using Map = std::unordered_map<str_id_t, SymbolVersionList>;
 
 public:
-    explicit PersScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
-        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)},
+    explicit PersScope(
+        Ref<Class> self_cls, Scope* parent, scope_flags_t flags = scp::NoFlags):
+        _self_cls{self_cls},
+        _parent{parent},
+        _flags{(scope_flags_t)(flags | scp::Persistent)},
         _version{0} {}
+
+    PersScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
+        PersScope({}, parent, flags) {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
+
+    Scope* parent() override { return _parent; };
+    scope_flags_t flags() const override { return _flags; }
 
     PersScopeView view(ScopeVersion version);
     PersScopeView view();
@@ -182,6 +172,8 @@ public:
     bool has(str_id_t name_id, Version version, bool current = false) const;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
+
+    ScopeContextProxy ctx() override;
 
     Symbol* get(str_id_t name_id, Version version, bool current = false);
     const Symbol*
@@ -196,7 +188,11 @@ protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
 private:
+    Ref<Class> _self_cls;
+    Scope* _parent;
+    scope_flags_t _flags;
     Version _version;
+    PersScopeContext _ctx;
     std::unordered_map<str_id_t, SymbolVersionList> _symbols;
     std::vector<str_id_t> _changes;
 };
