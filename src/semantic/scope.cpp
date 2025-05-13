@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/scope/view.hpp>
@@ -45,13 +46,27 @@ const ScopeContextProxy Scope::ctx() const {
 // BasicScope
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
-    auto sym = _symbols.get(name_id);
-    if (sym || current || !parent())
-        return sym;
-    return parent()->get(name_id);
+    return current ? _symbols.get(name_id) : do_get(name_id, ctx().eff_cls());
 }
 
 ScopeContextProxy BasicScope::ctx() { return {_ctx, parent()}; }
+
+Scope::Symbol* BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls) {
+    Scope* next = this;
+    while (next) {
+        auto sym = next->get(name_id, true);
+        if (sym)
+            return sym;
+        next = next->parent();
+        if (next && next->is(scp::Class) && next->ctx().self_cls() != eff_cls)
+            next = eff_cls->scope();
+    }
+    return {};
+}
+
+Scope::Symbol* BasicScope::do_set(str_id_t name_id, Symbol&& symbol) {
+    return _symbols.set(name_id, std::move(symbol));
+}
 
 // PersScope
 
