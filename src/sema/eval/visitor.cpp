@@ -286,8 +286,8 @@ ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
         _scope_stack.raii<BasicScope>(fun->cls()->scope(), scp::Fun);
 
     // bind `self`, set `Self`
-    scope()->set_self(self);
-    scope()->set_self_cls(fun->cls());
+    scope()->ctx().set_self(self);
+    scope()->ctx().set_self_cls(fun->cls());
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(scope_lvl);
 
@@ -494,7 +494,7 @@ std::pair<Ptr<ast::VarDef>, Ref<Var>> EvalVisitor::define_as_cond_var(
     }
 
     if (node->ident()->is_self()) {
-        scope->set_self(lval, type->as_class());
+        scope->ctx().set_self(lval, type->as_class());
     } else {
         def = make<ast::VarDef>(node->ident()->name());
         auto var = make<Var>(

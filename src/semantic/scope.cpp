@@ -10,8 +10,8 @@ namespace ulam {
 
 // Scope
 
-const Scope* Scope::parent(scope_flags_t flags) const {
-    return const_cast<Scope*>(this)->parent(flags);
+const Scope* Scope::parent() const {
+    return const_cast<Scope*>(this)->parent();
 }
 
 bool Scope::is(scope_flags_t flags_) const { return flags() & flags_; }
@@ -38,47 +38,20 @@ Scope::Symbol* Scope::get_local(str_id_t name_id) {
     return (sym || !parent()) ? sym : parent()->get_local(name_id);
 }
 
-// ScopeBase
-
-Scope* ScopeBase::parent(scope_flags_t flags) {
-    return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
-               ? _parent
-               : _parent->parent(flags);
-}
-
-bool ScopeBase::has_self() const { return !_self.lval.empty(); }
-
-// TODO: PersScope doesn't need `self'
-LValue ScopeBase::self() {
-    return (has_self() || !parent()) ? _self.lval : parent()->self();
-}
-
-Ref<Class> ScopeBase::eff_self_cls() {
-    auto eff_cls =
-        (has_self() || !parent()) ? _self.cls : parent()->eff_self_cls();
-    return eff_cls ? eff_cls : self_cls();
-}
-
-void ScopeBase::set_self(LValue self, Ref<Class> cls) {
-    assert(_self.lval.empty());
-    _self = {self, cls};
-}
-
-Ref<Class> ScopeBase::self_cls() {
-    return (_self_cls || !parent()) ? _self_cls : parent()->self_cls();
-}
-
-void ScopeBase::set_self_cls(Ref<Class> cls) {
-    assert(!_self_cls);
-    _self_cls = cls;
+const ScopeContextProxy Scope::ctx() const {
+    return const_cast<Scope*>(this)->ctx();
 }
 
 // BasicScope
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
     auto sym = _symbols.get(name_id);
-    return (sym || current || !parent()) ? sym : parent()->get(name_id);
+    if (sym || current || !parent())
+        return sym;
+    return parent()->get(name_id);
 }
+
+ScopeContextProxy BasicScope::ctx() { return {_ctx, parent()}; }
 
 // PersScope
 
@@ -97,6 +70,8 @@ PersScopeIterator PersScope::end() { return PersScopeIterator{}; }
 Scope::Symbol* PersScope::get(str_id_t name_id, bool current) {
     return get(name_id, _version, current);
 }
+
+ScopeContextProxy PersScope::ctx() { return ScopeContextProxy{_ctx, parent()}; }
 
 Scope::Symbol* PersScope::get(str_id_t name_id, Version version, bool current) {
     Scope::Symbol* sym{};

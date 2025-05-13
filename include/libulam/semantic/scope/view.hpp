@@ -1,5 +1,6 @@
 #pragma once
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/context.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/str_pool.hpp>
 #include <utility>
@@ -19,15 +20,15 @@ public:
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
-    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
-
-    Ref<Class> self_cls() override;
+    Scope* parent() override;
 
     operator bool() const { return _scope; }
 
     scope_flags_t flags() const override;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
+
+    ScopeContextProxy ctx() override;
 
     str_id_t last_change() const;
 
