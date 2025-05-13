@@ -89,9 +89,9 @@ public:
     ScopeContextProxy ctx() override;
 
 protected:
-    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override {
-        return _symbols.set(name_id, std::move(symbol));
-    }
+    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls);
+
+    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
 private:
     Scope* _parent;
