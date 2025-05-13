@@ -49,7 +49,7 @@ public:
     virtual Symbol* get(str_id_t name_id, bool current = false) = 0;
     const Symbol* get(str_id_t name_id, bool current = false) const;
 
-    Symbol* get_local(str_id_t name_id);
+    virtual Symbol* get_local(str_id_t name_id) = 0;
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return do_set(name_id, Symbol{std::move(value)});
@@ -96,10 +96,12 @@ public:
 
     Symbol* get(str_id_t name_id, bool current = false) override;
 
+    Symbol* get_local(str_id_t name_id) override;
+
     ScopeContextProxy ctx() override;
 
 protected:
-    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls);
+    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local);
 
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
@@ -171,12 +173,17 @@ public:
     bool has(str_id_t name_id, Version version, bool current = false) const;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
+    Symbol* get_local(str_id_t name_id) override;
 
     ScopeContextProxy ctx() override;
 
     Symbol* get(str_id_t name_id, Version version, bool current = false);
     const Symbol*
     get(str_id_t name_id, Version version, bool current = false) const;
+
+    Symbol* get_local(str_id_t name_id, Version version);
+    const Symbol*
+    get_local(str_id_t name_id, Version version) const;
 
     str_id_t last_change(Version version) const;
     str_id_t last_change() const { return last_change(_version); }

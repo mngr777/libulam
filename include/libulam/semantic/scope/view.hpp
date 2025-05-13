@@ -28,6 +28,7 @@ public:
     scope_flags_t flags() const override;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
+    Symbol* get_local(str_id_t name_id) override;
 
     ScopeContextProxy ctx() override;
 

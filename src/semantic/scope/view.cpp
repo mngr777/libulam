@@ -30,6 +30,10 @@ Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
     return scope()->get(name_id, _version, current);
 }
 
+Scope::Symbol* PersScopeView::get_local(str_id_t name_id) {
+    return scope()->get_local(name_id, _version);
+}
+
 ScopeContextProxy PersScopeView::ctx() { return scope()->ctx(); }
 
 str_id_t PersScopeView::last_change() const {

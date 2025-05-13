@@ -1,4 +1,3 @@
-#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/scope/view.hpp>
@@ -29,16 +28,6 @@ const Scope::Symbol* Scope::get(str_id_t name_id, bool current) const {
     return const_cast<Scope*>(this)->get(name_id, current);
 }
 
-Scope::Symbol* Scope::get_local(str_id_t name_id) {
-    // ??
-    if (is(scp::Class)) {
-        assert(parent());
-        return parent()->get(name_id);
-    }
-    auto sym = get(name_id, true);
-    return (sym || !parent()) ? sym : parent()->get_local(name_id);
-}
-
 const ScopeContextProxy Scope::ctx() const {
     return const_cast<Scope*>(this)->ctx();
 }
@@ -48,7 +37,7 @@ const ScopeContextProxy Scope::ctx() const {
 Scope* ScopeBase::parent(scope_flags_t flags) {
     return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
                ? _parent
-               : nullptr;
+               : _parent->parent(flags);
 }
 
 // BasicScope
@@ -59,22 +48,53 @@ BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
 }
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
-    return current ? _symbols.get(name_id) : do_get(name_id, ctx().eff_cls());
+    return current ? _symbols.get(name_id)
+                   : do_get(name_id, ctx().eff_cls(), false);
+}
+
+Scope::Symbol* BasicScope::get_local(str_id_t name_id) {
+    return do_get(name_id, ctx().eff_cls(), true);
 }
 
 ScopeContextProxy BasicScope::ctx() { return {_ctx, parent()}; }
 
-Scope::Symbol* BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls) {
-    Scope* next = this;
-    while (next) {
-        auto sym = next->get(name_id, true);
+Scope::Symbol*
+BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
+    // * if effective Self class doesn't match parent class scope Self (i.e.
+    // `self as Type` is used):
+    //   - seacrh current scope up to class scope;
+    //   - store current module scope;
+    //   - continue search in effective Self class scope up to module scope;
+    //   - switch to stored module scope and continue.
+    // * if searching for `local` symbol:
+    //   - search current scope up to class scope;
+    //   - switch to module scope (skipping class scopes) and continue.
+    Scope* scope = this;
+    Scope* module_scope{};
+    while (true) {
+        auto sym = scope->get(name_id, true);
         if (sym)
             return sym;
-        next = next->parent();
-        if (next && next->is(scp::Class) && next->ctx().self_cls() != eff_cls)
-            next = eff_cls->scope();
+        scope = scope->parent();
+        if (!scope)
+            return {};
+        if (scope->is(scp::Class) &&
+            (local || scope->ctx().self_cls() != eff_cls)) {
+            // store current module scope
+            module_scope = scope->parent(scp::Module);
+            assert(module_scope);
+            if (local) {
+                // skip class scopes
+                scope = module_scope;
+            } else {
+                // go to effective Self scope
+                scope = eff_cls->scope();
+            }
+        } else if (scope->is(scp::Module) && module_scope) {
+            // go back to current module scope
+            scope = module_scope;
+        }
     }
-    return {};
 }
 
 Scope::Symbol* BasicScope::do_set(str_id_t name_id, Symbol&& symbol) {
@@ -95,8 +115,20 @@ PersScopeIterator PersScope::begin() {
 
 PersScopeIterator PersScope::end() { return PersScopeIterator{}; }
 
+bool PersScope::has(str_id_t name_id, bool current) const {
+    return has(name_id, version(), current);
+}
+
+bool PersScope::has(str_id_t name_id, Version version, bool current) const {
+    return get(name_id, version, current);
+}
+
 Scope::Symbol* PersScope::get(str_id_t name_id, bool current) {
     return get(name_id, _version, current);
+}
+
+Scope::Symbol* PersScope::get_local(str_id_t name_id) {
+    return get_local(name_id, version());
 }
 
 ScopeContextProxy PersScope::ctx() { return ScopeContextProxy{_ctx, parent()}; }
@@ -115,12 +147,17 @@ Scope::Symbol* PersScope::get(str_id_t name_id, Version version, bool current) {
     return (sym || current || !parent()) ? sym : parent()->get(name_id);
 }
 
-bool PersScope::has(str_id_t name_id, bool current) const {
-    return has(name_id, version(), current);
+Scope::Symbol* PersScope::get_local(str_id_t name_id, Version version) {
+    // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
+    // scp::Module) count as local symbols: t3875
+    assert(in(scp::Module));
+    return (is(scp::Module)) ? get(name_id, version)
+                             : parent(scp::Module)->get(name_id);
 }
 
-bool PersScope::has(str_id_t name_id, Version version, bool current) const {
-    return get(name_id, version, current);
+const Scope::Symbol*
+PersScope::get_local(str_id_t name_id, Version version) const {
+    return const_cast<PersScope*>(this)->get_local(name_id, version);
 }
 
 const Scope::Symbol*
