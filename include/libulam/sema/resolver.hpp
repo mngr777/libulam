@@ -12,6 +12,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/str_pool.hpp>
 #include <optional>
+#include <unordered_set>
 
 namespace ulam::sema {
 
@@ -59,6 +60,8 @@ public:
     Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope);
 
 private:
+    using ClassSet = std::unordered_set<Ref<Class>>;
+
     PersScopeView decl_scope_view(Ref<Decl> decl);
 
     bool resolve_class_deps(Ref<Type> type);
@@ -93,7 +96,7 @@ private:
     UniqStrPool& _str_pool;
     bool _in_expr;
     eval_flags_t _flags;
-    std::set<Ref<Class>> _classes;
+    ClassSet _classes;
 };
 
 } // namespace ulam::sema
