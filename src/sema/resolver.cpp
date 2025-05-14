@@ -32,16 +32,29 @@ void Resolver::resolve(Ref<Program> program) {
     for (auto& module : program->modules())
         module->resolve(*this);
 
-    // TODO: loop
-    for (auto cls : _classes)
-        resolve(cls);
-    for (auto cls : _classes) {
-        for (auto type_def : cls->type_defs())
-            resolve(type_def);
-        for (auto var : cls->consts())
-            resolve(var);
+    ClassSet processed;
+    while (true) {
+        ClassSet classes = _classes;
+        _classes.clear();
+
+        ClassSet processing;
+        for (auto cls : classes) {
+            if (processed.count(cls) == 0) {
+                resolve(cls);
+                processing.insert(cls);
+            }
+        }
+        if (processing.empty())
+            return;
+
+        for (auto cls : processing) {
+            for (auto type_def : cls->type_defs())
+                resolve(type_def);
+            for (auto var : cls->consts())
+                resolve(var);
+            processed.insert(cls);
+        }
     }
-    _classes.clear();
 }
 
 bool Resolver::init(Ref<Class> cls) {

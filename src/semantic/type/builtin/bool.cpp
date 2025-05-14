@@ -11,7 +11,8 @@ namespace ulam {
 TypedValue BoolType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::MinOf: {
-        auto rval = construct(false);;
+        auto rval = construct(false);
+        ;
         rval.set_is_consteval(true);
         return {this, Value{std::move(rval)}};
     }
@@ -51,9 +52,15 @@ TypedValue BoolType::unary_op(Op op, RValue&& rval) {
     if (rval.empty())
         return {this, Value{std::move(rval)}};
 
+    bool is_truth = is_true(rval);
+    bool is_consteval = rval.is_consteval();
+
     switch (op) {
-    case Op::Negate:
-        return {this, Value{construct(!is_true(rval))}};
+    case Op::Negate: {
+        auto rval = construct(!is_truth);
+        rval.set_is_consteval(is_consteval);
+        return {this, Value{std::move(rval)}};
+    }
     default:
         assert(false);
     }
