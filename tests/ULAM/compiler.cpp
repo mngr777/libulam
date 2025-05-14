@@ -151,7 +151,7 @@ void Compiler::write_obj_members(
     bool is_base) {
     write_class_type_defs(os, cls);
     write_class_consts(os, cls, in_main, is_outer, is_base);
-    write_obj_props(os, cls, rval, in_main, is_outer);
+    write_obj_props(os, cls, rval, in_main, is_outer, is_base);
     if (in_main || !is_base)
         write_obj_parent_members(os, cls, rval, in_main, is_outer);
 }
@@ -240,13 +240,13 @@ void Compiler::write_obj_props(
     ulam::Ref<ulam::Class> cls,
     const ulam::RValue& obj,
     bool in_main,
-    bool is_outer) {
+    bool is_outer,
+    bool is_base) {
 
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.use_unsigned_suffix_zero =
         in_main || cls->is_transient() || cls->is_quark();
-    stringifier.options.unary_as_unsigned_lit = !in_main;
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
@@ -256,10 +256,16 @@ void Compiler::write_obj_props(
         auto type = prop->type();
         if (type->is_array())
             type = type->as_array()->item_type();
+        bool bool_as_unsigned_lit = stringifier.options.bool_as_unsigned_lit;
+        bool unary_as_unsigned_lit = stringifier.options.unary_as_unsigned_lit;
         bool use_unsigned_suffix_zero =
             stringifier.options.use_unsigned_suffix_zero;
         bool bits_use_unsigned_suffix =
             stringifier.options.bits_use_unsigned_suffix;
+
+        stringifier.options.bool_as_unsigned_lit = false;
+        stringifier.options.unary_as_unsigned_lit =
+            !in_main && !prop->type()->is_array();
         stringifier.options.use_unsigned_suffix_zero =
             use_unsigned_suffix_zero &&
             (in_main ||
@@ -271,6 +277,8 @@ void Compiler::write_obj_props(
 
         write_obj_prop(os, stringifier, prop, obj, in_main);
 
+        stringifier.options.bool_as_unsigned_lit = bool_as_unsigned_lit;
+        stringifier.options.unary_as_unsigned_lit = unary_as_unsigned_lit;
         stringifier.options.use_unsigned_suffix_zero = use_unsigned_suffix_zero;
         stringifier.options.bits_use_unsigned_suffix = bits_use_unsigned_suffix;
     }
