@@ -38,11 +38,19 @@ void Ancestor::add_dep_added(Ref<Ancestor> anc) {
 // Ancestry
 
 bool Ancestry::add(Ref<Class> cls, Ref<ast::TypeName> node) {
+    assert(node);
     auto [anc, added] = do_add(cls, node);
     if (added || !anc->is_parent()) {
         anc->set_is_parent(true);
         _parents.push_back(anc);
     }
+    return added;
+}
+
+bool Ancestry::add_implicit(Ref<Class> cls) {
+    auto [anc, added] = do_add(cls, {});
+    if (added)
+        anc->set_is_implicit(true);
     return added;
 }
 
@@ -66,8 +74,10 @@ Ancestry::do_add(Ref<Class> cls, Ref<ast::TypeName> node) {
     // add grandparents
     for (auto parent : cls->_ancestry.ancestors()) {
         auto [grandpa, added] = do_add(parent->cls(), parent->node());
-        if (added)
+        if (added) {
+            grandpa->set_is_implicit(parent->is_implicit());
             ref->add_dep_added(grandpa);
+        }
     }
     return {ref, true};
 }

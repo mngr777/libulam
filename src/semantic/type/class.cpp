@@ -598,7 +598,7 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
         }
     }
 
-    // TODO: refactoring
+    // TODO: refactoring, add an option
     {
         auto name_id = module()->program()->str_pool().put("UrSelf");
         auto sym = module()->scope()->get(name_id);
@@ -665,7 +665,8 @@ void Class::init_default_data(sema::Resolver& resolver) {
 }
 
 void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
-    if (!_ancestry.add(cls, node))
+    bool added = node ? _ancestry.add(cls, node) : _ancestry.add_implicit(cls);
+    if (!added)
         return;
 
     // import ancestor types

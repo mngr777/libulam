@@ -214,8 +214,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
     AnswerBasePrefixStack pref;
     while (!at(';')) {
-        if (at(':') || at('^')) {
-            // :ParentType< ... > | ^GrandparentType< ... >
+        if (at(':') || at('^') || at('+')) {
+            // :ParentType< ... > | ^GrandparentType< ... > (TODO: +Base2< ... >)
             bool is_grandparent = at('^');
             advance();
             auto [name, _] = read_parent_class_name();
