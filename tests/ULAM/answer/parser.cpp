@@ -215,11 +215,11 @@ std::string AnswerParser::read_value_str(bool is_array) {
     AnswerBasePrefixStack pref;
     while (!at(';')) {
         if (at(':') || at('^') || at('+')) {
-            // :ParentType< ... > | ^GrandparentType< ... > (TODO: +Base2< ... >)
-            bool is_grandparent = at('^');
+            // :Parent< ... > | ^GrandparentType< ... >
+            auto prefix = at('+') ? ':' : chr();
             advance();
             auto [name, _] = read_parent_class_name();
-            pref.push((is_grandparent ? "^" : "") + std::string{name});
+            pref.push(prefix + std::string{name});
             skip_spaces();
             skip('<');
 

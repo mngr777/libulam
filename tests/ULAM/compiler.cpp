@@ -175,9 +175,9 @@ void Compiler::write_obj_parent_members(
         write_obj_members(buf, parent, obj, in_main, is_outer, true);
         std::string mem_str{std::move(*(buf.rdbuf())).str()};
         if (!mem_str.empty()) {
-            // TODO: +Base2< ... >
-            os << (anc->is_parent() ? ':' : '^')
-               << out::type_str(stringifier, parent) << "< " << mem_str << "> ";
+            auto prefix = anc->is_parent() ? ':' : '^';
+            os << prefix << out::type_str(stringifier, parent) << "< "
+               << mem_str << "> ";
         }
     }
 }

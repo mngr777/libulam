@@ -118,11 +118,11 @@ Answer parse_answer(const std::string_view text) {
             p.skip_comment();
 
         } else if (p.at(':') || p.at('^') || p.at('+')) {
-            // :ParentType< ... > | ^GrandparentType< ... >
-            bool is_grandarent = p.at('^');
+            // :Parent< ... > | ^GrandparentType< ... >
+            auto prefix = p.at('+') ? ':' : p.chr();
             p.advance();
             auto [name, _] = p.read_parent_class_name();
-            pref.push((is_grandarent ? "^" : "") + std::string{name});
+            pref.push(prefix + std::string{name});
             p.skip_spaces();
             p.skip('<');
 
