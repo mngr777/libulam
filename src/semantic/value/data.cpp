@@ -81,12 +81,13 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    if (_view_type && !_view_type->is_same(_type)) {
-        assert(_view_type->is_expl_castable_to(_type));
-        auto val = _view_type->cast_to(_type, Value{std::move(rval)});
-        _type->store(_storage->bits(), _off, val.move_rvalue());
+    if (!_view_type || _view_type->is_same(_type)) {
+        _type->store(_storage->bits(), _off, std::move(rval));
+        return;
     }
-    _type->store(_storage->bits(), _off, std::move(rval));
+    assert(_view_type->is_expl_castable_to(_type));
+    auto val = _view_type->cast_to(_type, Value{std::move(rval)});
+    _type->store(_storage->bits(), _off, val.move_rvalue());
 }
 
 RValue DataView::load() const {
@@ -158,7 +159,7 @@ const DataView DataView::atom_of() const {
 }
 
 bitsize_t DataView::position_of() const {
-    // TMP
+    // TODO
     return _off;
 }
 
