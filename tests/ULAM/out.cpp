@@ -53,8 +53,9 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
             str += ",";
         assert(param->has_value());
         assert(param->has_type());
-        auto rval = param->value().copy_rvalue(); // TMP
-        str += stringifier.stringify(param->type(), rval);
+        param->value().with_rvalue([&](const auto& rval) {
+            str += stringifier.stringify(param->type(), rval);
+        });
     }
 
     stringifier.options.use_unsigned_suffix = use_unsigned_suffix;

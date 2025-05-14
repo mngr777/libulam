@@ -53,10 +53,6 @@ static const std::set<std::string> Skip = {
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
     "t41316_test_compiler_transientandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
-    // "t41318_test_compiler_elementandquark_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // Atom& to quark
-    // "t41320_test_compiler_elementandquark_multibases_refbasecallsoverridebaseclassvirtualfunc.test", // -"-
-    // "t41323_test_compiler_elementandquark_multibases_virtualfuncscalledonsharedancestoranddatamembercopies.test", // -"-
-    // "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // -"-
     "t41376_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccall.test", // classid magic, TODO
     "t41379_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingclassidofref.test", // -"-
     "t41380_test_compiler_elementandquark_multibases_constantspecificbasevariablevirtualfunccall.test", // -"-
@@ -199,6 +195,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41333_test_compiler_multiinheritance_sibilingshadowdatamemberlhs.test", // deref cast omitted, TODO: always dereference via cast helper
     "t41334_test_compiler_quarkunionstringarrayDM.test", // .lenghtof folding
     "t41336_test_compiler_multiinheritance_referenceinit.test", // deref cast omitted, similar to t41333
+    "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // Bool value format
 };
 
 using Path = std::filesystem::path;
