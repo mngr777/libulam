@@ -245,15 +245,17 @@ void Compiler::write_obj_props(
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.use_unsigned_suffix_zero =
-        in_main || cls->is_transient();
+        in_main || cls->is_transient() || cls->is_quark();
     stringifier.options.unary_as_unsigned_lit = !in_main;
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
 
     for (auto prop : cls->props()) {
+        // t41298, t41355 hacks
         auto type = prop->type();
-        // t41298 hacks
+        if (type->is_array())
+            type = type->as_array()->item_type();
         bool use_unsigned_suffix_zero =
             stringifier.options.use_unsigned_suffix_zero;
         bool bits_use_unsigned_suffix =
@@ -262,8 +264,7 @@ void Compiler::write_obj_props(
             use_unsigned_suffix_zero &&
             (in_main ||
              (type->is(ulam::UnsignedId) && prop->node()->has_init() &&
-              (!type->is_alias() || type->bitsize() == 8 ||
-               type->bitsize() == 6)));
+              (!type->is_alias() || type->bitsize() <= 8)));
         stringifier.options.bits_use_unsigned_suffix =
             bits_use_unsigned_suffix &&
             (!type->is(ulam::BitsId) || type->bitsize() != 64);
@@ -292,7 +293,6 @@ void Compiler::write_obj_prop(
         stringifier.options.empty_string_as_empty = true;
 
         if (type->is_array()) {
-
             auto array_type = type->as_array();
             auto item_type = array_type->item_type();
             for (ulam::array_idx_t idx = 0; idx < array_type->array_size();
@@ -314,7 +314,6 @@ void Compiler::write_obj_prop(
                     }
                 });
             }
-
         } else if (type->is_class()) {
             auto node = prop->node();
             if (!in_main && node->has_init() &&
