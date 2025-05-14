@@ -23,7 +23,6 @@ public:
     Ancestor(Ref<Class> cls, Ref<ast::TypeName> node):
         _cls{cls},
         _node{node},
-        _is_parent{false},
         _data_off{NoBitsize},
         _size_added{NoBitsize} {}
 
@@ -33,6 +32,7 @@ public:
     Ref<const ast::TypeName> node() const { return _node; }
 
     bool is_parent() const { return _is_parent; }
+    bool is_implicit() const { return _is_implicit; }
 
     bool has_data_off() const;
     bitsize_t data_off() const;
@@ -42,6 +42,7 @@ public:
 
 private:
     void set_is_parent(bool is_parent) { _is_parent = is_parent; }
+    void set_is_implicit(bool is_implicit) { _is_implicit = is_implicit; }
 
     void set_data_off(bitsize_t data_off);
     void set_size_added(bitsize_t size);
@@ -49,7 +50,8 @@ private:
 
     Ref<Class> _cls;
     Ref<ast::TypeName> _node;
-    bool _is_parent;
+    bool _is_parent{false}; // TODO: use flags
+    bool _is_implicit{false};
     bitsize_t _data_off; // NOTE: offset is relative to start of inherited data
                          // section
     bitsize_t _size_added;
@@ -60,6 +62,7 @@ private:
 class Ancestry {
 public:
     bool add(Ref<Class> cls, Ref<ast::TypeName> node);
+    bool add_implicit(Ref<Class> cls); // implicit base (UrSelf)
     void init();
 
     bool is_base(Ref<const Class> cls) const;

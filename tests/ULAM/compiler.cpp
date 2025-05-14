@@ -17,10 +17,6 @@ namespace {
 
 constexpr char NoMain[] = "<NOMAIN>";
 
-bool is_urself(ulam::Ref<const ulam::Class> cls) {
-    return cls->name() == "UrSelf";
-}
-
 std::string class_prefix(ulam::ClassKind kind) {
     switch (kind) {
     case ulam::ClassKind::Element:
@@ -136,20 +132,13 @@ void Compiler::write_class_parents(
     auto parents = cls->parents();
     if (parents.size() == 0)
         return;
-    if (parents.size() == 1 && is_urself(parents.front()->cls()))
-        return; // ignoring UrSelf
 
     Stringifier stringifier{program()};
     os << " : ";
-    bool first = true;
     for (auto anc : parents) {
-        auto parent = anc->cls();
-        if (is_urself(parent))
-            continue;
-        if (!first)
+        if (anc != *parents.begin())
             os << " + ";
         os << out::type_str(stringifier, anc->cls());
-        first = false;
     }
 }
 
@@ -179,14 +168,14 @@ void Compiler::write_obj_parent_members(
     stringifier.options.bits_use_unsigned_suffix = false;
 
     for (const auto anc : cls->ancestors()) {
-        auto parent = anc->cls();
-        if (is_urself(parent))
+        if (anc->is_implicit())
             continue;
-
+        auto parent = anc->cls();
         std::stringstream buf;
         write_obj_members(buf, parent, obj, in_main, is_outer, true);
         std::string mem_str{std::move(*(buf.rdbuf())).str()};
         if (!mem_str.empty()) {
+            // TODO: +Base2< ... >
             os << (anc->is_parent() ? ':' : '^')
                << out::type_str(stringifier, parent) << "< " << mem_str << "> ";
         }
