@@ -33,6 +33,26 @@ ExprRes ExprRes::derived(Ref<Type> type, Value&& val, bool keep_all_flags) {
     return derived({type, std::move(val)}, keep_all_flags);
 }
 
+bool ExprRes::is_self() const { return has_flag(Self); }
+
+void ExprRes::set_is_self(bool is_self) {
+    if (is_self) {
+        set_flag(Self);
+    } else {
+        uns_flag(Self);
+    }
+}
+
+bool ExprRes::is_super() const { return has_flag(Super); }
+
+void ExprRes::set_is_super(bool is_super) {
+    if (is_super) {
+        set_flag(Super);
+    } else {
+        uns_flag(Super);
+    }
+}
+
 TypedValue ExprRes::move_typed_value() {
     assert(!is_nil());
     TypedValue tv;

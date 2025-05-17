@@ -1,3 +1,4 @@
+#include "libulam/sema/expr_res.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -233,16 +234,21 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
     if (!check_is_class(node, obj.type(), true))
         return {ExprError::NotClass};
 
-    // obj.Base.bar?
+    Ref<Class> base{};
     if (node->has_base()) {
+        // foo.Base.bar
         obj = as_base(node, node->base(), std::move(obj));
         if (!obj)
             return obj;
+        base = obj.type()->as_class();
+    } else if (obj.is_super()) {
+        // super.bar
+        base = obj.type()->as_class();
     }
 
     // get op fset
     if (node->is_op())
-        return check(node, member_access_op(node, std::move(obj)));
+        return check(node, member_access_op(node, std::move(obj), base));
 
     // get symbol
     auto cls = obj.type()->deref()->as_class();
@@ -261,7 +267,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
             return member_access_prop(node, std::move(obj), prop);
         },
         [&](Ref<FunSet> fset) -> ExprRes {
-            return member_access_fset(node, std::move(obj), fset);
+            return member_access_fset(node, std::move(obj), fset, base);
         },
         [&](auto other) -> ExprRes { assert(false); });
     return check(node, std::move(res));
@@ -958,7 +964,9 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
     if (!sup)
         return {ExprError::NoSuper};
     auto self = scope()->ctx().self();
-    return {sup, Value{self.as(sup, true)}};
+    ExprRes res = {sup, Value{self.as(sup)}};
+    res.set_is_super(true);
+    return res;
 }
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
@@ -973,7 +981,8 @@ ExprRes EvalExprVisitor::ident_prop(Ref<ast::Ident> node, Ref<Prop> prop) {
 }
 
 ExprRes EvalExprVisitor::ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset) {
-    return {builtins().fun_type(), Value{scope()->ctx().self().bound_fset(fset)}};
+    return {
+        builtins().fun_type(), Value{scope()->ctx().self().bound_fset(fset)}};
 }
 
 ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
@@ -1066,15 +1075,15 @@ ExprRes EvalExprVisitor::array_access_array(
     return {item_type, array_val.array_access(int_idx, is_consteval_idx)};
 }
 
-ExprRes
-EvalExprVisitor::member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj) {
+ExprRes EvalExprVisitor::member_access_op(
+    Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Class> base) {
     auto cls = obj.type()->deref()->as_class();
     auto fset = cls->op(node->op());
     if (!fset) {
         diag().error(node, "operator not found");
         return {ExprError::NoOperator};
     }
-    return bind(node, fset, std::move(obj));
+    return bind(node, fset, std::move(obj), base);
 }
 
 ExprRes EvalExprVisitor::member_access_var(
@@ -1090,8 +1099,11 @@ ExprRes EvalExprVisitor::member_access_prop(
 }
 
 ExprRes EvalExprVisitor::member_access_fset(
-    Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset) {
-    return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+    Ref<ast::MemberAccess> node,
+    ExprRes&& obj,
+    Ref<FunSet> fset,
+    Ref<Class> base) {
+    return bind(node, fset, std::move(obj), base);
 }
 
 ExprRes EvalExprVisitor::class_const_access(
@@ -1104,10 +1116,10 @@ ExprRes EvalExprVisitor::class_const_access(
     return {var->type(), Value{LValue{var}}};
 }
 
-ExprRes
-EvalExprVisitor::bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj) {
+ExprRes EvalExprVisitor::bind(
+    Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj, Ref<Class> base) {
     assert(obj.type()->actual()->is_class());
-    return {builtins().fun_type(), obj.move_value().bound_fset(fset)};
+    return {builtins().fun_type(), obj.move_value().bound_fset(fset, base)};
 }
 
 ExprRes EvalExprVisitor::as_base(
@@ -1119,7 +1131,7 @@ ExprRes EvalExprVisitor::as_base(
             base->is_super() ? ExprError::NoSuper : ExprError::BaseNotFound;
         return {error};
     }
-    return {cls, Value{obj.move_value().as(cls, true)}};
+    return {cls, Value{obj.move_value()}};
 }
 
 ExprRes

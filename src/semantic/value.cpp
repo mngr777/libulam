@@ -97,10 +97,10 @@ LValue LValue::self() {
     return lval;
 }
 
-LValue LValue::as(Ref<Type> type, bool self) {
+LValue LValue::as(Ref<Type> type) {
     auto data = data_view();
     if (data)
-        data = data.as(type, self);
+        data = data.as(type);
     return derived(data);
 }
 
@@ -136,8 +136,8 @@ const LValue LValue::prop(Ref<Prop> prop) const {
     return const_cast<LValue*>(this)->prop(prop);
 }
 
-LValue LValue::bound_fset(Ref<FunSet> fset) {
-    return derived(BoundFunSet{data_view(), fset});
+LValue LValue::bound_fset(Ref<FunSet> fset, Ref<Class> base) {
+    return derived(BoundFunSet{data_view(), fset, base});
 }
 
 Value LValue::assign(RValue&& rval) {
@@ -203,9 +203,9 @@ LValue RValue::self() {
     return lval;
 }
 
-LValue RValue::as(Ref<Type> type, bool self) {
+LValue RValue::as(Ref<Type> type) {
     LValue lval{accept(
-        [&](DataPtr& data) { return data->view().as(type, self); },
+        [&](DataPtr& data) { return data->view().as(type); },
         [&](auto& other) -> DataView { assert(false); })};
     lval.set_scope_lvl(AutoScopeLvl);
     return lval;
@@ -250,10 +250,14 @@ const LValue RValue::prop(Ref<Prop> prop) const {
     return const_cast<RValue*>(this)->prop(prop);
 }
 
-LValue RValue::bound_fset(Ref<FunSet> fset) {
+LValue RValue::bound_fset(Ref<FunSet> fset, Ref<Class> base) {
     return accept(
-        [&](DataPtr data) { return LValue{BoundFunSet{data->view(), fset}}; },
-        [&](std::monostate) { return LValue{BoundFunSet{DataView{}, fset}}; },
+        [&](DataPtr data) {
+            return LValue{BoundFunSet{data->view(), fset, base}};
+        },
+        [&](std::monostate) {
+            return LValue{BoundFunSet{DataView{}, fset, base}};
+        },
         [&](auto& other) -> LValue { assert(false); });
 }
 
@@ -289,8 +293,8 @@ LValue Value::self() {
     return accept([&](auto& val) { return val.self(); });
 }
 
-LValue Value::as(Ref<Type> type, bool self) {
-    return accept([&](auto& val) { return val.as(type, self); });
+LValue Value::as(Ref<Type> type) {
+    return accept([&](auto& val) { return val.as(type); });
 }
 
 LValue Value::atom_of() {
@@ -316,8 +320,8 @@ const Value Value::prop(Ref<Prop> prop) const {
     return const_cast<Value*>(this)->prop(prop);
 }
 
-Value Value::bound_fset(Ref<FunSet> fset) {
-    return accept([&](auto& val) { return Value{val.bound_fset(fset)}; });
+Value Value::bound_fset(Ref<FunSet> fset, Ref<Class> base) {
+    return accept([&](auto& val) { return Value{val.bound_fset(fset, base)}; });
 }
 
 Value Value::copy() const {

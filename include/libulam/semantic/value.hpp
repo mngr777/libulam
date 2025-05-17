@@ -60,7 +60,7 @@ public:
     Ref<Type> dyn_obj_type(bool real = false) const;
 
     LValue self();
-    LValue as(Ref<Type> type, bool self = false);
+    LValue as(Ref<Type> type);
     LValue atom_of();
 
     LValue array_access(array_idx_t idx, bool is_consteval_idx);
@@ -68,7 +68,7 @@ public:
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
 
-    LValue bound_fset(Ref<FunSet> fset);
+    LValue bound_fset(Ref<FunSet> fset, Ref<Class> base = {});
 
     Value assign(RValue&& rval);
 
@@ -113,7 +113,7 @@ public:
     Ref<Type> dyn_obj_type(bool self = false) const;
 
     LValue self();
-    LValue as(Ref<Type> type, bool self = false);
+    LValue as(Ref<Type> type);
     LValue atom_of();
 
     LValue array_access(array_idx_t idx, bool is_consteval_idx);
@@ -121,7 +121,7 @@ public:
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
 
-    LValue bound_fset(Ref<FunSet> fset);
+    LValue bound_fset(Ref<FunSet> fset, Ref<Class> base = {});
 
     bool is_consteval() const { return _is_consteval; }
     void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; }
@@ -162,7 +162,7 @@ public:
     Ref<Type> dyn_obj_type(bool real = false) const;
 
     LValue self();
-    LValue as(Ref<Type> type, bool self = false);
+    LValue as(Ref<Type> type);
     LValue atom_of();
 
     bitsize_t position_of();
@@ -172,7 +172,7 @@ public:
     Value prop(Ref<Prop> prop);
     const Value prop(Ref<Prop> prop) const;
 
-    Value bound_fset(Ref<FunSet> fset);
+    Value bound_fset(Ref<FunSet> fset, Ref<Class> base = {});
 
     Value copy() const;
 

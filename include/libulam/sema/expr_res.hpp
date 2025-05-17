@@ -19,7 +19,8 @@ public:
     using flags_t = std::uint16_t;
     static constexpr flags_t NoFlags = 0;
     static constexpr flags_t Self = 1;
-    static constexpr flags_t Last = 1 << 1;
+    static constexpr flags_t Super = 1 << 1;
+    static constexpr flags_t Last = 1 << 2;
 
     using Data = std::any;
 
@@ -42,8 +43,11 @@ public:
     bool is_nil() const { return _error == ExprError::Nil; }
     operator bool() const { return ok(); }
 
-    bool is_self() const { return has_flag(Self); }
-    void set_is_self(bool is_self) { set_flag(Self); }
+    bool is_self() const;
+    void set_is_self(bool is_self);
+
+    bool is_super() const;
+    void set_is_super(bool is_super);
 
     Ref<Type> type() const { return _typed_value.type(); }
     const Value& value() const { return _typed_value.value(); }

@@ -103,7 +103,8 @@ protected:
     ExprRes member_access_fset(
         ulam::Ref<ulam::ast::MemberAccess> node,
         ExprRes&& obj,
-        ulam::Ref<ulam::FunSet> fset) override;
+        ulam::Ref<ulam::FunSet> fset,
+        ulam::Ref<ulam::Class> base) override;
 
     ExprRes class_const_access(
         ulam::Ref<ulam::ast::ClassConstAccess> node,
@@ -112,7 +113,8 @@ protected:
     ExprRes bind(
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Ref<ulam::FunSet> fset,
-        ulam::sema::ExprRes&& obj) override;
+        ulam::sema::ExprRes&& obj,
+        ulam::Ref<ulam::Class> base) override;
 
     ExprRes as_base(
         ulam::Ref<ulam::ast::Expr> node,
