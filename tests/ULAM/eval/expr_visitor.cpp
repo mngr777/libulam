@@ -563,7 +563,8 @@ ExprRes EvalExprVisitor::member_access_prop(
 ExprRes EvalExprVisitor::member_access_fset(
     ulam::Ref<ulam::ast::MemberAccess> node,
     ExprRes&& obj,
-    ulam::Ref<ulam::FunSet> fset) {
+    ulam::Ref<ulam::FunSet> fset,
+    ulam::Ref<ulam::Class> base) {
     if (!obj)
         return std::move(obj);
 
@@ -575,7 +576,7 @@ ExprRes EvalExprVisitor::member_access_fset(
         no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
-    auto res = Base::member_access_fset(node, std::move(obj), fset);
+    auto res = Base::member_access_fset(node, std::move(obj), fset, base);
     if (!data.empty()) {
         exp::set_data(res, data);
         exp::add_member_access(res, FuncallPh, is_self);
@@ -609,7 +610,8 @@ ExprRes EvalExprVisitor::class_const_access(
 ExprRes EvalExprVisitor::bind(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Ref<ulam::FunSet> fset,
-    ulam::sema::ExprRes&& obj) {
+    ulam::sema::ExprRes&& obj,
+    ulam::Ref<ulam::Class> base) {
     assert(obj);
     std::string data;
     bool is_self = false;
@@ -617,7 +619,7 @@ ExprRes EvalExprVisitor::bind(
         data = exp::data(obj);
         is_self = obj.has_flag(exp::Self);
     }
-    auto res = Base::bind(node, fset, std::move(obj));
+    auto res = Base::bind(node, fset, std::move(obj), base);
     if (!data.empty()) {
         exp::set_data(res, data);
         exp::add_member_access(res, FuncallPh, is_self);

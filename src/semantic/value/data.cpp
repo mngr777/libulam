@@ -101,14 +101,14 @@ RValue DataView::load() const {
     return rval;
 }
 
-DataView DataView::as(Ref<Type> view_type, bool self) {
+DataView DataView::as(Ref<Type> view_type) {
     DataView view{*this};
-    view.set_view_type(view_type, self);
+    view.set_view_type(view_type);
     return view;
 }
 
-const DataView DataView::as(Ref<Type> type, bool self) const {
-    return const_cast<DataView*>(this)->as(type, self);
+const DataView DataView::as(Ref<Type> type) const {
+    return const_cast<DataView*>(this)->as(type);
 }
 
 DataView DataView::array_item(array_idx_t idx) {
@@ -163,9 +163,8 @@ bitsize_t DataView::position_of() const {
     return _off;
 }
 
-Ref<Type> DataView::type(bool self) const {
-    return (_view_type && (!self || _is_view_type_self)) ? _view_type
-                                                         : dyn_type();
+Ref<Type> DataView::type(bool real) const {
+    return (!real && _view_type) ? _view_type : dyn_type();
 }
 
 BitsView DataView::bits() {
@@ -176,10 +175,9 @@ const BitsView DataView::bits() const {
     return _storage->bits().view(_off, _type->bitsize());
 }
 
-void DataView::set_view_type(Ref<Type> view_type, bool self) {
+void DataView::set_view_type(Ref<Type> view_type) {
     assert(dyn_type()->is_expl_refable_as(view_type, Value{RValue{}}));
     _view_type = view_type;
-    _is_view_type_self = self;
 }
 
 Ref<Type> DataView::dyn_type() const {

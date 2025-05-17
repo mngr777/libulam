@@ -146,19 +146,26 @@ protected:
     virtual ExprRes array_access_array(
         Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx);
 
-    virtual ExprRes
-    member_access_op(Ref<ast::MemberAccess> node, ExprRes&& obj);
+    virtual ExprRes member_access_op(
+        Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Class> base);
     virtual ExprRes
     member_access_var(Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var);
     virtual ExprRes member_access_prop(
         Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Prop> prop);
     virtual ExprRes member_access_fset(
-        Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<FunSet> fset);
+        Ref<ast::MemberAccess> node,
+        ExprRes&& obj,
+        Ref<FunSet> fset,
+        Ref<Class> base);
 
     virtual ExprRes
     class_const_access(Ref<ast::ClassConstAccess> node, Ref<Var> var);
 
-    virtual ExprRes bind(Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj);
+    virtual ExprRes bind(
+        Ref<ast::Expr> node,
+        Ref<FunSet> fset,
+        ExprRes&& obj,
+        Ref<Class> base = {});
 
     virtual ExprRes
     as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);
