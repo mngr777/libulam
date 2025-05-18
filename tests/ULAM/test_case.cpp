@@ -155,6 +155,8 @@ void TestCase::parse() {
 
 void TestCase::add_src(Path path, const std::string_view text) {
     auto ext = path.extension();
+    if (!path.has_parent_path() && ext != ".inc")
+        path = "." / path;
     if (ext == ".ulam") {
         _srcs.emplace_back(std::move(path), text);
     } else if (ext == ".inc") {

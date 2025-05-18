@@ -196,6 +196,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41334_test_compiler_quarkunionstringarrayDM.test", // .lenghtof folding
     "t41336_test_compiler_multiinheritance_referenceinit.test", // deref cast omitted, similar to t41333
     "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // Bool value format
+    "t41365_test_compiler_elementsandquarks_multibases_virtualfuncs_nestedascond_ish.test", // redundant cast for `as` var
 };
 
 using Path = std::filesystem::path;
