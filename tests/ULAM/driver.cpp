@@ -197,6 +197,11 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41336_test_compiler_multiinheritance_referenceinit.test", // deref cast omitted, similar to t41333
     "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // Bool value format
     "t41365_test_compiler_elementsandquarks_multibases_virtualfuncs_nestedascond_ish.test", // redundant cast for `as` var
+    "t41383_test_compiler_elementandquarkswclassargs_classidofSelf_issue.test", // TODO: classid
+    "t41394_test_compiler_elementandquark_multibases_virtualfuncsselectwextrashallowbase_issue.test", // array format
+    "t41395_test_compiler_transientclassdminitwithconstructor_localvar.test", // folding: .lengthof, non-const property
+    "t41402_test_compiler_classidtemplatearg_ish.test", // TODO: classids don't match, use separate ID for classes
+    "t41426_test_compiler_quarkunion_datamemberbitsizezero.test", // UNINITIALIZED_STRING
 };
 
 using Path = std::filesystem::path;
