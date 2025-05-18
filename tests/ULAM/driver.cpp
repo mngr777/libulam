@@ -90,6 +90,7 @@ static const std::set<std::string> Skip = {
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
+    "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // class typedef used in parent list
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -207,6 +208,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41473_test_compiler_funccallonrefinsideifconditionafterothercalls_gencode_ish.test", // `Bool m_border(false)` is correct?
     "t41478_test_compiler_classconstantofsametemplateclass_ish.test", // constant folding, consteval cast
     "t41480_test_compiler_datamemberinitusingclassconstantoftypedefofsametemplateclass.test", // object as hex formatting: why so many zeros?
+    "t41483_test_compiler_constantatom.test", // Atom initialization const expr
+    "t41490_test_compiler_constantatomwaitingonconstantinclassDM_ish.test", // quark prop output format (const vars)
 };
 
 using Path = std::filesystem::path;

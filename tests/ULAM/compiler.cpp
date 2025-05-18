@@ -122,7 +122,7 @@ void Compiler::write_obj(
     os << class_name(cls);
     write_class_parents(os, cls);
     os << " { ";
-    write_obj_members(os, cls, rval, in_main, true, false);
+    write_obj_members(os, cls, rval, in_main, true, false, cls);
     os << test_postfix;
     os << " }";
 }
@@ -148,12 +148,13 @@ void Compiler::write_obj_members(
     const ulam::RValue& rval,
     bool in_main,
     bool is_outer,
-    bool is_base) {
+    bool is_base,
+    ulam::Ref<ulam::Class> outer) {
     write_class_type_defs(os, cls);
-    write_class_consts(os, cls, in_main, is_outer, is_base);
-    write_obj_props(os, cls, rval, in_main, is_outer, is_base);
+    write_class_consts(os, cls, in_main, is_outer, is_base, outer);
+    write_obj_props(os, cls, rval, in_main, is_outer, is_base, outer);
     if (in_main || !is_base)
-        write_obj_parent_members(os, cls, rval, in_main, is_outer);
+        write_obj_parent_members(os, cls, rval, in_main, is_outer, outer);
 }
 
 void Compiler::write_obj_parent_members(
@@ -161,8 +162,8 @@ void Compiler::write_obj_parent_members(
     ulam::Ref<ulam::Class> cls,
     const ulam::RValue& obj,
     bool in_main,
-    bool is_outer) {
-
+    bool is_outer,
+    ulam::Ref<ulam::Class> outer) {
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = in_main;
     stringifier.options.bits_use_unsigned_suffix = false;
@@ -172,7 +173,7 @@ void Compiler::write_obj_parent_members(
             continue;
         auto parent = anc->cls();
         std::stringstream buf;
-        write_obj_members(buf, parent, obj, in_main, is_outer, true);
+        write_obj_members(buf, parent, obj, in_main, is_outer, true, outer);
         std::string mem_str{std::move(*(buf.rdbuf())).str()};
         if (!mem_str.empty()) {
             auto prefix = anc->is_parent() ? ':' : '^';
@@ -201,7 +202,8 @@ void Compiler::write_class_consts(
     ulam::Ref<ulam::Class> cls,
     bool in_main,
     bool is_outer,
-    bool is_base) {
+    bool is_base,
+    ulam::Ref<ulam::Class> outer) {
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
     stringifier.options.bits_use_unsigned_suffix = true;
@@ -213,6 +215,7 @@ void Compiler::write_class_consts(
 
     bool tpl_only =
         !(in_main || is_outer || cls->is_element() ||
+          /* (!is_outer && outer->is_element() && !is_base) || */ // t41490
           (is_base && !cls->has_cls_tpl()));
 
     // params as consts (t3336)
@@ -241,7 +244,8 @@ void Compiler::write_obj_props(
     const ulam::RValue& obj,
     bool in_main,
     bool is_outer,
-    bool is_base) {
+    bool is_base,
+    ulam::Ref<ulam::Class> outer) {
 
     Stringifier stringifier{program()};
     stringifier.options.use_unsigned_suffix = true;
@@ -275,7 +279,7 @@ void Compiler::write_obj_props(
             bits_use_unsigned_suffix &&
             (!type->is(ulam::BitsId) || type->bitsize() != 64);
 
-        write_obj_prop(os, stringifier, prop, obj, in_main);
+        write_obj_prop(os, stringifier, prop, obj, in_main, outer);
 
         stringifier.options.bool_as_unsigned_lit = bool_as_unsigned_lit;
         stringifier.options.unary_as_unsigned_lit = unary_as_unsigned_lit;
@@ -289,7 +293,8 @@ void Compiler::write_obj_prop(
     Stringifier& stringifier,
     ulam::Ref<ulam::Prop> prop,
     const ulam::RValue& obj,
-    bool in_main) {
+    bool in_main,
+    ulam::Ref<ulam::Class> outer) {
     auto& str_pool = program()->str_pool();
     auto type = prop->type();
     auto lval = obj.prop(prop);
@@ -312,7 +317,7 @@ void Compiler::write_obj_prop(
                             os << "), (";
                         write_obj_members(
                             os, item_type->as_class(), item_rval, in_main,
-                            false, false);
+                            false, false, outer);
 
                     } else {
                         assert(!item_type->is_array());
@@ -333,7 +338,7 @@ void Compiler::write_obj_prop(
                 os << stringifier.stringify(prop->type(), rval);
             } else {
                 write_obj_members(
-                    os, type->as_class(), rval, in_main, false, false);
+                    os, type->as_class(), rval, in_main, false, false, outer);
             }
         } else {
             os << stringifier.stringify(type, rval);

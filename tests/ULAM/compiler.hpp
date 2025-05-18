@@ -48,14 +48,16 @@ private:
         const ulam::RValue& rval,
         bool in_main,
         bool is_outer,
-        bool is_base);
+        bool is_base,
+        ulam::Ref<ulam::Class> outer);
 
     void write_obj_parent_members(
         std::ostream& os,
         ulam::Ref<ulam::Class> cls,
         const ulam::RValue& obj,
         bool in_main,
-        bool is_outer);
+        bool is_outer,
+        ulam::Ref<ulam::Class> outer);
 
     void write_class_type_defs(std::ostream& os, ulam::Ref<ulam::Class> cls);
 
@@ -69,7 +71,8 @@ private:
         ulam::Ref<ulam::Class> cls,
         bool in_main,
         bool is_outer,
-        bool is_base);
+        bool is_base,
+        ulam::Ref<ulam::Class> outer);
 
     void write_class_const(
         std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var);
@@ -80,14 +83,16 @@ private:
         const ulam::RValue& obj,
         bool in_main,
         bool is_outer,
-        bool is_base);
+        bool is_base,
+        ulam::Ref<ulam::Class> outer);
 
     void write_obj_prop(
         std::ostream& os,
         Stringifier& stringifier,
         ulam::Ref<ulam::Prop> prop,
         const ulam::RValue& obj,
-        bool in_main);
+        bool in_main,
+        ulam::Ref<ulam::Class> outer);
 
     ulam::Ref<ulam::Program> program();
 
