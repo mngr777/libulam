@@ -134,7 +134,9 @@ TypedValue BitsType::binary_op(
         auto& r_bits = r_rval.get<Bits>();
         bool is_equal = (l_bits == r_bits);
         bool val = (is_equal == (op == Op::Equal));
-        return {boolean, Value{boolean->construct(val)}};
+        auto rval = boolean->construct(val);
+        rval.set_is_consteval(is_consteval);
+        return {boolean, Value{std::move(rval)}};
     }
     case Op::AssignShiftLeft: {
         if (is_unknown)
