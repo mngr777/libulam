@@ -107,7 +107,7 @@ std::string Stringifier::stringify_class_hex_str(
 std::string Stringifier::stringify_class_map(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
     std::string str;
-    for (auto prop : cls->props()) {
+    for (auto prop : cls->all_props()) {
         auto lval = rval.prop(prop);
         lval.with_rvalue([&](const auto& prop_rval) {
             if (!str.empty())

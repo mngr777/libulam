@@ -111,7 +111,7 @@ bool Class::init(sema::Resolver& resolver) {
         set_state(Initializing);
     }
 
-    bool ok = resolve_params(resolver) && init_ancestors(resolver, false);
+    bool ok = resolve_params(resolver) && init_ancestors(resolver);
     set_state(ok ? Initialized : Unresolvable);
     return ok;
 }
@@ -129,6 +129,9 @@ Class::init_type_def(sema::Resolver& resolver, str_id_t name_id) {
 }
 
 bool Class::resolve(sema::Resolver& resolver) {
+    if (!resolver.init(this))
+        return false;
+
     switch (state()) {
     case Resolved:
         return true;
@@ -142,8 +145,8 @@ bool Class::resolve(sema::Resolver& resolver) {
         set_state(Resolving);
     }
 
-    bool ok = resolve_params(resolver) && init_ancestors(resolver, true) &&
-              resolve_props(resolver) && resolve_funs(resolver);
+    bool ok = resolve_ancestors(resolver) && resolve_props(resolver) &&
+              resolve_funs(resolver);
     set_state(ok ? Resolved : Unresolvable);
 
     if (ok) {
@@ -570,13 +573,12 @@ bool Class::resolve_params(sema::Resolver& resolver) {
     return true;
 }
 
-bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
+bool Class::init_ancestors(sema::Resolver& resolver) {
     if (node()->has_ancestors()) {
         for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
             auto cls_name = node()->ancestors()->get(n);
-            // TODO: check if element's ancestor is element or transient etc.
             auto cls =
-                resolver.resolve_class_name(cls_name, param_scope(), resolve);
+                resolver.resolve_class_name(cls_name, param_scope(), false);
             if (!cls)
                 return false;
             add_ancestor(cls, cls_name);
@@ -585,8 +587,9 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
 
     // add inherited properties
     // parents first
-    for (auto parent : parents()) {
-        for (auto prop : parent->cls()->props())
+    for (auto anc : parents()) {
+        assert(anc->is_parent());
+        for (auto prop : anc->cls()->props())
             _all_props.push_back(prop);
     }
     // grandparents
@@ -605,17 +608,21 @@ bool Class::init_ancestors(sema::Resolver& resolver, bool resolve) {
             auto type = sym->get<UserType>();
             if (type->is_class()) {
                 auto cls = type->as_class();
-                if (cls != this) {
+                if (cls != this)
                     add_ancestor(cls, {});
-                    if (resolve)
-                        resolver.resolve(cls);
-                }
             }
         }
     }
 
-    if (resolve)
-        _ancestry.init();
+    return true;
+}
+
+bool Class::resolve_ancestors(sema::Resolver& resolver) {
+    for (auto anc : ancestors()) {
+        if (!resolver.resolve(anc->cls()))
+            return false;
+    }
+    _ancestry.init();
     return true;
 }
 
