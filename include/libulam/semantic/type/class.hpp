@@ -150,7 +150,8 @@ private:
     elt_id_t read_element_id(const BitsView data, bitsize_t off = 0);
 
     bool resolve_params(sema::Resolver& resolver);
-    bool init_ancestors(sema::Resolver& resolver, bool resolve);
+    bool init_ancestors(sema::Resolver& resolver);
+    bool resolve_ancestors(sema::Resolver& resolver);
     bool resolve_props(sema::Resolver& resolver);
     bool resolve_funs(sema::Resolver& resolver);
     void init_default_data(sema::Resolver& resolver);
