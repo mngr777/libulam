@@ -1110,6 +1110,8 @@ ExprRes EvalExprVisitor::class_const_access(
     Ref<ast::ClassConstAccess> node, Ref<Var> var) {
     assert(var->has_cls());
     assert(var->is_const());
+    if (!var->has_type() && !eval().resolver(true, flags())->resolve(var))
+        return {ExprError::UnresolvableVar};
     LValue lval{var};
     lval.set_is_xvalue(false);
     lval.set_scope_lvl(NoScopeLvl);
