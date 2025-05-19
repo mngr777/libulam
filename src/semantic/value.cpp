@@ -125,6 +125,11 @@ LValue LValue::array_access(array_idx_t idx, bool is_consteval_idx) {
     return lval;
 }
 
+const LValue
+LValue::array_access(array_idx_t idx, bool is_consteval_idx) const {
+    return const_cast<LValue*>(this)->array_access(idx, is_consteval_idx);
+}
+
 LValue LValue::prop(Ref<Prop> prop) {
     auto data = data_view();
     if (!data)
@@ -235,6 +240,11 @@ LValue RValue::array_access(array_idx_t idx, bool is_consteval_idx) {
         [&](auto& other) -> LValue { assert(false); });
 }
 
+const LValue
+RValue::array_access(array_idx_t idx, bool is_consteval_idx) const {
+    return const_cast<RValue*>(this)->array_access(idx, is_consteval_idx);
+}
+
 LValue RValue::prop(Ref<Prop> prop) {
     return accept(
         [&](DataPtr data) {
@@ -310,6 +320,10 @@ Value Value::array_access(array_idx_t idx, bool is_consteval_idx) {
     return accept([&](auto& val) {
         return Value{val.array_access(idx, is_consteval_idx)};
     });
+}
+
+const Value Value::array_access(array_idx_t idx, bool is_consteval_idx) const {
+    return const_cast<Value*>(this)->array_access(idx, is_consteval_idx);
 }
 
 Value Value::prop(Ref<Prop> prop) {
