@@ -5,7 +5,6 @@
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
-#include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -151,7 +150,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
 
     switch (ulam::ops::kind(op)) {
     case ulam::ops::Kind::Assign:
-        if (r_type != l_type)
+        if (r_type != l_type && !right.value().is_consteval())
             exp::add_cast(right);
         break;
     case ulam::ops::Kind::Equality:

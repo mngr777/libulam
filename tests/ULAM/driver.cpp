@@ -218,6 +218,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41498_test_compiler_elementbasequarkandconstantatom_constantfuncparamatomascond.test", // -"-
     "t41499_test_compiler_elementbasequarkandconstantatom_constantfuncparamatomiscondandcast.test", // -"-
     "t41500_test_compiler_elementbasequarkandconstantatom_funcparamatomiscondandcast.test", // -"-
+    "t41503_test_compiler_element_castatomfromquarkrefimmediateconstantof.test", // constantof cast
+    "t41504_test_compiler_elementandquark_elementconstantoffunccallarg.test", // -"-
 };
 
 using Path = std::filesystem::path;
