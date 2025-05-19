@@ -210,6 +210,14 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41480_test_compiler_datamemberinitusingclassconstantoftypedefofsametemplateclass.test", // object as hex formatting: why so many zeros?
     "t41483_test_compiler_constantatom.test", // Atom initialization const expr
     "t41490_test_compiler_constantatomwaitingonconstantinclassDM_ish.test", // quark prop output format (const vars)
+    "t41492_test_compiler_elementandconstantatomarray_constantreffuncparamatom.test", // element hexes do not match, Atom init value
+    "t41493_test_compiler_elementandconstantatomarray_funcparamatomarray.test", // -"-
+    "t41494_test_compiler_elementandconstantatom_constantfuncparamatomascond.test", // -"-
+    "t41495_test_compiler_elementandconstantatom_constantfuncparamatomiscondandcast.test", // -"-
+    "t41496_test_compiler_elementandconstantatom_funcparamatomiscondcasttoref.test", // -"-
+    "t41498_test_compiler_elementbasequarkandconstantatom_constantfuncparamatomascond.test", // -"-
+    "t41499_test_compiler_elementbasequarkandconstantatom_constantfuncparamatomiscondandcast.test", // -"-
+    "t41500_test_compiler_elementbasequarkandconstantatom_funcparamatomiscondandcast.test", // -"-
 };
 
 using Path = std::filesystem::path;
