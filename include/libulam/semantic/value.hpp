@@ -63,7 +63,8 @@ public:
     LValue as(Ref<Type> type);
     LValue atom_of();
 
-    LValue array_access(array_idx_t idx, bool is_consteval_idx);
+    LValue array_access(array_idx_t idx, bool is_consteval_idx = true);
+    const LValue array_access(array_idx_t idx, bool is_consteval_idx = true) const;
 
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
@@ -117,6 +118,7 @@ public:
     LValue atom_of();
 
     LValue array_access(array_idx_t idx, bool is_consteval_idx);
+    const LValue array_access(array_idx_t idx, bool is_consteval_idx) const;
 
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
@@ -167,7 +169,9 @@ public:
 
     bitsize_t position_of();
 
-    Value array_access(array_idx_t idx, bool is_consteval_idx);
+    Value array_access(array_idx_t idx, bool is_consteval_idx = true);
+    const Value
+    array_access(array_idx_t idx, bool is_consteval_idx = true) const;
 
     Value prop(Ref<Prop> prop);
     const Value prop(Ref<Prop> prop) const;

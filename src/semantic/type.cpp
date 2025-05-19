@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -462,7 +463,8 @@ TypedValue ArrayType::type_op(TypeOp op) {
     }
 }
 
-bool ArrayType::is_castable_to(Ref<const Type> type, bool expl) const {
+bool ArrayType::is_castable_to(
+    Ref<const Type> type, const Value& val, bool expl) const {
     assert(!is_same(type));
     if (!type->is_array())
         return false;
@@ -472,7 +474,7 @@ bool ArrayType::is_castable_to(Ref<const Type> type, bool expl) const {
         return false;
 
     assert(!array_type->item_type()->is_same(item_type()));
-    return item_type()->is_castable_to(array_type->item_type(), expl);
+    return (item_type()->is_castable_to(array_type->item_type(), expl));
 }
 
 Value ArrayType::cast_to(Ref<Type> type, Value&& val) {

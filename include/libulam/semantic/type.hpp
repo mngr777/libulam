@@ -326,7 +326,7 @@ public:
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }
 
-    bool is_castable_to(Ref<const Type> type, bool expl = true) const override;
+    bool is_castable_to(Ref<const Type> type, const Value& val, bool expl = true) const override;
 
     Value cast_to(Ref<Type> type, Value&& val) override;
 
