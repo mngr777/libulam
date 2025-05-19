@@ -11,12 +11,7 @@ constexpr char Parameter[] = "parameter";
 constexpr char Holder[] = "holder";
 constexpr char Unresolved[] = "unresolved";
 
-enum ValueType {
-    NoValueType,
-    ScalarValue,
-    ObjValue,
-    ObjMapValue
-};
+enum ValueType { NoValueType, ScalarValue, ObjValue, ObjMapValue };
 
 } // namespace
 
@@ -239,8 +234,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
         } else if (
             at(Constant) || at(Parameter) ||
-            (at_upper() && !at("Atom,") && !at("Atom)") && !at("HexU64") &&
-             !at("UNINITIALIZED_STRING"))) {
+            (at_upper() && !at("Atom,") && !at("Atom)") && !at("Atom;") &&
+             !at("HexU64") && !at("UNINITIALIZED_STRING"))) {
             // constant/property
             if (val_type == ScalarValue) {
                 assert(is_array);
