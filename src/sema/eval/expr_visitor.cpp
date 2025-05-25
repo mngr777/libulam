@@ -923,6 +923,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
         break;
     case TypeOp::ClassIdOf:
     case TypeOp::InstanceOf:
+    case TypeOp::ConstantOf:
         // NOTE: self has known type at compile time
         is_consteval = arg.value().is_consteval() || arg.is_self();
         use_dyn_type = true;
@@ -936,8 +937,10 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 
     // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
     if (use_dyn_type) {
-        if (type->is_object() && !val.empty())
-            type = val.dyn_obj_type();
+        if (type->is_object() && !val.empty()) {
+            // using "real" type, implied by usage of `super.contstantof` in t41506
+            type = val.dyn_obj_type(true);
+        }
     }
 
     auto tv = type->type_op(node->op(), val);
