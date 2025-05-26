@@ -252,6 +252,7 @@ void Compiler::write_obj_props(
     stringifier.options.use_unsigned_suffix_zero =
         in_main || cls->is_transient() || cls->is_quark();
     stringifier.options.bits_use_unsigned_suffix = cls->is_transient();
+    stringifier.options.hex_u64_zero_as_int = cls->is_transient();
     stringifier.options.bits_32_as_signed_int = in_main;
     stringifier.options.class_params_as_consts = in_main;
 

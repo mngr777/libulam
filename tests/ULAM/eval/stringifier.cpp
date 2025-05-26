@@ -191,6 +191,8 @@ std::string
 Stringifier::int_to_str(ulam::Integer val, ulam::bitsize_t size) const {
     std::ostringstream ss;
     if (size > 32) {
+        if (val == 0 && options.hex_u64_zero_as_int)
+            return "0";
         std::uint32_t hi = val >> 32;
         std::uint32_t lo = (val << 32) >> 32;
         ss << "HexU64(" << std::hex << "0x" << hi << ", 0x" << lo << ")";
@@ -204,6 +206,8 @@ std::string
 Stringifier::unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const {
     std::ostringstream ss;
     if (size > 32) {
+        if (val == 0 && options.hex_u64_zero_as_int)
+            return "0";
         std::uint32_t hi = val >> 32;
         std::uint32_t lo = (val << 32) >> 32;
         ss << "HexU64(" << std::hex << "0x" << hi << ", 0x" << lo << ")";
