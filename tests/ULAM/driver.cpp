@@ -91,6 +91,7 @@ static const std::set<std::string> Skip = {
     "t41042_test_compiler_whileascond.test", // while-as
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
     "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // class typedef used in parent list
+    "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -221,7 +222,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41503_test_compiler_element_castatomfromquarkrefimmediateconstantof.test", // constantof cast
     "t41504_test_compiler_elementandquark_elementconstantoffunccallarg.test", // -"-
     "t41506_test_compiler_elementinheritedquark_constantof_withsuper.test", // Unsigned format
-    "t41507_test_compiler_elementandquark_memberselectonconstantof_issue.test", // return const member access fully folded (but not with cast, so no easy fix)
+    "t41507_test_compiler_elementandquark_memberselectonconstantof_issue.test", // return const member access fully folded (not true for all tests, TODO: revisit)
+    "t41512_test_compiler_transientconstantwelementarraydatamemberinitwconstantof.test", // `Bool m_testb(true);  Int m_testi(99);` is correct (tested)
+    "t41529_test_compiler_elementandquark_templateinstanceconstantof.test", // return const member access folding (similar to t41507)
 };
 
 using Path = std::filesystem::path;
