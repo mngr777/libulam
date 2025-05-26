@@ -127,6 +127,15 @@ void BitsView::write_right(size_t len, unit_t value) {
     data().write(_off + _len - len, len, value);
 }
 
+bool BitsView::empty() const {
+    for (unit_idx_t unit_idx = 0; unit_idx < _len / UnitSize; ++unit_idx) {
+        size_t idx = unit_idx * UnitSize;
+        if (read(idx, UnitSize) != 0)
+            return false;
+    }
+    return true;
+}
+
 Bits BitsView::copy() const {
     Bits bv{len()};
     for (size_t off = 0; off < len(); off += UnitSize) {
@@ -320,6 +329,16 @@ void Bits::write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
     const size_t shift = UnitSize - (start + len);
     const unit_t mask = make_mask(len, shift);
     _bits[unit_idx] = (_bits[unit_idx] & ~mask) | (value << shift);
+}
+
+bool Bits::empty() const {
+    for (unit_idx_t unit_idx = 0; unit_idx < _bits.size(); ++unit_idx) {
+        unit_t unit = _bits[unit_idx];
+        assert(unit_idx + 1 < unit_idx || (unit & last_unit_mask()) == unit);
+        if (unit != 0)
+            return false;
+    }
+    return true;
 }
 
 void Bits::flip() {

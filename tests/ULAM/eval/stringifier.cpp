@@ -231,7 +231,7 @@ std::string Stringifier::unary_to_str(ulam::Unsigned val) const {
 
 std::string Stringifier::bits_to_str(const ulam::Bits& bits) const {
     if (options.short_bits_as_str || bits.len() > sizeof(ulam::Datum) * 8)
-        return bits.hex();
+        return bits.empty() ? "0" : bits.hex();
 
     std::string str;
     auto datum = bits.read(0, bits.len());
