@@ -107,11 +107,11 @@ void EvalVisitor::visit(Ref<ast::IfAs> node) {
 
     Ptr<ast::VarDef> def{};
     if (!res.value().empty()) {
-        if (res.type()->deref()->is_impl_refable_as(type, res.value())) {
-            auto scope_raii =
-                _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
-            auto [var_def, var] =
-                define_as_cond_var(node, std::move(res), type, scope());
+        auto dyn_type = res.value().dyn_obj_type(true);
+        bool is_match = dyn_type->is_impl_refable_as(type, res.value());
+        if (is_match) {
+            auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
+            auto [var_def, var] = define_as_cond_var(node, std::move(res), type, scope());
             node->if_branch()->accept(*this);
             return;
         }
