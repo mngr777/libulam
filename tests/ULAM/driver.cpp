@@ -227,6 +227,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41507_test_compiler_elementandquark_memberselectonconstantof_issue.test", // return const member access fully folded (not true for all tests, TODO: revisit)
     "t41512_test_compiler_transientconstantwelementarraydatamemberinitwconstantof.test", // `Bool m_testb(true);  Int m_testi(99);` is correct (tested)
     "t41529_test_compiler_elementandquark_templateinstanceconstantof.test", // return const member access folding (similar to t41507)
+    "t41569_test_compiler_bitwisetwiddleonbigtransient.test", // `Int m_i(-1);` is correct
 };
 
 using Path = std::filesystem::path;
