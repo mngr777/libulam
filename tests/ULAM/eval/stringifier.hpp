@@ -28,6 +28,7 @@ public:
         bool use_unsigned_suffix_zero_force = false;
         bool bool_as_unsigned_lit = false;
         bool use_unsigned_suffix = true;
+        bool hex_u64_zero_as_int = false;
         bool unary_no_unsigned_suffix = false;
         bool bits_use_unsigned_suffix = true;
         bool short_bits_as_str = false;
