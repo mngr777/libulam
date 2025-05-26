@@ -94,6 +94,7 @@ static const std::set<std::string> Skip = {
     "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
     "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
     "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
+    "t41591_test_compiler_transientwithatomarraydmassignedatomarrayitem.test", // EventWindow.aref is native, so mAtoo[0] is initialized to empty Atom (not Empty atom!)
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
