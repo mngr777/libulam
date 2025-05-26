@@ -48,6 +48,7 @@ public:
     void write_right(size_t len, unit_t value);
 
     size_t len() const { return _len; }
+    bool empty() const;
 
     Bits copy() const;
 
@@ -116,6 +117,7 @@ public:
     void write_right(size_t len, unit_t value);
 
     size_t len() const { return _len; }
+    bool empty() const;
 
     void flip();
 
