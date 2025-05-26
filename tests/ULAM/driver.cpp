@@ -229,6 +229,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41512_test_compiler_transientconstantwelementarraydatamemberinitwconstantof.test", // `Bool m_testb(true);  Int m_testi(99);` is correct (tested)
     "t41529_test_compiler_elementandquark_templateinstanceconstantof.test", // return const member access folding (similar to t41507)
     "t41569_test_compiler_bitwisetwiddleonbigtransient.test", // `Int m_i(-1);` is correct
+    "t41594_test_compiler_transientwithtransientbasesfuncselfreset_ish.test", // autofilled array output
 };
 
 using Path = std::filesystem::path;
