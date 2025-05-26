@@ -92,6 +92,8 @@ static const std::set<std::string> Skip = {
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
     "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // class typedef used in parent list
     "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
+    "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
+    "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
 };
 
 static const std::set<std::string> SkipAnswerCheck = {

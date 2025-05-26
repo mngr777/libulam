@@ -1,3 +1,4 @@
+#include "libulam/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/atom.hpp>
@@ -146,26 +147,45 @@ TypedValue BitsType::binary_op(
         return {this, Value{RValue{std::move(bits), is_consteval}}};
     }
     case Op::ShiftLeft: {
-        bitsize_t max_size = 32;
-        if (bitsize() > max_size)
-            max_size = (bitsize() > 64) ? MaxSize : 64;
-        bitsize_t size = max_size;
+        auto res_bitsize = [&](bitsize_t size, bitsize_t shift) -> bitsize_t {
+            if (shift == 0)
+                return size;
+            // NOTE: not exactly how it works in ULAM
+            if (size > 64)
+                return size + shift;
+            if (size > 32)
+                return 64;
+            return 32;
+        };
 
-        Unsigned shift = 0;
-        if (!r_rval.empty()) {
-            shift = r_rval.get<Unsigned>();
-            size = std::min<bitsize_t>(bitsize() + shift, max_size);
+        bitsize_t size = bitsize();
+        if (!l_rval.empty() && l_rval.is_consteval() && size <= 64) {
+            // const value, bitsize <= 64, can we use less bits?
+            const Bits& bits = l_rval.get<Bits>();
+            size = std::min(
+                size, detail::bitsize((Unsigned)bits.read(0, bits.len())));
         }
-        auto type = builtins().bits_type(size);
-        if (is_unknown)
-            return {type, Value{RValue{}}};
-        if (shift == 0)
-            return {type, Value{std::move(l_rval)}};
 
-        auto rval = type->construct();
-        auto& bits = rval.get<Bits>();
-        bits |= l_rval.get<Bits>();
+        if (is_unknown) {
+            // assume 1-bit shift if unknown or not consteval
+            bitsize_t shift = (!r_rval.empty() && r_rval.is_consteval())
+                                  ? r_rval.get<Unsigned>()
+                                  : 1;
+            return {tpl()->type(res_bitsize(size, shift)), Value{RValue{}}};
+        }
+
+        bitsize_t shift = r_rval.get<Unsigned>();
+        auto type = builtins().bits_type(res_bitsize(size, shift));
+
+        Bits bits = std::move(l_rval.get<Bits>());
+        if (type->bitsize() != bits.len()) {
+            Bits tmp_bits{type->bitsize()};
+            tmp_bits |= bits;
+            std::swap(tmp_bits, bits);
+        }
+        assert(bits.len() == type->bitsize());
         bits <<= shift;
+        auto rval = type->construct(std::move(bits));
         rval.set_is_consteval(is_consteval);
         return {type, Value{std::move(rval)}};
     }
@@ -238,6 +258,25 @@ bool BitsType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     default:
         assert(false);
     }
+}
+
+bool BitsType::is_impl_castable_to_prim(
+    Ref<const PrimType> type, const Value& val) const {
+    if (!type->is(BitsId))
+        return is_castable_to_prim(type, false);
+    assert(type->bitsize() != bitsize());
+    if (type->bitsize() < bitsize())
+        return true;
+    if (!val.has_rvalue() || type->bitsize() > 64)
+        return false;
+
+    bool is_castable{};
+    val.with_rvalue([&](const RValue& rval) {
+        const Bits& bits = rval.get<Bits>();
+        bitsize_t size = detail::bitsize((Unsigned)bits.read(0, bits.len()));
+        is_castable =  size <= bitsize();
+    });
+    return is_castable;
 }
 
 TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {

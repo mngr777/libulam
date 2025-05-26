@@ -47,9 +47,14 @@ public:
         RValue&& r_rval) override;
 
 protected:
+    using PrimType::is_impl_castable_to_prim;
+
     bool is_castable_to_prim(
         Ref<const PrimType> type, bool expl = true) const override;
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
+
+    bool
+    is_impl_castable_to_prim(Ref<const PrimType> type, const Value& val) const override;
 
     TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
     RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) override;
