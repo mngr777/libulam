@@ -30,6 +30,18 @@ const Value& Var::value() const { return _value; }
 
 void Var::set_value(Value&& value) { std::swap(_value, value); }
 
+void Var::set_rvalue(RValue&& rval) {
+    if (_value.is_lvalue())
+        _value.lvalue().assign(std::move(rval));
+
+    auto data = data_view();
+    if (data) {
+        data.store(std::move(rval));
+    } else {
+        _value = Value{std::move(rval)};
+    }
+}
+
 DataView Var::data_view() {
     if (_value.is_lvalue())
         return _value.lvalue().data_view(); // ??
