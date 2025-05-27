@@ -232,6 +232,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41594_test_compiler_transientwithtransientbasesfuncselfreset_ish.test", // autofilled array output
     "t41595_test_compiler_elementwithbasesfuncselfreset.test", // -"-
     "t41596_test_compiler_quarkwithbasesfuncselfreset.test", // -"-
+    "t41599_test_compiler_reftobaseclassdmposoffbyone_ish.test", // output format
+    "t41600_test_compiler_twoelementswithsame64bitquarkbase_ish.test", // autofilled array output
+    "t41601_test_compiler_twoelementswithsame64bitquarkbase_variation.test", // -"-
 };
 
 using Path = std::filesystem::path;
