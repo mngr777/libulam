@@ -438,15 +438,13 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
     assert(type->is_class());
     auto cls = type->as_class();
 
-    // downcast
-    if (cls->is_base_of(this))
-        return Value{std::move(rval)};
-
-    // upcast
-    assert(is_base_of(cls));
+    // upcast/downcast
+    assert(is_base_of(cls) || cls->is_base_of(this));
     auto new_rval = cls->construct();
     auto new_obj = new_rval.get<DataPtr>();
-    for (auto prop : all_props())
+    auto props = is_base_of(cls) ? all_props()       // upcast
+                                 : cls->all_props(); // downcast
+    for (auto prop : props)
         prop->store(new_obj, prop->load(obj));
     new_rval.set_is_consteval(is_consteval);
     return Value{std::move(new_rval)};
