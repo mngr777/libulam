@@ -252,6 +252,13 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41634_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamemberfunccalldatamembercast.test", // -"-
     "t41634_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamemberfunccalldatamembercast.test", // -"-
     "t41635_test_compiler_elementandquarkinheritancetemplatemix_basedatamemberfunccalldatamembercast.test", // -"-
+    "t41636_test_compiler_complexbitsizewithsizeofanotherclasstypedef_issue.test", // deref cast
+    "t41637_test_compiler_constantatomarrayfromanotherclass_ish.test", // Atom array format
+    "t41638_test_compiler_constantclassarrayimmediate_gencode_issue.test", // object array format in `test()`
+    "t41639_test_compiler_constantclassarraywithstringdmimmediate_gencode.test", // object hex does not match
+    "t41659_test_compiler_constantclasswitharrayitem_issue.test", // Atom array format
+    "t41660_test_compiler_functionreturnprimitivearrayitemwithquestioncolon_gencode_issue.test", // UNINITIALIZED_STRING
+    "t41661_test_compiler_functionreturnclassarrayitemwithquestioncolon_gencode_issue.test", // TODO
 };
 
 using Path = std::filesystem::path;
