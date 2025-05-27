@@ -26,6 +26,7 @@ public:
         bool unary_as_unsigned_lit = false;
         bool use_unsigned_suffix_zero = true;
         bool use_unsigned_suffix_zero_force = false;
+        bool use_unsigned_suffix_31bit = true;
         bool bool_as_unsigned_lit = false;
         bool use_unsigned_suffix = true;
         bool hex_u64_zero_as_int = false;

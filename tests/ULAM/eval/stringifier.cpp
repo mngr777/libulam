@@ -216,7 +216,9 @@ Stringifier::unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const {
         bool is_zero = val == 0;
         bool add_suffix = false;
         if (options.use_unsigned_suffix)
-            add_suffix = (!is_zero || options.use_unsigned_suffix_zero);
+            add_suffix = (!is_zero || options.use_unsigned_suffix_zero) &&
+                         (options.use_unsigned_suffix_31bit ||
+                          val < ulam::detail::unsigned_max(30));
         if (!add_suffix)
             add_suffix = (is_zero && options.use_unsigned_suffix_zero_force);
         if (add_suffix)

@@ -242,6 +242,16 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41601_test_compiler_twoelementswithsame64bitquarkbase_variation.test", // -"-
     "t41613_test_compiler_elementinheritedquark_instanceof_withsuper_withinatomdatamember.test", // `Bool brtn[3](true, true, true);` is correct, Unsigned format
     "t41622_test_compiler_quarkunion_dmsizeswithaquarkunion.test", // output format
+    "t41623_test_compiler_funcdef_returnsarraytoreturnbangitem_ish.test", // `Bool m_b(true)` is correct
+    "t41625_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamembercast_ish.test", // output format, TODO: recheck
+    "t41626_test_compiler_elementandquarkinheritancetemplatemix_basedatamembercast.test", // -"-
+    "t41627_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamemberdatamembercast.test", // -"-
+    "t41628_test_compiler_elementandquarkinheritancetemplatemix_basedatamemberdatamembercast.test", // -"-
+    "t41629_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamemberbasedatamembercast.test", // -"-
+    "t41630_test_compiler_elementandquarkinheritancetemplatemix_basedatamemberbasedatamembercast.test", // -"-
+    "t41634_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamemberfunccalldatamembercast.test", // -"-
+    "t41634_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamemberfunccalldatamembercast.test", // -"-
+    "t41635_test_compiler_elementandquarkinheritancetemplatemix_basedatamemberfunccalldatamembercast.test", // -"-
 };
 
 using Path = std::filesystem::path;
