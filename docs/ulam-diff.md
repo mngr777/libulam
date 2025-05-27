@@ -31,25 +31,9 @@ quark A(Int cP = cR, Int cR = 1) {}
 quark A{Int cR = 1, Int cP = cR} {}
 ```
 
-## Quarks are not directly convertible to Atoms
-```
-quark C { Int c; }
-
-element B : C {
-  Void test() {
-    C b;
-    B& c = (C&)b;
-
-    // illegal conversions
-    Atom a = c;
-    Atom& aref = c;
-
-    // fix
-    Atom a = (A)c;
-    Atom& aref = (A&)c;
-  }
-}
-```
+## Misc
+* `&&` has higher priority than `||` (same priority in ULAM: `true || false && false` is `false`)
+* `p ? a : b = c` is parsed as `p ? a : (b = c)`, not `(p ? a : b) = c`
 
 ## Status of misc. additional features
 
