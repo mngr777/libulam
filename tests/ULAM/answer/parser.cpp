@@ -234,7 +234,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
         } else if (
             at(Constant) || at(Parameter) ||
-            (at_upper() && !at("Atom,") && !at("Atom)") && !at("Atom;") &&
+            (at_upper() && !at("Atom }") && !at("Atom,") && !at("Atom)") && !at("Atom;") &&
              !at("HexU64") && !at("UNINITIALIZED_STRING"))) {
             // constant/property
             if (val_type == ScalarValue) {
