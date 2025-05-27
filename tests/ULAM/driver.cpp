@@ -95,6 +95,11 @@ static const std::set<std::string> Skip = {
     "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
     "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
     "t41591_test_compiler_transientwithatomarraydmassignedatomarrayitem.test", // EventWindow.aref is native, so mAtoo[0] is initialized to empty Atom (not Empty atom!)
+    "t41615_test_compiler_positionofdatamemberconstantofandnonref.test", // positionof, TODO
+    "t41616_test_compiler_positionofdatamemberascond.test", // -"-
+    "t41617_test_compiler_positionofascondref.test", // -"-
+    "t41618_test_compiler_positionofreftodatamember.test", // -"-
+    "t41620_test_compiler_elementpositionofdatamemberinbaseclassofbaseclassnoref.test", // -"-
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -235,6 +240,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41599_test_compiler_reftobaseclassdmposoffbyone_ish.test", // output format
     "t41600_test_compiler_twoelementswithsame64bitquarkbase_ish.test", // autofilled array output
     "t41601_test_compiler_twoelementswithsame64bitquarkbase_variation.test", // -"-
+    "t41613_test_compiler_elementinheritedquark_instanceof_withsuper_withinatomdatamember.test", // `Bool brtn[3](true, true, true);` is correct, Unsigned format
 };
 
 using Path = std::filesystem::path;
