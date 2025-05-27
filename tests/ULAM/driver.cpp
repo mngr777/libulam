@@ -241,6 +241,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41600_test_compiler_twoelementswithsame64bitquarkbase_ish.test", // autofilled array output
     "t41601_test_compiler_twoelementswithsame64bitquarkbase_variation.test", // -"-
     "t41613_test_compiler_elementinheritedquark_instanceof_withsuper_withinatomdatamember.test", // `Bool brtn[3](true, true, true);` is correct, Unsigned format
+    "t41622_test_compiler_quarkunion_dmsizeswithaquarkunion.test", // output format
 };
 
 using Path = std::filesystem::path;
