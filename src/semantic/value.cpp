@@ -148,7 +148,7 @@ LValue LValue::bound_fset(Ref<FunSet> fset, Ref<Class> base) {
 Value LValue::assign(RValue&& rval) {
     return accept(
         [&](Ref<Var> var) {
-            var->set_value(Value{std::move(rval)});
+            var->set_rvalue(std::move(rval));
             return Value{derived(var->lvalue())};
         },
         [&](DataView& data) {

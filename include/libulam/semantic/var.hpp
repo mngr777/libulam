@@ -34,6 +34,8 @@ public:
     const Value& value() const;
     void set_value(Value&& value);
 
+    void set_rvalue(RValue&& rval);
+
     DataView data_view();
 
     LValue lvalue();
