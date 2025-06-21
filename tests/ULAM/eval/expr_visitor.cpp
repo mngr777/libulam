@@ -334,8 +334,7 @@ ExprRes EvalExprVisitor::type_op_default(
             exp::set_data(res, stringifier.stringify(res.type(), rval));
         });
     } else {
-        bool is_self = node->type_name()->is_self();
-        exp::append(res, is_self ? "Self" : out::type_str(stringifier, type));
+        exp::append(res, out::type_str(stringifier, type));
         exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
     }
     return res;

@@ -16,7 +16,6 @@ static const std::set<std::string> Skip = {
     "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
     "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
     "t3504_test_compiler_arraywithconstantindex.test", // constant used before definition
-    // "t3675_test_compiler_elementandquark_Selfatomoffordefaultelement.test", // quark self to Atoms
     "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
     "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
