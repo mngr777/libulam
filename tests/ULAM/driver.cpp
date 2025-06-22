@@ -16,7 +16,6 @@ static const std::set<std::string> Skip = {
     "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
     "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
     "t3504_test_compiler_arraywithconstantindex.test", // constant used before definition
-    "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // quark to Atom via super.instanceof ??
     "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
@@ -102,6 +101,7 @@ static const std::set<std::string> Skip = {
 
 static const std::set<std::string> SkipAnswerCheck = {
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
+    "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // "u" suffix
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
     "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
     "t3652_test_compiler_elementandquarksinherited_unseentypedef_unaryclassarg_ish.test", // classid of non-const expr
