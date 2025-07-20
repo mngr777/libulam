@@ -7,6 +7,7 @@
 #include "./funcall.hpp"
 #include "./init.hpp"
 #include "libulam/ast/nodes/stmts.hpp"
+#include "libulam/semantic/scope.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <libulam/sema/eval/except.hpp>
 #include <list>
@@ -109,73 +110,25 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     block_open();
 
     // cond
-    auto cond_res = eval_expr(node->cond());
-    append(exp::data(cond_res));
-    append("cond");
-
-    // if-branch
-    node->if_branch()->accept(*this);
-    append("if");
-
-    // else-branch
-    if (node->has_else_branch()) {
-        node->else_branch()->accept(*this);
-        append("else");
-    }
-
-    block_close();
-}
-
-void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
-    if (!codegen_enabled()) {
-        Base::visit(node);
-        return;
-    }
-
-    auto stringifier = make_stringifier();
-    block_open();
-
-    // ident and type
-    auto res = eval_as_cond_ident(node);
-    auto type = resolve_as_cond_type(node);
-    assert(!type->is_ref());
-    append(exp::data(res));
-    append(out::type_str(stringifier, type, false));
-    append("as");
-    append("cond");
-
-    // make tmp var
     {
-        ulam::Ptr<ulam::ast::VarDef> def{};
-        auto scope_raii =
-            _scope_stack.raii<ulam::BasicScope>(scope(), ulam::scp::NoFlags);
-        if (!res.value().empty()) {
-            auto dyn_type = res.value().dyn_obj_type();
-            if (!dyn_type->is_same(type) &&
-                !dyn_type->is_impl_castable_to(type))
-                res = {type, ulam::Value{ulam::LValue{}}};
-        }
-        auto [var_def, var] =
-            define_as_cond_var(node, std::move(res), type, scope());
-
-        // add tmp variable def
-        if (node->ident()->is_self()) {
-            set_next_prefix(
-                " " + out::type_str(stringifier, type->ref_type()) + " self; ");
+        auto scope_raii = _scope_stack.raii<ulam::BasicScope>(scope());
+        auto cond = node->cond();
+        auto [res, ctx] = eval_cond(cond, scope());
+        if (cond->is_as_cond()) {
+            add_as_cond(cond->as_cond(), ctx.type());
         } else {
-            assert(var);
-            set_next_prefix(
-                " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
+            append(exp::data(res));
+            append("cond");
         }
 
-        // if-branch, always in {} because of tmp var def
-        bool is_block = node->if_branch()->is_block();
-        if (!is_block)
+        // if-branch
+        // for as-cond: must be a block because of tmp var def
+        bool use_block = cond->is_as_cond() && !node->if_branch()->is_block();
+        if (use_block)
             block_open();
         node->if_branch()->accept(*this);
-        if (!is_block)
+        if (use_block)
             block_close();
-
         append("if");
     }
 
@@ -187,6 +140,69 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
 
     block_close();
 }
+
+// void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
+//     if (!codegen_enabled()) {
+//         Base::visit(node);
+//         return;
+//     }
+
+//     auto stringifier = make_stringifier();
+//     block_open();
+
+//     // ident and type
+//     auto res = eval_as_cond_ident(node);
+//     auto type = resolve_as_cond_type(node);
+//     assert(!type->is_ref());
+//     append(exp::data(res));
+//     append(out::type_str(stringifier, type, false));
+//     append("as");
+//     append("cond");
+
+//     // make tmp var
+//     {
+//         ulam::Ptr<ulam::ast::VarDef> def{};
+//         auto scope_raii =
+//             _scope_stack.raii<ulam::BasicScope>(scope(), ulam::scp::NoFlags);
+//         if (!res.value().empty()) {
+//             auto dyn_type = res.value().dyn_obj_type();
+//             if (!dyn_type->is_same(type) &&
+//                 !dyn_type->is_impl_castable_to(type))
+//                 res = {type, ulam::Value{ulam::LValue{}}};
+//         }
+//         auto [var_def, var] =
+//             define_as_cond_var(node, std::move(res), type, scope());
+
+//         // add tmp variable def
+//         if (node->ident()->is_self()) {
+//             set_next_prefix(
+//                 " " + out::type_str(stringifier, type->ref_type()) + " self;
+//                 ");
+//         } else {
+//             assert(var);
+//             set_next_prefix(
+//                 " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
+//         }
+
+//         // if-branch, always in {} because of tmp var def
+//         bool is_block = node->if_branch()->is_block();
+//         if (!is_block)
+//             block_open();
+//         node->if_branch()->accept(*this);
+//         if (!is_block)
+//             block_close();
+
+//         append("if");
+//     }
+
+//     // else-branch
+//     if (node->has_else_branch()) {
+//         node->else_branch()->accept(*this);
+//         append("else");
+//     }
+
+//     block_close();
+// }
 
 void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     if (!codegen_enabled()) {
@@ -508,6 +524,19 @@ ulam::sema::ExprRes EvalVisitor::_to_boolean(
     ulam::sema::ExprRes&& res,
     ulam::sema::eval_flags_t flags_) {
     return Base::_to_boolean(expr, std::move(res), flags_ | evl::NoCodegen);
+}
+
+void EvalVisitor::add_as_cond(
+    ulam::Ref<ulam::ast::UnaryOp> as_cond, ulam::Ref<ulam::Type> type) {
+    assert(as_cond->op() == ulam::Op::As);
+    auto stringifier = make_stringifier();
+    std::string name{str(as_cond->ident()->name_id())};
+    append(name);
+    append(out::type_str(stringifier, type, false));
+    append("as");
+    append("cond");
+    set_next_prefix(
+        " " + out::type_str(stringifier, type->ref_type()) + " " + name + "; ");
 }
 
 void EvalVisitor::block_open(bool nospace) {

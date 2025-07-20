@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
+#include <libulam/ast/nodes/exprs.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/type.hpp>
 
@@ -20,10 +21,31 @@ public:
     ULAM_AST_TUPLE_PROP(expr, 0);
 };
 
-class If : public Tuple<Stmt, Expr, Stmt, Stmt> {
+class Cond : public Tuple<Stmt, Expr> {
     ULAM_AST_NODE
 public:
-    If(Ptr<Expr>&& cond, Ptr<Stmt>&& if_branch, Ptr<Stmt>&& else_branch):
+    Cond(Ptr<Expr>&& expr, Ref<UnaryOp> as_cond = {}):
+        Tuple{std::move(expr)}, _as_cond{as_cond} {
+        assert(!as_cond || as_cond->op() == Op::As);
+        assert(!as_cond || as_cond->has_ident());
+        assert(!as_cond || as_cond->has_type_name());
+    }
+
+    ULAM_AST_TUPLE_PROP(expr, 0)
+
+    bool is_as_cond() const { return _as_cond; }
+
+    Ref<UnaryOp> as_cond() { return _as_cond; }
+    Ref<const UnaryOp> as_cond() const { return _as_cond; }
+
+private:
+    Ref<UnaryOp> _as_cond{};
+};
+
+class If : public Tuple<Stmt, Cond, Stmt, Stmt> {
+    ULAM_AST_NODE
+public:
+    If(Ptr<Cond>&& cond, Ptr<Stmt>&& if_branch, Ptr<Stmt>&& else_branch):
         Tuple{std::move(cond), std::move(if_branch), std::move(else_branch)} {}
 
     ULAM_AST_TUPLE_PROP(cond, 0)
@@ -31,6 +53,7 @@ public:
     ULAM_AST_TUPLE_PROP(else_branch, 2)
 };
 
+// TODO: remove
 // if (ident as Type)
 class IfAs : public Tuple<Stmt, Ident, TypeName, Stmt, Stmt> {
     ULAM_AST_NODE

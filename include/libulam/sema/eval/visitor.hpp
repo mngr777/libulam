@@ -34,7 +34,6 @@ public:
     void visit(Ref<ast::Block> node) override;
     void visit(Ref<ast::FunDefBody>) override;
     void visit(Ref<ast::If> node) override;
-    void visit(Ref<ast::IfAs> node) override;
     void visit(Ref<ast::For> node) override;
     void visit(Ref<ast::While> node) override;
     void visit(Ref<ast::Which> node) override;
@@ -66,6 +65,27 @@ public:
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
 protected:
+    class EvalCondContext {
+    public:
+        EvalCondContext(
+            Ref<Type> type, Ptr<ast::VarDef>&& var_def, Ref<Var> var):
+            _type{type}, _var_def{std::move(var_def)}, _var{var} {}
+
+        EvalCondContext(Ref<Type> type): EvalCondContext{type, {}, {}} {}
+
+        EvalCondContext(): EvalCondContext{{}} {}
+
+        Ref<Type> type() { return _type; }
+        Ref<Var> var() { return _var; }
+
+    private:
+        Ref<Type> _type;
+        Ptr<ast::VarDef> _var_def;
+        Ref<Var> _var{};
+    };
+
+    using EvalCondRes = std::pair<ExprRes, EvalCondContext>;
+
     virtual Ptr<Resolver> _resolver(bool in_expr, eval_flags_t flags);
 
     virtual Ptr<EvalExprVisitor>
@@ -99,23 +119,32 @@ protected:
     virtual std::optional<bool>
     which_match(Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> var);
 
-    virtual ExprRes eval_as_cond_ident(Ref<ast::IfAs> node);
-    virtual Ref<Type> resolve_as_cond_type(Ref<ast::IfAs> node);
-    virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(
-        Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Scope* scope);
-
     virtual ExprRes ret_res(Ref<ast::Return> node);
 
     ExprRes eval_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
     virtual ExprRes _eval_expr(Ref<ast::Expr> expr, eval_flags_t flags);
 
-    bool eval_cond(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
-    virtual bool _eval_cond(Ref<ast::Expr> expr, eval_flags_t flags);
+    virtual EvalCondRes eval_cond(
+        Ref<ast::Cond> cond, Scope* scope, eval_flags_t flags = evl::NoFlags);
+
+    virtual EvalCondRes
+    eval_as_cond(Ref<ast::UnaryOp> as_cond, Scope* scope, eval_flags_t flags);
+
+    ExprRes
+    eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes _eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags);
+
+    virtual ExprRes eval_as_cond_ident(Ref<ast::Ident> ident);
+    virtual Ref<Type> resolve_as_cond_type(Ref<ast::TypeName> type_name);
+    virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(
+        Ref<ast::UnaryOp> node, ExprRes&& res, Ref<Type> type, Scope* scope);
 
     ExprRes to_boolean(
         Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags = evl::NoFlags);
     virtual ExprRes
     _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
+
+    bool is_true(const ExprRes& res);
 
     Scope* scope() { return _scope_stack.top(); }
 

@@ -31,8 +31,8 @@ public:
     using Symbol = SymbolTable::Symbol;
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
-    Scope() {}
-    virtual ~Scope(){};
+    Scope();
+    virtual ~Scope();
 
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;

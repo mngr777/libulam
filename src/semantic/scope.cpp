@@ -10,6 +10,10 @@ namespace ulam {
 
 // Scope
 
+Scope::Scope() {}
+
+Scope::~Scope() {}
+
 const Scope* Scope::parent(scope_flags_t flags) const {
     return const_cast<Scope*>(this)->parent(flags);
 }

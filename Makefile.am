@@ -22,6 +22,7 @@ AST_HEADER_FILES = \
 	include/libulam/ast/nodes.inc.hpp
 
 AST_SOURCE_FILES = \
+	src/ast/expr_visitor.cpp \
 	src/ast/node.cpp \
 	src/ast/nodes/root.cpp \
 	src/ast/visitor.cpp

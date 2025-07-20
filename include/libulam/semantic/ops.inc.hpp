@@ -4,6 +4,7 @@
 #endif
 
 OP("<noop>", None)
+OP("as", As)
 OP("is", Is)
 OP("++", PostInc)
 OP("--", PostDec)

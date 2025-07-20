@@ -17,6 +17,9 @@ public:
         static_assert(std::is_base_of_v<Scope, T>);
         friend ScopeStack;
 
+        Raii(const Raii&) = delete;
+        Raii& operator=(const Raii&) = delete;
+
     private:
         template <typename... Ts>
         Raii(ScopeStack& stack, Ts&&... args):

@@ -1,6 +1,7 @@
 #pragma once
 #include "./context_stack.hpp"
 #include "./stringifier.hpp"
+#include "libulam/ast/nodes/exprs.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/flags.hpp>
@@ -23,7 +24,6 @@ public:
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::If> node) override;
-    void visit(ulam::Ref<ulam::ast::IfAs> node) override;
     void visit(ulam::Ref<ulam::ast::For> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
     void visit(ulam::Ref<ulam::ast::Which> node) override;
@@ -93,6 +93,9 @@ protected:
         ulam::sema::eval_flags_t flags_) override;
 
 private:
+    void add_as_cond(
+        ulam::Ref<ulam::ast::UnaryOp> as_cond, ulam::Ref<ulam::Type> type);
+
     unsigned next_tmp_idx() { return ++_tmp_idx; }
 
     void block_open(bool nospace = false);

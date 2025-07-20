@@ -238,6 +238,8 @@ Op unary_post_op(Type type) {
         return Op::PostDec;
     case Is:
         return Op::Is;
+    case As:
+        return Op::As;
     default:
         return Op::None;
     }

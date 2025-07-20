@@ -26,8 +26,6 @@ public:
     ScopeContextProxy(PersScopeContext& ctx, Scope* parent):
         _ctx{&ctx}, _parent{parent} {}
 
-    ScopeContextProxy() {}
-
     bool has_self() const;
 
     LValue self() const;

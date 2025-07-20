@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -82,42 +83,13 @@ void EvalVisitor::visit(Ref<ast::If> node) {
     assert(node->has_cond());
     assert(node->has_if_branch());
 
-    if (eval_cond(node->cond())) {
-        // if-branch
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
+    auto cond_res = eval_cond(node->cond(), scope());
+    if (is_true(cond_res.first)) {
         node->if_branch()->accept(*this);
-    } else {
-        // else-branch
-        if (node->has_else_branch())
-            node->else_branch()->accept(*this);
-    }
-}
-
-void EvalVisitor::visit(Ref<ast::IfAs> node) {
-    debug() << __FUNCTION__ << " IfAs\n";
-    assert(node->has_ident());
-    assert(node->has_type_name());
-    assert(node->has_if_branch());
-
-    // eval ident
-    auto res = eval_as_cond_ident(node);
-
-    // resolve type
-    auto type = resolve_as_cond_type(node);
-    assert(!type->is_ref());
-
-    Ptr<ast::VarDef> def{};
-    if (!res.value().empty()) {
-        auto dyn_type = res.value().dyn_obj_type(true);
-        bool is_match = dyn_type->is_impl_refable_as(type, res.value());
-        if (is_match) {
-            auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
-            auto [var_def, var] = define_as_cond_var(node, std::move(res), type, scope());
-            node->if_branch()->accept(*this);
-            return;
-        }
-    }
-    if (node->has_else_branch())
+    } else if (node->has_else_branch()) {
         node->else_branch()->accept(*this);
+    }
 }
 
 void EvalVisitor::visit(Ref<ast::For> node) {
@@ -129,7 +101,7 @@ void EvalVisitor::visit(Ref<ast::For> node) {
     if (node->has_init())
         node->init()->accept(*this);
     unsigned loop_count = 0;
-    while (!node->has_cond() || eval_cond(node->cond())) {
+    while (!node->has_cond() || is_true(eval_cond_expr(node->cond()))) {
         if (loop_count++ == 100) // TODO: max loops option
             throw EvalExceptError("for loop limit exceeded");
 
@@ -188,9 +160,8 @@ void EvalVisitor::visit(Ref<ast::While> node) {
 
     auto scope_raii =
         _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
-
     unsigned loop_count = 0;
-    while (eval_cond(node->cond())) {
+    while (is_true(eval_cond_expr(node->cond()))) {
         if (loop_count++ == 100) // TODO: max loops option
             throw EvalExceptError("for loop limit exceeded");
 
@@ -456,58 +427,6 @@ std::optional<bool> EvalVisitor::which_match(
     return boolean->is_true(res.move_value().move_rvalue());
 }
 
-ExprRes EvalVisitor::eval_as_cond_ident(Ref<ast::IfAs> node) {
-    auto res = eval_expr(node->ident());
-    auto arg_type = res.type()->actual();
-    if (!arg_type->is_object()) {
-        diag().error(node->ident(), "not a class or Atom");
-        throw EvalExceptError("if-as var is not an object");
-    }
-    return res;
-}
-
-Ref<Type> EvalVisitor::resolve_as_cond_type(Ref<ast::IfAs> node) {
-    auto type = resolver(false)->resolve_type_name(node->type_name(), scope());
-    if (!type)
-        throw EvalExceptError("failed to resolve type");
-    if (!type->is_object()) {
-        diag().error(node->type_name(), "not a class or Atom");
-        throw EvalExceptError("if-as type is not class or Atom");
-    }
-    return type;
-}
-
-std::pair<Ptr<ast::VarDef>, Ref<Var>> EvalVisitor::define_as_cond_var(
-    Ref<ast::IfAs> node, ExprRes&& res, Ref<Type> type, Scope* scope) {
-    Ptr<ast::VarDef> def{};
-    Ref<Var> ref{};
-
-    LValue lval;
-    if (!res.value().empty()) {
-        assert(res.value().is_lvalue());
-        lval = res.move_value().lvalue().as(type);
-    } else {
-        if (!has_flag(evl::NoExec)) {
-            diag().error(node, "empty value");
-            throw EvalExceptError("empty value");
-        }
-    }
-
-    if (node->ident()->is_self()) {
-        scope->ctx().set_self(lval, type->as_class());
-    } else {
-        def = make<ast::VarDef>(node->ident()->name());
-        auto var = make<Var>(
-            node->type_name(), ulam::ref(def),
-            TypedValue{type->ref_type(), Value{lval}});
-        var->set_scope_lvl(_scope_stack.size());
-        ref = ulam::ref(var);
-        scope->set(var->name_id(), std::move(var));
-    }
-
-    return {std::move(def), ref};
-}
-
 ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
     ExprRes res;
     if (node->has_expr()) {
@@ -564,20 +483,109 @@ ExprRes EvalVisitor::_eval_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
     return res;
 }
 
-bool EvalVisitor::eval_cond(Ref<ast::Expr> expr, eval_flags_t flags_) {
-    return _eval_cond(expr, flags() | flags_);
-}
-
-bool EvalVisitor::_eval_cond(Ref<ast::Expr> expr, eval_flags_t flags) {
+EvalVisitor::EvalCondRes
+EvalVisitor::eval_cond(Ref<ast::Cond> cond, Scope* scope, eval_flags_t flags) {
     debug() << __FUNCTION__ << "\n";
 
-    // eval
+    return cond->is_as_cond()
+               ? eval_as_cond(cond->as_cond(), scope, flags)
+               : EvalCondRes{
+                     eval_cond_expr(cond->expr(), flags), EvalCondContext{}};
+}
+
+EvalVisitor::EvalCondRes EvalVisitor::eval_as_cond(
+    Ref<ast::UnaryOp> as_cond, Scope* scope, eval_flags_t flags) {
+    assert(as_cond->op() == Op::As); // TODO: ast::AsCond
+    auto res = eval_as_cond_ident(as_cond->ident());
+    auto type = resolve_as_cond_type(as_cond->type_name());
+    assert(!type->is_ref());
+    auto boolean = builtins().bool_type();
+
+    bool is_match = false;
+    if (!res.value().empty()) {
+        auto dyn_type = res.value().dyn_obj_type(true);
+        is_match = dyn_type->is_impl_refable_as(type, res.value());
+    } else if (has_flag(evl::NoExec)) {
+        is_match = true;
+    } else {
+        is_match = false; // see t3923, using result of native function
+        // throw EvalExceptError("cannot eval as-cond");
+    }
+    Value cond_val{boolean->construct(is_match)};
+    if (!is_match)
+        return {ExprRes{boolean, std::move(cond_val)}, EvalCondContext{}};
+
+    auto [var_def, var] =
+        define_as_cond_var(as_cond, std::move(res), type, scope);
+    return {
+        ExprRes{boolean, std::move(cond_val)},
+        EvalCondContext{type, std::move(var_def), var}};
+}
+
+ExprRes EvalVisitor::eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags_) {
+    return _eval_cond_expr(expr, flags() | flags_);
+}
+
+ExprRes EvalVisitor::_eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags) {
+    debug() << __FUNCTION__ << "\n";
+
     auto res = _eval_expr(expr, flags);
     if (!res)
         throw EvalExceptError("failed to eval condition");
-    res = to_boolean(expr, std::move(res), flags);
-    assert(res);
-    return builtins().boolean()->is_true(res.move_value().move_rvalue());
+    return to_boolean(expr, std::move(res), flags);
+}
+
+ExprRes EvalVisitor::eval_as_cond_ident(Ref<ast::Ident> ident) {
+    auto res = eval_expr(ident);
+    auto arg_type = res.type()->actual();
+    if (!arg_type->is_object()) {
+        diag().error(ident, "not a class or Atom");
+        throw EvalExceptError("if-as var is not an object");
+    }
+    return res;
+}
+
+Ref<Type> EvalVisitor::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
+    auto type = resolver(false)->resolve_type_name(type_name, scope());
+    if (!type)
+        throw EvalExceptError("failed to resolve type");
+    if (!type->is_object()) {
+        diag().error(type_name, "not a class or Atom");
+        throw EvalExceptError("if-as type is not class or Atom");
+    }
+    return type;
+}
+
+std::pair<Ptr<ast::VarDef>, Ref<Var>> EvalVisitor::define_as_cond_var(
+    Ref<ast::UnaryOp> node, ExprRes&& res, Ref<Type> type, Scope* scope) {
+    assert(node->op() == Op::As);
+    Ptr<ast::VarDef> def{};
+    Ref<Var> ref{};
+
+    LValue lval;
+    if (!res.value().empty()) {
+        assert(res.value().is_lvalue());
+        lval = res.move_value().lvalue().as(type);
+    } else {
+        if (!has_flag(evl::NoExec)) {
+            diag().error(node, "empty value");
+            throw EvalExceptError("empty value");
+        }
+    }
+
+    if (node->ident()->is_self()) {
+        scope->ctx().set_self(lval, type->as_class());
+    } else {
+        def = make<ast::VarDef>(node->ident()->name());
+        auto var = make<Var>(
+            node->type_name(), ulam::ref(def),
+            TypedValue{type->ref_type(), Value{lval}});
+        var->set_scope_lvl(_scope_stack.size());
+        ref = ulam::ref(var);
+        scope->set(var->name_id(), std::move(var));
+    }
+
+    return {std::move(def), ref};
 }
 
 ExprRes EvalVisitor::to_boolean(
@@ -593,6 +601,15 @@ ExprRes EvalVisitor::_to_boolean(
     if (!res || (!(flags & evl::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to cast to boolean value");
     return std::move(res);
+}
+
+bool EvalVisitor::is_true(const ExprRes& res) {
+    assert(res.type()->is(BoolId));
+    bool is_truth = false;
+    res.value().with_rvalue([&](const auto& rval) {
+        is_truth = builtins().bool_type()->is_true(rval);
+    });
+    return is_truth;
 }
 
 } // namespace ulam::sema

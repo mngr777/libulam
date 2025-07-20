@@ -79,14 +79,27 @@ public:
     ULAM_AST_TUPLE_PROP(rhs, 1)
 };
 
+// NOTE: `is', `as' require `TypeName`,
+// `as` additionally requires `Ident` ref
 class UnaryOp : public Tuple<OpExpr, Expr, TypeName> {
     ULAM_AST_EXPR
 public:
-    UnaryOp(Op op, Ptr<Expr>&& arg, Ptr<TypeName>&& type_name = {}):
-        Tuple{std::move(arg), std::move(type_name), op} {}
+    UnaryOp(
+        Op op,
+        Ptr<Expr>&& arg,
+        Ptr<TypeName>&& type_name = {},
+        Ref<Ident> ident = {}):
+        Tuple{std::move(arg), std::move(type_name), op}, _ident{ident} {}
 
     ULAM_AST_TUPLE_PROP(arg, 0)
     ULAM_AST_TUPLE_PROP(type_name, 1);
+
+    bool has_ident() const { return _ident; }
+    Ref<Ident> ident() { return _ident; }
+    Ref<const Ident> ident() const { return _ident; }
+
+private:
+    Ref<Ident> _ident;
 };
 
 class Cast : public Tuple<Expr, FullTypeName, Expr> {

@@ -1014,7 +1014,7 @@ Ptr<ast::Stmt> Parser::parse_stmt() {
         consume();
         return parse_var_def_list(VarIsConst | VarAllowConstructorInit);
     case tok::If:
-        return parse_if_or_as_if();
+        return parse_if();
     case tok::For:
         return parse_for();
     case tok::While:
@@ -1109,32 +1109,21 @@ Ptr<ast::ExprStmt> Parser::parse_expr_stmt() {
     return tree<ast::ExprStmt>(std::move(expr));
 }
 
-Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
+Ptr<ast::If> Parser::parse_if() {
     assert(_tok.is(tok::If));
+    bool ok = true;
+
     // if
     auto loc_id = _tok.loc_id;
     consume();
-    // (expr
+    // (
     if (!expect(tok::ParenL))
         return {};
-    bool ok = true;
-    Ptr<ast::Expr> expr{};
-    Ptr<ast::Ident> ident{};
-    Ptr<ast::TypeName> type{};
-    if (_tok.is(tok::Ident)) {
-        ident = parse_ident(IdentAllowSelfOrSuper);
-        if (_tok.is(tok::As)) {
-            consume();
-            // if (ident as Type
-            type = parse_type_name();
-        } else {
-            // if (expr
-            expr = parse_expr_climb_rest(std::move(ident), 0);
-        }
-    } else {
-        expr = parse_expr();
-    }
-    ok = ok && (expr || type);
+
+    // cond
+    auto cond = parse_cond();
+    ok = ok && cond;
+
     // )
     if (!expect(tok::ParenR)) {
         panic(tok::ParenR);
@@ -1154,14 +1143,8 @@ Ptr<ast::Stmt> Parser::parse_if_or_as_if() {
     if (!ok)
         return {};
 
-    if (type) {
-        assert(ident);
-        return tree_loc<ast::IfAs>(
-            loc_id, std::move(ident), std::move(type), std::move(if_branch),
-            std::move(else_branch));
-    }
     return tree_loc<ast::If>(
-        loc_id, std::move(expr), std::move(if_branch), std::move(else_branch));
+        loc_id, std::move(cond), std::move(if_branch), std::move(else_branch));
 }
 
 Ptr<ast::For> Parser::parse_for() {
@@ -1333,6 +1316,15 @@ Ptr<ast::WhichCase> Parser::parse_which_case() {
     return tree_loc<ast::WhichCase>(loc_id, std::move(expr), std::move(stmt));
 }
 
+Ptr<ast::Cond> Parser::parse_cond() {
+    ExprContext expr_ctx{ExprAllowAsCond};
+    auto expr = parse_expr(expr_ctx);
+    if (!expr)
+        return {};
+    return tree_loc<ast::Cond>(
+        expr->loc_id(), std::move(expr), expr_ctx.as_cond);
+}
+
 Ptr<ast::Return> Parser::parse_return() {
     assert(_tok.is(tok::Return));
     auto loc_id = _tok.loc_id;
@@ -1371,35 +1363,44 @@ Ptr<ast::Continue> Parser::parse_continue() {
     return tree_loc<ast::Continue>(loc_id);
 }
 
-Ptr<ast::Expr> Parser::parse_expr(expr_flags_t flags) {
-    return parse_expr_climb(0, flags);
+Ptr<ast::Expr> Parser::parse_expr(ExprContext& ctx) {
+    return parse_expr_climb(0, ctx);
 }
 
-Ptr<ast::Expr>
-Parser::parse_expr_climb(ops::Prec min_prec, expr_flags_t flags) {
+Ptr<ast::Expr> Parser::parse_expr(expr_flags_t flags) {
+    ExprContext ctx{flags};
+    return parse_expr(ctx);
+}
+
+Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec, ExprContext& ctx) {
     Ptr<ast::Expr> lhs;
 
     // unary prefix?
     Op op = tok::unary_pre_op(_tok.type);
     if (op != Op::None) {
+        if (!check_expr_no_as_cond(ctx))
+            return {};
+        ctx.set_flag(ExprIsNotEmpty);
+
         auto loc_id = _tok.loc_id;
         consume();
         lhs = tree_loc<ast::UnaryOp>(
-            loc_id, op, parse_expr_climb(ops::prec(op), flags));
+            loc_id, op, parse_expr_climb(ops::prec(op), ctx));
+
     } else {
-        lhs = parse_expr_lhs();
+        lhs = parse_expr_lhs(ctx);
     }
     if (!lhs)
         return {};
-    return parse_expr_climb_rest(std::move(lhs), min_prec, flags);
+    return parse_expr_climb_rest(std::move(lhs), min_prec, ctx);
 }
 
 Ptr<ast::Expr> Parser::parse_expr_climb_rest(
-    Ptr<ast::Expr>&& lhs, ops::Prec min_prec, expr_flags_t flags) {
+    Ptr<ast::Expr>&& lhs, ops::Prec min_prec, ExprContext& ctx) {
     // binary or suffix
     while (true) {
         // comma?
-        if (_tok.is(tok::Comma) && flags & ExprStopAtComma)
+        if (_tok.is(tok::Comma) && ctx.has_flag(ExprStopAtComma))
             break;
 
         // binary?
@@ -1413,16 +1414,44 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
             if (op == Op::None || ops::prec(op) < min_prec)
                 break;
             consume();
-            Ptr<ast::TypeName> type_name{};
-            if (op == Op::Is) {
+
+            Ptr<ast::TypeName> type_name{}; // `as', `is'
+            Ref<ast::Ident> ident{};        // `as' only
+            switch (op) {
+            case Op::As:
+                // ident as Type
+                if (!check_expr_can_have_as_cond(ctx, ref(lhs)))
+                    return {};
+                ident = ctx.last_ident;
                 type_name = parse_type_name();
                 if (!type_name)
                     return {};
+                break;
+            case Op::Is:
+                // expr is Type
+                if (!check_expr_no_as_cond(ctx))
+                    return {};
+                type_name = parse_type_name();
+                if (!type_name)
+                    return {};
+            default:
+                if (!check_expr_no_as_cond(ctx))
+                    return {};
             }
-            lhs = tree_loc<ast::UnaryOp>(
-                op_loc_id, op, std::move(lhs), std::move(type_name));
+            ctx.set_flag(ExprIsNotEmpty);
+
+            auto unary_op = tree_loc<ast::UnaryOp>(
+                op_loc_id, op, std::move(lhs), std::move(type_name), ident);
+            if (op == Op::As)
+                ctx.as_cond = ref(unary_op);
+            lhs = std::move(unary_op);
             continue;
         }
+
+        if (!check_expr_no_as_cond(ctx))
+            return {};
+        ctx.set_flag(ExprIsNotEmpty);
+
         switch (op) {
         case Op::FunCall:
             lhs = parse_funcall(std::move(lhs));
@@ -1434,13 +1463,13 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
             lhs = parse_member_access_type_op_or_op_call(std::move(lhs));
             break;
         case Op::Ternary:
-            lhs = parse_ternary(std::move(lhs));
+            lhs = parse_ternary_rest(std::move(lhs));
             break;
         default:
             consume();
             lhs = tree_loc<ast::BinaryOp>(
                 op_loc_id, op, std::move(lhs),
-                parse_expr_climb(ops::right_prec(op)));
+                parse_expr_climb(ops::right_prec(op), ctx));
         }
         if (!lhs)
             return {};
@@ -1448,16 +1477,26 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
     return std::move(lhs);
 }
 
-Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
+Ptr<ast::Expr> Parser::parse_expr_lhs(ExprContext& ctx) {
     Ptr<ast::Expr> expr{};
+
+    if (_tok.type != tok::ParenL) {
+        if (!check_expr_no_as_cond(ctx))
+            return {};
+        ctx.set_flag(ExprIsNotEmpty);
+    }
+
     switch (_tok.type) {
     case tok::Local:
-        return parse_expr_lhs_local(flags);
+        return parse_expr_lhs_local(ctx);
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
         return parse_class_const_access_or_type_op();
-    case tok::Ident:
-        return parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
+    case tok::Ident: {
+        auto ident = parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
+        ctx.last_ident = ref(ident);
+        return ident;
+    }
     case tok::Operator:
         return parse_op_call();
     case tok::True:
@@ -1470,7 +1509,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
     case tok::String:
         return parse_str_lit();
     case tok::ParenL:
-        return parse_paren_expr_or_cast(flags);
+        return parse_paren_expr_or_cast(ctx);
     default:
         unexpected();
         panic(tok::Semicol);
@@ -1478,7 +1517,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(expr_flags_t flags) {
     }
 }
 
-Ptr<ast::Expr> Parser::parse_expr_lhs_local(expr_flags_t flags) {
+Ptr<ast::Expr> Parser::parse_expr_lhs_local(ExprContext& ctx) {
     assert(_tok.is(tok::Local));
     // local
     auto local = _tok;
@@ -1497,22 +1536,26 @@ Ptr<ast::Expr> Parser::parse_expr_lhs_local(expr_flags_t flags) {
         putback(period);
         putback(local);
         return parse_class_const_access_or_type_op();
-    case tok::Ident:
+    case tok::Ident: {
         putback(period);
         putback(local);
-        return parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
+        auto ident = parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
+        ctx.last_ident = ref(ident);
+        return ident;
+    }
     default:
         unexpected();
         return {};
     }
 }
 
-Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(expr_flags_t flags) {
+Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
     assert(_tok.is(tok::ParenL));
     auto loc_id = _tok.loc_id;
     consume();
     Ptr<ast::Expr> inner{};
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
+        ctx.set_flag(ExprIsNotEmpty);
         // (Type) | (Type.<type_op>
         auto full_type_name = parse_full_type_name(true);
         if (!full_type_name)
@@ -1520,7 +1563,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(expr_flags_t flags) {
         if (_tok.is(tok::ParenR)) {
             // cast
             consume();
-            auto expr = parse_expr_climb(ops::prec(Op::Cast), flags);
+            auto expr = parse_expr_climb(ops::prec(Op::Cast), ctx);
             if (!expr)
                 goto Panic;
             return tree_loc<ast::Cast>(
@@ -1532,10 +1575,11 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(expr_flags_t flags) {
         auto type_name = full_type_name->replace_type_name({});
         inner = parse_type_op_rest(std::move(type_name), {});
         assert(inner);
-        inner = parse_expr_climb_rest(
-            std::move(inner), 0, flags & ~ExprStopAtComma);
+        ctx.uns_flag(ExprStopAtComma);
+        inner = parse_expr_climb_rest(std::move(inner), 0, ctx);
     } else {
-        inner = parse_expr(flags & ~ExprStopAtComma);
+        ctx.uns_flag(ExprStopAtComma);
+        inner = parse_expr(ctx);
     }
     if (!inner || !expect(tok::ParenR))
         goto Panic;
@@ -1903,7 +1947,7 @@ Ptr<ast::Expr> Parser::parse_member_access_or_op_call_rest(
     return op_call;
 }
 
-Ptr<ast::Ternary> Parser::parse_ternary(Ptr<ast::Expr>&& cond) {
+Ptr<ast::Ternary> Parser::parse_ternary_rest(Ptr<ast::Expr>&& cond) {
     assert(_tok.is(tok::Quest));
     // ?
     auto loc_id = _tok.loc_id;
@@ -2128,6 +2172,31 @@ ast::Str Parser::tok_ast_str() {
 str_id_t Parser::tok_str_id() {
     assert(_tok.in(tok::Ident, tok::TypeIdent));
     return _str_pool.put(tok_str());
+}
+
+bool Parser::check_expr_no_as_cond(ExprContext& ctx) {
+    if (ctx.as_cond) {
+        diag("as-cond cannot be part of other expression");
+        return false;
+    }
+    return true;
+}
+
+bool Parser::check_expr_can_have_as_cond(
+    ExprContext& ctx, Ref<ast::Expr> expr) {
+    if (!ctx.has_flag(ExprAllowAsCond)) {
+        diag("as-cond is not allowed in this context");
+        return false;
+    }
+    if (!ctx.last_ident || ctx.last_ident != expr) {
+        diag("as-cond argument must be an identifier");
+        return false;
+    }
+    if (ctx.has_flag(ExprHasAsCond)) {
+        diag("as-cond cannot be part of other expression");
+        return false;
+    }
+    return true;
 }
 
 } // namespace ulam

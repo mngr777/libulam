@@ -1,5 +1,7 @@
 #pragma once
+#include "libulam/ast/nodes/exprs.hpp"
 #include "libulam/ast/nodes/module.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
@@ -42,6 +44,9 @@ private:
     using expr_flags_t = std::uint8_t;
     static constexpr expr_flags_t NoExprFlags = 0;
     static constexpr expr_flags_t ExprStopAtComma = 1;
+    static constexpr expr_flags_t ExprIsNotEmpty = 1 << 1; // not parens-only
+    static constexpr expr_flags_t ExprAllowAsCond = 1 << 2;
+    static constexpr expr_flags_t ExprHasAsCond = 1 << 3;
 
     using type_flags_t = std::uint8_t;
     static constexpr type_flags_t NoTypeFlags = 0;
@@ -53,6 +58,19 @@ private:
     static constexpr ident_flags_t NoIdentFlags = 0;
     static constexpr ident_flags_t IdentAllowSelfOrSuper = 1;
     static constexpr ident_flags_t IdentAllowLocal = 1 << 1;
+
+    struct ExprContext {
+        explicit ExprContext(expr_flags_t flags): flags{flags} {}
+        ExprContext(): ExprContext{NoExprFlags} {}
+
+        bool has_flag(expr_flags_t flag) const { return flags & flag; }
+        void set_flag(expr_flags_t flag) { flags |= flag; }
+        void uns_flag(expr_flags_t flag) { flags &= ~flag; }
+
+        expr_flags_t flags;
+        Ref<ast::UnaryOp> as_cond{};
+        Ref<ast::Ident> last_ident{};
+    };
 
     void consume();
     void putback(Token token);
@@ -107,25 +125,24 @@ private:
     Ptr<ast::Stmt> parse_stmt_local();
     Ptr<ast::Stmt> parse_stmt_type();
     Ptr<ast::ExprStmt> parse_expr_stmt();
-    Ptr<ast::Stmt> parse_if_or_as_if();
+    Ptr<ast::If> parse_if();
     Ptr<ast::For> parse_for();
     Ptr<ast::While> parse_while();
     Ptr<ast::Which> parse_which();
     Ptr<ast::WhichCase> parse_which_case();
+    Ptr<ast::Cond> parse_cond();
     Ptr<ast::Return> parse_return();
     Ptr<ast::Break> parse_break();
     Ptr<ast::Continue> parse_continue();
 
+    Ptr<ast::Expr> parse_expr(ExprContext& ctx);
     Ptr<ast::Expr> parse_expr(expr_flags_t flags = NoExprFlags);
-    Ptr<ast::Expr>
-    parse_expr_climb(ops::Prec min_prec, expr_flags_t flags = NoExprFlags);
+    Ptr<ast::Expr> parse_expr_climb(ops::Prec min_prec, ExprContext& ctx);
     Ptr<ast::Expr> parse_expr_climb_rest(
-        Ptr<ast::Expr>&& lhs,
-        ops::Prec min_prec,
-        expr_flags_t flags = NoExprFlags);
-    Ptr<ast::Expr> parse_expr_lhs(expr_flags_t flags = NoExprFlags);
-    Ptr<ast::Expr> parse_expr_lhs_local(expr_flags_t flags = NoExprFlags);
-    Ptr<ast::Expr> parse_paren_expr_or_cast(expr_flags_t flags = NoExprFlags);
+        Ptr<ast::Expr>&& lhs, ops::Prec min_prec, ExprContext& ctx);
+    Ptr<ast::Expr> parse_expr_lhs(ExprContext& ctx);
+    Ptr<ast::Expr> parse_expr_lhs_local(ExprContext& ctx);
+    Ptr<ast::Expr> parse_paren_expr_or_cast(ExprContext& ctx);
     Ptr<ast::Expr> parse_class_const_access_or_type_op();
     Ptr<ast::TypeOpExpr>
     parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr);
@@ -142,7 +159,7 @@ private:
     Ptr<ast::Expr> parse_member_access_type_op_or_op_call(Ptr<ast::Expr>&& obj);
     Ptr<ast::Expr> parse_member_access_or_op_call_rest(
         Ptr<ast::Expr>&& obj, loc_id_t op_loc_id);
-    Ptr<ast::Ternary> parse_ternary(Ptr<ast::Expr>&& cond);
+    Ptr<ast::Ternary> parse_ternary_rest(Ptr<ast::Expr>&& cond);
     Ptr<ast::ClassConstAccess>
     parse_class_const_access_rest(Ptr<ast::TypeName> type_name);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
@@ -164,6 +181,9 @@ private:
     const std::string_view tok_str();
     ast::Str tok_ast_str();
     str_id_t tok_str_id();
+
+    bool check_expr_no_as_cond(ExprContext& ctx);
+    bool check_expr_can_have_as_cond(ExprContext& ctx, Ref<ast::Expr> expr);
 
     Context& _ctx;
     UniqStrPool& _str_pool;

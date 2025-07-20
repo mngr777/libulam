@@ -125,6 +125,7 @@ Kind kind(Op op) {
     case Op::AssignBwOr:
         return Kind::Bitwise;
     case Op::Is:
+    case Op::As:
         return Kind::Objective;
     default:
         assert(false);
@@ -207,6 +208,7 @@ bool is_unary_post_op(Op op) {
     case Op::PostInc:
     case Op::PostDec:
     case Op::Is:
+    case Op::As:
         return true;
     default:
         return false;
@@ -228,6 +230,7 @@ bool is_inc_dec(Op op) {
 Prec prec(Op op) {
     switch (op) {
     case Op::Is:
+    case Op::As:
     case Op::FunCall:
     case Op::ArrayAccess:
     case Op::MemberAccess:
@@ -296,6 +299,7 @@ Prec right_prec(Op op) { return prec(op) + (assoc(op) == Assoc::Left ? 1 : 0); }
 Assoc assoc(Op op) {
     switch (op) {
     case Op::Is:
+    case Op::As:
     case Op::MemberAccess:
     case Op::Prod:
     case Op::Quot:
