@@ -141,69 +141,6 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     block_close();
 }
 
-// void EvalVisitor::visit(ulam::Ref<ulam::ast::IfAs> node) {
-//     if (!codegen_enabled()) {
-//         Base::visit(node);
-//         return;
-//     }
-
-//     auto stringifier = make_stringifier();
-//     block_open();
-
-//     // ident and type
-//     auto res = eval_as_cond_ident(node);
-//     auto type = resolve_as_cond_type(node);
-//     assert(!type->is_ref());
-//     append(exp::data(res));
-//     append(out::type_str(stringifier, type, false));
-//     append("as");
-//     append("cond");
-
-//     // make tmp var
-//     {
-//         ulam::Ptr<ulam::ast::VarDef> def{};
-//         auto scope_raii =
-//             _scope_stack.raii<ulam::BasicScope>(scope(), ulam::scp::NoFlags);
-//         if (!res.value().empty()) {
-//             auto dyn_type = res.value().dyn_obj_type();
-//             if (!dyn_type->is_same(type) &&
-//                 !dyn_type->is_impl_castable_to(type))
-//                 res = {type, ulam::Value{ulam::LValue{}}};
-//         }
-//         auto [var_def, var] =
-//             define_as_cond_var(node, std::move(res), type, scope());
-
-//         // add tmp variable def
-//         if (node->ident()->is_self()) {
-//             set_next_prefix(
-//                 " " + out::type_str(stringifier, type->ref_type()) + " self;
-//                 ");
-//         } else {
-//             assert(var);
-//             set_next_prefix(
-//                 " " + out::var_def_str(str_pool(), stringifier, var) + "; ");
-//         }
-
-//         // if-branch, always in {} because of tmp var def
-//         bool is_block = node->if_branch()->is_block();
-//         if (!is_block)
-//             block_open();
-//         node->if_branch()->accept(*this);
-//         if (!is_block)
-//             block_close();
-
-//         append("if");
-//     }
-
-//     // else-branch
-//     if (node->has_else_branch()) {
-//         node->else_branch()->accept(*this);
-//         append("else");
-//     }
-
-//     block_close();
-// }
-
 void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
