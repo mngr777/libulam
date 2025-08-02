@@ -25,7 +25,7 @@ static const std::set<std::string> Skip = {
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
     "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
-    "t41043_test_compiler_forascond.test", // for (; (a as Type); ) {...}, TODO
+    "t41043_test_compiler_forascond.test", // Int i(4) is correct
     "t41046_test_compiler_switchascondcases.test", // which() as cond, TODO
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref

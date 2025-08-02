@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/stmt.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -1162,15 +1163,19 @@ Ptr<ast::For> Parser::parse_for() {
     ok = ok && init;
 
     // <init>; <cond>;
-    Ptr<ast::Expr> cond{};
+    Ptr<ast::Cond> cond;
     if (!_tok.is(tok::Semicol)) {
-        cond = parse_expr();
+        cond = parse_cond();
+        if (cond && cond->is_as_cond() && init && !init->is_empty()) {
+            diag(init->loc_id(), 1, "Cannot use init statement with as-cond");
+            ok = false;
+        }
         ok = ok && cond;
     }
     ok = expect(tok::Semicol) && ok;
 
     // <init>; <cond>; <upd>
-    Ptr<ast::Expr> upd{};
+    Ptr<ast::Expr> upd;
     if (!_tok.is(tok::ParenR)) {
         upd = parse_expr();
         ok = ok && upd;

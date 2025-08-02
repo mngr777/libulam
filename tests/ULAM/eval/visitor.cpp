@@ -113,22 +113,16 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     {
         auto scope_raii = _scope_stack.raii<ulam::BasicScope>(scope());
         auto cond = node->cond();
-        auto [res, ctx] = eval_cond(cond, scope());
+        auto [res, cond_ctx] = eval_cond(cond, scope());
         if (cond->is_as_cond()) {
-            add_as_cond(cond->as_cond(), ctx.type());
+            add_as_cond(cond->as_cond(), cond_ctx.type());
         } else {
             append(exp::data(res));
             append("cond");
         }
 
         // if-branch
-        // for as-cond: must be a block because of tmp var def
-        bool use_block = cond->is_as_cond() && !node->if_branch()->is_block();
-        if (use_block)
-            block_open();
-        node->if_branch()->accept(*this);
-        if (use_block)
-            block_close();
+        maybe_wrap_stmt(node->if_branch(), cond->is_as_cond());
         append("if");
     }
 
@@ -153,19 +147,31 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     block_open();
 
     // init
-    if (node->has_init())
+    if (!node->init()->is_empty())
         node->init()->accept(*this);
 
-    // cond, TODO: cast to Bool
-    if (node->has_cond()) {
-        auto cond_res = eval_expr(node->cond());
-        if (cond_res.has_data())
-            append(cond_res.data<std::string>());
-    }
-    append("cond");
+    // cond
+    {
+        auto iter_scope_raii = _scope_stack.raii<ulam::BasicScope>(scope());
+        EvalCondContext cond_ctx;
+        if (node->has_cond()) {
+            auto cond = node->cond();
+            auto [res, cond_ctx] = eval_cond(node->cond(), scope());
+            if (cond->is_as_cond()) {
+                add_as_cond(cond->as_cond(), cond_ctx.type());
+            } else {
+                append(exp::data(res));
+                append("cond");
+            }
+        }
 
-    // body
-    node->body()->accept(*this);
+
+        // body
+        if (node->has_body()) {
+            bool is_as_cond = node->has_cond() && node->cond()->is_as_cond();
+            maybe_wrap_stmt(node->body(), is_as_cond);
+        }
+    }
 
     append("_" + std::to_string(next_tmp_idx()) + ":");
     if (node->has_upd()) {
@@ -491,6 +497,16 @@ void EvalVisitor::append(std::string data, bool nospace) {
     if (!_next_prefix.empty())
         _data += move_next_prefix();
     _data += std::move(data);
+}
+
+void EvalVisitor::maybe_wrap_stmt(ulam::Ref<ulam::ast::Stmt> stmt, bool wrap) {
+    if (wrap && !stmt->is_block())
+        block_open();
+
+    stmt->accept(*this);
+
+    if (wrap && !stmt->is_block())
+        block_close();
 }
 
 void EvalVisitor::set_next_prefix(std::string prefix) {

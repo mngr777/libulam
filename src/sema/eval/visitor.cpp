@@ -67,7 +67,7 @@ void EvalVisitor::visit(Ref<ast::VarDefList> node) {
 
 void EvalVisitor::visit(Ref<ast::Block> node) {
     debug() << __FUNCTION__ << " Block\n";
-    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope());
     for (unsigned n = 0; n < node->child_num(); ++n)
         node->get(n)->accept(*this);
 }
@@ -83,9 +83,9 @@ void EvalVisitor::visit(Ref<ast::If> node) {
     assert(node->has_cond());
     assert(node->has_if_branch());
 
-    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::NoFlags);
-    auto cond_res = eval_cond(node->cond(), scope());
-    if (is_true(cond_res.first)) {
+    auto scope_raii = _scope_stack.raii<BasicScope>(scope());
+    auto [res, ctx] = eval_cond(node->cond(), scope());
+    if (is_true(res)) {
         node->if_branch()->accept(*this);
     } else if (node->has_else_branch()) {
         node->else_branch()->accept(*this);
@@ -101,18 +101,28 @@ void EvalVisitor::visit(Ref<ast::For> node) {
     if (node->has_init())
         node->init()->accept(*this);
     unsigned loop_count = 0;
-    while (!node->has_cond() || is_true(eval_cond_expr(node->cond()))) {
-        if (loop_count++ == 100) // TODO: max loops option
+    while (true) {
+        if (loop_count++ == 150) // TODO: max loops option
             throw EvalExceptError("for loop limit exceeded");
 
-        if (node->has_body()) {
-            try {
-                node->body()->accept(*this);
-            } catch (const EvalExceptContinue&) {
-                debug() << "continue\n";
-            } catch (const EvalExceptBreak&) {
-                debug() << "break\n";
-                break;
+        {
+            auto iter_scope_raii = _scope_stack.raii<BasicScope>(scope());
+            EvalCondContext cond_ctx;
+            if (node->has_cond()) {
+                auto [res, cond_ctx] = eval_cond(node->cond(), scope());
+                if (!is_true(res))
+                    break;
+            }
+
+            if (node->has_body()) {
+                try {
+                    node->body()->accept(*this);
+                } catch (const EvalExceptContinue&) {
+                    debug() << "continue\n";
+                } catch (const EvalExceptBreak&) {
+                    debug() << "break\n";
+                    break;
+                }
             }
         }
 
@@ -162,7 +172,7 @@ void EvalVisitor::visit(Ref<ast::While> node) {
         _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
     unsigned loop_count = 0;
     while (is_true(eval_cond_expr(node->cond()))) {
-        if (loop_count++ == 100) // TODO: max loops option
+        if (loop_count++ == 150) // TODO: max loops option
             throw EvalExceptError("for loop limit exceeded");
 
         if (node->has_body()) {

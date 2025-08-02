@@ -73,10 +73,10 @@ public:
     ULAM_AST_TUPLE_PROP(else_branch, 3)
 };
 
-class For : public Tuple<Stmt, Stmt, Expr, Expr, Stmt> {
+class For : public Tuple<Stmt, Stmt, Cond, Expr, Stmt> {
     ULAM_AST_NODE
 public:
-    For(Ptr<Stmt>&& init, Ptr<Expr>&& cond, Ptr<Expr>&& upd, Ptr<Stmt>&& body):
+    For(Ptr<Stmt>&& init, Ptr<Cond>&& cond, Ptr<Expr>&& upd, Ptr<Stmt>&& body):
         Tuple{
             std::move(init), std::move(cond), std::move(upd), std::move(body)} {
     }

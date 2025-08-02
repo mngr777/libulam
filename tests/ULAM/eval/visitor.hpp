@@ -102,6 +102,8 @@ private:
     void block_close(bool nospace = false);
     void append(std::string data, bool nospace = false);
 
+    void maybe_wrap_stmt(ulam::Ref<ulam::ast::Stmt> stmt, bool wrap);
+
     void set_next_prefix(std::string prefix);
     std::string move_next_prefix();
 
