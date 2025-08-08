@@ -24,10 +24,8 @@ public:
 class Cond : public Tuple<Stmt, Expr> {
     ULAM_AST_NODE
 public:
-    Cond(Ptr<Expr>&& expr, Ref<UnaryOp> as_cond = {}):
+    Cond(Ptr<Expr>&& expr, Ref<AsCond> as_cond = {}):
         Tuple{std::move(expr)}, _as_cond{as_cond} {
-        assert(!as_cond || as_cond->op() == Op::As);
-        assert(!as_cond || as_cond->has_ident());
         assert(!as_cond || as_cond->has_type_name());
     }
 
@@ -35,11 +33,20 @@ public:
 
     bool is_as_cond() const { return _as_cond; }
 
-    Ref<UnaryOp> as_cond() { return _as_cond; }
-    Ref<const UnaryOp> as_cond() const { return _as_cond; }
+    Ref<AsCond> as_cond() { return _as_cond; }
+    Ref<const AsCond> as_cond() const { return _as_cond; }
 
 private:
-    Ref<UnaryOp> _as_cond{};
+    Ref<AsCond> _as_cond{};
+};
+
+class WhichCaseCond : public Cond {
+    ULAM_AST_NODE
+public:
+    using Cond::Cond;
+    WhichCaseCond(): WhichCaseCond{{}, {}} {}
+
+    bool is_default() const { return !has_expr(); }
 };
 
 class If : public Tuple<Stmt, Cond, Stmt, Stmt> {
@@ -97,16 +104,16 @@ public:
     ULAM_AST_TUPLE_PROP(body, 1)
 };
 
-class WhichCase : public Tuple<Stmt, Expr, Stmt> {
+class WhichCase : public Tuple<Stmt, WhichCaseCond, Stmt> {
     ULAM_AST_NODE
 public:
-    WhichCase(Ptr<Expr>&& expr, Ptr<Stmt>&& branch):
-        Tuple{std::move(expr), std::move(branch)} {}
+    WhichCase(Ptr<WhichCaseCond>&& case_cond, Ptr<Stmt>&& branch):
+        Tuple{std::move(case_cond), std::move(branch)} {}
 
-    ULAM_AST_TUPLE_PROP(expr, 0)
+    ULAM_AST_TUPLE_PROP(case_cond, 0)
     ULAM_AST_TUPLE_PROP(branch, 1)
 
-    bool is_default() const { return !has_expr(); }
+    bool is_default() const { return !has_case_cond(); }
 };
 
 class Which : public Tuple<List<Stmt, WhichCase>, Expr> {
@@ -120,6 +127,8 @@ public:
     Ref<const WhichCase> case_(unsigned n) const { return List::get(n); }
 
     ULAM_AST_TUPLE_PROP(expr, 0)
+
+    bool is_as_cond() const { return !has_expr(); }
 
     unsigned child_num() const override {
         return Tuple::child_num() + List::child_num();

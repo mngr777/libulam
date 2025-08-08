@@ -18,17 +18,14 @@ class Program;
 namespace ulam::sema {
 
 class EvalVisitor;
+class EvalWhich;
 
-class EvalExprVisitor : public EvalHelper, public ast::ExprVisitor {
+class EvalExprVisitor : public ScopedEvalHelper, public ast::ExprVisitor {
     friend EvalVisitor;
+    friend EvalWhich;
 
 public:
-    EvalExprVisitor(
-        EvalVisitor& eval,
-        Ref<Program> program,
-        Ref<Scope> scope,
-        eval_flags_t flags):
-        EvalHelper(eval, program, scope, flags) {}
+    using ScopedEvalHelper::ScopedEvalHelper;
 
     EvalExprVisitor(EvalExprVisitor&&) = default;
     EvalExprVisitor& operator=(EvalExprVisitor&& other);

@@ -1,4 +1,3 @@
-#include "libulam/sema/eval/flags.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -504,8 +503,7 @@ EvalVisitor::eval_cond(Ref<ast::Cond> cond, Scope* scope, eval_flags_t flags) {
 }
 
 EvalVisitor::EvalCondRes EvalVisitor::eval_as_cond(
-    Ref<ast::UnaryOp> as_cond, Scope* scope, eval_flags_t flags) {
-    assert(as_cond->op() == Op::As); // TODO: ast::AsCond
+    Ref<ast::AsCond> as_cond, Scope* scope, eval_flags_t flags) {
     auto res = eval_as_cond_ident(as_cond->ident());
     auto type = resolve_as_cond_type(as_cond->type_name());
     assert(!type->is_ref());
@@ -567,8 +565,7 @@ Ref<Type> EvalVisitor::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
 }
 
 std::pair<Ptr<ast::VarDef>, Ref<Var>> EvalVisitor::define_as_cond_var(
-    Ref<ast::UnaryOp> node, ExprRes&& res, Ref<Type> type, Scope* scope) {
-    assert(node->op() == Op::As);
+    Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type, Scope* scope) {
     Ptr<ast::VarDef> def{};
     Ref<Var> ref{};
 
@@ -611,15 +608,6 @@ ExprRes EvalVisitor::_to_boolean(
     if (!res || (!(flags & evl::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to cast to boolean value");
     return std::move(res);
-}
-
-bool EvalVisitor::is_true(const ExprRes& res) {
-    assert(res.type()->is(BoolId));
-    bool is_truth = false;
-    res.value().with_rvalue([&](const auto& rval) {
-        is_truth = builtins().bool_type()->is_true(rval);
-    });
-    return is_truth;
 }
 
 } // namespace ulam::sema

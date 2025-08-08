@@ -14,9 +14,9 @@ namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalInit : public EvalHelper {
+class EvalInit : public ScopedEvalHelper {
 public:
-    using EvalHelper::EvalHelper;
+    using ScopedEvalHelper::ScopedEvalHelper;
 
     // {dimensions, is_array}
     std::pair<ArrayDimList, bool>

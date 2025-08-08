@@ -68,7 +68,7 @@ private:
         void uns_flag(expr_flags_t flag) { flags &= ~flag; }
 
         expr_flags_t flags;
-        Ref<ast::UnaryOp> as_cond{};
+        Ref<ast::AsCond> as_cond{};
         Ref<ast::Ident> last_ident{};
     };
 
@@ -129,7 +129,7 @@ private:
     Ptr<ast::For> parse_for();
     Ptr<ast::While> parse_while();
     Ptr<ast::Which> parse_which();
-    Ptr<ast::WhichCase> parse_which_case();
+    Ptr<ast::WhichCase> parse_which_case(bool is_as_cond);
     Ptr<ast::Cond> parse_cond();
     Ptr<ast::Return> parse_return();
     Ptr<ast::Break> parse_break();

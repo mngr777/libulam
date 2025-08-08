@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/exprs.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -119,6 +120,8 @@ protected:
     virtual std::optional<bool>
     which_match(Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> var);
 
+    virtual EvalCondContext which_as_cond(Ref<ast::UnaryOp> as_cond);
+
     virtual ExprRes ret_res(Ref<ast::Return> node);
 
     ExprRes eval_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
@@ -128,7 +131,7 @@ protected:
         Ref<ast::Cond> cond, Scope* scope, eval_flags_t flags = evl::NoFlags);
 
     virtual EvalCondRes
-    eval_as_cond(Ref<ast::UnaryOp> as_cond, Scope* scope, eval_flags_t flags);
+    eval_as_cond(Ref<ast::AsCond> as_cond, Scope* scope, eval_flags_t flags);
 
     ExprRes
     eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
@@ -137,14 +140,12 @@ protected:
     virtual ExprRes eval_as_cond_ident(Ref<ast::Ident> ident);
     virtual Ref<Type> resolve_as_cond_type(Ref<ast::TypeName> type_name);
     virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(
-        Ref<ast::UnaryOp> node, ExprRes&& res, Ref<Type> type, Scope* scope);
+        Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type, Scope* scope);
 
     ExprRes to_boolean(
         Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags = evl::NoFlags);
     virtual ExprRes
     _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
-
-    bool is_true(const ExprRes& res);
 
     Scope* scope() { return _scope_stack.top(); }
 

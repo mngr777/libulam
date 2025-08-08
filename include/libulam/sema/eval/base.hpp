@@ -61,6 +61,8 @@ protected:
         return {*this, flags};
     }
 
+    bool is_true(const ExprRes& res, bool default_value = false);
+
 private:
     Ref<Program> _program;
     eval_flags_t _flags;

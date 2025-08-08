@@ -1,4 +1,7 @@
+#include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/exprs.hpp"
 #include "libulam/ast/nodes/stmt.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -1234,12 +1237,17 @@ Ptr<ast::Which> Parser::parse_which() {
     auto loc_id = _tok.loc_id;
     consume();
     bool ok = true;
+    bool is_as_cond = false;
 
-    // (expr
+    // (expr?
+    Ptr<ast::Expr> expr;
     if (!expect(tok::ParenL))
         return {};
-    auto expr = parse_expr();
-    ok = ok && expr;
+    is_as_cond = _tok.is(tok::ParenR);
+    if (!is_as_cond) {
+        expr = parse_expr();
+        ok = ok && expr;
+    }
 
     // )
     if (!expect(tok::ParenR)) {
@@ -1261,7 +1269,7 @@ Ptr<ast::Which> Parser::parse_which() {
         // parse case
         Ptr<ast::WhichCase> case_{};
         if (_tok.in(tok::Case, tok::Otherwise))
-            case_ = parse_which_case();
+            case_ = parse_which_case(is_as_cond);
 
         // success?
         if (!case_) {
@@ -1289,7 +1297,7 @@ Ptr<ast::Which> Parser::parse_which() {
     return node;
 }
 
-Ptr<ast::WhichCase> Parser::parse_which_case() {
+Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
     assert(_tok.in(tok::Case, tok::Otherwise));
 
     bool is_default = _tok.is(tok::Otherwise);
@@ -1300,11 +1308,23 @@ Ptr<ast::WhichCase> Parser::parse_which_case() {
 
     // expr
     Ptr<ast::Expr> expr{};
+    Ref<ast::AsCond> as_cond{};
     if (!is_default) {
-        expr = parse_expr();
+        ExprContext expr_ctx{is_as_cond ? ExprAllowAsCond : NoExprFlags};
+        auto expr = parse_expr(expr_ctx);
         if (!expr)
             return {};
+        if (is_as_cond && !expr_ctx.as_cond) {
+            diag(expr->loc_id(), 1, "as-cond is required");
+            return {};
+        }
+        if (!is_as_cond && expr_ctx.as_cond) {
+            diag(expr->loc_id(), 1, "case cannot have as-cond");
+            return {};
+        }
     }
+    auto case_cond =
+        tree_loc<ast::WhichCaseCond>(loc_id, std::move(expr), as_cond);
 
     // :
     if (!expect(tok::Colon))
@@ -1318,7 +1338,8 @@ Ptr<ast::WhichCase> Parser::parse_which_case() {
             return {};
     }
 
-    return tree_loc<ast::WhichCase>(loc_id, std::move(expr), std::move(stmt));
+    return tree_loc<ast::WhichCase>(
+        loc_id, std::move(case_cond), std::move(stmt));
 }
 
 Ptr<ast::Cond> Parser::parse_cond() {
@@ -1445,11 +1466,17 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
             }
             ctx.set_flag(ExprIsNotEmpty);
 
-            auto unary_op = tree_loc<ast::UnaryOp>(
-                op_loc_id, op, std::move(lhs), std::move(type_name), ident);
-            if (op == Op::As)
-                ctx.as_cond = ref(unary_op);
-            lhs = std::move(unary_op);
+            if (op == Op::As) {
+                // as-cond
+                auto as_cond = tree_loc<ast::AsCond>(
+                    op_loc_id, op, std::move(lhs), std::move(type_name), ident);
+                ctx.as_cond = ref(as_cond);
+                lhs = std::move(as_cond);
+            } else {
+                // other unary ops
+                lhs = tree_loc<ast::UnaryOp>(
+                    op_loc_id, op, std::move(lhs), std::move(type_name));
+            }
             continue;
         }
 

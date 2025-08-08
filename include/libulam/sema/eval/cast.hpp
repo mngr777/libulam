@@ -11,7 +11,7 @@ namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalCast : public EvalHelper {
+class EvalCast : public ScopedEvalHelper {
 public:
     enum CastStatus {
         CastOk,
@@ -20,7 +20,7 @@ public:
     };
     using CastRes = std::pair<ExprRes, CastStatus>;
 
-    using EvalHelper::EvalHelper;
+    using ScopedEvalHelper::ScopedEvalHelper;
 
     virtual ExprRes
     cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl = false);

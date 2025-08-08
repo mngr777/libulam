@@ -12,9 +12,9 @@ namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalFuncall : public EvalHelper {
+class EvalFuncall : public ScopedEvalHelper {
 public:
-    using EvalHelper::EvalHelper;
+    using ScopedEvalHelper::ScopedEvalHelper;
 
     virtual ExprRes
     construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);

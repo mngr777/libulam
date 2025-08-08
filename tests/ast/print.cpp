@@ -1,5 +1,6 @@
 #include "./print.hpp"
 #include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -293,6 +294,12 @@ void Printer::visit(ulam::Ref<ulam::ast::Block> node) {
 void Printer::visit(ulam::Ref<ulam::ast::EmptyStmt> node) { _os << ";"; }
 
 void Printer::visit(ulam::Ref<ulam::ast::Cond> node) {
+    assert(node->has_expr());
+    node->expr()->accept(*this);
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::WhichCaseCond> node) {
+    assert(node->has_expr());
     node->expr()->accept(*this);
 }
 
