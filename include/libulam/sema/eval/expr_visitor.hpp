@@ -59,16 +59,6 @@ public:
     virtual Ref<Class>
     class_base(Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident);
 
-    // TODO: move to Resolver
-
-    virtual bitsize_t
-    bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
-
-    virtual array_size_t array_size(Ref<ast::Expr> expr);
-
-    virtual std::pair<TypedValueList, bool>
-    eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
-
 protected:
     virtual ExprRes binary_op(
         Ref<ast::Expr> node,

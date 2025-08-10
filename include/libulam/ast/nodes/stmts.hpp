@@ -94,10 +94,10 @@ public:
     ULAM_AST_TUPLE_PROP(body, 3)
 };
 
-class While : public Tuple<Stmt, Expr, Stmt> {
+class While : public Tuple<Stmt, Cond, Stmt> {
     ULAM_AST_NODE
 public:
-    While(Ptr<Expr>&& cond, Ptr<Stmt>&& body):
+    While(Ptr<Cond>&& cond, Ptr<Stmt>&& body):
         Tuple{std::move(cond), std::move(body)} {}
 
     ULAM_AST_TUPLE_PROP(cond, 0)

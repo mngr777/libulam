@@ -22,11 +22,6 @@ ExprRes EvalCast::cast(
     return std::move(res);
 }
 
-ExprRes EvalCast::cast_to_idx(Ref<ast::Node> node, ExprRes&& arg) {
-    auto [res, _] = do_cast(node, idx_type(), std::move(arg), false);
-    return std::move(res);
-}
-
 CastRes
 EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
     if (!arg)
@@ -145,7 +140,7 @@ ExprRes EvalCast::cast_atom(
 
     auto cls = to->as_class();
     if (!cls->is_element()) {
-        // value is unknown, assume dynamic type is element descending from arg
+        // value is unknown, assume dynamic type is element derived from arg
         // class
         if (arg.value().empty())
             return cast_atom_to_nonelement_empty(node, cls, std::move(arg));
@@ -235,7 +230,7 @@ ExprRes EvalCast::cast_atom_to_nonelement_empty(
 ExprRes EvalCast::cast_class_fun(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl) {
     assert(arg.type()->deref()->is_class());
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     auto res = funcall->funcall(node, fun, std::move(arg), {});
     if (!res)
         diag().error(node, "conversion failed");
@@ -265,7 +260,5 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
         return arg.derived(arg.type()->deref(), std::move(val));
     return arg.derived(val.dyn_obj_type(), std::move(val));
 }
-
-Ref<Type> EvalCast::idx_type() { return builtins().int_type(); }
 
 } // namespace ulam::sema

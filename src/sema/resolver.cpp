@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
@@ -5,6 +6,7 @@
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 
 #ifdef DEBUG_SEMA_RESOLVER
@@ -158,8 +160,11 @@ bool Resolver::resolve(Ref<Var> var, Scope* scope) {
             auto flags = _flags;
             if (!var->is_local() && !var->type()->is_ref())
                 flags |= evl::Consteval; // class/module const
-            auto init = _eval.init_helper(scope, flags);
-            auto init_res = init->eval_init(var, node->init());
+            ExprRes init_res;
+            {
+                auto flags_raii = _eval.flags_raii(flags);
+                init_res = _eval.eval_init(var, node->init());
+            }
             bool ok = init_res.ok();
             update_state(var, ok);
             if (ok)
@@ -218,8 +223,11 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
 
     if (node->has_init()) {
         auto flags = _flags | evl::Consteval;
-        auto init = _eval.init_helper(&scope_view, flags);
-        auto init_res = init->eval_init(prop, node->init());
+        ExprRes init_res;
+        {
+            auto flags_raii = _eval.flags_raii(flags);
+            init_res = _eval.eval_init(prop, node->init());
+        }
         if (!init_res)
             RET_UPD_STATE(prop, false);
         prop->set_default_value(init_res.move_value().move_rvalue());
@@ -313,9 +321,7 @@ Ref<Class> Resolver::resolve_class_name(
 }
 
 Ref<Type> Resolver::resolve_full_type_name(
-    Ref<ast::FullTypeName> full_type_name,
-    Scope* scope,
-    bool resolve_class) {
+    Ref<ast::FullTypeName> full_type_name, Scope* scope, bool resolve_class) {
 
     // type
     auto type =
@@ -429,9 +435,7 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
             return _builtins.type(bi_type_id);
         auto args = type_spec->args();
         assert(args->child_num() > 0);
-        auto flags = _flags | evl::Consteval;
-        auto ev = _eval.expr_visitor(scope, flags);
-        bitsize_t size = ev->bitsize_for(args->get(0), bi_type_id);
+        bitsize_t size = bitsize_for(args->get(0), bi_type_id);
         if (size == NoBitsize)
             return {};
         if (args->child_num() > 1) {
@@ -476,15 +480,60 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
     // template?
     if (sym->is<ClassTpl>()) {
         auto tpl = sym->get<ClassTpl>();
-        auto flags = _flags | evl::Consteval;
-        auto ev = _eval.expr_visitor(scope, flags);
-        auto [args, success] = ev->eval_tpl_args(type_spec->args(), tpl);
+        auto [args, success] = eval_tpl_args(type_spec->args(), tpl);
         if (!success)
             return {};
         return tpl->type(std::move(args));
     }
     assert(sym->is<UserType>());
     return sym->get<UserType>();
+}
+
+bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
+    // debug() << __FUNCTION__ << "\n" << line_at(expr);
+    assert(bi_type_id != NoBuiltinTypeId);
+
+    // can have bitsize?
+    if (!has_bitsize(bi_type_id)) {
+        _diag.error(
+            expr, std::string{builtin_type_str(bi_type_id)} +
+                      " does not have bitsize parameter");
+        return NoBitsize;
+    }
+
+    // eval
+    ExprRes res = _eval.eval_expr(expr);
+    if (!res)
+        return NoBitsize;
+
+    // cast to Unsigned
+    Unsigned size{};
+    {
+        auto uns_type = _builtins.unsigned_type();
+        res = _eval.cast(expr, uns_type, std::move(res), true);
+        if (!res)
+            return NoBitsize;
+        auto rval = res.move_value().move_rvalue();
+        size = rval.get<Unsigned>();
+    }
+
+    // check range
+    auto tpl = _builtins.prim_type_tpl(bi_type_id);
+    if (size < tpl->min_bitsize()) {
+        auto message = std::string{"min size for "} +
+                       std::string{builtin_type_str(bi_type_id)} + " is " +
+                       std::to_string(tpl->min_bitsize());
+        _diag.error(expr, message);
+        return NoBitsize;
+    }
+    if (size > tpl->max_bitsize()) {
+        auto message = std::string{"max size for "} +
+                       std::string{builtin_type_str(bi_type_id)} + " is " +
+                       std::to_string(tpl->max_bitsize());
+        _diag.error(expr, message);
+        return NoBitsize;
+    }
+    return size;
 }
 
 PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
@@ -567,22 +616,21 @@ Ref<Type> Resolver::apply_array_dims(
         }
         bool ok = false;
         auto flags = _flags | evl::Consteval;
-        auto init_helper = _eval.init_helper(scope, flags);
-        std::tie(dim_list, ok) =
-            init_helper->array_dims(dims->child_num(), init);
-        if (!ok)
-            return {};
+        {
+            auto flags_raii = _eval.flags_raii(flags);
+            std::tie(dim_list, ok) = array_dims(dims->child_num(), init);
+            if (!ok)
+                return {};
+        }
     }
 
     // make array type
-    auto flags = _flags | evl::Consteval;
-    auto ev = _eval.expr_visitor(scope, flags);
     for (unsigned n = 0; n < dims->child_num(); ++n) {
         auto expr = dims->get(n);
         array_size_t size{};
         if (expr) {
             // explicit size expr
-            size = ev->array_size(expr);
+            size = array_size(expr);
             if (size == UnknownArraySize)
                 return {};
         } else {
@@ -593,6 +641,118 @@ Ref<Type> Resolver::apply_array_dims(
         type = type->array_type(size);
     }
     return type;
+}
+
+array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
+    // debug() << __FUNCTION__ << "\n" << line_at(expr);
+
+    // consteval
+    auto flags_raii = _eval.flags_raii(_eval.flags() | evl::Consteval);
+
+    ExprRes res = _eval.eval_expr(expr);
+    if (!res)
+        return UnknownArraySize;
+
+    // cast to Int
+    auto int_type = _builtins.int_type();
+    res = _eval.cast(expr, int_type, std::move(res));
+    if (!res)
+        return UnknownArraySize;
+
+    auto rval = res.move_value().move_rvalue();
+    if (rval.empty())
+        return UnknownArraySize;
+    assert(rval.is_consteval());
+
+    auto int_val = rval.get<Integer>();
+    if (int_val < 0) {
+        _diag.error(expr, "array index is < 0");
+        return UnknownArraySize;
+    }
+    return (array_size_t)int_val;
+}
+
+std::pair<ArrayDimList, bool>
+Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
+    assert(num > 0);
+    ArrayDimList dims;
+    bool ok = true;
+
+    if (!init->is<ast::InitList>()) {
+        _diag.error(init, "init value is not an array");
+        return {std::move(dims), false};
+    }
+
+    // get array dimensions
+    auto cur = init->get<ast::InitList>();
+    while (cur) {
+        dims.push_back(cur->size());
+        if (dims.size() == num)
+            break; // done
+
+        auto& first = cur->get(0);
+        first.accept(
+            [&](Ptr<ast::InitList>& sublist) { cur = ref(sublist); },
+            [&](auto&& other) {
+                _diag.error(ref(other), "not an array");
+                cur = {};
+                ok = false;
+            });
+    }
+    return {std::move(dims), ok};
+}
+
+std::pair<TypedValueList, bool>
+Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
+    // debug() << __FUNCTION__ << "\n" << line_at(args);
+
+    // consteval
+    auto flags_raii = _eval.flags_raii(_eval.flags() | evl::Consteval);
+
+    // tmp param eval scope
+    auto param_scope_view = tpl->param_scope()->view(0);
+    BasicScope param_scope{&param_scope_view};
+    std::list<Ref<Var>> cls_params;
+
+    assert(_in_expr); // ?? auto resolver = eval().resolver(true);
+    std::pair<TypedValueList, bool> res;
+    res.second = false;
+    unsigned n = 0;
+    for (auto tpl_param : tpl->params()) {
+        auto param = make<Var>(
+            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
+            Value{RValue{}}, tpl_param->flags());
+
+        // param type
+        if (!resolve(ref(param), &param_scope))
+            return res;
+        auto type = param->type();
+
+        // value
+        if (n < args->child_num()) {
+            // argument provided
+            auto arg = args->get(n);
+            auto arg_res = _eval.eval_expr(arg);
+            if (arg_res)
+                arg_res = _eval.cast(arg, type, std::move(arg_res), false);
+            if (!arg_res)
+                return res;
+            param->set_value(arg_res.move_value());
+
+        } else if (!param->has_value()) {
+            _diag.error(args, "not enough arguments");
+            return res;
+        }
+        ++n;
+
+        cls_params.push_back(ref(param)); // add to list
+        param_scope.set(param->name_id(), std::move(param));
+    }
+    res.second = true;
+
+    for (auto param : cls_params)
+        res.first.emplace_back(param->type(), param->move_value());
+    return res;
 }
 
 std::optional<bool> Resolver::check_state(Ref<Decl> obj) {

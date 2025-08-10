@@ -18,6 +18,8 @@ namespace ulam::sema {
 
 // TODO: better diagnostics, trace type/value resolution somehow
 
+// TODO: make eval helper, because of scope RAII !!
+
 class EvalVisitor;
 
 class Resolver {
@@ -61,6 +63,18 @@ public:
 
 private:
     using ClassSet = std::unordered_set<Ref<Class>>;
+
+    bitsize_t
+    bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
+
+    array_size_t array_size(Ref<ast::Expr> expr);
+
+    // {dimensions, is_array}
+    std::pair<ArrayDimList, bool>
+    array_dims(unsigned num, Ref<ast::InitValue> init);
+
+    std::pair<TypedValueList, bool>
+    eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
 
     PersScopeView decl_scope_view(Ref<Decl> decl);
 

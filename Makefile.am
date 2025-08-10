@@ -124,13 +124,17 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
 	include/libulam/sema/eval.hpp \
 	include/libulam/sema/eval/cast.hpp \
+	include/libulam/sema/eval/cond.hpp \
+	include/libulam/sema/eval/cond_res.hpp \
 	include/libulam/sema/eval/except.hpp \
 	include/libulam/sema/eval/expr_visitor.hpp \
 	include/libulam/sema/eval/flags.hpp \
 	include/libulam/sema/eval/funcall.hpp \
+	include/libulam/sema/eval/helper.hpp \
 	include/libulam/sema/eval/init.hpp \
 	include/libulam/sema/eval/stack.hpp \
 	include/libulam/sema/eval/visitor.hpp \
+	include/libulam/sema/eval/which.hpp \
 	include/libulam/sema/expr_error.hpp \
 	include/libulam/sema/expr_res.hpp \
 	include/libulam/sema/init.hpp \
@@ -141,12 +145,15 @@ SEMA_SOURCE_FILES = \
 	src/sema.cpp \
 	src/sema/eval.cpp \
 	src/sema/eval/cast.cpp \
+	src/sema/eval/cond.cpp \
 	src/sema/eval/except.cpp \
 	src/sema/eval/expr_visitor.cpp \
 	src/sema/eval/funcall.cpp \
+	src/sema/eval/helper.cpp \
 	src/sema/eval/init.cpp \
 	src/sema/eval/stack.cpp \
 	src/sema/eval/visitor.cpp \
+	src/sema/eval/which.cpp \
 	src/sema/expr_res.cpp \
 	src/sema/out.hpp \
 	src/sema/out.cpp \

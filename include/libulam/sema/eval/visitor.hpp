@@ -1,10 +1,10 @@
 #pragma once
-#include "libulam/ast/nodes/exprs.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/base.hpp>
+#include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/stack.hpp>
 #include <libulam/sema/expr_res.hpp>
@@ -21,6 +21,8 @@ class EvalInit;
 class EvalFuncall;
 
 class EvalVisitor : public ast::Visitor, public EvalBase {
+    friend EvalExprVisitor; // for flags_raii(), TODO: move all flags to
+                            // EvalVisitor
     friend Resolver;
 
 public:
@@ -51,52 +53,106 @@ public:
     void visit(Ref<ast::TypeOpExpr> node) override;
     void visit(Ref<ast::Ident> node) override;
 
-    Ptr<Resolver> resolver(bool in_expr, eval_flags_t flags = evl::NoFlags);
+    Resolver resolver(bool in_expr);
 
-    Ptr<EvalExprVisitor>
-    expr_visitor(Scope* scope, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes eval_expr(Ref<ast::Expr> expr);
 
-    Ptr<EvalInit> init_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes eval_equal(
+        Ref<ast::Expr> node,
+        Ref<ast::Expr> l_node,
+        ExprRes&& left,
+        Ref<ast::Expr> r_node,
+        ExprRes&& right);
 
-    Ptr<EvalCast> cast_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes
+    cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl = false);
 
+    virtual ExprRes cast(
+        Ref<ast::Node> node,
+        BuiltinTypeId bi_type_id,
+        ExprRes&& arg,
+        bool expl = false);
+
+    virtual ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& arg);
+
+    virtual ExprRes eval_init(Ref<VarBase> var, Ref<ast::InitValue> init);
+
+    // TODO: remove
     Ptr<EvalFuncall>
     funcall_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
 
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
-protected:
-    class EvalCondContext {
+    class FlagsRaii {
     public:
-        EvalCondContext(
-            Ref<Type> type, Ptr<ast::VarDef>&& var_def, Ref<Var> var):
-            _type{type}, _var_def{std::move(var_def)}, _var{var} {}
+        FlagsRaii(EvalVisitor& eval, eval_flags_t flags):
+            _eval{eval}, _old_flags{eval._flags} {
+            _eval._flags = flags;
+        }
+        ~FlagsRaii() { _eval._flags = _old_flags; }
 
-        EvalCondContext(Ref<Type> type): EvalCondContext{type, {}, {}} {}
-
-        EvalCondContext(): EvalCondContext{{}} {}
-
-        Ref<Type> type() { return _type; }
-        Ref<Var> var() { return _var; }
+        FlagsRaii(FlagsRaii&&) = default;
+        FlagsRaii& operator=(FlagsRaii&&) = delete;
 
     private:
-        Ref<Type> _type;
-        Ptr<ast::VarDef> _var_def;
-        Ref<Var> _var{};
+        EvalVisitor& _eval;
+        eval_flags_t _old_flags;
     };
 
-    using EvalCondRes = std::pair<ExprRes, EvalCondContext>;
+    FlagsRaii flags_raii(eval_flags_t flags) { return {*this, flags}; }
 
-    virtual Ptr<Resolver> _resolver(bool in_expr, eval_flags_t flags);
+    class ScopeRaii {
+    public:
+        ScopeRaii(EvalVisitor& eval, Scope* scope):
+            _eval{eval}, _old_scope{eval._scope} {}
+        ~ScopeRaii() { _eval._scope = _old_scope; }
 
-    virtual Ptr<EvalExprVisitor>
-    _expr_visitor(Scope* scope, eval_flags_t flags);
+        ScopeRaii(ScopeRaii&&) = default;
+        ScopeRaii& operator=(ScopeRaii&&) = delete;
 
-    virtual Ptr<EvalInit> _init_helper(Scope* scope, eval_flags_t flags);
+    private:
+        EvalVisitor& _eval;
+        Scope* _old_scope;
+    };
 
-    virtual Ptr<EvalCast> _cast_helper(Scope* scope, eval_flags_t flags);
+    ScopeRaii scope_raii(Scope* scope) { return {*this, scope}; }
+
+    bool has_flag(eval_flags_t flag) const { return _flags & flag; }
+    eval_flags_t flags() const { return _flags; }
+
+    Scope* scope();
+
+protected:
+    virtual ExprRes do_eval_expr(EvalExprVisitor& ev, Ref<ast::Expr> expr);
+
+    virtual ExprRes do_eval_equal(
+        EvalExprVisitor& ev,
+        Ref<ast::Expr> node,
+        Ref<ast::Expr> l_node,
+        ExprRes&& left,
+        Ref<ast::Expr> r_node,
+        ExprRes&& right);
+
+    virtual ExprRes do_cast(
+        EvalCast& ec,
+        Ref<ast::Node> node,
+        Ref<Type> type,
+        ExprRes&& arg,
+        bool expl);
+
+    virtual ExprRes do_cast(
+        EvalCast& ec,
+        Ref<ast::Node> node,
+        BuiltinTypeId bi_type_id,
+        ExprRes&& arg,
+        bool expl);
+
+    virtual ExprRes
+    do_eval_init(EvalInit& ei, Ref<VarBase> var, Ref<ast::InitValue> init);
 
     virtual Ptr<EvalFuncall> _funcall_helper(Scope* scope, eval_flags_t flags);
+
+    virtual CondRes eval_cond(Ref<ast::Cond> cond);
 
     virtual Ref<AliasType> type_def(Ref<ast::TypeDef> node);
 
@@ -110,48 +166,14 @@ protected:
     virtual void var_init_default(Ref<Var> var, bool in_expr);
     virtual void var_init(Ref<Var> var, bool in_expr);
 
-    virtual Ptr<Var> make_which_tmp_var(Ref<ast::Which> node);
-    virtual ExprRes eval_which_expr(Ref<ast::Which> node);
-    virtual ExprRes eval_which_match(
-        Ref<ast::Expr> expr,
-        Ref<ast::Expr> case_expr,
-        ExprRes&& expr_res,
-        ExprRes&& case_res);
-    virtual std::optional<bool>
-    which_match(Ref<ast::Expr> expr, Ref<ast::Expr> case_expr, Ref<Var> var);
-
-    virtual EvalCondContext which_as_cond(Ref<ast::UnaryOp> as_cond);
-
     virtual ExprRes ret_res(Ref<ast::Return> node);
 
-    ExprRes eval_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
-    virtual ExprRes _eval_expr(Ref<ast::Expr> expr, eval_flags_t flags);
-
-    virtual EvalCondRes eval_cond(
-        Ref<ast::Cond> cond, Scope* scope, eval_flags_t flags = evl::NoFlags);
-
-    virtual EvalCondRes
-    eval_as_cond(Ref<ast::AsCond> as_cond, Scope* scope, eval_flags_t flags);
-
-    ExprRes
-    eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags = evl::NoFlags);
-    virtual ExprRes _eval_cond_expr(Ref<ast::Expr> expr, eval_flags_t flags);
-
-    virtual ExprRes eval_as_cond_ident(Ref<ast::Ident> ident);
-    virtual Ref<Type> resolve_as_cond_type(Ref<ast::TypeName> type_name);
-    virtual std::pair<Ptr<ast::VarDef>, Ref<Var>> define_as_cond_var(
-        Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type, Scope* scope);
-
-    ExprRes to_boolean(
-        Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags = evl::NoFlags);
-    virtual ExprRes
-    _to_boolean(Ref<ast::Expr> expr, ExprRes&& res, eval_flags_t flags);
-
-    Scope* scope() { return _scope_stack.top(); }
-
+private:
+    Scope* _scope{};
     EvalStack _stack;
     BasicScope _program_scope;
     ScopeStack _scope_stack;
+    eval_flags_t _flags;
 };
 
 } // namespace ulam::sema

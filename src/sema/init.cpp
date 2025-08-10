@@ -240,7 +240,7 @@ void Init::export_classes() {
 void Init::resolve() {
     auto program = ast()->program();
     EvalVisitor eval{program};
-    eval.resolver(false)->resolve(program);
+    eval.resolver(false).resolve(program);
 }
 
 } // namespace ulam::sema

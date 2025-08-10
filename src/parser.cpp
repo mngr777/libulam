@@ -1204,14 +1204,17 @@ Ptr<ast::For> Parser::parse_for() {
 
 Ptr<ast::While> Parser::parse_while() {
     assert(_tok.is(tok::While));
-    // while
-    consume();
     bool ok = true;
 
-    // (cond
+    // while
+    auto loc_id = _tok.loc_id;
+    consume();
+
+    // (
     if (!expect(tok::ParenL))
         return {};
-    auto cond = parse_expr();
+
+    auto cond = parse_cond();
     ok = ok && cond;
 
     // )
@@ -1228,7 +1231,7 @@ Ptr<ast::While> Parser::parse_while() {
     if (!ok)
         return {};
 
-    return tree<ast::While>(std::move(cond), std::move(body));
+    return tree_loc<ast::While>(loc_id, std::move(cond), std::move(body));
 }
 
 Ptr<ast::Which> Parser::parse_which() {
@@ -1469,7 +1472,7 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
             if (op == Op::As) {
                 // as-cond
                 auto as_cond = tree_loc<ast::AsCond>(
-                    op_loc_id, op, std::move(lhs), std::move(type_name), ident);
+                    op_loc_id, std::move(lhs), std::move(type_name), ident);
                 ctx.as_cond = ref(as_cond);
                 lhs = std::move(as_cond);
             } else {

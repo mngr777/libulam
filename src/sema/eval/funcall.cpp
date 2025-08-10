@@ -108,7 +108,7 @@ ExprRes EvalFuncall::do_funcall(
 
     assert(fun->node()->has_body());
     assert(!self.empty());
-    return eval().funcall(fun, self, std::move(args));
+    return eval()->funcall(fun, self, std::move(args));
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
@@ -172,8 +172,7 @@ ExprRes EvalFuncall::cast_arg(
     Ref<Var> param,
     Ref<Type> to,
     ExprRes&& arg) {
-    auto cast = eval().cast_helper(scope(), flags());
-    return cast->cast(node, to, std::move(arg));
+    return eval()->cast(node, to, std::move(arg));
 }
 
 } // namespace ulam::sema

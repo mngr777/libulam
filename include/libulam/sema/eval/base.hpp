@@ -9,8 +9,8 @@ namespace ulam::sema {
 
 class EvalBase {
 public:
-    explicit EvalBase(Ref<Program> program, eval_flags_t flags = evl::NoFlags):
-        _program{program}, _flags{flags} {}
+    explicit EvalBase(Ref<Program> program):
+        _program{program} {}
     virtual ~EvalBase() {}
 
 protected:
@@ -38,34 +38,11 @@ protected:
     UniqStrPool& text_pool() { return _program->text_pool(); }
     const UniqStrPool& text_pool() const { return _program->text_pool(); }
 
-    bool has_flag(eval_flags_t flag) const { return _flags & flag; }
-    eval_flags_t flags() const { return _flags; }
-
 protected:
-    class FlagsRaii {
-    public:
-        using eval_flags_t = ulam::sema::eval_flags_t;
-
-        FlagsRaii(EvalBase& eval, eval_flags_t flags):
-            _eval{eval}, _orig_flags{eval._flags} {
-            _eval._flags = flags;
-        }
-        ~FlagsRaii() { _eval._flags = _orig_flags; }
-
-    private:
-        EvalBase& _eval;
-        eval_flags_t _orig_flags;
-    };
-
-    FlagsRaii flags_raii(ulam::sema::eval_flags_t flags) {
-        return {*this, flags};
-    }
-
     bool is_true(const ExprRes& res, bool default_value = false);
 
 private:
     Ref<Program> _program;
-    eval_flags_t _flags;
 };
 
 } // namespace ulam::sema

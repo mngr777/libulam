@@ -18,10 +18,6 @@ class EvalInit : public ScopedEvalHelper {
 public:
     using ScopedEvalHelper::ScopedEvalHelper;
 
-    // {dimensions, is_array}
-    std::pair<ArrayDimList, bool>
-    array_dims(unsigned num, Ref<ast::InitValue> init);
-
     virtual ExprRes eval_init(Ref<VarBase> var, Ref<ast::InitValue> init);
 
 protected:

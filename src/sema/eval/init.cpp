@@ -8,36 +8,6 @@
 
 namespace ulam::sema {
 
-std::pair<ArrayDimList, bool>
-EvalInit::array_dims(unsigned num, Ref<ast::InitValue> init) {
-    assert(num > 0);
-    ArrayDimList dims;
-    bool ok = true;
-
-    if (!init->is<ast::InitList>()) {
-        diag().error(init, "init value is not an array");
-        return {std::move(dims), false};
-    }
-
-    // get array dimensions
-    auto cur = init->get<ast::InitList>();
-    while (cur) {
-        dims.push_back(cur->size());
-        if (dims.size() == num)
-            break; // done
-
-        auto& first = cur->get(0);
-        first.accept(
-            [&](Ptr<ast::InitList>& sublist) { cur = ref(sublist); },
-            [&](auto&& other) {
-                diag().error(ref(other), "not an array");
-                cur = {};
-                ok = false;
-            });
-    }
-    return {std::move(dims), ok};
-}
-
 ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
     assert(var->has_type());
     return eval_v(var, var->type(), init->get(), 1);
@@ -59,9 +29,7 @@ ExprRes EvalInit::eval_v(
 
 ExprRes EvalInit::eval_expr(
     Ref<VarBase> var, Ref<Type> type, Ref<ast::Expr> expr, unsigned depth) {
-    // eval
-    auto ev = eval().expr_visitor(scope(), flags());
-    auto res = expr->accept(*ev);
+    auto res = eval()->eval_expr(expr);
     if (!res)
         return res;
     return cast_expr_res(var, type, expr, std::move(res), depth);
@@ -74,8 +42,7 @@ ExprRes EvalInit::cast_expr_res(
     ExprRes&& res,
     unsigned depth) {
     assert(res);
-    auto cast = eval().cast_helper(scope(), flags());
-    return cast->cast(expr, type, std::move(res));
+    return eval()->cast(expr, type, std::move(res));
 }
 
 ExprRes EvalInit::eval_list(
@@ -104,8 +71,6 @@ ExprRes EvalInit::eval_map(
 
 ExprRes EvalInit::eval_class_list(
     Ref<VarBase> var, Ref<Class> cls, Ref<ast::InitList> list, unsigned depth) {
-    // eval args
-    auto ev = eval().expr_visitor(scope(), flags());
     ExprResList args;
     for (unsigned n = 0; n < list->size(); ++n) {
         auto& item = list->get(n);
@@ -115,7 +80,7 @@ ExprRes EvalInit::eval_class_list(
             return {ExprError::InitListArgument};
         }
         auto& expr = item.get<Ptr<ast::Expr>>();
-        auto expr_res = expr->accept(*ev);
+        auto expr_res = eval()->eval_expr(expr.get());
         if (!expr_res)
             return expr_res;
         args.push_back(std::move(expr_res));
@@ -258,7 +223,7 @@ ExprRes EvalInit::construct_obj(
         rval.set_is_consteval(true);
         return {cls, Value{std::move(rval)}};
     }
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     return funcall->construct(arg_list, cls, std::move(args));
 }
 

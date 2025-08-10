@@ -6,12 +6,12 @@
 
 namespace ulam::sema {
 
-EvalCond::CondRes EvalCond::eval_cond(Ref<ast::Cond> cond) {
+CondRes EvalCond::eval_cond(Ref<ast::Cond> cond) {
     return cond->is_as_cond() ? eval_as_cond(cond->as_cond())
                               : eval_expr(cond->expr());
 }
 
-EvalCond::CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
+CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
     auto res = eval_as_cond_ident(as_cond->ident());
     auto type = resolve_as_cond_type(as_cond->type_name());
     assert(!type->is_ref());
@@ -27,17 +27,14 @@ EvalCond::CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
     return {is_match, AsCondContext{std::move(var_def), var}};
 }
 
-EvalCond::CondRes EvalCond::eval_expr(Ref<ast::Expr> expr) {
-    // TODO: public eval().eval_expr()
-    auto ev = eval().expr_visitor(scope(), flags());
-    auto res = expr->accept(*ev);
-    res = to_boolean(scope(), expr, std::move(res), flags());
+CondRes EvalCond::eval_expr(Ref<ast::Expr> expr) {
+    auto res = eval()->eval_expr(expr);
+    res = eval()->to_boolean(expr, std::move(res));
     return {is_true(res), AsCondContext{}};
 }
 
 ExprRes EvalCond::eval_as_cond_ident(Ref<ast::Ident> ident) {
-    auto ev = eval().expr_visitor(scope(), flags());
-    auto res = ident->accept(*ev);
+    auto res = eval()->eval_expr(ident);
     auto arg_type = res.type()->actual();
     if (!arg_type->is_object()) {
         diag().error(ident, "not a class or Atom");
@@ -47,7 +44,7 @@ ExprRes EvalCond::eval_as_cond_ident(Ref<ast::Ident> ident) {
 }
 
 Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
-    auto type = eval().resolver(false)->resolve_type_name(type_name, scope());
+    auto type = eval()->resolver(false).resolve_type_name(type_name, scope());
     if (!type)
         throw EvalExceptError("failed to resolve type");
     if (!type->is_object()) {

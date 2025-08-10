@@ -28,9 +28,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n" << line_at(node);
     ExprRes res;
     if (node->has_type_name()) {
-        auto resolver = eval().resolver(true, flags());
+        auto resolver = eval()->resolver(true);
         auto type =
-            resolver->resolve_type_name(node->type_name(), scope(), true);
+            resolver.resolve_type_name(node->type_name(), scope(), true);
         if (!type)
             return {ExprError::UnresolvableType};
         res = type_op(node, type);
@@ -116,10 +116,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
         return res;
 
     // resolve target type
+    auto resolver = eval()->resolver(true);
     auto cast_type =
-        eval()
-            .resolver(true, flags())
-            ->resolve_full_type_name(node->full_type_name(), scope());
+        resolver.resolve_full_type_name(node->full_type_name(), scope());
     if (!cast_type)
         return {ExprError::InvalidCast};
 
@@ -127,8 +126,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
     if (cast_type->is(VoidId))
         return {builtins().void_type(), Value{RValue{}}};
 
-    auto cast = eval().cast_helper(scope(), flags());
-    res = cast->cast(node, cast_type, std::move(res), true);
+    res = eval()->cast(node, cast_type, std::move(res), true);
     return check(node, std::move(res));
 }
 
@@ -215,7 +213,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     if (!args)
         return {args.error()};
 
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     auto res = funcall->funcall(node, std::move(callable), std::move(args));
     return check(node, std::move(res));
 }
@@ -275,8 +273,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     debug() << __FUNCTION__ << "ClassConstAccess" << line_at(node);
 
-    auto resolver = eval().resolver(true, flags());
-    auto type = resolver->resolve_class_name(node->type_name(), scope(), false);
+    auto resolver = eval()->resolver(true);
+    auto type = resolver.resolve_class_name(node->type_name(), scope(), false);
     if (!type)
         return {ExprError::UnresolvableType};
 
@@ -301,6 +299,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     assert(node->has_array());
     assert(node->has_index());
 
+    auto idx_type = builtins().int_type();
+
     // eval array expr
     auto obj = node->array()->accept(*this);
     if (!obj)
@@ -318,8 +318,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     }
 
     // cast to index type
-    auto cast = eval().cast_helper(scope(), flags());
-    idx = cast->cast_to_idx(node->index(), std::move(idx));
+    idx = eval()->cast(node->index(), idx_type, std::move(idx));
     if (!idx)
         return idx;
 
@@ -414,8 +413,8 @@ Ref<Class> EvalExprVisitor::class_base(
 
     // resolve aliases
     if (type->is_alias()) {
-        auto resolver = eval().resolver(true, flags());
-        if (!resolver->resolve(type->as_alias()))
+        auto resolver = eval()->resolver(true);
+        if (!resolver.resolve(type->as_alias()))
             return {};
     }
 
@@ -430,129 +429,6 @@ Ref<Class> EvalExprVisitor::class_base(
         return {};
     }
     return base;
-}
-
-bitsize_t
-EvalExprVisitor::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
-    debug() << __FUNCTION__ << "\n" << line_at(expr);
-    assert(bi_type_id != NoBuiltinTypeId);
-
-    // can have bitsize?
-    if (!has_bitsize(bi_type_id)) {
-        diag().error(
-            expr, std::string{builtin_type_str(bi_type_id)} +
-                      " does not have bitsize parameter");
-        return NoBitsize;
-    }
-
-    // eval
-    ExprRes res = expr->accept(*this);
-    if (!res)
-        return NoBitsize;
-
-    // cast to default Unsigned
-    auto uns_type = builtins().unsigned_type();
-    auto cast = eval().cast_helper(scope(), flags());
-    res = cast->cast(expr, uns_type, std::move(res), true);
-    if (!res)
-        return NoBitsize;
-    auto rval = res.move_value().move_rvalue();
-    auto size = rval.get<Unsigned>();
-
-    // check range
-    auto tpl = builtins().prim_type_tpl(bi_type_id);
-    if (size < tpl->min_bitsize()) {
-        auto message = std::string{"min size for "} +
-                       std::string{builtin_type_str(bi_type_id)} + " is " +
-                       std::to_string(tpl->min_bitsize());
-        diag().error(expr, message);
-        return NoBitsize;
-    }
-    if (size > tpl->max_bitsize()) {
-        auto message = std::string{"max size for "} +
-                       std::string{builtin_type_str(bi_type_id)} + " is " +
-                       std::to_string(tpl->max_bitsize());
-        diag().error(expr, message);
-        return NoBitsize;
-    }
-    return size;
-}
-
-array_size_t EvalExprVisitor::array_size(Ref<ast::Expr> expr) {
-    debug() << __FUNCTION__ << "\n" << line_at(expr);
-    ExprRes res = expr->accept(*this);
-    if (!res)
-        return UnknownArraySize;
-
-    // cast to default Int
-    auto int_type = builtins().int_type();
-    auto cast = eval().cast_helper(scope(), flags());
-    res = cast->cast(expr, int_type, std::move(res));
-    if (!res)
-        return UnknownArraySize;
-
-    auto rval = res.move_value().move_rvalue();
-    if (rval.empty())
-        return UnknownArraySize;
-    assert(rval.is_consteval());
-
-    auto int_val = rval.get<Integer>();
-    if (int_val < 0) {
-        diag().error(expr, "array index is < 0");
-        return UnknownArraySize;
-    }
-    return (array_size_t)int_val;
-}
-
-std::pair<TypedValueList, bool>
-EvalExprVisitor::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
-    debug() << __FUNCTION__ << "\n" << line_at(args);
-
-    // tmp param eval scope
-    auto param_scope_view = tpl->param_scope()->view(0);
-    BasicScope param_scope{&param_scope_view};
-    std::list<Ref<Var>> cls_params;
-
-    auto resolver = eval().resolver(true, flags());
-    auto cast = eval().cast_helper(scope(), flags());
-    std::pair<TypedValueList, bool> res;
-    res.second = false;
-    unsigned n = 0;
-    for (auto tpl_param : tpl->params()) {
-        auto param = make<Var>(
-            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
-            Value{RValue{}}, tpl_param->flags());
-
-        // param type
-        if (!resolver->resolve(ref(param), &param_scope))
-            return res;
-        auto type = param->type();
-
-        // value
-        if (n < args->child_num()) {
-            // argument provided
-            auto arg = args->get(n);
-            auto arg_res = arg->accept(*this);
-            if (arg_res)
-                arg_res = cast->cast(arg, type, std::move(arg_res), false);
-            if (!arg_res)
-                return res;
-            param->set_value(arg_res.move_value());
-
-        } else if (!param->has_value()) {
-            diag().error(args, "not enough arguments");
-            return res;
-        }
-        ++n;
-
-        cls_params.push_back(ref(param)); // add to list
-        param_scope.set(param->name_id(), std::move(param));
-    }
-    res.second = true;
-
-    for (auto param : cls_params)
-        res.first.emplace_back(param->type(), param->move_value());
-    return res;
 }
 
 ExprRes EvalExprVisitor::binary_op(
@@ -571,7 +447,6 @@ ExprRes EvalExprVisitor::binary_op(
         lval = left.value().lvalue();
     }
 
-    auto cast = eval().cast_helper(scope(), flags());
     auto type_errors = binary_op_type_check(op, left, right);
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
                       ExprRes&& arg) -> ExprRes {
@@ -592,9 +467,10 @@ ExprRes EvalExprVisitor::binary_op(
         }
         case TypeError::ImplCastRequired: {
             if (error.cast_bi_type_id != NoBuiltinTypeId)
-                return cast->cast(expr, error.cast_bi_type_id, std::move(arg));
+                return eval()->cast(
+                    expr, error.cast_bi_type_id, std::move(arg));
             assert(error.cast_type);
-            return cast->cast(expr, error.cast_type, std::move(arg));
+            return eval()->cast(expr, error.cast_type, std::move(arg));
         }
         case TypeError::Ok:
             return std::move(arg);
@@ -647,7 +523,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
             left = bind(node, fset, std::move(left));
             ExprResList args;
             args.push_back(std::move(right));
-            auto funcall = eval().funcall_helper(scope(), flags());
+            auto funcall = eval()->funcall_helper(scope(), flags());
             return funcall->funcall(node, std::move(left), std::move(args));
         }
     }
@@ -690,8 +566,7 @@ ExprRes EvalExprVisitor::unary_op(
         return {ExprError::CastRequired};
     case TypeError::ImplCastRequired: {
         assert(!ops::is_inc_dec(op));
-        auto cast = eval().cast_helper(scope(), flags());
-        arg = cast->cast(node, error.cast_bi_type_id, std::move(arg));
+        arg = eval()->cast(node, error.cast_bi_type_id, std::move(arg));
         if (!arg)
             return std::move(arg);
     } break;
@@ -701,8 +576,8 @@ ExprRes EvalExprVisitor::unary_op(
 
     Ref<Type> type{};
     if (type_name) {
-        auto resolver = eval().resolver(true, flags());
-        type = resolver->resolve_type_name(type_name, scope());
+        auto resolver = eval()->resolver(true);
+        type = resolver.resolve_type_name(type_name, scope());
         if (!type)
             return {ExprError::UnresolvableType};
     }
@@ -761,7 +636,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
             if (op == Op::PostInc || op == Op::PostDec)
                 args.push_back(post_inc_dec_dummy());
             arg = bind(node, fset, std::move(arg));
-            auto funcall = eval().funcall_helper(scope(), flags());
+            auto funcall = eval()->funcall_helper(scope(), flags());
             return funcall->funcall(node, std::move(arg), std::move(args));
         }
     }
@@ -782,14 +657,13 @@ ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {
         return cond_res;
 
     // cast bo Bool(1)
-    auto cast = eval().cast_helper(scope(), flags());
     auto boolean = builtins().boolean();
-    return cast->cast(node, boolean, std::move(cond_res));
+    return eval()->cast(node, boolean, std::move(cond_res));
 }
 
 ExprResPair
 EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
-    auto no_exec_raii = flags_raii(flags() | evl::NoExec);
+    auto flags_raii = eval()->flags_raii(flags() | evl::NoExec);
     return {node->if_true()->accept(*this), node->if_false()->accept(*this)};
 }
 
@@ -812,23 +686,25 @@ ExprRes EvalExprVisitor::ternary_eval(
         return {type, std::move(val)};
     }
 
-    auto cast = eval().cast_helper(scope(), flags() | evl::NoDerefCast);
+    // disable dereference casts
+    auto flags_raii = eval()->flags_raii(flags() | evl::NoDerefCast);
+
     auto cond_rval = cond_res.move_value().move_rvalue();
     bool cond_bool = builtins().boolean()->is_true(cond_rval);
 
     // use noexec result if possible
     if (cond_bool && (has_flag(evl::NoExec) || !if_true_res.value().empty())) {
-        return cast->cast(node->if_true(), type, std::move(if_true_res));
+        return eval()->cast(node->if_true(), type, std::move(if_true_res));
     }
     if (!cond_bool &&
         (has_flag(evl::NoExec) || !if_false_res.value().empty())) {
-        return cast->cast(node->if_false(), type, std::move(if_false_res));
+        return eval()->cast(node->if_false(), type, std::move(if_false_res));
     }
 
     // exec branch
     auto branch = cond_bool ? node->if_true() : node->if_false();
     auto res = branch->accept(*this);
-    return cast->cast(branch, type, std::move(res));
+    return eval()->cast(branch, type, std::move(res));
 }
 
 ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
@@ -846,7 +722,7 @@ EvalExprVisitor::type_op_construct(Ref<ast::TypeOpExpr> node, Ref<Class> cls) {
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     return funcall->construct(node, cls, std::move(args));
 }
 
@@ -893,14 +769,14 @@ ExprRes EvalExprVisitor::type_op_expr_construct(
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     return funcall->construct(node, arg.type()->as_class(), std::move(args));
 }
 
 ExprRes EvalExprVisitor::type_op_expr_fun(
     Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg) {
     arg = bind(node, fset, std::move(arg));
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     return funcall->funcall(node, std::move(arg), {});
 }
 
@@ -938,7 +814,8 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
     if (use_dyn_type) {
         if (type->is_object() && !val.empty()) {
-            // using "real" type, implied by usage of `super.contstantof` in t41506
+            // using "real" type, implied by usage of `super.contstantof` in
+            // t41506
             type = val.dyn_obj_type(true);
         }
     }
@@ -972,8 +849,8 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
 }
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
-    if (!var->has_type() &&
-        !eval().resolver(true, flags())->resolve(var, scope()))
+    auto resolver = eval()->resolver(true);
+    if (!var->has_type() && !resolver.resolve(var, scope()))
         return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
@@ -1015,7 +892,7 @@ ExprRes EvalExprVisitor::array_access_class(
     ExprResList args;
     args.push_back(std::move(idx));
 
-    auto funcall = eval().funcall_helper(scope(), flags());
+    auto funcall = eval()->funcall_helper(scope(), flags());
     ExprRes res = funcall->funcall(node, std::move(callable), std::move(args));
     if (is_tmp && res.value().is_lvalue()) {
         LValue lval = res.move_value().lvalue();
@@ -1090,7 +967,8 @@ ExprRes EvalExprVisitor::member_access_op(
 
 ExprRes EvalExprVisitor::member_access_var(
     Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var) {
-    if (!var->has_type() && !eval().resolver(true, flags())->resolve(var))
+    auto resolver = eval()->resolver(true).resolve(var);
+    if (!var->has_type() && !resolver)
         return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
@@ -1112,7 +990,9 @@ ExprRes EvalExprVisitor::class_const_access(
     Ref<ast::ClassConstAccess> node, Ref<Var> var) {
     assert(var->has_cls());
     assert(var->is_const());
-    if (!var->has_type() && !eval().resolver(true, flags())->resolve(var))
+
+    auto resolver = eval()->resolver(true);
+    if (!var->has_type() && !resolver.resolve(var))
         return {ExprError::UnresolvableVar};
     LValue lval{var};
     lval.set_is_xvalue(false);
@@ -1145,8 +1025,7 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
     if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
 
-    auto cast = eval().cast_helper(scope(), flags());
-    auto res = cast->cast(node, to.type()->deref(), std::move(tv));
+    auto res = eval()->cast(node, to.type()->deref(), std::move(tv));
     if (!res)
         return res;
 
