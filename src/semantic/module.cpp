@@ -156,8 +156,7 @@ bool Module::resolve(sema::Resolver& resolver) {
                     assert(type->is_alias());
                     auto scope_version = type->as_alias()->scope_version();
                     auto scope_view = scope()->view(scope_version);
-                    return resolver.resolve(type->as_alias(), &scope_view) &&
-                           ok;
+                    return resolver.resolve(type->as_alias()) && ok;
                 } else {
                     return resolver.init(type->as_class());
                 }
@@ -165,7 +164,7 @@ bool Module::resolve(sema::Resolver& resolver) {
             [&](Ref<ClassTpl> tpl) { return true; },
             [&](Ref<Var> var) {
                 auto scope_view = scope()->view(var->scope_version());
-                return resolver.resolve(var, &scope_view);
+                return resolver.resolve(var);
             },
             [&](auto) -> bool { assert(false); });
         ok = ok && resolved;

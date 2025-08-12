@@ -29,8 +29,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     ExprRes res;
     if (node->has_type_name()) {
         auto resolver = eval()->resolver(true);
-        auto type =
-            resolver.resolve_type_name(node->type_name(), scope(), true);
+        auto type = resolver.resolve_type_name(node->type_name(), true);
         if (!type)
             return {ExprError::UnresolvableType};
         res = type_op(node, type);
@@ -274,7 +273,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     debug() << __FUNCTION__ << "ClassConstAccess" << line_at(node);
 
     auto resolver = eval()->resolver(true);
-    auto type = resolver.resolve_class_name(node->type_name(), scope(), false);
+    auto type = resolver.resolve_class_name(node->type_name(), false);
     if (!type)
         return {ExprError::UnresolvableType};
 
@@ -850,7 +849,7 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
     auto resolver = eval()->resolver(true);
-    if (!var->has_type() && !resolver.resolve(var, scope()))
+    if (!var->has_type() && !resolver.resolve(var))
         return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }

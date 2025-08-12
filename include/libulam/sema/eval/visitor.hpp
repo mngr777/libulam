@@ -17,13 +17,13 @@ namespace ulam::sema {
 
 class EvalCast;
 class EvalExprVisitor;
-class EvalInit;
 class EvalFuncall;
+class EvalInit;
 
 class EvalVisitor : public ast::Visitor, public EvalBase {
-    friend EvalExprVisitor; // for flags_raii(), TODO: move all flags to
-                            // EvalVisitor
-    friend Resolver;
+    friend FlagsRaii;
+    friend ScopeRaii;
+    friend Resolver; // TODO: remove
 
 public:
     explicit EvalVisitor(
@@ -83,37 +83,7 @@ public:
 
     virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
-    class FlagsRaii {
-    public:
-        FlagsRaii(EvalVisitor& eval, eval_flags_t flags):
-            _eval{eval}, _old_flags{eval._flags} {
-            _eval._flags = flags;
-        }
-        ~FlagsRaii() { _eval._flags = _old_flags; }
-
-        FlagsRaii(FlagsRaii&&) = default;
-        FlagsRaii& operator=(FlagsRaii&&) = delete;
-
-    private:
-        EvalVisitor& _eval;
-        eval_flags_t _old_flags;
-    };
-
     FlagsRaii flags_raii(eval_flags_t flags) { return {*this, flags}; }
-
-    class ScopeRaii {
-    public:
-        ScopeRaii(EvalVisitor& eval, Scope* scope):
-            _eval{eval}, _old_scope{eval._scope} {}
-        ~ScopeRaii() { _eval._scope = _old_scope; }
-
-        ScopeRaii(ScopeRaii&&) = default;
-        ScopeRaii& operator=(ScopeRaii&&) = delete;
-
-    private:
-        EvalVisitor& _eval;
-        Scope* _old_scope;
-    };
 
     ScopeRaii scope_raii(Scope* scope) { return {*this, scope}; }
 

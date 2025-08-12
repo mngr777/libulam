@@ -222,7 +222,7 @@ void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { eval_expr(node); }
 void EvalVisitor::visit(Ref<ast::Ident> node) { eval_expr(node); }
 
 Resolver EvalVisitor::resolver(bool in_expr) {
-    return {*this, program(), in_expr, flags()};
+    return {*this, program(), in_expr};
 }
 
 ExprRes EvalVisitor::eval_expr(Ref<ast::Expr> expr) {
@@ -392,7 +392,7 @@ CondRes EvalVisitor::eval_cond(Ref<ast::Cond> cond) {
 Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type = make<AliasType>(str_pool(), builtins(), nullptr, node);
     auto ref = ulam::ref(type);
-    if (!resolver(false).resolve(type->as_alias(), scope()))
+    if (!resolver(false).resolve(type->as_alias()))
         throw EvalExceptError("failed to resolve type");
     scope()->set(type->name_id(), std::move(type));
     return ref->as_alias();
@@ -413,7 +413,7 @@ Ptr<Var> EvalVisitor::make_var(
     auto var_flags = is_const ? Var::Const : Var::NoFlags;
     auto var = make<Var>(type_name, node, Ref<Type>{}, var_flags);
     var->set_scope_lvl(_scope_stack.size());
-    if (!resolver(false).resolve(ref(var), scope()))
+    if (!resolver(false).resolve(ref(var)))
         return {};
     return var;
 }

@@ -4,7 +4,7 @@
 #include <libulam/ast/nodes/var_decl.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/sema/eval/flags.hpp>
+#include <libulam/sema/eval/helper.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/program.hpp>
@@ -18,29 +18,16 @@ namespace ulam::sema {
 
 // TODO: better diagnostics, trace type/value resolution somehow
 
-// TODO: make eval helper, because of scope RAII !!
-
 class EvalVisitor;
 
-class Resolver {
+class Resolver : public EvalHelperBase {
 public:
-    Resolver(
-        EvalVisitor& eval,
-        Ref<Program> program,
-        bool in_expr,
-        eval_flags_t flags = evl::NoFlags):
-        _eval{eval},
-        _diag{program->diag()},
-        _builtins{program->builtins()},
-        _str_pool{program->str_pool()},
-        _in_expr{in_expr},
-        _flags{flags} {}
+    Resolver(EvalVisitor& eval, Ref<Program> program, bool in_expr):
+        EvalHelperBase{eval, program}, _eval{eval}, _in_expr{in_expr} {}
 
     void resolve(Ref<Program> program);
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
-    bool resolve(Ref<AliasType> alias, Scope* scope);
-    bool resolve(Ref<Var> var, Scope* scope);
     bool resolve(Ref<AliasType> alias);
     bool resolve(Ref<Var> var);
     bool resolve(Ref<Prop> prop);
@@ -49,23 +36,20 @@ public:
     bool resolve(Ref<Fun> fun);
 
     Ref<Class> resolve_class_name(
-        Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class = false);
+        Ref<ast::TypeName> type_name, bool resolve_class = false);
 
     Ref<Type> resolve_full_type_name(
-        Ref<ast::FullTypeName> full_type_name,
-        Scope* scope,
-        bool resolve_class = false);
+        Ref<ast::FullTypeName> full_type_name, bool resolve_class = false);
 
-    Ref<Type> resolve_type_name(
-        Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class = false);
+    Ref<Type>
+    resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class = false);
 
-    Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope);
+    Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec);
 
 private:
     using ClassSet = std::unordered_set<Ref<Class>>;
 
-    bitsize_t
-    bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
+    bitsize_t bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 
     array_size_t array_size(Ref<ast::Expr> expr);
 
@@ -83,33 +67,26 @@ private:
     Ref<Type> resolve_var_decl_type(
         Ref<ast::TypeName> type_name,
         Ref<ast::VarDecl> node,
-        Scope* scope,
         bool resolve_class = false);
 
-    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node, Scope* scope);
+    Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node);
 
-    Ref<Type>
-    apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims, Scope* scope) {
-        return apply_array_dims(type, dims, Ref<ast::InitValue>{}, scope);
-    }
+    Ref<Type> apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims);
 
     Ref<Type> apply_array_dims(
-        Ref<Type> type,
-        Ref<ast::ExprList> dims,
-        Ref<ast::InitValue> init,
-        Scope* scope);
+        Ref<Type> type, Ref<ast::ExprList> dims, Ref<ast::InitValue> init);
 
     std::optional<bool> check_state(Ref<Decl> decl);
     void update_state(Ref<Decl> decl, bool is_resolved);
 
-    std::string_view str(str_id_t str_id) const;
+    Scope* scope();
+    eval_flags_t flags() const;
+
+    EvalVisitor& eval();
+    EvalVisitor& eval() const;
 
     EvalVisitor& _eval;
-    Diag& _diag;
-    Builtins& _builtins;
-    UniqStrPool& _str_pool;
     bool _in_expr;
-    eval_flags_t _flags;
     ClassSet _classes;
 };
 

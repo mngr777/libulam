@@ -141,7 +141,7 @@ bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (!sync_scope(node)) {
         Ptr<UserType> type = make<AliasType>(
             program()->str_pool(), program()->builtins(), nullptr, node);
-        _eval->resolver(false).resolve(type->as_alias(), scope());
+        _eval->resolver(false).resolve(type->as_alias());
         scope()->set(type->name_id(), std::move(type));
     }
     return true;
@@ -157,7 +157,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
             if (node->is_const())
                 flags |= Var::Const;
             auto var = make<Var>(node->type_name(), def, Ref<Type>{}, flags);
-            if (resolver.resolve(ref(var), scope()))
+            if (resolver.resolve(ref(var)))
                 scope()->set(var->name_id(), std::move(var));
         }
     }

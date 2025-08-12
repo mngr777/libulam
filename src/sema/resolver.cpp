@@ -1,4 +1,5 @@
 #include "libulam/sema/eval/flags.hpp"
+#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
@@ -27,6 +28,14 @@
         update_state((decl), (is_resolved));                                   \
         return (is_resolved);                                                  \
     } while (false)
+
+#define DECL_SCOPE(decl, scope_raii, scope_view)                               \
+    ScopeRaii scope_raii;                                                      \
+    PersScopeView scope_view;                                                  \
+    if (!decl->is_local()) {                                                   \
+        scope_view = decl_scope_view(decl);                                    \
+        scope_raii = eval().scope_raii(&scope_view);                           \
+    }
 
 namespace ulam::sema {
 
@@ -60,7 +69,7 @@ void Resolver::resolve(Ref<Program> program) {
 }
 
 bool Resolver::init(Ref<Class> cls) {
-    debug() << "initializiing " << cls->name() << "\n";
+    debug() << "initializing " << cls->name() << "\n";
     _classes.insert(cls);
     return cls->init(*this);
 }
@@ -76,12 +85,12 @@ bool Resolver::resolve(Ref<Class> cls) {
         if (prop) {
             auto message = std::string{"size limit of "} +
                            std::to_string(cls->bitsize()) + " bits exceeded";
-            _diag.error(prop->node(), std::move(message));
+            diag().error(prop->node(), std::move(message));
             return false;
         }
         auto parent = cls->first_parent_over_max_bitsize();
         if (parent) {
-            _diag.error(parent->node(), "size limit exceeded");
+            diag().error(parent->node(), "size limit exceeded");
             return false;
         }
         assert(false);
@@ -92,26 +101,21 @@ bool Resolver::resolve(Ref<Class> cls) {
     return ok;
 }
 
-bool Resolver::resolve(Ref<AliasType> alias, Scope* scope) {
+bool Resolver::resolve(Ref<AliasType> alias) {
     CHECK_STATE(alias);
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
-    PersScopeView scope_view{};
-    if (!alias->is_local()) {
-        scope_view = decl_scope_view(alias);
-        scope = &scope_view;
-    }
-    assert(scope);
+    DECL_SCOPE(alias, scope_raii, scope_view);
 
     // type
-    auto type = resolve_type_name(type_name, scope);
+    auto type = resolve_type_name(type_name, scope());
     if (!type)
         RET_UPD_STATE(alias, false);
 
     // []
     if (type_expr->has_array_dims())
-        type = apply_array_dims(type, type_expr->array_dims(), scope);
+        type = apply_array_dims(type, type_expr->array_dims());
     if (!type)
         RET_UPD_STATE(alias, false);
 
@@ -123,28 +127,23 @@ bool Resolver::resolve(Ref<AliasType> alias, Scope* scope) {
     RET_UPD_STATE(alias, true);
 }
 
-bool Resolver::resolve(Ref<Var> var, Scope* scope) {
+bool Resolver::resolve(Ref<Var> var) {
     CHECK_STATE(var);
     auto node = var->node();
     auto type_name = var->type_node();
 
-    PersScopeView scope_view{};
-    if (!var->is_local()) {
-        scope_view = decl_scope_view(var);
-        scope = &scope_view;
-    }
-    assert(scope);
+    DECL_SCOPE(var, scope_raii, scope_view);
 
     // type
     if (!var->has_type()) {
-        auto type = resolve_var_decl_type(type_name, node, scope, true);
+        auto type = resolve_var_decl_type(type_name, node, true);
         if (!var->is_local() && type->is_ref()) {
             if (var->has_cls()) {
-                _diag.error(
+                diag().error(
                     type_name, "class constant cannot have reference type");
             } else {
                 assert(var->has_module());
-                _diag.error(
+                diag().error(
                     type_name, "module constant cannot have reference type");
             }
             type = {};
@@ -157,14 +156,11 @@ bool Resolver::resolve(Ref<Var> var, Scope* scope) {
     // value
     if (!var->has_value()) {
         if (node->has_init()) {
-            auto flags = _flags;
+            auto flags_ = flags();
             if (!var->is_local() && !var->type()->is_ref())
-                flags |= evl::Consteval; // class/module const
-            ExprRes init_res;
-            {
-                auto flags_raii = _eval.flags_raii(flags);
-                init_res = _eval.eval_init(var, node->init());
-            }
+                flags_ |= evl::Consteval; // class/module const
+            auto flags_raii = _eval.flags_raii(flags_);
+            auto init_res = _eval.eval_init(var, node->init());
             bool ok = init_res.ok();
             update_state(var, ok);
             if (ok)
@@ -173,7 +169,7 @@ bool Resolver::resolve(Ref<Var> var, Scope* scope) {
 
         } else if (var->requires_value()) {
             auto name = node->name();
-            _diag.error(
+            diag().error(
                 name.loc_id(), str(name.str_id()).size(), "value required");
             RET_UPD_STATE(var, false);
 
@@ -186,23 +182,19 @@ bool Resolver::resolve(Ref<Var> var, Scope* scope) {
     RET_UPD_STATE(var, true);
 }
 
-bool Resolver::resolve(Ref<AliasType> alias) { return resolve(alias, {}); }
-
-bool Resolver::resolve(Ref<Var> var) { return resolve(var, {}); }
-
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
 
-    auto scope_view = decl_scope_view(prop);
+    DECL_SCOPE(prop, scope_raii, scope_view)
 
     // type
-    auto type = resolve_var_decl_type(
-        prop->type_node(), prop->node(), &scope_view, true);
+    auto type = resolve_var_decl_type(prop->type_node(), prop->node(), true);
     if (!type)
         RET_UPD_STATE(prop, false);
     // TODO: more type checks, e.g. for Void
     if (type->canon()->is_ref()) {
-        _diag.error(prop->type_node(), "property cannot have a reference type");
+        diag().error(
+            prop->type_node(), "property cannot have a reference type");
         RET_UPD_STATE(prop, false);
     }
     prop->set_type(type);
@@ -222,12 +214,8 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     auto scope_view = decl_scope_view(prop);
 
     if (node->has_init()) {
-        auto flags = _flags | evl::Consteval;
-        ExprRes init_res;
-        {
-            auto flags_raii = _eval.flags_raii(flags);
-            init_res = _eval.eval_init(prop, node->init());
-        }
+        auto flags_raii = _eval.flags_raii(flags() | evl::Consteval);
+        auto init_res = _eval.eval_init(prop, node->init());
         if (!init_res)
             RET_UPD_STATE(prop, false);
         prop->set_default_value(init_res.move_value().move_rvalue());
@@ -250,16 +238,16 @@ bool Resolver::resolve(Ref<FunSet> fset) {
         if (fun->is_ready() && str(fun->name_id()) == "toInt") {
             bool is_conv = true;
             // check ret type
-            auto int_type = _builtins.int_type();
+            auto int_type = builtins().int_type();
             if (is_conv && !fun->ret_type()->is_same(int_type)) {
-                _diag.warn(
+                diag().warn(
                     fun->node(),
                     std::string{"return type must be "} + int_type->name());
                 is_conv = false;
             }
             // check params
             if (is_conv && fun->param_num() != 0) {
-                _diag.warn(
+                diag().warn(
                     fun->node(), "conversion function cannot take params");
                 is_conv = false;
             }
@@ -267,7 +255,7 @@ bool Resolver::resolve(Ref<FunSet> fset) {
                 fun->cls()->add_conv(fun);
         }
     }
-    fset->init_map(_diag, _str_pool);
+    fset->init_map(diag(), str_pool());
     RET_UPD_STATE(fset, is_resolved);
 }
 
@@ -275,26 +263,25 @@ bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
-    auto scope_view = decl_scope_view(fun);
+    DECL_SCOPE(fun, scope_raii, scope_view)
 
     // return type
     if (fun->is_constructor()) {
-        fun->set_ret_type(_builtins.void_type());
+        fun->set_ret_type(builtins().void_type());
     } else {
         auto ret_type_node = fun->ret_type_node();
-        auto ret_type = resolve_fun_ret_type(ret_type_node, &scope_view);
+        auto ret_type = resolve_fun_ret_type(ret_type_node);
         if (ret_type) {
             fun->set_ret_type(ret_type);
         } else {
-            _diag.error(ret_type_node, "cannot resolve return type");
+            diag().error(ret_type_node, "cannot resolve return type");
             is_resolved = false;
         }
     }
 
     // params
     for (auto& param : fun->params()) {
-        auto type = resolve_var_decl_type(
-            param->type_node(), param->node(), &scope_view);
+        auto type = resolve_var_decl_type(param->type_node(), param->node());
         if (!type) {
             is_resolved = false;
             continue;
@@ -305,14 +292,14 @@ bool Resolver::resolve(Ref<Fun> fun) {
     RET_UPD_STATE(fun, is_resolved);
 }
 
-Ref<Class> Resolver::resolve_class_name(
-    Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class) {
-    auto type = resolve_type_name(type_name, scope, resolve_class);
+Ref<Class>
+Resolver::resolve_class_name(Ref<ast::TypeName> type_name, bool resolve_class) {
+    auto type = resolve_type_name(type_name, resolve_class);
     if (!type)
         return {};
 
     if (!type->is_class()) {
-        _diag.error(type_name, "not a class");
+        diag().error(type_name, "not a class");
         return {};
     }
     if (!init(type->as_class()))
@@ -321,17 +308,16 @@ Ref<Class> Resolver::resolve_class_name(
 }
 
 Ref<Type> Resolver::resolve_full_type_name(
-    Ref<ast::FullTypeName> full_type_name, Scope* scope, bool resolve_class) {
+    Ref<ast::FullTypeName> full_type_name, bool resolve_class) {
 
     // type
-    auto type =
-        resolve_type_name(full_type_name->type_name(), scope, resolve_class);
+    auto type = resolve_type_name(full_type_name->type_name(), resolve_class);
     if (!type)
         return {};
 
     // []
     if (full_type_name->has_array_dims())
-        type = apply_array_dims(type, full_type_name->array_dims(), scope);
+        type = apply_array_dims(type, full_type_name->array_dims());
     if (!type)
         return {};
 
@@ -342,10 +328,10 @@ Ref<Type> Resolver::resolve_full_type_name(
     return type;
 }
 
-Ref<Type> Resolver::resolve_type_name(
-    Ref<ast::TypeName> type_name, Scope* scope, bool resolve_class) {
+Ref<Type>
+Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
     auto type_spec = type_name->first();
-    auto type = resolve_type_spec(type_spec, scope);
+    auto type = resolve_type_spec(type_spec);
     if (!type)
         return {};
 
@@ -354,7 +340,7 @@ Ref<Type> Resolver::resolve_type_name(
         if (type_name->child_num() > 1) {
             auto ident = type_name->ident(1);
             auto name_id = ident->name().str_id();
-            _diag.error(
+            diag().error(
                 ident->loc_id(), str(name_id).size(),
                 "built-ins don't have member types");
         }
@@ -362,7 +348,7 @@ Ref<Type> Resolver::resolve_type_name(
     }
 
     // resolve first alias in current scope
-    if (type->is_alias() && !resolve(type->as_alias(), scope))
+    if (type->is_alias() && !resolve(type->as_alias()))
         return {};
 
     // follow rest of type idents, resolve aliases along the way
@@ -372,12 +358,12 @@ Ref<Type> Resolver::resolve_type_name(
     for (unsigned n = 1; n < type_name->child_num(); ++n) {
         // init next class
         if (!type->is_class()) {
-            _diag.error(ident, "not a class");
+            diag().error(ident, "not a class");
             return {};
         }
         auto cls = type->as_class();
         if (!init(cls)) {
-            _diag.error(ident, "cannot resolve");
+            diag().error(ident, "cannot resolve");
             return {};
         }
 
@@ -385,7 +371,7 @@ Ref<Type> Resolver::resolve_type_name(
         ident = type_name->ident(n);
         if (ident->is_super()) {
             if (!cls->has_super()) {
-                _diag.error(ident, "class doesn't have a superclass");
+                diag().error(ident, "class doesn't have a superclass");
                 return {};
             }
             type = cls->super();
@@ -400,7 +386,7 @@ Ref<Type> Resolver::resolve_type_name(
         }
         // not found?
         if (!type) {
-            _diag.error(ident, "type name not found in class");
+            diag().error(ident, "type name not found in class");
             return {};
         }
         // resolved?
@@ -412,13 +398,13 @@ Ref<Type> Resolver::resolve_type_name(
         // fully resolve class or class dependencies, e.g. array type
         // ClassName[2] depends on class ClassName
         if (!resolve_class_deps(type)) {
-            _diag.error(ident, "cannot resolve");
+            diag().error(ident, "cannot resolve");
             return {};
         }
     } else if (type->is_class()) {
         // just init if class
         if (!init(type->as_class())) {
-            _diag.error(ident, "cannot resolve");
+            diag().error(ident, "cannot resolve");
             return {};
         }
     }
@@ -426,23 +412,23 @@ Ref<Type> Resolver::resolve_type_name(
     return type;
 }
 
-Ref<Type>
-Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
+Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
     // builtin type?
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();
         if (!type_spec->has_args())
-            return _builtins.type(bi_type_id);
+            return builtins().type(bi_type_id);
+
         auto args = type_spec->args();
         assert(args->child_num() > 0);
         bitsize_t size = bitsize_for(args->get(0), bi_type_id);
         if (size == NoBitsize)
             return {};
         if (args->child_num() > 1) {
-            _diag.error(args->child(1), "too many arguments");
+            diag().error(args->child(1), "too many arguments");
             return {};
         }
-        return _builtins.prim_type(bi_type_id, size);
+        return builtins().prim_type(bi_type_id, size);
     }
     assert(type_spec->has_ident());
     auto ident = type_spec->ident();
@@ -450,10 +436,10 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
     // Self or Super?
     if (ident->is_self() || ident->is_super()) {
         assert(!type_spec->has_args());
-        auto self_cls = scope->ctx().self_cls();
+        auto self_cls = scope()->ctx().self_cls();
         if (!self_cls) {
             std::string name{ident->is_self() ? "Self" : "Super"};
-            _diag.error(ident, name + " can only be used in class context");
+            diag().error(ident, name + " can only be used in class context");
             return {};
         }
         // Self
@@ -462,18 +448,19 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
 
         // Super
         if (!self_cls->has_super()) {
-            _diag.error(
+            diag().error(
                 ident, self_cls->name() + " does not have a superclass");
             return {};
         }
         return self_cls->super();
     }
 
+    // find symbol
     auto name_id = ident->name_id();
     auto sym =
-        ident->is_local() ? scope->get_local(name_id) : scope->get(name_id);
+        ident->is_local() ? scope()->get_local(name_id) : scope()->get(name_id);
     if (!sym) {
-        _diag.error(ident, std::string{str(name_id)} + " type not found");
+        diag().error(ident, std::string{str(name_id)} + " type not found");
         return {};
     }
 
@@ -490,18 +477,19 @@ Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, Scope* scope) {
 }
 
 bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
-    // debug() << __FUNCTION__ << "\n" << line_at(expr);
+    debug() << __FUNCTION__ << "\n" << line_at(expr);
     assert(bi_type_id != NoBuiltinTypeId);
 
     // can have bitsize?
     if (!has_bitsize(bi_type_id)) {
-        _diag.error(
+        diag().error(
             expr, std::string{builtin_type_str(bi_type_id)} +
                       " does not have bitsize parameter");
         return NoBitsize;
     }
 
     // eval
+    // TODO: consteval
     ExprRes res = _eval.eval_expr(expr);
     if (!res)
         return NoBitsize;
@@ -509,7 +497,7 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     // cast to Unsigned
     Unsigned size{};
     {
-        auto uns_type = _builtins.unsigned_type();
+        auto uns_type = builtins().unsigned_type();
         res = _eval.cast(expr, uns_type, std::move(res), true);
         if (!res)
             return NoBitsize;
@@ -518,19 +506,19 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     }
 
     // check range
-    auto tpl = _builtins.prim_type_tpl(bi_type_id);
+    auto tpl = builtins().prim_type_tpl(bi_type_id);
     if (size < tpl->min_bitsize()) {
         auto message = std::string{"min size for "} +
                        std::string{builtin_type_str(bi_type_id)} + " is " +
                        std::to_string(tpl->min_bitsize());
-        _diag.error(expr, message);
+        diag().error(expr, message);
         return NoBitsize;
     }
     if (size > tpl->max_bitsize()) {
         auto message = std::string{"max size for "} +
                        std::string{builtin_type_str(bi_type_id)} + " is " +
                        std::to_string(tpl->max_bitsize());
-        _diag.error(expr, message);
+        diag().error(expr, message);
         return NoBitsize;
     }
     return size;
@@ -538,8 +526,15 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
 
 PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
     assert(!decl->is_local());
-    auto scope =
-        decl->has_cls() ? decl->cls()->scope() : decl->module()->scope();
+    Ref<PersScope> scope{};
+    if (decl->has_cls()) {
+        // TODO: params, fun params, ...
+        scope = decl->cls()->scope();
+    } else if (decl->has_module()) {
+        scope = decl->module()->scope();
+    } else {
+        assert(false);
+    }
     return scope->view(decl->scope_version());
 }
 
@@ -554,20 +549,16 @@ bool Resolver::resolve_class_deps(Ref<Type> type) {
 }
 
 Ref<Type> Resolver::resolve_var_decl_type(
-    Ref<ast::TypeName> type_name,
-    Ref<ast::VarDecl> node,
-    Scope* scope,
-    bool resolve_class) {
-    assert(scope);
+    Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, bool resolve_class) {
 
     // base type
-    auto type = resolve_type_name(type_name, scope, resolve_class);
+    auto type = resolve_type_name(type_name, resolve_class);
     if (!type)
         return {};
 
     // []
     if (node->has_array_dims())
-        type = apply_array_dims(type, node->array_dims(), node->init(), scope);
+        type = apply_array_dims(type, node->array_dims(), node->init());
 
     // &
     if (node->is_ref())
@@ -576,31 +567,29 @@ Ref<Type> Resolver::resolve_var_decl_type(
     return type;
 }
 
-Ref<Type>
-Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node, Scope* scope) {
-    assert(scope);
-
+Ref<Type> Resolver::resolve_fun_ret_type(Ref<ast::FunRetType> node) {
     // base type
-    auto type = resolve_type_name(node->type_name(), scope);
+    auto type = resolve_type_name(node->type_name());
     if (!type)
         return {};
 
     // []
     if (node->has_array_dims())
-        type = apply_array_dims(type, node->array_dims(), scope);
+        type = apply_array_dims(type, node->array_dims());
 
     // &
     if (node->is_ref())
         type = type->ref_type();
 
     return type;
+}
+
+Ref<Type> Resolver::apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims) {
+    return apply_array_dims(type, dims, Ref<ast::InitValue>{});
 }
 
 Ref<Type> Resolver::apply_array_dims(
-    Ref<Type> type,
-    Ref<ast::ExprList> dims,
-    Ref<ast::InitValue> init,
-    Scope* scope) {
+    Ref<Type> type, Ref<ast::ExprList> dims, Ref<ast::InitValue> init) {
     assert(type);
     assert(dims && dims->child_num() > 0);
     assert(!dims->has_empty() || init);
@@ -609,19 +598,15 @@ Ref<Type> Resolver::apply_array_dims(
     ArrayDimList dim_list;
     if (dims->has_empty()) {
         if (!init) {
-            _diag.error(
+            diag().error(
                 dims, "array size must be set explicitly unless initializer "
                       "list is provided");
             return {};
         }
         bool ok = false;
-        auto flags = _flags | evl::Consteval;
-        {
-            auto flags_raii = _eval.flags_raii(flags);
-            std::tie(dim_list, ok) = array_dims(dims->child_num(), init);
-            if (!ok)
-                return {};
-        }
+        std::tie(dim_list, ok) = array_dims(dims->child_num(), init);
+        if (!ok)
+            return {};
     }
 
     // make array type
@@ -644,9 +629,10 @@ Ref<Type> Resolver::apply_array_dims(
 }
 
 array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
-    // debug() << __FUNCTION__ << "\n" << line_at(expr);
+    debug() << __FUNCTION__ << "\n" << line_at(expr);
 
     // consteval
+    // TODO: scope
     auto flags_raii = _eval.flags_raii(_eval.flags() | evl::Consteval);
 
     ExprRes res = _eval.eval_expr(expr);
@@ -654,7 +640,7 @@ array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
         return UnknownArraySize;
 
     // cast to Int
-    auto int_type = _builtins.int_type();
+    auto int_type = builtins().int_type();
     res = _eval.cast(expr, int_type, std::move(res));
     if (!res)
         return UnknownArraySize;
@@ -666,7 +652,7 @@ array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
 
     auto int_val = rval.get<Integer>();
     if (int_val < 0) {
-        _diag.error(expr, "array index is < 0");
+        diag().error(expr, "array index is < 0");
         return UnknownArraySize;
     }
     return (array_size_t)int_val;
@@ -679,7 +665,7 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
     bool ok = true;
 
     if (!init->is<ast::InitList>()) {
-        _diag.error(init, "init value is not an array");
+        diag().error(init, "init value is not an array");
         return {std::move(dims), false};
     }
 
@@ -694,7 +680,7 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
         first.accept(
             [&](Ptr<ast::InitList>& sublist) { cur = ref(sublist); },
             [&](auto&& other) {
-                _diag.error(ref(other), "not an array");
+                diag().error(ref(other), "not an array");
                 cur = {};
                 ok = false;
             });
@@ -707,11 +693,12 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     // debug() << __FUNCTION__ << "\n" << line_at(args);
 
     // consteval
-    auto flags_raii = _eval.flags_raii(_eval.flags() | evl::Consteval);
+    auto flags_raii = eval().flags_raii(flags() | evl::Consteval);
 
     // tmp param eval scope
     auto param_scope_view = tpl->param_scope()->view(0);
     BasicScope param_scope{&param_scope_view};
+    auto scope_raii = eval().scope_raii(&param_scope);
     std::list<Ref<Var>> cls_params;
 
     assert(_in_expr); // ?? auto resolver = eval().resolver(true);
@@ -724,7 +711,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             Value{RValue{}}, tpl_param->flags());
 
         // param type
-        if (!resolve(ref(param), &param_scope))
+        if (!resolve(ref(param)))
             return res;
         auto type = param->type();
 
@@ -740,7 +727,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             param->set_value(arg_res.move_value());
 
         } else if (!param->has_value()) {
-            _diag.error(args, "not enough arguments");
+            diag().error(args, "not enough arguments");
             return res;
         }
         ++n;
@@ -770,8 +757,12 @@ void Resolver::update_state(Ref<Decl> obj, bool is_resolved) {
     obj->set_state(is_resolved ? Decl::Resolved : Decl::Unresolvable);
 }
 
-std::string_view Resolver::str(str_id_t str_id) const {
-    return _str_pool.get(str_id);
-}
+Scope* Resolver::scope() { return eval().scope(); }
+
+scope_flags_t Resolver::flags() const { return eval().flags(); }
+
+EvalVisitor& Resolver::eval() { return _eval; }
+
+EvalVisitor& Resolver::eval() const { return _eval; }
 
 } // namespace ulam::sema

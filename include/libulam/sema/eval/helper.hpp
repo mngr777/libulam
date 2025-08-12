@@ -4,11 +4,12 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/base.hpp>
 #include <libulam/sema/eval/flags.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/program.hpp>
-#include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/stack.hpp>
 
 namespace ulam::sema {
+
+class EvalVisitor;
 
 class EvalHelperBase : public EvalBase {
 public:
@@ -19,8 +20,8 @@ protected:
     EvalVisitor& eval_ref() { return _eval_ref; }
 
     // convenience
-    eval_flags_t has_flag(eval_flags_t flag) const { return flags() & flag; }
-    eval_flags_t flags() const { return _eval_ref.flags(); }
+    eval_flags_t has_flag(eval_flags_t flag) const;
+    eval_flags_t flags() const;
 
 private:
     EvalVisitor& _eval_ref;
@@ -36,7 +37,7 @@ protected:
     EvalVisitor* eval() { return &eval_ref(); }
     ScopeStack& scope_stack() { return _scope_stack; }
 
-    Scope* scope() { return eval()->scope(); }
+    Scope* scope();
 
 private:
     ScopeStack& _scope_stack;
@@ -48,8 +49,7 @@ public:
         friend ScopedEvalHelper;
 
     private:
-        EvalVisitorProxy(EvalVisitor& eval, Scope* scope):
-            _eval{eval}, _scope_raii(_eval.scope_raii(scope)) {}
+        EvalVisitorProxy(EvalVisitor& eval, Scope* scope);
 
         EvalVisitorProxy(EvalVisitorProxy&&) = default;
         EvalVisitorProxy& operator=(EvalVisitorProxy&&) = delete;
@@ -60,7 +60,7 @@ public:
 
     private:
         EvalVisitor& _eval;
-        EvalVisitor::ScopeRaii _scope_raii;
+        ScopeRaii _scope_raii;
     };
 
     ScopedEvalHelper(EvalVisitor& eval, Ref<Program> program, Ref<Scope> scope):

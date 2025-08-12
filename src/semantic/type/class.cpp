@@ -122,9 +122,7 @@ Class::init_type_def(sema::Resolver& resolver, str_id_t name_id) {
     if (!sym)
         return {};
     auto alias = sym->get<UserType>()->as_alias();
-    auto scope = alias->cls()->scope();
-    auto scope_view = scope->view(alias->scope_version());
-    resolver.resolve(alias, &scope_view);
+    resolver.resolve(alias);
     return alias;
 }
 
@@ -562,10 +560,8 @@ elt_id_t Class::read_element_id(const BitsView data, bitsize_t off) {
 }
 
 bool Class::resolve_params(sema::Resolver& resolver) {
-    auto scope = param_scope();
     for (auto param : params()) {
-        auto scope_view = scope->view(param->scope_version());
-        if (!resolver.resolve(param, &scope_view))
+        if (!resolver.resolve(param))
             return false;
     }
     return true;
@@ -575,8 +571,7 @@ bool Class::init_ancestors(sema::Resolver& resolver) {
     if (node()->has_ancestors()) {
         for (unsigned n = 0; n < node()->ancestors()->child_num(); ++n) {
             auto cls_name = node()->ancestors()->get(n);
-            auto cls =
-                resolver.resolve_class_name(cls_name, param_scope(), false);
+            auto cls = resolver.resolve_class_name(cls_name, false);
             if (!cls)
                 return false;
             add_ancestor(cls, cls_name);
@@ -586,7 +581,6 @@ bool Class::init_ancestors(sema::Resolver& resolver) {
     // add inherited properties
     // parents first
     for (auto anc : parents()) {
-        assert(anc->is_parent());
         for (auto prop : anc->cls()->props())
             _all_props.push_back(prop);
     }
