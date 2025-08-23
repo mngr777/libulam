@@ -212,8 +212,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     if (!args)
         return {args.error()};
 
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    auto res = funcall->funcall(node, std::move(callable), std::move(args));
+    auto res = eval()->call(node, std::move(callable), std::move(args));
     return check(node, std::move(res));
 }
 
@@ -522,8 +521,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
             left = bind(node, fset, std::move(left));
             ExprResList args;
             args.push_back(std::move(right));
-            auto funcall = eval()->funcall_helper(scope(), flags());
-            return funcall->funcall(node, std::move(left), std::move(args));
+            return eval()->call(node, std::move(left), std::move(args));
         }
     }
 
@@ -635,8 +633,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
             if (op == Op::PostInc || op == Op::PostDec)
                 args.push_back(post_inc_dec_dummy());
             arg = bind(node, fset, std::move(arg));
-            auto funcall = eval()->funcall_helper(scope(), flags());
-            return funcall->funcall(node, std::move(arg), std::move(args));
+            return eval()->call(node, std::move(arg), std::move(args));
         }
     }
     assert(false);
@@ -721,8 +718,7 @@ EvalExprVisitor::type_op_construct(Ref<ast::TypeOpExpr> node, Ref<Class> cls) {
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    return funcall->construct(node, cls, std::move(args));
+    return eval()->construct(node, cls, std::move(args));
 }
 
 ExprRes
@@ -768,15 +764,13 @@ ExprRes EvalExprVisitor::type_op_expr_construct(
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    return funcall->construct(node, arg.type()->as_class(), std::move(args));
+    return eval()->construct(node, arg.type()->as_class(), std::move(args));
 }
 
 ExprRes EvalExprVisitor::type_op_expr_fun(
     Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg) {
     arg = bind(node, fset, std::move(arg));
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    return funcall->funcall(node, std::move(arg), {});
+    return eval()->call(node, std::move(arg), {});
 }
 
 ExprRes EvalExprVisitor::type_op_expr_default(
@@ -891,8 +885,7 @@ ExprRes EvalExprVisitor::array_access_class(
     ExprResList args;
     args.push_back(std::move(idx));
 
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    ExprRes res = funcall->funcall(node, std::move(callable), std::move(args));
+    ExprRes res = eval()->call(node, std::move(callable), std::move(args));
     if (is_tmp && res.value().is_lvalue()) {
         LValue lval = res.move_value().lvalue();
         lval.set_is_xvalue(true);

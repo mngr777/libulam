@@ -263,12 +263,26 @@ ExprRes EvalVisitor::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
     return do_eval_init(ei, var, init);
 }
 
-Ptr<EvalFuncall>
-EvalVisitor::funcall_helper(Scope* scope, eval_flags_t flags_) {
-    return _funcall_helper(scope, flags() | flags_);
+ExprRes
+EvalVisitor::construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args) {
+    EvalFuncall ef{*this, program(), scope()};
+    return do_construct(ef, node, cls, std::move(args));
 }
 
-ExprRes EvalVisitor::funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
+ExprRes
+EvalVisitor::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
+    EvalFuncall ef{*this, program(), scope()};
+    return do_call(ef, node, std::move(callable), std::move(args));
+}
+
+ExprRes EvalVisitor::funcall(
+    Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
+    EvalFuncall ef{*this, program(), scope()};
+    return do_funcall(ef, node, fun, std::move(obj), std::move(args));
+}
+
+
+ExprRes EvalVisitor::old_funcall(Ref<Fun> fun, LValue self, ExprResList&& args) {
     debug() << __FUNCTION__ << " `" << str(fun->name_id()) << "` {\n";
     assert(fun->params().size() == args.size());
 
@@ -377,11 +391,6 @@ ExprRes EvalVisitor::do_cast(
 ExprRes EvalVisitor::do_eval_init(
     EvalInit& ei, Ref<VarBase> var, Ref<ast::InitValue> init) {
     return ei.eval_init(var, init);
-}
-
-Ptr<EvalFuncall>
-EvalVisitor::_funcall_helper(Scope* scope, eval_flags_t flags) {
-    return make<EvalFuncall>(*this, program(), scope /*, flags */);
 }
 
 CondRes EvalVisitor::eval_cond(Ref<ast::Cond> cond) {

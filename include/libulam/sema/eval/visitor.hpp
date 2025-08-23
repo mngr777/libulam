@@ -77,11 +77,17 @@ public:
 
     virtual ExprRes eval_init(Ref<VarBase> var, Ref<ast::InitValue> init);
 
-    // TODO: remove
-    Ptr<EvalFuncall>
-    funcall_helper(Scope* scope, eval_flags_t flags = evl::NoFlags);
+    virtual ExprRes
+    construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);
 
-    virtual ExprRes funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
+    virtual ExprRes
+    call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args);
+
+    virtual ExprRes funcall(
+        Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
+
+    // TODO: move to helper
+    virtual ExprRes old_funcall(Ref<Fun> fun, LValue self, ExprResList&& args);
 
     FlagsRaii flags_raii(eval_flags_t flags) { return {*this, flags}; }
 
@@ -120,7 +126,24 @@ protected:
     virtual ExprRes
     do_eval_init(EvalInit& ei, Ref<VarBase> var, Ref<ast::InitValue> init);
 
-    virtual Ptr<EvalFuncall> _funcall_helper(Scope* scope, eval_flags_t flags);
+    virtual ExprRes do_construct(
+        EvalFuncall& ef,
+        Ref<ast::Node> node,
+        Ref<Class> cls,
+        ExprResList&& args);
+
+    virtual ExprRes do_call(
+        EvalFuncall& ef,
+        Ref<ast::Node> node,
+        ExprRes&& callable,
+        ExprResList&& args);
+
+    virtual ExprRes do_funcall(
+        EvalFuncall& ef,
+        Ref<ast::Node> node,
+        Ref<Fun> fun,
+        ExprRes&& obj,
+        ExprResList&& args);
 
     virtual CondRes eval_cond(Ref<ast::Cond> cond);
 

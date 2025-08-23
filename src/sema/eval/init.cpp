@@ -223,8 +223,7 @@ ExprRes EvalInit::construct_obj(
         rval.set_is_consteval(true);
         return {cls, Value{std::move(rval)}};
     }
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    return funcall->construct(arg_list, cls, std::move(args));
+    return eval()->construct(arg_list, cls, std::move(args));
 }
 
 ExprRes EvalInit::obj_set(

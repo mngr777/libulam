@@ -108,7 +108,7 @@ ExprRes EvalFuncall::do_funcall(
 
     assert(fun->node()->has_body());
     assert(!self.empty());
-    return eval()->funcall(fun, self, std::move(args));
+    return eval()->old_funcall(fun, self, std::move(args));
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {

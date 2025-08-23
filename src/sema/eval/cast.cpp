@@ -230,8 +230,7 @@ ExprRes EvalCast::cast_atom_to_nonelement_empty(
 ExprRes EvalCast::cast_class_fun(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl) {
     assert(arg.type()->deref()->is_class());
-    auto funcall = eval()->funcall_helper(scope(), flags());
-    auto res = funcall->funcall(node, fun, std::move(arg), {});
+    auto res = eval()->funcall(node, fun, std::move(arg), {});
     if (!res)
         diag().error(node, "conversion failed");
     return res;
