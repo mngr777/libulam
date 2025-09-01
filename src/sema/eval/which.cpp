@@ -1,7 +1,7 @@
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
-#include <libulam/sema/eval/visitor.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/which.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/flags.hpp>
@@ -15,7 +15,7 @@
 namespace ulam::sema {
 
 void EvalWhich::eval_which(Ref<ast::Which> node) {
-    auto scope_raii = scope_stack().raii<BasicScope>(scope(), scp::Break);
+    auto sr = env().scope_raii(scp::Break);
     Context ctx{node};
     if (node->has_expr())
         ctx.which_var = make_which_var(ctx, node->expr());
@@ -30,14 +30,14 @@ void EvalWhich::eval_which(Ref<ast::Which> node) {
 }
 
 Ptr<Var> EvalWhich::make_which_var(Context& ctx, Ref<ast::Expr> expr) {
-    auto res = eval()->eval_expr(expr);
+    auto res = env().eval_expr(expr);
     return make<Var>(res.move_typed_value());
 }
 
 void EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
-    auto scope_raii = scope_stack().raii<BasicScope>(scope());
+    auto sr = env().scope_raii();
     if (match(ctx, case_->case_cond()))
-        case_->branch()->accept(*eval());
+        env().eval_stmt(case_->branch());
 }
 
 bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
@@ -48,7 +48,7 @@ bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
 }
 
 bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {
-    auto case_res = eval()->eval_expr(case_expr);
+    auto case_res = env().eval_expr(case_expr);
     if (!case_res)
         throw EvalExceptError("failed to eval which case");
     auto res = match_expr_res(ctx, case_expr, std::move(case_res));
@@ -56,7 +56,7 @@ bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {
 }
 
 bool EvalWhich::match_as_cond(Context& ctx, Ref<ast::AsCond> as_cond) {
-    EvalCond ec{*eval(), program(), scope_stack()};
+    EvalCond ec{env()};
     return do_match_as_cond(ctx, ec, as_cond);
 }
 
@@ -71,12 +71,12 @@ ExprRes EvalWhich::match_expr_res(
     Context& ctx, Ref<ast::Expr> case_expr, ExprRes&& case_res) {
     ExprRes which_res{ctx.which_var->type(), Value{ctx.which_var->lvalue()}};
     auto which_expr = ctx.node->expr();
-    auto res = eval()->eval_equal(
+    auto res = env().eval_equal(
         case_expr, case_expr, std::move(case_res), which_expr,
         std::move(which_res));
     if (!res || (!has_flag(evl::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to match eval which case");
-    return eval()->to_boolean(case_expr, std::move(res));
+    return env().to_boolean(case_expr, std::move(res));
 }
 
 } // namespace ulam::sema

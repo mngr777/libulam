@@ -1,9 +1,8 @@
-#include "libulam/semantic/scope/flags.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
@@ -18,7 +17,7 @@ RecVisitor::RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies):
     _diag{diag},
     _ast{ast},
     _program{},
-    _eval{},
+    _eval_env{},
     _skip_fun_bodies{skip_fun_bodies},
     _pass{Pass::Module} {}
 
@@ -29,7 +28,7 @@ void RecVisitor::analyze() { visit(_ast); }
 void RecVisitor::visit(Ref<ast::Root> node) {
     assert(node->program());
     _program = node->program();
-    _eval = make<EvalVisitor>(_program);
+    _eval_env = make<EvalEnv>(_program); // ??
 
     if (do_visit(node))
         traverse(node);
@@ -141,14 +140,14 @@ bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (!sync_scope(node)) {
         Ptr<UserType> type = make<AliasType>(
             program()->str_pool(), program()->builtins(), nullptr, node);
-        _eval->resolver(false).resolve(type->as_alias());
+        _eval_env->resolver(false).resolve(type->as_alias());
         scope()->set(type->name_id(), std::move(type));
     }
     return true;
 }
 
 void RecVisitor::visit(Ref<ast::VarDefList> node) {
-    auto resolver = _eval->resolver(false);
+    auto resolver = _eval_env->resolver(false);
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto def = node->def(n);
         if (!sync_scope(def)) {

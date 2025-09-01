@@ -17,15 +17,15 @@
 namespace ulam::sema {
 
 // TODO: better diagnostics, trace type/value resolution somehow
+// TODO: move to /eval?
 
-class EvalVisitor;
+class EvalEnv;
 
-class Resolver : public EvalHelperBase {
+class Resolver : public EvalHelper {
 public:
-    Resolver(EvalVisitor& eval, Ref<Program> program, bool in_expr):
-        EvalHelperBase{eval, program}, _eval{eval}, _in_expr{in_expr} {}
+    Resolver(EvalEnv& env, bool in_expr): EvalHelper{env}, _in_expr{in_expr} {}
 
-    void resolve(Ref<Program> program);
+    void resolve(Ref<Program> program); // TODO: move to constr
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias);
@@ -79,13 +79,6 @@ private:
     std::optional<bool> check_state(Ref<Decl> decl);
     void update_state(Ref<Decl> decl, bool is_resolved);
 
-    Scope* scope();
-    eval_flags_t flags() const;
-
-    EvalVisitor& eval();
-    EvalVisitor& eval() const;
-
-    EvalVisitor& _eval;
     bool _in_expr;
     ClassSet _classes;
 };

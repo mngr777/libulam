@@ -23,17 +23,22 @@ public:
     private:
         template <typename... Ts>
         Raii(ScopeStack& stack, Ts&&... args):
-            _stack{stack}, _scope{std::forward<Ts>(args)...} {
-            _stack.push(Variant{get()});
+            _stack{&stack}, _scope{std::forward<Ts>(args)...} {
+            stack.push(Variant{get()});
         }
 
     public:
-        ~Raii() { _stack.pop(); }
+        Raii(): _stack{}, _scope{nullptr} {}
+
+        ~Raii() {
+            if (_stack)
+                _stack->pop();
+        }
 
         T* get() { return &_scope; }
 
     private:
-        ScopeStack& _stack;
+        ScopeStack* _stack;
         T _scope;
     };
 

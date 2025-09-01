@@ -1,9 +1,9 @@
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/init.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/scope/view.hpp>
@@ -28,7 +28,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
     debug() << __FUNCTION__ << " TypeOpExpr\n" << line_at(node);
     ExprRes res;
     if (node->has_type_name()) {
-        auto resolver = eval()->resolver(true);
+        auto resolver = env().resolver(true);
         auto type = resolver.resolve_type_name(node->type_name(), true);
         if (!type)
             return {ExprError::UnresolvableType};
@@ -115,7 +115,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
         return res;
 
     // resolve target type
-    auto resolver = eval()->resolver(true);
+    auto resolver = env().resolver(true);
     auto cast_type =
         resolver.resolve_full_type_name(node->full_type_name(), scope());
     if (!cast_type)
@@ -125,7 +125,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
     if (cast_type->is(VoidId))
         return {builtins().void_type(), Value{RValue{}}};
 
-    res = eval()->cast(node, cast_type, std::move(res), true);
+    res = env().cast(node, cast_type, std::move(res), true);
     return check(node, std::move(res));
 }
 
@@ -212,7 +212,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
     if (!args)
         return {args.error()};
 
-    auto res = eval()->call(node, std::move(callable), std::move(args));
+    auto res = env().call(node, std::move(callable), std::move(args));
     return check(node, std::move(res));
 }
 
@@ -271,7 +271,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
     debug() << __FUNCTION__ << "ClassConstAccess" << line_at(node);
 
-    auto resolver = eval()->resolver(true);
+    auto resolver = env().resolver(true);
     auto type = resolver.resolve_class_name(node->type_name(), false);
     if (!type)
         return {ExprError::UnresolvableType};
@@ -316,7 +316,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     }
 
     // cast to index type
-    idx = eval()->cast(node->index(), idx_type, std::move(idx));
+    idx = env().cast(node->index(), idx_type, std::move(idx));
     if (!idx)
         return idx;
 
@@ -411,7 +411,7 @@ Ref<Class> EvalExprVisitor::class_base(
 
     // resolve aliases
     if (type->is_alias()) {
-        auto resolver = eval()->resolver(true);
+        auto resolver = env().resolver(true);
         if (!resolver.resolve(type->as_alias()))
             return {};
     }
@@ -465,10 +465,9 @@ ExprRes EvalExprVisitor::binary_op(
         }
         case TypeError::ImplCastRequired: {
             if (error.cast_bi_type_id != NoBuiltinTypeId)
-                return eval()->cast(
-                    expr, error.cast_bi_type_id, std::move(arg));
+                return env().cast(expr, error.cast_bi_type_id, std::move(arg));
             assert(error.cast_type);
-            return eval()->cast(expr, error.cast_type, std::move(arg));
+            return env().cast(expr, error.cast_type, std::move(arg));
         }
         case TypeError::Ok:
             return std::move(arg);
@@ -521,7 +520,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
             left = bind(node, fset, std::move(left));
             ExprResList args;
             args.push_back(std::move(right));
-            return eval()->call(node, std::move(left), std::move(args));
+            return env().call(node, std::move(left), std::move(args));
         }
     }
 
@@ -563,7 +562,7 @@ ExprRes EvalExprVisitor::unary_op(
         return {ExprError::CastRequired};
     case TypeError::ImplCastRequired: {
         assert(!ops::is_inc_dec(op));
-        arg = eval()->cast(node, error.cast_bi_type_id, std::move(arg));
+        arg = env().cast(node, error.cast_bi_type_id, std::move(arg));
         if (!arg)
             return std::move(arg);
     } break;
@@ -573,7 +572,7 @@ ExprRes EvalExprVisitor::unary_op(
 
     Ref<Type> type{};
     if (type_name) {
-        auto resolver = eval()->resolver(true);
+        auto resolver = env().resolver(true);
         type = resolver.resolve_type_name(type_name, scope());
         if (!type)
             return {ExprError::UnresolvableType};
@@ -633,7 +632,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
             if (op == Op::PostInc || op == Op::PostDec)
                 args.push_back(post_inc_dec_dummy());
             arg = bind(node, fset, std::move(arg));
-            return eval()->call(node, std::move(arg), std::move(args));
+            return env().call(node, std::move(arg), std::move(args));
         }
     }
     assert(false);
@@ -654,12 +653,12 @@ ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {
 
     // cast bo Bool(1)
     auto boolean = builtins().boolean();
-    return eval()->cast(node, boolean, std::move(cond_res));
+    return env().cast(node, boolean, std::move(cond_res));
 }
 
 ExprResPair
 EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
-    auto flags_raii = eval()->flags_raii(flags() | evl::NoExec);
+    auto flags_raii = env().flags_raii(flags() | evl::NoExec);
     return {node->if_true()->accept(*this), node->if_false()->accept(*this)};
 }
 
@@ -683,24 +682,24 @@ ExprRes EvalExprVisitor::ternary_eval(
     }
 
     // disable dereference casts
-    auto flags_raii = eval()->flags_raii(flags() | evl::NoDerefCast);
+    auto fr = env().add_flags_raii(evl::NoDerefCast);
 
     auto cond_rval = cond_res.move_value().move_rvalue();
     bool cond_bool = builtins().boolean()->is_true(cond_rval);
 
     // use noexec result if possible
     if (cond_bool && (has_flag(evl::NoExec) || !if_true_res.value().empty())) {
-        return eval()->cast(node->if_true(), type, std::move(if_true_res));
+        return env().cast(node->if_true(), type, std::move(if_true_res));
     }
     if (!cond_bool &&
         (has_flag(evl::NoExec) || !if_false_res.value().empty())) {
-        return eval()->cast(node->if_false(), type, std::move(if_false_res));
+        return env().cast(node->if_false(), type, std::move(if_false_res));
     }
 
     // exec branch
     auto branch = cond_bool ? node->if_true() : node->if_false();
     auto res = branch->accept(*this);
-    return eval()->cast(branch, type, std::move(res));
+    return env().cast(branch, type, std::move(res));
 }
 
 ExprRes EvalExprVisitor::type_op(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
@@ -718,7 +717,7 @@ EvalExprVisitor::type_op_construct(Ref<ast::TypeOpExpr> node, Ref<Class> cls) {
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
-    return eval()->construct(node, cls, std::move(args));
+    return env().construct(node, cls, std::move(args));
 }
 
 ExprRes
@@ -764,13 +763,13 @@ ExprRes EvalExprVisitor::type_op_expr_construct(
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
-    return eval()->construct(node, arg.type()->as_class(), std::move(args));
+    return env().construct(node, arg.type()->as_class(), std::move(args));
 }
 
 ExprRes EvalExprVisitor::type_op_expr_fun(
     Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg) {
     arg = bind(node, fset, std::move(arg));
-    return eval()->call(node, std::move(arg), {});
+    return env().call(node, std::move(arg), {});
 }
 
 ExprRes EvalExprVisitor::type_op_expr_default(
@@ -842,7 +841,7 @@ ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
 }
 
 ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
-    auto resolver = eval()->resolver(true);
+    auto resolver = env().resolver(true);
     if (!var->has_type() && !resolver.resolve(var))
         return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
@@ -885,7 +884,7 @@ ExprRes EvalExprVisitor::array_access_class(
     ExprResList args;
     args.push_back(std::move(idx));
 
-    ExprRes res = eval()->call(node, std::move(callable), std::move(args));
+    ExprRes res = env().call(node, std::move(callable), std::move(args));
     if (is_tmp && res.value().is_lvalue()) {
         LValue lval = res.move_value().lvalue();
         lval.set_is_xvalue(true);
@@ -959,8 +958,8 @@ ExprRes EvalExprVisitor::member_access_op(
 
 ExprRes EvalExprVisitor::member_access_var(
     Ref<ast::MemberAccess> node, ExprRes&& obj, Ref<Var> var) {
-    auto resolver = eval()->resolver(true).resolve(var);
-    if (!var->has_type() && !resolver)
+    auto resolved = env().resolver(true).resolve(var);
+    if (!var->has_type() && !resolved)
         return {ExprError::UnresolvableVar};
     return {var->type(), Value{var->lvalue()}};
 }
@@ -983,7 +982,7 @@ ExprRes EvalExprVisitor::class_const_access(
     assert(var->has_cls());
     assert(var->is_const());
 
-    auto resolver = eval()->resolver(true);
+    auto resolver = env().resolver(true);
     if (!var->has_type() && !resolver.resolve(var))
         return {ExprError::UnresolvableVar};
     LValue lval{var};
@@ -1017,7 +1016,7 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
     if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
 
-    auto res = eval()->cast(node, to.type()->deref(), std::move(tv));
+    auto res = env().cast(node, to.type()->deref(), std::move(tv));
     if (!res)
         return res;
 

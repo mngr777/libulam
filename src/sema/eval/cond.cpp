@@ -1,7 +1,7 @@
 #include <libulam/sema/eval/cond.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 
@@ -29,13 +29,13 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
 }
 
 CondRes EvalCond::eval_expr(Ref<ast::Expr> expr) {
-    auto res = eval()->eval_expr(expr);
-    res = eval()->to_boolean(expr, std::move(res));
+    auto res = env().eval_expr(expr);
+    res = env().to_boolean(expr, std::move(res));
     return {is_true(res), AsCondContext{}};
 }
 
 ExprRes EvalCond::eval_as_cond_ident(Ref<ast::Ident> ident) {
-    auto res = eval()->eval_expr(ident);
+    auto res = env().eval_expr(ident);
     auto arg_type = res.type()->actual();
     if (!arg_type->is_object()) {
         diag().error(ident, "not a class or Atom");
@@ -45,7 +45,7 @@ ExprRes EvalCond::eval_as_cond_ident(Ref<ast::Ident> ident) {
 }
 
 Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
-    auto type = eval()->resolver(false).resolve_type_name(type_name, scope());
+    auto type = env().resolver(false).resolve_type_name(type_name, scope());
     if (!type)
         throw EvalExceptError("failed to resolve type");
     if (!type->is_object()) {
@@ -79,7 +79,7 @@ EvalCond::VarDefPair EvalCond::define_as_cond_var(
         auto var = make<Var>(
             node->type_name(), ulam::ref(def),
             TypedValue{type->ref_type(), Value{lval}});
-        var->set_scope_lvl(scope_stack().size());
+        var->set_scope_lvl(env().stack_size());
         ref = ulam::ref(var);
         scope()->set(var->name_id(), std::move(var));
     }

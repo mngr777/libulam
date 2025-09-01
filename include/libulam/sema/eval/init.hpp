@@ -6,24 +6,38 @@
 #include <libulam/sema/eval/helper.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/semantic/var.hpp>
 #include <libulam/semantic/var/base.hpp>
 
 namespace ulam::sema {
 
 class EvalVisitor;
 
-class EvalInit : public ScopedEvalHelper {
+class EvalInit : public EvalHelper {
 public:
-    using ScopedEvalHelper::ScopedEvalHelper;
+    using EvalHelper::EvalHelper;
 
-    virtual ExprRes eval_init(Ref<VarBase> var, Ref<ast::InitValue> init);
+    virtual bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
+
+    virtual bool init_prop(Ref<Prop> prop, Ref<ast::InitValue> init);
 
 protected:
     using Variant = ast::InitValue::ItemT;
     static_assert(std::is_same<Variant, ast::InitList::ItemT>());
     static_assert(std::is_same<Variant, ast::InitMap::ItemT>());
+
+    virtual ExprRes eval_init(Ref<VarBase> var, Ref<ast::InitValue> init);
+
+    virtual void var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr);
+    virtual void var_init_default(Ref<Var> var, bool in_expr);
+    virtual void var_init(Ref<Var> var, bool in_expr);
+
+    virtual void prop_init_expr(Ref<Prop> prop, ExprRes&& init);
+    virtual void prop_init_default(Ref<Prop> prop);
+    virtual void prop_init(Ref<Prop> prop);
 
     ExprRes
     eval_v(Ref<VarBase> var, Ref<Type> type, Variant& v, unsigned depth);

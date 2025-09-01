@@ -1,7 +1,10 @@
+#include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/eval/env.hpp>
+#include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/funcall.hpp>
-#include <libulam/sema/eval/visitor.hpp>
+#include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/value/bound_fun_set.hpp>
 
 #ifdef DEBUG_EVAL
@@ -105,14 +108,72 @@ ExprRes EvalFuncall::do_funcall(
         diag().error(node, "function is pure virtual");
         return {ExprError::FunctionIsPureVirtual};
     }
-
     assert(fun->node()->has_body());
     assert(!self.empty());
-    return eval()->old_funcall(fun, self, std::move(args));
+
+    auto scope_lvl = env().stack_size();
+    auto sr = env().scope_raii(scp::Fun);
+
+    // bind `self`, set `Self` class
+    scope()->ctx().set_self(self);
+    scope()->ctx().set_self_cls(fun->cls());
+    if (self.has_auto_scope_lvl())
+        self.set_scope_lvl(scope_lvl);
+
+    // bind params
+    std::list<Ptr<ast::VarDef>> tmp_defs{};
+    std::list<Ptr<Var>> tmp_vars{};
+    for (const auto& param : fun->params()) {
+        assert(!args.empty());
+        auto arg = args.pop_front();
+
+        // binding rvalue or xvalue lvalue to const ref via tmp variable
+        if (param->type()->is_ref() && arg.value().is_tmp()) {
+            assert(param->is_const());
+            // create tmp var default
+            auto def = make<ast::VarDef>(param->node()->name());
+            auto var = make<Var>(
+                param->type_node(), ref(def),
+                TypedValue{param->type()->deref(), arg.move_value().deref()},
+                param->flags() | Var::TmpFunParam);
+            arg = {param->type(), Value{LValue{ref(var)}}};
+            tmp_defs.push_back(std::move(def));
+            tmp_vars.push_back(std::move(var));
+        }
+        assert(arg.type()->is_same(param->type()));
+
+        auto var = make<Var>(
+            param->type_node(), param->node(), param->type(), param->flags());
+        var->set_value(arg.move_value());
+        scope()->set(var->name_id(), std::move(var));
+    }
+
+    // eval
+    try {
+        env().eval_stmt(fun->body_node());
+    } catch (EvalExceptReturn& ret) {
+        debug() << "}\n";
+        return ret.move_res();
+    }
+    debug() << "}\n";
+
+    if (!fun->ret_type()->is(VoidId)) {
+        if (has_flag(evl::NoExec)) {
+            if (fun->ret_type()->is_ref()) {
+                LValue lval;
+                lval.set_is_xvalue(false);
+                return {fun->ret_type(), Value{lval}};
+            }
+            return {fun->ret_type(), Value{RValue{}}};
+        } else {
+            return {ExprError::NoReturn};
+        }
+    }
+    return {builtins().void_type(), Value{RValue{}}};
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
-    if (fun->ret_type()->is_ref()) {
+    if (!fun->ret_type()->is_ref()) {
         LValue lval;
         lval.set_is_xvalue(false);
         return {fun->ret_type(), Value{lval}};
@@ -172,7 +233,7 @@ ExprRes EvalFuncall::cast_arg(
     Ref<Var> param,
     Ref<Type> to,
     ExprRes&& arg) {
-    return eval()->cast(node, to, std::move(arg));
+    return env().cast(node, to, std::move(arg));
 }
 
 } // namespace ulam::sema

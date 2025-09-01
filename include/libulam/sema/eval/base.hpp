@@ -15,37 +15,6 @@ public:
     explicit EvalBase(Ref<Program> program): _program{program} {}
     virtual ~EvalBase() {}
 
-protected:
-    class FlagsRaii {
-    public:
-        FlagsRaii(EvalVisitor& eval, eval_flags_t flags);
-        FlagsRaii();
-        ~FlagsRaii();
-
-        FlagsRaii(FlagsRaii&& other);
-        FlagsRaii& operator=(FlagsRaii&& other);
-
-    private:
-        EvalVisitor* _eval;
-        eval_flags_t _old_flags;
-    };
-
-    // TODO: rename to ScopeSwitchRaii (so not to confuse with
-    // ScopeStack::ScopeRaii)
-    class ScopeRaii {
-    public:
-        ScopeRaii(EvalVisitor& eval, Scope* scope);
-        ScopeRaii();
-        ~ScopeRaii();
-
-        ScopeRaii(ScopeRaii&& other);
-        ScopeRaii& operator=(ScopeRaii&& other);
-
-    private:
-        EvalVisitor* _eval;
-        Scope* _old_scope;
-    };
-
     const std::string_view line_at(loc_id_t loc_id) {
         return _program->sm().line_at(loc_id);
     }
@@ -70,7 +39,6 @@ protected:
     UniqStrPool& text_pool() { return _program->text_pool(); }
     const UniqStrPool& text_pool() const { return _program->text_pool(); }
 
-protected:
     bool is_true(const ExprRes& res, bool default_value = false);
 
 private:

@@ -1,6 +1,7 @@
 #pragma once
-#include <libulam/memory/ptr.hpp>
+#include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
+#include <libulam/memory/ptr.hpp>
 #include <utility>
 
 namespace ulam::sema {

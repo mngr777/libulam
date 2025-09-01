@@ -1,6 +1,6 @@
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/funcall.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -230,7 +230,7 @@ ExprRes EvalCast::cast_atom_to_nonelement_empty(
 ExprRes EvalCast::cast_class_fun(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl) {
     assert(arg.type()->deref()->is_class());
-    auto res = eval()->funcall(node, fun, std::move(arg), {});
+    auto res = env().funcall(node, fun, std::move(arg), {});
     if (!res)
         diag().error(node, "conversion failed");
     return res;

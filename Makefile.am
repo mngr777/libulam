@@ -126,6 +126,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/cast.hpp \
 	include/libulam/sema/eval/cond.hpp \
 	include/libulam/sema/eval/cond_res.hpp \
+	include/libulam/sema/eval/env.hpp \
 	include/libulam/sema/eval/except.hpp \
 	include/libulam/sema/eval/expr_visitor.hpp \
 	include/libulam/sema/eval/flags.hpp \
@@ -146,6 +147,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/eval.cpp \
 	src/sema/eval/cast.cpp \
 	src/sema/eval/cond.cpp \
+	src/sema/eval/env.cpp \
 	src/sema/eval/except.cpp \
 	src/sema/eval/expr_visitor.cpp \
 	src/sema/eval/funcall.cpp \

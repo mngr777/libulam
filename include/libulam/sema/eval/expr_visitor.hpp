@@ -9,7 +9,6 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
-#include <utility>
 
 namespace ulam {
 class Program;
@@ -17,18 +16,15 @@ class Program;
 
 namespace ulam::sema {
 
-class EvalVisitor;
+class EvalEnv;
 class EvalWhich;
 
-class EvalExprVisitor : public ScopedEvalHelper, public ast::ExprVisitor {
-    friend EvalVisitor;
+class EvalExprVisitor : public EvalHelper, public ast::ExprVisitor {
+    friend EvalEnv;
     friend EvalWhich;
 
 public:
-    using ScopedEvalHelper::ScopedEvalHelper;
-
-    EvalExprVisitor(EvalExprVisitor&&) = default;
-    EvalExprVisitor& operator=(EvalExprVisitor&& other);
+    using EvalHelper::EvalHelper;
 
     ExprRes visit(Ref<ast::TypeOpExpr> node) override;
     ExprRes visit(Ref<ast::Ident> node) override;

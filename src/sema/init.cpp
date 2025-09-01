@@ -1,8 +1,9 @@
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/sema/eval/visitor.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/init.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -239,8 +240,8 @@ void Init::export_classes() {
 
 void Init::resolve() {
     auto program = ast()->program();
-    EvalVisitor eval{program};
-    eval.resolver(false).resolve(program);
+    EvalEnv env{program};
+    env.resolver(false).resolve(program);
 }
 
 } // namespace ulam::sema

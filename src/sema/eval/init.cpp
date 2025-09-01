@@ -1,16 +1,74 @@
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/init.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <type_traits>
 
 namespace ulam::sema {
 
+bool EvalInit::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
+    if (!init) {
+        var_init_default(var, in_expr);
+        return true;
+    }
+    auto res = eval_init(var, init);
+    if (res) {
+        var_init_expr(var, std::move(res), in_expr);
+        return true;
+    }
+    return false;
+}
+
+bool EvalInit::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
+    if (!init) {
+        prop_init_default(prop);
+        return true;
+    }
+    auto res = eval_init(prop, init);
+    if (res) {
+        prop_init_expr(prop, std::move(res));
+        return true;
+    }
+    return false;
+}
+
 ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
     assert(var->has_type());
     return eval_v(var, var->type(), init->get(), 1);
+}
+
+void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
+    assert(init);
+    var_init(var, in_expr);
+    var->set_value(init.move_value());
+}
+
+void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
+    var_init(var, in_expr);
+    var->set_value(Value{var->type()->construct()});
+}
+
+void EvalInit::var_init(Ref<Var> var, bool in_expr) {
+    assert(var && var->is_ready());
+    assert(var->value().empty());
+}
+
+void EvalInit::prop_init_expr(Ref<Prop> prop, ExprRes&& init) {
+    assert(init);
+    prop_init(prop);
+    prop->set_default_value(init.move_value().move_rvalue());
+}
+
+void EvalInit::prop_init_default(Ref<Prop> prop) {
+    prop_init(prop);
+    prop->set_default_value(prop->type()->construct());
+}
+
+void EvalInit::prop_init(Ref<Prop> prop) {
+    assert(prop && prop->is_ready());
+    assert(prop->default_value().empty());
 }
 
 ExprRes EvalInit::eval_v(
@@ -29,7 +87,7 @@ ExprRes EvalInit::eval_v(
 
 ExprRes EvalInit::eval_expr(
     Ref<VarBase> var, Ref<Type> type, Ref<ast::Expr> expr, unsigned depth) {
-    auto res = eval()->eval_expr(expr);
+    auto res = env().eval_expr(expr);
     if (!res)
         return res;
     return cast_expr_res(var, type, expr, std::move(res), depth);
@@ -42,7 +100,7 @@ ExprRes EvalInit::cast_expr_res(
     ExprRes&& res,
     unsigned depth) {
     assert(res);
-    return eval()->cast(expr, type, std::move(res));
+    return env().cast(expr, type, std::move(res));
 }
 
 ExprRes EvalInit::eval_list(
@@ -80,7 +138,7 @@ ExprRes EvalInit::eval_class_list(
             return {ExprError::InitListArgument};
         }
         auto& expr = item.get<Ptr<ast::Expr>>();
-        auto expr_res = eval()->eval_expr(expr.get());
+        auto expr_res = env().eval_expr(expr.get());
         if (!expr_res)
             return expr_res;
         args.push_back(std::move(expr_res));
@@ -223,7 +281,7 @@ ExprRes EvalInit::construct_obj(
         rval.set_is_consteval(true);
         return {cls, Value{std::move(rval)}};
     }
-    return eval()->construct(arg_list, cls, std::move(args));
+    return env().construct(arg_list, cls, std::move(args));
 }
 
 ExprRes EvalInit::obj_set(

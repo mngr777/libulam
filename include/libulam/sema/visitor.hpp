@@ -13,7 +13,7 @@ class Program;
 
 namespace ulam::sema {
 
-class EvalVisitor;
+class EvalEnv;
 
 class RecVisitor : public ast::RecVisitor {
 public:
@@ -85,7 +85,7 @@ private:
     Diag& _diag;
     Ref<ast::Root> _ast;
     Ref<Program> _program;
-    Ptr<EvalVisitor> _eval;
+    Ptr<EvalEnv> _eval_env;
     bool _skip_fun_bodies;
 
     Pass _pass;

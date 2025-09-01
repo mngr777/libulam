@@ -2,8 +2,6 @@
 #include <libulam/ast/nodes/root.hpp>
 #include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/sema/eval/visitor.hpp>
-#include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/str_pool.hpp>
 

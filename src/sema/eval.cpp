@@ -2,6 +2,7 @@
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/sema/eval.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/semantic/program.hpp>
 
 #ifdef DEBUG_EVAL
@@ -27,8 +28,8 @@ Ptr<ast::Block> Eval::parse(const std::string& text) {
 }
 
 ExprRes Eval::do_eval(Ref<ast::Block> block) {
-    auto visitor = make<EvalVisitor>(_ast->program());
-    return visitor->eval(block);
+    EvalEnv env{_ast->program()};
+    return env.eval(block);
 }
 
 } // namespace ulam::sema

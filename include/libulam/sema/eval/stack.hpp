@@ -13,8 +13,8 @@ public:
     public:
         Item(Ref<Fun> fun, LValue self): _fun{fun}, _self{self} {}
 
-        Ref<Fun> fun() { return _fun; }
-        LValue self() { return _self; }
+        Ref<Fun> fun() const { return _fun; }
+        LValue self() const { return _self; }
 
     private:
         Ref<Fun> _fun;
@@ -46,6 +46,7 @@ public:
     bool empty() const { return _stack.empty(); }
 
     Item& top() { return _stack.top(); }
+    const Item& top() const { return _stack.top(); }
 
     Raii raii(Ref<Fun> fun, LValue self);
 

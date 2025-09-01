@@ -1,4 +1,5 @@
 #include <libulam/sema/eval/cast.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/helper.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -6,22 +7,14 @@
 
 namespace ulam::sema {
 
-// EvalHelperBase
+EvalHelper::EvalHelper(EvalEnv& env): EvalBase{env.program()}, _env{env} {}
 
-eval_flags_t EvalHelperBase::has_flag(eval_flags_t flag) const {
+eval_flags_t EvalHelper::has_flag(eval_flags_t flag) const {
     return flags() & flag;
 }
 
-eval_flags_t EvalHelperBase::flags() const { return _eval_ref.flags(); }
+eval_flags_t EvalHelper::flags() const { return _env.flags(); }
 
-// EvalHelper
-
-Scope* EvalHelper::scope() { return eval()->scope(); }
-
-// ScopedEvalHelper
-
-ScopedEvalHelper::EvalVisitorProxy::EvalVisitorProxy(
-    EvalVisitor& eval, Scope* scope):
-    _eval{eval}, _scope_raii(_eval.scope_raii(scope)) {}
+Scope* EvalHelper::scope() { return _env.scope(); }
 
 } // namespace ulam::sema

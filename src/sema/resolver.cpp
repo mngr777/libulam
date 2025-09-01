@@ -1,9 +1,7 @@
-#include "libulam/sema/eval/flags.hpp"
-#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -29,12 +27,12 @@
         return (is_resolved);                                                  \
     } while (false)
 
-#define DECL_SCOPE(decl, scope_raii, scope_view)                               \
-    ScopeRaii scope_raii;                                                      \
+#define DECL_SCOPE(decl, ssr, scope_view)                                      \
+    EvalEnv::ScopeSwitchRaii ssr;                                              \
     PersScopeView scope_view;                                                  \
     if (!decl->is_local()) {                                                   \
         scope_view = decl_scope_view(decl);                                    \
-        scope_raii = eval().scope_raii(&scope_view);                           \
+        ssr = env().scope_switch_raii(&scope_view);                            \
     }
 
 namespace ulam::sema {
@@ -106,7 +104,7 @@ bool Resolver::resolve(Ref<AliasType> alias) {
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
-    DECL_SCOPE(alias, scope_raii, scope_view);
+    DECL_SCOPE(alias, ssr, scope_view);
 
     // type
     auto type = resolve_type_name(type_name, scope());
@@ -132,7 +130,7 @@ bool Resolver::resolve(Ref<Var> var) {
     auto node = var->node();
     auto type_name = var->type_node();
 
-    DECL_SCOPE(var, scope_raii, scope_view);
+    DECL_SCOPE(var, ssr, scope_view);
 
     // type
     if (!var->has_type()) {
@@ -156,15 +154,12 @@ bool Resolver::resolve(Ref<Var> var) {
     // value
     if (!var->has_value()) {
         if (node->has_init()) {
-            auto flags_ = flags();
+            auto flags_ = evl::NoFlags;
             if (!var->is_local() && !var->type()->is_ref())
                 flags_ |= evl::Consteval; // class/module const
-            auto flags_raii = _eval.flags_raii(flags_);
-            auto init_res = _eval.eval_init(var, node->init());
-            bool ok = init_res.ok();
+            auto flags_raii = env().add_flags_raii(flags_);
+            bool ok = env().init_var(var, node->init(), _in_expr);
             update_state(var, ok);
-            if (ok)
-                _eval.var_init_expr(var, std::move(init_res), _in_expr);
             return ok;
 
         } else if (var->requires_value()) {
@@ -175,7 +170,7 @@ bool Resolver::resolve(Ref<Var> var) {
 
         } else {
             update_state(var, true);
-            _eval.var_init_default(var, _in_expr);
+            env().init_var(var, {}, _in_expr);
             return true;
         }
     }
@@ -185,7 +180,7 @@ bool Resolver::resolve(Ref<Var> var) {
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
 
-    DECL_SCOPE(prop, scope_raii, scope_view)
+    DECL_SCOPE(prop, ssr, scope_view)
 
     // type
     auto type = resolve_var_decl_type(prop->type_node(), prop->node(), true);
@@ -209,20 +204,11 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     if (prop->has_default_value())
         return true;
 
-    auto type = prop->type();
-    auto node = prop->node();
-    auto scope_view = decl_scope_view(prop);
+    DECL_SCOPE(prop, ssr, scope_view)
 
-    if (node->has_init()) {
-        auto flags_raii = _eval.flags_raii(flags() | evl::Consteval);
-        auto init_res = _eval.eval_init(prop, node->init());
-        if (!init_res)
-            RET_UPD_STATE(prop, false);
-        prop->set_default_value(init_res.move_value().move_rvalue());
-    } else {
-        prop->set_default_value(type->construct());
-    }
-    return true;
+    auto fr = env().add_flags_raii(evl::Consteval);
+    bool ok = env().init_prop(prop, prop->node()->init());
+    RET_UPD_STATE(prop, ok);
 }
 
 bool Resolver::resolve(Ref<FunSet> fset) {
@@ -263,7 +249,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
-    DECL_SCOPE(fun, scope_raii, scope_view)
+    DECL_SCOPE(fun, ssr, scope_view)
 
     // return type
     if (fun->is_constructor()) {
@@ -488,9 +474,11 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
         return NoBitsize;
     }
 
+    // consteval
+    auto fr = env().add_flags_raii(evl::Consteval);
+
     // eval
-    // TODO: consteval
-    ExprRes res = _eval.eval_expr(expr);
+    ExprRes res = env().eval_expr(expr);
     if (!res)
         return NoBitsize;
 
@@ -498,7 +486,7 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     Unsigned size{};
     {
         auto uns_type = builtins().unsigned_type();
-        res = _eval.cast(expr, uns_type, std::move(res), true);
+        res = env().cast(expr, uns_type, std::move(res), true);
         if (!res)
             return NoBitsize;
         auto rval = res.move_value().move_rvalue();
@@ -632,16 +620,15 @@ array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n" << line_at(expr);
 
     // consteval
-    // TODO: scope
-    auto flags_raii = _eval.flags_raii(_eval.flags() | evl::Consteval);
+    auto fr = env().add_flags_raii(evl::Consteval);
 
-    ExprRes res = _eval.eval_expr(expr);
+    ExprRes res = env().eval_expr(expr);
     if (!res)
         return UnknownArraySize;
 
     // cast to Int
     auto int_type = builtins().int_type();
-    res = _eval.cast(expr, int_type, std::move(res));
+    res = env().cast(expr, int_type, std::move(res));
     if (!res)
         return UnknownArraySize;
 
@@ -690,15 +677,15 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
 
 std::pair<TypedValueList, bool>
 Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
-    // debug() << __FUNCTION__ << "\n" << line_at(args);
+    debug() << __FUNCTION__ << "\n" << line_at(args);
 
     // consteval
-    auto flags_raii = eval().flags_raii(flags() | evl::Consteval);
+    auto fr = env().add_flags_raii(evl::Consteval);
 
     // tmp param eval scope
     auto param_scope_view = tpl->param_scope()->view(0);
     BasicScope param_scope{&param_scope_view};
-    auto scope_raii = eval().scope_raii(&param_scope);
+    auto ssr = env().scope_switch_raii(&param_scope);
     std::list<Ref<Var>> cls_params;
 
     assert(_in_expr); // ?? auto resolver = eval().resolver(true);
@@ -719,9 +706,9 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         if (n < args->child_num()) {
             // argument provided
             auto arg = args->get(n);
-            auto arg_res = _eval.eval_expr(arg);
+            auto arg_res = env().eval_expr(arg);
             if (arg_res)
-                arg_res = _eval.cast(arg, type, std::move(arg_res), false);
+                arg_res = env().cast(arg, type, std::move(arg_res), false);
             if (!arg_res)
                 return res;
             param->set_value(arg_res.move_value());
@@ -756,13 +743,5 @@ std::optional<bool> Resolver::check_state(Ref<Decl> obj) {
 void Resolver::update_state(Ref<Decl> obj, bool is_resolved) {
     obj->set_state(is_resolved ? Decl::Resolved : Decl::Unresolvable);
 }
-
-Scope* Resolver::scope() { return eval().scope(); }
-
-scope_flags_t Resolver::flags() const { return eval().flags(); }
-
-EvalVisitor& Resolver::eval() { return _eval; }
-
-EvalVisitor& Resolver::eval() const { return _eval; }
 
 } // namespace ulam::sema
