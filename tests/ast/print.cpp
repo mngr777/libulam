@@ -366,7 +366,7 @@ void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
         indent() << "otherwise";
     } else {
         indent() << "case ";
-        accept_me(node->expr());
+        accept_me(node->case_cond());
     }
     _os << ": ";
     if (node->has_branch())

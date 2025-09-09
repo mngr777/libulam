@@ -1,19 +1,14 @@
-#include <libulam/ast/node.hpp>
-#include <libulam/memory/ptr.hpp>
+#include "./env.hpp"
+#include "./helper.hpp"
 #include <libulam/sema/eval/funcall.hpp>
-#include <libulam/semantic/fun.hpp>
-#include <libulam/semantic/program.hpp>
-#include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/value.hpp>
-#include <libulam/str_pool.hpp>
 
-class EvalFuncall : public ulam::sema::EvalFuncall {
+class EvalFuncall : public EvalHelper, public ulam::sema::EvalFuncall {
 public:
     using Base = ulam::sema::EvalFuncall;
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
 
-    using Base::EvalFuncall;
+    EvalFuncall(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
 protected:
     ExprRes construct_funcall(
@@ -33,6 +28,12 @@ protected:
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
         ExprRes&& obj,
+        ExprResList&& args) override;
+
+    ExprRes do_funcall(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Fun> fun,
+        ulam::LValue self,
         ExprResList&& args) override;
 
     ExprResList cast_args(

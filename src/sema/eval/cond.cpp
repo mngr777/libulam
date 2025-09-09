@@ -23,9 +23,9 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
         is_match = dyn_type->is_impl_refable_as(type, res.value());
     }
     if (!is_match)
-        return {is_match, AsCondContext{}};
+        return {is_match, AsCondContext{type}};
     auto [var_def, var] = define_as_cond_var(as_cond, std::move(res), type);
-    return {is_match, AsCondContext{std::move(var_def), var}};
+    return {is_match, AsCondContext{type, std::move(var_def), var}};
 }
 
 CondRes EvalCond::eval_expr(Ref<ast::Expr> expr) {

@@ -31,17 +31,6 @@ ExprRes EvalFuncall::construct(
     return construct_funcall(node, cls, fun, std::move(rval), std::move(args));
 }
 
-ExprRes EvalFuncall::construct_funcall(
-    Ref<ast::Node> node,
-    Ref<Class> cls,
-    Ref<Fun> fun,
-    RValue&& rval,
-    ExprResList&& args) {
-    rval.set_is_consteval(args.is_consteval());
-    do_funcall(node, fun, rval.self(), std::move(args));
-    return {cls, Value{std::move(rval)}};
-}
-
 ExprRes EvalFuncall::funcall(
     Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
     assert(callable);
@@ -76,6 +65,17 @@ ExprRes EvalFuncall::funcall(
 
     args = cast_args(node, fun, std::move(args));
     return funcall_obj(node, fun, std::move(obj), std::move(args));
+}
+
+ExprRes EvalFuncall::construct_funcall(
+    Ref<ast::Node> node,
+    Ref<Class> cls,
+    Ref<Fun> fun,
+    RValue&& rval,
+    ExprResList&& args) {
+    rval.set_is_consteval(args.is_consteval());
+    do_funcall(node, fun, rval.self(), std::move(args));
+    return {cls, Value{std::move(rval)}};
 }
 
 ExprRes EvalFuncall::funcall_callable(

@@ -69,12 +69,24 @@ ExprRes EvalFuncall::funcall_obj(
     return res;
 }
 
+ExprRes EvalFuncall::do_funcall(
+    ulam::Ref<ulam::ast::Node> node,
+    ulam::Ref<ulam::Fun> fun,
+    ulam::LValue self,
+    ExprResList&& args)
+{
+    EvalEnv::FlagsRaii fr{};
+    if (env().stack_size() == 0 && !env().has_flag(evl::NoCodegen))
+        fr = env().add_flags_raii(ulam::sema::evl::NoExec);
+    return Base::do_funcall(node, fun, self, std::move(args));
+}
+
 ExprResList EvalFuncall::cast_args(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
     ExprResList&& args) {
     // do not omit consteval casts for arguments (t3233)
-    auto consteval_cast_raii = flags_raii(flags() & ~evl::NoConstevalCast);
+    auto fr = env().remove_flags_raii(evl::NoConstevalCast);
     return Base::cast_args(node, fun, std::move(args));
 }
 

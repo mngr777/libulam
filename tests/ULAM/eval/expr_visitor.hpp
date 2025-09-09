@@ -1,6 +1,6 @@
 #pragma once
-#include "./stringifier.hpp"
-#include "./visitor.hpp"
+#include "./env.hpp"
+#include "./helper.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/flags.hpp>
@@ -8,18 +8,13 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 
-class EvalExprVisitor : public ulam::sema::EvalExprVisitor {
+class EvalExprVisitor : public EvalHelper, public ulam::sema::EvalExprVisitor {
 public:
     using Base = ulam::sema::EvalExprVisitor;
     using ExprError = ulam::sema::ExprError;
     using ExprRes = ulam::sema::ExprRes;
 
-    EvalExprVisitor(
-        EvalVisitor& eval,
-        ulam::Ref<ulam::Program> program,
-        ulam::Ref<ulam::Scope> scope,
-        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
-        Base::EvalExprVisitor{eval, program, scope, flags} {}
+    EvalExprVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     ExprRes visit(ulam::Ref<ulam::ast::Cast> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::Ternary> node) override;
@@ -120,6 +115,4 @@ protected:
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Ref<ulam::ast::TypeIdent> base,
         ExprRes&& obj) override;
-
-    Stringifier make_stringifier();
 };

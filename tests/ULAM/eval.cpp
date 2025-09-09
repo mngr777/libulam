@@ -1,9 +1,9 @@
 #include "./eval.hpp"
-#include "./eval/visitor.hpp"
+#include "./eval/env.hpp"
 
 ulam::sema::ExprRes Eval::do_eval(ulam::Ref<ulam::ast::Block> block) {
-    auto visitor = ulam::make<EvalVisitor>(_ast->program());
-    auto res = visitor->eval(block);
-    _data = visitor->data();
+    EvalEnv env{_ast->program()};
+    auto res = env.eval(block);
+    _data = env.gen().code();
     return res;
 }

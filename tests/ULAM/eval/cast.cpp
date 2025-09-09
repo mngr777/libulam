@@ -7,6 +7,7 @@
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
@@ -48,15 +49,15 @@ ExprRes EvalCast::cast(
 }
 
 ExprRes EvalCast::cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
-    auto no_consteval_cast = flags_raii(flags() | evl::NoConstevalCast);
-    auto type = idx_type();
+    auto fr = env().add_flags_raii(evl::NoConstevalCast);
+    auto type = builtins().int_type();
     if (!has_flag(evl::NoCodegen)) {
         auto arg_type = arg.type()->deref();
         if ((arg_type->is(ulam::UnsignedId) || arg.type()->is(ulam::IntId)) &&
             arg_type->is_impl_castable_to(type))
             arg.set_flag(exp::OmitCastInternal);
     }
-    auto [res, _] = do_cast(node, idx_type(), std::move(arg), false);
+    auto [res, _] = do_cast(node, type, std::move(arg), false);
     if (!has_flag(evl::NoCodegen))
         unset_internal_res_flags(res);
     return std::move(res);

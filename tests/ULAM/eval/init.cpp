@@ -3,6 +3,7 @@
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
+#include "../out.hpp"
 #include <string>
 
 namespace {
@@ -13,11 +14,36 @@ ExprRes EvalInit::eval_init(
     ulam::Ref<ulam::VarBase> var, ulam::Ref<ulam::ast::InitValue> init) {
     auto type = var->type();
     // for constants, omit consteval cast for scalars
-    auto flags_ = flags();
+    EvalEnv::FlagsRaii fr{};
     if ((var->is_const()) && !type->is_array() && !type->is_class())
-        flags_ |= evl::NoConstevalCast;
-    auto consteval_cast = flags_raii(flags_);
+        fr = env().add_flags_raii(evl::NoConstevalCast);
     return Base::eval_init(var, std::move(init));
+}
+
+void EvalInit::var_init_expr(
+    ulam::Ref<ulam::Var> var, ExprRes&& init, bool in_expr) {
+    std::string data;
+    if (!in_expr && codegen_enabled())
+        data = exp::data(init);
+    Base::var_init_expr(var, std::move(init), in_expr);
+    if (!in_expr && codegen_enabled()) {
+        gen().append("=");
+        gen().append(data + "; ");
+    }
+}
+
+void EvalInit::var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) {
+    Base::var_init_default(var, in_expr);
+    if (!in_expr && codegen_enabled())
+        gen().append("; ", true);
+}
+
+void EvalInit::var_init_common(ulam::Ref<ulam::Var> var, bool in_expr) {
+    Base::var_init_common(var, in_expr);
+    if (!in_expr && codegen_enabled()) {
+        auto strf = gen().make_strf();
+        gen().append(out::var_def_str(str_pool(), strf, var));
+    }
 }
 
 ExprRes EvalInit::eval_class_list(
@@ -42,10 +68,9 @@ ExprRes EvalInit::eval_array_list(
     ulam::Ref<ulam::ArrayType> array_type,
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
-    auto flags_ = flags();
+    EvalEnv::FlagsRaii fr{};
     if (depth > 1)
-        flags_ |= evl::NoConstFold;
-    auto no_fold_raii = flags_raii(flags_);
+        fr = env().add_flags_raii(evl::NoConstFold);
     auto array = Base::eval_array_list(var, array_type, list, depth);
     if (!has_flag(evl::NoCodegen)) {
         auto data = array.has_data() ? "{ " + exp::data(array) + " }"
@@ -60,10 +85,9 @@ ExprRes EvalInit::eval_class_map(
     ulam::Ref<ulam::Class> cls,
     ulam::Ref<ulam::ast::InitMap> map,
     unsigned depth) {
-    auto flags_ = flags();
+    EvalEnv::FlagsRaii fr{};
     if (depth > 1)
-        flags_ |= evl::NoConstFold;
-    auto no_fold_raii = flags_raii(flags_);
+        fr = env().add_flags_raii(evl::NoConstFold);
     auto obj = Base::eval_class_map(var, cls, map, depth);
     if (!has_flag(evl::NoCodegen)) {
         auto obj_data = obj.has_data() ? exp::data(obj) : std::string{};

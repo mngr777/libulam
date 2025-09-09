@@ -41,32 +41,32 @@ ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
 
 void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
     assert(init);
-    var_init(var, in_expr);
+    var_init_common(var, in_expr);
     var->set_value(init.move_value());
 }
 
 void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
-    var_init(var, in_expr);
+    var_init_common(var, in_expr);
     var->set_value(Value{var->type()->construct()});
 }
 
-void EvalInit::var_init(Ref<Var> var, bool in_expr) {
+void EvalInit::var_init_common(Ref<Var> var, bool in_expr) {
     assert(var && var->is_ready());
     assert(var->value().empty());
 }
 
 void EvalInit::prop_init_expr(Ref<Prop> prop, ExprRes&& init) {
     assert(init);
-    prop_init(prop);
+    prop_init_common(prop);
     prop->set_default_value(init.move_value().move_rvalue());
 }
 
 void EvalInit::prop_init_default(Ref<Prop> prop) {
-    prop_init(prop);
+    prop_init_common(prop);
     prop->set_default_value(prop->type()->construct());
 }
 
-void EvalInit::prop_init(Ref<Prop> prop) {
+void EvalInit::prop_init_common(Ref<Prop> prop) {
     assert(prop && prop->is_ready());
     assert(prop->default_value().empty());
 }

@@ -1,3 +1,4 @@
+#include "libulam/ast/nodes/stmts.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -6,6 +7,7 @@
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/eval/visitor.hpp>
+#include <libulam/sema/eval/which.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <utility>
@@ -37,6 +39,9 @@ EvalEnv::ScopeSwitchRaii::operator=(ScopeSwitchRaii&& other) {
     std::swap(_old_scope_override, _old_scope_override);
     return *this;
 }
+
+EvalEnv::ScopeSwitchRaii::ScopeSwitchRaii(EvalEnv& env, Scope* scope):
+    _env{&env}, _old_scope_override{env._scope_override} {}
 
 // EvalEnv::FlagsRaii
 
@@ -102,6 +107,11 @@ void EvalEnv::eval_stmt(Ref<ast::Stmt> stmt) {
     return do_eval_stmt(vis, stmt);
 }
 
+void EvalEnv::eval_which(Ref<ast::Which> which) {
+    EvalWhich ew{*this};
+    return do_eval_which(ew, which);
+}
+
 ExprRes EvalEnv::eval_expr(Ref<ast::Expr> expr) {
     EvalExprVisitor ev{*this};
     return do_eval_expr(ev, expr);
@@ -133,6 +143,11 @@ ExprRes EvalEnv::cast(
     Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
     EvalCast cast{*this};
     return do_cast(cast, node, bi_type_id, std::move(arg), expl);
+}
+
+ExprRes EvalEnv::cast_to_idx(Ref<ast::Node> node, ExprRes&& arg) {
+    EvalCast cast{*this};
+    return do_cast_to_idx(cast, node, std::move(arg));
 }
 
 ExprRes EvalEnv::to_boolean(Ref<ast::Expr> expr, ExprRes&& arg) {
@@ -189,6 +204,10 @@ EvalEnv::FlagsRaii EvalEnv::add_flags_raii(eval_flags_t flags_) {
     return {*this, (eval_flags_t)(flags() | flags_)};
 }
 
+EvalEnv::FlagsRaii EvalEnv::remove_flags_raii(eval_flags_t flags_) {
+    return {*this, (eval_flags_t)(flags() & ~flags_)};
+}
+
 const EvalStack::Item& EvalEnv::stack_top() const {
     assert(!_stack.empty());
     return _stack.top();
@@ -205,8 +224,14 @@ Scope* EvalEnv::scope() {
 
 eval_flags_t EvalEnv::flags() const { return _flags; }
 
+bool EvalEnv::has_flag(eval_flags_t flag) const { return _flags & flag; }
+
 void EvalEnv::do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt) {
     stmt->accept(vis);
+}
+
+void EvalEnv::do_eval_which(EvalWhich& ew, Ref<ast::Which> which) {
+    ew.eval_which(which);
 }
 
 ExprRes EvalEnv::do_eval_expr(EvalExprVisitor& ev, Ref<ast::Expr> expr) {
@@ -222,6 +247,10 @@ ExprRes EvalEnv::do_eval_equal(
     ExprRes&& right) {
     return ev.binary_op(
         node, Op::Equal, l_node, std::move(left), r_node, std::move(right));
+}
+
+CondRes EvalEnv::do_eval_cond(EvalCond& ec, Ref<ast::Cond> cond) {
+    return ec.eval_cond(cond);
 }
 
 ExprRes EvalEnv::do_cast(
@@ -240,6 +269,11 @@ ExprRes EvalEnv::do_cast(
     ExprRes&& arg,
     bool expl) {
     return ec.cast(node, bi_type_id, std::move(arg), expl);
+}
+
+ExprRes
+EvalEnv::do_cast_to_idx(EvalCast& ec, Ref<ast::Node> node, ExprRes&& arg) {
+    return ec.cast_to_idx(node, std::move(arg));
 }
 
 bool EvalEnv::do_init_var(

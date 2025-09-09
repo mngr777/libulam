@@ -145,6 +145,7 @@ SEMA_HEADER_FILES = \
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
 	src/sema/eval.cpp \
+	src/sema/eval/base.cpp \
 	src/sema/eval/cast.cpp \
 	src/sema/eval/cond.cpp \
 	src/sema/eval/env.cpp \
@@ -280,7 +281,14 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval.cpp \
 	tests/ULAM/eval/cast.hpp \
 	tests/ULAM/eval/cast.cpp \
-	tests/ULAM/eval/constext_stack.hpp \
+	tests/ULAM/eval/codegen.hpp \
+	tests/ULAM/eval/codegen.cpp \
+	tests/ULAM/eval/codegen/context_stack.hpp \
+	tests/ULAM/eval/codegen/context_stack.cpp \
+	tests/ULAM/eval/cond.hpp \
+	tests/ULAM/eval/cond.cpp \
+	tests/ULAM/eval/env.hpp \
+	tests/ULAM/eval/env.cpp \
 	tests/ULAM/eval/expr_flags.hpp \
 	tests/ULAM/eval/expr_res.hpp \
 	tests/ULAM/eval/expr_res.cpp \
@@ -289,6 +297,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/flags.hpp \
 	tests/ULAM/eval/funcall.hpp \
 	tests/ULAM/eval/funcall.cpp \
+	tests/ULAM/eval/helper.hpp \
+	tests/ULAM/eval/helper.cpp \
 	tests/ULAM/eval/init.hpp \
 	tests/ULAM/eval/init.cpp \
 	tests/ULAM/eval/stringifier.hpp \
@@ -296,6 +306,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/util.hpp \
 	tests/ULAM/eval/visitor.hpp \
 	tests/ULAM/eval/visitor.cpp \
+	tests/ULAM/eval/which.hpp \
+	tests/ULAM/eval/which.cpp \
 	tests/ULAM/out.hpp \
 	tests/ULAM/out.cpp \
 	tests/ULAM/parser.hpp \

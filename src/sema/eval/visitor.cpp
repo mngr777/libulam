@@ -1,20 +1,11 @@
 #include <cassert>
-#include <libulam/sema/eval/cast.hpp>
-#include <libulam/sema/eval/cond.hpp>
-#include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
-#include <libulam/sema/eval/expr_visitor.hpp>
-#include <libulam/sema/eval/funcall.hpp>
-#include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/eval/visitor.hpp>
-#include <libulam/sema/eval/which.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/type/builtin/bool.hpp>
-#include <libulam/semantic/type/builtin/void.hpp>
 #include <utility>
 
 #ifdef DEBUG_EVAL
@@ -168,10 +159,7 @@ void EvalVisitor::visit(Ref<ast::While> node) {
 
 void EvalVisitor::visit(Ref<ast::Which> node) {
     debug() << __FUNCTION__ << "Which\n";
-    assert(node->has_expr());
-
-    EvalWhich ew{env()};
-    ew.eval_which(node);
+    return env().eval_which(node);
 }
 
 void EvalVisitor::visit(Ref<ast::UnaryOp> node) { env().eval_expr(node); }

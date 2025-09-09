@@ -18,6 +18,7 @@ class EvalExprVisitor;
 class EvalFuncall;
 class EvalInit;
 class EvalVisitor;
+class EvalWhich;
 
 class EvalEnv : public EvalBase {
 public:
@@ -69,6 +70,8 @@ public:
 
     virtual void eval_stmt(Ref<ast::Stmt> stmt);
 
+    virtual void eval_which(Ref<ast::Which> which);
+
     virtual ExprRes eval_expr(Ref<ast::Expr> expr);
 
     virtual ExprRes eval_equal(
@@ -88,6 +91,8 @@ public:
         BuiltinTypeId bi_type_id,
         ExprRes&& arg,
         bool expl = false);
+
+    virtual ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
 
     virtual ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& arg);
 
@@ -112,6 +117,7 @@ public:
 
     FlagsRaii flags_raii(eval_flags_t flags);
     FlagsRaii add_flags_raii(eval_flags_t flags);
+    FlagsRaii remove_flags_raii(eval_flags_t flags);
 
     const EvalStack::Item& stack_top() const;
     scope_lvl_t stack_size() const;
@@ -119,9 +125,12 @@ public:
     Scope* scope();
 
     eval_flags_t flags() const;
+    bool has_flag(eval_flags_t flag) const;
 
 protected:
     virtual void do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt);
+
+    virtual void do_eval_which(EvalWhich& ew, Ref<ast::Which> which);
 
     virtual ExprRes do_eval_expr(EvalExprVisitor& ev, Ref<ast::Expr> expr);
 
@@ -148,6 +157,9 @@ protected:
         BuiltinTypeId bi_type_id,
         ExprRes&& arg,
         bool expl);
+
+    virtual ExprRes
+    do_cast_to_idx(EvalCast& ec, Ref<ast::Node> node, ExprRes&& arg);
 
     virtual bool do_init_var(
         EvalInit& ei, Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);

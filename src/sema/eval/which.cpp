@@ -20,12 +20,16 @@ void EvalWhich::eval_which(Ref<ast::Which> node) {
     if (node->has_expr())
         ctx.which_var = make_which_var(ctx, node->expr());
     try {
-        for (unsigned i = 0; i < node->case_num(); ++i) {
-            auto case_ = node->case_(i);
-            eval_case(ctx, case_);
-        }
+        eval_cases(ctx);
     } catch (const EvalExceptBreak&) {
         debug() << "break\n";
+    }
+}
+
+void EvalWhich::eval_cases(Context& ctx) {
+    for (unsigned i = 0; i < ctx.node->case_num(); ++i) {
+        auto case_ = ctx.node->case_(i);
+        eval_case(ctx, case_);
     }
 }
 
@@ -69,7 +73,7 @@ bool EvalWhich::do_match_as_cond(
 
 ExprRes EvalWhich::match_expr_res(
     Context& ctx, Ref<ast::Expr> case_expr, ExprRes&& case_res) {
-    ExprRes which_res{ctx.which_var->type(), Value{ctx.which_var->lvalue()}};
+    auto which_res = make_which_expr(ctx);
     auto which_expr = ctx.node->expr();
     auto res = env().eval_equal(
         case_expr, case_expr, std::move(case_res), which_expr,
@@ -77,6 +81,10 @@ ExprRes EvalWhich::match_expr_res(
     if (!res || (!has_flag(evl::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to match eval which case");
     return env().to_boolean(case_expr, std::move(res));
+}
+
+ExprRes EvalWhich::make_which_expr(Context& ctx) {
+    return {ctx.which_var->type(), Value{ctx.which_var->lvalue()}};
 }
 
 } // namespace ulam::sema

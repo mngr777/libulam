@@ -16,10 +16,7 @@
 
 namespace ulam::sema {
 
-class EvalCast;
-class EvalExprVisitor;
-class EvalFuncall;
-class EvalInit;
+class EvalWhich;
 
 class EvalVisitor : public ast::Visitor, public EvalHelper {
 public:

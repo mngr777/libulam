@@ -58,10 +58,11 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
         return {ExprError::TernaryNonMatchingTypes};
     }
 
-    auto cast_flags = flags() | ulam::sema::evl::NoDerefCast;
-    auto cast = eval().cast_helper(scope(), cast_flags);
-    if_true_res = cast->cast(node->if_true(), type, std::move(if_true_res));
-    if_false_res = cast->cast(node->if_false(), type, std::move(if_false_res));
+    {
+        auto fr = env().add_flags_raii(ulam::sema::evl::NoDerefCast);
+        if_true_res = env().cast(node->if_true(), type, std::move(if_true_res));
+        if_false_res = env().cast(node->if_false(), type, std::move(if_false_res));
+    }
     if (!if_true_res)
         return std::move(if_true_res);
     if (!if_false_res)
@@ -98,10 +99,10 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
 
     assert(res.value().is_consteval());
     res.value().with_rvalue([&](const auto& rval) {
-        auto stringifier = make_stringifier();
-        stringifier.options.unary_as_unsigned_lit = true;
-        stringifier.options.bool_as_unsigned_lit = true;
-        exp::set_data(res, stringifier.stringify(res.type(), rval));
+        auto strf = gen().make_strf();
+        strf.options.unary_as_unsigned_lit = true;
+        strf.options.bool_as_unsigned_lit = true;
+        exp::set_data(res, strf.stringify(res.type(), rval));
     });
     res.set_flag(exp::NumLit);
     return res;
@@ -113,8 +114,8 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
         return res;
 
     res.value().with_rvalue([&](const auto& rval) {
-        auto stringifier = make_stringifier();
-        exp::set_data(res, stringifier.stringify(res.type(), rval));
+        auto strf = gen().make_strf();
+        exp::set_data(res, strf.stringify(res.type(), rval));
     });
     return res;
 }
@@ -223,7 +224,8 @@ ExprRes EvalExprVisitor::apply_binary_op(
     const auto& val = res.value();
     if (!no_fold && val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
-            exp::set_data(res, make_stringifier().stringify(res.type(), rval));
+            auto strf = gen().make_strf();
+            exp::set_data(res, strf.stringify(res.type(), rval));
         });
     } else if (!empty(data)) {
         exp::set_data(res, data);
@@ -280,8 +282,8 @@ ExprRes EvalExprVisitor::apply_unary_op(
         // x <op> | x Type is
         std::string op_str{ulam::ops::str(op)};
         if (type) {
-            auto stringifier = make_stringifier();
-            data = exp::data_combine(data, out::type_str(stringifier, type));
+            auto strf = gen().make_strf();
+            data = exp::data_combine(data, out::type_str(strf, type));
         }
         data = exp::data_combine(data, op_str);
     }
@@ -291,7 +293,8 @@ ExprRes EvalExprVisitor::apply_unary_op(
     const auto& val = res.value();
     if (!no_fold && val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
-            exp::set_data(res, make_stringifier().stringify(res.type(), rval));
+            auto strf = gen().make_strf();
+            exp::set_data(res, strf.stringify(res.type(), rval));
         });
     } else {
         exp::set_data(res, data);
@@ -313,8 +316,8 @@ ExprRes EvalExprVisitor::type_op_construct(
     auto res = Base::type_op_construct(node, cls);
     if (!has_flag(evl::NoCodegen)) {
         // Class.instanceof ( args )Self .
-        auto stringifier = make_stringifier();
-        auto op_str = out::type_str(stringifier, cls) + ".instanceof";
+        auto strf = gen().make_strf();
+        auto op_str = out::type_str(strf, cls) + ".instanceof";
         exp::set_data(res, exp::data_combine(op_str, exp::data(res), "."));
     }
     return res;
@@ -326,15 +329,15 @@ ExprRes EvalExprVisitor::type_op_default(
     if (has_flag(evl::NoCodegen))
         return res;
 
-    auto stringifier = make_stringifier();
+    auto strf = gen().make_strf();
     if (res.type()->is_prim() && res.value().is_consteval()) {
         res.value().with_rvalue([&](const auto& rval) {
-            stringifier.options.unary_as_unsigned_lit = true;
-            stringifier.options.bool_as_unsigned_lit = true;
-            exp::set_data(res, stringifier.stringify(res.type(), rval));
+            strf.options.unary_as_unsigned_lit = true;
+            strf.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, strf.stringify(res.type(), rval));
         });
     } else {
-        exp::append(res, out::type_str(stringifier, type));
+        exp::append(res, out::type_str(strf, type));
         exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
     }
     return res;
@@ -373,10 +376,10 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     if (!data.empty()) {
         if (util::can_fold(res)) {
             res.value().with_rvalue([&](const ulam::RValue& rval) {
-                auto stringifier = make_stringifier();
-                stringifier.options.unary_as_unsigned_lit = true;
-                stringifier.options.bool_as_unsigned_lit = true;
-                exp::set_data(res, stringifier.stringify(res.type(), rval));
+                auto strf = gen().make_strf();
+                strf.options.unary_as_unsigned_lit = true;
+                strf.options.bool_as_unsigned_lit = true;
+                exp::set_data(res, strf.stringify(res.type(), rval));
             });
         } else {
             exp::set_data(res, data);
@@ -409,10 +412,10 @@ ExprRes EvalExprVisitor::ident_var(
     bool no_fold = has_flag(evl::NoConstFold);
     if (!no_fold && util::can_fold(res)) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
-            auto stringifier = make_stringifier();
-            stringifier.options.unary_as_unsigned_lit = true;
-            stringifier.options.bool_as_unsigned_lit = true;
-            exp::set_data(res, stringifier.stringify(res.type(), rval));
+            auto strf = gen().make_strf();
+            strf.options.unary_as_unsigned_lit = true;
+            strf.options.bool_as_unsigned_lit = true;
+            exp::set_data(res, strf.stringify(res.type(), rval));
         });
     } else {
         exp::set_data(res, str(var->name_id()));
@@ -510,10 +513,10 @@ ExprRes EvalExprVisitor::member_access_var(
         exp::set_data(res, data);
         if (!no_fold && util::can_fold(res)) {
             res.value().with_rvalue([&](const ulam::RValue& rval) {
-                auto stringifier = make_stringifier();
-                stringifier.options.unary_as_unsigned_lit = true;
-                stringifier.options.bool_as_unsigned_lit = true;
-                auto val_str = stringifier.stringify(res.type(), rval);
+                auto strf = gen().make_strf();
+                strf.options.unary_as_unsigned_lit = true;
+                strf.options.bool_as_unsigned_lit = true;
+                auto val_str = strf.stringify(res.type(), rval);
                 if (res.type()->is(ulam::StringId)) {
                     // t41273
                     exp::set_data(res, val_str);
@@ -597,8 +600,8 @@ ExprRes EvalExprVisitor::class_const_access(
             assert(!res.value().empty());
             assert(res.value().is_consteval());
             res.value().with_rvalue([&](const auto& rval) {
-                auto stringifier = make_stringifier();
-                exp::set_data(res, stringifier.stringify(type, rval));
+                auto strf = gen().make_strf();
+                exp::set_data(res, strf.stringify(type, rval));
             });
         }
     }
@@ -636,9 +639,4 @@ ExprRes EvalExprVisitor::as_base(
     if (!data.empty())
         exp::set_data(res, exp::data_combine(data, str(base->name_id()), "."));
     return res;
-}
-
-Stringifier EvalExprVisitor::make_stringifier() {
-    Stringifier stringifier{program()};
-    return stringifier;
 }

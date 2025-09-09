@@ -297,8 +297,6 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     assert(node->has_array());
     assert(node->has_index());
 
-    auto idx_type = builtins().int_type();
-
     // eval array expr
     auto obj = node->array()->accept(*this);
     if (!obj)
@@ -316,7 +314,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     }
 
     // cast to index type
-    idx = env().cast(node->index(), idx_type, std::move(idx));
+    idx = env().cast_to_idx(node->index(), std::move(idx));
     if (!idx)
         return idx;
 

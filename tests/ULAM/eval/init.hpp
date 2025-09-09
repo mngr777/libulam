@@ -1,23 +1,27 @@
-#include <libulam/memory/ptr.hpp>
+#include "./env.hpp"
+#include "./helper.hpp"
 #include <libulam/sema/eval/init.hpp>
-#include <libulam/sema/expr_res.hpp>
-#include <libulam/semantic/type/class.hpp>
-#include <libulam/semantic/type/class/prop.hpp>
-#include <libulam/semantic/var/base.hpp>
 
-class EvalInit : public ulam::sema::EvalInit {
+class EvalInit : public EvalHelper, public ulam::sema::EvalInit {
 public:
     using Base = ulam::sema::EvalInit;
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
 
-    using Base::EvalInit;
+    EvalInit(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
+protected:
     ulam::sema::ExprRes eval_init(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::ast::InitValue> init) override;
 
-protected:
+    void var_init_expr(
+        ulam::Ref<ulam::Var> var, ExprRes&& init, bool in_expr) override;
+
+    void var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) override;
+
+    void var_init_common(ulam::Ref<ulam::Var> var, bool in_expr) override;
+
     ExprRes eval_class_list(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::Class> cls,

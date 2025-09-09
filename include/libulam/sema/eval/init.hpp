@@ -33,11 +33,11 @@ protected:
 
     virtual void var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr);
     virtual void var_init_default(Ref<Var> var, bool in_expr);
-    virtual void var_init(Ref<Var> var, bool in_expr);
+    virtual void var_init_common(Ref<Var> var, bool in_expr);
 
     virtual void prop_init_expr(Ref<Prop> prop, ExprRes&& init);
     virtual void prop_init_default(Ref<Prop> prop);
-    virtual void prop_init(Ref<Prop> prop);
+    virtual void prop_init_common(Ref<Prop> prop);
 
     ExprRes
     eval_v(Ref<VarBase> var, Ref<Type> type, Variant& v, unsigned depth);

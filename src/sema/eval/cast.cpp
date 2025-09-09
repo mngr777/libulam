@@ -22,6 +22,10 @@ ExprRes EvalCast::cast(
     return std::move(res);
 }
 
+ExprRes EvalCast::cast_to_idx(Ref<ast::Node> node, ExprRes&& arg) {
+    return cast(node, builtins().int_type(), std::move(arg), false);
+}
+
 CastRes
 EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
     if (!arg)

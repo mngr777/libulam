@@ -13,11 +13,7 @@ class EvalVisitor;
 
 class EvalCast : public EvalHelper {
 public:
-    enum CastStatus {
-        CastOk,
-        CastError,
-        NoCast
-    };
+    enum CastStatus { CastOk, CastError, NoCast };
     using CastRes = std::pair<ExprRes, CastStatus>;
 
     using EvalHelper::EvalHelper;
@@ -30,6 +26,8 @@ public:
         BuiltinTypeId bi_type_id,
         ExprRes&& arg,
         bool expl = false);
+
+    virtual ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
 
 protected:
     virtual CastRes

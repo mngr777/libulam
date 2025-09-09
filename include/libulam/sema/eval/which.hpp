@@ -28,6 +28,8 @@ protected:
 
     virtual Ptr<Var> make_which_var(Context& ctx, Ref<ast::Expr> expr);
 
+    virtual void eval_cases(Context& ctx);
+
     virtual void eval_case(Context& ctx, Ref<ast::WhichCase> case_);
 
     virtual bool match(Context& ctx, Ref<ast::WhichCaseCond> case_cond);
@@ -41,6 +43,8 @@ protected:
 
     virtual ExprRes
     match_expr_res(Context& ctx, Ref<ast::Expr> case_expr, ExprRes&& case_res);
+
+    virtual ExprRes make_which_expr(Context& ctx);
 };
 
 } // namespace ulam::sema
