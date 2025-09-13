@@ -51,7 +51,7 @@ void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
 }
 
 void EvalInit::var_init_common(Ref<Var> var, bool in_expr) {
-    assert(var && var->is_ready());
+    assert(var && var->has_type());
     assert(var->value().empty());
 }
 
@@ -67,7 +67,7 @@ void EvalInit::prop_init_default(Ref<Prop> prop) {
 }
 
 void EvalInit::prop_init_common(Ref<Prop> prop) {
-    assert(prop && prop->is_ready());
+    assert(prop && prop->has_type());
     assert(prop->default_value().empty());
 }
 

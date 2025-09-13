@@ -154,10 +154,9 @@ bool Resolver::resolve(Ref<Var> var) {
     // value
     if (!var->has_value()) {
         if (node->has_init()) {
-            auto flags_ = evl::NoFlags;
+            EvalEnv::FlagsRaii fr{};
             if (!var->is_local() && !var->type()->is_ref())
-                flags_ |= evl::Consteval; // class/module const
-            auto flags_raii = env().add_flags_raii(flags_);
+                fr = env().add_flags_raii(evl::Consteval); // class/module const
             bool ok = env().init_var(var, node->init(), _in_expr);
             update_state(var, ok);
             return ok;
@@ -688,7 +687,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     auto ssr = env().scope_switch_raii(&param_scope);
     std::list<Ref<Var>> cls_params;
 
-    assert(_in_expr); // ?? auto resolver = eval().resolver(true);
+    // assert(_in_expr); // ?? auto resolver = eval().resolver(true);
     std::pair<TypedValueList, bool> res;
     res.second = false;
     unsigned n = 0;
