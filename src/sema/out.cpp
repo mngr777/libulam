@@ -4,6 +4,10 @@
 
 namespace ulam::sema {
 
+void Out::print(Scope* scope) {
+
+}
+
 // void Out::print(Ref<Scope> scope) {
 //     assert(false);
 //     if (scope->flags() == scp::NoFlags) {

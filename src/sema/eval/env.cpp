@@ -41,7 +41,9 @@ EvalEnv::ScopeSwitchRaii::operator=(ScopeSwitchRaii&& other) {
 }
 
 EvalEnv::ScopeSwitchRaii::ScopeSwitchRaii(EvalEnv& env, Scope* scope):
-    _env{&env}, _old_scope_override{env._scope_override} {}
+    _env{&env}, _old_scope_override{env._scope_override} {
+    env._scope_override = scope;
+}
 
 // EvalEnv::FlagsRaii
 

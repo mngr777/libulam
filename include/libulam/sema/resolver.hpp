@@ -18,6 +18,7 @@ namespace ulam::sema {
 
 // TODO: better diagnostics, trace type/value resolution somehow
 // TODO: move to /eval?
+// TODO: split into eval helper and program/module resolver?
 
 class EvalEnv;
 
