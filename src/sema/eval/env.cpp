@@ -36,7 +36,7 @@ EvalEnv::ScopeSwitchRaii::ScopeSwitchRaii(ScopeSwitchRaii&& other) {
 EvalEnv::ScopeSwitchRaii&
 EvalEnv::ScopeSwitchRaii::operator=(ScopeSwitchRaii&& other) {
     std::swap(_env, other._env);
-    std::swap(_old_scope_override, _old_scope_override);
+    std::swap(_old_scope_override, other._old_scope_override);
     return *this;
 }
 

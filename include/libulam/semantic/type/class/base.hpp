@@ -98,7 +98,7 @@ protected:
         return _members.set(name_id, value);
     }
 
-    PersScope* inh_scope() { return ref(_inh_scope); }
+    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
 
     auto& members() { return _members; }
 
@@ -115,6 +115,7 @@ protected:
 private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
+    // TODO: store in class
     Ptr<PersScope> _inh_scope;
     Ptr<PersScope> _param_scope;
     Ptr<PersScope> _scope;

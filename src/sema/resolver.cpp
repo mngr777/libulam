@@ -7,6 +7,7 @@
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
+#include <libulam/semantic/scope/iterator.hpp>
 
 #ifdef DEBUG_SEMA_RESOLVER
 #    define ULAM_DEBUG

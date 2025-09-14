@@ -27,6 +27,7 @@ class Class;
 class Diag;
 class FunSet;
 class Mangler;
+class PersScope;
 class Scope;
 class Type;
 class Var;
@@ -39,7 +40,7 @@ public:
     enum MatchStatus { NoMatch, IsMatch, ExactMatch };
     using MatchRes = std::pair<MatchStatus, conv_cost_t>;
 
-    Fun(Mangler& mangler, Ref<ast::FunDef> node);
+    Fun(Mangler& mangler, Scope* scope, Ref<ast::FunDef> node);
     ~Fun();
 
     str_id_t name_id() const;
@@ -78,6 +79,7 @@ public:
 
     Ref<Fun> find_override(Ref<const Class> cls);
 
+    Ref<PersScope> param_scope() { return ref(_param_scope); }
     Ref<ast::FunDef> node() const { return _node; }
     Ref<ast::FunRetType> ret_type_node() const;
     Ref<ast::ParamList> params_node() const;
@@ -93,6 +95,7 @@ private:
     std::string key() const;
 
     Mangler& _mangler;
+    Ptr<PersScope> _param_scope;
     Ref<ast::FunDef> _node;
     Ref<Type> _ret_type{};
     Params _params{};
