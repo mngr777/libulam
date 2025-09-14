@@ -240,7 +240,8 @@ bool Resolver::resolve(Ref<FunSet> fset) {
                 fun->cls()->add_conv(fun);
         }
     }
-    fset->init_map(diag(), str_pool());
+    if (is_resolved)
+        fset->init_map(diag(), str_pool());
     RET_UPD_STATE(fset, is_resolved);
 }
 
