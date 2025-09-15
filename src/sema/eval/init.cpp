@@ -68,7 +68,7 @@ void EvalInit::prop_init_default(Ref<Prop> prop) {
 
 void EvalInit::prop_init_common(Ref<Prop> prop) {
     assert(prop && prop->has_type());
-    assert(prop->default_value().empty());
+    assert(!prop->has_default_value());
 }
 
 ExprRes EvalInit::eval_v(
