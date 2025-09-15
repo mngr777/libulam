@@ -120,9 +120,10 @@ public:
     FlagsRaii remove_flags_raii(eval_flags_t flags);
 
     const EvalStack::Item& stack_top() const;
-    scope_lvl_t stack_size() const;
+    std::size_t stack_size() const;
 
     Scope* scope();
+    scope_lvl_t scope_lvl() const;
 
     eval_flags_t flags() const;
     bool has_flag(eval_flags_t flag) const;

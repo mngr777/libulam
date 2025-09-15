@@ -215,13 +215,17 @@ const EvalStack::Item& EvalEnv::stack_top() const {
     return _stack.top();
 }
 
-scope_lvl_t EvalEnv::stack_size() const {
-    assert(!_scope_override);
-    return _scope_stack.size();
+std::size_t EvalEnv::stack_size() const {
+    return _stack.size();
 }
 
 Scope* EvalEnv::scope() {
     return _scope_override ? _scope_override : _scope_stack.top();
+}
+
+scope_lvl_t EvalEnv::scope_lvl() const {
+    assert(!_scope_override);
+    return _scope_stack.size();
 }
 
 eval_flags_t EvalEnv::flags() const { return _flags; }

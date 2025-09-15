@@ -111,7 +111,8 @@ ExprRes EvalFuncall::do_funcall(
     assert(fun->node()->has_body());
     assert(!self.empty());
 
-    auto scope_lvl = env().stack_size();
+    auto stack_raii = env().stack_raii(fun, self);
+    auto scope_lvl = env().scope_lvl();
     auto sr = env().scope_raii(scp::Fun);
 
     // bind `self`, set `Self` class
