@@ -191,7 +191,7 @@ private:
     BasicScope _program_scope;
     EvalStack _stack;
     ScopeStack _scope_stack;
-    Scope* _scope_override;
+    Scope* _scope_override{};
     eval_flags_t _flags;
 };
 
