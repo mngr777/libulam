@@ -79,7 +79,9 @@ public:
 
     Ref<Fun> find_override(Ref<const Class> cls);
 
+    Ref<PersScope> scope();
     Ref<PersScope> param_scope() { return ref(_param_scope); }
+
     Ref<ast::FunDef> node() const { return _node; }
     Ref<ast::FunRetType> ret_type_node() const;
     Ref<ast::ParamList> params_node() const;

@@ -14,7 +14,6 @@ using ExprResList = EvalEnv::ExprResList;
 
 ExprRes EvalEnv::eval(ulam::Ref<ulam::ast::Block> block) {
     // codegen
-    // NOTE: ulam::sema::evl::NoExec set on first function call, see `funcall`
     Base::eval(block);
 
     // exec

@@ -31,7 +31,7 @@ ExprRes EvalFuncall::construct(
     return construct_funcall(node, cls, fun, std::move(rval), std::move(args));
 }
 
-ExprRes EvalFuncall::funcall(
+ExprRes EvalFuncall::call(
     Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
     assert(callable);
     assert(args);
@@ -81,6 +81,8 @@ ExprRes EvalFuncall::construct_funcall(
 ExprRes EvalFuncall::funcall_callable(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& callable, ExprResList&& args) {
     assert(callable.type()->is(FunId));
+    if (has_flag(evl::NoExec))
+        return empty_ret_val(node, fun);
     auto val = callable.move_value();
     assert(!val.empty());
     return do_funcall(node, fun, val.self(), std::move(args));
@@ -89,6 +91,8 @@ ExprRes EvalFuncall::funcall_callable(
 ExprRes EvalFuncall::funcall_obj(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     assert(obj.type()->actual()->is_class());
+    if (has_flag(evl::NoExec))
+        return empty_ret_val(node, fun);
     auto val = obj.move_value();
     auto self = val.empty() ? LValue{} : val.self();
     return do_funcall(node, fun, self, std::move(args));
@@ -96,9 +100,6 @@ ExprRes EvalFuncall::funcall_obj(
 
 ExprRes EvalFuncall::do_funcall(
     Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
-    if (has_flag(evl::NoExec))
-        return empty_ret_val(node, fun);
-
     if (fun->is_native()) {
         // can't eval, return empty value
         diag().notice(node, "cannot evaluate native function");
@@ -113,7 +114,7 @@ ExprRes EvalFuncall::do_funcall(
 
     auto stack_raii = env().stack_raii(fun, self);
     auto scope_lvl = env().scope_lvl();
-    auto sr = env().scope_raii(scp::Fun);
+    auto sr = env().scope_raii(fun->scope(), scp::Fun);
 
     // bind `self`, set `Self` class
     scope()->ctx().set_self(self);
@@ -174,12 +175,12 @@ ExprRes EvalFuncall::do_funcall(
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
-    if (!fun->ret_type()->is_ref()) {
-        LValue lval;
-        lval.set_is_xvalue(false);
-        return {fun->ret_type(), Value{lval}};
-    }
-    return {fun->ret_type(), Value{RValue{}}};
+    if (!fun->ret_type()->is_ref())
+        return {fun->ret_type(), Value{RValue{}}};
+
+    LValue lval;
+    lval.set_is_xvalue(false);
+    return {fun->ret_type(), Value{lval}};
 }
 
 std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(

@@ -104,7 +104,7 @@ void Compiler::compile_class(
     assert(obj.type()->is_class());
     assert(obj.value().is_rvalue());
     auto test_postfix =
-        has_test ? "Int test() {  " + eval.data() + " }" : NoMain;
+        has_test ? "Int test() {  " + eval.code() + " }" : NoMain;
     write_obj(os, std::move(obj), test_postfix, has_test);
     os << "\n";
 }

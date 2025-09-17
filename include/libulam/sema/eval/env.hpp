@@ -112,6 +112,7 @@ public:
     StackRaii stack_raii(Ref<Fun> fun, LValue self);
 
     ScopeRaii scope_raii(scope_flags_t flags = scp::NoFlags);
+    ScopeRaii scope_raii(Scope* parent, scope_flags_t flags = scp::NoFlags);
 
     ScopeSwitchRaii scope_switch_raii(Scope* scope);
 

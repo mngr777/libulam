@@ -4,6 +4,8 @@
 #include <libulam/sema/eval/flags.hpp>
 #include <string>
 
+#define NO_EXEC(fr) \
+
 namespace {
 
 using ExprRes = EvalFuncall::ExprRes;
@@ -73,8 +75,7 @@ ExprRes EvalFuncall::do_funcall(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
     ulam::LValue self,
-    ExprResList&& args)
-{
+    ExprResList&& args) {
     EvalEnv::FlagsRaii fr{};
     if (env().stack_size() == 0 && !env().has_flag(evl::NoCodegen))
         fr = env().add_flags_raii(ulam::sema::evl::NoExec);

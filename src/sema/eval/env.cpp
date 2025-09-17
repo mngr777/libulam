@@ -190,8 +190,12 @@ EvalEnv::StackRaii EvalEnv::stack_raii(Ref<Fun> fun, LValue self) {
 }
 
 EvalEnv::ScopeRaii EvalEnv::scope_raii(scope_flags_t flags) {
+    return scope_raii(_scope_stack.top(), flags);
+}
+
+EvalEnv::ScopeRaii EvalEnv::scope_raii(Scope* parent, scope_flags_t flags) {
     assert(!_scope_override);
-    return _scope_stack.raii<BasicScope>(_scope_stack.top(), flags);
+    return _scope_stack.raii<BasicScope>(parent, flags);
 }
 
 EvalEnv::ScopeSwitchRaii EvalEnv::scope_switch_raii(Scope* scope) {
@@ -215,9 +219,7 @@ const EvalStack::Item& EvalEnv::stack_top() const {
     return _stack.top();
 }
 
-std::size_t EvalEnv::stack_size() const {
-    return _stack.size();
-}
+std::size_t EvalEnv::stack_size() const { return _stack.size(); }
 
 Scope* EvalEnv::scope() {
     return _scope_override ? _scope_override : _scope_stack.top();
@@ -302,7 +304,7 @@ ExprRes EvalEnv::do_call(
     Ref<ast::Node> node,
     ExprRes&& callable,
     ExprResList&& args) {
-    return ef.funcall(node, std::move(callable), std::move(args));
+    return ef.call(node, std::move(callable), std::move(args));
 }
 
 ExprRes EvalEnv::do_funcall(

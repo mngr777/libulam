@@ -7,11 +7,11 @@ class Eval : public ulam::sema::Eval {
 public:
     using ulam::sema::Eval::Eval;
 
-    const std::string& data() const { return _data; }
+    const std::string& code() const { return _code; }
 
 protected:
     ulam::sema::ExprRes do_eval(ulam::Ref<ulam::ast::Block> block) override;
 
 private:
-    std::string _data;
+    std::string _code;
 };

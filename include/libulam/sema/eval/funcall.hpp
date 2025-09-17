@@ -20,7 +20,7 @@ public:
     construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);
 
     virtual ExprRes
-    funcall(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args);
+    call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args);
 
     virtual ExprRes funcall(
         Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
