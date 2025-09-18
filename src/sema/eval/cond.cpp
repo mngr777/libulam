@@ -1,3 +1,4 @@
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -22,7 +23,7 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
         auto dyn_type = res.value().dyn_obj_type(true);
         is_match = dyn_type->is_impl_refable_as(type, res.value());
     }
-    if (!is_match)
+    if (!is_match && !has_flag(evl::NoExec)) // TODO
         return {is_match, AsCondContext{type}};
     auto [var_def, var] = define_as_cond_var(as_cond, std::move(res), type);
     return {is_match, AsCondContext{type, std::move(var_def), var}};

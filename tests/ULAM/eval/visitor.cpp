@@ -75,13 +75,12 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     // cond
     {
         auto iter_sr = env().scope_raii();
-        auto cond_res = env().eval_cond(node->cond());
+        auto cond = node->cond();
+        auto cond_res = env().eval_cond(cond);
 
         // body
-        if (node->has_body()) {
-            bool is_as_cond = cond_res.second.empty();
-            maybe_wrap_stmt(node->body(), is_as_cond);
-        }
+        if (node->has_body())
+            maybe_wrap_stmt(node->body(), cond->is_as_cond());
     }
 
     gen().append("_" + gen().next_tmp_idx_str() + ":");
