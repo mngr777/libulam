@@ -105,12 +105,14 @@ bool Resolver::resolve(Ref<AliasType> alias) {
     auto type_name = alias->node()->type_name();
     auto type_expr = alias->node()->type_expr();
 
-    DECL_SCOPE(alias, ssr, scope_view);
-
     // type
-    auto type = resolve_type_name(type_name, scope());
-    if (!type)
-        RET_UPD_STATE(alias, false);
+    Ref<Type> type{};
+    {
+        DECL_SCOPE(alias, ssr, scope_view);
+        type = resolve_type_name(type_name, scope());
+        if (!type)
+            RET_UPD_STATE(alias, false);
+    }
 
     // []
     if (type_expr->has_array_dims())
