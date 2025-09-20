@@ -1,14 +1,20 @@
 #include "./init.hpp"
+#include "../out.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
-#include "../out.hpp"
+#include <libulam/semantic/var.hpp>
 #include <string>
 
 namespace {
 using ExprRes = EvalInit::ExprRes;
+
+bool is_local_var(ulam::Ref<ulam::Var> var) {
+    return var->is_local() && !var->has_flag(ulam::Var::ClassParam);
 }
+
+} // namespace
 
 ExprRes EvalInit::eval_init(
     ulam::Ref<ulam::VarBase> var, ulam::Ref<ulam::ast::InitValue> init) {
@@ -26,7 +32,7 @@ void EvalInit::var_init_expr(
     if (!in_expr && codegen_enabled())
         data = exp::data(init);
     Base::var_init_expr(var, std::move(init), in_expr);
-    if (!in_expr && codegen_enabled()) {
+    if (!in_expr && is_local_var(var) && codegen_enabled()) {
         gen().append("=");
         gen().append(data + "; ");
     }
@@ -34,13 +40,13 @@ void EvalInit::var_init_expr(
 
 void EvalInit::var_init_default(ulam::Ref<ulam::Var> var, bool in_expr) {
     Base::var_init_default(var, in_expr);
-    if (!in_expr && codegen_enabled())
+    if (!in_expr && is_local_var(var) && codegen_enabled())
         gen().append("; ", true);
 }
 
 void EvalInit::var_init_common(ulam::Ref<ulam::Var> var, bool in_expr) {
     Base::var_init_common(var, in_expr);
-    if (!in_expr && codegen_enabled()) {
+    if (!in_expr && is_local_var(var) && codegen_enabled()) {
         auto strf = gen().make_strf();
         gen().append(out::var_def_str(str_pool(), strf, var));
     }
