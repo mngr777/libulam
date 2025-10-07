@@ -53,58 +53,36 @@ private:
 template <typename... Ts>
 using NullableVariant = Variant<std::monostate, Ts...>;
 
-template <typename... Ts> using RefVariant = Variant<Ref<Ts>...>;
+template <typename... Ts> using PtrVariant = Variant<Ptr<Ts>...>;
 
-template <typename... Ts> class RefPtrVariant {
+// template <typename... Ts> using RefVariant = Variant<Ref<Ts>...>;
+
+template <typename... Ts> class RefVariant : private Variant<Ref<Ts>...> {
+    using Base = Variant<Ref<Ts>...>;
+
 public:
     template <typename T>
-    RefPtrVariant(Ptr<T>&& value): _value{std::move(value)} {}
-    template <typename T> RefPtrVariant(Ref<T> value): _value{value} {}
-    virtual ~RefPtrVariant() {}
+    explicit RefVariant(Ref<T> value): Base{std::forward<Ref<T>>(value)} {}
 
-    RefPtrVariant(const RefPtrVariant&) = default;
-    RefPtrVariant& operator=(const RefPtrVariant&) = default;
+    bool empty() const { return Base::empty(); }
 
-    RefPtrVariant(RefPtrVariant&&) = default;
-    RefPtrVariant& operator=(RefPtrVariant&&) = default;
-
-    bool owns() const {
-        return std::visit(
-            [](auto&& value) -> bool { return value.owns(); }, _value);
-    }
-
-    std::size_t index() const { return _value.index(); }
+    std::size_t index() const { return Base::index(); }
 
     template <typename T> bool is() const {
-        return std::holds_alternative<RefPtr<T>>(_value);
+        return Base::template is<Ref<T>>();
     }
 
-    template <typename T> Ref<T> get() {
-        return std::get<RefPtr<T>>(_value).ref();
-    }
-
-    template <typename T> Ref<const T> get() const {
-        return std::get<RefPtr<T>>(_value).ref();
+    template <typename T> Ref<T> get() { return Base::template get<Ref<T>>(); }
+    template <typename T> Ref<T> get() const {
+        return Base::template get<Ref<T>>();
     }
 
     template <typename... Vs> auto accept(Vs&&... visitors) {
-        return std::visit(
-            [&](auto&& value) {
-                return variant::Overloads{std::move(visitors)...}(value.ref());
-            },
-            _value);
+        return Base::template accept(std::move(visitors)...);
     }
-
     template <typename... Vs> auto accept(Vs&&... visitors) const {
-        return std::visit(
-            [&](const auto&& value) {
-                return variant::Overloads{std::move(visitors)...}(value.ref());
-            },
-            _value);
+        return Base::template accept(std::move(visitors)...);
     }
-
-private:
-    std::variant<RefPtr<Ts>...> _value;
 };
 
 } // namespace ulam::detail

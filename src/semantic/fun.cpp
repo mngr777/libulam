@@ -50,7 +50,6 @@ bool Fun::has_ellipsis() const { return _node->params()->has_ellipsis(); }
 void Fun::add_param(Ptr<Var>&& param) {
     assert(params_node());
     assert(_params.size() < params_node()->child_num());
-    param->set_scope_version(_param_scope->version());
     _param_scope->set(param->name_id(), ref(param));
     _params.push_back(std::move(param));
 }

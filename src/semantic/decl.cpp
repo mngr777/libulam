@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -43,13 +44,17 @@ void Decl::set_cls_tpl(Ref<ClassTpl> cls_tpl) {
     _cls_tpl = cls_tpl;
 }
 
+bool Decl::has_scope_version() const {
+    return _scope_version != NoScopeVersion;
+}
+
 ScopeVersion Decl::scope_version() const {
-    assert(_scope_version != NoScopeVersion);
+    assert(has_scope_version());
     return _scope_version;
 }
 
 void Decl::set_scope_version(ScopeVersion version) {
-    assert(version != NoScopeVersion);
+    assert(!has_scope_version());
     _scope_version = version;
 }
 

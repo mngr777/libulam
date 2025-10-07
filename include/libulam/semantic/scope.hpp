@@ -1,5 +1,7 @@
 #pragma once
+#include "libulam/semantic/decl.hpp"
 #include <cassert>
+#include <forward_list>
 #include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/fun.hpp>
@@ -13,8 +15,8 @@
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/var.hpp>
 #include <libulam/str_pool.hpp>
-#include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace ulam {
 
@@ -52,9 +54,10 @@ public:
     virtual Symbol* get_local(str_id_t name_id) = 0;
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
-        return do_set(name_id, Symbol{std::move(value)});
+        auto ref = ulam::ref(value);
+        _decls.push_front(std::move(value));
+        return do_set(name_id, Symbol{ref});
     }
-
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
         return do_set(name_id, Symbol{value});
     }
@@ -64,6 +67,8 @@ public:
 
 protected:
     virtual Symbol* do_set(str_id_t name_id, Symbol&& symbol) = 0;
+
+    std::forward_list<Ptr<Decl>> _decls;
 };
 
 // ScopeBase
@@ -76,6 +81,18 @@ public:
     Scope* parent(scope_flags_t flags = scp::NoFlags) override;
 
     scope_flags_t flags() const override { return _flags; }
+
+    Symbol* get(str_id_t name_id, bool current = false) override;
+
+    Symbol* get_local(str_id_t name_id) override;
+
+protected:
+    virtual Symbol* do_get_current(str_id_t name_id);
+    virtual Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local);
+
+    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
+
+    SymbolTable _symbols;
 
 private:
     Scope* _parent;
@@ -94,20 +111,13 @@ public:
     Ref<Class> self_cls();
     void set_self_cls(Ref<Class> cls);
 
-    Symbol* get(str_id_t name_id, bool current = false) override;
-
-    Symbol* get_local(str_id_t name_id) override;
-
     ScopeContextProxy ctx() override;
 
 protected:
-    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local);
-
-    Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
+    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) override;
 
 private:
     BasicScopeContext _ctx;
-    SymbolTable _symbols;
 };
 
 // Persistent
@@ -141,24 +151,12 @@ class PersScope : public ScopeBase {
     friend PersScopeView;
 
 public:
-    using Version = std::uint32_t;
-    static constexpr Version NoVersion = -1;
-
-private:
-    struct SymbolVersion {
-        SymbolVersion(Version version, Symbol&& symbol):
-
-            version{version}, symbol{std::move(symbol)} {}
-        std::uint32_t version;
-        Symbol symbol;
-    };
-    using SymbolVersionList = std::list<SymbolVersion>;
-    using Map = std::unordered_map<str_id_t, SymbolVersionList>;
+    using Version = ScopeVersion;
+    static constexpr Version NoVersion = NoScopeVersion;
 
 public:
     explicit PersScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
-        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)},
-        _version{0} {}
+        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
@@ -177,26 +175,22 @@ public:
 
     ScopeContextProxy ctx() override;
 
+    str_id_t last_change(Version version) const;
+
     Symbol* get(str_id_t name_id, Version version, bool current = false);
     const Symbol*
     get(str_id_t name_id, Version version, bool current = false) const;
 
     Symbol* get_local(str_id_t name_id, Version version);
-    const Symbol*
-    get_local(str_id_t name_id, Version version) const;
+    const Symbol* get_local(str_id_t name_id, Version version) const;
 
-    str_id_t last_change(Version version) const;
-    str_id_t last_change() const { return last_change(_version); }
-
-    ScopeVersion version() const { return _version; }
+    ScopeVersion version() const;
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
 private:
-    Version _version;
     PersScopeContext _ctx;
-    std::unordered_map<str_id_t, SymbolVersionList> _symbols;
     std::vector<str_id_t> _changes;
 };
 

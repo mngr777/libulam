@@ -108,6 +108,7 @@ private:
 
 class FunSet : public Decl {
 private:
+    // TODO: split refs/ptrs
     using FunList = std::list<RefPtr<Fun>>;
 
 public:

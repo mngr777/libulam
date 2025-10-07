@@ -13,7 +13,7 @@ ClassBase::ClassBase(
     Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags):
     _node{node},
     _module{module},
-    _inh_scope{make<PersScope>(module->scope())},
+    _inh_scope{make<BasicScope>(module->scope())},
     _param_scope{make<PersScope>(ref(_inh_scope))},
     _scope{make<PersScope>(ref(_param_scope), scope_flags)},
     _constructors(make<FunSet>()) {}
@@ -75,10 +75,8 @@ Ref<Var> ClassBase::add_param(Ptr<Var>&& var) {
     auto name_id = ref->name_id();
     assert(!has(name_id));
 
-    ref->set_scope_version(param_scope()->version());
-
-    param_scope()->set(name_id, ref);
-    set(name_id, std::move(var));
+    param_scope()->set(name_id, std::move(var));
+    set(name_id, ref);
     _params.push_back(ref);
 
     auto node = ref->node();
@@ -97,11 +95,10 @@ Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type = make<AliasType>(
         program->str_pool(), program->builtins(), &program->type_id_gen(),
         node);
-    auto ref = ulam::ref(type)->as_alias();
-    type->set_scope_version(scope()->version());
 
-    scope()->set(name_id, ref);
-    set(name_id, std::move(type));
+    auto ref = ulam::ref(type)->as_alias();
+    scope()->set(name_id, std::move(type));
+    set(name_id, ref);
 
     if (!node->has_scope_version())
         node->set_scope_version(scope()->version());
@@ -147,10 +144,9 @@ ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
-    var->set_scope_version(scope()->version());
 
-    scope()->set(name_id, ref);
-    set(name_id, std::move(var));
+    scope()->set(name_id, std::move(var));
+    set(name_id, ref);
 
     if (!node->has_scope_version()) {
         node->set_var(ref);
@@ -166,10 +162,9 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
     auto prop = make<Prop>(type_node, node, Ref<Type>{}, Var::NoFlags);
     auto ref = ulam::ref(prop);
-    prop->set_scope_version(scope()->version());
 
-    scope()->set(name_id, ref);
-    set(name_id, std::move(prop));
+    scope()->set(name_id, std::move(prop));
+    set(name_id, ref);
 
     if (!node->has_scope_version()) {
         node->set_prop(ref);
@@ -199,9 +194,8 @@ Ref<FunSet> ClassBase::find_op_fset(Op op) {
 Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
     auto fset = make<FunSet>(name_id);
     auto ref = ulam::ref(fset);
-    fset->set_scope_version(scope()->version()); // ??
-    set(name_id, std::move(fset));
-    scope()->set(name_id, ref);
+    scope()->set(name_id, std::move(fset));
+    set(name_id, ref);
     return ref;
 }
 
@@ -209,7 +203,6 @@ Ref<FunSet> ClassBase::add_op_fset(Op op) {
     assert(_ops.count(op) == 0);
     auto fset = make<FunSet>();
     auto ref = ulam::ref(fset);
-    fset->set_scope_version(scope()->version()); // ??
     _ops[op] = std::move(fset);
     return ref;
 }

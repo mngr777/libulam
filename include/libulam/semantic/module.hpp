@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/scope.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -96,10 +97,6 @@ public:
     Symbol* get(str_id_t name_id);
     const Symbol* get(str_id_t name_id) const;
 
-    template <typename T> void set(str_id_t name_id, Ptr<T>&& value) {
-        _symbols.set(name_id, std::move(value));
-    }
-
     const auto& deps() const { return _deps; }
     void add_dep(str_id_t name_id) { _deps.insert(name_id); }
 
@@ -113,10 +110,14 @@ public:
     bool resolve(sema::Resolver& resolver);
 
 private:
+    template <typename T> void set(str_id_t name_id, Ref<T> value) {
+        _symbols.set(name_id, value);
+    }
+
     Ref<Program> _program;
     Ref<ast::ModuleDef> _node;
-    Ptr<PersScope> _env_scope;
-    Ptr<PersScope> _scope;
+    Ptr<BasicScope> _env_scope; // TODO
+    Ptr<PersScope> _scope; // TODO
     SymbolTable _symbols;
     std::set<str_id_t> _deps;
     std::unordered_map<str_id_t, Import> _imports;

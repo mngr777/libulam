@@ -20,6 +20,7 @@ public:
     };
 
     Decl() {}
+    virtual ~Decl() {}
 
     bool is_ready() const { return _state == Resolved; }
     bool is_resolving() const { return _state == Resolving; };
@@ -43,6 +44,7 @@ public:
     State state() const { return _state; }
     void set_state(State state) { _state = state; }
 
+    bool has_scope_version() const;
     ScopeVersion scope_version() const;
     void set_scope_version(ScopeVersion version);
 

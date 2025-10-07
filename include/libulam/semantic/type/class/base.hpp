@@ -28,6 +28,7 @@ class Resolver;
 
 namespace ulam {
 
+class BasicScope;
 class Module;
 class PersScope;
 class Value;
@@ -98,7 +99,7 @@ protected:
         return _members.set(name_id, value);
     }
 
-    Ref<PersScope> inh_scope() { return ref(_inh_scope); }
+    Ref<BasicScope> inh_scope() { return ref(_inh_scope); }
 
     auto& members() { return _members; }
 
@@ -116,7 +117,7 @@ private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
     // TODO: store in class
-    Ptr<PersScope> _inh_scope;
+    Ptr<BasicScope> _inh_scope;
     Ptr<PersScope> _param_scope;
     Ptr<PersScope> _scope;
     SymbolTable _members;

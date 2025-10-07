@@ -11,9 +11,10 @@
 
 namespace ulam {
 
-template <typename... Ts> class _Symbol : public detail::RefPtrVariant<Ts...> {
+template <typename... Ts> class _Symbol : public detail::RefVariant<Ts...> {
+    using Base = detail::RefVariant<Ts...>;
 public:
-    using detail::RefPtrVariant<Ts...>::RefPtrVariant;
+    using Base::Base;
 
     _Symbol(_Symbol&&) = default;
     _Symbol& operator=(_Symbol&&) = default;
@@ -45,7 +46,8 @@ public:
     const auto end() const { return _symbols.end(); }
 
     template <typename... Ts>
-    bool import_sym(str_id_t name_id, _Symbol<Ts...>& sym, bool overwrite = false) {
+    bool
+    import_sym(str_id_t name_id, _Symbol<Ts...>& sym, bool overwrite = false) {
         return sym.accept([&](auto&& value) {
             using T = typename std::remove_pointer<
                 std::decay_t<decltype(value)>>::type;
@@ -78,8 +80,7 @@ public:
     bool has(str_id_t name_id) const { return (_symbols.count(name_id) == 1); }
 
     Symbol* get(str_id_t name_id) {
-        auto it = _symbols.find(name_id);
-        return (it != _symbols.end()) ? &it->second : nullptr;
+        return const_cast<Symbol*>(std::as_const(*this).get(name_id));
     }
 
     const Symbol* get(str_id_t name_id) const {
@@ -89,11 +90,6 @@ public:
 
     Symbol* set(str_id_t name_id, Symbol&& sym) {
         auto [it, _] = _symbols.emplace(name_id, std::move(sym));
-        return &it->second;
-    }
-
-    template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
-        auto [it, _] = _symbols.emplace(name_id, Symbol{std::move(value)});
         return &it->second;
     }
 

@@ -11,7 +11,7 @@ namespace ulam {
 Module::Module(Ref<Program> program, Ref<ast::ModuleDef> node):
     _program{program},
     _node{node},
-    _env_scope{make<PersScope>(nullptr, scp::ModuleEnv)},
+    _env_scope{make<BasicScope>(nullptr, scp::ModuleEnv)},
     _scope{make<PersScope>(ref(_env_scope), scp::Module)} {}
 
 Module::~Module() {}
@@ -31,7 +31,6 @@ Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
         node);
     auto ref = ulam::ref(type)->as_alias();
     type->set_module(this);
-    type->set_scope_version(scope()->version());
     scope()->set(name_id, std::move(type));
 
     assert(!node->has_scope_version());
@@ -49,8 +48,7 @@ Module::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node) {
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
     var->set_module(this);
-    var->set_scope_version(scope()->version());
-    scope()->set(var->name_id(), std::move(var));
+    scope()->set(ref->name_id(), std::move(var));
 
     assert(!node->has_scope_version());
     node->set_var(ref);
@@ -62,10 +60,9 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
     auto name = program()->str_pool().get(node->name_id());
     auto cls = make<Class>(name, node, this);
     auto ref = ulam::ref(cls);
-    cls->set_scope_version(scope()->version());
 
-    scope()->set(cls->name_id(), ref);
-    set(cls->name_id(), std::move(cls));
+    scope()->set(ref->name_id(), std::move(cls));
+    set(ref->name_id(), ref);
 
     assert(!node->has_scope_version());
     node->set_cls(ref);
@@ -81,18 +78,17 @@ Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     auto name = program()->str_pool().get(node->name_id());
     auto tpl = make<ClassTpl>(name, node, this);
     auto ref = ulam::ref(tpl);
-    tpl->set_scope_version(scope()->version());
 
     auto params = node->params();
     for (unsigned n = 0; n < params->child_num(); ++n) {
         auto param = params->get(n);
-        if (tpl->has(param->name_id()))
+        if (ref->has(param->name_id()))
             program()->diag().error(param, "already defined");
-        tpl->add_param(param);
+        ref->add_param(param);
     }
 
-    scope()->set(tpl->name_id(), ref);
-    set(tpl->name_id(), std::move(tpl));
+    scope()->set(ref->name_id(), std::move(tpl));
+    set(ref->name_id(), ref);
 
     assert(!node->has_scope_version());
     node->set_cls_tpl(ref);
