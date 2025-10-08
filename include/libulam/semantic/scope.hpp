@@ -1,5 +1,5 @@
 #pragma once
-#include "libulam/semantic/decl.hpp"
+#include <libulam/semantic/decl.hpp>
 #include <cassert>
 #include <forward_list>
 #include <functional>
@@ -20,6 +20,7 @@
 
 namespace ulam {
 
+class BasicScopeIterator;
 class Module;
 class PersScopeView;
 
@@ -102,6 +103,7 @@ private:
 // Transient
 
 class BasicScope : public ScopeBase {
+    friend BasicScopeIterator;
 public:
     explicit BasicScope(Scope* parent, scope_flags_t flags = scp::NoFlags);
 

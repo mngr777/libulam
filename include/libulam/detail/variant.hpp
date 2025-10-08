@@ -25,6 +25,13 @@ public:
     Variant(Variant&&) = default;
     Variant& operator=(Variant&&) = default;
 
+    bool operator==(const Variant& other) const {
+        return _value == other._value;
+    }
+    bool operator!=(const Variant& other) const {
+        return !operator==(other);
+    }
+
     bool empty() const {
         static_assert((std::is_same_v<std::monostate, Ts> || ...));
         return is<std::monostate>();
