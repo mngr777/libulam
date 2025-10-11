@@ -1,5 +1,3 @@
-#include "libulam/semantic/scope/version.hpp"
-#include "libulam/str_pool.hpp"
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iterator.hpp>
 #include <libulam/semantic/scope/view.hpp>
@@ -38,6 +36,12 @@ const ScopeContextProxy Scope::ctx() const {
     return const_cast<Scope*>(this)->ctx();
 }
 
+ScopeIterator BasicScope::begin() {
+    return ScopeIterator{BasicScopeIterator{*this}};
+}
+
+ScopeIterator BasicScope::end() { return ScopeIterator{BasicScopeIterator{}}; }
+
 // ScopeBase
 
 Scope* ScopeBase::parent(scope_flags_t flags) {
@@ -47,7 +51,8 @@ Scope* ScopeBase::parent(scope_flags_t flags) {
 }
 
 Scope::Symbol* ScopeBase::get(str_id_t name_id, bool current) {
-    return current ? do_get_current(name_id) : do_get(name_id, ctx().eff_cls(), false);
+    return current ? do_get_current(name_id)
+                   : do_get(name_id, ctx().eff_cls(), false);
 }
 
 Scope::Symbol* ScopeBase::get_local(str_id_t name_id) {
@@ -157,11 +162,11 @@ PersScopeView PersScope::view(ScopeVersion version) {
 
 PersScopeView PersScope::view() { return PersScopeView{this, version()}; }
 
-PersScopeIterator PersScope::begin() {
-    return PersScopeIterator(PersScopeView{this, 0});
+ScopeIterator PersScope::begin() {
+    return ScopeIterator{PersScopeIterator{PersScopeView{this, 0}}};
 }
 
-PersScopeIterator PersScope::end() { return PersScopeIterator{}; }
+ScopeIterator PersScope::end() { return ScopeIterator{PersScopeIterator{}}; }
 
 bool PersScope::has(str_id_t name_id, bool current) const {
     return has(name_id, version(), current);
@@ -213,9 +218,7 @@ PersScope::get_local(str_id_t name_id, Version version) const {
     return const_cast<PersScope*>(this)->get_local(name_id, version);
 }
 
-ScopeVersion PersScope::version() const {
-    return _changes.size();
-}
+ScopeVersion PersScope::version() const { return _changes.size(); }
 
 Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
     auto sym = ScopeBase::do_set(name_id, std::move(symbol));

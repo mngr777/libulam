@@ -23,6 +23,7 @@ namespace ulam {
 class BasicScopeIterator;
 class Module;
 class PersScopeView;
+class ScopeIterator;
 
 // Scope base
 
@@ -65,6 +66,9 @@ public:
 
     virtual ScopeContextProxy ctx() = 0;
     const ScopeContextProxy ctx() const;
+
+    virtual ScopeIterator begin() = 0;
+    virtual ScopeIterator end() = 0;
 
 protected:
     virtual Symbol* do_set(str_id_t name_id, Symbol&& symbol) = 0;
@@ -114,6 +118,9 @@ public:
     void set_self_cls(Ref<Class> cls);
 
     ScopeContextProxy ctx() override;
+
+    ScopeIterator begin() override;
+    ScopeIterator end() override;
 
 protected:
     Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) override;
@@ -166,8 +173,8 @@ public:
     PersScopeView view(ScopeVersion version);
     PersScopeView view();
 
-    PersScopeIterator begin();
-    PersScopeIterator end();
+    ScopeIterator begin() override;
+    ScopeIterator end() override;
 
     bool has(str_id_t name_id, bool current = false) const override;
     bool has(str_id_t name_id, Version version, bool current = false) const;

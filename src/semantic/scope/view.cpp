@@ -51,11 +51,13 @@ void PersScopeView::set_version_after(ScopeVersion version) {
     set_version(version + 1);
 }
 
-PersScopeIterator PersScopeView::begin() {
-    return PersScopeIterator(PersScopeView{_scope, 0});
+ScopeIterator PersScopeView::begin() {
+    return ScopeIterator{PersScopeIterator{PersScopeView{_scope, 0}}};
 }
 
-PersScopeIterator PersScopeView::end() { return PersScopeIterator(); }
+ScopeIterator PersScopeView::end() {
+    return ScopeIterator{PersScopeIterator{}};
+}
 
 bool PersScopeView::operator==(const PersScopeView& other) const {
     return _scope == other._scope && _version == other._version;

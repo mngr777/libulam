@@ -38,8 +38,8 @@ public:
     void set_version(ScopeVersion version);
     void set_version_after(ScopeVersion version);
 
-    PersScopeIterator begin();
-    PersScopeIterator end();
+    ScopeIterator begin() override;
+    ScopeIterator end() override;
 
     bool operator==(const PersScopeView& other) const;
     bool operator!=(const PersScopeView& other) const;
