@@ -8,6 +8,7 @@
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/scope/iter.hpp>
+#include "src/sema/out.hpp"
 
 #ifdef DEBUG_SEMA_RESOLVER
 #    define ULAM_DEBUG
@@ -450,6 +451,9 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
         ident->is_local() ? scope()->get_local(name_id) : scope()->get(name_id);
     if (!sym) {
         diag().error(ident, std::string{str(name_id)} + " type not found");
+        // TEST
+        sema::Out out{program()};
+        out.print(*scope());
         return {};
     }
 

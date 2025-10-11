@@ -6,30 +6,38 @@ namespace ulam {
 
 BasicScopeIter::BasicScopeIter(BasicScope& scope):
     _scope{&scope}, _it{scope._symbols.begin()} {
-    operator++();
+    set_cur();
 }
 
-BasicScopeIter::BasicScopeIter():
-    _scope{}, _it{}, _cur{NoStrId, nullptr} {}
+BasicScopeIter::BasicScopeIter(): _scope{}, _it{}, _cur{NoStrId, nullptr} {}
 
 BasicScopeIter& BasicScopeIter::operator++() {
-    assert(_cur.second);
-    if (_scope && _it != _scope->_symbols.end()) {
+    if (!is_end()) {
         ++_it;
-        _cur = {_it->first, &_it->second};
-    } else {
-        _cur = {NoStrId, nullptr};
+        set_cur();
     }
     return *this;
 }
 
 bool BasicScopeIter::operator==(const BasicScopeIter& other) const {
-    return (_scope == other._scope) &&
-           (!_scope || _cur.second == other._cur.second);
+    return (is_end() && other.is_end()) ||
+        (_scope == other._scope && _it == other._it);
 }
 
 bool BasicScopeIter::operator!=(const BasicScopeIter& other) const {
     return !operator==(other);
+}
+
+bool BasicScopeIter::is_end() const {
+    return !_scope || _it == _scope->_symbols.end();
+}
+
+void BasicScopeIter::set_cur() {
+    if (!is_end()) {
+        _cur = {_it->first, &_it->second};
+    } else {
+        _cur = {NoStrId, nullptr};
+    }
 }
 
 // PersScopeIter

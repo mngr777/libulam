@@ -14,7 +14,9 @@ class Out {
 public:
     Out(Ref<Program> program): _program{program}, _os{std::cout} {}
 
-    void print(Scope* scope);
+    void print(Scope& scope);
+    void print(Scope::Symbol& sym);
+
     void print(RecVisitor::Pass pass);
     void print(Scope::Symbol* sym);
     void print(Ref<Type> type, bool canon = false);
@@ -45,6 +47,8 @@ private:
 
     UniqStrPool& text_pool() { return _program->text_pool(); }
     const UniqStrPool& text_pool() const { return _program->text_pool(); }
+
+    void hr();
 
     std::ostream& _os;
 };

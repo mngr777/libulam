@@ -33,6 +33,9 @@ public:
     bool operator!=(const BasicScopeIter& other) const;
 
 private:
+    bool is_end() const;
+    void set_cur();
+
     BasicScope* _scope;
     BasicScope::SymbolTable::iterator _it;
     value_type _cur;

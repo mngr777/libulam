@@ -1,11 +1,30 @@
 #include "src/sema/out.hpp"
+#include <iomanip>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/visitor.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 
 namespace ulam::sema {
 
-void Out::print(Scope* scope) {
+void Out::print(Scope& scope) {
+    hr();
+    for (auto cur = &scope; cur; cur = cur->parent()) {
+        for (auto [name_id, sym] : *cur) {
+            _os << std::setw(16) << " " << str(name_id) << " ";
+            print(*sym);
+            _os << "\n";
+        }
+        hr();
+    }
+}
 
+void Out::print(Scope::Symbol& sym) {
+    sym.accept(
+        [&](Ref<UserType> type) { _os << "type"; },
+        [&](Ref<ClassTpl> tpl) { _os << "tpl"; },
+        [&](Ref<FunSet> fset) { _os << "fun"; },
+        [&](Ref<Var> var) { _os << "var"; },
+        [&](Ref<Prop> prop) { _os << "prop"; });
 }
 
 // void Out::print(Ref<Scope> scope) {
@@ -86,5 +105,7 @@ void Out::print(Ref<Var> var) {
 std::string_view Out::str(str_id_t str_id) {
     return _program->str_pool().get(str_id);
 }
+
+void Out::hr() { _os << "--------------------\n"; }
 
 } // namespace ulam::sema

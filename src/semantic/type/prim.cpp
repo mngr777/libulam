@@ -1,4 +1,3 @@
-#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/prim.hpp>
