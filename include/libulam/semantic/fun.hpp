@@ -114,7 +114,7 @@ private:
 public:
     using Matches = std::unordered_set<Ref<Fun>>;
 
-    class Iterator {
+    class Iter {
         friend FunSet;
 
     public:
@@ -123,16 +123,16 @@ public:
         using pointer_type = Ref<Fun>;
         using reference_type = Ref<Fun>;
 
-        Iterator& operator++();
+        Iter& operator++();
 
         reference_type operator*();
         pointer_type operator->();
 
-        bool operator==(const Iterator& other);
-        bool operator!=(const Iterator& other);
+        bool operator==(const Iter& other);
+        bool operator!=(const Iter& other);
 
     private:
-        explicit Iterator(FunList::iterator it);
+        explicit Iter(FunList::iterator it);
 
         FunList::iterator _it;
     };
@@ -151,8 +151,8 @@ public:
     void add(Ptr<Fun>&& fun);
     void add(Ref<Fun> fun);
 
-    Iterator begin() { return Iterator{_funs.begin()}; }
-    Iterator end() { return Iterator{_funs.end()}; }
+    Iter begin() { return Iter{_funs.begin()}; }
+    Iter end() { return Iter{_funs.end()}; }
 
     std::size_t size() const { return _funs.size(); }
     bool empty() const { return _funs.empty(); }

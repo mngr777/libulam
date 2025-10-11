@@ -1,4 +1,4 @@
-#include <libulam/semantic/scope/iterator.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
 namespace ulam {
@@ -51,13 +51,11 @@ void PersScopeView::set_version_after(ScopeVersion version) {
     set_version(version + 1);
 }
 
-ScopeIterator PersScopeView::begin() {
-    return ScopeIterator{PersScopeIterator{PersScopeView{_scope, 0}}};
+ScopeIter PersScopeView::begin() {
+    return ScopeIter{PersScopeIter{PersScopeView{_scope, 0}}};
 }
 
-ScopeIterator PersScopeView::end() {
-    return ScopeIterator{PersScopeIterator{}};
-}
+ScopeIter PersScopeView::end() { return ScopeIter{PersScopeIter{}}; }
 
 bool PersScopeView::operator==(const PersScopeView& other) const {
     return _scope == other._scope && _version == other._version;

@@ -1,5 +1,5 @@
 #include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/scope/iterator.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
 #define ULAM_DEBUG
@@ -36,11 +36,9 @@ const ScopeContextProxy Scope::ctx() const {
     return const_cast<Scope*>(this)->ctx();
 }
 
-ScopeIterator BasicScope::begin() {
-    return ScopeIterator{BasicScopeIterator{*this}};
-}
+ScopeIter BasicScope::begin() { return ScopeIter{BasicScopeIter{*this}}; }
 
-ScopeIterator BasicScope::end() { return ScopeIterator{BasicScopeIterator{}}; }
+ScopeIter BasicScope::end() { return ScopeIter{BasicScopeIter{}}; }
 
 // ScopeBase
 
@@ -162,11 +160,11 @@ PersScopeView PersScope::view(ScopeVersion version) {
 
 PersScopeView PersScope::view() { return PersScopeView{this, version()}; }
 
-ScopeIterator PersScope::begin() {
-    return ScopeIterator{PersScopeIterator{PersScopeView{this, 0}}};
+ScopeIter PersScope::begin() {
+    return ScopeIter{PersScopeIter{PersScopeView{this, 0}}};
 }
 
-ScopeIterator PersScope::end() { return ScopeIterator{PersScopeIterator{}}; }
+ScopeIter PersScope::end() { return ScopeIter{PersScopeIter{}}; }
 
 bool PersScope::has(str_id_t name_id, bool current) const {
     return has(name_id, version(), current);

@@ -8,7 +8,7 @@
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/scope/iterator.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/class.hpp>

@@ -3,7 +3,7 @@
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/scope/iterator.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/str_pool.hpp>
 

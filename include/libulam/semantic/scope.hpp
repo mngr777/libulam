@@ -1,9 +1,9 @@
 #pragma once
-#include <libulam/semantic/decl.hpp>
 #include <cassert>
 #include <forward_list>
 #include <functional>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/scope/context.hpp>
 #include <libulam/semantic/scope/flags.hpp>
@@ -20,10 +20,10 @@
 
 namespace ulam {
 
-class BasicScopeIterator;
+class BasicScopeIter;
 class Module;
 class PersScopeView;
-class ScopeIterator;
+class ScopeIter;
 
 // Scope base
 
@@ -67,8 +67,8 @@ public:
     virtual ScopeContextProxy ctx() = 0;
     const ScopeContextProxy ctx() const;
 
-    virtual ScopeIterator begin() = 0;
-    virtual ScopeIterator end() = 0;
+    virtual ScopeIter begin() = 0;
+    virtual ScopeIter end() = 0;
 
 protected:
     virtual Symbol* do_set(str_id_t name_id, Symbol&& symbol) = 0;
@@ -107,7 +107,8 @@ private:
 // Transient
 
 class BasicScope : public ScopeBase {
-    friend BasicScopeIterator;
+    friend BasicScopeIter;
+
 public:
     explicit BasicScope(Scope* parent, scope_flags_t flags = scp::NoFlags);
 
@@ -119,8 +120,8 @@ public:
 
     ScopeContextProxy ctx() override;
 
-    ScopeIterator begin() override;
-    ScopeIterator end() override;
+    ScopeIter begin() override;
+    ScopeIter end() override;
 
 protected:
     Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) override;
@@ -153,7 +154,7 @@ private:
  point, which allows to resolve dependencies recursively.
 */
 
-class PersScopeIterator;
+class PersScopeIter;
 class PersScopeView;
 
 class PersScope : public ScopeBase {
@@ -173,8 +174,8 @@ public:
     PersScopeView view(ScopeVersion version);
     PersScopeView view();
 
-    ScopeIterator begin() override;
-    ScopeIterator end() override;
+    ScopeIter begin() override;
+    ScopeIter end() override;
 
     bool has(str_id_t name_id, bool current = false) const override;
     bool has(str_id_t name_id, Version version, bool current = false) const;

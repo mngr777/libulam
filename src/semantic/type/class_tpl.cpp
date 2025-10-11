@@ -4,7 +4,7 @@
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
-#include <libulam/semantic/scope/iterator.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>

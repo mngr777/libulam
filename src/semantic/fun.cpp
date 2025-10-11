@@ -21,7 +21,7 @@ namespace ulam {
 // Fun
 
 Fun::Fun(Mangler& mangler, Scope* scope, Ref<ast::FunDef> node):
-    _mangler{mangler}, _param_scope{make<PersScope>(scope)},  _node{node} {
+    _mangler{mangler}, _param_scope{make<PersScope>(scope)}, _node{node} {
     assert(node);
     if (node->is_marked_virtual())
         set_is_virtual(true);
@@ -115,9 +115,7 @@ Ref<Fun> Fun::find_override(Ref<const Class> cls) {
     return (it != _overrides.end()) ? it->second : Ref<Fun>{};
 }
 
-Ref<PersScope> Fun::scope() {
-    return cls()->scope();
-}
+Ref<PersScope> Fun::scope() { return cls()->scope(); }
 
 Ref<ast::FunRetType> Fun::ret_type_node() const {
     assert(_node->has_ret_type());
@@ -172,26 +170,18 @@ std::string Fun::key() const {
     return key;
 }
 
-// FunSet::Iterator
+// FunSet::Iter
 
-FunSet::Iterator::Iterator(FunList::iterator it): _it{it} {}
+FunSet::Iter::Iter(FunList::iterator it): _it{it} {}
 
-FunSet::Iterator::reference_type FunSet::Iterator::operator*() {
-    return _it->ref();
-}
-FunSet::Iterator::pointer_type FunSet::Iterator::operator->() {
-    return _it->ref();
-}
+FunSet::Iter::reference_type FunSet::Iter::operator*() { return _it->ref(); }
+FunSet::Iter::pointer_type FunSet::Iter::operator->() { return _it->ref(); }
 
-bool FunSet::Iterator::operator==(const Iterator& other) {
-    return _it == other._it;
-}
+bool FunSet::Iter::operator==(const Iter& other) { return _it == other._it; }
 
-bool FunSet::Iterator::operator!=(const Iterator& other) {
-    return !operator==(other);
-}
+bool FunSet::Iter::operator!=(const Iter& other) { return !operator==(other); }
 
-FunSet::Iterator& FunSet::Iterator::operator++() {
+FunSet::Iter& FunSet::Iter::operator++() {
     _it++;
     return *this;
 }

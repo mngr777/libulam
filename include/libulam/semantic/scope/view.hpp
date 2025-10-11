@@ -9,7 +9,7 @@
 namespace ulam {
 
 class PersScope;
-class PersScopeIterator;
+class PersScopeIter;
 
 class PersScopeView : public Scope {
 public:
@@ -38,8 +38,8 @@ public:
     void set_version(ScopeVersion version);
     void set_version_after(ScopeVersion version);
 
-    ScopeIterator begin() override;
-    ScopeIterator end() override;
+    ScopeIter begin() override;
+    ScopeIter end() override;
 
     bool operator==(const PersScopeView& other) const;
     bool operator!=(const PersScopeView& other) const;
