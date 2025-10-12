@@ -190,7 +190,7 @@ EvalEnv::StackRaii EvalEnv::stack_raii(Ref<Fun> fun, LValue self) {
 }
 
 EvalEnv::ScopeRaii EvalEnv::scope_raii(scope_flags_t flags) {
-    return scope_raii(_scope_stack.top(), flags);
+    return scope_raii(scope(), flags);
 }
 
 EvalEnv::ScopeRaii EvalEnv::scope_raii(Scope* parent, scope_flags_t flags) {

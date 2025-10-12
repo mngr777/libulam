@@ -451,9 +451,6 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
         ident->is_local() ? scope()->get_local(name_id) : scope()->get(name_id);
     if (!sym) {
         diag().error(ident, std::string{str(name_id)} + " type not found");
-        // TEST
-        sema::Out out{program()};
-        out.print(*scope());
         return {};
     }
 
@@ -690,8 +687,15 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     auto fr = env().add_flags_raii(evl::Consteval);
 
     // tmp param eval scope
-    auto sr = env().scope_raii();
+    // NOTE: cannot use scope RAII, in case scope switch RAII has been used
+    BasicScope tmp_scope(scope());
+    auto ssr = env().scope_switch_raii(&tmp_scope);
+
     std::list<Ref<Var>> cls_params;
+
+    // TEST
+    sema::Out out{program()};
+    out.print(*scope());
 
     // assert(_in_expr); // ?? auto resolver = eval().resolver(true);
     std::pair<TypedValueList, bool> res;
@@ -725,6 +729,10 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         ++n;
 
         cls_params.push_back(ref(param)); // add to list
+
+        // TEST
+        out.print(*scope());
+
         scope()->set(param->name_id(), std::move(param));
     }
     res.second = true;
