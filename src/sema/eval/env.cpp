@@ -152,9 +152,9 @@ ExprRes EvalEnv::cast_to_idx(Ref<ast::Node> node, ExprRes&& arg) {
     return do_cast_to_idx(cast, node, std::move(arg));
 }
 
-ExprRes EvalEnv::to_boolean(Ref<ast::Expr> expr, ExprRes&& arg) {
+ExprRes EvalEnv::to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl) {
     auto boolean = builtins().boolean();
-    return cast(expr, boolean, std::move(arg));
+    return cast(expr, boolean, std::move(arg), expl);
 }
 
 bool EvalEnv::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {

@@ -693,10 +693,6 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     std::list<Ref<Var>> cls_params;
 
-    // TEST
-    sema::Out out{program()};
-    out.print(*scope());
-
     // assert(_in_expr); // ?? auto resolver = eval().resolver(true);
     std::pair<TypedValueList, bool> res;
     res.second = false;
@@ -729,10 +725,6 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         ++n;
 
         cls_params.push_back(ref(param)); // add to list
-
-        // TEST
-        out.print(*scope());
-
         scope()->set(param->name_id(), std::move(param));
     }
     res.second = true;

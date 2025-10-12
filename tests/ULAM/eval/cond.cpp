@@ -1,5 +1,6 @@
 #include "./cond.hpp"
 #include "./expr_res.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 
 using CondRes = EvalCond::CondRes;
 
@@ -15,7 +16,9 @@ CondRes EvalCond::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
         return Base::eval_expr(expr);
 
     auto res = env().eval_expr(expr);
-    res = env().to_boolean(expr, std::move(res));
+    // t3374: no cast for Bool(n>1) -> Bool(1)?
+    if (!res.type()->is(ulam::BoolId))
+        res = env().to_boolean(expr, std::move(res));
 
     gen().append(exp::data(res));
     gen().append("cond");

@@ -94,7 +94,7 @@ public:
 
     virtual ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
 
-    virtual ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& arg);
+    virtual ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl = false);
 
     virtual bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
 
