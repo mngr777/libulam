@@ -7,15 +7,32 @@
 namespace ulam::sema {
 
 void Out::print(Scope& scope) {
-    hr();
+    hr2();
     for (auto cur = &scope; cur; cur = cur->parent()) {
+        if (cur->flags() == scp::NoFlags) {
+            _os << "<no flags>\n";
+        } else {
+            if (cur->flags() & scp::Program)
+                _os << "[program]\n";
+            if (cur->flags() & scp::ModuleEnv)
+                _os << "[module-env]\n";
+            if (cur->flags() & scp::Module)
+                _os << "[module]\n";
+            if (cur->flags() & scp::ClassTpl)
+                _os << "[class-tpl]\n";
+            if (cur->flags() & scp::Class)
+                _os << "[class]\n";
+        }
+
         for (auto [name_id, sym] : *cur) {
             _os << std::setw(16) << " " << str(name_id) << " ";
             print(*sym);
             _os << "\n";
         }
-        hr();
+        if (cur->parent())
+            hr();
     }
+    hr2();
 }
 
 void Out::print(Scope::Symbol& sym) {
@@ -26,36 +43,6 @@ void Out::print(Scope::Symbol& sym) {
         [&](Ref<Var> var) { _os << "var"; },
         [&](Ref<Prop> prop) { _os << "prop"; });
 }
-
-// void Out::print(Ref<Scope> scope) {
-//     assert(false);
-//     if (scope->flags() == scp::NoFlags) {
-//         _os << "<no flags>";
-//     } else {
-//         if (scope->flags() & scp::Program)
-//             _os << "[program]";
-//         if (scope->flags() & scp::ModuleEnv)
-//             _os << "[module-env]";
-//         if (scope->flags() & scp::Module)
-//             _os << "[module]";
-//         if (scope->flags() & scp::ClassTpl)
-//             _os << "[class-tpl]";
-//         if (scope->flags() & scp::Class)
-//             _os << "[class]";
-//     }
-//     _os << "\n";
-//     scope->for_each([&](str_id_t name_id, Scope::Symbol& sym) {
-//         _os << str(name_id) << ": ";
-//         print(&sym);
-//         _os << "\n";
-//     });
-//     if (scope->parent()) {
-//         _os << "----------\n";
-//         print(scope->parent());
-//     } else {
-//         _os << "==========\n";
-//     }
-// }
 
 void Out::print(RecVisitor::Pass pass) {
     switch (pass) {
@@ -107,5 +94,7 @@ std::string_view Out::str(str_id_t str_id) {
 }
 
 void Out::hr() { _os << "--------------------\n"; }
+
+void Out::hr2() { _os << "====================\n"; }
 
 } // namespace ulam::sema

@@ -49,6 +49,7 @@ private:
     const UniqStrPool& text_pool() const { return _program->text_pool(); }
 
     void hr();
+    void hr2();
 
     std::ostream& _os;
 };
