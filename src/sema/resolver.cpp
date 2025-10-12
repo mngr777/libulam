@@ -690,9 +690,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     auto fr = env().add_flags_raii(evl::Consteval);
 
     // tmp param eval scope
-    auto param_scope_view = tpl->param_scope()->view(0);
-    BasicScope param_scope{&param_scope_view};
-    auto ssr = env().scope_switch_raii(&param_scope);
+    auto sr = env().scope_raii();
     std::list<Ref<Var>> cls_params;
 
     // assert(_in_expr); // ?? auto resolver = eval().resolver(true);
@@ -727,7 +725,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         ++n;
 
         cls_params.push_back(ref(param)); // add to list
-        param_scope.set(param->name_id(), std::move(param));
+        scope()->set(param->name_id(), std::move(param));
     }
     res.second = true;
 
