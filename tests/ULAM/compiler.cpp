@@ -186,8 +186,8 @@ void Compiler::write_obj_parent_members(
 void Compiler::write_class_type_defs(
     std::ostream& os, ulam::Ref<ulam::Class> cls) {
     Stringifier stringifier{program()};
-    for (auto type_def : cls->type_defs())
-        write_class_type_def(os, stringifier, type_def);
+    for (auto alias : cls->type_defs())
+        write_class_type_def(os, stringifier, alias);
 }
 
 void Compiler::write_class_type_def(
