@@ -1,14 +1,14 @@
+#include "src/sema/out.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
-#include <libulam/semantic/scope/iter.hpp>
-#include "src/sema/out.hpp"
 
 #ifdef DEBUG_SEMA_RESOLVER
 #    define ULAM_DEBUG
@@ -676,58 +676,68 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
     return {std::move(dims), ok};
 }
 
+// TODO: refactor this!
 std::pair<TypedValueList, bool>
 Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n" << line_at(args);
 
+    std::pair<TypedValueList, bool> res;
+
     // consteval
     auto fr = env().add_flags_raii(evl::Consteval);
 
-    // tmp param eval scope
-    // NOTE: cannot use scope RAII, in case scope switch RAII has been used
-    BasicScope tmp_scope(scope());
-    auto ssr = env().scope_switch_raii(&tmp_scope);
-
-    std::list<Ref<Var>> cls_params;
-
-    // assert(_in_expr); // ?? auto resolver = eval().resolver(true);
-    std::pair<TypedValueList, bool> res;
-    res.second = false;
-    unsigned n = 0;
-    for (auto tpl_param : tpl->params()) {
-        auto param = make<Var>(
-            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
-            Value{RValue{}}, tpl_param->flags());
-
-        // param type
-        if (!resolve(ref(param)))
-            return res;
-        auto type = param->type();
-
-        // value
-        if (n < args->child_num()) {
-            // argument provided
-            auto arg = args->get(n);
-            auto arg_res = env().eval_expr(arg);
-            if (arg_res)
-                arg_res = env().cast(arg, type, std::move(arg_res), false);
+    // resolve arguments in current scope
+    ExprResList arg_res_list;
+    {
+        BasicScope arg_scope(scope());
+        auto ssr = env().scope_switch_raii(&arg_scope);
+        for (unsigned n = 0; n < args->child_num(); ++n) {
+            auto arg_res = env().eval_expr(args->get(n));
             if (!arg_res)
                 return res;
-            param->set_value(arg_res.move_value());
+            arg_res_list.push_back(std::move(arg_res));
+        }
+    }
 
-        } else if (!param->has_value()) {
-            diag().error(args, "not enough arguments");
+    // resolve param types and default values (if needed) in tpl scope
+    std::list<Ptr<Var>> params;
+    auto param_scope_view = tpl->param_scope()->view(0);
+    BasicScope param_scope(&param_scope_view);
+    auto ssr = env().scope_switch_raii(&param_scope);
+    for (auto tpl_param : tpl->params()) {
+        params.push_back(make<Var>(
+            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
+            Value{RValue{}}, tpl_param->flags()));
+        auto param = ref(params.back());
+        auto type = resolve_var_decl_type(param->type_node(), param->node());
+        if (!type)
+            return res;
+        param->set_type(type);
+
+        ExprRes arg_res;
+        if (!arg_res_list.empty()) {
+            arg_res = arg_res_list.pop_front();
+        } else if (param->node()->has_init()) {
+            auto ok = env().init_var(param, param->node()->init(), true);
+            if (!ok)
+                return res;
+            arg_res = {param->type(), Value{param->value().copy_rvalue()}};
+        } else {
+            diag().error(args->loc_id(), 1, "not enough arguments");
             return res;
         }
-        ++n;
 
-        cls_params.push_back(ref(param)); // add to list
-        scope()->set(param->name_id(), std::move(param));
+        arg_res = env().cast(args, param->type(), std::move(arg_res), false);
+        if (!arg_res)
+            return res;
+
+        param->set_value(arg_res.move_value());
+        param_scope.set(param->name_id(), param);
     }
-    res.second = true;
 
-    for (auto param : cls_params)
+    for (auto& param : params)
         res.first.emplace_back(param->type(), param->move_value());
+    res.second = true;
     return res;
 }
 
