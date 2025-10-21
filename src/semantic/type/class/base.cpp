@@ -13,7 +13,8 @@ ClassBase::ClassBase(
     Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags):
     _node{node},
     _module{module},
-    _inh_scope{make<BasicScope>(module->scope())},
+    _module_scope_view{make<PersScopeView>(module->scope()->view())},
+    _inh_scope{make<BasicScope>(ref(_module_scope_view))},
     _param_scope{make<PersScope>(ref(_inh_scope))},
     _scope{make<PersScope>(ref(_param_scope), scope_flags)},
     _constructors(make<FunSet>()) {}

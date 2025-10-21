@@ -64,6 +64,11 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
     } else {
         module()->add_class(node);
     }
+
+    // workaround for classes in module depending on each other:
+    // classes added to same module as deps
+    module()->add_dep(name_id);
+
     module()->add_dep(ast()->ctx().str_pool().put("UrSelf")); // TODO: option
     sync_scope(node);
     return true;
@@ -167,6 +172,7 @@ bool Init::do_visit(Ref<ast::TypeName> node) {
         return true;
 
     // add unresolved name to module dependencies
+    // TODO: types inside classes may be added via inheritance
     assert(type_spec->has_ident());
     auto name_id = type_spec->ident()->name_id();
     if (!scope()->has(name_id)) {
@@ -222,18 +228,17 @@ void Init::export_classes() {
             if (it == exporting.end())
                 continue;
             assert(it->second.size() == 1);
+            // NOTE: module may import into itself as a temp workaround
             auto& exporter = *it->second.begin();
-            if (true || *exporter != *mod) {
-                auto sym = exporter->get(name_id);
-                assert(sym);
-                sym->accept([&](auto cls_or_tpl) {
-                    debug()
-                        << "importing " << str(name_id) << " into "
-                        << mod->name() << " from " << exporter->name() << "\n";
-                    mod->add_import(name_id, exporter, cls_or_tpl);
-                    assert(mod->scope()->has(name_id));
-                });
-            }
+            auto sym = exporter->get(name_id);
+            assert(sym);
+            sym->accept([&](auto cls_or_tpl) {
+                debug()
+                    << "importing " << str(name_id) << " into "
+                    << mod->name() << " from " << exporter->name() << "\n";
+                mod->add_import(name_id, exporter, cls_or_tpl);
+                assert(mod->scope()->has(name_id));
+            });
         }
     }
 }

@@ -21,6 +21,7 @@ class VarDefList;
 
 namespace ulam::sema {
 class Resolver;
+class ClassResolver;
 }
 
 namespace ulam {
@@ -35,6 +36,7 @@ class Value;
 class Class : public UserType, public ClassBase {
     friend ClassTpl;
     friend cls::Ancestry;
+    friend sema::ClassResolver;
 
 public:
     using UserType::is_castable_to;
@@ -51,12 +53,7 @@ public:
 
     elt_id_t element_id() const;
 
-    // Ref<Var>
-    // add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
-    // Ref<Var> add_param(
-    //     Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node, Value&& val);
     Ref<Var> add_param(Ptr<Var>&& var) override;
-
     Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
     Ref<Fun> add_fun(Ref<ast::FunDef> node) override;
     Ref<Var>
@@ -67,10 +64,6 @@ public:
     bool init(sema::Resolver& resolver);
     Ref<AliasType> init_type_def(sema::Resolver& resolver, str_id_t name_id);
     bool resolve(sema::Resolver& resolver);
-
-    // NOTE: check existence with `has()/has_op()` first
-    Symbol* get_resolved(str_id_t name_id, sema::Resolver& resolver);
-    Ref<FunSet> resolved_op(Op op, sema::Resolver& resolver);
 
     bool is_base_of(Ref<const Class> other) const;
     bool is_same_or_base_of(Ref<const Class> other) const;

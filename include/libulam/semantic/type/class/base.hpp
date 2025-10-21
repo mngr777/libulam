@@ -31,6 +31,7 @@ namespace ulam {
 class BasicScope;
 class Module;
 class PersScope;
+class PersScopeView;
 class Value;
 
 class ClassBase {
@@ -116,6 +117,7 @@ protected:
 private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
+    Ptr<PersScopeView> _module_scope_view;
     // TODO: store in class
     Ptr<BasicScope> _inh_scope;
     Ptr<PersScope> _param_scope;

@@ -1,5 +1,5 @@
-#include "src/sema/out.hpp"
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
@@ -10,6 +10,7 @@
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 
+#define DEBUG_SEMA_RESOLVER // TMP
 #ifdef DEBUG_SEMA_RESOLVER
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[sema::Resolver] "
@@ -45,57 +46,41 @@ void Resolver::resolve(Ref<Program> program) {
 
     ClassSet processed;
     while (true) {
-        ClassSet classes = _classes;
-        _classes.clear();
+        ClassSet classes;
+        std::swap(classes, _classes);
 
         ClassSet processing;
         for (auto cls : classes) {
-            if (processed.count(cls) == 0) {
-                resolve(cls);
+            if (processed.count(cls) > 0)
+                continue;
+            if (ClassResolver{env(), *this, *cls}.resolve())
                 processing.insert(cls);
-            }
         }
         if (processing.empty())
-            return;
+            break;
 
         for (auto cls : processing) {
-            for (auto type_def : cls->type_defs())
-                resolve(type_def);
-            for (auto var : cls->consts())
-                resolve(var);
+            ClassResolver{env(), *this, *cls}.resolve(true);
             processed.insert(cls);
         }
     }
+
+    debug() << "fully resolved classes:\n";
+    for (auto cls : processed)
+        debug() << " - " << cls->name() << "\n";
 }
 
 bool Resolver::init(Ref<Class> cls) {
     debug() << "initializing " << cls->name() << "\n";
-    _classes.insert(cls);
-    return cls->init(*this);
+    bool ok = ClassResolver{env(), *this, *cls}.init();
+    if (ok)
+        _classes.insert(cls);
+    return ok;
 }
 
 bool Resolver::resolve(Ref<Class> cls) {
     debug() << "resolving " << cls->name() << "\n";
-    bool ok = cls->resolve(*this);
-
-    // check if size limit is exceeded
-    if (ok && cls->required_bitsize() > cls->bitsize()) {
-        cls->set_state(Decl::Unresolvable);
-        auto prop = cls->first_prop_over_max_bitsize();
-        if (prop) {
-            auto message = std::string{"size limit of "} +
-                           std::to_string(cls->bitsize()) + " bits exceeded";
-            diag().error(prop->node(), std::move(message));
-            return false;
-        }
-        auto parent = cls->first_parent_over_max_bitsize();
-        if (parent) {
-            diag().error(parent->node(), "size limit exceeded");
-            return false;
-        }
-        assert(false);
-    }
-
+    bool ok = ClassResolver{env(), *this, *cls}.resolve();
     if (ok)
         _classes.insert(cls);
     return ok;
@@ -108,7 +93,7 @@ bool Resolver::resolve(Ref<AliasType> alias) {
 
     // type
     DECL_SCOPE(alias, ssr, scope_view);
-    Ref<Type> type = resolve_type_name(type_name, scope());
+    Ref<Type> type = resolve_type_name(type_name, true);
     if (!type)
         RET_UPD_STATE(alias, false);
 

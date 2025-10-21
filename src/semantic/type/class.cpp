@@ -155,25 +155,6 @@ bool Class::resolve(sema::Resolver& resolver) {
     return ok;
 }
 
-Class::Symbol* Class::get_resolved(str_id_t name_id, sema::Resolver& resolver) {
-    auto sym = get(name_id);
-    assert(sym);
-    auto is_resolved = sym->accept(
-        [&](Ref<UserType> type) { return resolver.resolve(type->as_alias()); },
-        [&](auto decl) { return resolver.resolve(decl); });
-    if (!is_resolved)
-        return {};
-    return sym;
-}
-
-Ref<FunSet> Class::resolved_op(Op op, sema::Resolver& resolver) {
-    auto fset = Class::op(op);
-    assert(fset);
-    if (!resolver.resolve(fset))
-        return {};
-    return fset;
-}
-
 bool Class::is_base_of(Ref<const Class> other) const {
     return other->_ancestry.is_base(this);
 }

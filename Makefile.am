@@ -122,6 +122,7 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	include/libulam/sema.hpp \
+	include/libulam/sema/class_resolver.hpp \
 	include/libulam/sema/eval.hpp \
 	include/libulam/sema/eval/cast.hpp \
 	include/libulam/sema/eval/cond.hpp \
@@ -144,6 +145,7 @@ SEMA_HEADER_FILES = \
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
+	src/sema/class_resolver.cpp \
 	src/sema/eval.cpp \
 	src/sema/eval/base.cpp \
 	src/sema/eval/cast.cpp \

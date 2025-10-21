@@ -656,7 +656,7 @@ ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {
 
 ExprResPair
 EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
-    auto flags_raii = env().flags_raii(flags() | evl::NoExec);
+    auto fr = env().flags_raii(flags() | evl::NoExec);
     return {node->if_true()->accept(*this), node->if_false()->accept(*this)};
 }
 
