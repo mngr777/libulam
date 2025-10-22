@@ -13,6 +13,7 @@ bool ClassResolver::init() {
     case Decl::Initializing:
     case Decl::Initialized:
     case Decl::Resolved:
+    case Decl::Resolving:
         return true;
     case Decl::Unresolvable:
         return false;
@@ -42,9 +43,7 @@ bool ClassResolver::do_resolve() {
     case Decl::Unresolvable:
         return false;
     default:
-        assert(
-            _cls.state() == Decl::NotResolved ||
-            _cls.state() == Decl::Initialized);
+        assert(_cls.state() == Decl::Initialized);
         _cls.set_state(Decl::Resolving);
     }
 

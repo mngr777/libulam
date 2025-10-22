@@ -107,6 +107,8 @@ bool Class::init(sema::Resolver& resolver) {
         return true;
     case Unresolvable:
         return false;
+    case Resolving:
+        return true;
     default:
         set_state(Initializing);
     }

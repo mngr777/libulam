@@ -93,7 +93,7 @@ bool Resolver::resolve(Ref<AliasType> alias) {
 
     // type
     DECL_SCOPE(alias, ssr, scope_view);
-    Ref<Type> type = resolve_type_name(type_name, true);
+    Ref<Type> type = resolve_type_name(type_name);
     if (!type)
         RET_UPD_STATE(alias, false);
 

@@ -20,11 +20,7 @@ class Ancestor {
     friend Ancestry;
 
 public:
-    Ancestor(Ref<Class> cls, Ref<ast::TypeName> node):
-        _cls{cls},
-        _node{node},
-        _data_off{NoBitsize},
-        _size_added{NoBitsize} {}
+    Ancestor(Ref<Class> cls, Ref<ast::TypeName> node): _cls{cls}, _node{node} {}
 
     Ref<Class> cls() const { return _cls; }
 
@@ -52,9 +48,9 @@ private:
     Ref<ast::TypeName> _node;
     bool _is_parent{false}; // TODO: use flags
     bool _is_implicit{false};
-    bitsize_t _data_off; // NOTE: offset is relative to start of inherited data
-                         // section
-    bitsize_t _size_added;
+    bitsize_t _data_off{NoBitsize}; // NOTE: offset is relative to start of
+                                    // inherited data section
+    bitsize_t _size_added{NoBitsize};
     // dependencies pulled in first time by current ancestor,
     std::list<Ref<Ancestor>> _deps_added;
 };
