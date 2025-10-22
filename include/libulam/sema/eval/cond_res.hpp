@@ -12,7 +12,6 @@ public:
     AsCondContext(Ref<Type> type, Ptr<ast::VarDef>&& var_def, Ref<Var> var):
         _type{type}, _var_def{std::move(var_def)}, _var{var} {
         assert(_type);
-        assert(_var_def && _var);
     }
     AsCondContext(Ref<Type> type): _type{type}, _var_def{}, _var{} {
         assert(_type);
