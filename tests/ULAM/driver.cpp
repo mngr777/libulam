@@ -20,6 +20,7 @@ static const std::set<std::string> Skip = {
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
     "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use
+    "t3874_test_compiler_elementinheritance_withlocaldefsafterused_filescope.test", // type alias defined after use
     "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition
     "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
