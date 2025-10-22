@@ -191,8 +191,8 @@ str_id_t PersScope::last_change(Version version) const {
 
 Scope::Symbol* PersScope::get(str_id_t name_id, Version version, bool current) {
     auto sym = do_get_current(name_id);
-    if (sym)
-        return (sym->as_decl()->scope_version() < version) ? sym : nullptr;
+    if (sym && sym->as_decl()->scope_version() < version)
+        return sym;
     if (current || !parent())
         return nullptr;
     return parent()->get(name_id);
