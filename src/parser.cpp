@@ -1310,11 +1310,11 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
     consume();
 
     // expr
-    Ptr<ast::Expr> expr{};
+    Ptr<ast::Expr> expr;
     Ref<ast::AsCond> as_cond{};
     if (!is_default) {
         ExprContext expr_ctx{is_as_cond ? ExprAllowAsCond : NoExprFlags};
-        auto expr = parse_expr(expr_ctx);
+        expr = parse_expr(expr_ctx);
         if (!expr)
             return {};
         if (is_as_cond && !expr_ctx.as_cond) {
