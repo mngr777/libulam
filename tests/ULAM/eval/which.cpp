@@ -15,8 +15,13 @@ void EvalWhich::eval_which(ulam::Ref<ulam::ast::Which> node) {
         auto tmp_idx =
             ulam::detail::leximited((ulam::Unsigned)gen().next_tmp_idx());
         cr = gen().ctx_stack().raii(gen::WhichContext{label_idx, tmp_idx});
+        gen().block_open();
     }
-    return Base::eval_which(node);
+
+    Base::eval_which(node);
+
+    if (codegen_enabled())
+        gen().block_close();
 }
 
 ulam::Ptr<ulam::Var>
@@ -42,20 +47,15 @@ EvalWhich::make_which_var(Context& ctx, ulam::Ref<ulam::ast::Expr> expr) {
     gen().append(type_str);
     gen().append(gen_ctx.tmp_var_name() + type_dim_str);
     gen().append("=");
-    gen().append(exp::data(res) + ";");
+    gen().append(exp::data(res) + "; ");
 
     return ulam::make<ulam::Var>(res.move_typed_value());
 }
 
 void EvalWhich::eval_cases(Context& ctx) {
-    if (codegen_enabled())
-        gen().block_open();
-
     Base::eval_cases(ctx);
 
     if (codegen_enabled()) {
-        gen().block_close();
-
         auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
         if (gen_ctx.non_default_num() > 0)
             gen().append("else");

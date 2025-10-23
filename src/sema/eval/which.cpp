@@ -1,7 +1,7 @@
 #include <libulam/sema/eval/cond.hpp>
+#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
-#include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/which.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/flags.hpp>
@@ -76,8 +76,8 @@ ExprRes EvalWhich::match_expr_res(
     auto which_res = make_which_expr(ctx);
     auto which_expr = ctx.node->expr();
     auto res = env().eval_equal(
-        case_expr, case_expr, std::move(case_res), which_expr,
-        std::move(which_res));
+        case_expr, which_expr, std::move(which_res), case_expr,
+        std::move(case_res));
     if (!res || (!has_flag(evl::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to match eval which case");
     return env().to_boolean(case_expr, std::move(res));
