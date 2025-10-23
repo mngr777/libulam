@@ -113,7 +113,7 @@ public:
     ULAM_AST_TUPLE_PROP(case_cond, 0)
     ULAM_AST_TUPLE_PROP(branch, 1)
 
-    bool is_default() const { return !has_case_cond(); }
+    bool is_default() const { return case_cond()->is_default(); }
 };
 
 class Which : public Tuple<List<Stmt, WhichCase>, Expr> {

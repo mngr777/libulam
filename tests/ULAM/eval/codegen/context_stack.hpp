@@ -63,16 +63,25 @@ public:
         friend ContextStack;
 
     private:
-        explicit Raii(ContextStack& stack): _stack{stack} {}
+        explicit Raii(ContextStack& stack): _stack{&stack} {}
 
     public:
-        ~Raii() { _stack.pop(); }
+        Raii(): _stack{} {}
 
-        Raii(Raii&& other) = default;
-        Raii& operator=(Raii&&) = delete;
+        ~Raii() {
+            if (_stack)
+                _stack->pop();
+        }
+
+        Raii(Raii&& other) { operator=(std::move(other)); }
+
+        Raii& operator=(Raii&& other) {
+            std::swap(_stack, other._stack);
+            return *this;
+        }
 
     private:
-        ContextStack& _stack;
+        ContextStack* _stack;
     };
 
     ContextStack() {}

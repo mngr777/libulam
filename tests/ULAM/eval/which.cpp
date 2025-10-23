@@ -9,11 +9,12 @@
 using ExprRes = EvalWhich::ExprRes;
 
 void EvalWhich::eval_which(ulam::Ref<ulam::ast::Which> node) {
+    gen::ContextStack::Raii cr;
     if (codegen_enabled()) {
         auto label_idx = gen().next_tmp_idx_str();
         auto tmp_idx =
             ulam::detail::leximited((ulam::Unsigned)gen().next_tmp_idx());
-        gen().ctx_stack().raii(gen::WhichContext{label_idx, tmp_idx});
+        cr = gen().ctx_stack().raii(gen::WhichContext{label_idx, tmp_idx});
     }
     return Base::eval_which(node);
 }
