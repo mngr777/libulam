@@ -40,15 +40,6 @@ private:
     Ref<AsCond> _as_cond{};
 };
 
-class WhichCaseCond : public Cond {
-    ULAM_AST_NODE
-public:
-    using Cond::Cond;
-    WhichCaseCond(): WhichCaseCond{{}, {}} {}
-
-    bool is_default() const { return !has_expr(); }
-};
-
 class If : public Tuple<Stmt, Cond, Stmt, Stmt> {
     ULAM_AST_NODE
 public:
@@ -104,22 +95,38 @@ public:
     ULAM_AST_TUPLE_PROP(body, 1)
 };
 
-class WhichCase : public Tuple<Stmt, WhichCaseCond, Stmt> {
+class WhichCaseCond : public Cond {
     ULAM_AST_NODE
 public:
-    WhichCase(Ptr<WhichCaseCond>&& case_cond, Ptr<Stmt>&& branch):
-        Tuple{std::move(case_cond), std::move(branch)} {}
+    using Cond::Cond;
+    WhichCaseCond(): WhichCaseCond{{}, {}} {}
 
-    ULAM_AST_TUPLE_PROP(case_cond, 0)
+    bool is_default() const { return !has_expr(); }
+};
+
+class WhichCaseCondList : public List<Stmt, WhichCaseCond> {
+    ULAM_AST_NODE
+public:
+    using List::List;
+};
+
+class WhichCase : public Tuple<Stmt, WhichCaseCondList, Block> {
+    ULAM_AST_NODE
+public:
+    WhichCase(Ptr<WhichCaseCondList>&& conds, Ptr<Block>&& branch):
+        Tuple{std::move(conds), std::move(branch)} {}
+
+    explicit WhichCase(Ptr<Block>&& branch):
+        WhichCase{make<WhichCaseCondList>(), std::move(branch)} {}
+
+    ULAM_AST_TUPLE_PROP(conds, 0)
     ULAM_AST_TUPLE_PROP(branch, 1)
-
-    bool is_default() const { return case_cond()->is_default(); }
 };
 
 class Which : public Tuple<List<Stmt, WhichCase>, Expr> {
     ULAM_AST_NODE
 public:
-    Which(Ptr<Expr>&& expr): Tuple{std::move(expr)} {}
+    explicit Which(Ptr<Expr>&& expr): Tuple{std::move(expr)} {}
 
     unsigned case_num() const { return List::child_num(); }
 

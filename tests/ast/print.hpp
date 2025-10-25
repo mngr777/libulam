@@ -106,12 +106,13 @@ protected:
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::EmptyStmt> node) override;
     void visit(ulam::Ref<ulam::ast::Cond> node) override;
-    void visit(ulam::Ref<ulam::ast::WhichCaseCond> node) override;
     void visit(ulam::Ref<ulam::ast::If> node) override;
     void visit(ulam::Ref<ulam::ast::For> node) override;
     void visit(ulam::Ref<ulam::ast::While> node) override;
     void visit(ulam::Ref<ulam::ast::Which> node) override;
     void visit(ulam::Ref<ulam::ast::WhichCase> node) override;
+    void visit(ulam::Ref<ulam::ast::WhichCaseCondList> node) override;
+    void visit(ulam::Ref<ulam::ast::WhichCaseCond> node) override;
     void visit(ulam::Ref<ulam::ast::Return> node) override;
     void visit(ulam::Ref<ulam::ast::Continue> node) override;
     void visit(ulam::Ref<ulam::ast::Break> node) override;

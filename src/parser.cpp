@@ -1267,7 +1267,7 @@ Ptr<ast::Which> Parser::parse_which() {
     // {
     if (!expect(tok::BraceL))
         return {};
-    bool has_default = false;
+    // bool has_default = false;
     while (!_tok.in(tok::BraceR, tok::Eof)) {
         // parse case
         Ptr<ast::WhichCase> case_{};
@@ -1282,11 +1282,11 @@ Ptr<ast::Which> Parser::parse_which() {
         }
 
         // duplicate `otherwise'?
-        if (case_->is_default()) {
-            if (has_default)
-                diag(case_->loc_id(), 1, "multiple default cases");
-            has_default = true;
-        }
+        // if (case_->is_default()) {
+        //     if (has_default)
+        //         diag(case_->loc_id(), 1, "multiple default cases");
+        //     has_default = true;
+        // }
 
         if (node) {
             node->add(std::move(case_));
@@ -1303,46 +1303,49 @@ Ptr<ast::Which> Parser::parse_which() {
 Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
     assert(_tok.in(tok::Case, tok::Otherwise));
 
-    bool is_default = _tok.is(tok::Otherwise);
+    // TODO: keep parsing on errors, throw out result
 
-    // case/otherwise
     auto loc_id = _tok.loc_id;
-    consume();
+    auto conds = tree_loc<ast::WhichCaseCondList>(_tok.loc_id);
+    do {
+        bool is_default = _tok.is(tok::Otherwise);
+        consume();
+        auto cond_loc_id = _tok.loc_id;
 
-    // expr
-    Ptr<ast::Expr> expr;
-    Ref<ast::AsCond> as_cond{};
-    if (!is_default) {
-        ExprContext expr_ctx{is_as_cond ? ExprAllowAsCond : NoExprFlags};
-        expr = parse_expr(expr_ctx);
-        if (!expr)
-            return {};
-        if (is_as_cond && !expr_ctx.as_cond) {
-            diag(expr->loc_id(), 1, "as-cond is required");
-            return {};
+        // expr
+        Ptr<ast::Expr> expr;
+        Ref<ast::AsCond> as_cond{};
+        if (!is_default) {
+            ExprContext expr_ctx{is_as_cond ? ExprAllowAsCond : NoExprFlags};
+            expr = parse_expr(expr_ctx);
+            if (!expr)
+                return {};
+            if (is_as_cond && !expr_ctx.as_cond) {
+                diag(expr->loc_id(), 1, "as-cond is required");
+                return {};
+            }
+            if (!is_as_cond && expr_ctx.as_cond) {
+                diag(expr->loc_id(), 1, "case cannot have as-cond");
+                return {};
+            }
         }
-        if (!is_as_cond && expr_ctx.as_cond) {
-            diag(expr->loc_id(), 1, "case cannot have as-cond");
+        conds->add(tree_loc<ast::WhichCaseCond>(
+            cond_loc_id, std::move(expr), as_cond));
+
+        // :
+        if (!expect(tok::Colon))
             return {};
-        }
-    }
-    auto case_cond =
-        tree_loc<ast::WhichCaseCond>(loc_id, std::move(expr), as_cond);
+    } while (_tok.in(tok::Case, tok::Otherwise));
 
-    // :
-    if (!expect(tok::Colon))
-        return {};
-
-    // stmt
-    Ptr<ast::Stmt> stmt{};
+    // block
+    Ptr<ast::Block> block;
     if (!_tok.in(tok::Case, tok::Otherwise)) {
-        stmt = parse_stmt();
-        if (!stmt)
+        block = parse_block();
+        if (!block)
             return {};
     }
 
-    return tree_loc<ast::WhichCase>(
-        loc_id, std::move(case_cond), std::move(stmt));
+    return tree_loc<ast::WhichCase>(loc_id, std::move(conds), std::move(block));
 }
 
 Ptr<ast::Cond> Parser::parse_cond() {

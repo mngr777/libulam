@@ -18,8 +18,12 @@ protected:
 
     void eval_cases(Context& ctx) override;
 
-    void
+    bool
     eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) override;
+
+    bool match_conds(
+        Context& ctx,
+        ulam::Ref<ulam::ast::WhichCaseCondList> case_conds) override;
 
     ExprRes match_expr_res(
         Context& ctx,

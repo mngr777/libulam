@@ -298,11 +298,6 @@ void Printer::visit(ulam::Ref<ulam::ast::Cond> node) {
     node->expr()->accept(*this);
 }
 
-void Printer::visit(ulam::Ref<ulam::ast::WhichCaseCond> node) {
-    assert(node->has_expr());
-    node->expr()->accept(*this);
-}
-
 void Printer::visit(ulam::Ref<ulam::ast::If> node) {
     assert(node->has_cond());
     assert(node->has_if_branch());
@@ -340,6 +335,7 @@ void Printer::visit(ulam::Ref<ulam::ast::For> node) {
 
 void Printer::visit(ulam::Ref<ulam::ast::While> node) {
     assert(node->has_cond());
+
     _os << "while (";
     accept_me(node->cond());
     _os << ")";
@@ -353,6 +349,7 @@ void Printer::visit(ulam::Ref<ulam::ast::While> node) {
 
 void Printer::visit(ulam::Ref<ulam::ast::Which> node) {
     assert(node->has_expr());
+
     _os << "which (";
     accept_me(node->expr());
     _os << ") {\n";
@@ -362,16 +359,26 @@ void Printer::visit(ulam::Ref<ulam::ast::Which> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
-    if (node->is_default()) {
-        indent() << "otherwise";
-    } else {
-        indent() << "case ";
-        accept_me(node->case_cond());
-    }
-    _os << ": ";
-    if (node->has_branch())
-        accept_me(node->branch());
+    assert(node->has_branch());
+
+    accept_me(node->conds());
+    accept_me(node->branch());
     _os << nl();
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::WhichCaseCondList> node) {
+    for (unsigned n = 0; n < node->child_num(); ++n)
+        accept_me(node->get(n));
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::WhichCaseCond> node) {
+    if (!node->is_default()) {
+        indent() << "case ";
+        accept_me(node->expr());
+    } else {
+        indent() << "otherwise";
+    }
+    _os << ": " << nl();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Return> node) {

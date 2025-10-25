@@ -26,34 +26,47 @@ void EvalWhich::eval_which(Ref<ast::Which> node) {
     }
 }
 
-void EvalWhich::eval_cases(Context& ctx) {
-    for (unsigned i = 0; i < ctx.node->case_num(); ++i) {
-        auto case_ = ctx.node->case_(i);
-        eval_case(ctx, case_);
-    }
-}
-
 Ptr<Var> EvalWhich::make_which_var(Context& ctx, Ref<ast::Expr> expr) {
     auto res = env().eval_expr(expr);
     return make<Var>(res.move_typed_value());
 }
 
-void EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
+void EvalWhich::eval_cases(Context& ctx) {
+    for (unsigned i = 0; i < ctx.node->case_num(); ++i) {
+        auto case_ = ctx.node->case_(i);
+        if (eval_case(ctx, case_))
+            break;
+    }
+}
+
+bool EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
     auto sr = env().scope_raii();
-    if (ctx.matched || match(ctx, case_->case_cond()))
+    bool matched = match_conds(ctx, case_->conds());
+    if (matched)
         env().eval_stmt(case_->branch());
+    return matched;
+}
+
+bool EvalWhich::match_conds(
+    Context& ctx, Ref<ast::WhichCaseCondList> case_conds) {
+    for (unsigned n = 0; n < case_conds->child_num(); ++n) {
+        if (case_conds->get(n)->is_default())
+            return true;
+    }
+    for (unsigned n = 0; n < case_conds->child_num(); ++n) {
+        if (match(ctx, case_conds->get(n)))
+            return true;
+    }
+    return false;
 }
 
 bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
-    assert(!ctx.matched);
-    if (case_cond->is_default()) {
-        ctx.matched = true;
-    } else {
-        ctx.matched = case_cond->is_as_cond()
-                          ? match_as_cond(ctx, case_cond->as_cond())
-                          : match_expr(ctx, case_cond->expr());
-    }
-    return ctx.matched;
+    if (case_cond->is_default())
+        return true;
+
+    return case_cond->is_as_cond()
+        ? match_as_cond(ctx, case_cond->as_cond())
+        : match_expr(ctx, case_cond->expr());
 }
 
 bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {
