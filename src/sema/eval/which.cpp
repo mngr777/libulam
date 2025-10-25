@@ -40,15 +40,20 @@ Ptr<Var> EvalWhich::make_which_var(Context& ctx, Ref<ast::Expr> expr) {
 
 void EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
     auto sr = env().scope_raii();
-    if (match(ctx, case_->case_cond()))
+    if (ctx.matched || match(ctx, case_->case_cond()))
         env().eval_stmt(case_->branch());
 }
 
 bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
-    if (case_cond->is_default())
-        return true;
-    return case_cond->is_as_cond() ? match_as_cond(ctx, case_cond->as_cond())
-                                   : match_expr(ctx, case_cond->expr());
+    assert(!ctx.matched);
+    if (case_cond->is_default()) {
+        ctx.matched = true;
+    } else {
+        ctx.matched = case_cond->is_as_cond()
+                          ? match_as_cond(ctx, case_cond->as_cond())
+                          : match_expr(ctx, case_cond->expr());
+    }
+    return ctx.matched;
 }
 
 bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {

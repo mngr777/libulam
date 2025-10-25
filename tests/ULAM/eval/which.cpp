@@ -72,31 +72,36 @@ void EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
     bool has_branch = case_->has_branch();
 
     auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
+    bool prev_has_breaks = gen_ctx.case_has_breaks();
     gen_ctx.set_case_has_breaks(false);
     if (!is_default)
         gen_ctx.inc_non_default_num();
 
-    // TODO: check
-    bool fallthru = ctx.matched;
-    bool has_cond = fallthru;
+    ctx.matched = false;
     match(ctx, case_->case_cond());
-    if (!is_default && has_branch) {
-        gen().append(gen_ctx.move_cond_str());
-        gen().append("cond");
-        has_cond = true;
-    } else if (is_default && !gen_ctx.has_non_default()) {
-        // default case is the only one, t41038
-        gen().append("true");
-        gen().append("cond");
-        has_cond = true;
+    if (!is_default) {
+        if (has_branch) {
+            gen().append(gen_ctx.move_cond_str());
+            gen().append("cond");
+        }
+    } else {
+        if (!gen_ctx.has_non_default()) {
+            // default case is the only one (first one?), t41038
+            gen().append("true");
+            gen().append("cond");
+        }
     }
 
     if (has_branch) {
         env().eval_stmt(case_->branch());
-        if (!has_cond) {
-            gen().append("else");
-        } else if (!is_default || !fallthru) {
+        if (!is_default) {
             gen().append("if");
+        } else {
+            if (gen_ctx.has_non_default() && prev_has_breaks) {
+                // single "else" after "case -1" falls through before end label,
+                // t41021
+                gen().append("else");
+            }
         }
     }
 }
