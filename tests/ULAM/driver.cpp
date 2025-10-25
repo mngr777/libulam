@@ -86,9 +86,9 @@ static const std::set<std::string> Skip = {
     /* added while writing postfix compiler: */
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
-    "t41042_test_compiler_whileascond.test", // while-as
-    "t41431_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_asdatamember_ish.test", // local contstant use be before definition
+    "t41042_test_compiler_whileascond.test", // while-as, native aref cannot be evaluated
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
+    "t41431_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_asdatamember_ish.test", // local contstant used be before definition
     "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // class typedef used in parent list
     "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
     "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
