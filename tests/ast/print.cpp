@@ -348,10 +348,9 @@ void Printer::visit(ulam::Ref<ulam::ast::While> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Which> node) {
-    assert(node->has_expr());
-
     _os << "which (";
-    accept_me(node->expr());
+    if (node->has_expr())
+        accept_me(node->expr());
     _os << ") {\n";
     for (unsigned n = 0; n < node->case_num(); ++n)
         accept_me(node->case_(n));

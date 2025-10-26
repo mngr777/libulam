@@ -1328,6 +1328,7 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
                 diag(expr->loc_id(), 1, "case cannot have as-cond");
                 return {};
             }
+            as_cond = expr_ctx.as_cond;
         }
         conds->add(tree_loc<ast::WhichCaseCond>(
             cond_loc_id, std::move(expr), as_cond));

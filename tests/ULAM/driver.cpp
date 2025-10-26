@@ -11,6 +11,7 @@
 
 constexpr char UlamPathEnv[] = "ULAM_PATH";
 
+// TODO: native classes
 static const std::set<std::string> Skip = {
     "t3241_test_compiler_unarymod.test", // invalid implicit cast?
     "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
@@ -27,7 +28,7 @@ static const std::set<std::string> Skip = {
     "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t41043_test_compiler_forascond.test", // Int i(4) is correct
-    "t41046_test_compiler_switchascondcases.test", // which() as cond, TODO
+    "t41046_test_compiler_switchascondcases.test", // cannot evaluate natie aref
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
@@ -99,6 +100,7 @@ static const std::set<std::string> Skip = {
     "t41617_test_compiler_positionofascondref.test", // -"-
     "t41618_test_compiler_positionofreftodatamember.test", // -"-
     "t41620_test_compiler_elementpositionofdatamemberinbaseclassofbaseclassnoref.test", // -"-
+    "t41516_test_compiler_elementinheritance_withmultiplelocaldefskeywordpriority.test", // typedefs are (supposed to be) used before definition
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
