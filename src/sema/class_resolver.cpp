@@ -144,14 +144,14 @@ void ClassResolver::init_default_data() {
     TypeIdSet unions; // initialized Unions
     for (auto prop : _cls.all_props()) {
         auto cls = prop->cls();
-        if (unions.count(cls->id()) > 0)
-            continue;
-
+        if (cls->is_union()) {
+            auto [_, added] = unions.insert(cls->id());
+            if (!added)
+                continue;
+        }
         _resolver.init_default_value(prop);
         auto off = prop->data_off_in(&_cls);
         prop->type()->store(_cls._init_bits, off, prop->default_value());
-        if (cls->is_union())
-            unions.insert(cls->id());
     }
 }
 

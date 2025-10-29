@@ -61,10 +61,6 @@ public:
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
-    bool init(sema::Resolver& resolver);
-    Ref<AliasType> init_type_def(sema::Resolver& resolver, str_id_t name_id);
-    bool resolve(sema::Resolver& resolver);
-
     bool is_base_of(Ref<const Class> other) const;
     bool is_same_or_base_of(Ref<const Class> other) const;
 
@@ -141,13 +137,6 @@ protected:
 private:
     void register_element(Ref<Program> program);
     elt_id_t read_element_id(const BitsView data, bitsize_t off = 0);
-
-    bool resolve_params(sema::Resolver& resolver);
-    bool init_ancestors(sema::Resolver& resolver);
-    bool resolve_ancestors(sema::Resolver& resolver);
-    bool resolve_props(sema::Resolver& resolver);
-    bool resolve_funs(sema::Resolver& resolver);
-    void init_default_data(sema::Resolver& resolver);
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
 

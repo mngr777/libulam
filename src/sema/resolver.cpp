@@ -1,3 +1,4 @@
+#include "libulam/semantic/type.hpp"
 #include "src/sema/out.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -343,6 +344,7 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
 
         // resolve typedef
         ident = type_name->ident(n);
+        const auto name_id = ident->name_id();
         if (ident->is_super()) {
             if (!cls->has_super()) {
                 diag().error(ident, "class doesn't have a superclass");
@@ -351,12 +353,18 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
             type = cls->super();
         } else {
             assert(!ident->is_self());
-            // alias?
-            type = cls->init_type_def(*this, ident->name_id());
-            if (!type) {
+            // alias or base class?
+            auto sym = cls->get(name_id);
+            if (sym) {
+                // alias
+                type = sym->get<UserType>();
+                if (!resolve(type->as_alias()))
+                    return {};
+            } else {
                 // base?
-                type = cls->base_by_name_id(ident->name_id());
+                type = cls->base_by_name_id(name_id);
             }
+            type = sym ? sym->get<UserType>() : cls->base_by_name_id(name_id);
         }
         // not found?
         if (!type) {
