@@ -26,7 +26,7 @@ class Resolver : public EvalHelper {
 public:
     Resolver(EvalEnv& env, bool in_expr): EvalHelper{env}, _in_expr{in_expr} {}
 
-    void resolve(Ref<Program> program); // TODO: move to constr
+    void resolve(Ref<Program> program); // TODO: move to constr (or somewhere)
     bool init(Ref<Class> cls);
     bool resolve(Ref<Class> cls);
     bool resolve(Ref<AliasType> alias);

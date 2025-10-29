@@ -1,14 +1,16 @@
-#include <libulam/ast/nodes/module.hpp>
+#include "src/sema/out.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/module.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
+#include <libulam/semantic/type/class_tpl.hpp>
 
 #define DEBUG_SEMA_RESOLVER // TMP
 #ifdef DEBUG_SEMA_RESOLVER
@@ -427,25 +429,49 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
         return self_cls->super();
     }
 
-    // find symbol
     auto name_id = ident->name_id();
-    auto sym =
-        ident->is_local() ? scope()->get_local(name_id) : scope()->get(name_id);
-    if (!sym) {
+    auto class_tpl_to_type = [&](Ref<ClassTpl> class_tpl) -> Ref<Type> {
+        auto [args, success] = eval_tpl_args(type_spec->args(), class_tpl);
+        if (!success)
+            return {};
+        return class_tpl->type(std::move(args));
+    };
+
+    {
+        auto sym = ident->is_local() ? scope()->get_local(name_id)
+                                     : scope()->get(name_id);
+        if (sym) {
+            return sym->accept(
+                class_tpl_to_type,
+                [&](Ref<UserType> type) -> Ref<Type> { return type; },
+                [&](auto&&) -> Ref<Type> { assert(false); });
+        }
+    }
+
+    auto exp = program()->exports().get(name_id);
+    if (!exp) {
         diag().error(ident, std::string{str(name_id)} + " type not found");
         return {};
     }
 
-    // template?
-    if (sym->is<ClassTpl>()) {
-        auto tpl = sym->get<ClassTpl>();
-        auto [args, success] = eval_tpl_args(type_spec->args(), tpl);
-        if (!success)
-            return {};
-        return tpl->type(std::move(args));
-    }
-    assert(sym->is<UserType>());
-    return sym->get<UserType>();
+    // import into module, TODO: add and use Module::add_import instead
+    auto module = scope()->module();
+    sema::Out out{program()};
+    out.print(*scope());
+    if (module)
+        std::cout << "TEST\n";
+    return exp->sym()->accept(
+        [&](Ref<ClassTpl> class_tpl) -> Ref<Type> {
+            if (module)
+                module->env_scope()->set(name_id, class_tpl); // TODO
+            return class_tpl_to_type(class_tpl);
+        },
+        [&](Ref<Class> cls) -> Ref<Type> {
+            if (module)
+                module->env_scope()->set(name_id, cls); // TODO
+            return cls;
+        },
+        [&](auto&&) -> Ref<Type> { assert(false); });
 }
 
 bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {

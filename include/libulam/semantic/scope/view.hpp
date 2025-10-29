@@ -8,6 +8,7 @@
 
 namespace ulam {
 
+class Module;
 class PersScope;
 class PersScopeIter;
 
@@ -22,6 +23,8 @@ public:
     std::pair<str_id_t, Symbol*> advance();
 
     Scope* parent(scope_flags_t flags = scp::NoFlags) override;
+
+    Ref<Module> module() override;
 
     operator bool() const { return _scope; }
 

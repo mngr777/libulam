@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/class_tpl.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -78,22 +79,7 @@ bool ClassResolver::resolve_params() {
 bool ClassResolver::init_ancestors() {
     if (!do_init_ancestors())
         return false;
-
-    // Add UrSelf base
-    // TODO: refactoring, add base class option
-    {
-        auto name_id = program()->str_pool().put("UrSelf");
-        auto sym = _cls.module()->scope()->get(name_id);
-        if (sym && sym->is<UserType>()) {
-            auto urself_type = sym->get<UserType>();
-            if (urself_type->is_class()) {
-                auto urself = urself_type->as_class();
-                if (urself != &_cls)
-                    _cls.add_ancestor(urself, {});
-            }
-        }
-    }
-
+    add_common_base();
     add_inherited_props();
     return true;
 }
@@ -183,6 +169,30 @@ bool ClassResolver::do_init_ancestors() {
     }
     return true;
 }
+
+bool ClassResolver::add_common_base() {
+    auto name_id = program()->str_pool().put("UrSelf");
+    auto exp = program()->exports().get(name_id);
+    if (!exp) {
+        // diag().error(_cls.node(), "common base class not found");
+        return false;
+    }
+    auto sym = exp->sym();
+    if (sym->is<ClassTpl>()) {
+        diag().error(_cls.node(), "common base class cannot be a template");
+        return false;
+    }
+
+    assert(sym->is<Class>());
+    auto urself_type = exp->sym()->get<Class>();
+    if (urself_type->is_class()) {
+        auto urself = urself_type->as_class();
+        if (urself != &_cls)
+            _cls.add_ancestor(urself, {});
+    }
+    return true;
+}
+
 
 void ClassResolver::add_inherited_props() {
     // parents first

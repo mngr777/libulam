@@ -33,6 +33,7 @@ private:
     void init_default_data();
 
     bool do_init_ancestors();
+    bool add_common_base();
     void add_inherited_props();
 
     Resolver& _resolver;

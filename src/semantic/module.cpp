@@ -3,7 +3,7 @@
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
-#include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 
 namespace ulam {
@@ -12,7 +12,7 @@ Module::Module(Ref<Program> program, Ref<ast::ModuleDef> node):
     _program{program},
     _node{node},
     _env_scope{make<BasicScope>(nullptr, scp::ModuleEnv)},
-    _scope{make<PersScope>(ref(_env_scope), scp::Module)} {}
+    _scope{make<ModuleScope>(this, ref(_env_scope), scp::Module)} {}
 
 Module::~Module() {}
 
@@ -60,9 +60,12 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
     auto name = program()->str_pool().get(node->name_id());
     auto cls = make<Class>(name, node, this);
     auto ref = ulam::ref(cls);
+    auto name_id = ref->name_id();
 
-    scope()->set(ref->name_id(), std::move(cls));
-    set(ref->name_id(), ref);
+    scope()->set(name_id, std::move(cls));
+    _env_scope->set(name_id, ref);
+    auto sym = set(name_id, ref);
+    add_export(node, name_id, sym);
 
     assert(!node->has_scope_version());
     node->set_cls(ref);
@@ -74,21 +77,26 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
 
 Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     assert(node->params()->child_num() > 0);
+    const auto& str_pool = program()->str_pool();
+    auto& diag = program()->diag();
 
-    auto name = program()->str_pool().get(node->name_id());
+    auto name = str_pool.get(node->name_id());
     auto tpl = make<ClassTpl>(name, node, this);
     auto ref = ulam::ref(tpl);
+    auto name_id = ref->name_id();
 
     auto params = node->params();
     for (unsigned n = 0; n < params->child_num(); ++n) {
         auto param = params->get(n);
         if (ref->has(param->name_id()))
-            program()->diag().error(param, "already defined");
+            diag.error(param, "already defined");
         ref->add_param(param);
     }
 
-    scope()->set(ref->name_id(), std::move(tpl));
-    set(ref->name_id(), ref);
+    scope()->set(name_id, std::move(tpl));
+    _env_scope->set(name_id, ref);
+    auto sym = set(name_id, ref);
+    add_export(node, name_id, sym);
 
     assert(!node->has_scope_version());
     node->set_cls_tpl(ref);
@@ -128,21 +136,6 @@ const Module::Symbol* Module::get(str_id_t name_id) const {
     return _symbols.get(name_id);
 }
 
-void Module::add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type) {
-    assert(_imports.count(name_id) == 0);
-    // assert(module != this);
-    _imports.emplace(name_id, Import{module, type});
-    _env_scope->set(name_id, type);
-}
-
-void Module::add_import(
-    str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl) {
-    assert(_imports.count(name_id) == 0);
-    // assert(module != this);
-    _imports.emplace(name_id, Import{module, type_tpl});
-    _env_scope->set(name_id, type_tpl);
-}
-
 bool Module::resolve(sema::Resolver& resolver) {
     bool ok = true;
     for (auto [_, sym] : *scope()) {
@@ -166,6 +159,20 @@ bool Module::resolve(sema::Resolver& resolver) {
         ok = ok && resolved;
     }
     return ok;
+}
+
+void Module::add_export(Ref<ast::Node> node, str_id_t name_id, Symbol* sym) {
+    auto& str_pool = program()->str_pool();
+    auto& diag = program()->diag();
+
+    auto existing = program()->add_export(name_id, {this, sym});
+    if (existing) {
+        assert(existing->module() != this);
+        auto other_module_name = str_pool.get(existing->module()->name_id());
+        auto message =
+            "name conflicts with name in " + std::string{other_module_name};
+        diag.error(node, message);
+    }
 }
 
 } // namespace ulam

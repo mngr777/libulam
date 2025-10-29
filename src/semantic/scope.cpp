@@ -18,6 +18,11 @@ const Scope* Scope::parent(scope_flags_t flags) const {
     return const_cast<Scope*>(this)->parent(flags);
 }
 
+Ref<Module> Scope::module() {
+    auto module_scope = parent(scp::Module);
+    return module_scope ? module_scope->module() : nullptr;
+}
+
 bool Scope::is(scope_flags_t flags_) const { return flags() & flags_; }
 
 bool Scope::in(scope_flags_t flags_) const {

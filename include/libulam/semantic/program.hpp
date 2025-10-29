@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/export.hpp>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/type.hpp>
@@ -32,9 +33,13 @@ public:
     UniqStrPool& text_pool() { return _text_pool; }
 
     SrcMngr& sm() { return _sm; }
+
     TypeIdGen& type_id_gen() { return _type_id_gen; }
+
     ElementRegistry& elements() { return _elements; }
+
     auto& builtins() { return _builtins; }
+
     Mangler& mangler() { return _mangler; }
 
     const ModuleList& modules() { return _modules; }
@@ -42,8 +47,8 @@ public:
     Ref<Module> module(str_id_t name_id);
     Ref<Module> add_module(Ref<ast::ModuleDef> node);
 
-    elt_id_t add_element(Ref<Class> cls);
-    Ref<Class> element(elt_id_t id);
+    const ExportTable& exports() { return _exports; }
+    const Export* add_export(str_id_t name_id, Export exp);
 
 private:
     Diag& _diag;
@@ -54,9 +59,10 @@ private:
     ElementRegistry _elements;
     Builtins _builtins;
     Mangler _mangler;
-    std::list<Ptr<Module>> _module_ptr;
+    std::list<Ptr<Module>> _module_ptrs;
     std::list<Ref<Module>> _modules;
     std::map<str_id_t, Ref<Module>> _modules_by_name_id;
+    ExportTable _exports;
 };
 
 } // namespace ulam

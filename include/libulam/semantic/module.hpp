@@ -1,6 +1,7 @@
 #pragma once
-#include "libulam/semantic/scope.hpp"
 #include <libulam/memory/ptr.hpp>
+#include <libulam/semantic/module/scope.hpp>
+#include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
@@ -9,9 +10,9 @@
 #include <list>
 #include <set>
 #include <string_view>
-#include <unordered_map>
 
 namespace ulam::ast {
+class Node;
 class ModuleDef;
 class TypeName;
 class TypeSpec;
@@ -26,28 +27,7 @@ class Resolver;
 namespace ulam {
 
 class Program;
-
 class Module;
-
-class Import {
-public:
-    Import(Ref<Module> module, Ref<Class> type):
-        _module{module}, _type{type}, _type_tpl{} {}
-
-    Import(Ref<Module> module, Ref<ClassTpl> type_tpl):
-        _module{module}, _type{}, _type_tpl{type_tpl} {}
-
-    Ref<Module> module() { return _module; }
-    Ref<Class> type() { return _type; }
-    Ref<ClassTpl> type_tpl() { return _type_tpl; }
-
-private:
-    Ref<Module> _module;
-    Ref<Class> _type;
-    Ref<ClassTpl> _type_tpl;
-};
-
-class PersScope;
 
 class Module {
 public:
@@ -89,7 +69,9 @@ public:
 
     void export_symbols(Scope* scope);
 
-    PersScope* scope() { return ref(_scope); }
+    // TODO: add and use add_import instead
+    Scope* env_scope() { return ref(_env_scope); }
+    ModuleScope* scope() { return ref(_scope); }
 
     Symbol* get(const std::string_view name);
     const Symbol* get(const std::string_view name) const;
@@ -97,30 +79,25 @@ public:
     Symbol* get(str_id_t name_id);
     const Symbol* get(str_id_t name_id) const;
 
-    const auto& deps() const { return _deps; }
-    void add_dep(str_id_t name_id) { _deps.insert(name_id); }
-
-    void add_import(str_id_t name_id, Ref<Module> module, Ref<Class> type);
-    void
-    add_import(str_id_t name_id, Ref<Module> module, Ref<ClassTpl> type_tpl);
-
     const ClassList classes() const { return _classes; }
     const ClassTplList class_tpls() const { return _class_tpls; }
 
+    // TODO: move out
     bool resolve(sema::Resolver& resolver);
 
 private:
-    template <typename T> void set(str_id_t name_id, Ref<T> value) {
-        _symbols.set(name_id, value);
+    template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
+        return _symbols.set(name_id, value);
     }
+
+    void add_export(Ref<ast::Node> node, str_id_t name_id, Symbol* sym);
 
     Ref<Program> _program;
     Ref<ast::ModuleDef> _node;
-    Ptr<BasicScope> _env_scope; // TODO
-    Ptr<PersScope> _scope; // TODO
+    Ptr<BasicScope> _env_scope;
+    Ptr<ModuleScope> _scope;
     SymbolTable _symbols;
     std::set<str_id_t> _deps;
-    std::unordered_map<str_id_t, Import> _imports;
     ClassList _classes;
     ClassTplList _class_tpls;
 };

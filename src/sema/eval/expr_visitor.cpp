@@ -15,6 +15,7 @@
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <src/sema/out.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
 #    define ULAM_DEBUG
@@ -401,6 +402,8 @@ Ref<Class> EvalExprVisitor::class_base(
     // search in class scope
     auto sym = cls->scope()->get(ident->name_id());
     if (!sym) {
+        Out out{program()};
+        out.print(*cls->scope());
         diag().error(ident, "base type not found");
         return {};
     }

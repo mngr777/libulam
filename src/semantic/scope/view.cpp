@@ -1,3 +1,4 @@
+#include "libulam/semantic/module.hpp"
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
@@ -22,6 +23,10 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
 
 Scope* PersScopeView::parent(scope_flags_t flags) {
     return scope()->parent(flags);
+}
+
+Ref<Module> PersScopeView::module() {
+    return scope()->module();
 }
 
 scope_flags_t PersScopeView::flags() const { return scope()->flags(); }

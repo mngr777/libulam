@@ -22,26 +22,26 @@ Program::~Program() {}
 
 Ref<Module> Program::module(const std::string_view name) {
     auto name_id = _str_pool.id(name);
-    if (name_id == NoStrId)
-        return {};
-    return module(name_id);
+    return (name_id != NoStrId) ? module(name_id) : Ref<Module>{};
 }
 
 Ref<Module> Program::module(str_id_t id) {
     auto it = _modules_by_name_id.find(id);
-    if (it == _modules_by_name_id.end())
-        return {};
-    return it->second;
+    return (it != _modules_by_name_id.end()) ? it->second : Ref<Module>{};
 }
 
 Ref<Module> Program::add_module(Ref<ast::ModuleDef> node) {
     assert(_modules_by_name_id.count(node->name_id()) == 0);
     auto mod = make<Module>(this, node);
     auto ref = ulam::ref(mod);
-    _module_ptr.push_back(std::move(mod));
+    _module_ptrs.push_back(std::move(mod));
     _modules.push_back(ref);
     _modules_by_name_id[ref->name_id()] = ref;
     return ref;
+}
+
+const Export* Program::add_export(str_id_t name_id, Export exp) {
+    return _exports.add(name_id, std::move(exp));
 }
 
 } // namespace ulam

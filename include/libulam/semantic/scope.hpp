@@ -44,6 +44,8 @@ public:
     virtual Scope* parent(scope_flags_t flags = scp::NoFlags) = 0;
     const Scope* parent(scope_flags_t flags = scp::NoFlags) const;
 
+    virtual Ref<Module> module();
+
     virtual scope_flags_t flags() const = 0;
 
     bool is(scope_flags_t flags_) const;
