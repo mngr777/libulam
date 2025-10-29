@@ -1,5 +1,3 @@
-#include "libulam/semantic/type.hpp"
-#include "src/sema/out.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -466,10 +464,6 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
 
     // import into module, TODO: add and use Module::add_import instead
     auto module = scope()->module();
-    sema::Out out{program()};
-    out.print(*scope());
-    if (module)
-        std::cout << "TEST\n";
     return exp->sym()->accept(
         [&](Ref<ClassTpl> class_tpl) -> Ref<Type> {
             if (module)
