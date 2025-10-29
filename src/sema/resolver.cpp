@@ -39,7 +39,9 @@
     if (!decl->is_local()) {                                                   \
         scope_view = decl_scope_view(decl);                                    \
         ssr = env().scope_switch_raii(&scope_view);                            \
-    }
+    }                                                                          \
+    do {                                                                       \
+    } while (false)
 
 namespace ulam::sema {
 
@@ -168,7 +170,7 @@ bool Resolver::resolve(Ref<Var> var) {
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
 
-    DECL_SCOPE(prop, ssr, scope_view)
+    DECL_SCOPE(prop, ssr, scope_view);
 
     // type
     auto type = resolve_var_decl_type(prop->type_node(), prop->node(), true);
@@ -192,7 +194,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     if (prop->has_default_value())
         return true;
 
-    DECL_SCOPE(prop, ssr, scope_view)
+    DECL_SCOPE(prop, ssr, scope_view);
 
     auto fr = env().add_flags_raii(evl::Consteval);
     bool ok = env().init_prop(prop, prop->node()->init());
@@ -238,7 +240,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
-    DECL_SCOPE(fun, ssr, scope_view)
+    DECL_SCOPE(fun, ssr, scope_view);
 
     // return type
     if (fun->is_constructor()) {
