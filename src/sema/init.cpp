@@ -30,7 +30,6 @@ void Init::visit(Ref<ast::Root> node) {
     node->set_program(make<Program>(
         diag(), node->ctx().str_pool(), node->ctx().text_pool(), _sm));
     RecVisitor::visit(node);
-    export_classes();
     resolve();
 }
 
@@ -154,88 +153,6 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     cls_base->add_fun(node);
     sync_scope(node);
     return true;
-}
-
-bool Init::do_visit(Ref<ast::TypeName> node) {
-    // NOTE: type name nodes can have embedded type names in parameters, e.g.
-    // `Foo(Bar.maxof)` so we still need to go deeper
-
-    // auto type_spec = node->first();
-    // if (type_spec->is_builtin() || type_spec->ident()->is_self())
-    //     return true;
-
-    // add unresolved name to module dependencies
-    // TODO: types inside classes may be added via inheritance
-    // assert(type_spec->has_ident());
-    // auto name_id = type_spec->ident()->name_id();
-    // if (!scope()->has(name_id)) {
-    //     debug() << "module " << module()->name() << " depends on "
-    //             << str(name_id) << "\n";
-    //     module()->add_dep(name_id);
-    // }
-    // return true;
-    return false;
-}
-
-void Init::export_classes() {
-    // collect set of exporting modules for each exported symbol
-    // (must be 1 per symbol)
-    // using ModuleSet = std::unordered_set<Ref<Module>>;
-    // std::unordered_map<str_id_t, ModuleSet> exporting;
-    // for (auto& mod : program()->modules()) {
-    //     debug() << "exporting symbols from module " << mod->name() << "\n";
-    //     for (auto& [name_id, sym] : *mod) {
-    //         debug() << "module " << mod->name() << " exports " <<
-    //         str(name_id)
-    //                 << "\n";
-    //         auto [it, inserted] = exporting.emplace(name_id, ModuleSet{});
-    //         assert(sym.is<Class>() || sym.is<ClassTpl>());
-    //         it->second.insert(mod);
-    //     }
-    // }
-
-    // // remove names defined in multiple modules
-    // for (auto it = exporting.begin(); it != exporting.end();) {
-    //     auto name_id = it->first;
-    //     auto& mods = it->second;
-    //     if (mods.size() > 1) {
-    //         for (auto& mod : mods) {
-    //             auto sym = mod->get(name_id);
-    //             assert(sym);
-    //             auto cls_base =
-    //                 sym->accept([&](auto cls_or_tpl) -> Ref<ClassBase> {
-    //                     return cls_or_tpl;
-    //                 });
-    //             diag().error(
-    //                 cls_base->node()->loc_id(), str(name_id).size(),
-    //                 "defined in multiple modules");
-    //         }
-    //         it = exporting.erase(it);
-    //     } else {
-    //         ++it;
-    //     }
-    // }
-
-    // // import dependencies
-    // for (auto& mod : program()->modules()) {
-    //     for (auto name_id : mod->deps()) {
-    //         auto it = exporting.find(name_id);
-    //         if (it == exporting.end())
-    //             continue;
-    //         assert(it->second.size() == 1);
-    //         // NOTE: module may import into itself as a temp workaround
-    //         auto& exporter = *it->second.begin();
-    //         auto sym = exporter->get(name_id);
-    //         assert(sym);
-    //         sym->accept([&](auto cls_or_tpl) {
-    //             debug()
-    //                 << "importing " << str(name_id) << " into "
-    //                 << mod->name() << " from " << exporter->name() << "\n";
-    //             mod->add_import(name_id, exporter, cls_or_tpl);
-    //             assert(mod->scope()->has(name_id));
-    //         });
-    //     }
-    // }
 }
 
 void Init::resolve() {

@@ -21,10 +21,8 @@ public:
     void visit(Ref<ast::TypeDef> node) override;
     void visit(Ref<ast::VarDefList> node) override;
     bool do_visit(Ref<ast::FunDef> node) override;
-    bool do_visit(Ref<ast::TypeName> node) override;
 
 private:
-    void export_classes();
     void resolve();
 
     SrcMngr& _sm;
