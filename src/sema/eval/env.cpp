@@ -71,13 +71,20 @@ EvalEnv::FlagsRaii::FlagsRaii(EvalEnv& env, eval_flags_t flags):
 
 // EvalEnv
 
-EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
-    EvalBase{program}, _program_scope{nullptr, scp::Program}, _flags{flags} {
+EvalEnv::EvalEnv(
+    Ref<Program> program, const EvalOptions& options, eval_flags_t flags):
+    EvalBase{program},
+    _options{options},
+    _flags{flags},
+    _program_scope{nullptr, scp::Program} {
     // init global scope
     _scope_stack.push(ScopeStack::Variant{&_program_scope});
     for (auto& mod : program->modules())
         mod->export_symbols(scope());
 }
+
+EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
+    EvalEnv{program, {}, flags} {}
 
 Resolver EvalEnv::resolver(bool in_expr) { return {*this, in_expr}; }
 
@@ -229,10 +236,6 @@ scope_lvl_t EvalEnv::scope_lvl() const {
     assert(!_scope_override);
     return _scope_stack.size();
 }
-
-eval_flags_t EvalEnv::flags() const { return _flags; }
-
-bool EvalEnv::has_flag(eval_flags_t flag) const { return _flags & flag; }
 
 void EvalEnv::do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt) {
     stmt->accept(vis);

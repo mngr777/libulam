@@ -137,6 +137,7 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/funcall.hpp \
 	include/libulam/sema/eval/helper.hpp \
 	include/libulam/sema/eval/init.hpp \
+	include/libulam/sema/eval/options.hpp \
 	include/libulam/sema/eval/stack.hpp \
 	include/libulam/sema/eval/visitor.hpp \
 	include/libulam/sema/eval/which.hpp \

@@ -2,6 +2,7 @@
 #include <libulam/sema/eval/base.hpp>
 #include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/flags.hpp>
+#include <libulam/sema/eval/options.hpp>
 #include <libulam/sema/eval/stack.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
@@ -59,6 +60,11 @@ public:
         eval_flags_t _old_flags;
     };
 
+    EvalEnv(
+        Ref<Program> program,
+        const EvalOptions& options,
+        eval_flags_t flags = evl::NoFlags);
+
     EvalEnv(Ref<Program> program, eval_flags_t flags = evl::NoFlags);
 
     EvalEnv(EvalEnv&&) = default;
@@ -94,7 +100,8 @@ public:
 
     virtual ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
 
-    virtual ExprRes to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl = false);
+    virtual ExprRes
+    to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl = false);
 
     virtual bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
 
@@ -126,8 +133,10 @@ public:
     Scope* scope();
     scope_lvl_t scope_lvl() const;
 
-    eval_flags_t flags() const;
-    bool has_flag(eval_flags_t flag) const;
+    const EvalOptions& options() const { return _options; }
+
+    eval_flags_t flags() const { return _flags; }
+    bool has_flag(eval_flags_t flag) const { return _flags & flag; }
 
 protected:
     virtual void do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt);
@@ -190,11 +199,12 @@ protected:
 
 private:
     Ref<Program> _program;
+    EvalOptions _options;
+    eval_flags_t _flags;
     BasicScope _program_scope;
     EvalStack _stack;
     ScopeStack _scope_stack;
     Scope* _scope_override{};
-    eval_flags_t _flags;
 };
 
 } // namespace ulam::sema
