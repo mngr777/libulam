@@ -38,8 +38,7 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
     assert(node->module());
     auto mod = node->module();
     _module_def = node;
-    auto scope_raii =
-        _scope_stack.raii<PersScopeView>(mod->scope(), ScopeVersion{0});
+    auto sr = _scope_stack.raii<PersScopeView>(mod->scope(), ScopeVersion{0});
     if (do_visit(node)) {
         _pass = Pass::Module;
         traverse(node);
@@ -78,7 +77,7 @@ void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
     assert((bool)_class_def->cls() != (bool)_class_def->cls_tpl());
 
     auto scope_version = (pass() == Pass::Classes) ? 0 : NoScopeVersion;
-    auto scope_raii = _scope_stack.raii<PersScopeView>(
+    auto sr = _scope_stack.raii<PersScopeView>(
         _class_def->cls_or_tpl()->scope(), scope_version);
 
     // traverse
@@ -103,28 +102,26 @@ void RecVisitor::visit(Ref<ast::FunDef> node) {
 void RecVisitor::visit(Ref<ast::FunDefBody> node) {
     assert(pass() == Pass::FunBodies);
     assert(_fun_def);
-    auto scope_raii = _scope_stack.raii<BasicScope>(scope(), scp::Fun);
+    auto sr = _scope_stack.raii<BasicScope>(scope(), scp::Fun);
     if (do_visit(node))
         traverse(node);
     assert(scope()->is(scp::Fun));
 }
 
 void RecVisitor::visit(Ref<ast::Block> node) {
-    auto scope_raii = _scope_stack.raii<BasicScope>(scope());
+    auto sr = _scope_stack.raii<BasicScope>(scope());
     if (do_visit(node))
         traverse(node);
 }
 
 void RecVisitor::visit(Ref<ast::For> node) {
-    auto scope_raii =
-        _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
+    auto sr = _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
     if (do_visit(node))
         traverse(node);
 }
 
 void RecVisitor::visit(Ref<ast::While> node) {
-    auto scope_raii =
-        _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
+    auto sr = _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
     if (do_visit(node))
         traverse(node);
 }
