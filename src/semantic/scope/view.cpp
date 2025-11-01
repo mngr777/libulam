@@ -1,4 +1,3 @@
-#include "libulam/semantic/module.hpp"
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 
@@ -25,9 +24,11 @@ Scope* PersScopeView::parent(scope_flags_t flags) {
     return scope()->parent(flags);
 }
 
-Ref<Module> PersScopeView::module() {
-    return scope()->module();
-}
+Ref<Module> PersScopeView::module() const { return scope()->module(); }
+
+Ref<Class> PersScopeView::self_cls() const { return scope()->self_cls(); }
+
+Ref<Class> PersScopeView::eff_cls() const { return scope()->eff_cls(); }
 
 scope_flags_t PersScopeView::flags() const { return scope()->flags(); }
 
@@ -38,8 +39,6 @@ Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
 Scope::Symbol* PersScopeView::get_local(str_id_t name_id) {
     return scope()->get_local(name_id, _version);
 }
-
-ScopeContextProxy PersScopeView::ctx() { return scope()->ctx(); }
 
 str_id_t PersScopeView::last_change() const {
     return scope()->last_change(_version);

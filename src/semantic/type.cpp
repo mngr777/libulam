@@ -6,6 +6,7 @@
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>

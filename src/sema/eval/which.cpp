@@ -40,10 +40,17 @@ void EvalWhich::eval_cases(Context& ctx) {
 }
 
 bool EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
-    auto sr = env().scope_raii();
     bool matched = match_conds(ctx, case_->conds());
-    if (matched)
-        env().eval_stmt(case_->branch());
+    if (matched) {
+        auto branch = [&]() { env().eval_stmt(case_->branch()); };
+        if (!ctx.as_cond_ctx.empty()) {
+            auto sr = env().as_cond_scope_raii(ctx.as_cond_ctx);
+            branch();
+        } else {
+            auto sr = env().scope_raii();
+            branch();
+        }
+    }
     return matched;
 }
 
@@ -64,9 +71,8 @@ bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
     if (case_cond->is_default())
         return true;
 
-    return case_cond->is_as_cond()
-        ? match_as_cond(ctx, case_cond->as_cond())
-        : match_expr(ctx, case_cond->expr());
+    return case_cond->is_as_cond() ? match_as_cond(ctx, case_cond->as_cond())
+                                   : match_expr(ctx, case_cond->expr());
 }
 
 bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {

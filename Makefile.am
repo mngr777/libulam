@@ -24,6 +24,7 @@ AST_HEADER_FILES = \
 AST_SOURCE_FILES = \
 	src/ast/expr_visitor.cpp \
 	src/ast/node.cpp \
+	src/ast/nodes/module.cpp \
 	src/ast/nodes/root.cpp \
 	src/ast/visitor.cpp
 
@@ -33,14 +34,16 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/export.hpp \
 	include/libulam/semantic/mangler.hpp \
 	include/libulam/semantic/module.hpp \
-	include/libulam/semantic/module/scope.hpp \
 	include/libulam/semantic/number.hpp \
 	include/libulam/semantic/ops.hpp \
 	include/libulam/semantic/ops.inc.hpp \
 	include/libulam/semantic/program.hpp \
 	include/libulam/semantic/scope.hpp \
-	include/libulam/semantic/scope/context.hpp \
+	include/libulam/semantic/scope/as_cond.hpp \
+	include/libulam/semantic/scope/class.hpp \
+	include/libulam/semantic/scope/fun.hpp \
 	include/libulam/semantic/scope/iter.hpp \
+	include/libulam/semantic/scope/module.hpp \
 	include/libulam/semantic/scope/stack.hpp \
 	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/scope/view.hpp \
@@ -99,7 +102,6 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type_ops.cpp \
 	src/semantic/program.cpp \
 	src/semantic/scope.cpp \
-	src/semantic/scope/context.cpp \
 	src/semantic/scope/iter.cpp \
 	src/semantic/scope/stack.cpp \
 	src/semantic/scope/view.cpp \

@@ -1,6 +1,7 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
+#include <libulam/semantic/type/class.hpp>
 
 #define ULAM_DEBUG
 #define ULAM_DEBUG_PREFIX "[Scope] "
@@ -18,9 +19,40 @@ const Scope* Scope::parent(scope_flags_t flags) const {
     return const_cast<Scope*>(this)->parent(flags);
 }
 
-Ref<Module> Scope::module() {
-    auto module_scope = parent(scp::Module);
-    return module_scope ? module_scope->module() : nullptr;
+Ref<Module> Scope::module() const {
+    auto scope = parent(scp::Module);
+    return scope ? scope->module() : nullptr;
+}
+
+Ref<Class> Scope::self_cls() const {
+    auto scope = parent(scp::Class);
+    return scope ? scope->self_cls() : nullptr;
+}
+
+Ref<Class> Scope::eff_cls() const {
+    auto cur = this;
+    while ((cur = cur->parent(scp::Class | scp::AsCond))) {
+        auto cls = cur->eff_cls();
+        if (cls)
+            return cls;
+    }
+    return {};
+}
+
+Ref<Fun> Scope::fun() const {
+    auto scope = parent(scp::Fun);
+    return scope ? scope->fun() : nullptr;
+}
+
+bool Scope::has_self() const { return false; }
+
+LValue Scope::self() const {
+    auto cur = this;
+    while ((cur = cur->parent(scp::Fun | scp::AsCond))) {
+        if (cur->has_self())
+            return cur->self();
+    }
+    return {};
 }
 
 bool Scope::is(scope_flags_t flags_) const { return flags() & flags_; }
@@ -37,10 +69,6 @@ const Scope::Symbol* Scope::get(str_id_t name_id, bool current) const {
     return const_cast<Scope*>(this)->get(name_id, current);
 }
 
-const ScopeContextProxy Scope::ctx() const {
-    return const_cast<Scope*>(this)->ctx();
-}
-
 ScopeIter BasicScope::begin() { return ScopeIter{BasicScopeIter{*this}}; }
 
 ScopeIter BasicScope::end() { return ScopeIter{BasicScopeIter{}}; }
@@ -55,11 +83,11 @@ Scope* ScopeBase::parent(scope_flags_t flags) {
 
 Scope::Symbol* ScopeBase::get(str_id_t name_id, bool current) {
     return current ? do_get_current(name_id)
-                   : do_get(name_id, ctx().eff_cls(), false);
+                   : do_get(name_id, eff_cls(), false);
 }
 
 Scope::Symbol* ScopeBase::get_local(str_id_t name_id) {
-    return do_get(name_id, ctx().eff_cls(), true);
+    return do_get(name_id, eff_cls(), true);
 }
 
 Scope::Symbol* ScopeBase::do_get_current(str_id_t name_id) {
@@ -87,7 +115,7 @@ ScopeBase::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
         if (!scope)
             return {};
         if (scope->is(scp::Class) &&
-            (local || scope->ctx().self_cls() != eff_cls)) {
+            (local || scope->self_cls() != eff_cls)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
             assert(module_scope);
@@ -116,8 +144,6 @@ BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
     assert(!is(scp::Persistent));
 }
 
-ScopeContextProxy BasicScope::ctx() { return {_ctx, parent()}; }
-
 Scope::Symbol*
 BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
     // * if effective Self class doesn't match parent class scope Self (i.e.
@@ -139,7 +165,7 @@ BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
         if (!scope)
             return {};
         if (scope->is(scp::Class) &&
-            (local || scope->ctx().self_cls() != eff_cls)) {
+            (local || scope->self_cls() != eff_cls)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
             assert(module_scope);
@@ -186,8 +212,6 @@ Scope::Symbol* PersScope::get(str_id_t name_id, bool current) {
 Scope::Symbol* PersScope::get_local(str_id_t name_id) {
     return get_local(name_id, version());
 }
-
-ScopeContextProxy PersScope::ctx() { return ScopeContextProxy{_ctx, parent()}; }
 
 str_id_t PersScope::last_change(Version version) const {
     assert(version <= _changes.size());

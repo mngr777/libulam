@@ -5,6 +5,7 @@
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/type/class.hpp>
 
 namespace ulam {
 
@@ -274,7 +275,7 @@ bool BitsType::is_impl_castable_to_prim(
     val.with_rvalue([&](const RValue& rval) {
         const Bits& bits = rval.get<Bits>();
         bitsize_t size = detail::bitsize((Unsigned)bits.read(0, bits.len()));
-        is_castable =  size <= bitsize();
+        is_castable = size <= bitsize();
     });
     return is_castable;
 }

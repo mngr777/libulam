@@ -6,10 +6,10 @@
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/var.hpp>
 
-#define DEBUG_FUN // TEST
 #ifdef DEBUG_FUN
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::Fun] "

@@ -824,18 +824,18 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 }
 
 ExprRes EvalExprVisitor::ident_self(Ref<ast::Ident> node) {
-    auto self = scope()->ctx().self();
-    ExprRes res = {scope()->ctx().eff_cls()->ref_type(), Value{self}};
+    auto self = scope()->self();
+    ExprRes res = {scope()->eff_cls()->ref_type(), Value{self}};
     res.set_is_self(true);
     return res;
 }
 
 ExprRes EvalExprVisitor::ident_super(Ref<ast::Ident> node) {
-    auto self_cls = scope()->ctx().eff_cls();
+    auto self_cls = scope()->eff_cls();
     auto sup = class_super(node, self_cls);
     if (!sup)
         return {ExprError::NoSuper};
-    auto self = scope()->ctx().self();
+    auto self = scope()->self();
     ExprRes res = {sup, Value{self.as(sup)}};
     res.set_is_super(true);
     return res;
@@ -849,18 +849,18 @@ ExprRes EvalExprVisitor::ident_var(Ref<ast::Ident> node, Ref<Var> var) {
 }
 
 ExprRes EvalExprVisitor::ident_prop(Ref<ast::Ident> node, Ref<Prop> prop) {
-    return {prop->type(), Value{scope()->ctx().self().prop(prop)}};
+    return {prop->type(), Value{scope()->self().prop(prop)}};
 }
 
 ExprRes EvalExprVisitor::ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset) {
     return {
-        builtins().fun_type(), Value{scope()->ctx().self().bound_fset(fset)}};
+        builtins().fun_type(), Value{scope()->self().bound_fset(fset)}};
 }
 
 ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
     assert(node->is_op_call());
-    auto lval = scope()->ctx().self();
-    auto cls = scope()->ctx().eff_cls();
+    auto lval = scope()->self();
+    auto cls = scope()->eff_cls();
     auto fset = cls->op(node->fun_op());
     if (!fset) {
         diag().error(node, "operator not found in class");

@@ -29,6 +29,7 @@ class Resolver;
 namespace ulam {
 
 class BasicScope;
+class Class;
 class Module;
 class PersScope;
 class PersScopeView;
@@ -40,7 +41,10 @@ public:
     using Symbol = SymbolTable::Symbol;
 
     ClassBase(
-        Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags);
+        Ref<ast::ClassDef> node,
+        Ref<Module> module,
+        Ref<Class> cls,
+        scope_flags_t scope_flags = scp::NoFlags);
 
     ClassBase(ClassBase&&) = default;
     ClassBase& operator=(ClassBase&&) = default;
@@ -118,7 +122,6 @@ private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
     Ptr<PersScopeView> _module_scope_view;
-    // TODO: store in class
     Ptr<BasicScope> _inh_scope;
     Ptr<PersScope> _param_scope;
     Ptr<PersScope> _scope;

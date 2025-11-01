@@ -1,8 +1,8 @@
-#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 
@@ -23,10 +23,17 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
         auto dyn_type = res.value().dyn_obj_type(true);
         is_match = dyn_type->is_impl_refable_as(type, res.value());
     }
-    if (!is_match && !has_flag(evl::NoExec)) // TODO
+    if (!is_match && !has_flag(evl::NoExec))
         return {is_match, AsCondContext{type}};
-    auto [var_def, var] = define_as_cond_var(as_cond, std::move(res), type);
-    return {is_match, AsCondContext{type, std::move(var_def), var}};
+
+    if (as_cond->ident()->is_self()) {
+        AsCondContext as_cond_ctx{
+            type, as_cond_lvalue(as_cond, std::move(res), type)};
+        return {is_match, std::move(as_cond_ctx)};
+    }
+
+    auto [var_def, var] = make_as_cond_var(as_cond, std::move(res), type);
+    return {is_match, AsCondContext{type, std::move(var_def), std::move(var)}};
 }
 
 CondRes EvalCond::eval_expr(Ref<ast::Expr> expr) {
@@ -49,6 +56,7 @@ Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
     auto type = env().resolver(false).resolve_type_name(type_name, scope());
     if (!type)
         throw EvalExceptError("failed to resolve type");
+    // TODO: can this actually be Atom?
     if (!type->is_object()) {
         diag().error(type_name, "not a class or Atom");
         throw EvalExceptError("if-as type is not class or Atom");
@@ -56,12 +64,8 @@ Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
     return type;
 }
 
-EvalCond::VarDefPair EvalCond::define_as_cond_var(
-    Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
-
-    Ptr<ast::VarDef> def{};
-    Ref<Var> ref{};
-
+LValue
+EvalCond::as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
     LValue lval;
     if (!res.value().empty()) {
         assert(res.value().is_lvalue());
@@ -72,20 +76,21 @@ EvalCond::VarDefPair EvalCond::define_as_cond_var(
             throw EvalExceptError("empty value");
         }
     }
+    return lval;
+}
 
-    if (node->ident()->is_self()) {
-        scope()->ctx().set_self(lval, type->as_class());
-    } else {
-        def = make<ast::VarDef>(node->ident()->name());
-        auto var = make<Var>(
-            node->type_name(), ulam::ref(def),
-            TypedValue{type->ref_type(), Value{lval}});
-        var->set_scope_lvl(env().stack_size());
-        ref = ulam::ref(var);
-        scope()->set(var->name_id(), std::move(var));
-    }
+EvalCond::VarDefPair EvalCond::make_as_cond_var(
+    Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
+    assert(!node->ident()->is_self());
 
-    return {std::move(def), ref};
+    auto lval = as_cond_lvalue(node, std::move(res), type);
+    auto def = make<ast::VarDef>(node->ident()->name());
+    auto var = make<Var>(
+        node->type_name(), ulam::ref(def),
+        TypedValue{type->ref_type(), Value{lval}});
+    // var->set_scope_lvl(env().stack_size());
+    //scope()->set(var->name_id(), std::move(var));
+    return {std::move(def), std::move(var)};
 }
 
 } // namespace ulam::sema

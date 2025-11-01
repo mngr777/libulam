@@ -13,9 +13,11 @@ static constexpr scope_flags_t ModuleEnv = 1 << 2; // 4
 static constexpr scope_flags_t Module = 1 << 3;    // 8
 static constexpr scope_flags_t Class = 1 << 4;     // 16
 static constexpr scope_flags_t ClassTpl = 1 << 5;  // 32
-static constexpr scope_flags_t Fun = 1 << 6;       // 64
-static constexpr scope_flags_t Break = 1 << 7;     // 128
-static constexpr scope_flags_t Continue = 1 << 8;  // 256
+static constexpr scope_flags_t Self = 1 << 6;      // 64
+static constexpr scope_flags_t AsCond = 1 << 7;    // 128
+static constexpr scope_flags_t Fun = 1 << 8;       // 256
+static constexpr scope_flags_t Break = 1 << 9;     // 512
+static constexpr scope_flags_t Continue = 1 << 10; // 1024
 static constexpr scope_flags_t Last = 1 << 9;
 // combined
 static constexpr scope_flags_t BreakAndContinue = Break | Continue;

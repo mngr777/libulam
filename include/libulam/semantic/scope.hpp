@@ -5,12 +5,10 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
-#include <libulam/semantic/scope/context.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
-#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/var.hpp>
@@ -21,6 +19,8 @@
 namespace ulam {
 
 class BasicScopeIter;
+class Class;
+class ClassTpl;
 class Module;
 class PersScopeView;
 class ScopeIter;
@@ -44,7 +44,13 @@ public:
     virtual Scope* parent(scope_flags_t flags = scp::NoFlags) = 0;
     const Scope* parent(scope_flags_t flags = scp::NoFlags) const;
 
-    virtual Ref<Module> module();
+    virtual Ref<Module> module() const;
+    virtual Ref<Class> self_cls() const;
+    virtual Ref<Class> eff_cls() const;
+    virtual Ref<Fun> fun() const;
+
+    virtual bool has_self() const;
+    virtual LValue self() const;
 
     virtual scope_flags_t flags() const = 0;
 
@@ -65,9 +71,6 @@ public:
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
         return do_set(name_id, Symbol{value});
     }
-
-    virtual ScopeContextProxy ctx() = 0;
-    const ScopeContextProxy ctx() const;
 
     virtual ScopeIter begin() = 0;
     virtual ScopeIter end() = 0;
@@ -117,19 +120,11 @@ public:
     BasicScope(BasicScope&&) = default;
     BasicScope& operator=(BasicScope&&) = default;
 
-    Ref<Class> self_cls();
-    void set_self_cls(Ref<Class> cls);
-
-    ScopeContextProxy ctx() override;
-
     ScopeIter begin() override;
     ScopeIter end() override;
 
 protected:
     Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) override;
-
-private:
-    BasicScopeContext _ctx;
 };
 
 // Persistent
@@ -185,8 +180,6 @@ public:
     Symbol* get(str_id_t name_id, bool current = false) override;
     Symbol* get_local(str_id_t name_id) override;
 
-    ScopeContextProxy ctx() override;
-
     str_id_t last_change(Version version) const;
 
     Symbol* get(str_id_t name_id, Version version, bool current = false);
@@ -202,7 +195,6 @@ protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
 private:
-    PersScopeContext _ctx;
     std::vector<str_id_t> _changes;
 };
 

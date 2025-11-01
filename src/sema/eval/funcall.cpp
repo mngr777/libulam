@@ -31,8 +31,8 @@ ExprRes EvalFuncall::construct(
     return construct_funcall(node, cls, fun, std::move(rval), std::move(args));
 }
 
-ExprRes EvalFuncall::call(
-    Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
+ExprRes
+EvalFuncall::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
     assert(callable);
     assert(args);
     assert(callable.type()->is(FunId));
@@ -112,15 +112,10 @@ ExprRes EvalFuncall::do_funcall(
     assert(fun->node()->has_body());
     assert(!self.empty());
 
-    auto stack_raii = env().stack_raii(fun, self);
-    auto scope_lvl = env().scope_lvl();
-    auto sr = env().scope_raii(fun->scope(), scp::Fun);
-
-    // bind `self`, set `Self` class
-    scope()->ctx().set_self(self);
-    scope()->ctx().set_self_cls(fun->cls());
     if (self.has_auto_scope_lvl())
-        self.set_scope_lvl(scope_lvl);
+        self.set_scope_lvl(env().scope_lvl() + 1);
+    auto stack_raii = env().stack_raii(fun, self);
+    auto sr = env().fun_scope_raii(fun, self);
 
     // bind params
     std::list<Ptr<ast::VarDef>> tmp_defs{};
