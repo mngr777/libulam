@@ -1,4 +1,5 @@
 #include "libulam/ast/nodes/stmts.hpp"
+#include "libulam/sema/eval/cond_res.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -203,6 +204,31 @@ EvalEnv::ScopeRaii EvalEnv::scope_raii(scope_flags_t flags) {
 EvalEnv::ScopeRaii EvalEnv::scope_raii(Scope* parent, scope_flags_t flags) {
     assert(!_scope_override);
     return _scope_stack.raii<BasicScope>(parent, flags);
+}
+
+EvalEnv::FunScopeRaii
+EvalEnv::fun_scope_raii(Ref<Fun> fun, LValue self, scope_flags_t flags) {
+    assert(!_scope_override);
+    return _scope_stack.raii<FunScope>(fun, self, flags);
+}
+
+EvalEnv::AsCondScopeRaii
+EvalEnv::as_cond_scope_raii(AsCondContext& as_cond_ctx, scope_flags_t flags) {
+    assert(!_scope_override);
+    assert(!as_cond_ctx.empty());
+
+    if (as_cond_ctx.is_self()) {
+        // (self as A)
+        assert(as_cond_ctx.type()->is_class());
+        auto cls = as_cond_ctx.type()->as_class();
+        auto self = as_cond_ctx.self();
+        return _scope_stack.raii<AsCondScope>(cls, self, scope(), flags);
+    }
+
+    // (a as A)
+    auto var = as_cond_ctx.var();
+    var->set_scope_lvl(_scope_stack.size() + 1);
+    return _scope_stack.raii<AsCondScope>(var, scope(), flags);
 }
 
 EvalEnv::ScopeSwitchRaii EvalEnv::scope_switch_raii(Scope* scope) {

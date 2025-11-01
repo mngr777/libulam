@@ -418,7 +418,7 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
     // Self or Super?
     if (ident->is_self() || ident->is_super()) {
         assert(!type_spec->has_args());
-        auto self_cls = scope()->ctx().self_cls();
+        auto self_cls = scope()->self_cls();
         if (!self_cls) {
             std::string name{ident->is_self() ? "Self" : "Super"};
             diag().error(ident, name + " can only be used in class context");

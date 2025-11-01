@@ -3,6 +3,7 @@
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/class.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/str_pool.hpp>
@@ -10,14 +11,19 @@
 namespace ulam {
 
 ClassBase::ClassBase(
-    Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags):
+    Ref<ast::ClassDef> node,
+    Ref<Module> module,
+    Ref<Class> cls,
+    scope_flags_t scope_flags):
     _node{node},
     _module{module},
     _module_scope_view{make<PersScopeView>(module->scope()->view())},
     _inh_scope{make<BasicScope>(ref(_module_scope_view))},
     _param_scope{make<PersScope>(ref(_inh_scope))},
-    _scope{make<PersScope>(ref(_param_scope), scope_flags)},
+    _scope{make<ClassScope>(cls, ref(_param_scope), scope_flags)},
     _constructors(make<FunSet>()) {}
+
+ClassBase::~ClassBase() {}
 
 ClassKind ClassBase::kind() const { return node()->kind(); }
 
@@ -180,6 +186,10 @@ Ref<FunSet> ClassBase::constructors() {
     assert(_constructors);
     return ref(_constructors);
 }
+
+Ref<PersScope> ClassBase::param_scope() { return ref(_param_scope); }
+
+Ref<PersScope> ClassBase::scope() { return ref(_scope); }
 
 Ref<FunSet> ClassBase::find_fset(str_id_t name_id) {
     auto sym = get(name_id);

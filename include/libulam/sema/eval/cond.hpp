@@ -20,7 +20,7 @@ public:
     virtual CondRes eval_as_cond(Ref<ast::AsCond> as_cond);
 
 protected:
-    using VarDefPair = std::pair<Ptr<ast::VarDef>, Ref<Var>>;
+    using VarDefPair = std::pair<Ptr<ast::VarDef>, Ptr<Var>>;
 
     virtual CondRes eval_expr(Ref<ast::Expr> expr);
 
@@ -28,8 +28,11 @@ protected:
 
     virtual Ref<Type> resolve_as_cond_type(Ref<ast::TypeName> type_name);
 
+    virtual LValue
+    as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type);
+
     virtual VarDefPair
-    define_as_cond_var(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type);
+    make_as_cond_var(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type);
 };
 
 } // namespace ulam::sema

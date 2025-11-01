@@ -2,10 +2,10 @@
 #include "../out.hpp"
 #include "./cast.hpp"
 #include "./codegen.hpp"
+#include "./codegen/context_stack.hpp"
 #include "./expr_res.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
-#include "./codegen/context_stack.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -42,10 +42,19 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     {
         auto sr = env().scope_raii();
         auto cond = node->cond();
-        auto cond_res = env().eval_cond(cond);
+        auto [_, as_cond_ctx] = env().eval_cond(cond);
+
+        auto if_branch = [&]() {
+            maybe_wrap_stmt(node->if_branch(), cond->is_as_cond());
+        };
 
         // if-branch
-        maybe_wrap_stmt(node->if_branch(), cond->is_as_cond());
+        if (!as_cond_ctx.empty()) {
+            auto sr = env().as_cond_scope_raii(as_cond_ctx);
+            if_branch();
+        } else {
+            if_branch();
+        }
         gen().append("if");
     }
 

@@ -29,6 +29,8 @@ class Resolver;
 namespace ulam {
 
 class BasicScope;
+class Class;
+class ClassScope;
 class Module;
 class PersScope;
 class PersScopeView;
@@ -40,7 +42,12 @@ public:
     using Symbol = SymbolTable::Symbol;
 
     ClassBase(
-        Ref<ast::ClassDef> node, Ref<Module> module, scope_flags_t scope_flags);
+        Ref<ast::ClassDef> node,
+        Ref<Module> module,
+        Ref<Class> cls,
+        scope_flags_t scope_flags = scp::NoFlags);
+
+    virtual ~ClassBase();
 
     ClassBase(ClassBase&&) = default;
     ClassBase& operator=(ClassBase&&) = default;
@@ -88,8 +95,8 @@ public:
     Ref<ast::ClassDef> node() { return _node; }
     Ref<const ast::ClassDef> node() const { return _node; }
 
-    Ref<PersScope> param_scope() { return ref(_param_scope); }
-    Ref<PersScope> scope() { return ref(_scope); }
+    Ref<PersScope> param_scope();
+    Ref<PersScope> scope();
 
 protected:
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
@@ -118,10 +125,9 @@ private:
     Ref<ast::ClassDef> _node;
     Ref<Module> _module;
     Ptr<PersScopeView> _module_scope_view;
-    // TODO: store in class
     Ptr<BasicScope> _inh_scope;
     Ptr<PersScope> _param_scope;
-    Ptr<PersScope> _scope;
+    Ptr<ClassScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;
     Ptr<FunSet> _constructors;

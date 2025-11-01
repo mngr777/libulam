@@ -28,11 +28,10 @@ namespace ulam {
 
 Class::Class(std::string_view name, Ref<ClassTpl> tpl):
     UserType{tpl->program()->builtins(), &tpl->program()->type_id_gen()},
-    ClassBase{tpl->node(), tpl->module(), scp::Class},
+    ClassBase{tpl->node(), tpl->module(), this},
     _name{name},
     _tpl{tpl},
     _init_bits{0} {
-    scope()->ctx().set_self_cls(this);
     set_module(tpl->module());
     set_cls_tpl(tpl);
     if (is_element())
@@ -42,11 +41,10 @@ Class::Class(std::string_view name, Ref<ClassTpl> tpl):
 Class::Class(
     std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module):
     UserType{module->program()->builtins(), &module->program()->type_id_gen()},
-    ClassBase{node, module, scp::Class},
+    ClassBase{node, module, this},
     _name{name},
     _tpl{},
     _init_bits{0} {
-    scope()->ctx().set_self_cls(this);
     set_module(module);
     if (is_element())
         register_element(module->program());

@@ -47,9 +47,14 @@ void EvalVisitor::visit(Ref<ast::If> node) {
     assert(node->has_if_branch());
 
     auto sr = env().scope_raii();
-    auto [is_true, ctx] = env().eval_cond(node->cond());
+    auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
     if (is_true) {
-        node->if_branch()->accept(*this);
+        if (!as_cond_ctx.empty()) {
+            auto sr = env().as_cond_scope_raii(as_cond_ctx);
+            node->if_branch()->accept(*this);
+        } else {
+            node->if_branch()->accept(*this);
+        }
     } else if (node->has_else_branch()) {
         node->else_branch()->accept(*this);
     }
@@ -62,33 +67,43 @@ void EvalVisitor::visit(Ref<ast::For> node) {
     if (node->has_init())
         node->init()->accept(*this);
 
+    auto loop = [&]() -> bool {
+        if (node->has_body()) {
+            try {
+                node->body()->accept(*this);
+            } catch (const EvalExceptContinue&) {
+                debug() << "continue\n";
+            } catch (const EvalExceptBreak&) {
+                debug() << "break\n";
+                return true;
+            }
+        }
+        return false;
+    };
+
+    bool done = false;
     unsigned loop_count = 1;
-    while (true) {
+    while (!done) {
         if (loop_count++ == 150) // TODO: max loops option
             throw EvalExceptError("for loop limit exceeded");
 
-        {
-            auto iter_sr = env().scope_raii();
-            AsCondContext as_cond_ctx;
-            if (node->has_cond()) {
-                auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-                if (!is_true)
-                    break;
-            }
-
-            if (node->has_body()) {
-                try {
-                    node->body()->accept(*this);
-                } catch (const EvalExceptContinue&) {
-                    debug() << "continue\n";
-                } catch (const EvalExceptBreak&) {
-                    debug() << "break\n";
-                    break;
+        auto sr = env().scope_raii();
+        if (node->has_cond()) {
+            auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
+            done = !is_true;
+            if (!done) {
+                if (!as_cond_ctx.empty()) {
+                    auto sr = env().as_cond_scope_raii(as_cond_ctx);
+                    done = loop();
+                } else {
+                    done = loop();
                 }
             }
+        } else {
+            done = loop();
         }
 
-        if (node->has_upd())
+        if (!done && node->has_upd())
             node->upd()->accept(*this);
     }
 }
@@ -131,19 +146,8 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     assert(node->has_cond());
 
     auto sr = env().scope_raii(scp::BreakAndContinue);
-    unsigned loop_count = 1;
-    while (true) {
-        if (loop_count++ == 150) // TODO: max loops option
-            throw EvalExceptError("for loop limit exceeded");
 
-        auto iter_sr = env().scope_raii();
-        AsCondContext as_cond_ctx;
-        if (node->has_cond()) {
-            auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            if (!is_true)
-                break;
-        }
-
+    auto loop = [&]() -> bool {
         if (node->has_body()) {
             try {
                 node->body()->accept(*this);
@@ -151,8 +155,32 @@ void EvalVisitor::visit(Ref<ast::While> node) {
                 debug() << "continue\n";
             } catch (const EvalExceptBreak&) {
                 debug() << "break\n";
-                break;
+                return true;
             }
+        }
+        return false;
+    };
+
+    bool done = false;
+    unsigned loop_count = 1;
+    while (!done) {
+        if (loop_count++ == 150) // TODO: max loops option
+            throw EvalExceptError("for loop limit exceeded");
+
+        auto sr = env().scope_raii();
+        if (node->has_cond()) {
+            auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
+            done = !is_true;
+            if (!done) {
+                if (!as_cond_ctx.empty()) {
+                    auto sr = env().as_cond_scope_raii(as_cond_ctx);
+                    done = loop();
+                } else {
+                    done = loop();
+                }
+            }
+        } else {
+            done = loop();
         }
     }
 }
@@ -213,8 +241,8 @@ ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
         res = {builtins().type(VoidId), Value{RValue{}}};
     }
 
-    auto fun = env().stack_top().fun();
-    auto ret_type = fun->ret_type();
+    assert(scope()->fun());
+    auto ret_type = scope()->fun()->ret_type();
 
     // Check if Void fun returns value and vice versa
     if (ret_type->is(VoidId)) {
@@ -236,7 +264,7 @@ ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
         }
         const LValue lval = res.value().lvalue();
         if (lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
-            lval.scope_lvl() >= env().stack_size()) {
+            lval.scope_lvl() > env().scope_lvl()) {
             diag().error(node, "reference to local variable");
             return {ExprError::ReferenceToLocal};
         }

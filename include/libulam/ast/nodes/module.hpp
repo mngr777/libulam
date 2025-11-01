@@ -22,6 +22,7 @@
 namespace ulam {
 class Module;
 class Class;
+class ClassBase;
 class ClassTpl;
 class Var;
 } // namespace ulam
@@ -72,11 +73,7 @@ public:
         return has_params();
     }
 
-    Ref<ClassBase> cls_or_tpl() {
-        if (cls())
-            return cls();
-        return cls_tpl();
-    }
+    Ref<ClassBase> cls_or_tpl();
 
 private:
     ClassKind _kind;

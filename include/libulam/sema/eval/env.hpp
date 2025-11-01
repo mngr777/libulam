@@ -7,7 +7,9 @@
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
+#include <libulam/semantic/scope/as_cond.hpp>
 #include <libulam/semantic/scope/flags.hpp>
+#include <libulam/semantic/scope/fun.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 #include <libulam/semantic/value.hpp>
 
@@ -25,6 +27,8 @@ class EvalEnv : public EvalBase {
 public:
     using StackRaii = EvalStack::Raii;
     using ScopeRaii = ScopeStack::Raii<BasicScope>;
+    using FunScopeRaii = ScopeStack::Raii<FunScope>;
+    using AsCondScopeRaii = ScopeStack::Raii<AsCondScope>;
 
     class ScopeSwitchRaii {
         friend EvalEnv;
@@ -120,6 +124,12 @@ public:
 
     ScopeRaii scope_raii(scope_flags_t flags = scp::NoFlags);
     ScopeRaii scope_raii(Scope* parent, scope_flags_t flags = scp::NoFlags);
+
+    FunScopeRaii fun_scope_raii(
+        Ref<Fun> fun, LValue self, scope_flags_t flags = scp::NoFlags);
+
+    AsCondScopeRaii as_cond_scope_raii(
+        AsCondContext& as_cond_ctx, scope_flags_t flags = scp::NoFlags);
 
     ScopeSwitchRaii scope_switch_raii(Scope* scope);
 

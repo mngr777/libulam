@@ -1,5 +1,6 @@
-#include "libulam/semantic/ops.hpp"
 #include <cassert>
+#include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/ops.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/typed_value.hpp>
@@ -82,10 +83,12 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
     // for equality op, avoid casting to commont type if possible, t41292
     // if (ops::kind(op) == ops::Kind::Equality &&
     //     (l_val.is_consteval() || r_val.is_consteval())) {
-    //     if (r_val.is_consteval() && r_type->is_impl_castable_to(l_type, r_val)) {
+    //     if (r_val.is_consteval() && r_type->is_impl_castable_to(l_type,
+    //     r_val)) {
     //         errors.second = {TypeError::ImplCastRequired, l_type};
     //         return errors;
-    //     } else if (l_val.is_consteval() && l_type->is_impl_castable_to(r_type, l_val)) {
+    //     } else if (l_val.is_consteval() &&
+    //     l_type->is_impl_castable_to(r_type, l_val)) {
     //         errors.first = {TypeError::ImplCastRequired, r_type};
     //         return errors;
     //     }

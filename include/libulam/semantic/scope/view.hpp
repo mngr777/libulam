@@ -1,6 +1,5 @@
 #pragma once
 #include <libulam/semantic/scope.hpp>
-#include <libulam/semantic/scope/context.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/str_pool.hpp>
@@ -24,7 +23,9 @@ public:
 
     Scope* parent(scope_flags_t flags = scp::NoFlags) override;
 
-    Ref<Module> module() override;
+    Ref<Module> module() const override;
+    Ref<Class> self_cls() const override;
+    Ref<Class> eff_cls() const override;
 
     operator bool() const { return _scope; }
 
@@ -32,8 +33,6 @@ public:
 
     Symbol* get(str_id_t name_id, bool current = false) override;
     Symbol* get_local(str_id_t name_id) override;
-
-    ScopeContextProxy ctx() override;
 
     str_id_t last_change() const;
 
