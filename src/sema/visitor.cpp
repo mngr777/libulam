@@ -38,7 +38,7 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
     assert(node->module());
     auto mod = node->module();
     _module_def = node;
-    auto sr = _scope_stack.raii<PersScopeView>(mod->scope(), ScopeVersion{0});
+    auto sr = _scope_stack.raii<PersScopeView>(mod->scope(), scope_version_t{0});
     if (do_visit(node)) {
         _pass = Pass::Module;
         traverse(node);

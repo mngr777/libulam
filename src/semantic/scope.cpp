@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/version.hpp"
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>
 #include <libulam/semantic/scope/iter.hpp>
@@ -184,7 +185,7 @@ BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
 
 // PersScope
 
-PersScopeView PersScope::view(ScopeVersion version) {
+PersScopeView PersScope::view(version_t version) {
     return PersScopeView{this, version};
 }
 
@@ -200,7 +201,7 @@ bool PersScope::has(str_id_t name_id, bool current) const {
     return has(name_id, version(), current);
 }
 
-bool PersScope::has(str_id_t name_id, Version version, bool current) const {
+bool PersScope::has(str_id_t name_id, version_t version, bool current) const {
     return get(name_id, version, current);
 }
 
@@ -212,12 +213,12 @@ Scope::Symbol* PersScope::get_local(str_id_t name_id) {
     return get_local(name_id, version());
 }
 
-str_id_t PersScope::last_change(Version version) const {
+str_id_t PersScope::last_change(version_t version) const {
     assert(version <= _changes.size());
     return (version > 0) ? _changes[version - 1] : NoStrId;
 }
 
-Scope::Symbol* PersScope::get(str_id_t name_id, Version version, bool current) {
+Scope::Symbol* PersScope::get(str_id_t name_id, version_t version, bool current) {
     auto sym = do_get_current(name_id);
     if (sym && sym->as_decl()->scope_version() < version)
         return sym;
@@ -227,11 +228,11 @@ Scope::Symbol* PersScope::get(str_id_t name_id, Version version, bool current) {
 }
 
 const Scope::Symbol*
-PersScope::get(str_id_t name_id, Version version, bool current) const {
+PersScope::get(str_id_t name_id, version_t version, bool current) const {
     return const_cast<PersScope*>(this)->get(name_id, version, current);
 }
 
-Scope::Symbol* PersScope::get_local(str_id_t name_id, Version version) {
+Scope::Symbol* PersScope::get_local(str_id_t name_id, version_t version) {
     // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
     // scp::Module) count as local symbols: t3875
     assert(in(scp::Module));
@@ -240,11 +241,11 @@ Scope::Symbol* PersScope::get_local(str_id_t name_id, Version version) {
 }
 
 const Scope::Symbol*
-PersScope::get_local(str_id_t name_id, Version version) const {
+PersScope::get_local(str_id_t name_id, version_t version) const {
     return const_cast<PersScope*>(this)->get_local(name_id, version);
 }
 
-ScopeVersion PersScope::version() const { return _changes.size(); }
+PersScope::version_t PersScope::version() const { return _changes.size(); }
 
 Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
     auto sym = ScopeBase::do_set(name_id, std::move(symbol));

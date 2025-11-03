@@ -13,7 +13,7 @@ public:
     enum State {
         NotResolved,
         Initializing, // class only
-        Initialized, // class only
+        Initialized,  // class only
         Resolving,
         Resolved,
         Unresolvable
@@ -45,15 +45,15 @@ public:
     void set_state(State state) { _state = state; }
 
     bool has_scope_version() const;
-    ScopeVersion scope_version() const;
-    void set_scope_version(ScopeVersion version);
+    scope_version_t scope_version() const;
+    void set_scope_version(scope_version_t version);
 
 private:
     Ref<Module> _module{};
     Ref<Class> _cls{};
     Ref<ClassTpl> _cls_tpl{};
     State _state{NotResolved};
-    ScopeVersion _scope_version{NoScopeVersion};
+    scope_version_t _scope_version{NoScopeVersion};
 };
 
 } // namespace ulam

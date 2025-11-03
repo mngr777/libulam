@@ -3,7 +3,7 @@
 
 namespace ulam {
 
-PersScopeView::PersScopeView(PersScope* scope, ScopeVersion version):
+PersScopeView::PersScopeView(PersScope* scope, scope_version_t version):
     Scope{},
     _scope{scope},
     _version{version != NoScopeVersion ? version : scope->version()} {}
@@ -44,13 +44,13 @@ str_id_t PersScopeView::last_change() const {
     return scope()->last_change(_version);
 }
 
-void PersScopeView::set_version(ScopeVersion version) {
+void PersScopeView::set_version(scope_version_t version) {
     assert(version != NoScopeVersion);
     assert(version <= scope()->version());
     _version = version;
 }
 
-void PersScopeView::set_version_after(ScopeVersion version) {
+void PersScopeView::set_version_after(scope_version_t version) {
     assert(version != NoScopeVersion);
     set_version(version + 1);
 }

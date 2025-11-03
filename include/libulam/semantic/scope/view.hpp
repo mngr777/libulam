@@ -14,7 +14,7 @@ class PersScopeIter;
 class PersScopeView : public Scope {
 public:
     explicit PersScopeView(
-        PersScope* scope, ScopeVersion version = NoScopeVersion);
+        PersScope* scope, scope_version_t version = NoScopeVersion);
     PersScopeView(): Scope{}, _scope{}, _version{NoScopeVersion} {}
 
     void reset() { set_version(0); }
@@ -36,9 +36,9 @@ public:
 
     str_id_t last_change() const;
 
-    ScopeVersion version() const { return _version; }
-    void set_version(ScopeVersion version);
-    void set_version_after(ScopeVersion version);
+    scope_version_t version() const { return _version; }
+    void set_version(scope_version_t version);
+    void set_version_after(scope_version_t version);
 
     ScopeIter begin() override;
     ScopeIter end() override;
@@ -54,7 +54,7 @@ private:
     const PersScope* scope() const;
 
     PersScope* _scope;
-    ScopeVersion _version;
+    scope_version_t _version;
 };
 
 } // namespace ulam

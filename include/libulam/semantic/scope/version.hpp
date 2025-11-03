@@ -3,7 +3,7 @@
 
 namespace ulam {
 
-using ScopeVersion = std::uint32_t;
-constexpr ScopeVersion NoScopeVersion = -1;
+using scope_version_t = std::uint32_t;
+constexpr scope_version_t NoScopeVersion = -1;
 
 } // namespace ulam

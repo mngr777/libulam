@@ -158,8 +158,8 @@ class PersScope : public ScopeBase {
     friend PersScopeView;
 
 public:
-    using Version = ScopeVersion;
-    static constexpr Version NoVersion = NoScopeVersion;
+    using version_t = scope_version_t;
+    static constexpr version_t NoVersion = NoScopeVersion;
 
 public:
     explicit PersScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
@@ -168,28 +168,28 @@ public:
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;
 
-    PersScopeView view(ScopeVersion version);
+    PersScopeView view(version_t version);
     PersScopeView view();
 
     ScopeIter begin() override;
     ScopeIter end() override;
 
     bool has(str_id_t name_id, bool current = false) const override;
-    bool has(str_id_t name_id, Version version, bool current = false) const;
+    bool has(str_id_t name_id, version_t version, bool current = false) const;
 
     Symbol* get(str_id_t name_id, bool current = false) override;
     Symbol* get_local(str_id_t name_id) override;
 
-    str_id_t last_change(Version version) const;
+    str_id_t last_change(version_t version) const;
 
-    Symbol* get(str_id_t name_id, Version version, bool current = false);
+    Symbol* get(str_id_t name_id, version_t version, bool current = false);
     const Symbol*
-    get(str_id_t name_id, Version version, bool current = false) const;
+    get(str_id_t name_id, version_t version, bool current = false) const;
 
-    Symbol* get_local(str_id_t name_id, Version version);
-    const Symbol* get_local(str_id_t name_id, Version version) const;
+    Symbol* get_local(str_id_t name_id, version_t version);
+    const Symbol* get_local(str_id_t name_id, version_t version) const;
 
-    ScopeVersion version() const;
+    version_t version() const;
 
 protected:
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;

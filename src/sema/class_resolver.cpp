@@ -161,7 +161,7 @@ bool ClassResolver::do_init_ancestors() {
         return true;
 
     const auto& params = _cls.params();
-    ScopeVersion scope_version =
+    scope_version_t scope_version =
         !params.empty() ? params.back()->scope_version() + 1 : 0;
     auto scope_view = _cls.scope()->view(scope_version);
     auto ssr = env().scope_switch_raii(&scope_view);

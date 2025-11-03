@@ -85,7 +85,7 @@ public:
 
 // Version number of persistent scope after definition
 class DefNode {
-    ULAM_AST_SIMPLE_ATTR(ScopeVersion, scope_version, NoScopeVersion)
+    ULAM_AST_SIMPLE_ATTR(scope_version_t, scope_version, NoScopeVersion)
     ULAM_AST_SIMPLE_ATTR(bool, is_in_tpl, false)
 public:
     bool has_scope_version() { return scope_version() != NoScopeVersion; }

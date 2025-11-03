@@ -1,4 +1,3 @@
-#include "libulam/semantic/scope/version.hpp"
 #include <cassert>
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -48,12 +47,12 @@ bool Decl::has_scope_version() const {
     return _scope_version != NoScopeVersion;
 }
 
-ScopeVersion Decl::scope_version() const {
+scope_version_t Decl::scope_version() const {
     assert(has_scope_version());
     return _scope_version;
 }
 
-void Decl::set_scope_version(ScopeVersion version) {
+void Decl::set_scope_version(scope_version_t version) {
     assert(!has_scope_version());
     _scope_version = version;
 }
