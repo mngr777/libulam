@@ -95,7 +95,6 @@ public:
     Ref<ast::ClassDef> node() { return _node; }
     Ref<const ast::ClassDef> node() const { return _node; }
 
-    Ref<PersScope> param_scope();
     Ref<PersScope> scope();
 
 protected:
@@ -126,7 +125,6 @@ private:
     Ref<Module> _module;
     Ptr<PersScopeView> _module_scope_view;
     Ptr<BasicScope> _inh_scope;
-    Ptr<PersScope> _param_scope;
     Ptr<ClassScope> _scope;
     SymbolTable _members;
     std::list<Ref<Var>> _params;

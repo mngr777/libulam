@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/version.hpp"
 #include "libulam/semantic/type/class_tpl.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -159,7 +160,12 @@ bool ClassResolver::do_init_ancestors() {
     if (!_cls.node()->has_ancestors())
         return true;
 
-    auto ssr = env().scope_switch_raii(_cls.param_scope());
+    const auto& params = _cls.params();
+    ScopeVersion scope_version =
+        !params.empty() ? params.back()->scope_version() + 1 : 0;
+    auto scope_view = _cls.scope()->view(scope_version);
+    auto ssr = env().scope_switch_raii(&scope_view);
+
     for (unsigned n = 0; n < _cls.node()->ancestors()->child_num(); ++n) {
         auto cls_name = _cls.node()->ancestors()->get(n);
         auto anc = _resolver.resolve_class_name(cls_name, false);
@@ -192,7 +198,6 @@ bool ClassResolver::add_common_base() {
     }
     return true;
 }
-
 
 void ClassResolver::add_inherited_props() {
     // parents first

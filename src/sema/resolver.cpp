@@ -716,8 +716,8 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     // resolve param types and default values (if needed) in tpl scope
     std::list<Ptr<Var>> params;
-    auto param_scope_view = tpl->param_scope()->view(0);
-    BasicScope param_scope(&param_scope_view);
+    auto scope_view = tpl->scope()->view(0);
+    BasicScope param_scope(&scope_view);
     auto ssr = env().scope_switch_raii(&param_scope);
     for (auto tpl_param : tpl->params()) {
         params.push_back(make<Var>(

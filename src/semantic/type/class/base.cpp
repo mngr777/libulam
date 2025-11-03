@@ -19,8 +19,7 @@ ClassBase::ClassBase(
     _module{module},
     _module_scope_view{make<PersScopeView>(module->scope()->view())},
     _inh_scope{make<BasicScope>(ref(_module_scope_view))},
-    _param_scope{make<PersScope>(ref(_inh_scope))},
-    _scope{make<ClassScope>(cls, ref(_param_scope), scope_flags)},
+    _scope{make<ClassScope>(cls, ref(_inh_scope), scope_flags)},
     _constructors(make<FunSet>()) {}
 
 ClassBase::~ClassBase() {}
@@ -82,14 +81,14 @@ Ref<Var> ClassBase::add_param(Ptr<Var>&& var) {
     auto name_id = ref->name_id();
     assert(!has(name_id));
 
-    param_scope()->set(name_id, std::move(var));
+    scope()->set(name_id, std::move(var));
     set(name_id, ref);
     _params.push_back(ref);
 
     auto node = ref->node();
     if (!node->has_scope_version()) {
         node->set_var(ref);
-        node->set_scope_version(param_scope()->version());
+        node->set_scope_version(scope()->version());
     }
     return ref;
 }
@@ -186,8 +185,6 @@ Ref<FunSet> ClassBase::constructors() {
     assert(_constructors);
     return ref(_constructors);
 }
-
-Ref<PersScope> ClassBase::param_scope() { return ref(_param_scope); }
 
 Ref<PersScope> ClassBase::scope() { return ref(_scope); }
 
