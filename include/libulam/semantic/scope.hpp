@@ -6,6 +6,7 @@
 #include <libulam/semantic/decl.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/scope/flags.hpp>
+#include <libulam/semantic/scope/options.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/semantic/symbol.hpp>
 #include <libulam/semantic/type.hpp>
@@ -35,6 +36,9 @@ public:
     using Symbol = SymbolTable::Symbol;
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
+    // {symbol, is_final}
+    using SymbolRes = std::pair<Symbol*, bool>;
+
     Scope();
     virtual ~Scope();
 
@@ -44,10 +48,13 @@ public:
     virtual Scope* parent(scope_flags_t flags = scp::NoFlags) = 0;
     const Scope* parent(scope_flags_t flags = scp::NoFlags) const;
 
+    virtual Ref<Program> program() const;
     virtual Ref<Module> module() const;
     virtual Ref<Class> self_cls() const;
     virtual Ref<Class> eff_cls() const;
     virtual Ref<Fun> fun() const;
+
+    const ScopeOptions& options() const;
 
     virtual bool has_self() const;
     virtual LValue self() const;
@@ -62,6 +69,8 @@ public:
     const Symbol* get(str_id_t name_id, bool current = false) const;
 
     virtual Symbol* get_local(str_id_t name_id) = 0;
+
+    virtual SymbolRes find(str_id_t name_id) = 0;
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         auto ref = ulam::ref(value);
@@ -92,14 +101,7 @@ public:
 
     scope_flags_t flags() const override { return _flags; }
 
-    Symbol* get(str_id_t name_id, bool current = false) override;
-
-    Symbol* get_local(str_id_t name_id) override;
-
 protected:
-    virtual Symbol* do_get_current(str_id_t name_id);
-    virtual Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local);
-
     Symbol* do_set(str_id_t name_id, Symbol&& symbol) override;
 
     SymbolTable _symbols;
@@ -123,8 +125,13 @@ public:
     ScopeIter begin() override;
     ScopeIter end() override;
 
+    Symbol* get(str_id_t name_id, bool current) override;
+    Symbol* get_local(str_id_t name_id) override;
+
+    SymbolRes find(str_id_t name_id) override;
+
 protected:
-    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) override;
+    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local);
 };
 
 // Persistent
@@ -180,6 +187,8 @@ public:
     Symbol* get(str_id_t name_id, bool current = false) override;
     Symbol* get_local(str_id_t name_id) override;
 
+    SymbolRes find(str_id_t name_id) override;
+
     str_id_t last_change(version_t version) const;
 
     Symbol* get(str_id_t name_id, version_t version, bool current = false);
@@ -188,6 +197,8 @@ public:
 
     Symbol* get_local(str_id_t name_id, version_t version);
     const Symbol* get_local(str_id_t name_id, version_t version) const;
+
+    SymbolRes find(str_id_t name_id, version_t version);
 
     version_t version() const;
 

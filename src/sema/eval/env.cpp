@@ -72,20 +72,13 @@ EvalEnv::FlagsRaii::FlagsRaii(EvalEnv& env, eval_flags_t flags):
 
 // EvalEnv
 
-EvalEnv::EvalEnv(
-    Ref<Program> program, const EvalOptions& options, eval_flags_t flags):
-    EvalBase{program},
-    _options{options},
-    _flags{flags},
-    _program_scope{nullptr, scp::Program} {
+EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
+    EvalBase{program}, _flags{flags}, _program_scope{program} {
     // init global scope
     _scope_stack.push(ScopeStack::Variant{&_program_scope});
     for (auto& mod : program->modules())
         mod->export_symbols(scope());
 }
-
-EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
-    EvalEnv{program, {}, flags} {}
 
 Resolver EvalEnv::resolver(bool in_expr) { return {*this, in_expr}; }
 

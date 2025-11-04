@@ -1,6 +1,7 @@
 #pragma once
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/flags.hpp>
+#include <libulam/semantic/scope/options.hpp>
 #include <libulam/semantic/scope/version.hpp>
 #include <libulam/str_pool.hpp>
 #include <utility>
@@ -33,6 +34,8 @@ public:
 
     Symbol* get(str_id_t name_id, bool current = false) override;
     Symbol* get_local(str_id_t name_id) override;
+
+    SymbolRes find(str_id_t name_id) override;
 
     str_id_t last_change() const;
 

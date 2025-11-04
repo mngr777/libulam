@@ -44,6 +44,8 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/scope/fun.hpp \
 	include/libulam/semantic/scope/iter.hpp \
 	include/libulam/semantic/scope/module.hpp \
+	include/libulam/semantic/scope/options.hpp \
+	include/libulam/semantic/scope/program.hpp \
 	include/libulam/semantic/scope/stack.hpp \
 	include/libulam/semantic/scope/version.hpp \
 	include/libulam/semantic/scope/view.hpp \
@@ -139,7 +141,6 @@ SEMA_HEADER_FILES = \
 	include/libulam/sema/eval/funcall.hpp \
 	include/libulam/sema/eval/helper.hpp \
 	include/libulam/sema/eval/init.hpp \
-	include/libulam/sema/eval/options.hpp \
 	include/libulam/sema/eval/stack.hpp \
 	include/libulam/sema/eval/visitor.hpp \
 	include/libulam/sema/eval/which.hpp \

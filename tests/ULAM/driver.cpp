@@ -11,24 +11,30 @@
 
 constexpr char UlamPathEnv[] = "ULAM_PATH";
 
-// TODO: native classes
-static const std::set<std::string> Skip = {
-    "t3241_test_compiler_unarymod.test", // invalid implicit cast?
-    "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
-    "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
+static const std::set<std::string> DefOrder = {
     "t3504_test_compiler_arraywithconstantindex.test", // constant used before definition
-    "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
-    "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
-    "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
     "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use
     "t3874_test_compiler_elementinheritance_withlocaldefsafterused_filescope.test", // type alias defined after use
     "t3886_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_reverseorder.test", // tpl param used in previous param definition
-    "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
+    "t41284_test_compiler_localdefquestioncolon_filescope.test", // module-local constants referenced before definition
+    "t41431_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_asdatamember_ish.test", // local contstant used be before definition
+    "t41516_test_compiler_elementinheritance_withmultiplelocaldefskeywordpriority.test", // typedefs are (supposed to be) used before definition
+};
+
+// TODO: native classes
+static const std::set<std::string> Skip {
+    "t3241_test_compiler_unarymod.test", // invalid implicit cast?
+    "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
+    "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
+    "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
+    "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
+    "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
+    "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value // TODO
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
     "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t41043_test_compiler_forascond.test", // Int i(4) is correct
-    "t41046_test_compiler_switchascondcases.test", // cannot evaluate natie aref
+    "t41046_test_compiler_switchascondcases.test", // cannot evaluate native aref
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
@@ -47,7 +53,6 @@ static const std::set<std::string> Skip = {
     "t41226_test_compiler_elementtemplatewithinheritedclassparameterquarktemplatedependent_thegoal.test", // -"-
     "t41228_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor.test", // -"-
     "t41266_test_compiler_constantclassarrayoftransients.test", // module-local constant `keyexpr_x13` addressed as `KeyExprRep.keyexpr_x13` ??
-    "t41284_test_compiler_localdefquestioncolon_filescope.test", // module-local constants referenced before definition
     "t41285_test_compiler_localdefquestioncolon_usingtemplateinstanceconstant_filescope.test",
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
@@ -89,7 +94,6 @@ static const std::set<std::string> Skip = {
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41042_test_compiler_whileascond.test", // while-as, native aref cannot be evaluated
     "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
-    "t41431_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_asdatamember_ish.test", // local contstant used be before definition
     "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // class typedef used in parent list
     "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
     "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
@@ -100,7 +104,6 @@ static const std::set<std::string> Skip = {
     "t41617_test_compiler_positionofascondref.test", // -"-
     "t41618_test_compiler_positionofreftodatamember.test", // -"-
     "t41620_test_compiler_elementpositionofdatamemberinbaseclassofbaseclassnoref.test", // -"-
-    "t41516_test_compiler_elementinheritance_withmultiplelocaldefskeywordpriority.test", // typedefs are (supposed to be) used before definition
 };
 
 static const std::set<std::string> SkipAnswerCheck = {

@@ -1,4 +1,5 @@
-#include "libulam/semantic/scope/version.hpp"
+#include "libulam/semantic/scope/options.hpp"
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>
 #include <libulam/semantic/scope/iter.hpp>
@@ -19,6 +20,11 @@ Scope::~Scope() {}
 
 const Scope* Scope::parent(scope_flags_t flags) const {
     return const_cast<Scope*>(this)->parent(flags);
+}
+
+Ref<Program> Scope::program() const {
+    auto scope = parent(scp::Program);
+    return scope ? scope->program() : nullptr;
 }
 
 Ref<Module> Scope::module() const {
@@ -44,6 +50,11 @@ Ref<Class> Scope::eff_cls() const {
 Ref<Fun> Scope::fun() const {
     auto scope = parent(scp::Fun);
     return scope ? scope->fun() : nullptr;
+}
+
+const ScopeOptions& Scope::options() const {
+    auto program_ = program();
+    return program_ ? program_->scope_options() : DefaultScopeOptions;
 }
 
 bool Scope::has_self() const { return false; }
@@ -83,57 +94,6 @@ Scope* ScopeBase::parent(scope_flags_t flags) {
                : _parent->parent(flags);
 }
 
-Scope::Symbol* ScopeBase::get(str_id_t name_id, bool current) {
-    return current ? do_get_current(name_id)
-                   : do_get(name_id, eff_cls(), false);
-}
-
-Scope::Symbol* ScopeBase::get_local(str_id_t name_id) {
-    return do_get(name_id, eff_cls(), true);
-}
-
-Scope::Symbol* ScopeBase::do_get_current(str_id_t name_id) {
-    return _symbols.get(name_id);
-}
-
-Scope::Symbol*
-ScopeBase::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
-    // * if effective Self class doesn't match parent class scope Self (i.e.
-    // `self as Type` is used):
-    //   - seacrh current scope up to class scope;
-    //   - store current module scope;
-    //   - continue search in effective Self class scope up to module scope;
-    //   - switch to stored module scope and continue.
-    // * if searching for `local` symbol:
-    //   - search current scope up to class scope;
-    //   - switch to module scope (skipping class scopes) and continue.
-    Scope* scope = this;
-    Scope* module_scope{};
-    while (true) {
-        auto sym = scope->get(name_id, true);
-        if (sym)
-            return sym;
-        scope = scope->parent();
-        if (!scope)
-            return {};
-        if (scope->is(scp::Class) && (local || scope->self_cls() != eff_cls)) {
-            // store current module scope
-            module_scope = scope->parent(scp::Module);
-            assert(module_scope);
-            if (local) {
-                // skip class scopes
-                scope = module_scope;
-            } else {
-                // go to effective Self scope
-                scope = eff_cls->scope();
-            }
-        } else if (scope->is(scp::Module) && module_scope) {
-            // go back to current module scope
-            scope = module_scope;
-        }
-    }
-}
-
 Scope::Symbol* ScopeBase::do_set(str_id_t name_id, Symbol&& symbol) {
     return _symbols.set(name_id, std::move(symbol));
 }
@@ -143,6 +103,19 @@ Scope::Symbol* ScopeBase::do_set(str_id_t name_id, Symbol&& symbol) {
 BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
     ScopeBase{parent, flags} {
     assert(!is(scp::Persistent));
+}
+
+Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
+    return current ? _symbols.get(name_id) : do_get(name_id, eff_cls(), false);
+}
+
+Scope::Symbol* BasicScope::get_local(str_id_t name_id) {
+    return do_get(name_id, eff_cls(), true);
+}
+
+Scope::SymbolRes BasicScope::find(str_id_t name_id) {
+    auto sym = _symbols.get(name_id);
+    return {sym, (bool)sym};
 }
 
 Scope::Symbol*
@@ -158,13 +131,19 @@ BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
     //   - switch to module scope (skipping class scopes) and continue.
     Scope* scope = this;
     Scope* module_scope{};
+    Symbol* fallback{};
+    bool use_fallback = options().allow_access_before_def;
     while (true) {
-        auto sym = scope->get(name_id, true);
-        if (sym)
+        auto [sym, is_final] = scope->find(name_id);
+        if (sym && is_final)
             return sym;
+        if (!fallback)
+            fallback = sym;
+
         scope = scope->parent();
         if (!scope)
-            return {};
+            return use_fallback ? fallback : nullptr;
+
         if (scope->is(scp::Class) && (local || scope->self_cls() != eff_cls)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
@@ -213,18 +192,27 @@ Scope::Symbol* PersScope::get_local(str_id_t name_id) {
     return get_local(name_id, version());
 }
 
+Scope::SymbolRes PersScope::find(str_id_t name_id) {
+    return find(name_id, version());
+}
+
 str_id_t PersScope::last_change(version_t version) const {
     assert(version <= _changes.size());
     return (version > 0) ? _changes[version - 1] : NoStrId;
 }
 
-Scope::Symbol* PersScope::get(str_id_t name_id, version_t version, bool current) {
-    auto sym = do_get_current(name_id);
-    if (sym && sym->as_decl()->scope_version() < version)
-        return sym;
+Scope::Symbol*
+PersScope::get(str_id_t name_id, version_t version, bool current) {
+    auto [cur_sym, is_final] = find(name_id, version);
+    if (is_final)
+        return cur_sym;
+
+    auto fallback = options().allow_access_before_def ? cur_sym : nullptr;
     if (current || !parent())
-        return nullptr;
-    return parent()->get(name_id);
+        return fallback;
+
+    auto sym = parent()->get(name_id);
+    return sym ? sym : fallback;
 }
 
 const Scope::Symbol*
@@ -243,6 +231,12 @@ Scope::Symbol* PersScope::get_local(str_id_t name_id, version_t version) {
 const Scope::Symbol*
 PersScope::get_local(str_id_t name_id, version_t version) const {
     return const_cast<PersScope*>(this)->get_local(name_id, version);
+}
+
+Scope::SymbolRes PersScope::find(str_id_t name_id, version_t version) {
+    auto sym = _symbols.get(name_id);
+    bool is_final = sym && sym->as_decl()->scope_version() < version;
+    return {sym, is_final};
 }
 
 PersScope::version_t PersScope::version() const { return _changes.size(); }

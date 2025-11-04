@@ -2,7 +2,6 @@
 #include <libulam/sema/eval/base.hpp>
 #include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/flags.hpp>
-#include <libulam/sema/eval/options.hpp>
 #include <libulam/sema/eval/stack.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
@@ -10,6 +9,7 @@
 #include <libulam/semantic/scope/as_cond.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/fun.hpp>
+#include <libulam/semantic/scope/program.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 #include <libulam/semantic/value.hpp>
 
@@ -64,12 +64,7 @@ public:
         eval_flags_t _old_flags;
     };
 
-    EvalEnv(
-        Ref<Program> program,
-        const EvalOptions& options,
-        eval_flags_t flags = evl::NoFlags);
-
-    EvalEnv(Ref<Program> program, eval_flags_t flags = evl::NoFlags);
+    explicit EvalEnv(Ref<Program> program, eval_flags_t flags = evl::NoFlags);
 
     EvalEnv(EvalEnv&&) = default;
     EvalEnv& operator=(EvalEnv&&) = default;
@@ -143,8 +138,6 @@ public:
     Scope* scope();
     scope_lvl_t scope_lvl() const;
 
-    const EvalOptions& options() const { return _options; }
-
     eval_flags_t flags() const { return _flags; }
     bool has_flag(eval_flags_t flag) const { return _flags & flag; }
 
@@ -209,9 +202,8 @@ protected:
 
 private:
     Ref<Program> _program;
-    EvalOptions _options;
     eval_flags_t _flags;
-    BasicScope _program_scope;
+    ProgramScope _program_scope;
     EvalStack _stack;
     ScopeStack _scope_stack;
     Scope* _scope_override{};

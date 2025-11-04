@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/scope/options.hpp"
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/export.hpp>
@@ -42,6 +43,9 @@ public:
 
     Mangler& mangler() { return _mangler; }
 
+    const ScopeOptions& scope_options() const;
+    ScopeOptions set_scope_options(ScopeOptions options);
+
     const ModuleList& modules() { return _modules; }
     Ref<Module> module(const std::string_view name);
     Ref<Module> module(str_id_t name_id);
@@ -59,6 +63,11 @@ private:
     ElementRegistry _elements;
     Builtins _builtins;
     Mangler _mangler;
+
+    struct {
+        ScopeOptions scope_options{DefaultScopeOptions};
+    } _options;
+
     std::list<Ptr<Module>> _module_ptrs;
     std::list<Ref<Module>> _modules;
     std::map<str_id_t, Ref<Module>> _modules_by_name_id;

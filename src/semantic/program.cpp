@@ -4,6 +4,7 @@
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/str_pool.hpp>
+#include <utility>
 
 namespace ulam {
 
@@ -19,6 +20,15 @@ Program::Program(
     _mangler{_text_pool} {}
 
 Program::~Program() {}
+
+const ScopeOptions& Program::scope_options() const {
+    return _options.scope_options;
+}
+
+ScopeOptions Program::set_scope_options(ScopeOptions options) {
+    std::swap(_options.scope_options, options);
+    return options;
+}
 
 Ref<Module> Program::module(const std::string_view name) {
     auto name_id = _str_pool.id(name);

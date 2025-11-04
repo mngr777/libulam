@@ -40,6 +40,10 @@ Scope::Symbol* PersScopeView::get_local(str_id_t name_id) {
     return scope()->get_local(name_id, _version);
 }
 
+Scope::SymbolRes PersScopeView::find(str_id_t name_id) {
+    return scope()->find(name_id, _version);
+}
+
 str_id_t PersScopeView::last_change() const {
     return scope()->last_change(_version);
 }
