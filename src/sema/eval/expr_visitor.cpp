@@ -578,7 +578,7 @@ ExprRes EvalExprVisitor::unary_op(
     Ref<Type> type{};
     if (type_name) {
         auto resolver = env().resolver(true);
-        type = resolver.resolve_type_name(type_name, scope());
+        type = resolver.resolve_type_name(type_name, true);
         if (!type)
             return {ExprError::UnresolvableType};
     }
