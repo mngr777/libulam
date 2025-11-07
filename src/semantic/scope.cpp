@@ -1,5 +1,3 @@
-#include "libulam/semantic/scope/flags.hpp"
-#include "libulam/semantic/scope/options.hpp"
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>
@@ -12,6 +10,14 @@
 #include "src/debug.hpp"
 
 namespace ulam {
+
+namespace {
+
+bool is_excluded(const Scope::Symbol& sym, const Scope::GetParams& params) {
+    return sym.as_decl() == params.except;
+}
+
+} // namespace
 
 // Scope
 
@@ -112,8 +118,10 @@ BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
 }
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
-    if (params.current)
-        return _symbols.get(name_id);
+    if (params.current) {
+        auto sym = _symbols.get(name_id);
+        return sym && !is_excluded(*sym, params) ? sym : nullptr;
+    }
 
     // * if effective Self class doesn't match parent class scope Self (i.e.
     // `self as Type` is used):
@@ -131,8 +139,12 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
     bool use_fallback = options().allow_access_before_def;
     while (true) {
         auto [sym, is_final] = scope->find(name_id);
+        if (sym && is_excluded(*sym, params))
+            sym = nullptr;
+
         if (sym && is_final)
             return sym;
+
         if (!fallback)
             fallback = sym;
 
@@ -140,7 +152,8 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
         if (!scope)
             return use_fallback ? fallback : nullptr;
 
-        if (scope->is(scp::Class) && (params.local || scope->self_cls() != eff_cls_)) {
+        if (scope->is(scp::Class) &&
+            (params.local || scope->self_cls() != eff_cls_)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
             assert(module_scope);
@@ -205,18 +218,22 @@ PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
     // scp::Module) count as local symbols: t3875
     if (params.local && is(scp::Class)) {
         assert(in(scp::Module));
-        return parent(scp::Module)->get(name_id);
+        return parent(scp::Module)->get(name_id, params);
     }
 
     auto [cur_sym, is_final] = find(name_id, version);
-    if (is_final)
+    if (cur_sym && is_excluded(*cur_sym, params))
+        cur_sym = nullptr;
+
+    if (cur_sym && is_final)
         return cur_sym;
 
     auto fallback = options().allow_access_before_def ? cur_sym : nullptr;
+
     if (params.current || !parent())
         return fallback;
 
-    auto sym = parent()->get(name_id);
+    auto sym = parent()->get(name_id, params);
     return sym ? sym : fallback;
 }
 

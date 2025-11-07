@@ -45,10 +45,16 @@ public:
     Ref<Type>
     resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class = false);
 
-    Ref<Type> resolve_type_spec(Ref<ast::TypeSpec> type_spec);
-
 private:
     using ClassSet = std::unordered_set<Ref<Class>>;
+
+    Ref<Type> do_resolve_type_name(
+        Ref<ast::TypeName> type_name,
+        Ref<AliasType> exclude_alias,
+        bool resolve_class);
+
+    Ref<Type> resolve_type_spec(
+        Ref<ast::TypeSpec> type_spec, Ref<AliasType> exclude_alias);
 
     bitsize_t bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 

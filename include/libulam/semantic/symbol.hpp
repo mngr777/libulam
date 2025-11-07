@@ -19,7 +19,7 @@ public:
     _Symbol(_Symbol&&) = default;
     _Symbol& operator=(_Symbol&&) = default;
 
-    Ref<Decl> as_decl() {
+    Ref<Decl> as_decl() const {
         return this->accept([](auto&& value) -> Ref<Decl> { return value; });
     }
 };

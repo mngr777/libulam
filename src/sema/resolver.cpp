@@ -96,7 +96,7 @@ bool Resolver::resolve(Ref<AliasType> alias) {
 
     // type
     DECL_SCOPE(alias, ssr, scope_view);
-    Ref<Type> type = resolve_type_name(type_name);
+    Ref<Type> type = do_resolve_type_name(type_name, alias, false);
     if (!type)
         RET_UPD_STATE(alias, false);
 
@@ -305,8 +305,13 @@ Ref<Type> Resolver::resolve_full_type_name(
 
 Ref<Type>
 Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
+    return do_resolve_type_name(type_name, {}, resolve_class);
+}
+
+Ref<Type> Resolver::do_resolve_type_name(
+    Ref<ast::TypeName> type_name, Ref<AliasType> exclude_alias, bool resolve_class) {
     auto type_spec = type_name->first();
-    auto type = resolve_type_spec(type_spec);
+    auto type = resolve_type_spec(type_spec, exclude_alias);
     if (!type)
         return {};
 
@@ -394,7 +399,8 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
     return type;
 }
 
-Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
+Ref<Type> Resolver::resolve_type_spec(
+    Ref<ast::TypeSpec> type_spec, Ref<AliasType> exclude_alias) {
     // builtin type?
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();
@@ -448,6 +454,7 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
     {
         Scope::GetParams sgp;
         sgp.local = ident->is_local();
+        sgp.except = exclude_alias;
         auto sym = scope()->get(name_id, sgp);
         if (sym) {
             return sym->accept(
