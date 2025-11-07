@@ -309,7 +309,9 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
 }
 
 Ref<Type> Resolver::do_resolve_type_name(
-    Ref<ast::TypeName> type_name, Ref<AliasType> exclude_alias, bool resolve_class) {
+    Ref<ast::TypeName> type_name,
+    Ref<AliasType> exclude_alias,
+    bool resolve_class) {
     auto type_spec = type_name->first();
     auto type = resolve_type_spec(type_spec, exclude_alias);
     if (!type)
@@ -728,10 +730,15 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     // resolve param types and default values (if needed) in tpl scope
     std::list<Ptr<Var>> params;
-    auto scope_view = tpl->scope()->view(0);
-    BasicScope param_scope(&scope_view);
+    scope_version_t scope_version =
+        program()->scope_options().prefer_params_in_param_resolution
+            ? tpl->params().size()
+            : 0;
+    auto scope_view = tpl->scope()->view(scope_version);
+    BasicScope param_scope(&scope_view); // tmp scope
     auto ssr = env().scope_switch_raii(&param_scope);
     for (auto tpl_param : tpl->params()) {
+        // make class param
         params.push_back(make<Var>(
             tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
             Value{RValue{}}, tpl_param->flags()));
@@ -741,6 +748,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             return res;
         param->set_type(type);
 
+        // get class param value
         ExprRes arg_res;
         if (!arg_res_list.empty()) {
             arg_res = arg_res_list.pop_front();
@@ -754,10 +762,12 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             return res;
         }
 
+        // cast to param type
         arg_res = env().cast(args, param->type(), std::move(arg_res), false);
         if (!arg_res)
             return res;
 
+        // set class param value and add to tmp scope
         param->set_value(arg_res.move_value());
         param_scope.set(param->name_id(), param);
     }

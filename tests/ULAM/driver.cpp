@@ -11,6 +11,7 @@
 
 constexpr char UlamPathEnv[] = "ULAM_PATH";
 
+// require symbol lookup work the same as in original ULAM
 static const std::set<std::string> DefOrder = {
     "t3504_test_compiler_arraywithconstantindex.test", // constant used before definition
     "t3873_test_compiler_elementinheritance_withunorderedlocaldefs_separatefilescope.test", // type defined after use
@@ -19,6 +20,9 @@ static const std::set<std::string> DefOrder = {
     "t41284_test_compiler_localdefquestioncolon_filescope.test", // module-local constants referenced before definition
     "t41431_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_asdatamember_ish.test", // local contstant used be before definition
     "t41516_test_compiler_elementinheritance_withmultiplelocaldefskeywordpriority.test", // typedefs are (supposed to be) used before definition
+    "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
+    "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
+    "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
 };
 
 // TODO: native classes
@@ -29,10 +33,7 @@ static const std::set<std::string> Skip {
     "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
-    "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value // TODO
-    "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // -"-
-    "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
-    "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
+    "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // parent class const used as tpl params
     "t41043_test_compiler_forascond.test", // Int i(4) is correct
     "t41046_test_compiler_switchascondcases.test", // cannot evaluate native aref
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
@@ -44,8 +45,8 @@ static const std::set<std::string> Skip {
     "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
     "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
-    "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition
-    "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
+    // "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition
+    // "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
     "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
     "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"-
     "t41223_test_compiler_elementtemplatewithinheritedclassparameterquarktemplate.test", // -"-
