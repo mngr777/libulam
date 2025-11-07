@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/flags.hpp"
 #include "libulam/semantic/scope/options.hpp"
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -74,12 +75,17 @@ bool Scope::in(scope_flags_t flags_) const {
     return is(flags_) || (parent() && parent()->in(flags_));
 }
 
-bool Scope::has(str_id_t name_id, bool current) const {
-    return get(name_id, current);
+bool Scope::has(str_id_t name_id, const GetParams& params) const {
+    return get(name_id, params);
 }
 
-const Scope::Symbol* Scope::get(str_id_t name_id, bool current) const {
-    return const_cast<Scope*>(this)->get(name_id, current);
+const Scope::Symbol*
+Scope::get(str_id_t name_id, const GetParams& params) const {
+    return const_cast<Scope*>(this)->get(name_id, params);
+}
+
+bool Scope::defines(str_id_t name_id) const {
+    return const_cast<Scope*>(this)->find(name_id).first;
 }
 
 ScopeIter BasicScope::begin() { return ScopeIter{BasicScopeIter{*this}}; }
@@ -105,21 +111,10 @@ BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
     assert(!is(scp::Persistent));
 }
 
-Scope::Symbol* BasicScope::get(str_id_t name_id, bool current) {
-    return current ? _symbols.get(name_id) : do_get(name_id, eff_cls(), false);
-}
+Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
+    if (params.current)
+        return _symbols.get(name_id);
 
-Scope::Symbol* BasicScope::get_local(str_id_t name_id) {
-    return do_get(name_id, eff_cls(), true);
-}
-
-Scope::SymbolRes BasicScope::find(str_id_t name_id) {
-    auto sym = _symbols.get(name_id);
-    return {sym, (bool)sym};
-}
-
-Scope::Symbol*
-BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
     // * if effective Self class doesn't match parent class scope Self (i.e.
     // `self as Type` is used):
     //   - seacrh current scope up to class scope;
@@ -129,6 +124,7 @@ BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
     // * if searching for `local` symbol:
     //   - search current scope up to class scope;
     //   - switch to module scope (skipping class scopes) and continue.
+    Ref<Class> eff_cls_ = eff_cls();
     Scope* scope = this;
     Scope* module_scope{};
     Symbol* fallback{};
@@ -144,22 +140,27 @@ BasicScope::do_get(str_id_t name_id, Ref<Class> eff_cls, bool local) {
         if (!scope)
             return use_fallback ? fallback : nullptr;
 
-        if (scope->is(scp::Class) && (local || scope->self_cls() != eff_cls)) {
+        if (scope->is(scp::Class) && (params.local || scope->self_cls() != eff_cls_)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
             assert(module_scope);
-            if (local) {
+            if (params.local) {
                 // skip class scopes
                 scope = module_scope;
             } else {
                 // go to effective Self scope
-                scope = eff_cls->scope();
+                scope = eff_cls_->scope();
             }
         } else if (scope->is(scp::Module) && module_scope) {
             // go back to current module scope
             scope = module_scope;
         }
     }
+}
+
+Scope::FindRes BasicScope::find(str_id_t name_id) {
+    auto sym = _symbols.get(name_id);
+    return {sym, (bool)sym};
 }
 
 // PersScope
@@ -176,23 +177,20 @@ ScopeIter PersScope::begin() {
 
 ScopeIter PersScope::end() { return ScopeIter{PersScopeIter{}}; }
 
-bool PersScope::has(str_id_t name_id, bool current) const {
-    return has(name_id, version(), current);
+bool PersScope::has(str_id_t name_id, const GetParams& params) const {
+    return has(name_id, version(), params);
 }
 
-bool PersScope::has(str_id_t name_id, version_t version, bool current) const {
-    return get(name_id, version, current);
+bool PersScope::has(
+    str_id_t name_id, version_t version, const GetParams& params) const {
+    return get(name_id, version, params);
 }
 
-Scope::Symbol* PersScope::get(str_id_t name_id, bool current) {
-    return get(name_id, version(), current);
+Scope::Symbol* PersScope::get(str_id_t name_id, const GetParams& params) {
+    return get(name_id, version(), params);
 }
 
-Scope::Symbol* PersScope::get_local(str_id_t name_id) {
-    return get_local(name_id, version());
-}
-
-Scope::SymbolRes PersScope::find(str_id_t name_id) {
+Scope::FindRes PersScope::find(str_id_t name_id) {
     return find(name_id, version());
 }
 
@@ -202,38 +200,32 @@ str_id_t PersScope::last_change(version_t version) const {
 }
 
 Scope::Symbol*
-PersScope::get(str_id_t name_id, version_t version, bool current) {
+PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
+    // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
+    // scp::Module) count as local symbols: t3875
+    if (params.local && is(scp::Class)) {
+        assert(in(scp::Module));
+        return parent(scp::Module)->get(name_id);
+    }
+
     auto [cur_sym, is_final] = find(name_id, version);
     if (is_final)
         return cur_sym;
 
     auto fallback = options().allow_access_before_def ? cur_sym : nullptr;
-    if (current || !parent())
+    if (params.current || !parent())
         return fallback;
 
     auto sym = parent()->get(name_id);
     return sym ? sym : fallback;
 }
 
-const Scope::Symbol*
-PersScope::get(str_id_t name_id, version_t version, bool current) const {
-    return const_cast<PersScope*>(this)->get(name_id, version, current);
+const Scope::Symbol* PersScope::get(
+    str_id_t name_id, version_t version, const GetParams& params) const {
+    return const_cast<PersScope*>(this)->get(name_id, version, params);
 }
 
-Scope::Symbol* PersScope::get_local(str_id_t name_id, version_t version) {
-    // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
-    // scp::Module) count as local symbols: t3875
-    assert(in(scp::Module));
-    return (is(scp::Module)) ? get(name_id, version)
-                             : parent(scp::Module)->get(name_id);
-}
-
-const Scope::Symbol*
-PersScope::get_local(str_id_t name_id, version_t version) const {
-    return const_cast<PersScope*>(this)->get_local(name_id, version);
-}
-
-Scope::SymbolRes PersScope::find(str_id_t name_id, version_t version) {
+Scope::FindRes PersScope::find(str_id_t name_id, version_t version) {
     auto sym = _symbols.get(name_id);
     bool is_final = sym && sym->as_decl()->scope_version() < version;
     return {sym, is_final};

@@ -446,12 +446,17 @@ Ref<Type> Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec) {
     };
 
     {
-        auto sym = ident->is_local() ? scope()->get_local(name_id)
-                                     : scope()->get(name_id);
+        Scope::GetParams sgp;
+        sgp.local = ident->is_local();
+        auto sym = scope()->get(name_id, sgp);
         if (sym) {
             return sym->accept(
                 class_tpl_to_type,
-                [&](Ref<UserType> type) -> Ref<Type> { return type; },
+                [&](Ref<UserType> type) -> Ref<Type> {
+                    return (!type->is_alias() || resolve(type->as_alias()))
+                               ? type
+                               : nullptr;
+                },
                 [&](auto&&) -> Ref<Type> { assert(false); });
         }
     }

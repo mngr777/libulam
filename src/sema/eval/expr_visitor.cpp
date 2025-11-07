@@ -57,8 +57,12 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
         return check(node, ident_super(node));
 
     auto name_id = node->name().str_id();
-    auto sym =
-        node->is_local() ? scope()->get_local(name_id) : scope()->get(name_id);
+    Scope::Symbol* sym{};
+    {
+        Scope::GetParams sgp;
+        sgp.local = node->is_local();
+        sym = scope()->get(name_id, sgp);
+    }
     if (!sym) {
         diag().error(node, "symbol not found");
         return {ExprError::SymbolNotFound};

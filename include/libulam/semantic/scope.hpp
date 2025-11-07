@@ -37,7 +37,15 @@ public:
     using ItemCb = std::function<void(str_id_t, Symbol&)>;
 
     // {symbol, is_final}
-    using SymbolRes = std::pair<Symbol*, bool>;
+    using FindRes = std::pair<Symbol*, bool>;
+
+    struct GetParams {
+        GetParams() {}
+
+        bool current{false};
+        bool local{false};
+        Decl* except{};
+    };
 
     Scope();
     virtual ~Scope();
@@ -64,13 +72,13 @@ public:
     bool is(scope_flags_t flags_) const;
     bool in(scope_flags_t flags_) const;
 
-    virtual bool has(str_id_t name_id, bool current = false) const;
-    virtual Symbol* get(str_id_t name_id, bool current = false) = 0;
-    const Symbol* get(str_id_t name_id, bool current = false) const;
+    virtual bool has(str_id_t name_id, const GetParams& params = {}) const;
 
-    virtual Symbol* get_local(str_id_t name_id) = 0;
+    virtual Symbol* get(str_id_t name_id, const GetParams& params = {}) = 0;
+    const Symbol* get(str_id_t name_id, const GetParams& params = {}) const;
 
-    virtual SymbolRes find(str_id_t name_id) = 0;
+    bool defines(str_id_t name_id) const;
+    virtual FindRes find(str_id_t name_id) = 0;
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         auto ref = ulam::ref(value);
@@ -125,13 +133,9 @@ public:
     ScopeIter begin() override;
     ScopeIter end() override;
 
-    Symbol* get(str_id_t name_id, bool current) override;
-    Symbol* get_local(str_id_t name_id) override;
+    Symbol* get(str_id_t name_id, const GetParams& params = {}) override;
 
-    SymbolRes find(str_id_t name_id) override;
-
-protected:
-    Symbol* do_get(str_id_t name_id, Ref<Class> eff_cls, bool local);
+    FindRes find(str_id_t name_id) override;
 };
 
 // Persistent
@@ -181,24 +185,20 @@ public:
     ScopeIter begin() override;
     ScopeIter end() override;
 
-    bool has(str_id_t name_id, bool current = false) const override;
-    bool has(str_id_t name_id, version_t version, bool current = false) const;
+    bool has(str_id_t name_id, const GetParams& params = {}) const override;
+    bool has(str_id_t name_id, version_t version, const GetParams& params = {}) const;
 
-    Symbol* get(str_id_t name_id, bool current = false) override;
-    Symbol* get_local(str_id_t name_id) override;
+    Symbol* get(str_id_t name_id, const GetParams& params = {}) override;
 
-    SymbolRes find(str_id_t name_id) override;
+    FindRes find(str_id_t name_id) override;
 
     str_id_t last_change(version_t version) const;
 
-    Symbol* get(str_id_t name_id, version_t version, bool current = false);
+    Symbol* get(str_id_t name_id, version_t version, const GetParams& params = {});
     const Symbol*
-    get(str_id_t name_id, version_t version, bool current = false) const;
+    get(str_id_t name_id, version_t version, const GetParams& params = {}) const;
 
-    Symbol* get_local(str_id_t name_id, version_t version);
-    const Symbol* get_local(str_id_t name_id, version_t version) const;
-
-    SymbolRes find(str_id_t name_id, version_t version);
+    FindRes find(str_id_t name_id, version_t version);
 
     version_t version() const;
 

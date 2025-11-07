@@ -23,6 +23,7 @@ public:
     bool do_visit(Ref<ast::FunDef> node) override;
 
 private:
+    // TODO: move out
     void resolve();
 
     SrcMngr& _sm;

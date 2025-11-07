@@ -72,8 +72,9 @@ void Init::visit(Ref<ast::TypeDef> node) {
     node->type_name()->accept(*this);
 
     auto alias_id = node->alias_id();
+
     // name is already in current scope?
-    if (scope()->has(alias_id, true)) {
+    if (scope()->defines(alias_id)) {
         // TODO: after types are resolves, complain if types don't match
         return;
     }
@@ -110,7 +111,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
             def->init()->accept(*this);
 
         // already in current scope?
-        if (scope()->has(name_id, true)) {
+        if (scope()->defines(name_id)) {
             diag().error(def, "already defined");
             continue;
         }

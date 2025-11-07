@@ -16,8 +16,8 @@ std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     assert(_version < scope()->version());
     ++_version;
     auto name_id = last_change();
-    assert(name_id != NoStrId && get(name_id));
-    return {name_id, get(name_id)};
+    assert(name_id != NoStrId && find(name_id).first);
+    return {name_id, find(name_id).first};
 }
 
 Scope* PersScopeView::parent(scope_flags_t flags) {
@@ -32,15 +32,15 @@ Ref<Class> PersScopeView::eff_cls() const { return scope()->eff_cls(); }
 
 scope_flags_t PersScopeView::flags() const { return scope()->flags(); }
 
-Scope::Symbol* PersScopeView::get(str_id_t name_id, bool current) {
-    return scope()->get(name_id, _version, current);
+bool PersScopeView::has(str_id_t name_id, const GetParams& params) const {
+    return scope()->has(name_id, _version, params);
 }
 
-Scope::Symbol* PersScopeView::get_local(str_id_t name_id) {
-    return scope()->get_local(name_id, _version);
+Scope::Symbol* PersScopeView::get(str_id_t name_id, const GetParams& params) {
+    return scope()->get(name_id, _version, params);
 }
 
-Scope::SymbolRes PersScopeView::find(str_id_t name_id) {
+Scope::FindRes PersScopeView::find(str_id_t name_id) {
     return scope()->find(name_id, _version);
 }
 

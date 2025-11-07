@@ -32,10 +32,11 @@ public:
 
     scope_flags_t flags() const override;
 
-    Symbol* get(str_id_t name_id, bool current = false) override;
-    Symbol* get_local(str_id_t name_id) override;
+    bool has(str_id_t name_id, const GetParams& params) const override;
 
-    SymbolRes find(str_id_t name_id) override;
+    Symbol* get(str_id_t name_id, const GetParams& params) override;
+
+    FindRes find(str_id_t name_id) override;
 
     str_id_t last_change() const;
 

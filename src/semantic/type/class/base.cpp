@@ -146,7 +146,7 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
 Ref<Var>
 ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
-    assert(!scope()->has(name_id, true));
+    assert(!scope()->defines(name_id));
 
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
@@ -164,7 +164,7 @@ ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 Ref<Prop>
 ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
-    assert(!scope()->has(name_id));
+    assert(!scope()->defines(name_id));
 
     auto prop = make<Prop>(type_node, node, Ref<Type>{}, Var::NoFlags);
     auto ref = ulam::ref(prop);
