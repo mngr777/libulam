@@ -12,10 +12,7 @@
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
-    // TEST
-    // assert(!rval.empty());
-    if (rval.empty())
-        return "<empty>";
+    assert(!rval.empty());
 
     type = type->deref();
 
