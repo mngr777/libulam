@@ -23,6 +23,14 @@ static const std::set<std::string> DefOrder = {
     "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
     "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
+    "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition (postfix doesn't match)
+    "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"- 
+    "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"- (postfix doesn't match)
+    "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"- (postfix doesn't match)
+    "t41223_test_compiler_elementtemplatewithinheritedclassparameterquarktemplate.test", // -"-
+    "t41224_test_compiler_elementregularwithinheritedclassparameterquarktemplate.test", // -"- (postfix doesn't match)
+    "t41226_test_compiler_elementtemplatewithinheritedclassparameterquarktemplatedependent_thegoal.test", // -"-
+    "t41228_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor.test", // -"-
 };
 
 // TODO: native classes
@@ -45,14 +53,6 @@ static const std::set<std::string> Skip {
     "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
     "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
-    // "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition
-    "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
-    "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
-    "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"-
-    "t41223_test_compiler_elementtemplatewithinheritedclassparameterquarktemplate.test", // -"-
-    "t41224_test_compiler_elementregularwithinheritedclassparameterquarktemplate.test", // -"-
-    "t41226_test_compiler_elementtemplatewithinheritedclassparameterquarktemplatedependent_thegoal.test", // -"-
-    "t41228_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor.test", // -"-
     "t41266_test_compiler_constantclassarrayoftransients.test", // module-local constant `keyexpr_x13` addressed as `KeyExprRep.keyexpr_x13` ??
     "t41285_test_compiler_localdefquestioncolon_usingtemplateinstanceconstant_filescope.test",
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
@@ -187,8 +187,12 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41206_test_compiler_classdminitarraysnull_localvar.test", // array format
     "t41209_test_compiler_elementwithclassparameterquarktemplate.test", // object param format (is prefix in hex classid?), folding, casts
     "t41213_test_compiler_elementwithclassparameterquarktemplate_Sfirst.test", // -"-
+    "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // -"-
     "t41216_test_compiler_elementwithaclassparameterquark_constantclassemptyinit.test", // -"-
+    "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
+    "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"-
     "t41220_test_compiler_elementwithaclassparameterquark_constantclassemptyinit_Sfirst.test", // -"-
+    "t41224_test_compiler_elementregularwithinheritedclassparameterquarktemplate.test", // -"-
     "t41229_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_assignment_ish.test", // -"-
     "t41231_test_compiler_transientconstant_assignment.test", // `Bool m_rb(true);  Int m_ri(99);` is correct
     "t41232_test_compiler_transientconstantwelementdatamember.test", // `Bool m_testb(true);  Int m_testi(77);` is correct
