@@ -70,6 +70,44 @@ EvalEnv::FlagsRaii::FlagsRaii(EvalEnv& env, eval_flags_t flags):
     env._flags = flags;
 }
 
+// EvalEnv::VarDefaultsRaii
+
+EvalEnv::VarDefaultsRaii::VarDefaultsRaii(): _env{} {}
+
+EvalEnv::VarDefaultsRaii::~VarDefaultsRaii() {
+    if (_env) {
+        for (auto var : _var_set)
+            _env->_var_defaults.erase(var);
+    }
+}
+
+EvalEnv::VarDefaultsRaii::VarDefaultsRaii(VarDefaultsRaii&& other) {
+    operator=(std::move(other));
+}
+
+EvalEnv::VarDefaultsRaii&
+EvalEnv::VarDefaultsRaii::operator=(VarDefaultsRaii&& other) {
+    std::swap(_env, other._env);
+    std::swap(_var_set, other._var_set);
+    return *this;
+}
+
+EvalEnv::VarDefaultsRaii::VarDefaultsRaii(
+    EvalEnv& env, VarDefaults&& var_defaults):
+    _env{&env}, _var_set{make_set(var_defaults)} {
+    env._var_defaults.merge(var_defaults);
+}
+
+EvalEnv::VarDefaultsRaii::VarSet
+EvalEnv::VarDefaultsRaii::make_set(const VarDefaults& var_defaults) {
+    VarSet set;
+    for (const auto& [var, res] : var_defaults) {
+        assert(_env && _env->_var_defaults.count(var) == 0);
+        set.insert(var);
+    }
+    return set;
+}
+
 // EvalEnv
 
 EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
@@ -245,6 +283,11 @@ EvalEnv::FlagsRaii EvalEnv::remove_flags_raii(eval_flags_t flags_) {
     return {*this, (eval_flags_t)(flags() & ~flags_)};
 }
 
+EvalEnv::VarDefaultsRaii
+EvalEnv::var_defaults_raii(VarDefaults&& var_defaults) {
+    return {*this, std::move(var_defaults)};
+}
+
 const EvalStack::Item& EvalEnv::stack_top() const {
     assert(!_stack.empty());
     return _stack.top();
@@ -259,6 +302,11 @@ Scope* EvalEnv::scope() {
 scope_lvl_t EvalEnv::scope_lvl() const {
     assert(!_scope_override);
     return _scope_stack.size();
+}
+
+ExprRes EvalEnv::move_var_default(Ref<Var> var) {
+    auto node_h = _var_defaults.extract(var);
+    return !node_h.empty() ? std::move(node_h.mapped()) : ExprRes{};
 }
 
 void EvalEnv::do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt) {

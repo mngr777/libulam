@@ -12,6 +12,7 @@
 #include <libulam/semantic/scope/program.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 #include <libulam/semantic/value.hpp>
+#include <unordered_set>
 
 namespace ulam::sema {
 
@@ -29,6 +30,7 @@ public:
     using ScopeRaii = ScopeStack::Raii<BasicScope>;
     using FunScopeRaii = ScopeStack::Raii<FunScope>;
     using AsCondScopeRaii = ScopeStack::Raii<AsCondScope>;
+    using VarDefaults = std::map<Ref<Var>, ExprRes>;
 
     class ScopeSwitchRaii {
         friend EvalEnv;
@@ -62,6 +64,27 @@ public:
 
         EvalEnv* _env;
         eval_flags_t _old_flags;
+    };
+
+    class VarDefaultsRaii {
+        friend EvalEnv;
+
+    public:
+        VarDefaultsRaii();
+        ~VarDefaultsRaii();
+
+        VarDefaultsRaii(VarDefaultsRaii&& other);
+        VarDefaultsRaii& operator=(VarDefaultsRaii&& other);
+
+    private:
+        using VarSet = std::unordered_set<Ref<Var>>;
+
+        VarDefaultsRaii(EvalEnv& env, VarDefaults&& var_defaults);
+
+        VarSet make_set(const VarDefaults& var_defaults);
+
+        EvalEnv* _env;
+        VarSet _var_set;
     };
 
     explicit EvalEnv(Ref<Program> program, eval_flags_t flags = evl::NoFlags);
@@ -133,6 +156,8 @@ public:
     FlagsRaii add_flags_raii(eval_flags_t flags);
     FlagsRaii remove_flags_raii(eval_flags_t flags);
 
+    VarDefaultsRaii var_defaults_raii(VarDefaults&& var_defaults);
+
     const EvalStack::Item& stack_top() const;
     std::size_t stack_size() const;
 
@@ -141,6 +166,8 @@ public:
 
     eval_flags_t flags() const { return _flags; }
     bool has_flag(eval_flags_t flag) const { return _flags & flag; }
+
+    ExprRes move_var_default(Ref<Var> var);
 
 protected:
     virtual void do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt);
@@ -210,6 +237,7 @@ private:
     EvalStack _stack;
     ScopeStack _scope_stack;
     Scope* _scope_override{};
+    VarDefaults _var_defaults;
 };
 
 } // namespace ulam::sema

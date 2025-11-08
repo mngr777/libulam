@@ -46,39 +46,6 @@ public:
 
 private:
     using ClassSet = std::unordered_set<Ref<Class>>;
-    using VarDefaults = std::unordered_map<Ref<Var>, ExprRes>;
-
-    class VarDefaultsRaii {
-    public:
-        VarDefaultsRaii(Resolver& resolver, VarDefaults&& var_defaults):
-            _resolver{&resolver}, _var_defaults(std::move(var_defaults)) {
-            std::swap(_var_defaults, resolver._var_defaults);
-            resolver._var_defaults.merge(_var_defaults);
-        }
-
-        VarDefaultsRaii(): _resolver{} {}
-
-        ~VarDefaultsRaii() {
-            if (_resolver)
-                std::swap(_var_defaults, _resolver->_var_defaults);
-        }
-
-        VarDefaultsRaii(VarDefaultsRaii&& other) {
-            operator=(std::move(other));
-        }
-
-        VarDefaultsRaii& operator=(VarDefaultsRaii&& other) {
-            std::swap(_resolver, other._resolver);
-            std::swap(_var_defaults, other._var_defaults);
-            return *this;
-        }
-
-    private:
-        Resolver* _resolver;
-        VarDefaults _var_defaults;
-    };
-
-    VarDefaultsRaii var_defaults_raii(VarDefaults&& var_defaults);
 
     Ref<Type> do_resolve_type_name(
         Ref<ast::TypeName> type_name,
@@ -128,7 +95,6 @@ private:
 
     bool _in_expr;
     ClassSet _classes;
-    VarDefaults _var_defaults;
 };
 
 } // namespace ulam::sema

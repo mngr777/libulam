@@ -142,9 +142,8 @@ bool Resolver::resolve(Ref<Var> var) {
 
     // value
     if (!var->has_value()) {
-        auto node_h = _var_defaults.extract(var);
-        if (!node_h.empty()) {
-            auto arg = std::move(node_h.mapped());
+        auto arg = env().move_var_default(var);
+        if (arg) {
             bool ok = env().init_var_with(var, std::move(arg));
             RET_UPD_STATE(var, ok);
         }
@@ -310,11 +309,6 @@ Ref<Type> Resolver::resolve_full_type_name(
 Ref<Type>
 Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
     return do_resolve_type_name(type_name, {}, resolve_class);
-}
-
-Resolver::VarDefaultsRaii
-Resolver::var_defaults_raii(VarDefaults&& var_defaults) {
-    return {*this, std::move(var_defaults)};
 }
 
 Ref<Type> Resolver::do_resolve_type_name(
@@ -796,7 +790,7 @@ Resolver::do_eval_tpl_args_compat(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     PersScope param_scope(&scope_view, scp::Params); // tmp scope
 
     // create tmp class params
-    VarDefaults var_defaults;
+    EvalEnv::VarDefaults var_defaults;
     std::list<Ptr<Var>> params; // tmp class params
     for (auto tpl_param : tpl->params()) {
         // make tmp class param
@@ -819,7 +813,7 @@ Resolver::do_eval_tpl_args_compat(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     // resolve params
     auto param_scope_view = param_scope.view(0);
     auto ssr = env().scope_switch_raii(&param_scope_view);
-    auto vdr = var_defaults_raii(std::move(var_defaults));
+    auto vdr = env().var_defaults_raii(std::move(var_defaults));
     for (auto& param : params) {
         if (!resolve(ref(param)))
             return res;
