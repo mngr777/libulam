@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/program.hpp"
 #include <cassert>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>

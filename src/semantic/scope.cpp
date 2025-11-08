@@ -1,3 +1,4 @@
+#include "libulam/semantic/scope/flags.hpp"
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>
@@ -152,7 +153,7 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
         if (!scope)
             return use_fallback ? fallback : nullptr;
 
-        if (scope->is(scp::Class) &&
+        if (scope->is(scp::Class | scp::Params) &&
             (params.local || scope->self_cls() != eff_cls_)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
@@ -216,7 +217,7 @@ Scope::Symbol*
 PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
     // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
     // scp::Module) count as local symbols: t3875
-    if (params.local && is(scp::Class)) {
+    if (params.local && is(scp::Class | scp::Params)) {
         assert(in(scp::Module));
         return parent(scp::Module)->get(name_id, params);
     }
@@ -224,6 +225,10 @@ PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
     auto [cur_sym, is_final] = find(name_id, version);
     if (cur_sym && is_excluded(*cur_sym, params))
         cur_sym = nullptr;
+
+    if (cur_sym && !is_final && is(scp::Params) &&
+        options().prefer_params_in_param_resolution)
+        is_final = true;
 
     if (cur_sym && is_final)
         return cur_sym;

@@ -103,6 +103,7 @@ public:
     to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl = false);
 
     virtual bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
+    virtual bool init_var_with(Ref<Var> var, ExprRes&& arg);
 
     virtual bool init_prop(Ref<Prop> prop, Ref<ast::InitValue> init);
 
@@ -177,6 +178,8 @@ protected:
 
     virtual bool do_init_var(
         EvalInit& ei, Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
+
+    virtual bool do_init_var_with(EvalInit& ei, Ref<Var> var, ExprRes&& arg);
 
     virtual bool
     do_init_prop(EvalInit& ei, Ref<Prop> prop, Ref<ast::InitValue> init);

@@ -1,6 +1,7 @@
 #pragma once
 #include <any>
 #include <cstdint>
+#include <initializer_list>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/expr_error.hpp>
 #include <libulam/semantic/typed_value.hpp>
@@ -98,6 +99,11 @@ private:
 
 class ExprResList {
 public:
+    ExprResList() {}
+
+    ExprResList(ExprResList&&) = default;
+    ExprResList& operator=(ExprResList&&) = default;
+
     bool ok() const { return _list.empty() || _list.back(); }
     operator bool() const { return ok(); }
 

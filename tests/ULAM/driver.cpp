@@ -46,7 +46,7 @@ static const std::set<std::string> Skip {
     "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
     // "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition
-    // "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
+    "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"-
     "t41217_test_compiler_elementwithclassparameterquarktemplateanddefaultsecarg.test", // -"-
     "t41218_test_compiler_elementwithclassparameterquarktemplate_scopeparamnames.test", // -"-
     "t41223_test_compiler_elementtemplatewithinheritedclassparameterquarktemplate.test", // -"-

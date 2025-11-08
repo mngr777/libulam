@@ -142,25 +142,29 @@ bool Resolver::resolve(Ref<Var> var) {
 
     // value
     if (!var->has_value()) {
+        auto node_h = _var_defaults.extract(var);
+        if (!node_h.empty()) {
+            auto arg = std::move(node_h.mapped());
+            bool ok = env().init_var_with(var, std::move(arg));
+            RET_UPD_STATE(var, ok);
+        }
+
         if (node->has_init()) {
             EvalEnv::FlagsRaii fr{};
             if (!var->is_local() && !var->type()->is_ref())
                 fr = env().add_flags_raii(evl::Consteval); // class/module const
             bool ok = env().init_var(var, node->init(), _in_expr);
-            update_state(var, ok);
-            return ok;
+            RET_UPD_STATE(var, ok);
+        }
 
-        } else if (var->requires_value()) {
+        if (var->requires_value()) {
             auto name = node->name();
             diag().error(
                 name.loc_id(), str(name.str_id()).size(), "value required");
             RET_UPD_STATE(var, false);
-
-        } else {
-            update_state(var, true);
-            env().init_var(var, {}, _in_expr);
-            return true;
         }
+
+        env().init_var(var, {}, _in_expr);
     }
     RET_UPD_STATE(var, true);
 }
@@ -306,6 +310,11 @@ Ref<Type> Resolver::resolve_full_type_name(
 Ref<Type>
 Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
     return do_resolve_type_name(type_name, {}, resolve_class);
+}
+
+Resolver::VarDefaultsRaii
+Resolver::var_defaults_raii(VarDefaults&& var_defaults) {
+    return {*this, std::move(var_defaults)};
 }
 
 Ref<Type> Resolver::do_resolve_type_name(
@@ -705,40 +714,33 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
     return {std::move(dims), ok};
 }
 
-// TODO: refactor this!
 std::pair<TypedValueList, bool>
 Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n" << line_at(args);
 
+    auto fr = env().add_flags_raii(evl::Consteval);
+    return !program()->scope_options().allow_access_before_def
+               ? do_eval_tpl_args(args, tpl)
+               : do_eval_tpl_args_compat(args, tpl);
+}
+
+std::pair<TypedValueList, bool>
+Resolver::do_eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     std::pair<TypedValueList, bool> res;
 
-    // consteval
-    auto fr = env().add_flags_raii(evl::Consteval);
-
-    // resolve arguments in current scope
+    // eval args
     ExprResList arg_res_list;
-    {
-        BasicScope arg_scope(scope());
-        auto ssr = env().scope_switch_raii(&arg_scope);
-        for (unsigned n = 0; n < args->child_num(); ++n) {
-            auto arg_res = env().eval_expr(args->get(n));
-            if (!arg_res)
-                return res;
-            arg_res_list.push_back(std::move(arg_res));
-        }
-    }
+    std::tie(arg_res_list, res.second) = eval_args(args);
+    if (!res.second)
+        return res;
 
     // resolve param types and default values (if needed) in tpl scope
-    std::list<Ptr<Var>> params;
-    scope_version_t scope_version =
-        program()->scope_options().prefer_params_in_param_resolution
-            ? tpl->params().size()
-            : 0;
-    auto scope_view = tpl->scope()->view(scope_version);
+    auto scope_view = tpl->scope()->view(0);
     BasicScope param_scope(&scope_view); // tmp scope
     auto ssr = env().scope_switch_raii(&param_scope);
+    std::list<Ptr<Var>> params; // tmp class params
     for (auto tpl_param : tpl->params()) {
-        // make class param
+        // make tmp class param
         params.push_back(make<Var>(
             tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
             Value{RValue{}}, tpl_param->flags()));
@@ -772,9 +774,73 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         param_scope.set(param->name_id(), param);
     }
 
+    // move param values into result
     for (auto& param : params)
         res.first.emplace_back(param->type(), param->move_value());
     res.second = true;
+    return res;
+}
+
+std::pair<TypedValueList, bool>
+Resolver::do_eval_tpl_args_compat(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
+    std::pair<TypedValueList, bool> res;
+
+    // eval args
+    ExprResList arg_res_list;
+    std::tie(arg_res_list, res.second) = eval_args(args);
+    if (!res.second)
+        return res;
+
+    // param types and default values (if needed) are resolved in tpl scope
+    auto scope_view = tpl->scope()->view(0);
+    PersScope param_scope(&scope_view, scp::Params); // tmp scope
+
+    // create tmp class params
+    VarDefaults var_defaults;
+    std::list<Ptr<Var>> params; // tmp class params
+    for (auto tpl_param : tpl->params()) {
+        // make tmp class param
+        params.push_back(make<Var>(
+            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
+            Value{RValue{}}, tpl_param->flags()));
+        auto param = ref(params.back());
+        assert(param->is_local());
+        param_scope.set(param->name_id(), param);
+
+        // if arg provided, set default value override
+        if (!arg_res_list.empty()) {
+            var_defaults[param] = arg_res_list.pop_front();
+        } else if (!param->node()->has_init()) {
+            diag().error(args->loc_id(), 1, "not enough arguments");
+            return res;
+        }
+    }
+
+    // resolve params
+    auto param_scope_view = param_scope.view(0);
+    auto ssr = env().scope_switch_raii(&param_scope_view);
+    auto vdr = var_defaults_raii(std::move(var_defaults));
+    for (auto& param : params) {
+        if (!resolve(ref(param)))
+            return res;
+        param_scope_view.advance();
+    }
+
+    // move param values into result
+    for (auto& param : params)
+        res.first.emplace_back(param->type(), param->move_value());
+    res.second = true;
+    return res;
+}
+
+std::pair<ExprResList, bool> Resolver::eval_args(Ref<ast::ArgList> args) {
+    std::pair<ExprResList, bool> res;
+    res.second = true;
+    for (unsigned n = 0; res.second && n < args->child_num(); ++n) {
+        auto arg_res = env().eval_expr(args->get(n));
+        res.second = arg_res.ok();
+        res.first.push_back(std::move(arg_res));
+    }
     return res;
 }
 

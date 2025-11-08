@@ -163,6 +163,11 @@ bool EvalEnv::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
     return do_init_var(ei, var, init, in_expr);
 }
 
+bool EvalEnv::init_var_with(Ref<Var> var, ExprRes&& arg) {
+    EvalInit ei{*this};
+    return do_init_var_with(ei, var, std::move(arg));
+}
+
 bool EvalEnv::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
     EvalInit ei{*this};
     return do_init_prop(ei, prop, init);
@@ -309,6 +314,10 @@ EvalEnv::do_cast_to_idx(EvalCast& ec, Ref<ast::Node> node, ExprRes&& arg) {
 bool EvalEnv::do_init_var(
     EvalInit& ei, Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
     return ei.init_var(var, init, in_expr);
+}
+
+bool EvalEnv::do_init_var_with(EvalInit& ei, Ref<Var> var, ExprRes&& arg) {
+    return ei.init_var_with(var, std::move(arg));
 }
 
 bool EvalEnv::do_init_prop(

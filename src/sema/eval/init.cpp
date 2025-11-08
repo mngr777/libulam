@@ -21,6 +21,16 @@ bool EvalInit::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
     return false;
 }
 
+bool EvalInit::init_var_with(Ref<Var> var, ExprRes&& init) {
+    assert(init);
+    assert(var->has_type());
+    init = env().cast(var->node(), var->type(), std::move(init));
+    if (!init)
+        return false;
+    var_init_expr(var, std::move(init), false);
+    return true;
+}
+
 bool EvalInit::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
     if (!init) {
         prop_init_default(prop);

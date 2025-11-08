@@ -21,6 +21,7 @@ public:
     using EvalHelper::EvalHelper;
 
     virtual bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
+    virtual bool init_var_with(Ref<Var> var, ExprRes&& init);
 
     virtual bool init_prop(Ref<Prop> prop, Ref<ast::InitValue> init);
 
