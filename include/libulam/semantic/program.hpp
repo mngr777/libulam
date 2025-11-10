@@ -1,12 +1,14 @@
 #pragma once
-#include "libulam/semantic/scope/options.hpp"
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/export.hpp>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/module.hpp>
+#include <libulam/semantic/scope/options.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/type/class/options.hpp>
+#include <libulam/semantic/type/class/registry.hpp>
 #include <libulam/semantic/type/element.hpp>
 #include <libulam/src_mngr.hpp>
 #include <libulam/str_pool.hpp>
@@ -37,11 +39,15 @@ public:
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
 
+    ClassRegistry& classes() { return _classes; }
     ElementRegistry& elements() { return _elements; }
 
     auto& builtins() { return _builtins; }
 
     Mangler& mangler() { return _mangler; }
+
+    const ClassOptions& class_options() const;
+    ClassOptions set_class_options(ClassOptions options);
 
     const ScopeOptions& scope_options() const;
     ScopeOptions set_scope_options(ScopeOptions options);
@@ -60,11 +66,13 @@ private:
     UniqStrPool& _text_pool;
     SrcMngr& _sm;
     TypeIdGen _type_id_gen;
+    ClassRegistry _classes;
     ElementRegistry _elements;
     Builtins _builtins;
     Mangler _mangler;
 
     struct {
+        ClassOptions class_options{DefaultClassOptions};
         ScopeOptions scope_options{DefaultScopeOptions};
     } _options;
 

@@ -65,7 +65,9 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/class_tpl.hpp \
 	include/libulam/semantic/type/class/ancestry.hpp \
 	include/libulam/semantic/type/class/base.hpp \
+	include/libulam/semantic/type/class/options.hpp \
 	include/libulam/semantic/type/class/prop.hpp \
+	include/libulam/semantic/type/class/registry.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
 	include/libulam/semantic/type/conv.hpp \
 	include/libulam/semantic/type/element.hpp \
@@ -96,6 +98,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/class/ancestry.cpp \
 	src/semantic/type/class/base.cpp \
 	src/semantic/type/class/prop.cpp \
+	src/semantic/type/class/registry.cpp \
 	src/semantic/type/class_kind.cpp \
 	src/semantic/type/prim.cpp \
 	src/semantic/mangler.cpp \

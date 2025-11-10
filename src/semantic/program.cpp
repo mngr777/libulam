@@ -21,6 +21,15 @@ Program::Program(
 
 Program::~Program() {}
 
+const ClassOptions& Program::class_options() const {
+    return _options.class_options;
+}
+
+ClassOptions Program::set_class_options(ClassOptions options) {
+    std::swap(_options.class_options, options);
+    return options;
+}
+
 const ScopeOptions& Program::scope_options() const {
     return _options.scope_options;
 }

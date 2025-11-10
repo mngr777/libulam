@@ -11,7 +11,7 @@ class ElementRegistry {
 public:
     elt_id_t add(Ref<Class> cls);
 
-    Ref<Class> get(elt_id_t id);
+    Ref<Class> get(elt_id_t id) const;
 
 private:
     std::vector<Ref<Class>> _elements;

@@ -22,6 +22,9 @@ using ArrayDimList = std::vector<array_size_t>;
 using str_len_t = std::uint16_t;
 constexpr str_len_t NoStrLen = -1;
 
+using cls_id_t = std::uint16_t;
+constexpr cls_id_t NoClassId = 0;
+
 using elt_id_t = std::uint16_t;
 constexpr elt_id_t NoEltId = 0;
 

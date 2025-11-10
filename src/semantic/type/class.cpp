@@ -32,10 +32,8 @@ Class::Class(std::string_view name, Ref<ClassTpl> tpl):
     _name{name},
     _tpl{tpl},
     _init_bits{0} {
-    set_module(tpl->module());
     set_cls_tpl(tpl);
-    if (is_element())
-        register_element(tpl->program());
+    init(tpl->module());
 }
 
 Class::Class(
@@ -45,14 +43,21 @@ Class::Class(
     _name{name},
     _tpl{},
     _init_bits{0} {
-    set_module(module);
-    if (is_element())
-        register_element(module->program());
+    init(module);
 }
 
 Class::~Class() {}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
+
+cls_id_t Class::class_id() const {
+    if (_cls_id == NoClassId &&
+        module()->program()->class_options().lazy_class_id) {
+        const_cast<Class*>(this)->register_class();
+    }
+    assert(_cls_id != NoClassId);
+    return _cls_id;
+}
 
 elt_id_t Class::element_id() const {
     assert(is_element());
@@ -472,10 +477,26 @@ Ref<FunSet> Class::add_op_fset(Op op) {
     return fset;
 }
 
-void Class::register_element(Ref<Program> program) {
+void Class::init(Ref<Module> module) {
+    auto program = module->program();
+    set_module(module);
+
+    if (!program->class_options().lazy_class_id)
+        register_class();
+
+    if (is_element())
+        register_element();
+}
+
+void Class::register_class() {
+    assert(_cls_id == NoClassId);
+    _cls_id = program()->classes().add(this);
+}
+
+void Class::register_element() {
     assert(is_element());
     assert(_elt_id == NoEltId);
-    _elt_id = program->elements().add(this);
+    _elt_id = program()->elements().add(this);
 }
 
 elt_id_t Class::read_element_id(const BitsView data, bitsize_t off) {
@@ -555,5 +576,7 @@ void Class::init_layout() {
             off += prop->bitsize();
     }
 }
+
+Ref<Program> Class::program() { return module()->program(); }
 
 } // namespace ulam

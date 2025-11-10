@@ -22,7 +22,7 @@ class VarDefList;
 namespace ulam::sema {
 class Resolver;
 class ClassResolver;
-}
+} // namespace ulam::sema
 
 namespace ulam {
 
@@ -51,6 +51,7 @@ public:
     std::string name() const override { return std::string{_name}; }
     str_id_t name_id() const override;
 
+    cls_id_t class_id() const;
     elt_id_t element_id() const;
 
     Ref<Var> add_param(Ptr<Var>&& var) override;
@@ -135,7 +136,11 @@ protected:
     Ref<FunSet> add_op_fset(Op op) override;
 
 private:
-    void register_element(Ref<Program> program);
+    void init(Ref<Module> module);
+
+    void register_class();
+
+    void register_element();
     elt_id_t read_element_id(const BitsView data, bitsize_t off = 0);
 
     void add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node);
@@ -146,7 +151,10 @@ private:
     auto& convs() { return _convs; }
     auto& fsets() { return _fsets; }
 
+    Ref<Program> program();
+
     const std::string_view _name;
+    cls_id_t _cls_id{NoClassId};
     elt_id_t _elt_id{NoEltId};
     Ref<ClassTpl> _tpl;
     cls::Ancestry _ancestry;
