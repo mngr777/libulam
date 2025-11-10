@@ -41,11 +41,8 @@ class Class : public UserType, public ClassBase {
 public:
     using UserType::is_castable_to;
 
-    Class(const std::string_view name, Ref<ClassTpl> tpl);
-    Class(
-        const std::string_view name,
-        Ref<ast::ClassDef> node,
-        Ref<Module> module);
+    explicit Class(Ref<ClassTpl> tpl);
+    Class(Ref<ast::ClassDef> node, Ref<Module> module);
     ~Class();
 
     std::string name() const override { return std::string{_name}; }

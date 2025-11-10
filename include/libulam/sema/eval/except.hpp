@@ -46,4 +46,10 @@ private:
     std::string _message;
 };
 
+class EvalExceptAssert : public EvalExceptError {
+public:
+    // TODO: loc id
+    using EvalExceptError::EvalExceptError;
+};
+
 } // namespace ulam::sema

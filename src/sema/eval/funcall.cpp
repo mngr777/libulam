@@ -101,11 +101,9 @@ ExprRes EvalFuncall::funcall_obj(
 ExprRes EvalFuncall::do_funcall(
     Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
     if (fun->is_native()) {
-        // can't eval, return empty value
-        diag().notice(node, "cannot evaluate native function");
-        return empty_ret_val(node, fun);
-
-    } else if (fun->is_pure_virtual()) {
+        return do_funcall_native(node, fun, self, std::move(args));
+    }
+    if (fun->is_pure_virtual()) {
         diag().error(node, "function is pure virtual");
         return {ExprError::FunctionIsPureVirtual};
     }
@@ -167,6 +165,13 @@ ExprRes EvalFuncall::do_funcall(
         }
     }
     return {builtins().void_type(), Value{RValue{}}};
+}
+
+ExprRes EvalFuncall::do_funcall_native(
+    Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
+    // can't eval, return empty value
+    diag().notice(node, "cannot evaluate native function");
+    return empty_ret_val(node, fun);
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {

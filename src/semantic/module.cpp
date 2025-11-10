@@ -57,8 +57,7 @@ Module::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node) {
 }
 
 Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
-    auto name = program()->str_pool().get(node->name_id());
-    auto cls = make<Class>(name, node, this);
+    auto cls = make<Class>(node, this);
     auto ref = ulam::ref(cls);
     auto name_id = ref->name_id();
 

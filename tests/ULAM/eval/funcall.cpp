@@ -77,9 +77,26 @@ ExprRes EvalFuncall::do_funcall(
     ulam::LValue self,
     ExprResList&& args) {
     EvalEnv::FlagsRaii fr{};
-    if (env().stack_size() == 0 && !env().has_flag(evl::NoCodegen))
+    if (env().stack_size() == 0 && !has_flag(evl::NoCodegen))
         fr = env().add_flags_raii(ulam::sema::evl::NoExec);
     return Base::do_funcall(node, fun, self, std::move(args));
+}
+
+ExprRes EvalFuncall::do_funcall_native(
+    ulam::Ref<ulam::ast::Node> node,
+    ulam::Ref<ulam::Fun> fun,
+    ulam::LValue self,
+    ExprResList&& args) {
+    if (has_flag(ulam::sema::evl::NoExec))
+        return empty_ret_val(node, fun);
+
+    // auto type = self.dyn_obj_type();
+    // assert(type->is_class());
+    // auto cls = type->as_class();
+
+    // TODO
+
+    return empty_ret_val(node, fun);
 }
 
 ExprResList EvalFuncall::cast_args(

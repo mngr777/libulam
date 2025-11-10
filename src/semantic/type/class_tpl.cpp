@@ -79,8 +79,7 @@ Ref<Class> ClassTpl::type(TypedValueList&& args) {
 }
 
 Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
-    auto& str_pool = program()->str_pool();
-    auto cls = make<Class>(str_pool.get(name_id()), this);
+    auto cls = make<Class>(this);
 
     // create params
     TypedValue tv;

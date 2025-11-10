@@ -36,6 +36,12 @@ protected:
         ulam::LValue self,
         ExprResList&& args) override;
 
+    ExprRes do_funcall_native(
+        ulam::Ref<ulam::ast::Node> node,
+        ulam::Ref<ulam::Fun> fun,
+        ulam::LValue self,
+        ExprResList&& args) override;
+
     ExprResList cast_args(
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,

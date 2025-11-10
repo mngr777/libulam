@@ -50,6 +50,7 @@ private:
     Bits _bits;
 };
 
+// TODO: move additional data to shared object
 class DataView {
 public:
     DataView(
