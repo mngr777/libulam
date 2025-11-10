@@ -25,7 +25,7 @@ public:
 
     PrimType(Builtins& builtins, TypeIdGen* id_gen);
 
-    std::string name() const override;
+    const std::string_view name() const override;
 
     bool is_constructible() const override { return true; }
 
@@ -127,11 +127,13 @@ public:
         bitsize_t bitsize):
         PrimType{builtins, &id_gen}, _tpl{tpl}, _bitsize{bitsize} {}
 
-    std::string name() const override {
-        auto name = PrimType::name();
-        if (bitsize() != DefaultSize)
-            name += std::string{"("} + std::to_string(bitsize()) + ")";
-        return name;
+    const std::string_view name() const override {
+        if (_name.empty()) {
+            _name = PrimType::name();
+            if (bitsize() != DefaultSize)
+                _name += std::string{"("} + std::to_string(bitsize()) + ")";
+        }
+        return _name;
     }
 
     BuiltinTypeId bi_type_id() const override { return TypeId; }
@@ -143,6 +145,7 @@ protected:
 private:
     Ref<PrimTypeTpl> _tpl;
     bitsize_t _bitsize;
+    mutable std::string _name;
 };
 
 class PrimTypeTpl : public TypeTpl {

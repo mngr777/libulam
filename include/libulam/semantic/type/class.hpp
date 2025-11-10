@@ -45,7 +45,7 @@ public:
     Class(Ref<ast::ClassDef> node, Ref<Module> module);
     ~Class();
 
-    std::string name() const override { return std::string{_name}; }
+    const std::string_view name() const override;
     str_id_t name_id() const override;
 
     cls_id_t class_id() const;
@@ -150,7 +150,6 @@ private:
 
     Ref<Program> program();
 
-    const std::string_view _name;
     cls_id_t _cls_id{NoClassId};
     elt_id_t _elt_id{NoEltId};
     Ref<ClassTpl> _tpl;

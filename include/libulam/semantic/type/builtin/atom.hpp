@@ -3,7 +3,6 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/element.hpp>
-#include <string>
 
 namespace ulam {
 
@@ -15,7 +14,7 @@ public:
 
     AtomType(Builtins& builtins, TypeIdGen& id_gen, ElementRegistry& elements);
 
-    std::string name() const override { return "Atom"; }
+    const std::string_view name() const override { return "Atom"; }
 
     bitsize_t bitsize() const override { return ULAM_ATOM_SIZE; }
 

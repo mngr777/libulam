@@ -219,7 +219,7 @@ bool Resolver::resolve(Ref<FunSet> fset) {
             if (is_conv && !fun->ret_type()->is_same(int_type)) {
                 diag().warn(
                     fun->node(),
-                    std::string{"return type must be "} + int_type->name());
+                    "return type must be " + std::string{int_type->name()});
                 is_conv = false;
             }
             // check params
@@ -442,7 +442,8 @@ Ref<Type> Resolver::resolve_type_spec(
         // Super
         if (!self_cls->has_super()) {
             diag().error(
-                ident, self_cls->name() + " does not have a superclass");
+                ident,
+                std::string{self_cls->name()} + " does not have a superclass");
             return {};
         }
         return self_cls->super();

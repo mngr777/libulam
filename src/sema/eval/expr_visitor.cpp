@@ -428,7 +428,7 @@ Ref<Class> EvalExprVisitor::class_base(
 
     auto base = type->as_class();
     if (!base->is_same_or_base_of(cls)) {
-        diag().error(ident, std::string{"not an ancestor of "} + cls->name());
+        diag().error(ident, "not an ancestor of " + std::string{cls->name()});
         return {};
     }
     return base;
@@ -460,7 +460,7 @@ ExprRes EvalExprVisitor::binary_op(
         case TypeError::ExplCastRequired: {
             auto rval = arg.move_value().move_rvalue();
             auto message =
-                std::string{"suggest casting "} + arg.type()->name() + " to ";
+                "suggest casting " + std::string{arg.type()->name()} + " to ";
             message +=
                 (error.cast_bi_type_id != NoBuiltinTypeId)
                     ? std::string{builtin_type_str(error.cast_bi_type_id)}
@@ -857,8 +857,7 @@ ExprRes EvalExprVisitor::ident_prop(Ref<ast::Ident> node, Ref<Prop> prop) {
 }
 
 ExprRes EvalExprVisitor::ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset) {
-    return {
-        builtins().fun_type(), Value{scope()->self().bound_fset(fset)}};
+    return {builtins().fun_type(), Value{scope()->self().bound_fset(fset)}};
 }
 
 ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {

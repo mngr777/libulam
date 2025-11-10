@@ -3,7 +3,6 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
-#include <string>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -18,7 +17,7 @@ public:
     VoidType(Builtins& builtins, TypeIdGen& id_gen):
         PrimType{builtins, &id_gen} {}
 
-    std::string name() const override { return "Void"; }
+    const std::string_view name() const override { return "Void"; }
 
     bool is_constructible() const override { return false; }
 

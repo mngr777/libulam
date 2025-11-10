@@ -17,7 +17,7 @@ namespace out {
 std::string
 type_str(Stringifier& stringifier, ulam::Ref<ulam::Type> type, bool with_dims) {
     auto base = type_base(type);
-    auto str = base->name();
+    std::string str{base->name()};
     bool is_ref = type->is_ref();
     type = type->deref();
     if (base->is_class())
@@ -89,7 +89,7 @@ std::string
 type_def_str(Stringifier& stringifier, ulam::Ref<ulam::AliasType> alias) {
     auto aliased = alias->aliased();
     return "typedef " + type_str(stringifier, aliased, false) + " " +
-           alias->name() + type_dim_str(aliased);
+           std::string{alias->name()} + type_dim_str(aliased);
 }
 
 std::string var_str(

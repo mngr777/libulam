@@ -63,7 +63,7 @@ public:
     bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
 
-    virtual std::string name() const { assert(false); }
+    virtual const std::string_view name() const { assert(false); }
 
     virtual bitsize_t bitsize() const = 0;
 
@@ -217,7 +217,7 @@ public:
         Ref<ast::TypeDef> node):
         UserType{builtins, id_gen}, _str_pool{str_pool}, _node{node} {}
 
-    std::string name() const override;
+    const std::string_view name() const override;
 
     str_id_t name_id() const override;
 
@@ -311,7 +311,7 @@ public:
         Ref<Type> item_type,
         array_size_t size);
 
-    std::string name() const override;
+    const std::string_view name() const override;
 
     bitsize_t bitsize() const override;
 
@@ -347,6 +347,7 @@ private:
     Ref<Type> _item_type;
     array_size_t _array_size;
     Ref<ArrayType> _canon{};
+    mutable std::string _name;
 };
 
 class RefType : public Type {
@@ -360,7 +361,7 @@ public:
         _refd{refd},
         _canon{refd->is_canon() ? this : refd->canon()->ref_type()} {}
 
-    std::string name() const override;
+    const std::string_view name() const override;
 
     bitsize_t bitsize() const override;
 
@@ -413,6 +414,7 @@ private:
 
     Ref<Type> _refd{};
     Ref<RefType> _canon{};
+    mutable std::string _name;
 };
 
 } // namespace ulam

@@ -199,8 +199,8 @@ ExprRes EvalCast::cast_default(
     if (!arg)
         return std::move(arg);
     if (!arg.type()->is_castable_to(to, arg.value(), expl)) {
-        auto message = std::string{"invalid cast from "} + arg.type()->name() +
-                       " to " + to->name();
+        auto message = "invalid cast from " + std::string{arg.type()->name()} +
+                       " to " + std::string{to->name()};
         diag().error(node, message);
         return {ExprError::InvalidCast};
     }
@@ -213,7 +213,7 @@ ExprRes EvalCast::cast_default(
         return std::move(arg);
     if (!arg.type()->is_prim() ||
         !arg.type()->is_castable_to(bi_type_id, arg.value(), expl)) {
-        auto message = std::string{"invalid cast from "} + arg.type()->name() +
+        auto message = "invalid cast from " + std::string{arg.type()->name()} +
                        " to " + std::string{builtin_type_str(bi_type_id)};
         diag().error(node, message);
         return {ExprError::InvalidCast};

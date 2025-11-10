@@ -287,9 +287,9 @@ Ptr<RefType> Type::make_ref_type() {
 
 // AliasType
 
-std::string AliasType::name() const {
+const std::string_view AliasType::name() const {
     assert(_canon);
-    return std::string{_str_pool.get(name_id())};
+    return _str_pool.get(name_id());
 }
 
 str_id_t AliasType::name_id() const { return _node->alias_id(); }
@@ -413,12 +413,15 @@ ArrayType::ArrayType(
     assert(size != UnknownArraySize);
 }
 
-std::string ArrayType::name() const {
+const std::string_view ArrayType::name() const {
     assert(_item_type);
-    std::string size_str;
-    if (_array_size != UnknownArraySize)
-        size_str = std::to_string(_array_size);
-    return _item_type->name() + "[" + size_str + "]";
+    if (_name.empty()) {
+        std::string size_str;
+        if (_array_size != UnknownArraySize)
+            size_str = std::to_string(_array_size);
+        _name = std::string{_item_type->name()} + "[" + size_str + "]";
+    }
+    return _name;
 }
 
 bitsize_t ArrayType::bitsize() const {
@@ -514,9 +517,12 @@ bitsize_t ArrayType::item_off(array_idx_t idx) const {
 
 // RefType
 
-std::string RefType::name() const {
-    assert(_refd);
-    return _refd->name() + "&";
+const std::string_view RefType::name() const {
+    if (_name.empty()) {
+        assert(_refd);
+        _name = std::string{_refd->name()} + "&";
+    }
+    return _name;
 }
 
 bitsize_t RefType::bitsize() const {

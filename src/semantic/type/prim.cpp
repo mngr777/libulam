@@ -11,8 +11,8 @@ PrimType::PrimType(Builtins& builtins, TypeIdGen* id_gen):
     assert(id_gen);
 }
 
-std::string PrimType::name() const {
-    return std::string{builtin_type_str(bi_type_id())};
+const std::string_view PrimType::name() const {
+    return builtin_type_str(bi_type_id());
 }
 
 RValue PrimType::load(const BitsView data, bitsize_t off) {

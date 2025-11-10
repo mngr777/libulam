@@ -29,7 +29,6 @@ namespace ulam {
 Class::Class(Ref<ClassTpl> tpl):
     UserType{tpl->program()->builtins(), &tpl->program()->type_id_gen()},
     ClassBase{tpl->node(), tpl->module(), this},
-    _name{tpl->program()->str_pool().get(tpl->name_id())},
     _tpl{tpl},
     _init_bits{0} {
     set_cls_tpl(tpl);
@@ -39,13 +38,16 @@ Class::Class(Ref<ClassTpl> tpl):
 Class::Class(Ref<ast::ClassDef> node, Ref<Module> module):
     UserType{module->program()->builtins(), &module->program()->type_id_gen()},
     ClassBase{node, module, this},
-    _name{module->program()->str_pool().get(node->name_id())},
     _tpl{},
     _init_bits{0} {
     init(module);
 }
 
 Class::~Class() {}
+
+const std::string_view Class::name() const {
+    return const_cast<Class*>(this)->program()->str_pool().get(name_id());
+}
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 

@@ -29,7 +29,7 @@ std::string class_prefix(ulam::ClassKind kind) {
 }
 
 std::string class_name(ulam::Ref<ulam::Class> cls) {
-    return class_prefix(cls->kind()) + cls->name();
+    return class_prefix(cls->kind()) + std::string{cls->name()};
 }
 
 } // namespace
@@ -94,7 +94,7 @@ void Compiler::compile_class(
     std::ostream& os, Eval& eval, ulam::Ref<ulam::Class> cls) {
     bool has_test = cls->has_fun("test");
 
-    auto text = cls->name() + " foo; ";
+    auto text = std::string{cls->name()} + " foo; ";
     if (has_test)
         text += "foo.test(); ";
     text += "foo;\n";

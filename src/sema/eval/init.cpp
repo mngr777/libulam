@@ -223,14 +223,14 @@ ExprRes EvalInit::eval_class_map(
         // not found?
         if (!sym) {
             auto message = std::string{"property `"} + std::string{str(key)} +
-                           "' not found in " + cls->name();
+                           "' not found in " + std::string{cls->name()};
             diag().error(map->child_by_key(key), std::move(message));
             return {ExprError::InitPropNotInClass};
         }
         // not a property?
         if (!sym->is<Prop>()) {
-            auto message = cls->name() + "." + std::string{str(key)} +
-                           " is not a property";
+            auto message = std::string{cls->name()} + "." +
+                           std::string{str(key)} + " is not a property";
             diag().error(map->child_by_key(key), std::move(message));
             return {ExprError::InitNotProp};
         }

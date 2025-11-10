@@ -1,7 +1,6 @@
 #pragma once
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type.hpp>
-#include <string>
 
 namespace ulam {
 
@@ -9,7 +8,7 @@ class FunType : public Type {
 public:
     FunType(Builtins& builtins, TypeIdGen& id_gen): Type{builtins, &id_gen} {}
 
-    std::string name() const override { return "Fun"; }
+    const std::string_view name() const override { return "Fun"; }
 
     bool is_constructible() const override { return false; }
 

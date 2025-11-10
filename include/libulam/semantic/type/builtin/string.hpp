@@ -4,7 +4,6 @@
 #include <libulam/semantic/type/prim.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/str_pool.hpp>
-#include <string>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -20,7 +19,7 @@ public:
     StringType(Builtins& builtins, TypeIdGen& id_gen, UniqStrPool& text_pool):
         PrimType{builtins, &id_gen}, _text_pool{text_pool} {}
 
-    std::string name() const override { return "String"; }
+    const std::string_view name() const override { return "String"; }
 
     bitsize_t bitsize() const override;
 
