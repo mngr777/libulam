@@ -112,9 +112,11 @@ Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
 }
 
 Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
+    auto program = _module->program();
     auto name_id = node->name_id();
 
-    auto fun = make<Fun>(_module->program()->mangler(), scope(), node);
+    auto fun =
+        make<Fun>(program->str_pool(), program->mangler(), scope(), node);
     auto ref = ulam::ref(fun);
     fun->set_scope_version(scope()->version());
 

@@ -1,3 +1,4 @@
+#include "libulam/str_pool.hpp"
 #include <algorithm>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -20,8 +21,15 @@ namespace ulam {
 
 // Fun
 
-Fun::Fun(Mangler& mangler, Scope* scope, Ref<ast::FunDef> node):
-    _mangler{mangler}, _param_scope{make<PersScope>(scope)}, _node{node} {
+Fun::Fun(
+    UniqStrPool& str_pool,
+    Mangler& mangler,
+    Scope* scope,
+    Ref<ast::FunDef> node):
+    _str_pool{str_pool},
+    _mangler{mangler},
+    _param_scope{make<PersScope>(scope)},
+    _node{node} {
     assert(node);
     if (node->is_marked_virtual())
         set_is_virtual(true);
@@ -30,6 +38,14 @@ Fun::Fun(Mangler& mangler, Scope* scope, Ref<ast::FunDef> node):
 Fun::~Fun() {}
 
 str_id_t Fun::name_id() const { return _node->name_id(); }
+
+const std::string_view Fun::name() const { return _str_pool.get(name_id()); }
+
+const std::string_view Fun::mangled_name() const {
+    if (_mangled_name.empty())
+        _mangled_name = std::string{name()} + key();
+    return _mangled_name;
+}
 
 bool Fun::is_constructor() const { return _node->is_constructor(); }
 

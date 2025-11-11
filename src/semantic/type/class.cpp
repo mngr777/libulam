@@ -46,14 +46,24 @@ Class::Class(Ref<ast::ClassDef> node, Ref<Module> module):
 Class::~Class() {}
 
 const std::string_view Class::name() const {
-    return const_cast<Class*>(this)->program()->str_pool().get(name_id());
+    return program()->str_pool().get(name_id());
 }
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
+const std::string_view Class::mangled_name() const {
+    if (_mangled_name.empty()) {
+        Mangler& mangler = program()->mangler();
+        TypeList param_types;
+        for (const auto param : params())
+            param_types.push_back(param->type());
+        _mangled_name = std::string{name()} + mangler.mangled(param_types);
+    }
+    return _mangled_name;
+}
+
 cls_id_t Class::class_id() const {
-    if (_cls_id == NoClassId &&
-        module()->program()->class_options().lazy_class_id) {
+    if (_cls_id == NoClassId && program()->class_options().lazy_class_id) {
         const_cast<Class*>(this)->register_class();
     }
     assert(_cls_id != NoClassId);
@@ -479,10 +489,9 @@ Ref<FunSet> Class::add_op_fset(Op op) {
 }
 
 void Class::init(Ref<Module> module) {
-    auto program = module->program();
     set_module(module);
 
-    if (!program->class_options().lazy_class_id)
+    if (!program()->class_options().lazy_class_id)
         register_class();
 
     if (is_element())
@@ -525,8 +534,8 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
             auto name_id_ = name_id; // C++17 cannot capture struct-d bindings
             // TEST
             debug() << "importing " << cls->name() << "."
-                    << module()->program()->str_pool().get(name_id) << " into "
-                    << name() << "\n";
+                    << program()->str_pool().get(name_id) << " into " << name()
+                    << "\n";
             sym.accept([&](auto mem) { inh_scope()->set(name_id_, mem); });
         }
     }
@@ -578,6 +587,6 @@ void Class::init_layout() {
     }
 }
 
-Ref<Program> Class::program() { return module()->program(); }
+Ref<Program> Class::program() const { return module()->program(); }
 
 } // namespace ulam

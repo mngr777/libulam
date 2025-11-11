@@ -38,6 +38,7 @@ class Value;
 
 class ClassBase {
 public:
+    using ParamList = std::list<Ref<Var>>;
     using SymbolTable = _SymbolTable<UserType, FunSet, Var, Prop>;
     using Symbol = SymbolTable::Symbol;
 
@@ -52,7 +53,6 @@ public:
     ClassBase(ClassBase&&) = default;
     ClassBase& operator=(ClassBase&&) = default;
 
-public:
     ClassKind kind() const;
 
     bool is_element() const { return kind() == ClassKind::Element; }
@@ -87,7 +87,7 @@ public:
     virtual Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
 
-    const auto& params() const { return _params; }
+    const ParamList& params() const { return _params; }
 
     bool has_constructors() const;
     Ref<FunSet> constructors();
@@ -98,6 +98,9 @@ public:
     Ref<PersScope> scope();
 
 protected:
+    // TODO: use refs
+    using OpMap = std::map<Op, Ptr<FunSet>>;
+
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         return _members.set(name_id, std::move(value));
     }
@@ -118,7 +121,7 @@ protected:
 
     virtual Ref<Var> add_param(Ptr<Var>&& var);
 
-    auto& ops() { return _ops; }
+    OpMap& ops() { return _ops; }
 
 private:
     Ref<ast::ClassDef> _node;
@@ -127,9 +130,9 @@ private:
     Ptr<BasicScope> _inh_scope;
     Ptr<ClassScope> _scope;
     SymbolTable _members;
-    std::list<Ref<Var>> _params;
+    ParamList _params;
     Ptr<FunSet> _constructors;
-    std::map<Op, Ptr<FunSet>> _ops;
+    OpMap _ops;
 };
 
 } // namespace ulam

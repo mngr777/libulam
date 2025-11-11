@@ -40,10 +40,16 @@ public:
     enum MatchStatus { NoMatch, IsMatch, ExactMatch };
     using MatchRes = std::pair<MatchStatus, conv_cost_t>;
 
-    Fun(Mangler& mangler, Scope* scope, Ref<ast::FunDef> node);
+    Fun(UniqStrPool& str_pool,
+        Mangler& mangler,
+        Scope* scope,
+        Ref<ast::FunDef> node);
     ~Fun();
 
     str_id_t name_id() const;
+    const std::string_view name() const;
+
+    const std::string_view mangled_name() const;
 
     bool is_constructor() const;
 
@@ -96,6 +102,7 @@ private:
 
     std::string key() const;
 
+    UniqStrPool& _str_pool;
     Mangler& _mangler;
     Ptr<PersScope> _param_scope;
     Ref<ast::FunDef> _node;
@@ -104,6 +111,7 @@ private:
     bool _is_virtual{false};
     Ref<Fun> _overridden{};
     std::map<type_id_t, Ref<Fun>> _overrides;
+    mutable std::string _mangled_name;
 };
 
 class FunSet : public Decl {

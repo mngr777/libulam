@@ -48,6 +48,8 @@ public:
     const std::string_view name() const override;
     str_id_t name_id() const override;
 
+    const std::string_view mangled_name() const;
+
     cls_id_t class_id() const;
     elt_id_t element_id() const;
 
@@ -148,7 +150,7 @@ private:
     auto& convs() { return _convs; }
     auto& fsets() { return _fsets; }
 
-    Ref<Program> program();
+    Ref<Program> program() const;
 
     cls_id_t _cls_id{NoClassId};
     elt_id_t _elt_id{NoEltId};
@@ -161,6 +163,7 @@ private:
     std::map<type_id_t, Ref<Fun>> _convs;
     std::map<str_id_t, Ref<FunSet>> _fsets;
     Bits _init_bits;
+    mutable std::string _mangled_name;
 };
 
 } // namespace ulam
