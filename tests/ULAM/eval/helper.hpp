@@ -5,6 +5,7 @@
 class EvalHelper {
 public:
     EvalHelper(EvalEnv& env): _env{env} {}
+    virtual ~EvalHelper() {}
 
     bool in_main() const;
     bool codegen_enabled() const;

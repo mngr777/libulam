@@ -313,6 +313,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/helper.cpp \
 	tests/ULAM/eval/init.hpp \
 	tests/ULAM/eval/init.cpp \
+	tests/ULAM/eval/native.hpp \
+	tests/ULAM/eval/native.cpp \
 	tests/ULAM/eval/stringifier.hpp \
 	tests/ULAM/eval/stringifier.cpp \
 	tests/ULAM/eval/util.hpp \

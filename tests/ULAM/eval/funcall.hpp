@@ -8,7 +8,7 @@ public:
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
 
-    EvalFuncall(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalFuncall(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
 protected:
     ExprRes construct_funcall(

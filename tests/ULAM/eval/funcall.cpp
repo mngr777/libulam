@@ -1,10 +1,12 @@
 #include "./funcall.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
+#include "./native.hpp"
+#include "libulam/sema/expr_error.hpp"
 #include <libulam/sema/eval/flags.hpp>
 #include <string>
 
-#define NO_EXEC(fr) \
+#define NO_EXEC(fr)
 
 namespace {
 
@@ -90,13 +92,17 @@ ExprRes EvalFuncall::do_funcall_native(
     if (has_flag(ulam::sema::evl::NoExec))
         return empty_ret_val(node, fun);
 
-    // auto type = self.dyn_obj_type();
-    // assert(type->is_class());
-    // auto cls = type->as_class();
+    auto type = self.dyn_obj_type();
+    assert(type->is_class());
+    auto cls = type->as_class();
 
-    // TODO
-
-    return empty_ret_val(node, fun);
+    const auto class_name = cls->mangled_name();
+    const auto fun_name = fun->mangled_name();
+    auto res = EvalNative{Base::env()}.call(
+        node, class_name, fun_name, self, std::move(args));
+    return (res.error() != ulam::sema::ExprError::CannotEvalNative)
+               ? std::move(res)
+               : empty_ret_val(node, fun);
 }
 
 ExprResList EvalFuncall::cast_args(

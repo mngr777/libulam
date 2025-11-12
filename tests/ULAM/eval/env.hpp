@@ -14,7 +14,7 @@ public:
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
 
-    EvalEnv(
+    explicit EvalEnv(
         ulam::Ref<ulam::Program> program,
         ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
         Base{program, flags}, _codegen{program} {}

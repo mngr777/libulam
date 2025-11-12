@@ -53,19 +53,21 @@ str_id_t Class::name_id() const { return node()->name().str_id(); }
 
 const std::string_view Class::mangled_name() const {
     if (_mangled_name.empty()) {
-        Mangler& mangler = program()->mangler();
-        TypeList param_types;
-        for (const auto param : params())
-            param_types.push_back(param->type());
-        _mangled_name = std::string{name()} + mangler.mangled(param_types);
+        _mangled_name = std::string{name()};
+        if (!params().empty()) {
+            Mangler& mangler = program()->mangler();
+            TypeList param_types;
+            for (const auto param : params())
+                param_types.push_back(param->type());
+            _mangled_name += "@" + mangler.mangled(param_types);
+        }
     }
     return _mangled_name;
 }
 
 cls_id_t Class::class_id() const {
-    if (_cls_id == NoClassId && program()->class_options().lazy_class_id) {
+    if (_cls_id == NoClassId && program()->class_options().lazy_class_id)
         const_cast<Class*>(this)->register_class();
-    }
     assert(_cls_id != NoClassId);
     return _cls_id;
 }

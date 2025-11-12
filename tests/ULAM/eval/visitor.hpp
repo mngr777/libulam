@@ -9,7 +9,7 @@ public:
     using Base = ulam::sema::EvalVisitor;
     using CondRes = ulam::sema::CondRes;
 
-    EvalVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::If> node) override;

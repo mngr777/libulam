@@ -14,7 +14,7 @@ public:
     using ExprError = ulam::sema::ExprError;
     using ExprRes = ulam::sema::ExprRes;
 
-    EvalExprVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalExprVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     ExprRes visit(ulam::Ref<ulam::ast::Cast> node) override;
     ExprRes visit(ulam::Ref<ulam::ast::Ternary> node) override;

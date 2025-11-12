@@ -8,7 +8,7 @@ public:
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
 
-    EvalInit(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalInit(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
 protected:
     ulam::sema::ExprRes eval_init(

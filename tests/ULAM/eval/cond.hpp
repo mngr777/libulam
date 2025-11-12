@@ -11,7 +11,7 @@ public:
     using Base = ulam::sema::EvalCond;
     using CondRes = ulam::sema::CondRes;
 
-    EvalCond(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalCond(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     CondRes eval_as_cond(ulam::Ref<ulam::ast::AsCond> as_cond);
 

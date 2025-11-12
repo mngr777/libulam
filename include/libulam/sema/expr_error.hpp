@@ -48,7 +48,8 @@ enum class ExprError {
     InitTooManyItems,
     InitPropNotInClass,
     InitNotProp,
-    TernaryNonMatchingTypes
+    TernaryNonMatchingTypes,
+    CannotEvalNative
 };
 
 }

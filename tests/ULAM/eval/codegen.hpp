@@ -9,7 +9,7 @@
 
 class Codegen {
 public:
-    Codegen(ulam::Ref<ulam::Program> program): _program{program} {}
+    explicit Codegen(ulam::Ref<ulam::Program> program): _program{program} {}
 
     Stringifier make_strf();
 

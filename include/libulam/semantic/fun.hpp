@@ -100,7 +100,7 @@ private:
     Ref<Fun> overridden();
     void set_overridden(Ref<Fun> fun);
 
-    std::string key() const;
+    std::string mangled_param_types() const;
 
     UniqStrPool& _str_pool;
     Mangler& _mangler;

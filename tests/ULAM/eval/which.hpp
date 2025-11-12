@@ -8,7 +8,7 @@ public:
     using Base = ulam::sema::EvalWhich;
     using ExprRes = ulam::sema::ExprRes;
 
-    EvalWhich(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalWhich(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     void eval_which(ulam::Ref<ulam::ast::Which> node) override;
 

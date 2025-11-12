@@ -11,7 +11,7 @@ public:
     using Base = ulam::sema::EvalCast;
     using ExprRes = ulam::sema::ExprRes;
 
-    EvalCast(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalCast(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     ExprRes cast(
         ulam::Ref<ulam::ast::Node> node,

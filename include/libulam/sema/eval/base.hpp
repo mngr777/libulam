@@ -22,6 +22,9 @@ public:
         return line_at(node->loc_id());
     }
 
+    const str_id_t str_id(const std::string_view str) const {
+        return str_pool().id(str);
+    }
     const std::string_view str(str_id_t str_id) const {
         return str_pool().get(str_id);
     }

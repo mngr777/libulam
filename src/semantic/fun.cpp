@@ -42,8 +42,11 @@ str_id_t Fun::name_id() const { return _node->name_id(); }
 const std::string_view Fun::name() const { return _str_pool.get(name_id()); }
 
 const std::string_view Fun::mangled_name() const {
-    if (_mangled_name.empty())
-        _mangled_name = std::string{name()} + key();
+    if (_mangled_name.empty()) {
+        _mangled_name = std::string{name()};
+        if (param_num() > 0 || has_ellipsis())
+            _mangled_name += "@" + mangled_param_types();
+    }
     return _mangled_name;
 }
 
@@ -146,8 +149,10 @@ Ref<ast::ParamList> Fun::params_node() const {
 Ref<ast::FunDefBody> Fun::body_node() const { return _node->body(); }
 
 void Fun::add_override(Ref<Fun> fun, Ref<Class> cls) {
-    assert(is_virtual());        // must be already marked as virtual
-    assert(fun->key() == key()); // parameters must match
+    assert(is_virtual()); // must be already marked as virtual
+    assert(
+        fun->mangled_param_types() ==
+        mangled_param_types()); // parameters must match
 
     if (_overrides.count(cls->id()) == 1) {
         // can happen with multible inheritance
@@ -176,13 +181,13 @@ void Fun::set_overridden(Ref<Fun> fun) {
     _overridden = fun;
 }
 
-std::string Fun::key() const {
+std::string Fun::mangled_param_types() const {
     TypeList param_types;
     for (const auto& param : _params)
         param_types.push_back(param->type());
     auto key = _mangler.mangled(param_types);
     if (has_ellipsis())
-        key += "..."; // TMP
+        key += "*";
     return key;
 }
 
@@ -270,7 +275,7 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     std::unordered_map<std::string, List> key_map;
     for (auto& item : _funs) {
         auto fun = item.ref();
-        auto key = fun->key();
+        auto key = fun->mangled_param_types();
         // debug() << str_pool.get(fun->node()->name().str_id()) << " " << key
         // << "\n";
         auto [it, _] = key_map.emplace(key, List{});
@@ -299,7 +304,8 @@ void FunSet::merge(Ref<FunSet> other, Ref<Class> cls, Ref<Class> from_cls) {
     for (auto fun : *other) {
         if (from_cls && fun->cls() != from_cls)
             continue;
-        auto [it, added] = _map.value().emplace(fun->key(), fun);
+        auto [it, added] =
+            _map.value().emplace(fun->mangled_param_types(), fun);
         if (added) {
             _funs.push_back(fun);
             if (fun->is_virtual() && fun->has_overridden())
