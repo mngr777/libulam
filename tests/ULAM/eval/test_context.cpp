@@ -16,7 +16,9 @@ constexpr ulam::array_idx_t site_to_idx(ulam::array_idx_t site) {
 
 EvalTestContext::EvalTestContext(
     ulam::Builtins& builtins, ulam::LValue active_atom):
-    _builtins{&builtins}, _active_atom{active_atom} {}
+    _builtins{&builtins},
+    _active_atom{active_atom},
+    _neighbors{builtins.atom_type()->array_type(NeighborNum)->construct()} {}
 
 EvalTestContext::EvalTestContext(): _builtins{} {}
 
@@ -33,17 +35,18 @@ EvalTestContext& EvalTestContext::operator=(EvalTestContext&& other) {
 
 bool EvalTestContext::empty() const { return !_builtins; }
 
-ulam::RValue EvalTestContext::neighbor(ulam::array_idx_t site) const {
+ulam::LValue EvalTestContext::active_atom() {
     assert(!empty());
-    const auto idx = site_to_idx(site);
-    if (_neighbors[idx].empty())
-        return _builtins->atom_type()->construct();
-    return _neighbors[idx].copy();
+    return _active_atom;
+}
+
+ulam::LValue EvalTestContext::neighbor(ulam::array_idx_t site) const {
+    assert(!empty());
+    return _neighbors.array_access(site_to_idx(site), false);
 }
 
 void EvalTestContext::set_neighbor(
     ulam::array_idx_t site, ulam::RValue&& rvalue) {
     assert(!empty());
-    const auto idx = site_to_idx(site);
-    _neighbors[idx] = std::move(rvalue);
+    neighbor(site_to_idx(site)).assign(std::move(rvalue));
 }

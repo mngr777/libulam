@@ -29,11 +29,13 @@ private:
     using NamePair = std::pair<const std::string_view, const std::string_view>;
     using FunImpl = std::function<ExprRes(ulam::LValue, ExprResList&&)>;
     using Map = std::map<NamePair, FunImpl>;
+    using NodeRef = ulam::Ref<ulam::ast::Node>;
 
     // System
     ExprRes eval_system_print_int(ulam::LValue self, ExprResList&& args);
     ExprRes eval_system_print_unsigned(ulam::LValue self, ExprResList&& args);
-    ExprRes eval_system_print_unsigned_hex(ulam::LValue self, ExprResList&& args);
+    ExprRes
+    eval_system_print_unsigned_hex(ulam::LValue self, ExprResList&& args);
     ExprRes eval_system_assert(ulam::LValue self, ExprResList&& args);
 
     // EventWindow
@@ -44,6 +46,8 @@ private:
 
     ulam::LValue obj_prop(ulam::LValue obj, const std::string_view prop_name);
     ulam::LValue array_item(ulam::LValue array, ulam::RValue&& idx_rval);
+
+    ulam::array_idx_t array_idx(const ulam::RValue& idx_rval);
 
     std::ostream& out();
 

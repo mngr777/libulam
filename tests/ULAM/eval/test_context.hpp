@@ -17,13 +17,13 @@ public:
 
     bool empty() const;
 
-    ulam::LValue active_atom() { return _active_atom; }
+    ulam::LValue active_atom();
 
-    ulam::RValue neighbor(ulam::array_idx_t site) const;
+    ulam::LValue neighbor(ulam::array_idx_t site) const;
     void set_neighbor(ulam::array_idx_t site, ulam::RValue&& rvalue);
 
 private:
     ulam::Builtins* _builtins;
     ulam::LValue _active_atom;
-    std::array<ulam::RValue, NeighborNum> _neighbors;
+    ulam::RValue _neighbors;
 };

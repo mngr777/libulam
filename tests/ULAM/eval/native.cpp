@@ -5,6 +5,7 @@
 #include <iostream>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/expr_error.hpp>
+#include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/value/types.hpp>
@@ -35,6 +36,7 @@ EvalNative::EvalNative(EvalEnv& env): ::EvalHelper{env}, Base{env} {
     ADD_METHOD("System", "print@13b", eval_system_print_unsigned_hex);
     ADD_METHOD("System", "print@13y", eval_system_print_unsigned_hex);
     ADD_METHOD("System", "assert@11b", eval_system_assert);
+    ADD_METHOD("EventWindow", "aref@232i", eval_event_window_aref);
     ADD_METHOD("Bar", "aref@232i", eval_bar_aref);
 
 #undef ADD_METHOD
@@ -100,8 +102,13 @@ ExprRes EvalNative::eval_system_assert(ulam::LValue self, ExprResList&& args) {
 
 ExprRes
 EvalNative::eval_event_window_aref(ulam::LValue self, ExprResList&& args) {
-    // TODO
-    return {};
+    assert(args.size() == 1);
+    auto idx_arg = args.pop_front();
+
+    auto& ctx = test_ctx();
+    const auto idx = array_idx(idx_arg.move_value().move_rvalue());
+    auto lval = (idx == 0) ? ctx.active_atom() : ctx.neighbor(idx);
+    return {builtins().atom_type(), ulam::Value{lval}};
 }
 
 // Bar
@@ -125,11 +132,14 @@ EvalNative::obj_prop(ulam::LValue obj, const std::string_view prop_name) {
 
 ulam::LValue
 EvalNative::array_item(ulam::LValue array, ulam::RValue&& idx_rval) {
+    return array.array_access(array_idx(idx_rval), idx_rval.is_consteval());
+}
+
+ulam::array_idx_t EvalNative::array_idx(const ulam::RValue& idx_rval) {
     assert(idx_rval.is<ulam::Integer>());
     auto idx_int = idx_rval.get<ulam::Integer>();
     assert(idx_int >= 0);
-    auto idx = static_cast<ulam::array_idx_t>(idx_int);
-    return array.array_access(idx, idx_rval.is_consteval());
+    return static_cast<ulam::array_idx_t>(idx_int);
 }
 
 std::ostream& EvalNative::out() { return std::cout << "System.print: "; }
