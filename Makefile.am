@@ -317,6 +317,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/native.cpp \
 	tests/ULAM/eval/stringifier.hpp \
 	tests/ULAM/eval/stringifier.cpp \
+	tests/ULAM/eval/test_context.hpp \
+	tests/ULAM/eval/test_context.cpp \
 	tests/ULAM/eval/util.hpp \
 	tests/ULAM/eval/visitor.hpp \
 	tests/ULAM/eval/visitor.cpp \

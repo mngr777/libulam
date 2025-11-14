@@ -1,11 +1,14 @@
 #pragma once
 #include "./codegen.hpp"
+#include "./test_context.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/program.hpp>
+#include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/value.hpp>
 
 class EvalEnv : public ulam::sema::EvalEnv {
 public:
@@ -13,6 +16,22 @@ public:
     using CondRes = ulam::sema::CondRes;
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
+
+    class EvalTestContextRaii {
+        friend EvalEnv;
+
+    public:
+        EvalTestContextRaii();
+        ~EvalTestContextRaii();
+
+        EvalTestContextRaii(EvalTestContextRaii&& other);
+        EvalTestContextRaii& operator=(EvalTestContextRaii&& other);
+
+    private:
+        EvalTestContextRaii(EvalEnv& env, ulam::LValue active_atom);
+
+        EvalEnv* _env;
+    };
 
     explicit EvalEnv(
         ulam::Ref<ulam::Program> program,
@@ -48,9 +67,8 @@ public:
         ExprRes&& arg,
         bool expl = false) override;
 
-    ExprRes cast_to_idx(
-        ulam::Ref<ulam::ast::Node> node,
-        ExprRes&& arg) override;
+    ExprRes
+    cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) override;
 
     bool init_var(
         ulam::Ref<ulam::Var> var,
@@ -77,8 +95,13 @@ public:
         ExprRes&& obj,
         ExprResList&& args) override;
 
+    EvalTestContextRaii test_ctx_raii(ulam::LValue active_atom);
+
     Codegen& gen() { return _codegen; }
+
+    EvalTestContext& test_ctx();
 
 private:
     Codegen _codegen;
+    EvalTestContext _test_ctx{};
 };

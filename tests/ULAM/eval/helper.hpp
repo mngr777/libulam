@@ -1,6 +1,7 @@
 #pragma once
 #include "./codegen.hpp"
 #include "./env.hpp"
+#include <libulam/semantic/value.hpp>
 
 class EvalHelper {
 public:
@@ -11,6 +12,17 @@ public:
     bool codegen_enabled() const;
 
     Codegen& gen() { return _env.gen(); }
+
+    EvalEnv::EvalTestContextRaii test_ctx_raii(ulam::LValue active_atom) {
+        return _env.test_ctx_raii(active_atom);
+    }
+
+    ulam::sema::ExprRes call_native(
+        ulam::Ref<ulam::ast::Node> node,
+        const std::string_view class_name,
+        const std::string_view fun_name,
+        ulam::LValue self,
+        ulam::sema::ExprResList&& args);
 
 private:
     EvalEnv& _env;

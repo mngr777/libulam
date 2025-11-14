@@ -1,16 +1,47 @@
 #include "./env.hpp"
 #include "./cast.hpp"
-#include "./which.hpp"
 #include "./cond.hpp"
 #include "./expr_visitor.hpp"
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
 #include "./visitor.hpp"
+#include "./which.hpp"
+#include <cassert>
 
 using CondRes = EvalEnv::CondRes;
 using ExprRes = EvalEnv::ExprRes;
 using ExprResList = EvalEnv::ExprResList;
+
+// EvalTestContextRaii
+
+EvalEnv::EvalTestContextRaii::EvalTestContextRaii(): _env{} {}
+
+EvalEnv::EvalTestContextRaii::~EvalTestContextRaii() {
+    if (_env) {
+        assert(!_env->_test_ctx.empty());
+        _env->_test_ctx = {};
+    }
+}
+
+EvalEnv::EvalTestContextRaii::EvalTestContextRaii(EvalTestContextRaii&& other) {
+    operator=(std::move(other));
+}
+
+EvalEnv::EvalTestContextRaii&
+EvalEnv::EvalTestContextRaii::operator=(EvalTestContextRaii&& other) {
+    std::swap(_env, other._env);
+    return *this;
+}
+
+EvalEnv::EvalTestContextRaii::EvalTestContextRaii(
+    EvalEnv& env, ulam::LValue active_atom):
+    _env{&env} {
+    assert(env._test_ctx.empty());
+    env._test_ctx = {env.builtins(), active_atom};
+}
+
+// EvalEnv
 
 ExprRes EvalEnv::eval(ulam::Ref<ulam::ast::Block> block) {
     // codegen
@@ -110,4 +141,13 @@ ExprRes EvalEnv::funcall(
     ExprResList&& args) {
     EvalFuncall ef{*this};
     return do_funcall(ef, node, fun, std::move(obj), std::move(args));
+}
+
+EvalTestContext& EvalEnv::test_ctx() {
+    assert(!_test_ctx.empty());
+    return _test_ctx;
+}
+
+EvalEnv::EvalTestContextRaii EvalEnv::test_ctx_raii(ulam::LValue active_atom) {
+    return {*this, active_atom};
 }

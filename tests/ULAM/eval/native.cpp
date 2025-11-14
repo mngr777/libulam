@@ -17,8 +17,7 @@ using EvalExceptAssert = ulam::sema::EvalExceptAssert;
 
 } // namespace
 
-EvalNative::EvalNative(ulam::sema::EvalEnv& env): Base{env} {
-
+EvalNative::EvalNative(EvalEnv& env): ::EvalHelper{env}, Base{env} {
 #define ADD_METHOD(class_name, fun_name, method)                               \
     do {                                                                       \
         namespace ph = std::placeholders;                                      \
@@ -58,6 +57,8 @@ ExprRes EvalNative::call(
     return (it->second)(self, std::move(args));
 }
 
+// System
+
 ExprRes
 EvalNative::eval_system_print_int(ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
@@ -94,6 +95,16 @@ ExprRes EvalNative::eval_system_assert(ulam::LValue self, ExprResList&& args) {
         throw ulam::sema::EvalExceptAssert("assert failed");
     return void_res();
 }
+
+// EventWindow
+
+ExprRes
+EvalNative::eval_event_window_aref(ulam::LValue self, ExprResList&& args) {
+    // TODO
+    return {};
+}
+
+// Bar
 
 ExprRes EvalNative::eval_bar_aref(ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);

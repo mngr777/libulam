@@ -1,4 +1,5 @@
 #pragma once
+#include "./helper.hpp"
 #include <functional>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/helper.hpp>
@@ -9,13 +10,13 @@
 #include <string_view>
 #include <utility>
 
-class EvalNative : public ulam::sema::EvalHelper {
+class EvalNative : public EvalHelper, public ulam::sema::EvalHelper {
 public:
     using Base = ulam::sema::EvalHelper;
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
 
-    explicit EvalNative(ulam::sema::EvalEnv& env);
+    explicit EvalNative(EvalEnv& env);
 
     ExprRes call(
         ulam::Ref<ulam::ast::Node> node,
@@ -34,6 +35,9 @@ private:
     ExprRes eval_system_print_unsigned(ulam::LValue self, ExprResList&& args);
     ExprRes eval_system_print_unsigned_hex(ulam::LValue self, ExprResList&& args);
     ExprRes eval_system_assert(ulam::LValue self, ExprResList&& args);
+
+    // EventWindow
+    ExprRes eval_event_window_aref(ulam::LValue self, ExprResList&& args);
 
     // Bar
     ExprRes eval_bar_aref(ulam::LValue self, ExprResList&& args);

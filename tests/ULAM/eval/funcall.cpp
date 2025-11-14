@@ -78,9 +78,18 @@ ExprRes EvalFuncall::do_funcall(
     ulam::Ref<ulam::Fun> fun,
     ulam::LValue self,
     ExprResList&& args) {
-    EvalEnv::FlagsRaii fr{};
-    if (env().stack_size() == 0 && !has_flag(evl::NoCodegen))
-        fr = env().add_flags_raii(ulam::sema::evl::NoExec);
+
+    EvalEnv::FlagsRaii fr;
+    EvalEnv::EvalTestContextRaii tcr;
+    if (env().stack_size() == 0 && fun->name() == "test") {
+        // set NoExec after `test` is called, unless executing (not codegen)
+        if (!has_flag(evl::NoCodegen))
+            fr = env().add_flags_raii(ulam::sema::evl::NoExec);
+        // if executing, set exec context
+        if (!has_flag(ulam::sema::evl::NoExec))
+            tcr = test_ctx_raii(self);
+    }
+
     return Base::do_funcall(node, fun, self, std::move(args));
 }
 
@@ -98,7 +107,7 @@ ExprRes EvalFuncall::do_funcall_native(
 
     const auto class_name = cls->mangled_name();
     const auto fun_name = fun->mangled_name();
-    auto res = EvalNative{Base::env()}.call(
+    auto res = call_native(
         node, class_name, fun_name, self, std::move(args));
     return (res.error() != ulam::sema::ExprError::CannotEvalNative)
                ? std::move(res)
