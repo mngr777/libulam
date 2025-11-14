@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>

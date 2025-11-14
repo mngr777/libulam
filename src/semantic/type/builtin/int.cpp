@@ -26,7 +26,9 @@ TypedValue IntType::type_op(TypeOp op) {
 
 RValue IntType::construct() { return RValue{Integer{}}; }
 
-RValue IntType::construct(Integer int_val) { return RValue{int_val}; }
+RValue IntType::construct(Integer int_val) {
+    return RValue{std::min(int_val, detail::integer_max(bitsize()))};
+}
 
 RValue IntType::from_datum(Datum datum) {
     Integer int_val = detail::integer_from_datum(datum, bitsize());
