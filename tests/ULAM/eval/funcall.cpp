@@ -82,7 +82,7 @@ ExprRes EvalFuncall::do_funcall(
     EvalEnv::FlagsRaii fr;
     EvalEnv::EvalTestContextRaii tcr;
     if (env().stack_size() == 0 && fun->name() == "test") {
-        // set NoExec after `test` is called, unless executing (not codegen)
+        // set NoExec after `test` is called, unless executing (NoCodegen is set)
         if (!has_flag(evl::NoCodegen))
             fr = env().add_flags_raii(ulam::sema::evl::NoExec);
         // if executing, set exec context

@@ -230,6 +230,8 @@ Ptr<Var> EvalVisitor::make_var(
     var->set_scope_lvl(env().stack_size());
     if (!env().resolver(false).resolve(ref(var)))
         return {};
+    debug() << "new var: " << str(var->name_id())
+            << ", scope lvl: " << var->scope_lvl() << "\n";
     return var;
 }
 
@@ -263,8 +265,9 @@ ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
             return {ExprError::NotReference};
         }
         const LValue lval = res.value().lvalue();
-        if (lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
-            lval.scope_lvl() > env().scope_lvl()) {
+        // TODO: only xvalues to have scope lvl?
+        if (lval.is_xvalue() && lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
+            lval.scope_lvl() >= env().scope_lvl()) {
             diag().error(node, "reference to local variable");
             return {ExprError::ReferenceToLocal};
         }
