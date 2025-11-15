@@ -118,6 +118,7 @@ ExprRes EvalNative::eval_event_window_aref(
     auto& ctx = test_ctx();
     const auto idx = array_idx(idx_arg.move_value().move_rvalue());
     auto lval = (idx == 0) ? ctx.active_atom() : ctx.neighbor(idx);
+    lval.set_is_xvalue(false);
     return {builtins().atom_type(), ulam::Value{lval}};
 }
 
@@ -154,6 +155,7 @@ EvalNative::eval_bar_aref(NodeRef node, LValue self, ExprResList&& args) {
     auto idx_arg = args.pop_front();
     auto lval = obj_prop(self, "val_b");
     lval = array_item(lval, idx_arg.move_value().move_rvalue());
+    lval.set_is_xvalue(self.is_xvalue());
     return {builtins().bool_type(), ulam::Value{lval}};
 }
 
