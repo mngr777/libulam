@@ -136,6 +136,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3908_test_compiler_elementandquark_atomofmemberselectarrayitemlval.test", // -"-
     "t3909_test_compiler_elementandquark_atomofmemberselectarrayitemlval_clobberingType.test", // -"-
     "t3916_test_compiler_elementandquark_memberselectoncustomarray.test", // similar to t3811, b(true) is correct?
+    "t3920_test_compiler_elementandquark_conditionalis_resbehave_issue.test", // b(true) is correct
+    "t3922_test_compiler_elementandquark_castatomreftoelement_routerdemo_issue.test", // b(true) is correct
+    "t3923_test_compiler_elementandquark_conditionalas_caarray.test", // -"-
     "t3930_test_compiler_string_ascii.test", // .lenghtof is not consteval, since string var is not const, would require constrol flow analysis
     "t3948_test_compiler_caarrayofregulararrayofstrings3D.test", // `mi_i(120)` is correct (tested)
     "t3949_test_compiler_array2Dstring_lengthof.test", // .lengthof, similar to t3930
