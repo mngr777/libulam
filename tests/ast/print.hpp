@@ -50,9 +50,9 @@ protected:
 
     std::ostream& indent();
 
-    const char* paren_l();
-    const char* paren_r();
-    const char* nl();
+    void paren_l();
+    void paren_r();
+    void nl();
 
     const std::string_view name(ulam::Ref<ulam::ast::Named> node);
     const std::string_view str(ulam::str_id_t str_id);

@@ -109,7 +109,7 @@ void PrinterBase::traverse_with_indent(ulam::Ref<ulam::ast::Node> node) {
     for (unsigned n = 0; n < node->child_num(); ++n) {
         indent();
         accept_me(node->child(n));
-        _os << nl();
+        nl();
     }
 }
 
@@ -129,11 +129,20 @@ std::ostream& PrinterBase::indent() {
     return _os;
 }
 
-const char* PrinterBase::paren_l() { return options.expl_parens ? "(" : ""; }
+void PrinterBase::paren_l() {
+    if (options.expl_parens)
+        _os << "(";
+}
 
-const char* PrinterBase::paren_r() { return options.expl_parens ? "(" : ""; }
+void PrinterBase::paren_r() {
+    if (options.expl_parens)
+        _os << ")";
+}
 
-const char* PrinterBase::nl() { return _no_newline ? "" : "\n"; }
+void PrinterBase::nl() {
+    if (!_no_newline)
+        _os << "\n";
+}
 
 const std::string_view PrinterBase::name(ulam::Ref<ulam::ast::Named> node) {
     return str(node->name().str_id());
@@ -186,9 +195,11 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
     }
     // body
     assert(node->has_body());
-    _os << " {" << nl();
+    _os << " {";
+    nl();
     visit(node->body());
-    indent() << "}" << nl();
+    indent() << "}";
+    nl();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) { print_var_decl(node); }
@@ -207,7 +218,8 @@ void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
     visit(node->params());
     // body
     if (node->has_body()) {
-        _os << " {" << nl();
+        _os << " {";
+        nl();
         visit(node->body());
         indent() << "}";
     } else {
@@ -283,7 +295,8 @@ void Printer::visit(ulam::Ref<ulam::ast::InitMap> node) {
 
 void Printer::visit(ulam::Ref<ulam::ast::Block> node) {
     if (do_visit(node)) {
-        _os << "{" << nl();
+        _os << "{";
+        nl();
         inc_lvl();
         traverse(node);
         dec_lvl();
@@ -311,7 +324,7 @@ void Printer::visit(ulam::Ref<ulam::ast::If> node) {
         _os << ";";
     }
     if (node->has_else_branch()) {
-        _os << nl();
+        nl();
         indent() << "else ";
         accept_me(node->else_branch());
     }
@@ -362,7 +375,7 @@ void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
 
     accept_me(node->conds());
     accept_me(node->branch());
-    _os << nl();
+    nl();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::WhichCaseCondList> node) {
@@ -377,7 +390,8 @@ void Printer::visit(ulam::Ref<ulam::ast::WhichCaseCond> node) {
     } else {
         indent() << "otherwise";
     }
-    _os << ": " << nl();
+    _os << ": ";
+    nl();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Return> node) {
