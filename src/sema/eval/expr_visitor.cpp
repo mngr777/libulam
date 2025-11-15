@@ -1,3 +1,5 @@
+#include "libulam/sema/eval/flags.hpp"
+#include "libulam/semantic/type/builtin_type_id.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -86,18 +88,26 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
     debug() << __FUNCTION__ << " BinaryOp\n" << line_at(node);
     assert(node->has_lhs() && node->has_rhs());
 
-    // TODO: special case for short-circuiting
+    Op op = node->op();
+
     auto left = node->lhs()->accept(*this);
     if (!left)
         return left;
+
+    // short-circuit?
+    if (!has_flag(evl::NoExec) && (op == Op::And || op == Op::Or)) {
+        auto bool_res = env().to_boolean(node->lhs(), left.copy());
+        bool truth = is_true(bool_res);
+        if (truth == (op == Op::Or))
+            return left;
+    }
 
     auto right = node->rhs()->accept(*this);
     if (!right)
         return right;
 
     auto res = binary_op(
-        node, node->op(), node->lhs(), std::move(left), node->rhs(),
-        std::move(right));
+        node, op, node->lhs(), std::move(left), node->rhs(), std::move(right));
     return check(node, std::move(res));
 }
 
