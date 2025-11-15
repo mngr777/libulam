@@ -21,6 +21,8 @@ public:
 
     operator bool() { return _type; }
 
+    TypedValue copy() const { return {_type, _value.copy()}; }
+
     Ref<Type> type() const { return _type; }
 
     Value& value() { return _value; }

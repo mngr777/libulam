@@ -453,11 +453,11 @@ ExprRes EvalExprVisitor::binary_op(
     ExprRes&& right) {
     debug() << __FUNCTION__ << "\n" << line_at(node);
 
-    LValue lval;
+    TypedValue lval_tv;
     if (ops::is_assign(op)) {
         if (!check_is_assignable(node, left.value()))
             return {ExprError::NotAssignable};
-        lval = left.value().lvalue();
+        lval_tv = {left.type(), Value{left.value().lvalue()}};
     }
 
     auto type_errors = binary_op_type_check(op, left, right);
@@ -502,13 +502,14 @@ ExprRes EvalExprVisitor::binary_op(
         return std::move(right);
 
     return apply_binary_op(
-        node, op, lval, l_node, std::move(left), r_node, std::move(right));
+        node, op, std::move(lval_tv), l_node, std::move(left), r_node,
+        std::move(right));
 }
 
 ExprRes EvalExprVisitor::apply_binary_op(
     Ref<ast::Expr> node,
     Op op,
-    LValue lval,
+    TypedValue&& lval_tv,
     Ref<ast::Expr> l_node,
     ExprRes&& left,
     Ref<ast::Expr> r_node,
@@ -541,9 +542,9 @@ ExprRes EvalExprVisitor::apply_binary_op(
 
     // handle assignment
     if (ops::is_assign(op)) {
-        if (lval.empty() || right.value().empty())
+        if (lval_tv.value().empty() || right.value().empty())
             return std::move(left);
-        return assign(node, {l_type, Value{lval}}, right.move_typed_value());
+        return assign(node, std::move(lval_tv), right.move_typed_value());
     }
     return std::move(right);
 }
@@ -555,12 +556,12 @@ ExprRes EvalExprVisitor::unary_op(
     ExprRes&& arg,
     Ref<ast::TypeName> type_name) {
 
-    LValue lval;
+    TypedValue lval_tv;
     if (ops::is_inc_dec(op)) {
         // store lvalue
         if (!check_is_assignable(node, arg.value()))
             return {ExprError::NotAssignable};
-        lval = arg.value().lvalue();
+        lval_tv = {arg.type(), Value{arg.value().lvalue()}};
     }
 
     auto error = unary_op_type_check(op, arg.type());
@@ -593,13 +594,14 @@ ExprRes EvalExprVisitor::unary_op(
             return {ExprError::UnresolvableType};
     }
 
-    return apply_unary_op(node, op, lval, arg_node, std::move(arg), type);
+    return apply_unary_op(
+        node, op, std::move(lval_tv), arg_node, std::move(arg), type);
 }
 
 ExprRes EvalExprVisitor::apply_unary_op(
     Ref<ast::Expr> node,
     Op op,
-    LValue lval,
+    TypedValue&& lval_tv,
     Ref<ast::Expr> arg_node,
     ExprRes&& arg,
     Ref<Type> type) {
@@ -614,12 +616,12 @@ ExprRes EvalExprVisitor::apply_unary_op(
             arg_type->as_prim()->unary_op(op, arg.move_value().move_rvalue());
 
         if (ops::is_inc_dec(op)) {
-            if (!lval.empty() && !tv.value().empty())
-                assign(node, TypedValue{tv.type(), Value{lval}}, std::move(tv));
+            if (!lval_tv.value().empty() && !tv.value().empty())
+                assign(node, lval_tv.copy(), std::move(tv));
             if (ops::is_unary_pre_op(op))
-                return {tv.type(), Value{lval}};
+                return {std::move(lval_tv)};
             assert(ops::is_unary_post_op(op));
-            return {tv.type(), Value{std::move(orig_rval)}};
+            return {lval_tv.type(), Value{std::move(orig_rval)}};
         }
         return {std::move(tv)};
 

@@ -67,7 +67,7 @@ protected:
     virtual ExprRes apply_binary_op(
         Ref<ast::Expr> node,
         Op op,
-        LValue lval,
+        TypedValue&& lval_tv,
         Ref<ast::Expr> l_node,
         ExprRes&& left,
         Ref<ast::Expr> r_node,
@@ -85,7 +85,7 @@ protected:
     virtual ExprRes apply_unary_op(
         Ref<ast::Expr> node,
         Op op,
-        LValue lval,
+        TypedValue&& lval_tv,
         Ref<ast::Expr> arg_node,
         ExprRes&& arg,
         Ref<Type> type = {});
