@@ -6,6 +6,7 @@
 #include <libulam/sema/expr_error.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <limits>
@@ -42,6 +43,7 @@ EvalNative::EvalNative(EvalEnv& env):
     ADD_METHOD("System", "print@13b", eval_system_print_unsigned_hex);
     ADD_METHOD("System", "print@13y", eval_system_print_unsigned_hex);
     ADD_METHOD("System", "assert@11b", eval_system_assert);
+    ADD_METHOD("SystemU3", "print@s", eval_system_u3_print_string);
     ADD_METHOD("EventWindow", "aref@232i", eval_event_window_aref);
     ADD_METHOD("EventWindow@232i", "aref@232i", eval_event_window_aref);
     ADD_METHOD("Math", "max@*", eval_math_max);
@@ -102,6 +104,16 @@ ExprRes EvalNative::eval_system_assert(
     assert(args.size() == 1);
     if (!env().is_true(args.pop_front()))
         throw ulam::sema::EvalExceptAssert("assert failed");
+    return void_res();
+}
+
+ExprRes EvalNative::eval_system_u3_print_string(
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
+    assert(args.size() == 1);
+    auto arg = args.pop_front();
+    auto val = arg.move_value();
+    auto str_type = builtins().string_type();
+    out() << str_type->text(val) << "\n";
     return void_res();
 }
 
@@ -178,7 +190,7 @@ ulam::array_idx_t EvalNative::array_idx(const ulam::RValue& idx_rval) {
     return static_cast<ulam::array_idx_t>(idx_int);
 }
 
-std::ostream& EvalNative::out() { return std::cout << "System.print: "; }
+std::ostream& EvalNative::out() { return std::cout << ">> "; }
 
 ExprRes EvalNative::void_res() {
     return {builtins().void_type(), ulam::Value{ulam::RValue{}}};

@@ -38,6 +38,9 @@ private:
     _DECLARE_METHOD(eval_system_print_unsigned_hex);
     _DECLARE_METHOD(eval_system_assert);
 
+    // SystemU3
+    _DECLARE_METHOD(eval_system_u3_print_string);
+
     // EventWindow
     _DECLARE_METHOD(eval_event_window_aref);
 
