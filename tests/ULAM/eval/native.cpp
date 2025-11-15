@@ -1,15 +1,11 @@
 #include "./native.hpp"
-#include "libulam/semantic/type/builtin/int.hpp"
-#include "libulam/semantic/type/builtin_type_id.hpp"
-#include "libulam/semantic/type/class/prop.hpp"
-#include "libulam/semantic/value.hpp"
 #include <cassert>
 #include <functional>
 #include <iostream>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/expr_error.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
-#include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <limits>
@@ -18,13 +14,16 @@ namespace {
 
 using ExprRes = EvalNative::ExprRes;
 using ExprResList = EvalNative::ExprResList;
-using LValue = EvalNative::LValue;
+using FunRef = EvalNative::FunRef;
 using NodeRef = EvalNative::NodeRef;
 using EvalExceptAssert = ulam::sema::EvalExceptAssert;
 
 } // namespace
 
-EvalNative::EvalNative(EvalEnv& env): ::EvalHelper{env}, Base{env} {
+EvalNative::EvalNative(EvalEnv& env):
+    ::EvalHelper{env},
+    Base{env},
+    _bar_atom{builtins().atom_type()->construct()} {
 #define ADD_METHOD(class_name, fun_name, method)                               \
     do {                                                                       \
         namespace ph = std::placeholders;                                      \
@@ -33,7 +32,7 @@ EvalNative::EvalNative(EvalEnv& env): ::EvalHelper{env}, Base{env} {
                 std::string_view{class_name}, std::string_view{fun_name}},     \
             std::bind(                                                         \
                 std::mem_fn(&EvalNative::method), this, ph::_1, ph::_2,        \
-                ph::_3));                                                      \
+                ph::_3, ph::_4));                                              \
     } while (false)
 
     ADD_METHOD("System", "print@13i", eval_system_print_int);
@@ -52,11 +51,9 @@ EvalNative::EvalNative(EvalEnv& env): ::EvalHelper{env}, Base{env} {
 }
 
 ExprRes EvalNative::call(
-    ulam::Ref<ulam::ast::Node> node,
-    const std::string_view class_name,
-    const std::string_view fun_name,
-    LValue self,
-    ExprResList&& args) {
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
+    const auto class_name = fun->cls()->mangled_name();
+    const auto fun_name = fun->mangled_name();
     auto it = _map.find({class_name, fun_name});
     if (it == _map.end()) {
         auto message = std::string{"cannot eval native function "} +
@@ -65,13 +62,13 @@ ExprRes EvalNative::call(
         std::exit(0);
         return {ulam::sema::ExprError::CannotEvalNative};
     }
-    return (it->second)(node, self, std::move(args));
+    return (it->second)(node, fun, self, std::move(args));
 }
 
 // System
 
 ExprRes EvalNative::eval_system_print_int(
-    NodeRef node, LValue self, ExprResList&& args) {
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     auto arg = args.pop_front();
     auto rval = arg.move_value().move_rvalue();
@@ -81,7 +78,7 @@ ExprRes EvalNative::eval_system_print_int(
 }
 
 ExprRes EvalNative::eval_system_print_unsigned(
-    NodeRef node, LValue self, ExprResList&& args) {
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     auto arg = args.pop_front();
     auto rval = arg.move_value().move_rvalue();
@@ -91,7 +88,7 @@ ExprRes EvalNative::eval_system_print_unsigned(
 }
 
 ExprRes EvalNative::eval_system_print_unsigned_hex(
-    NodeRef node, LValue self, ExprResList&& args) {
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     auto arg = args.pop_front();
     auto rval = arg.move_value().move_rvalue();
@@ -100,8 +97,8 @@ ExprRes EvalNative::eval_system_print_unsigned_hex(
     return void_res();
 }
 
-ExprRes
-EvalNative::eval_system_assert(NodeRef node, LValue self, ExprResList&& args) {
+ExprRes EvalNative::eval_system_assert(
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     if (!env().is_true(args.pop_front()))
         throw ulam::sema::EvalExceptAssert("assert failed");
@@ -111,7 +108,7 @@ EvalNative::eval_system_assert(NodeRef node, LValue self, ExprResList&& args) {
 // EventWindow
 
 ExprRes EvalNative::eval_event_window_aref(
-    NodeRef node, LValue self, ExprResList&& args) {
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     auto idx_arg = args.pop_front();
 
@@ -123,8 +120,8 @@ ExprRes EvalNative::eval_event_window_aref(
 }
 
 // Math
-ExprRes
-EvalNative::eval_math_max(NodeRef node, LValue self, ExprResList&& args) {
+ExprRes EvalNative::eval_math_max(
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     auto max = std::numeric_limits<ulam::Integer>::min();
     bool is_consteval = true;
     while (!args.empty()) {
@@ -149,19 +146,19 @@ EvalNative::eval_math_max(NodeRef node, LValue self, ExprResList&& args) {
 
 // Bar
 
-ExprRes
-EvalNative::eval_bar_aref(NodeRef node, LValue self, ExprResList&& args) {
+ExprRes EvalNative::eval_bar_aref(
+    NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     auto idx_arg = args.pop_front();
-    auto lval = obj_prop(self, "val_b");
-    lval = array_item(lval, idx_arg.move_value().move_rvalue());
-    lval.set_is_xvalue(self.is_xvalue());
-    return {builtins().bool_type(), ulam::Value{lval}};
+    assert(idx_arg);
+    auto type = builtins().atom_type()->ref_type();
+    return {type, ulam::Value{_bar_atom.atom_of()}};
 }
 
 // utils
 
-LValue EvalNative::obj_prop(LValue obj, const std::string_view prop_name) {
+ulam::LValue
+EvalNative::obj_prop(ulam::LValue obj, const std::string_view prop_name) {
     auto cls = obj.dyn_cls();
     assert(cls);
     auto sym = cls->get(prop_name);
@@ -169,7 +166,8 @@ LValue EvalNative::obj_prop(LValue obj, const std::string_view prop_name) {
     return obj.prop(sym->get<ulam::Prop>());
 }
 
-LValue EvalNative::array_item(LValue array, ulam::RValue&& idx_rval) {
+ulam::LValue
+EvalNative::array_item(ulam::LValue array, ulam::RValue&& idx_rval) {
     return array.array_access(array_idx(idx_rval), idx_rval.is_consteval());
 }
 

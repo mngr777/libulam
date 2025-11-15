@@ -15,46 +15,44 @@ public:
     using Base = ulam::sema::EvalHelper;
     using ExprRes = ulam::sema::ExprRes;
     using ExprResList = ulam::sema::ExprResList;
-    using LValue = ulam::LValue;
+    using FunRef = ulam::Ref<ulam::Fun>;
     using NodeRef = ulam::Ref<ulam::ast::Node>;
 
     explicit EvalNative(EvalEnv& env);
 
-    ExprRes call(
-        ulam::Ref<ulam::ast::Node> node,
-        const std::string_view class_name,
-        const std::string_view fun_name,
-        LValue self,
-        ExprResList&& args);
+    ExprRes
+    call(NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args);
 
 private:
     using NamePair = std::pair<const std::string_view, const std::string_view>;
-    using FunImpl = std::function<ExprRes(NodeRef, LValue, ExprResList&&)>;
+    using FunImpl =
+        std::function<ExprRes(NodeRef, FunRef, ulam::LValue, ExprResList&&)>;
     using Map = std::map<NamePair, FunImpl>;
 
+#define _DECLARE_METHOD(name)                                                  \
+    ExprRes name(NodeRef, FunRef, ulam::LValue, ExprResList&&)
+
     // System
-    ExprRes
-    eval_system_print_int(NodeRef node, LValue self, ExprResList&& args);
-    ExprRes
-    eval_system_print_unsigned(NodeRef node, LValue self, ExprResList&& args);
-    ExprRes eval_system_print_unsigned_hex(
-        NodeRef node, LValue self, ExprResList&& args);
-    ExprRes eval_system_assert(NodeRef node, LValue self, ExprResList&& args);
+    _DECLARE_METHOD(eval_system_print_int);
+    _DECLARE_METHOD(eval_system_print_unsigned);
+    _DECLARE_METHOD(eval_system_print_unsigned_hex);
+    _DECLARE_METHOD(eval_system_assert);
 
     // EventWindow
-    ExprRes
-    eval_event_window_aref(NodeRef node, LValue self, ExprResList&& args);
+    _DECLARE_METHOD(eval_event_window_aref);
 
     // Math
-    ExprRes eval_math_max(NodeRef node, LValue self, ExprResList&& args);
+    _DECLARE_METHOD(eval_math_max);
 
     // Bar
-    ExprRes eval_bar_aref(NodeRef node, LValue self, ExprResList&& args);
+    _DECLARE_METHOD(eval_bar_aref);
+
+#undef _DECLARE_METHOD
 
     // utils
 
-    LValue obj_prop(LValue obj, const std::string_view prop_name);
-    LValue array_item(LValue array, ulam::RValue&& idx_rval);
+    ulam::LValue obj_prop(ulam::LValue obj, const std::string_view prop_name);
+    ulam::LValue array_item(ulam::LValue array, ulam::RValue&& idx_rval);
 
     ulam::array_idx_t array_idx(const ulam::RValue& idx_rval);
 
@@ -62,5 +60,8 @@ private:
 
     ExprRes void_res();
 
+    // NOTE: single shared Empty atom, there's no good way to distinguish Bar
+    // quark instances
+    ulam::RValue _bar_atom;
     Map _map;
 };

@@ -13,10 +13,8 @@ bool EvalHelper::codegen_enabled() const {
 
 ulam::sema::ExprRes EvalHelper::call_native(
     ulam::Ref<ulam::ast::Node> node,
-    const std::string_view class_name,
-    const std::string_view fun_name,
+    ulam::Ref<ulam::Fun> fun,
     ulam::LValue self,
     ulam::sema::ExprResList&& args) {
-    return EvalNative{_env}.call(
-        node, class_name, fun_name, self, std::move(args));
+    return EvalNative{_env}.call(node, fun, self, std::move(args));
 }

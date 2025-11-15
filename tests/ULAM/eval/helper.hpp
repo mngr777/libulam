@@ -22,8 +22,7 @@ public:
 
     ulam::sema::ExprRes call_native(
         ulam::Ref<ulam::ast::Node> node,
-        const std::string_view class_name,
-        const std::string_view fun_name,
+        ulam::Ref<ulam::Fun> fun,
         ulam::LValue self,
         ulam::sema::ExprResList&& args);
 
