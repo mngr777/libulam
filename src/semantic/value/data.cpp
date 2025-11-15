@@ -81,14 +81,17 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    auto type = dyn_type();
-    if (!_view_type || _view_type->is_same(type)) {
-        type->store(_storage->bits(), _off, std::move(rval));
+    // NOTE: not using dyn type to store, otherwise Atoms would use their
+    // current element class to store other elements -- that effectively
+    // would cast data to current element by overwriting element ID.
+
+    if (!_view_type || _view_type->is_same(_type)) {
+        _type->store(_storage->bits(), _off, std::move(rval));
         return;
     }
-    assert(_view_type->is_expl_castable_to(type));
+    assert(_view_type->is_expl_castable_to(_type));
     auto val = _view_type->cast_to(_type, Value{std::move(rval)});
-    type->store(_storage->bits(), _off, val.move_rvalue());
+    _type->store(_storage->bits(), _off, val.move_rvalue());
 }
 
 RValue DataView::load() const {

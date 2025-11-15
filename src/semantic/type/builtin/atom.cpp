@@ -25,8 +25,9 @@ Ref<Type> AtomType::data_type(const BitsView data, bitsize_t off) {
     assert(data.len() - off >= ULAM_ATOM_SIZE);
     Ref<Type> type{this};
     auto elt_id = read_element_id(data, off);
-    if (elt_id != NoEltId)
-        type = _elements.get(elt_id);
+    auto elt_type = _elements.get(elt_id);
+    if (elt_type)
+        return elt_type;
     return type;
 }
 

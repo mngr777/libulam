@@ -15,7 +15,7 @@ Program::Program(
     _text_pool{text_pool},
     _sm{sm},
     _type_id_gen{},
-    _elements{},
+    _elements{_options.class_options},
     _builtins{this},
     _mangler{_text_pool} {}
 
