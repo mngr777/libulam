@@ -5,7 +5,7 @@
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/type/class.hpp>
-#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/utils/integer.hpp>
 
 namespace ulam {
 

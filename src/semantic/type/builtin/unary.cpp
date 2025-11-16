@@ -3,7 +3,7 @@
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
-#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/utils/integer.hpp>
 
 namespace ulam {
 

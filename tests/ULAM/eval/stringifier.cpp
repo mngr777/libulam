@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
-#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <sstream>

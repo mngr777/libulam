@@ -8,7 +8,7 @@
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
-#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <limits>
 

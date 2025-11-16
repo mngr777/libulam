@@ -1,5 +1,5 @@
 #include <iostream>
-#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <limits>

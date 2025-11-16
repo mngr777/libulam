@@ -1,5 +1,5 @@
 #include <libulam/semantic/number.hpp>
-#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/utils/integer.hpp>
 #include <sstream>
 
 std::ostream& operator<<(std::ostream& os, const ulam::Number& number) {
