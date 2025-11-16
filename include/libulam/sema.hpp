@@ -1,28 +1,13 @@
 #pragma once
 #include <libulam/ast.hpp>
+#include <libulam/context.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/scope.hpp>
+#include <libulam/sema/eval/env.hpp>
 
-namespace ulam {
+namespace ulam::sema {
 
-namespace sema {
-class RecVisitor;
-}
+Ref<Program> init(Context& ctx, Ref<ast::Root> ast);
 
-class Diag;
+bool resolve(Context& ctx, Ref<Program> program);
 
-class Sema {
-    friend sema::RecVisitor;
-
-public:
-    explicit Sema(Diag& diag, SrcMngr& sm);
-    ~Sema();
-
-    void analyze(Ref<ast::Root> ast);
-
-private:
-    Diag& _diag;
-    SrcMngr& _sm;
-};
-
-} // namespace ulam
+} // namespace ulam::sema

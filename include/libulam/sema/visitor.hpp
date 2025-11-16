@@ -2,6 +2,7 @@
 #include <cassert>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/visitor.hpp>
+#include <libulam/context.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/stack.hpp>
@@ -23,7 +24,7 @@ public:
 
     enum class Pass { Module, Classes, FunBodies };
 
-    RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies = false);
+    RecVisitor(Context& ctx, Ref<ast::Root> ast, bool skip_fun_bodies = false);
     ~RecVisitor();
 
     void analyze();
@@ -51,6 +52,7 @@ protected:
 
     bool sync_scope(Ref<ast::DefNode> node);
 
+    Context& ctx() { return _ctx; }
     Diag& diag();
     ScopeStack& scope_stack() { return _scope_stack; }
     Scope* scope();
@@ -82,7 +84,7 @@ protected:
     }
 
 private:
-    Diag& _diag;
+    Context& _ctx;
     Ref<ast::Root> _ast;
     Ref<Program> _program;
     Ptr<EvalEnv> _eval_env;

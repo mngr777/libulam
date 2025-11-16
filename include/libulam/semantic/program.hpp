@@ -1,6 +1,8 @@
 #pragma once
+#include <libulam/context.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/options.hpp>
 #include <libulam/semantic/export.hpp>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/module.hpp>
@@ -26,16 +28,15 @@ class Program {
 public:
     using ModuleList = std::list<Ref<Module>>;
 
-    Program(
-        Diag& diag, UniqStrPool& str_pool, UniqStrPool& text_pool, SrcMngr& sm);
+    Program(Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool);
     ~Program();
 
-    Diag& diag() { return _diag; }
+    Diag& diag() { return _ctx.diag(); }
 
     UniqStrPool& str_pool() { return _str_pool; }
     UniqStrPool& text_pool() { return _text_pool; }
 
-    SrcMngr& sm() { return _sm; }
+    SrcMngr& sm() { return _ctx.sm(); }
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
 
@@ -47,10 +48,7 @@ public:
     Mangler& mangler() { return _mangler; }
 
     const ClassOptions& class_options() const;
-    ClassOptions set_class_options(ClassOptions options);
-
     const ScopeOptions& scope_options() const;
-    ScopeOptions set_scope_options(ScopeOptions options);
 
     const ModuleList& modules() { return _modules; }
     Ref<Module> module(const std::string_view name);
@@ -61,20 +59,14 @@ public:
     const Export* add_export(str_id_t name_id, Export exp);
 
 private:
-    Diag& _diag;
+    Context& _ctx;
     UniqStrPool& _str_pool;
     UniqStrPool& _text_pool;
-    SrcMngr& _sm;
     TypeIdGen _type_id_gen;
     ClassRegistry _classes;
     ElementRegistry _elements;
     Builtins _builtins;
     Mangler _mangler;
-
-    struct {
-        ClassOptions class_options{DefaultClassOptions};
-        ScopeOptions scope_options{DefaultScopeOptions};
-    } _options;
 
     std::list<Ptr<Module>> _module_ptrs;
     std::list<Ref<Module>> _modules;

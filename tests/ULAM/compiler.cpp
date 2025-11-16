@@ -66,9 +66,11 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
     test::ast::Printer printer{std::cout, ulam::ref(_ast)};
     printer.print();
     // }
-    ulam::Sema sema{_ctx.diag(), _ctx.sm()};
-    sema.analyze(ulam::ref(_ast));
-    return _ast->program();
+
+    auto program = ulam::sema::init(_ctx, ulam::ref(_ast));
+    assert(program);
+    ulam::sema::resolve(_ctx, program);
+    return program;
 }
 
 void Compiler::compile(std::ostream& os) {

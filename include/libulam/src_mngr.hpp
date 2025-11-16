@@ -17,8 +17,8 @@ public:
 
     SrcMngr() {}
 
-    SrcMngr(const SrcMngr&) = delete;
-    SrcMngr& operator=(const SrcMngr&) = delete;
+    SrcMngr(SrcMngr&&) = default;
+    SrcMngr& operator=(SrcMngr&&) = default;
 
     Src* string(std::string text, Path path);
     Src* file(Path path);

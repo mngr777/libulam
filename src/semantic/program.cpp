@@ -9,34 +9,23 @@
 namespace ulam {
 
 Program::Program(
-    Diag& diag, UniqStrPool& str_pool, UniqStrPool& text_pool, SrcMngr& sm):
-    _diag{diag},
+    Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
+    _ctx{ctx},
     _str_pool{str_pool},
     _text_pool{text_pool},
-    _sm{sm},
     _type_id_gen{},
-    _elements{_options.class_options},
+    _elements{ctx.options.class_options},
     _builtins{this},
     _mangler{_text_pool} {}
 
 Program::~Program() {}
 
 const ClassOptions& Program::class_options() const {
-    return _options.class_options;
-}
-
-ClassOptions Program::set_class_options(ClassOptions options) {
-    std::swap(_options.class_options, options);
-    return options;
+    return _ctx.options.class_options;
 }
 
 const ScopeOptions& Program::scope_options() const {
-    return _options.scope_options;
-}
-
-ScopeOptions Program::set_scope_options(ScopeOptions options) {
-    std::swap(_options.scope_options, options);
-    return options;
+    return _ctx.options.scope_options;
 }
 
 Ref<Module> Program::module(const std::string_view name) {

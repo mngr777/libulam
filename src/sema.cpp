@@ -4,20 +4,18 @@
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 
-#define ULAM_DEBUG
-#define ULAM_DEBUG_PREFIX "[Sema] "
-#include "src/debug.hpp"
+namespace ulam::sema {
 
-namespace ulam {
-
-Sema::Sema(Diag& diag, SrcMngr& sm): _diag{diag}, _sm{sm} {}
-
-Sema::~Sema() {}
-
-void Sema::analyze(Ref<ast::Root> ast) {
-    sema::Init init{_diag, _sm, ast};
+Ref<Program> init(Context& ctx, Ref<ast::Root> ast) {
+    sema::Init init{ctx, ast};
     init.analyze();
-    assert(ast->program());
+    return ast->program();
 }
 
-} // namespace ulam
+bool resolve(Context& ctx, Ref<Program> program) {
+    EvalEnv eval_env{program};
+    eval_env.resolver(false).resolve(program);
+    return true; // TMP
+}
+
+} // namespace ulam::sema

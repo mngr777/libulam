@@ -28,10 +28,9 @@ namespace ulam::sema {
 
 void Init::visit(Ref<ast::Root> node) {
     assert(!node->program());
-    node->set_program(make<Program>(
-        diag(), node->ctx().str_pool(), node->ctx().text_pool(), _sm));
+    node->set_program(
+        make<Program>(ctx(), node->ctx().str_pool(), node->ctx().text_pool()));
     RecVisitor::visit(node);
-    resolve();
 }
 
 void Init::visit(Ref<ast::ModuleDef> node) {
@@ -155,12 +154,6 @@ bool Init::do_visit(Ref<ast::FunDef> node) {
     cls_base->add_fun(node);
     sync_scope(node);
     return true;
-}
-
-void Init::resolve() {
-    auto program = ast()->program();
-    EvalEnv env{program};
-    env.resolver(false).resolve(program);
 }
 
 } // namespace ulam::sema

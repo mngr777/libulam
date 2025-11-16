@@ -14,8 +14,8 @@ public:
     Src(src_id_t id, std::filesystem::path path): _id{id}, _path{std::move(path)} {}
     virtual ~Src() {}
 
-    Src(const Src&) = delete;
-    Src& operator=(const Src&) = delete;
+    Src(Src&&) = default;
+    Src& operator=(Src&&) = default;
 
     virtual const mem::BufRef content() = 0;
 

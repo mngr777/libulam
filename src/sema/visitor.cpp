@@ -13,8 +13,8 @@
 
 namespace ulam::sema {
 
-RecVisitor::RecVisitor(Diag& diag, Ref<ast::Root> ast, bool skip_fun_bodies):
-    _diag{diag},
+RecVisitor::RecVisitor(Context& ctx, Ref<ast::Root> ast, bool skip_fun_bodies):
+    _ctx{ctx},
     _ast{ast},
     _program{},
     _eval_env{},
@@ -38,7 +38,8 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
     assert(node->module());
     auto mod = node->module();
     _module_def = node;
-    auto sr = _scope_stack.raii<PersScopeView>(mod->scope(), scope_version_t{0});
+    auto sr =
+        _scope_stack.raii<PersScopeView>(mod->scope(), scope_version_t{0});
     if (do_visit(node)) {
         _pass = Pass::Module;
         traverse(node);
@@ -177,6 +178,6 @@ bool RecVisitor::sync_scope(Ref<ast::DefNode> node) {
 
 Scope* RecVisitor::scope() { return _scope_stack.top(); }
 
-Diag& RecVisitor::diag() { return _diag; }
+Diag& RecVisitor::diag() { return _ctx.diag(); }
 
 } // namespace ulam::sema

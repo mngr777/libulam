@@ -186,7 +186,9 @@ HEADER_FILES = \
 	include/libulam/lex.hpp \
 	include/libulam/memory/buf.hpp \
 	include/libulam/memory/notepad.hpp \
+	include/libulam/options.hpp \
 	include/libulam/parser.hpp \
+	include/libulam/parser/options.hpp \
 	include/libulam/preproc.hpp \
 	include/libulam/src.hpp \
 	include/libulam/src_loc.hpp \
