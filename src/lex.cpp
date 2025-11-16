@@ -260,7 +260,7 @@ void Lex::skip_whitespace() {
     }
 }
 
-loc_id_t Lex::loc_id() { return _sm.loc_id(_src_id, _cur, _linum, chr()); }
+loc_id_t Lex::loc_id() { return _src_man.loc_id(_src_id, _cur, _linum, chr()); }
 
 void Lex::start(Token& token) {
     _tok_start = _cur;

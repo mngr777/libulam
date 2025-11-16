@@ -13,7 +13,7 @@ class Diag {
 public:
     enum Level : std::uint8_t { Fatal = 0, Error, Warn, Notice, Debug };
 
-    Diag(SrcMan& sm): _sm{sm} {}
+    Diag(SrcMan& src_man): _src_man{src_man} {}
 
     template <typename... Ts> void fatal(Ts... args) {
         emit(Diag::Fatal, std::forward<Ts>(args)...);
@@ -52,7 +52,7 @@ public:
         const std::string& text);
 
 private:
-    SrcMan& _sm;
+    SrcMan& _src_man;
     unsigned _err_num{0};
 };
 

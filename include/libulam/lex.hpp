@@ -1,7 +1,7 @@
 #pragma once
-#include "libulam/src_loc.hpp"
-#include "libulam/token.hpp"
-#include "libulam/memory/buf.hpp"
+#include <libulam/memory/buf.hpp>
+#include <libulam/src_loc.hpp>
+#include <libulam/token.hpp>
 
 namespace ulam {
 
@@ -11,9 +11,9 @@ class Preproc;
 
 class Lex {
 public:
-    Lex(Preproc& pp, SrcMan& sm, src_id_t src_id, const mem::BufRef buf):
+    Lex(Preproc& pp, SrcMan& src_man, src_id_t src_id, const mem::BufRef buf):
         _pp{pp},
-        _sm{sm},
+        _src_man{src_man},
         _src_id{src_id},
         _buf{buf},
         _cur{buf.start()},
@@ -42,7 +42,7 @@ private:
     void lex_word();
 
     Preproc& _pp;
-    SrcMan& _sm;
+    SrcMan& _src_man;
     const src_id_t _src_id;
     const mem::BufRef _buf;
 

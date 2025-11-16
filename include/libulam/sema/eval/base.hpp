@@ -16,7 +16,7 @@ public:
     virtual ~EvalBase() {}
 
     const std::string_view line_at(loc_id_t loc_id) {
-        return _program->sm().line_at(loc_id);
+        return _program->src_man().line_at(loc_id);
     }
     const std::string_view line_at(Ref<ast::Node> node) {
         return line_at(node->loc_id());

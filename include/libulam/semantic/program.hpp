@@ -36,7 +36,7 @@ public:
     UniqStrPool& str_pool() { return _str_pool; }
     UniqStrPool& text_pool() { return _text_pool; }
 
-    SrcMan& sm() { return _ctx.sm(); }
+    SrcMan& src_man() { return _ctx.src_man(); }
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
 

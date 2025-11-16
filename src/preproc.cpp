@@ -6,7 +6,6 @@
 #include <libulam/src_man.hpp>
 #include <libulam/token.hpp>
 
-#define DEBUG_PREPROC // TEST
 #ifdef DEBUG_PREPROC
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::Preproc] "
@@ -17,18 +16,18 @@ namespace ulam {
 
 void Preproc::main_file(Path path) {
     assert(_stack.empty());
-    auto src = _ctx.sm().file(std::move(path));
+    auto src = _ctx.src_man().file(std::move(path));
     push(src);
 }
 
 void Preproc::main_string(std::string text, Path path) {
     assert(_stack.empty());
-    auto src = _ctx.sm().string(std::move(text), std::move(path));
+    auto src = _ctx.src_man().string(std::move(text), std::move(path));
     push(src);
 }
 
 void Preproc::add_string(std::string text, Path path) {
-    _ctx.sm().string(std::move(text), std::move(path));
+    _ctx.src_man().string(std::move(text), std::move(path));
 }
 
 Preproc& Preproc::operator>>(Token& token) {
@@ -97,7 +96,7 @@ const Preproc::Path& Preproc::current_path() const {
 void Preproc::push(Src* src) {
     assert(src);
     assert(src->content().start());
-    _stack.emplace(src, Lex{*this, _ctx.sm(), src->id(), src->content()});
+    _stack.emplace(src, Lex{*this, _ctx.src_man(), src->id(), src->content()});
 }
 
 Lex& Preproc::lexer() {
@@ -144,7 +143,7 @@ void Preproc::preproc_use() {
 }
 
 bool Preproc::preproc_load() {
-    auto& sm = _ctx.sm();
+    auto& src_man = _ctx.src_man();
     auto& diag = _ctx.diag();
 
     Token path_tok;
@@ -154,9 +153,9 @@ bool Preproc::preproc_load() {
     // bool global = (path[0] == '<'); // TODO
     path = detail::parse_str(diag, path_tok.loc_id, path);
 
-    auto src = sm.src(path);
+    auto src = src_man.src(path);
     if (!src)
-        src = sm.file(path);
+        src = src_man.file(path);
     if (src) {
         push(src);
     } else {
@@ -167,7 +166,7 @@ bool Preproc::preproc_load() {
 }
 
 const std::string_view Preproc::tok_str(const Token& token) {
-    return _ctx.sm().str_at(token.loc_id, token.size);
+    return _ctx.src_man().str_at(token.loc_id, token.size);
 }
 
 } // namespace ulam

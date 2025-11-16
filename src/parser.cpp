@@ -2154,7 +2154,8 @@ Number Parser::num_lit_number() {
     case tok::Number:
         return detail::parse_num_str(_ctx.diag(), _tok.loc_id, tok_str());
     case tok::__Line:
-        return {Radix::Decimal, (Unsigned)_ctx.sm().loc(_tok.loc_id).linum()};
+        return {
+            Radix::Decimal, (Unsigned)_ctx.src_man().loc(_tok.loc_id).linum()};
     default:
         assert(false);
     }
@@ -2200,7 +2201,7 @@ Ptr<N> Parser::tree_loc(loc_id_t loc_id, Args&&... args) {
 const std::string_view Parser::tok_str() {
     assert(_tok.in(
         tok::Ident, tok::TypeIdent, tok::Number, tok::Char, tok::String));
-    return _ctx.sm().str_at(_tok.loc_id, _tok.size);
+    return _ctx.src_man().str_at(_tok.loc_id, _tok.size);
 }
 
 ast::Str Parser::tok_ast_str() {

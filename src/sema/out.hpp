@@ -9,7 +9,6 @@
 
 namespace ulam::sema {
 
-// TMP
 class Out {
 public:
     Out(Ref<Program> program): _program{program}, _os{std::cout} {}
@@ -24,7 +23,7 @@ public:
 
 private:
     const std::string_view line_at(loc_id_t loc_id) {
-        return _program->sm().line_at(loc_id);
+        return _program->src_man().line_at(loc_id);
     }
     const std::string_view line_at(Ref<ast::Node> node) {
         return line_at(node->loc_id());
@@ -36,7 +35,6 @@ private:
     const std::string_view text(str_id_t str_id) const {
         return text_pool().get(str_id);
     }
-
 
     std::string_view str(str_id_t str_id);
 

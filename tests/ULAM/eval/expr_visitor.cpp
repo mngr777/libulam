@@ -19,7 +19,7 @@
 #endif
 #include "src/debug.hpp"
 
-#define DBG_LINE(node) debug() << _program->sm().line_at(node->loc_id())
+#define DBG_LINE(node) debug() << _program->src_man().line_at(node->loc_id())
 
 namespace {
 

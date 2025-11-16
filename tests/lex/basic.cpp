@@ -1,10 +1,10 @@
-#include "libulam/token.hpp"
 #include <iostream>
 #include <libulam/context.hpp>
 #include <libulam/lex.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/src.hpp>
 #include <libulam/src_man.hpp>
+#include <libulam/token.hpp>
 
 static const char* Program = R"END(
 ulam 1;
@@ -41,13 +41,13 @@ int main() {
     ulam::Context ctx;
     ulam::Preproc pp{ctx};
     std::string text{Program};
-    auto src = ctx.sm().string(text, "A");
-    ulam::Lex lex{pp, ctx.sm(), src->id(), src->content()};
+    auto src = ctx.src_man().string(text, "A");
+    ulam::Lex lex{pp, ctx.src_man(), src->id(), src->content()};
     ulam::Token token;
     do {
         lex.lex(token);
         if (token.in(ulam::tok::Ident, ulam::tok::Number, ulam::tok::String)) {
-            std::cout << "`" << ctx.sm().str_at(token.loc_id, token.size)
+            std::cout << "`" << ctx.src_man().str_at(token.loc_id, token.size)
                       << "'";
         } else {
             const char* str = token.type_str();

@@ -7,18 +7,18 @@ namespace ulam {
 
 class Context {
 public:
-    Context(): _sm{}, _diag{_sm} {}
+    Context(): _src_man{}, _diag{_src_man} {}
 
     Context(Context&&) = default;
     Context& operator=(Context&&) = default;
 
-    SrcMan& sm() { return _sm; }
+    SrcMan& src_man() { return _src_man; }
     Diag& diag() { return _diag; }
 
     Options options;
 
 private:
-    SrcMan _sm;
+    SrcMan _src_man;
     Diag _diag;
 };
 
