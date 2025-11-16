@@ -1,10 +1,10 @@
 #pragma once
-#include "libulam/ast/nodes/exprs.hpp"
-#include "libulam/ast/nodes/module.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/nodes.hpp>
+#include <libulam/ast/nodes/exprs.hpp>
+#include <libulam/ast/nodes/module.hpp>
+#include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/detail/variant.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -44,9 +44,10 @@ private:
     using expr_flags_t = std::uint8_t;
     static constexpr expr_flags_t NoExprFlags = 0;
     static constexpr expr_flags_t ExprStopAtComma = 1;
-    static constexpr expr_flags_t ExprIsNotEmpty = 1 << 1; // not parens-only
-    static constexpr expr_flags_t ExprAllowAsCond = 1 << 2;
-    static constexpr expr_flags_t ExprHasAsCond = 1 << 3;
+    static constexpr expr_flags_t ExprStopAtEqual = 1 << 1;
+    static constexpr expr_flags_t ExprIsNotEmpty = 1 << 2; // not parens-only
+    static constexpr expr_flags_t ExprAllowAsCond = 1 << 3;
+    static constexpr expr_flags_t ExprHasAsCond = 1 << 4;
 
     using type_flags_t = std::uint8_t;
     static constexpr type_flags_t NoTypeFlags = 0;

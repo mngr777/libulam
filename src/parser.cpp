@@ -1,7 +1,3 @@
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/exprs.hpp"
-#include "libulam/ast/nodes/stmt.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -12,7 +8,6 @@
 #include <src/parser/string.hpp>
 #include <string>
 
-#define DEBUG_PARSER // TEST
 #ifdef DEBUG_PARSER
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[ulam::Parser] "
@@ -1432,8 +1427,11 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
     Ptr<ast::Expr>&& lhs, ops::Prec min_prec, ExprContext& ctx) {
     // binary or suffix
     while (true) {
-        // comma?
+        // ,
         if (_tok.is(tok::Comma) && ctx.has_flag(ExprStopAtComma))
+            break;
+        // =
+        if (_tok.is(tok::Equal) && ctx.has_flag(ExprStopAtEqual))
             break;
 
         // binary?
@@ -1614,10 +1612,10 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
         auto type_name = full_type_name->replace_type_name({});
         inner = parse_type_op_rest(std::move(type_name), {});
         assert(inner);
-        ctx.uns_flag(ExprStopAtComma);
+        ctx.uns_flag(ExprStopAtComma | ExprStopAtEqual);
         inner = parse_expr_climb_rest(std::move(inner), 0, ctx);
     } else {
-        ctx.uns_flag(ExprStopAtComma);
+        ctx.uns_flag(ExprStopAtComma | ExprStopAtEqual);
         inner = parse_expr(ctx);
     }
     if (!inner || !expect(tok::ParenR))
@@ -1992,13 +1990,17 @@ Ptr<ast::Ternary> Parser::parse_ternary_rest(Ptr<ast::Expr>&& cond) {
     auto loc_id = _tok.loc_id;
     consume();
 
-    auto if_true = parse_expr();
+    auto flags = NoExprFlags;
+    if (!_ctx.options.parser_options.allow_assign_in_ternary)
+        flags |= ExprStopAtEqual;
+
+    auto if_true = parse_expr(flags);
 
     // :
     if (!expect(tok::Colon))
         return {};
 
-    auto if_false = parse_expr();
+    auto if_false = parse_expr(flags);
 
     if (!if_true || !if_false)
         return {};
