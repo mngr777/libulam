@@ -1,5 +1,4 @@
 #pragma once
-#include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <ostream>
 #include <sstream>

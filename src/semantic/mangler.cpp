@@ -1,8 +1,8 @@
-#include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/utils/leximited.hpp>
 #include <sstream>
 
 #ifdef DEBUG_MANGLER

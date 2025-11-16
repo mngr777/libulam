@@ -1,5 +1,5 @@
 #include <libulam/utils/integer.hpp>
-#include <src/semantic/detail/leximited.hpp>
+#include <libulam/utils/leximited.hpp>
 
 // see `ULAM/src/ulam/UlamUtils.cpp`
 

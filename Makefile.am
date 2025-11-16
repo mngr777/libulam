@@ -76,7 +76,6 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type_ops.hpp \
 	include/libulam/semantic/type_ops.inc.hpp \
 	include/libulam/semantic/type_tpl.hpp \
-	include/libulam/utils/integer.hpp \
 	include/libulam/semantic/value.hpp \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/bound_fun_set.hpp \
@@ -87,8 +86,6 @@ SEMANTIC_HEADER_FILES = \
 
 SEMANTIC_SOURCE_FILES = \
 	src/semantic/decl.cpp \
-	src/semantic/detail/leximited.hpp \
-	src/semantic/detail/leximited.cpp \
 	src/semantic/export.cpp \
 	src/semantic/fun.cpp \
 	src/semantic/number.cpp \
@@ -195,7 +192,9 @@ HEADER_FILES = \
 	include/libulam/src_man.hpp \
 	include/libulam/str_pool.hpp \
 	include/libulam/token.hpp \
-	include/libulam/types.hpp
+	include/libulam/types.hpp \
+	include/libulam/utils/integer.hpp \
+	include/libulam/utils/leximited.hpp
 
 SOURCE_FILES = \
 	$(HEADER_FILES) \
@@ -219,7 +218,8 @@ SOURCE_FILES = \
 	src/src_loc.cpp \
 	src/src_man.cpp \
 	src/str_pool.cpp \
-	src/token.cpp
+	src/token.cpp \
+	src/utils/leximited.cpp
 
 lib_LTLIBRARIES = libulam.la
 libulam_ladir = $(includedir)

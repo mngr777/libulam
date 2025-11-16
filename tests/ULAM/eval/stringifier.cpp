@@ -1,12 +1,12 @@
 #include "./stringifier.hpp"
-#include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <cstdint>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
-#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/utils/integer.hpp>
+#include <libulam/utils/leximited.hpp>
 #include <sstream>
 #include <string>
 

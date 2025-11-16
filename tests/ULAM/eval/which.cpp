@@ -3,9 +3,9 @@
 #include "./codegen.hpp"
 #include "./codegen/context_stack.hpp"
 #include "./expr_res.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
-#include "src/semantic/detail/leximited.hpp" // TODO: remove dep
 #include <cassert>
+#include <libulam/ast/nodes/stmts.hpp>
+#include <libulam/utils/leximited.hpp>
 
 using ExprRes = EvalWhich::ExprRes;
 
@@ -115,7 +115,8 @@ bool EvalWhich::match_conds(
     return false;
 }
 
-// bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
+// bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase>
+// case_) {
 //     if (!codegen_enabled())
 //         return Base::eval_case(ctx, case_);
 
@@ -149,7 +150,8 @@ bool EvalWhich::match_conds(
 //             gen().append("if");
 //         } else {
 //             if (gen_ctx.has_non_default() && prev_has_breaks) {
-//                 // single "else" after "case -1" falls through before end label,
+//                 // single "else" after "case -1" falls through before end
+//                 label,
 //                 // t41021
 //                 gen().append("else");
 //             }
