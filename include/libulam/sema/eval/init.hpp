@@ -40,8 +40,12 @@ protected:
     virtual void prop_init_default(Ref<Prop> prop);
     virtual void prop_init_common(Ref<Prop> prop);
 
-    ExprRes
-    eval_v(Ref<VarBase> var, Ref<Type> type, Variant& v, unsigned depth);
+    ExprRes eval_v(
+        Ref<VarBase> var,
+        Ref<Type> type,
+        RValue&& default_rval,
+        Variant& v,
+        unsigned depth);
 
     virtual ExprRes eval_expr(
         Ref<VarBase> var, Ref<Type> type, Ref<ast::Expr> expr, unsigned depth);
@@ -62,6 +66,7 @@ protected:
     virtual ExprRes eval_map(
         Ref<VarBase> var,
         Ref<Type> type,
+        RValue&& default_rval,
         Ref<ast::InitMap> map,
         unsigned depth);
 
@@ -80,6 +85,7 @@ protected:
     virtual ExprRes eval_class_map(
         Ref<VarBase> var,
         Ref<Class> cls,
+        RValue&& default_rval,
         Ref<ast::InitMap> map,
         unsigned depth);
 
@@ -96,7 +102,8 @@ protected:
         bool autofill,
         unsigned depth);
 
-    virtual ExprRes make_obj(Ref<VarBase> var, Ref<Class> cls);
+    virtual ExprRes
+    make_obj(Ref<VarBase> var, Ref<Class> cls, RValue&& default_rval);
 
     virtual ExprRes construct_obj(
         Ref<VarBase> var,

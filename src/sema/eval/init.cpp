@@ -46,7 +46,7 @@ bool EvalInit::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
 
 ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
     assert(var->has_type());
-    return eval_v(var, var->type(), init->get(), 1);
+    return eval_v(var, var->type(), RValue{}, init->get(), 1);
 }
 
 void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
@@ -82,7 +82,11 @@ void EvalInit::prop_init_common(Ref<Prop> prop) {
 }
 
 ExprRes EvalInit::eval_v(
-    Ref<VarBase> var, Ref<Type> type, Variant& init, unsigned depth) {
+    Ref<VarBase> var,
+    Ref<Type> type,
+    RValue&& default_rval,
+    Variant& init,
+    unsigned depth) {
     return init.accept(
         [&](Ptr<ast::Expr>& expr) {
             return eval_expr(var, type, ref(expr), depth);
@@ -91,7 +95,8 @@ ExprRes EvalInit::eval_v(
             return eval_list(var, type, ref(list), depth);
         },
         [&](Ptr<ast::InitMap>& map) {
-            return eval_map(var, type, ref(map), depth);
+            return eval_map(
+                var, type, std::move(default_rval), ref(map), depth);
         });
 }
 
@@ -127,9 +132,15 @@ ExprRes EvalInit::eval_list(
 }
 
 ExprRes EvalInit::eval_map(
-    Ref<VarBase> var, Ref<Type> type, Ref<ast::InitMap> map, unsigned depth) {
+    Ref<VarBase> var,
+    Ref<Type> type,
+    RValue&& default_rval,
+    Ref<ast::InitMap> map,
+    unsigned depth) {
+
     if (type->is_class()) {
-        return eval_class_map(var, type->as_class(), map, depth);
+        return eval_class_map(
+            var, type->as_class(), std::move(default_rval), map, depth);
     } else {
         diag().error(
             map, "designated initializers are only supported for classes");
@@ -213,9 +224,13 @@ ExprRes EvalInit::eval_array_list(
 }
 
 ExprRes EvalInit::eval_class_map(
-    Ref<VarBase> var, Ref<Class> cls, Ref<ast::InitMap> map, unsigned depth) {
+    Ref<VarBase> var,
+    Ref<Class> cls,
+    RValue&& default_rval,
+    Ref<ast::InitMap> map,
+    unsigned depth) {
     // construct
-    auto obj = make_obj(var, cls);
+    auto obj = make_obj(var, cls, std::move(default_rval));
     assert(map->size() > 0);
 
     for (auto key : map->keys()) {
@@ -237,7 +252,11 @@ ExprRes EvalInit::eval_class_map(
 
         // eval item
         auto prop = sym->get<Prop>();
-        auto prop_res = eval_v(var, prop->type(), map->get(key), depth + 1);
+        auto default_rval =
+            prop->type()->is_object() ? prop->default_value().copy() : RValue{};
+        auto prop_res = eval_v(
+            var, prop->type(), std::move(default_rval), map->get(key),
+            depth + 1);
         if (!prop_res)
             return prop_res;
 
@@ -249,7 +268,7 @@ ExprRes EvalInit::eval_class_map(
 
 ExprRes EvalInit::eval_array_list_item(
     Ref<VarBase> var, Ref<Type> type, Variant& item_v, unsigned depth) {
-    return eval_v(var, type, item_v, depth);
+    return eval_v(var, type, RValue{}, item_v, depth);
 }
 
 ExprRes EvalInit::make_array(Ref<VarBase> var, Ref<ArrayType> array_type) {
@@ -275,8 +294,10 @@ ExprRes EvalInit::array_set(
     return {array.type(), Value{std::move(rval)}};
 }
 
-ExprRes EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls) {
-    RValue rval = cls->construct();
+ExprRes
+EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls, RValue&& default_rval) {
+    RValue rval =
+        (!default_rval.empty()) ? std::move(default_rval) : cls->construct();
     rval.set_is_consteval(true);
     return {cls, Value{std::move(rval)}};
 }

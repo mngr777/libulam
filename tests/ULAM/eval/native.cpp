@@ -10,7 +10,6 @@
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/utils/integer.hpp>
-#include <limits>
 
 namespace {
 

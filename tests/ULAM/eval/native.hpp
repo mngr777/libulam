@@ -29,28 +29,28 @@ private:
         std::function<ExprRes(NodeRef, FunRef, ulam::LValue, ExprResList&&)>;
     using Map = std::map<NamePair, FunImpl>;
 
-#define _DECLARE_METHOD(name)                                                  \
+#define _METHOD_DECL(name)                                                  \
     ExprRes name(NodeRef, FunRef, ulam::LValue, ExprResList&&)
 
     // System
-    _DECLARE_METHOD(eval_system_print_int);
-    _DECLARE_METHOD(eval_system_print_unsigned);
-    _DECLARE_METHOD(eval_system_print_unsigned_hex);
-    _DECLARE_METHOD(eval_system_assert);
+    _METHOD_DECL(eval_system_print_int);
+    _METHOD_DECL(eval_system_print_unsigned);
+    _METHOD_DECL(eval_system_print_unsigned_hex);
+    _METHOD_DECL(eval_system_assert);
 
     // SystemU3
-    _DECLARE_METHOD(eval_system_u3_print_string);
+    _METHOD_DECL(eval_system_u3_print_string);
 
     // EventWindow
-    _DECLARE_METHOD(eval_event_window_aref);
+    _METHOD_DECL(eval_event_window_aref);
 
     // Math
-    _DECLARE_METHOD(eval_math_max);
+    _METHOD_DECL(eval_math_max);
 
     // Bar
-    _DECLARE_METHOD(eval_bar_aref);
+    _METHOD_DECL(eval_bar_aref);
 
-#undef _DECLARE_METHOD
+#undef _METHOD_DECL
 
     // utils
 

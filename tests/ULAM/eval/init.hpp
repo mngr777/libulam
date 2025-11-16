@@ -37,6 +37,7 @@ protected:
     ExprRes eval_class_map(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::Class> cls,
+        ulam::RValue&& default_rval,
         ulam::Ref<ulam::ast::InitMap> map,
         unsigned depth) override;
 
