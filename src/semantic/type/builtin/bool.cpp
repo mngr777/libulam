@@ -1,10 +1,10 @@
-#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/utils/integer.hpp>
 
 namespace ulam {
 
@@ -27,13 +27,13 @@ TypedValue BoolType::type_op(TypeOp op) {
 }
 
 RValue BoolType::construct(bool value) {
-    return RValue{value ? detail::ones(bitsize()) : 0};
+    return RValue{value ? utils::ones(bitsize()) : 0};
 }
 
 bool BoolType::is_true(const RValue& rval) const {
     assert(rval.is<Unsigned>());
     auto uns_val = rval.get<Unsigned>();
-    return detail::count_ones(uns_val) >= (bitsize() + 1u) / 2;
+    return utils::count_ones(uns_val) >= (bitsize() + 1u) / 2;
 }
 
 RValue BoolType::from_datum(Datum datum) {
@@ -176,7 +176,7 @@ RValue BoolType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return RValue{(Unsigned)(is_truth ? 1 : 0), is_consteval};
     }
     case BoolId: {
-        Unsigned uns_val = is_truth ? detail::ones(type->bitsize()) : 0;
+        Unsigned uns_val = is_truth ? utils::ones(type->bitsize()) : 0;
         return RValue{uns_val, is_consteval};
     }
     case BitsId: {

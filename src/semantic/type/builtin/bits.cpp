@@ -1,4 +1,3 @@
-#include "libulam/semantic/detail/integer.hpp"
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/atom.hpp>
@@ -6,6 +5,7 @@
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/utils/integer.hpp>
 
 namespace ulam {
 
@@ -164,7 +164,7 @@ TypedValue BitsType::binary_op(
             // const value, bitsize <= 64, can we use less bits?
             const Bits& bits = l_rval.get<Bits>();
             size = std::min(
-                size, detail::bitsize((Unsigned)bits.read(0, bits.len())));
+                size, utils::bitsize((Unsigned)bits.read(0, bits.len())));
         }
 
         if (is_unknown) {
@@ -274,7 +274,7 @@ bool BitsType::is_impl_castable_to_prim(
     bool is_castable{};
     val.with_rvalue([&](const RValue& rval) {
         const Bits& bits = rval.get<Bits>();
-        bitsize_t size = detail::bitsize((Unsigned)bits.read(0, bits.len()));
+        auto size = utils::bitsize((Unsigned)bits.read(0, bits.len()));
         is_castable = size <= bitsize();
     });
     return is_castable;

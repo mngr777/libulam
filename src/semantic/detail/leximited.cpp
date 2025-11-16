@@ -1,5 +1,5 @@
-#include "src/semantic/detail/leximited.hpp"
-#include <libulam/semantic/detail/integer.hpp>
+#include <libulam/semantic/utils/integer.hpp>
+#include <src/semantic/detail/leximited.hpp>
 
 // see `ULAM/src/ulam/UlamUtils.cpp`
 
@@ -24,10 +24,10 @@ void write_header(std::ostream& os, Unsigned len) {
 } // namespace
 
 void write_leximited(std::ostream& os, Integer value) {
-    switch (sign(value)) {
+    switch (ulam::utils::sign(value)) {
     case -1:
         os << "n";
-        if (value == min<Integer>()) {
+        if (value == ulam::utils::min<Integer>()) {
             os << "10"; // "n10" is special case for min negative
         } else {
             write_leximited(os, (Unsigned)-value);

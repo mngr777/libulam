@@ -4,7 +4,7 @@
 #include <libulam/semantic/value/types.hpp>
 #include <limits>
 
-namespace ulam::detail {
+namespace ulam::utils {
 
 // TODO: refactoring, optimizations
 

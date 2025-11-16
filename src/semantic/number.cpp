@@ -1,5 +1,5 @@
-#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/number.hpp>
+#include <libulam/semantic/utils/integer.hpp>
 #include <sstream>
 
 std::ostream& operator<<(std::ostream& os, const ulam::Number& number) {
@@ -11,12 +11,12 @@ namespace ulam {
 
 Number::Number(Radix radix, Integer value, bitsize_t size):
     _radix{radix}, _value{value}, _size{size} {
-    assert(size == 0 || size >= detail::bitsize(value));
+    assert(size == 0 || size >= utils::bitsize(value));
 }
 
 Number::Number(Radix radix, Unsigned value, bitsize_t size):
     _radix{radix}, _value{value}, _size{size} {
-    assert(size == 0 || size >= detail::bitsize(value));
+    assert(size == 0 || size >= utils::bitsize(value));
 }
 
 Number::Number(): Number{Radix::Decimal, (Integer)0} {}
@@ -24,8 +24,8 @@ Number::Number(): Number{Radix::Decimal, (Integer)0} {}
 std::uint8_t Number::bitsize() const {
     if (_size != 0)
         return _size;
-    return is_signed() ? detail::bitsize(value<Integer>())
-                       : detail::bitsize(value<Unsigned>());
+    return is_signed() ? utils::bitsize(value<Integer>())
+                       : utils::bitsize(value<Unsigned>());
 }
 
 void Number::write_value(std::ostream& os) const {

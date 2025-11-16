@@ -1,11 +1,11 @@
 #include "./stringifier.hpp"
-#include "libulam/semantic/value/data.hpp"
 #include "src/semantic/detail/leximited.hpp"
 #include <cassert>
 #include <cstdint>
-#include <libulam/semantic/detail/integer.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
+#include <libulam/semantic/utils/integer.hpp>
+#include <libulam/semantic/value/data.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <sstream>
 #include <string>
@@ -219,7 +219,7 @@ Stringifier::unsigned_to_str(ulam::Unsigned val, ulam::bitsize_t size) const {
         if (options.use_unsigned_suffix)
             add_suffix = (!is_zero || options.use_unsigned_suffix_zero) &&
                          (options.use_unsigned_suffix_31bit ||
-                          val < ulam::detail::unsigned_max(30));
+                          val < ulam::utils::unsigned_max(30));
         if (!add_suffix)
             add_suffix = (is_zero && options.use_unsigned_suffix_zero_force);
         if (add_suffix)
@@ -243,7 +243,7 @@ std::string Stringifier::bits_to_str(const ulam::Bits& bits) const {
     std::string str;
     auto datum = bits.read(0, bits.len());
     if (options.bits_32_as_signed_int && bits.len() == 32) { // t3806
-        auto int_val = ulam::detail::integer_from_datum(datum, bits.len());
+        auto int_val = ulam::utils::integer_from_datum(datum, bits.len());
         str = std::to_string(int_val);
     } else {
         str = std::to_string((ulam::Unsigned)datum);

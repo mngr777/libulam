@@ -30,7 +30,6 @@ AST_SOURCE_FILES = \
 
 SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/decl.hpp \
-	include/libulam/semantic/detail/integer.hpp \
 	include/libulam/semantic/export.hpp \
 	include/libulam/semantic/mangler.hpp \
 	include/libulam/semantic/module.hpp \
@@ -77,6 +76,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type_ops.hpp \
 	include/libulam/semantic/type_ops.inc.hpp \
 	include/libulam/semantic/type_tpl.hpp \
+	include/libulam/semantic/utils/integer.hpp \
 	include/libulam/semantic/value.hpp \
 	include/libulam/semantic/value/bits.hpp \
 	include/libulam/semantic/value/bound_fun_set.hpp \
