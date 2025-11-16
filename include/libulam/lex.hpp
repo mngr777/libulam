@@ -6,12 +6,12 @@
 namespace ulam {
 
 class Src;
-class SrcMngr;
+class SrcMan;
 class Preproc;
 
 class Lex {
 public:
-    Lex(Preproc& pp, SrcMngr& sm, src_id_t src_id, const mem::BufRef buf):
+    Lex(Preproc& pp, SrcMan& sm, src_id_t src_id, const mem::BufRef buf):
         _pp{pp},
         _sm{sm},
         _src_id{src_id},
@@ -42,7 +42,7 @@ private:
     void lex_word();
 
     Preproc& _pp;
-    SrcMngr& _sm;
+    SrcMan& _sm;
     const src_id_t _src_id;
     const mem::BufRef _buf;
 

@@ -1,7 +1,7 @@
 #include "src/detail/string.hpp"
 #include <libulam/lex.hpp>
 #include <libulam/preproc.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 #include <libulam/token.hpp>
 #include <string_view>
 

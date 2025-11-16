@@ -192,7 +192,7 @@ HEADER_FILES = \
 	include/libulam/preproc.hpp \
 	include/libulam/src.hpp \
 	include/libulam/src_loc.hpp \
-	include/libulam/src_mngr.hpp \
+	include/libulam/src_man.hpp \
 	include/libulam/str_pool.hpp \
 	include/libulam/token.hpp \
 	include/libulam/types.hpp
@@ -217,7 +217,7 @@ SOURCE_FILES = \
 	src/preproc.cpp \
 	src/src.cpp \
 	src/src_loc.cpp \
-	src/src_mngr.cpp \
+	src/src_man.cpp \
 	src/str_pool.cpp \
 	src/token.cpp
 

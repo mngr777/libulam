@@ -3,7 +3,7 @@
 #include <charconv>
 #include <libulam/context.hpp>
 #include <libulam/preproc.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 #include <libulam/token.hpp>
 
 #define DEBUG_PREPROC // TEST

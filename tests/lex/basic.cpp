@@ -4,7 +4,7 @@
 #include <libulam/lex.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/src.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 
 static const char* Program = R"END(
 ulam 1;

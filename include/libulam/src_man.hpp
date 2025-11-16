@@ -1,7 +1,7 @@
 #pragma once
+#include <filesystem>
 #include <libulam/src.hpp>
 #include <libulam/src_loc.hpp>
-#include <filesystem>
 #include <map>
 #include <memory>
 #include <string>
@@ -11,14 +11,14 @@ namespace ulam {
 
 // TODO: REPL source
 
-class SrcMngr {
+class SrcMan {
 public:
     using Path = std::filesystem::path;
 
-    SrcMngr() {}
+    SrcMan() {}
 
-    SrcMngr(SrcMngr&&) = default;
-    SrcMngr& operator=(SrcMngr&&) = default;
+    SrcMan(SrcMan&&) = default;
+    SrcMan& operator=(SrcMan&&) = default;
 
     Src* string(std::string text, Path path);
     Src* file(Path path);

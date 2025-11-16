@@ -12,7 +12,7 @@
 #include <libulam/semantic/type/class/options.hpp>
 #include <libulam/semantic/type/class/registry.hpp>
 #include <libulam/semantic/type/element.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
 #include <map>
@@ -36,7 +36,7 @@ public:
     UniqStrPool& str_pool() { return _str_pool; }
     UniqStrPool& text_pool() { return _text_pool; }
 
-    SrcMngr& sm() { return _ctx.sm(); }
+    SrcMan& sm() { return _ctx.sm(); }
 
     TypeIdGen& type_id_gen() { return _type_id_gen; }
 

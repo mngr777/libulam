@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 
 namespace ulam::ast {
 class Node;
@@ -13,7 +13,7 @@ class Diag {
 public:
     enum Level : std::uint8_t { Fatal = 0, Error, Warn, Notice, Debug };
 
-    Diag(SrcMngr& sm): _sm{sm} {}
+    Diag(SrcMan& sm): _sm{sm} {}
 
     template <typename... Ts> void fatal(Ts... args) {
         emit(Diag::Fatal, std::forward<Ts>(args)...);
@@ -52,7 +52,7 @@ public:
         const std::string& text);
 
 private:
-    SrcMngr& _sm;
+    SrcMan& _sm;
     unsigned _err_num{0};
 };
 

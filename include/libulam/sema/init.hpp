@@ -3,7 +3,7 @@
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/visitor.hpp>
 #include <libulam/semantic/module.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 
 namespace ulam::sema {
 

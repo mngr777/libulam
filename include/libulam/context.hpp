@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/diag.hpp>
 #include <libulam/options.hpp>
-#include <libulam/src_mngr.hpp>
+#include <libulam/src_man.hpp>
 
 namespace ulam {
 
@@ -12,13 +12,13 @@ public:
     Context(Context&&) = default;
     Context& operator=(Context&&) = default;
 
-    SrcMngr& sm() { return _sm; }
+    SrcMan& sm() { return _sm; }
     Diag& diag() { return _diag; }
 
     Options options;
 
 private:
-    SrcMngr _sm;
+    SrcMan _sm;
     Diag _diag;
 };
 
