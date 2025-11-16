@@ -8,8 +8,8 @@
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
-#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/utils/integer.hpp>
 #include <limits>
 
 namespace {
@@ -135,7 +135,10 @@ ExprRes EvalNative::eval_event_window_aref(
 // Math
 ExprRes EvalNative::eval_math_max(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    auto max = std::numeric_limits<ulam::Integer>::min();
+    const auto Min = ulam::utils::integer_min(ulam::IntType::DefaultSize);
+    const auto Max = ulam::utils::integer_max(ulam::IntType::DefaultSize);
+
+    auto max = Min;
     bool is_consteval = true;
     while (!args.empty()) {
         auto arg = args.pop_front();
@@ -147,7 +150,7 @@ ExprRes EvalNative::eval_math_max(
         assert(rval.is<ulam::Integer>());
         auto int_val = rval.get<ulam::Integer>();
         if (int_val > max)
-            max = int_val;
+            max = std::min(int_val, Max);
         is_consteval = is_consteval && rval.is_consteval();
     }
 
