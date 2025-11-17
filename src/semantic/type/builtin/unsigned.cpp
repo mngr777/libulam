@@ -5,8 +5,8 @@
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
-#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value/types.hpp>
+#include <libulam/utils/integer.hpp>
 
 namespace ulam {
 
@@ -21,7 +21,11 @@ TypedValue UnsignedType::type_op(TypeOp op) {
     }
 }
 
-RValue UnsignedType::construct() { return RValue{Unsigned{}}; }
+RValue UnsignedType::construct() { return construct(Unsigned{}); }
+
+RValue UnsignedType::construct(Unsigned uns_val) {
+    return RValue{std::min(uns_val, utils::unsigned_max(bitsize()))};
+}
 
 RValue UnsignedType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
 

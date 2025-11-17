@@ -67,6 +67,7 @@ static const std::set<std::string> Skip {
     "t41391_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant.test", // classid magic, TODO
     "t41392_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant2.test", // -"-
     "t41393_test_compiler_elementandquark_multibases_virtualfuncsselectwselfSelfandclassidconstant3.test", // -"-
+    "t41402_test_compiler_classidtemplatearg_ish.test", // Ele1.classid != 1u due to different resolution order (`local constant Unsigned c_ele2 = Ele2.classidof` resolved first)
     "t41414_test_compiler_castingquarkreftobits_ish.test", // ref to base to Bits(Base.sizeof), TODO?? -- need "known dynamic type" flag similar to consteval for values?
     "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
     "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-

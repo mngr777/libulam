@@ -92,6 +92,8 @@ public:
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
+    TypedValue type_op(TypeOp op) override;
+
     Ref<Type> common(Ref<Type> type) override;
     Ref<Type>
     common(const Value& val1, Ref<Type> type, const Value& val2) override;

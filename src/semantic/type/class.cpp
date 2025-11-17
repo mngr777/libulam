@@ -11,6 +11,7 @@
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
+#include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
@@ -268,6 +269,19 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
             auto prop_off = prop->data_off_in(this);
             prop->type()->store(data, off + prop_off, prop->load(obj_data));
         }
+    }
+}
+
+TypedValue Class::type_op(TypeOp op) {
+    switch (op) {
+    case TypeOp::ClassIdOf: {
+        auto type = builtins().unsigned_type();
+        auto rval = type->construct(class_id());
+        rval.set_is_consteval(true);
+        return {type, Value{std::move(rval)}};
+    }
+    default:
+        return UserType::type_op(op);
     }
 }
 

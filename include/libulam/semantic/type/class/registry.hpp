@@ -13,6 +13,8 @@ public:
 
     Ref<Class> get(cls_id_t id) const;
 
+    const auto& list() const { return _classes; }
+
 private:
     std::vector<Ref<Class>> _classes;
 };
