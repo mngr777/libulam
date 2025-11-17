@@ -510,6 +510,26 @@ void ArrayType::set_canon(Ref<ArrayType> canon) {
     _canon = canon;
 }
 
+Ref<Type> ArrayType::non_array() {
+    if (!_non_array) {
+        Ref<ArrayType> type = this;
+        while (true) {
+            auto item_type = type->item_type();
+            assert(item_type);
+            if (!item_type->is_array()) {
+                _non_array = item_type;
+                break;
+            }
+            type = item_type->as_array();
+        }
+    }
+    return _non_array;
+}
+
+Ref<const Type> ArrayType::non_array() const {
+    return const_cast<ArrayType*>(this)->non_array();
+}
+
 bitsize_t ArrayType::item_off(array_idx_t idx) const {
     assert(idx < _array_size);
     return item_type()->bitsize() * idx;

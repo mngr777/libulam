@@ -92,7 +92,8 @@ ExprRes EvalInit::eval_v(
             return eval_expr(var, type, ref(expr), depth);
         },
         [&](Ptr<ast::InitList>& list) {
-            return eval_list(var, type, ref(list), depth);
+            return eval_list(
+                var, type, std::move(default_rval), ref(list), depth);
         },
         [&](Ptr<ast::InitMap>& map) {
             return eval_map(
@@ -119,11 +120,20 @@ ExprRes EvalInit::cast_expr_res(
 }
 
 ExprRes EvalInit::eval_list(
-    Ref<VarBase> var, Ref<Type> type, Ref<ast::InitList> list, unsigned depth) {
+    Ref<VarBase> var,
+    Ref<Type> type,
+    RValue&& default_rval,
+    Ref<ast::InitList> list,
+    unsigned depth) {
+
     if (type->is_class()) {
+        // NOTE: constructor call, so no default rvalue passed
         return eval_class_list(var, type->as_class(), list, depth);
     } else if (type->is_array()) {
-        return eval_array_list(var, type->as_array(), list, depth);
+        // NOTE: default rvalue passed when items are objects, so may need to be
+        // merged
+        return eval_array_list(
+            var, type->as_array(), std::move(default_rval), list, depth);
     } else {
         diag().error(
             list, "variable of scalar type cannot have initializer list");
@@ -139,6 +149,7 @@ ExprRes EvalInit::eval_map(
     unsigned depth) {
 
     if (type->is_class()) {
+        // NOTE: default rvalue is passed to be merged with map data
         return eval_class_map(
             var, type->as_class(), std::move(default_rval), map, depth);
     } else {
@@ -172,8 +183,10 @@ ExprRes EvalInit::eval_class_list(
 ExprRes EvalInit::eval_array_list(
     Ref<VarBase> var,
     Ref<ArrayType> array_type,
+    RValue&& default_rval,
     Ref<ast::InitList> list,
     unsigned depth) {
+
     auto item_type = array_type->item_type();
     auto size = array_type->array_size();
 
@@ -200,7 +213,14 @@ ExprRes EvalInit::eval_array_list(
     // fill with list items
     for (; n < std::min<unsigned>(list->size(), size); ++n) {
         // eval item
-        item = eval_array_list_item(var, item_type, list->get(n), depth + 1);
+        RValue item_default_rval;
+        if (!default_rval.empty()) {
+            item_default_rval =
+                default_rval.array_access(n, true).rvalue().copy();
+        }
+        item = eval_array_list_item(
+            var, item_type, std::move(item_default_rval), list->get(n),
+            depth + 1);
         if (!item)
             return item;
         // assign to array item
@@ -252,11 +272,14 @@ ExprRes EvalInit::eval_class_map(
 
         // eval item
         auto prop = sym->get<Prop>();
-        auto default_rval =
-            prop->type()->is_object() ? prop->default_value().copy() : RValue{};
+        auto type = prop->type();
+        RValue default_rval;
+        if (type->is_object() ||
+            (type->is_array() && type->as_array()->non_array()->is_object())) {
+            default_rval = obj.value().prop(prop).copy_rvalue();
+        }
         auto prop_res = eval_v(
-            var, prop->type(), std::move(default_rval), map->get(key),
-            depth + 1);
+            var, type, std::move(default_rval), map->get(key), depth + 1);
         if (!prop_res)
             return prop_res;
 
@@ -267,8 +290,12 @@ ExprRes EvalInit::eval_class_map(
 }
 
 ExprRes EvalInit::eval_array_list_item(
-    Ref<VarBase> var, Ref<Type> type, Variant& item_v, unsigned depth) {
-    return eval_v(var, type, RValue{}, item_v, depth);
+    Ref<VarBase> var,
+    Ref<Type> type,
+    RValue&& default_rval,
+    Variant& item_v,
+    unsigned depth) {
+    return eval_v(var, type, std::move(default_rval), item_v, depth);
 }
 
 ExprRes EvalInit::make_array(Ref<VarBase> var, Ref<ArrayType> array_type) {

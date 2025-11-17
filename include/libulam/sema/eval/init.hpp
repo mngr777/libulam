@@ -60,6 +60,7 @@ protected:
     virtual ExprRes eval_list(
         Ref<VarBase> var,
         Ref<Type> type,
+        RValue&& default_rval,
         Ref<ast::InitList> list,
         unsigned depth);
 
@@ -79,6 +80,7 @@ protected:
     virtual ExprRes eval_array_list(
         Ref<VarBase> var,
         Ref<ArrayType> array_type,
+        RValue&& default_rval,
         Ref<ast::InitList> list,
         unsigned depth);
 
@@ -90,7 +92,11 @@ protected:
         unsigned depth);
 
     virtual ExprRes eval_array_list_item(
-        Ref<VarBase> var, Ref<Type> type, Variant& item_v, unsigned depth);
+        Ref<VarBase> var,
+        Ref<Type> type,
+        RValue&& default_rval,
+        Variant& item_v,
+        unsigned depth);
 
     virtual ExprRes make_array(Ref<VarBase> var, Ref<ArrayType> array_type);
 

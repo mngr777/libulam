@@ -31,6 +31,7 @@ protected:
     ExprRes eval_array_list(
         ulam::Ref<ulam::VarBase> var,
         ulam::Ref<ulam::ArrayType> array_type,
+        ulam::RValue&& default_rval,
         ulam::Ref<ulam::ast::InitList> list,
         unsigned depth) override;
 

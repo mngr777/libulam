@@ -333,6 +333,9 @@ public:
     Ref<Type> item_type() { return _item_type; }
     Ref<const Type> item_type() const { return _item_type; }
 
+    Ref<Type> non_array();
+    Ref<const Type> non_array() const;
+
     array_size_t array_size() const { return _array_size; }
 
     bitsize_t item_off(array_idx_t idx) const;
@@ -345,6 +348,7 @@ private:
     void set_canon(Ref<ArrayType> canon);
 
     Ref<Type> _item_type;
+    Ref<Type> _non_array{};
     array_size_t _array_size;
     Ref<ArrayType> _canon{};
     mutable std::string _name;
