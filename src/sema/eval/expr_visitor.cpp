@@ -633,7 +633,8 @@ ExprRes EvalExprVisitor::apply_unary_op(
             assert(op == Op::Is);
             if (!arg.value().has_rvalue())
                 return {builtins().boolean(), Value{RValue{}}};
-            auto dyn_type = arg.value().dyn_obj_type();
+            // NOTE: using "real" dyn type, see t41365
+            auto dyn_type = arg.value().dyn_obj_type(true);
             assert(type->is_class()); // TODO: check upstream
             bool is =
                 dyn_type->is_class() &&
