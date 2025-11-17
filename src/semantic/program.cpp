@@ -10,6 +10,9 @@ namespace ulam {
 
 Program::Program(
     Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
+#ifndef NDEBUG
+    dbg{this},
+#endif
     _ctx{ctx},
     _str_pool{str_pool},
     _text_pool{text_pool},

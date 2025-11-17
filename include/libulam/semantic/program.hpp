@@ -17,6 +17,10 @@
 #include <list>
 #include <map>
 
+#ifndef NDEBUG
+#    include <libulam/sema/debug/out.hpp>
+#endif
+
 namespace ulam::ast {
 class Root;
 class ModuleDef;
@@ -57,6 +61,10 @@ public:
 
     const ExportTable& exports() { return _exports; }
     const Export* add_export(str_id_t name_id, Export exp);
+
+#ifndef NDEBUG
+    sema::dbg::Out dbg;
+#endif
 
 private:
     Context& _ctx;

@@ -1,10 +1,11 @@
-#include "src/sema/out.hpp"
 #include <iomanip>
 #include <libulam/ast/nodes/module.hpp>
+#include <libulam/sema/debug/out.hpp>
 #include <libulam/sema/visitor.hpp>
+#include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 
-namespace ulam::sema {
+namespace ulam::sema::dbg {
 
 void Out::print(Scope& scope) {
     hr2();
@@ -89,12 +90,37 @@ void Out::print(Ref<Var> var) {
     _os << "\n";
 }
 
-std::string_view Out::str(str_id_t str_id) {
-    return _program->str_pool().get(str_id);
+void Out::print_class_registry() {
+    const auto& list = _program->classes().list();
+    hr();
+    _os << "# class registry (" << list.size() << "):\n";
+    hr();
+    for (const auto cls : list)
+        _os << std::setw(5) << cls->class_id() << " " << cls->name() << "\n";
+    hr2();
 }
+
+const std::string_view Out::line_at(loc_id_t loc_id) {
+    return _program->src_man().line_at(loc_id);
+}
+
+const std::string_view Out::line_at(Ref<ast::Node> node) {
+    return line_at(node->loc_id());
+}
+
+const std::string_view Out::str(str_id_t str_id) const {
+    return str_pool().get(str_id);
+}
+
+const std::string_view Out::text(str_id_t str_id) const {
+    return text_pool().get(str_id);
+}
+
+const UniqStrPool& Out::str_pool() const { return _program->str_pool(); }
+const UniqStrPool& Out::text_pool() const { return _program->text_pool(); }
 
 void Out::hr() { _os << "--------------------\n"; }
 
 void Out::hr2() { _os << "====================\n"; }
 
-} // namespace ulam::sema
+} // namespace ulam::sema::dbg
