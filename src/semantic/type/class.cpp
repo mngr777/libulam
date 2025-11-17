@@ -308,7 +308,7 @@ bool Class::is_castable_to(
         return true;
 
     if (!val.empty()) {
-        auto dyn_type = val.dyn_obj_type();
+        auto dyn_type = val.dyn_obj_type(true);
         if (!is_same(dyn_type))
             return dyn_type->is_castable_to(type, std::move(val), expl);
     }
