@@ -98,7 +98,8 @@ protected:
         Variant& item_v,
         unsigned depth);
 
-    virtual ExprRes make_array(Ref<VarBase> var, Ref<ArrayType> array_type);
+    virtual ExprRes make_array(
+        Ref<VarBase> var, Ref<ArrayType> array_type, RValue&& default_rval);
 
     virtual ExprRes array_set(
         Ref<VarBase> var,

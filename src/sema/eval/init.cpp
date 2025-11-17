@@ -6,6 +6,19 @@
 #include <libulam/semantic/typed_value.hpp>
 #include <type_traits>
 
+// TODO: there's potentially redundant copying of `default_rval` that can
+// be optimized.
+//
+// Where default rvalue is actually needed (see t41167-...):
+// * init map is applied to object with a default rvalue previously defined
+//   elsewhere,  e.g. if A is defined `element A { B b = {.foo=1, .bar=2} }`,
+//   then in `A a = {.b = {.foo = 3}}` init map for `A.b` must be merged
+//   with default value;
+// * similar case, when default object values are inside an array:
+//   `element A { B[] bs={{.foo=1, .bar=2}, <...>} }`
+// * if empty array `{}` is provided by init map, default value should be used
+//   instead (see t41206), `QBar bar = {.r = {}, .sp = false}`
+
 namespace ulam::sema {
 
 bool EvalInit::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
@@ -207,7 +220,10 @@ ExprRes EvalInit::eval_array_list(
     }
 
     // construct
-    auto array = make_array(var, array_type);
+    bool use_default = (list->empty() && !default_rval.empty());
+    auto array = make_array(
+        var, array_type, use_default ? std::move(default_rval) : RValue{});
+
     unsigned n = 0;
     ExprRes item;
     // fill with list items
@@ -274,10 +290,8 @@ ExprRes EvalInit::eval_class_map(
         auto prop = sym->get<Prop>();
         auto type = prop->type();
         RValue default_rval;
-        if (type->is_object() ||
-            (type->is_array() && type->as_array()->non_array()->is_object())) {
+        if (type->is_object() || type->is_array())
             default_rval = obj.value().prop(prop).copy_rvalue();
-        }
         auto prop_res = eval_v(
             var, type, std::move(default_rval), map->get(key), depth + 1);
         if (!prop_res)
@@ -298,8 +312,10 @@ ExprRes EvalInit::eval_array_list_item(
     return eval_v(var, type, std::move(default_rval), item_v, depth);
 }
 
-ExprRes EvalInit::make_array(Ref<VarBase> var, Ref<ArrayType> array_type) {
-    RValue rval = array_type->construct();
+ExprRes EvalInit::make_array(
+    Ref<VarBase> var, Ref<ArrayType> array_type, RValue&& default_rval) {
+    auto rval = (!default_rval.empty()) ? std::move(default_rval)
+                                        : array_type->construct();
     rval.set_is_consteval(true);
     return {array_type, Value{std::move(rval)}};
 }
