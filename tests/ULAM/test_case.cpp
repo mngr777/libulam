@@ -38,7 +38,7 @@ TestCase::TestCase(const Path& stdlib_dir, const Path& path, flags_t flags):
     parse();
 }
 
-void TestCase::run() {
+bool TestCase::run() {
     assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
@@ -90,6 +90,7 @@ void TestCase::run() {
 
     if (!ok)
         throw std::invalid_argument("test case failed");
+    return ok;
 }
 
 void TestCase::load(const std::filesystem::path& path) {

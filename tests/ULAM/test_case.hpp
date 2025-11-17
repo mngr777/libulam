@@ -14,7 +14,7 @@ public:
 
     TestCase(const Path& stdlib_dir, const Path& path, flags_t flags = NoFlags);
 
-    void run();
+    bool run();
 
 private:
     void load(const Path& path);

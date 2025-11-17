@@ -286,8 +286,7 @@ static bool run(Path stdlib_dir, const Path& path, bool single) {
         if (!single && SkipAnswerCheck.count(path.filename()) > 0)
             flags |= TestCase::SkipAnswerCheck;
         TestCase test_case{stdlib_dir, path, flags};
-        test_case.run();
-        return true;
+        return test_case.run();
     } catch (std::invalid_argument& e) {
         std::cerr << e.what() << "\n";
         return false;
