@@ -43,7 +43,7 @@ protected:
     ExprRes eval_v(
         Ref<VarBase> var,
         Ref<Type> type,
-        RValue&& default_rval,
+        LValue default_lval,
         Variant& v,
         unsigned depth);
 
@@ -60,14 +60,14 @@ protected:
     virtual ExprRes eval_list(
         Ref<VarBase> var,
         Ref<Type> type,
-        RValue&& default_rval,
+        LValue default_lval,
         Ref<ast::InitList> list,
         unsigned depth);
 
     virtual ExprRes eval_map(
         Ref<VarBase> var,
         Ref<Type> type,
-        RValue&& default_rval,
+        LValue default_lval,
         Ref<ast::InitMap> map,
         unsigned depth);
 
@@ -80,26 +80,26 @@ protected:
     virtual ExprRes eval_array_list(
         Ref<VarBase> var,
         Ref<ArrayType> array_type,
-        RValue&& default_rval,
+        LValue default_lval,
         Ref<ast::InitList> list,
         unsigned depth);
 
     virtual ExprRes eval_class_map(
         Ref<VarBase> var,
         Ref<Class> cls,
-        RValue&& default_rval,
+        LValue default_lval,
         Ref<ast::InitMap> map,
         unsigned depth);
 
     virtual ExprRes eval_array_list_item(
         Ref<VarBase> var,
         Ref<Type> type,
-        RValue&& default_rval,
+        LValue default_lval,
         Variant& item_v,
         unsigned depth);
 
     virtual ExprRes make_array(
-        Ref<VarBase> var, Ref<ArrayType> array_type, RValue&& default_rval);
+        Ref<VarBase> var, Ref<ArrayType> array_type, LValue default_lval);
 
     virtual ExprRes array_set(
         Ref<VarBase> var,
@@ -110,7 +110,7 @@ protected:
         unsigned depth);
 
     virtual ExprRes
-    make_obj(Ref<VarBase> var, Ref<Class> cls, RValue&& default_rval);
+    make_obj(Ref<VarBase> var, Ref<Class> cls, LValue default_lval);
 
     virtual ExprRes construct_obj(
         Ref<VarBase> var,

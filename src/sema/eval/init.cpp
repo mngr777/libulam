@@ -6,11 +6,8 @@
 #include <libulam/semantic/typed_value.hpp>
 #include <type_traits>
 
-// TODO: there's potentially redundant copying of `default_rval` that can
-// be optimized.
-//
-// Where default rvalue is actually needed (see t41167-...):
-// * init map is applied to object with a default rvalue previously defined
+// Where passing default_lval is actually needed (see t41167-...):
+// * init map is applied to object with a default value previously defined
 //   elsewhere,  e.g. if A is defined `element A { B b = {.foo=1, .bar=2} }`,
 //   then in `A a = {.b = {.foo = 3}}` init map for `A.b` must be merged
 //   with default value;
@@ -59,7 +56,7 @@ bool EvalInit::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
 
 ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
     assert(var->has_type());
-    return eval_v(var, var->type(), RValue{}, init->get(), 1);
+    return eval_v(var, var->type(), LValue{}, init->get(), 1);
 }
 
 void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
@@ -97,7 +94,7 @@ void EvalInit::prop_init_common(Ref<Prop> prop) {
 ExprRes EvalInit::eval_v(
     Ref<VarBase> var,
     Ref<Type> type,
-    RValue&& default_rval,
+    LValue default_lval,
     Variant& init,
     unsigned depth) {
     return init.accept(
@@ -105,12 +102,10 @@ ExprRes EvalInit::eval_v(
             return eval_expr(var, type, ref(expr), depth);
         },
         [&](Ptr<ast::InitList>& list) {
-            return eval_list(
-                var, type, std::move(default_rval), ref(list), depth);
+            return eval_list(var, type, default_lval, ref(list), depth);
         },
         [&](Ptr<ast::InitMap>& map) {
-            return eval_map(
-                var, type, std::move(default_rval), ref(map), depth);
+            return eval_map(var, type, default_lval, ref(map), depth);
         });
 }
 
@@ -135,7 +130,7 @@ ExprRes EvalInit::cast_expr_res(
 ExprRes EvalInit::eval_list(
     Ref<VarBase> var,
     Ref<Type> type,
-    RValue&& default_rval,
+    LValue default_lval,
     Ref<ast::InitList> list,
     unsigned depth) {
 
@@ -146,7 +141,7 @@ ExprRes EvalInit::eval_list(
         // NOTE: default rvalue passed when items are objects, so may need to be
         // merged
         return eval_array_list(
-            var, type->as_array(), std::move(default_rval), list, depth);
+            var, type->as_array(), default_lval, list, depth);
     } else {
         diag().error(
             list, "variable of scalar type cannot have initializer list");
@@ -157,14 +152,13 @@ ExprRes EvalInit::eval_list(
 ExprRes EvalInit::eval_map(
     Ref<VarBase> var,
     Ref<Type> type,
-    RValue&& default_rval,
+    LValue default_lval,
     Ref<ast::InitMap> map,
     unsigned depth) {
 
     if (type->is_class()) {
         // NOTE: default rvalue is passed to be merged with map data
-        return eval_class_map(
-            var, type->as_class(), std::move(default_rval), map, depth);
+        return eval_class_map(var, type->as_class(), default_lval, map, depth);
     } else {
         diag().error(
             map, "designated initializers are only supported for classes");
@@ -196,7 +190,7 @@ ExprRes EvalInit::eval_class_list(
 ExprRes EvalInit::eval_array_list(
     Ref<VarBase> var,
     Ref<ArrayType> array_type,
-    RValue&& default_rval,
+    LValue default_lval,
     Ref<ast::InitList> list,
     unsigned depth) {
 
@@ -220,23 +214,21 @@ ExprRes EvalInit::eval_array_list(
     }
 
     // construct
-    bool use_default = (list->empty() && !default_rval.empty());
-    auto array = make_array(
-        var, array_type, use_default ? std::move(default_rval) : RValue{});
+    bool use_default = (list->empty() && !default_lval.empty());
+    auto array =
+        make_array(var, array_type, use_default ? default_lval : LValue{});
 
     unsigned n = 0;
     ExprRes item;
     // fill with list items
     for (; n < std::min<unsigned>(list->size(), size); ++n) {
         // eval item
-        RValue item_default_rval;
-        if (!default_rval.empty()) {
-            item_default_rval =
-                default_rval.array_access(n, true).rvalue().copy();
+        LValue item_default_lval;
+        if (!default_lval.empty()) {
+            item_default_lval = default_lval.array_access(n, true);
         }
         item = eval_array_list_item(
-            var, item_type, std::move(item_default_rval), list->get(n),
-            depth + 1);
+            var, item_type, item_default_lval, list->get(n), depth + 1);
         if (!item)
             return item;
         // assign to array item
@@ -262,11 +254,11 @@ ExprRes EvalInit::eval_array_list(
 ExprRes EvalInit::eval_class_map(
     Ref<VarBase> var,
     Ref<Class> cls,
-    RValue&& default_rval,
+    LValue default_lval,
     Ref<ast::InitMap> map,
     unsigned depth) {
     // construct
-    auto obj = make_obj(var, cls, std::move(default_rval));
+    auto obj = make_obj(var, cls, default_lval);
     assert(map->size() > 0);
 
     for (auto key : map->keys()) {
@@ -289,11 +281,11 @@ ExprRes EvalInit::eval_class_map(
         // eval item
         auto prop = sym->get<Prop>();
         auto type = prop->type();
-        RValue default_rval;
+        LValue default_lval;
         if (type->is_object() || type->is_array())
-            default_rval = obj.value().prop(prop).copy_rvalue();
-        auto prop_res = eval_v(
-            var, type, std::move(default_rval), map->get(key), depth + 1);
+            default_lval = obj.value().prop(prop).lvalue();
+        auto prop_res =
+            eval_v(var, type, default_lval, map->get(key), depth + 1);
         if (!prop_res)
             return prop_res;
 
@@ -306,15 +298,15 @@ ExprRes EvalInit::eval_class_map(
 ExprRes EvalInit::eval_array_list_item(
     Ref<VarBase> var,
     Ref<Type> type,
-    RValue&& default_rval,
+    LValue default_lval,
     Variant& item_v,
     unsigned depth) {
-    return eval_v(var, type, std::move(default_rval), item_v, depth);
+    return eval_v(var, type, default_lval, item_v, depth);
 }
 
 ExprRes EvalInit::make_array(
-    Ref<VarBase> var, Ref<ArrayType> array_type, RValue&& default_rval) {
-    auto rval = (!default_rval.empty()) ? std::move(default_rval)
+    Ref<VarBase> var, Ref<ArrayType> array_type, LValue default_lval) {
+    auto rval = (!default_lval.empty()) ? default_lval.rvalue()
                                         : array_type->construct();
     rval.set_is_consteval(true);
     return {array_type, Value{std::move(rval)}};
@@ -338,9 +330,9 @@ ExprRes EvalInit::array_set(
 }
 
 ExprRes
-EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls, RValue&& default_rval) {
+EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls, LValue default_lval) {
     RValue rval =
-        (!default_rval.empty()) ? std::move(default_rval) : cls->construct();
+        (!default_lval.empty()) ? default_lval.rvalue() : cls->construct();
     rval.set_is_consteval(true);
     return {cls, Value{std::move(rval)}};
 }

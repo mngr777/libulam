@@ -72,14 +72,14 @@ ExprRes EvalInit::eval_class_list(
 ExprRes EvalInit::eval_array_list(
     ulam::Ref<ulam::VarBase> var,
     ulam::Ref<ulam::ArrayType> array_type,
-    ulam::RValue&& default_rval,
+    ulam::LValue default_lval,
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
     EvalEnv::FlagsRaii fr{};
     if (depth > 1)
         fr = env().add_flags_raii(evl::NoConstFold);
-    auto array = Base::eval_array_list(
-        var, array_type, std::move(default_rval), list, depth);
+    auto array =
+        Base::eval_array_list(var, array_type, default_lval, list, depth);
     if (!has_flag(evl::NoCodegen)) {
         auto data = array.has_data() ? "{ " + exp::data(array) + " }"
                                      : std::string{"{ }"};
@@ -91,14 +91,13 @@ ExprRes EvalInit::eval_array_list(
 ExprRes EvalInit::eval_class_map(
     ulam::Ref<ulam::VarBase> var,
     ulam::Ref<ulam::Class> cls,
-    ulam::RValue&& default_rval,
+    ulam::LValue default_lval,
     ulam::Ref<ulam::ast::InitMap> map,
     unsigned depth) {
     EvalEnv::FlagsRaii fr{};
     if (depth > 1)
         fr = env().add_flags_raii(evl::NoConstFold);
-    auto obj =
-        Base::eval_class_map(var, cls, std::move(default_rval), map, depth);
+    auto obj = Base::eval_class_map(var, cls, default_lval, map, depth);
     if (!has_flag(evl::NoCodegen)) {
         auto obj_data = obj.has_data() ? exp::data(obj) : std::string{};
         exp::set_data(obj, "{ " + obj_data + " }");
