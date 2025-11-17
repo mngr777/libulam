@@ -66,8 +66,10 @@ const std::string_view Class::mangled_name() const {
 }
 
 cls_id_t Class::class_id() const {
-    if (_cls_id == NoClassId && program()->class_options().lazy_class_id)
+    if (_cls_id == NoClassId) {
+        assert(program()->class_options().lazy_class_id);
         const_cast<Class*>(this)->register_class();
+    }
     assert(_cls_id != NoClassId);
     return _cls_id;
 }
