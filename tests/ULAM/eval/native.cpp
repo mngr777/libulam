@@ -28,12 +28,12 @@ EvalNative::EvalNative(EvalEnv& env):
 #define ADD_METHOD(class_name, fun_name, method)                               \
     do {                                                                       \
         namespace ph = std::placeholders;                                      \
+        NamePair key{class_name, fun_name};                                    \
+        assert(_map.count(key) == 0);                                          \
         _map.emplace(                                                          \
-            NamePair{                                                          \
-                std::string_view{class_name}, std::string_view{fun_name}},     \
-            std::bind(                                                         \
-                std::mem_fn(&EvalNative::method), this, ph::_1, ph::_2,        \
-                ph::_3, ph::_4));                                              \
+            key, std::bind(                                                    \
+                     std::mem_fn(&EvalNative::method), this, ph::_1, ph::_2,   \
+                     ph::_3, ph::_4));                                         \
     } while (false)
 
     ADD_METHOD("System", "print@13i", eval_system_print_int);
@@ -43,7 +43,11 @@ EvalNative::EvalNative(EvalEnv& env):
     ADD_METHOD("System", "print@13b", eval_system_print_unsigned_hex);
     ADD_METHOD("System", "print@13y", eval_system_print_unsigned_hex);
     ADD_METHOD("System", "assert@11b", eval_system_assert);
-    ADD_METHOD("SystemU3", "print@s", eval_system_u3_print_string);
+    ADD_METHOD("SystemU3", "print@s", eval_system_print_string);
+    ADD_METHOD("SystemU5", "print@264i", eval_system_print_int);
+    ADD_METHOD("SystemU5", "print@264u", eval_system_print_unsigned);
+    ADD_METHOD("SystemU5", "print@s", eval_system_print_string);
+
     ADD_METHOD("EventWindow", "aref@232i", eval_event_window_aref);
     ADD_METHOD("EventWindow@232i", "aref@232i", eval_event_window_aref);
     ADD_METHOD("Math", "max@*", eval_math_max);
@@ -107,7 +111,7 @@ ExprRes EvalNative::eval_system_assert(
     return void_res();
 }
 
-ExprRes EvalNative::eval_system_u3_print_string(
+ExprRes EvalNative::eval_system_print_string(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     assert(args.size() == 1);
     auto arg = args.pop_front();

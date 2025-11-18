@@ -32,14 +32,12 @@ private:
 #define _METHOD_DECL(name)                                                  \
     ExprRes name(NodeRef, FunRef, ulam::LValue, ExprResList&&)
 
-    // System
+    // System, SystemU3, SystemU5
     _METHOD_DECL(eval_system_print_int);
     _METHOD_DECL(eval_system_print_unsigned);
     _METHOD_DECL(eval_system_print_unsigned_hex);
     _METHOD_DECL(eval_system_assert);
-
-    // SystemU3
-    _METHOD_DECL(eval_system_u3_print_string);
+    _METHOD_DECL(eval_system_print_string);
 
     // EventWindow
     _METHOD_DECL(eval_event_window_aref);
