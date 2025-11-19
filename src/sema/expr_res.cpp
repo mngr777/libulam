@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <libulam/sema/expr_res.hpp>
+#include <libulam/semantic/type.hpp>
 
 namespace ulam::sema {
 

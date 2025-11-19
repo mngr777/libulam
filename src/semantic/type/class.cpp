@@ -366,6 +366,10 @@ bool Class::is_assignable_to(Ref<const Type> type, const Value& val) const {
 
     auto cls = type->as_class();
 
+    // element to element
+    if (is_element() && cls->is_element())
+        return true;
+
     // up/down cast
     if (cls->is_base_of(this) || is_base_of(cls))
         return true;
