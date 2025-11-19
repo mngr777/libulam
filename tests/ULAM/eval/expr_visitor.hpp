@@ -26,7 +26,7 @@ protected:
     ExprRes apply_binary_op(
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Op op,
-        ulam::TypedValue&& lval_tv,
+        ExprRes&& lval_res,
         ulam::Ref<ulam::ast::Expr> l_node,
         ExprRes&& left,
         ulam::Ref<ulam::ast::Expr> r_node,
@@ -35,7 +35,7 @@ protected:
     ExprRes apply_unary_op(
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Op op,
-        ulam::TypedValue&& lval_tv,
+        ExprRes&& lval_res,
         ulam::Ref<ulam::ast::Expr> arg_node,
         ExprRes&& arg,
         ulam::Ref<ulam::Type> type) override;

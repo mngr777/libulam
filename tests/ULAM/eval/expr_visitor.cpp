@@ -124,14 +124,14 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
 ExprRes EvalExprVisitor::apply_binary_op(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Op op,
-    ulam::TypedValue&& lval_tv,
+    ExprRes&& lval_res,
     ulam::Ref<ulam::ast::Expr> l_node,
     ExprRes&& left,
     ulam::Ref<ulam::ast::Expr> r_node,
     ExprRes&& right) {
     if (has_flag(evl::NoCodegen)) {
         return Base::apply_binary_op(
-            node, op, std::move(lval_tv), l_node, std::move(left), r_node,
+            node, op, std::move(lval_res), l_node, std::move(left), r_node,
             std::move(right));
     }
 
@@ -144,7 +144,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
     if (is_class_op) {
         // class op is a funcall, no need to update data
         return Base::apply_binary_op(
-            node, op, std::move(lval_tv), l_node, std::move(left), r_node,
+            node, op, std::move(lval_res), l_node, std::move(left), r_node,
             std::move(right));
     }
 
@@ -222,7 +222,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
     auto data = exp::data_combine(exp::data(left), exp::data(right), op_str);
 
     auto res = Base::apply_binary_op(
-        node, op, std::move(lval_tv), l_node, std::move(left), r_node,
+        node, op, std::move(lval_res), l_node, std::move(left), r_node,
         std::move(right));
 
     const auto& val = res.value();
@@ -242,13 +242,13 @@ ExprRes EvalExprVisitor::apply_binary_op(
 ExprRes EvalExprVisitor::apply_unary_op(
     ulam::Ref<ulam::ast::Expr> node,
     ulam::Op op,
-    ulam::TypedValue&& lval_tv,
+    ExprRes&& lval_res,
     ulam::Ref<ulam::ast::Expr> arg_node,
     ExprRes&& arg,
     ulam::Ref<ulam::Type> type) {
     if (has_flag(evl::NoCodegen)) {
         return Base::apply_unary_op(
-            node, op, std::move(lval_tv), arg_node, std::move(arg), type);
+            node, op, std::move(lval_res), arg_node, std::move(arg), type);
     }
 
     auto arg_type = arg.type()->actual();
@@ -256,7 +256,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
     if (is_class_op) {
         // class op is a funcall, no need to update data
         return Base::apply_unary_op(
-            node, op, std::move(lval_tv), arg_node, std::move(arg), type);
+            node, op, std::move(lval_res), arg_node, std::move(arg), type);
     }
 
     auto data = exp::data(arg);
@@ -293,7 +293,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
     }
 
     auto res = Base::apply_unary_op(
-        node, op, std::move(lval_tv), arg_node, std::move(arg), type);
+        node, op, std::move(lval_res), arg_node, std::move(arg), type);
     const auto& val = res.value();
     if (!no_fold && val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {

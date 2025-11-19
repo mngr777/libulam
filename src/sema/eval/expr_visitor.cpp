@@ -450,11 +450,11 @@ ExprRes EvalExprVisitor::binary_op(
     ExprRes&& right) {
     debug() << __FUNCTION__ << "\n" << line_at(node);
 
-    TypedValue lval_tv;
+    ExprRes lval_res;
     if (ops::is_assign(op)) {
         if (!check_is_assignable(node, left.value()))
             return {ExprError::NotAssignable};
-        lval_tv = {left.type(), Value{left.value().lvalue()}};
+        lval_res = left.derived(left.type(), Value{left.value().lvalue()});
     }
 
     auto type_errors = binary_op_type_check(op, left, right);
@@ -499,14 +499,14 @@ ExprRes EvalExprVisitor::binary_op(
         return std::move(right);
 
     return apply_binary_op(
-        node, op, std::move(lval_tv), l_node, std::move(left), r_node,
+        node, op, std::move(lval_res), l_node, std::move(left), r_node,
         std::move(right));
 }
 
 ExprRes EvalExprVisitor::apply_binary_op(
     Ref<ast::Expr> node,
     Op op,
-    TypedValue&& lval_tv,
+    ExprRes&& lval_res,
     Ref<ast::Expr> l_node,
     ExprRes&& left,
     Ref<ast::Expr> r_node,
@@ -539,9 +539,9 @@ ExprRes EvalExprVisitor::apply_binary_op(
 
     // handle assignment
     if (ops::is_assign(op)) {
-        if (lval_tv.value().empty() || right.value().empty())
+        if (lval_res.value().empty() || right.value().empty())
             return std::move(left);
-        return assign(node, std::move(lval_tv), right.move_typed_value());
+        return assign(node, std::move(lval_res), std::move(right));
     }
     return std::move(right);
 }
@@ -598,7 +598,7 @@ ExprRes EvalExprVisitor::unary_op(
 ExprRes EvalExprVisitor::apply_unary_op(
     Ref<ast::Expr> node,
     Op op,
-    TypedValue&& lval_tv,
+    ExprRes&& lval_res,
     Ref<ast::Expr> arg_node,
     ExprRes&& arg,
     Ref<Type> type) {
@@ -613,12 +613,16 @@ ExprRes EvalExprVisitor::apply_unary_op(
             arg_type->as_prim()->unary_op(op, arg.move_value().move_rvalue());
 
         if (ops::is_inc_dec(op)) {
-            if (!lval_tv.value().empty() && !tv.value().empty())
-                assign(node, lval_tv.copy(), std::move(tv));
+            if (!lval_res.value().empty() && !tv.value().empty()) {
+                ExprRes lval_res_copy = lval_res.derived(
+                    lval_res.type(), Value{lval_res.value().lvalue()});
+                assign(node, std::move(lval_res_copy), std::move(tv));
+            }
             if (ops::is_unary_pre_op(op))
-                return {std::move(lval_tv)};
+                return {std::move(lval_res)};
             assert(ops::is_unary_post_op(op));
-            return {lval_tv.type(), Value{std::move(orig_rval)}};
+            return lval_res.derived(
+                lval_res.type(), Value{std::move(orig_rval)});
         }
         return {std::move(tv)};
 
@@ -1023,8 +1027,8 @@ ExprRes EvalExprVisitor::as_base(
     return {cls, Value{obj.move_value()}};
 }
 
-ExprRes EvalExprVisitor::assign(
-    Ref<ast::Expr> node, TypedValue&& to, TypedValue&& from) {
+ExprRes
+EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
     debug() << __FUNCTION__ << "\n" << line_at(node);
 
     if (!check_is_assignable(node, to.value()))
@@ -1033,19 +1037,13 @@ ExprRes EvalExprVisitor::assign(
     auto to_type = to.type()->deref();
     auto from_type = from.type()->deref();
 
-    ExprRes res;
-    if (!from_type->is_assignable_to(to_type, from.value())) {
-        auto res = env().cast(node, to_type, std::move(from));
-        if (!res)
-            return res;
-    } else {
-        res = {std::move(from)};
-    }
+    if (!from_type->is_assignable_to(to_type, from.value()))
+        from = env().cast(node, to_type, std::move(from), true);
 
     auto lval = to.move_value().lvalue();
     if (has_flag(evl::NoExec))
         return {to.type(), Value{lval}};
-    return {to.type(), lval.assign(res.move_value().move_rvalue())};
+    return {to.type(), lval.assign(from.move_value().move_rvalue())};
 }
 
 ExprResList EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {

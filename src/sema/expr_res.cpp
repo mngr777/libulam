@@ -55,10 +55,8 @@ void ExprRes::set_is_super(bool is_super) {
 
 TypedValue ExprRes::move_typed_value() {
     assert(!is_nil());
-    TypedValue tv;
-    std::swap(tv, _typed_value);
     _error = ExprError::Nil;
-    return tv;
+    return std::exchange(_typed_value, {});
 }
 
 // ExprResList

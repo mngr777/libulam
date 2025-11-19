@@ -67,7 +67,7 @@ protected:
     virtual ExprRes apply_binary_op(
         Ref<ast::Expr> node,
         Op op,
-        TypedValue&& lval_tv,
+        ExprRes&& lval_res,
         Ref<ast::Expr> l_node,
         ExprRes&& left,
         Ref<ast::Expr> r_node,
@@ -85,7 +85,7 @@ protected:
     virtual ExprRes apply_unary_op(
         Ref<ast::Expr> node,
         Op op,
-        TypedValue&& lval_tv,
+        ExprRes&& lval_res,
         Ref<ast::Expr> arg_node,
         ExprRes&& arg,
         Ref<Type> type = {});
@@ -153,9 +153,8 @@ protected:
     virtual ExprRes
     as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);
 
-    // TODO: use ExprRes params
     virtual ExprRes
-    assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& from);
+    assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
 
     virtual ExprResList eval_args(Ref<ast::ArgList> args);
 
