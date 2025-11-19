@@ -1048,8 +1048,8 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
 
     auto lval = to.move_value().lvalue();
     if (has_flag(evl::NoExec))
-        return {to.type(), Value{lval}};
-    return {to.type(), lval.assign(from.move_value().move_rvalue())};
+        return std::move(to);
+    return to.derived(to.type(), lval.assign(from.move_value().move_rvalue()));
 }
 
 ExprResList EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {

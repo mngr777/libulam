@@ -2,6 +2,7 @@
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/semantic/var.hpp>
+#include <utility>
 #include <variant>
 
 namespace ulam {
@@ -351,11 +352,7 @@ RValue Value::copy_rvalue() const {
 RValue Value::move_rvalue() {
     return accept(
         [&](LValue& lval) { return lval.rvalue(); },
-        [&](RValue& rval) {
-            RValue res{};
-            std::swap(res, rval);
-            return res;
-        });
+        [&](RValue& rval) { return std::exchange(rval, {}); });
 }
 
 Value Value::deref() { return Value{move_rvalue()}; }
