@@ -153,8 +153,9 @@ protected:
     virtual ExprRes
     as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);
 
+    // TODO: use ExprRes params
     virtual ExprRes
-    assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv);
+    assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& from);
 
     virtual ExprResList eval_args(Ref<ast::ArgList> args);
 

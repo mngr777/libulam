@@ -1023,16 +1023,24 @@ ExprRes EvalExprVisitor::as_base(
     return {cls, Value{obj.move_value()}};
 }
 
-ExprRes
-EvalExprVisitor::assign(Ref<ast::Expr> node, TypedValue&& to, TypedValue&& tv) {
+ExprRes EvalExprVisitor::assign(
+    Ref<ast::Expr> node, TypedValue&& to, TypedValue&& from) {
     debug() << __FUNCTION__ << "\n" << line_at(node);
 
     if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
 
-    auto res = env().cast(node, to.type()->deref(), std::move(tv));
-    if (!res)
-        return res;
+    auto to_type = to.type()->deref();
+    auto from_type = from.type()->deref();
+
+    ExprRes res;
+    if (!from_type->is_assignable_to(to_type, from.value())) {
+        auto res = env().cast(node, to_type, std::move(from));
+        if (!res)
+            return res;
+    } else {
+        res = {std::move(from)};
+    }
 
     auto lval = to.move_value().lvalue();
     if (has_flag(evl::NoExec))

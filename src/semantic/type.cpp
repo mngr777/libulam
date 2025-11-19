@@ -266,6 +266,10 @@ bool Type::is_refable_as(
     return is_same(type);
 }
 
+bool Type::is_assignable_to(Ref<const Type> type, const Value& val) const {
+    return is_same(type);
+}
+
 conv_cost_t Type::conv_cost(Ref<const Type> type, bool allow_cast) const {
     return is_same(type) ? 0 : MaxConvCost;
 }
@@ -574,6 +578,10 @@ bool RefType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 
 bool RefType::is_refable_as(
     Ref<const Type> type, const Value& val, bool expl) const {
+    assert(false);
+}
+
+bool RefType::is_assignable_to(Ref<const Type> type, const Value& val) const {
     assert(false);
 }
 

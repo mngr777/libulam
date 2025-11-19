@@ -254,21 +254,12 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
         return;
     }
 
-    if (is_base_of(cls)) {
-        // base to derived
-        for (auto prop : all_props()) {
-            auto prop_off = prop->data_off();
-            prop->type()->store(data, off + prop_off, prop->load(obj_data));
-        }
-    } else {
-        // derived to base:
-        // e.g. `Base a = self` where `Self` is Base and dynamic class of `self`
-        // is derived from Base
-        assert(cls->is_base_of(this));
-        for (auto prop : cls->all_props()) {
-            auto prop_off = prop->data_off_in(this);
-            prop->type()->store(data, off + prop_off, prop->load(obj_data));
-        }
+    // upcast/downcast
+    assert(is_base_of(cls) || cls->is_base_of(this));
+    auto props = is_base_of(cls) ? all_props() : cls->all_props();
+    for (auto prop : props) {
+        auto data_off = prop->data_off_in(this);
+        prop->type()->store(data, off + data_off, prop->load(obj_data));
     }
 }
 
@@ -310,7 +301,7 @@ bool Class::is_castable_to(
     if (!val.empty()) {
         auto dyn_type = val.dyn_obj_type(true);
         if (!is_same(dyn_type))
-            return dyn_type->is_castable_to(type, std::move(val), expl);
+            return dyn_type->is_castable_to(type, val, expl);
     }
 
     if (!convs(type, expl).empty())
@@ -352,6 +343,34 @@ bool Class::is_castable_to(
 bool Class::is_refable_as(
     Ref<const Type> type, const Value& val, bool expl) const {
     return is_castable_to(type, val, expl);
+}
+
+bool Class::is_assignable_to(Ref<const Type> type, const Value& val) const {
+    if (is_same(type))
+        return true;
+
+    if (!val.empty() && type->is_object()) {
+        auto dyn_type = val.dyn_obj_type(true);
+        if (!is_same(dyn_type))
+            return dyn_type->is_assignable_to(type, val);
+    }
+
+    // to Atom
+    // NOTE: assuming element dyn type for unknown values, TODO: check if `type`
+    // has element descendants
+    if (type->is(AtomId))
+        return is_element() || val.empty();
+
+    if (!type->is_class())
+        return false;
+
+    auto cls = type->as_class();
+
+    // up/down cast
+    if (cls->is_base_of(this) || is_base_of(cls))
+        return true;
+
+    return false;
 }
 
 Value Class::cast_to(Ref<Type> type, Value&& val) {
@@ -397,8 +416,7 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
     assert(is_base_of(cls) || cls->is_base_of(this));
     auto new_rval = cls->construct();
     auto new_obj = new_rval.get<DataPtr>();
-    auto props = is_base_of(cls) ? all_props()       // upcast
-                                 : cls->all_props(); // downcast
+    auto props = is_base_of(cls) ? all_props() : cls->all_props();
     for (auto prop : props)
         prop->store(new_obj, prop->load(obj));
     new_rval.set_is_consteval(is_consteval);
