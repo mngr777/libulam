@@ -16,8 +16,10 @@
 #include <libulam/semantic/type/class/prop.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/utils/strf.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>
+#include <sstream>
 
 #ifdef DEBUG_CLASS
 #    define ULAM_DEBUG
@@ -52,16 +54,39 @@ const std::string_view Class::name() const {
 
 str_id_t Class::name_id() const { return node()->name().str_id(); }
 
+const std::string_view Class::full_name() const {
+    if (_full_name.empty()) {
+        std::stringstream ss;
+        ss << name();
+        if (!params().empty()) {
+            ss << "(";
+            utils::Strf strf{program()};
+            bool is_first = true;
+            for (const auto param : params()) {
+                if (is_first)
+                    ss << ", ";
+                strf.str(ss, param->type(), param->value());
+                is_first = false;
+            }
+        }
+        _full_name = ss.str();
+    }
+    return _full_name;
+}
+
 const std::string_view Class::mangled_name() const {
     if (_mangled_name.empty()) {
-        _mangled_name = std::string{name()};
+        std::stringstream ss;
+        ss << name();
         if (!params().empty()) {
             Mangler& mangler = program()->mangler();
-            TypeList param_types;
-            for (const auto param : params())
-                param_types.push_back(param->type());
-            _mangled_name += "@" + mangler.mangled(param_types);
+            if (!params().empty()) {
+                ss << "@";
+                for (const auto param : params())
+                    mangler.write_mangled(ss, param->type());
+            }
         }
+        _mangled_name = ss.str();
     }
     return _mangled_name;
 }
@@ -237,7 +262,7 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
 
     // not Atom, must be a class
     assert(type->is_class());
-    auto cls = obj_data->type()->as_class();
+    auto cls = type->as_class();
 
     // same class
     if (is_same(cls)) {

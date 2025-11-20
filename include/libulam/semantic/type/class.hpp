@@ -48,6 +48,7 @@ public:
     const std::string_view name() const override;
     str_id_t name_id() const override;
 
+    const std::string_view full_name() const;
     const std::string_view mangled_name() const;
 
     cls_id_t class_id() const;
@@ -168,6 +169,7 @@ private:
     std::map<type_id_t, Ref<Fun>> _convs;
     std::map<str_id_t, Ref<FunSet>> _fsets;
     Bits _init_bits;
+    mutable std::string _full_name;
     mutable std::string _mangled_name;
 };
 
