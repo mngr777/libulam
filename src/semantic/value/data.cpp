@@ -81,17 +81,7 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    Ref<Type> type{};
-    // TODO: move logic to Class
-    if (_type->is_atom() && rval.is<DataPtr>()) {
-        // NOTE: atom to atom assignment is handled by AtomType
-        auto rval_type = rval.get<DataPtr>()->type();
-        if (rval_type->is_atom())
-            type = _type->builtins().atom_type();
-    }
-    if (!type)
-        type = dyn_type();
-    type->store(_storage->bits(), _off, std::move(rval));
+    dyn_type()->store(_storage->bits(), _off, std::move(rval));
 }
 
 RValue DataView::load() const {

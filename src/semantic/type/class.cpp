@@ -255,8 +255,8 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
     auto obj_data = rval.get<DataPtr>();
     auto type = obj_data->type();
 
-    // element data to Atom
-    if (type->is(AtomId)) {
+    // atom to atom: full rewrite, including element ID
+    if (is_element() && type->is_atom()) {
         assert(is_element());
         data.write(off, obj_data->bits().view());
         return;
@@ -270,14 +270,6 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
     if (is_same(cls)) {
         if (bitsize() > 0)
             data.write(off, obj_data->bits().view());
-        return;
-    }
-
-    // element data to other element (via Atom&, see t3986)
-    if (is_element() && cls->is_element()) {
-        data.write(
-            off + AtomDataOff,
-            obj_data->bits().view(data_off(), data_bitsize()));
         return;
     }
 
