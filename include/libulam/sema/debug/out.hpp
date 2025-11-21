@@ -20,11 +20,6 @@ public:
     void print(Scope& scope);
     void print(Scope::Symbol& sym);
 
-    void print(RecVisitor::Pass pass);
-    void print(Scope::Symbol* sym);
-    void print(Ref<Type> type, bool canon = false);
-    void print(Ref<Var> var);
-
     void print_class_registry();
 
 private:

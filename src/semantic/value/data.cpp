@@ -81,17 +81,17 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    // NOTE: not using dyn type to store, otherwise Atoms would use their
-    // current element class to store other elements -- that effectively
-    // would cast data to current element by overwriting element ID.
-
-    if (!_view_type || _view_type->is_same(_type)) {
-        _type->store(_storage->bits(), _off, std::move(rval));
-        return;
+    Ref<Type> type{};
+    // TODO: move logic to Class
+    if (_type->is_atom() && rval.is<DataPtr>()) {
+        // NOTE: atom to atom assignment is handled by AtomType
+        auto rval_type = rval.get<DataPtr>()->type();
+        if (rval_type->is_atom())
+            type = _type->builtins().atom_type();
     }
-    assert(_view_type->is_expl_castable_to(_type));
-    auto val = _view_type->cast_to(_type, Value{std::move(rval)});
-    _type->store(_storage->bits(), _off, val.move_rvalue());
+    if (!type)
+        type = dyn_type();
+    type->store(_storage->bits(), _off, std::move(rval));
 }
 
 RValue DataView::load() const {
@@ -131,20 +131,28 @@ const DataView DataView::array_item(array_idx_t idx) const {
 DataView DataView::prop(Ref<Prop> prop_) {
     // NOTE: it is possible use a property of unrelated (element) class by
     // rewriting `atomof` with an element or raw Atom (t3909)
-    auto type_ = dyn_type();
-    bitsize_t off = _off + prop_->data_off();
-    assert(
-        type_->is_class() || (type_->is(AtomId) && prop_->cls()->is_element()));
-    if (type_->is_class()) {
-        auto cls = type_->as_class();
-        assert(
-            prop_->cls()->is_same_or_base_of(cls) ||
-            (cls->is_element() && prop_->cls()->is_element()));
-        if (prop_->cls()->is_base_of(cls))
-            off = _off + prop_->data_off_in(cls);
+
+    auto type = dyn_type();
+    if (!type->is_class()) {
+        // NOTE: cannot be raw atom if empty element is defined
+        // (in ulam::Options::class_options)
+        assert(type->is_atom());
+        assert(_view_type->is_class());
+        assert(_view_type->as_class()->is_element());
+        type = _view_type;
     }
-    auto type = prop_->type();
-    return {_storage, type, off, _atom.off, _atom.type};
+    assert(type->is_class());
+
+    auto cls = type->as_class();
+    auto prop_cls = prop_->cls();
+    assert(
+        prop_cls->is_same_or_base_of(cls) ||
+        (cls->is_element() && prop_cls->is_element()));
+
+    auto prop_off = prop_cls->is_same_or_base_of(cls) ? prop_->data_off_in(cls)
+                                                      : prop_->data_off();
+    bitsize_t off = _off + prop_off;
+    return {_storage, prop_->type(), off, _atom.off, _atom.type};
 }
 
 const DataView DataView::prop(Ref<Prop> prop_) const {

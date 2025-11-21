@@ -33,6 +33,7 @@ Class::Class(Ref<ClassTpl> tpl):
     UserType{tpl->program()->builtins(), &tpl->program()->type_id_gen()},
     ClassBase{tpl->node(), tpl->module(), this},
     _tpl{tpl},
+    _ancestry{},
     _init_bits{0} {
     set_cls_tpl(tpl);
     init(tpl->module());
@@ -42,6 +43,7 @@ Class::Class(Ref<ast::ClassDef> node, Ref<Module> module):
     UserType{module->program()->builtins(), &module->program()->type_id_gen()},
     ClassBase{node, module, this},
     _tpl{},
+    _ancestry{},
     _init_bits{0} {
     init(module);
 }

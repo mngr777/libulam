@@ -45,51 +45,6 @@ void Out::print(Scope::Symbol& sym) {
         [&](Ref<Prop> prop) { _os << "prop"; });
 }
 
-void Out::print(RecVisitor::Pass pass) {
-    switch (pass) {
-    case RecVisitor::Pass::Module:
-        _os << "pass: module\n";
-        return;
-    case RecVisitor::Pass::Classes:
-        _os << "pass: classes\n";
-        return;
-    case RecVisitor::Pass::FunBodies:
-        _os << "pass: fun bodies\n";
-    }
-}
-
-void Out::print(Scope::Symbol* sym) {
-    if (sym->is<UserType>()) {
-        _os << "type ";
-        auto type = sym->get<UserType>();
-        if (type->is_alias()) {
-            _os << "(alias)";
-        } else if (type->is_class()) {
-            _os << "(class)";
-        }
-    } else if (sym->is<ClassTpl>()) {
-        _os << "tpl";
-    } else if (sym->is<Var>()) {
-        _os << "var";
-    } else if (sym->is<FunSet>()) {
-        _os << "fun";
-    }
-}
-
-void Out::print(Ref<Type> type, bool canon) {
-    // std::list<array_size_t> array_sizes;
-}
-
-void Out::print(Ref<Var> var) {
-    if (var->type()) {
-        print(var->type());
-    } else {
-        _os << "<no type>";
-    }
-    _os << " " << str(var->name_id());
-    _os << "\n";
-}
-
 void Out::print_class_registry() {
     const auto& list = _program->classes().list();
     hr();

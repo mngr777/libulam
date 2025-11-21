@@ -18,11 +18,6 @@ RValue AtomType::load(const BitsView data, bitsize_t off) {
 
 void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) {
     assert(rval.is<DataPtr>());
-    if (off == 0) {
-        auto type = data_type(data, off);
-        if (!is_same(type))
-            type->store(data, off, rval);
-    }
     data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
