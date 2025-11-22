@@ -48,8 +48,9 @@ public:
     LValue derived() const { return derived(std::monostate{}); }
 
     bool has_rvalue() const;
-    RValue rvalue() const;
-    void with_rvalue(std::function<void(const RValue&)> cb) const;
+    RValue rvalue(bool real = false) const;
+    void
+    with_rvalue(std::function<void(const RValue&)> cb, bool real = false) const;
 
     Ref<Type> type() const;
 
@@ -64,7 +65,8 @@ public:
     LValue atom_of();
 
     LValue array_access(array_idx_t idx, bool is_consteval_idx = true);
-    const LValue array_access(array_idx_t idx, bool is_consteval_idx = true) const;
+    const LValue
+    array_access(array_idx_t idx, bool is_consteval_idx = true) const;
 
     LValue prop(Ref<Prop> prop);
     const LValue prop(Ref<Prop> prop) const;
@@ -180,15 +182,16 @@ public:
 
     Value copy() const;
 
-    RValue copy_rvalue() const;
-    RValue move_rvalue();
+    RValue copy_rvalue(bool real = false) const;
+    RValue move_rvalue(bool real = false);
 
-    Value deref();
+    Value deref(bool real = false);
 
     bool is_consteval() const;
     void set_is_consteval(bool is_consteval);
 
-    void with_rvalue(std::function<void(const RValue&)> cb) const;
+    void
+    with_rvalue(std::function<void(const RValue&)> cb, bool real = false) const;
 };
 
 using ValueList = std::list<Value>;

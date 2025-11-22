@@ -3,6 +3,7 @@
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/options.hpp>
+#include <libulam/sema/eval/options.hpp>
 #include <libulam/semantic/export.hpp>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/module.hpp>
@@ -53,6 +54,7 @@ public:
 
     const ClassOptions& class_options() const;
     const ScopeOptions& scope_options() const;
+    const sema::EvalOptions& eval_options() const;
 
     const ModuleList& modules() { return _modules; }
     Ref<Module> module(const std::string_view name);

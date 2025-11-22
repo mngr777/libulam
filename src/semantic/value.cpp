@@ -27,11 +27,11 @@ bool LValue::has_rvalue() const {
         [&](const std::monostate&) { return false; });
 }
 
-RValue LValue::rvalue() const {
+RValue LValue::rvalue(bool real) const {
     return accept(
         [&](Ref<const Var> var) { return var->rvalue(); },
         [&](const DataView& data) {
-            auto rval = data.load(true /* see t3697 */);
+            auto rval = data.load(real);
             rval.set_is_consteval(is_consteval());
             return rval;
         },
@@ -39,11 +39,12 @@ RValue LValue::rvalue() const {
         [&](const std::monostate&) { return RValue{}; });
 }
 
-void LValue::with_rvalue(std::function<void(const RValue&)> cb) const {
+void LValue::with_rvalue(
+    std::function<void(const RValue&)> cb, bool real) const {
     accept(
-        [&](Ref<const Var> var) { var->value().with_rvalue(cb); },
+        [&](Ref<const Var> var) { var->value().with_rvalue(cb, real); },
         [&](const DataView& data) {
-            RValue rval = data.load();
+            RValue rval = data.load(real);
             rval.set_is_consteval(_is_consteval);
             cb(rval);
         },
@@ -343,19 +344,19 @@ Value Value::copy() const {
     return is_lvalue() ? Value{lvalue()} : Value{copy_rvalue()};
 }
 
-RValue Value::copy_rvalue() const {
+RValue Value::copy_rvalue(bool real) const {
     return accept(
-        [&](const LValue& lval) { return lval.rvalue(); },
+        [&](const LValue& lval) { return lval.rvalue(real); },
         [&](const RValue& rval) { return rval.copy(); });
 }
 
-RValue Value::move_rvalue() {
+RValue Value::move_rvalue(bool real) {
     return accept(
-        [&](LValue& lval) { return lval.rvalue(); },
+        [&](LValue& lval) { return lval.rvalue(real); },
         [&](RValue& rval) { return std::exchange(rval, {}); });
 }
 
-Value Value::deref() { return Value{move_rvalue()}; }
+Value Value::deref(bool real) { return Value{move_rvalue(real)}; }
 
 bool Value::is_consteval() const {
     return accept([&](const auto& val) { return val.is_consteval(); });
@@ -365,9 +366,10 @@ void Value::set_is_consteval(bool is_consteval) {
     accept([&](auto& val) { val.set_is_consteval(is_consteval); });
 }
 
-void Value::with_rvalue(std::function<void(const RValue&)> cb) const {
+void Value::with_rvalue(
+    std::function<void(const RValue&)> cb, bool real) const {
     accept(
-        [&](const LValue& lval) { lval.with_rvalue(cb); },
+        [&](const LValue& lval) { lval.with_rvalue(cb, real); },
         [&](const RValue& rval) { cb(rval); });
 }
 

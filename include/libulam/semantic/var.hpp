@@ -39,7 +39,7 @@ public:
     DataView data_view();
 
     LValue lvalue();
-    RValue rvalue() const;
+    RValue rvalue(bool real = false) const;
 
     Value move_value();
 

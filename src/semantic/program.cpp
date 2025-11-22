@@ -31,6 +31,10 @@ const ScopeOptions& Program::scope_options() const {
     return _ctx.options.scope_options;
 }
 
+const sema::EvalOptions& Program::eval_options() const {
+    return _ctx.options.eval_options;
+}
+
 Ref<Module> Program::module(const std::string_view name) {
     auto name_id = _str_pool.id(name);
     return (name_id != NoStrId) ? module(name_id) : Ref<Module>{};

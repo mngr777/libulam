@@ -60,8 +60,8 @@ LValue Var::lvalue() {
     return lval;
 }
 
-RValue Var::rvalue() const {
-    auto rval = _value.copy_rvalue();
+RValue Var::rvalue(bool real) const {
+    auto rval = _value.copy_rvalue(real);
     rval.set_is_consteval(is_consteval());
     return rval;
 }

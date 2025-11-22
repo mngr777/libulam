@@ -257,7 +257,8 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
 
 ExprRes EvalCast::deref(ExprRes&& arg) {
     assert(arg.value().is_lvalue());
-    Value val = arg.move_value().deref();
+    bool deref_as_dyn_type = program()->eval_options().cast_deref_as_dyn_type;
+    Value val = arg.move_value().deref(deref_as_dyn_type);
     if (!arg.type()->deref()->is_object() || val.empty())
         return arg.derived(arg.type()->deref(), std::move(val));
     return arg.derived(val.dyn_obj_type(), std::move(val));
