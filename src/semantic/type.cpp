@@ -600,8 +600,6 @@ Value RefType::cast_to(Ref<Type> type, Value&& val) {
         return refd()->cast_to(type, std::move(val));
     type = type->deref();
     assert(refd()->is_expl_refable_as(type, val));
-    if (refd()->is_impl_refable_as(type, val))
-        return std::move(val);
     return Value{val.lvalue().as(type)};
 }
 

@@ -84,10 +84,10 @@ void DataView::store(RValue&& rval) {
     dyn_type()->store(_storage->bits(), _off, std::move(rval));
 }
 
-RValue DataView::load() const {
+RValue DataView::load(bool real) const {
     auto rval = _type->load(_storage->bits(), _off);
     auto type = dyn_type();
-    if (_view_type && !_view_type->is_same(type)) {
+    if (!real && _view_type && !_view_type->is_same(type)) {
         assert(type->is_expl_castable_to(_view_type));
         auto val = type->cast_to(_view_type, Value{std::move(rval)});
         return val.move_rvalue();

@@ -65,7 +65,7 @@ public:
     operator bool() const { return _storage.get(); }
 
     void store(RValue&& rval);
-    RValue load() const;
+    RValue load(bool real = false) const;
 
     DataPtr storage() { return _storage; }
     ConstDataPtr storage() const { return _storage; }

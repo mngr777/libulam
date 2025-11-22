@@ -1034,14 +1034,8 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
     if (!check_is_assignable(node, to.value()))
         return {ExprError::NotAssignable};
 
-    auto dyn_type = [&](const ExprRes& res) {
-        auto type = res.type()->deref();
-        return (type->is_object() && !res.value().empty())
-            ? res.value().dyn_obj_type(true)
-            : type;
-    };
-    auto to_type = dyn_type(to);
-    auto from_type = dyn_type(from);
+    auto to_type = to.type()->deref();
+    auto from_type = from.type()->deref();
 
     if (!from_type->is_assignable_to(to_type, from.value()))
         from = env().cast(node, to_type, std::move(from), true);

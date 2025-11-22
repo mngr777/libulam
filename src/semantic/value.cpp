@@ -31,7 +31,7 @@ RValue LValue::rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->rvalue(); },
         [&](const DataView& data) {
-            auto rval = data.load();
+            auto rval = data.load(true /* see t3697 */);
             rval.set_is_consteval(is_consteval());
             return rval;
         },

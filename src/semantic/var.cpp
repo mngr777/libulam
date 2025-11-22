@@ -44,7 +44,8 @@ void Var::set_rvalue(RValue&& rval) {
 
 DataView Var::data_view() {
     if (_value.is_lvalue())
-        return _value.lvalue().data_view(); // ??
+        return _value.lvalue().data_view();
+
     return _value.rvalue().accept(
         [&](DataPtr data) { return data->view(); },
         [&](auto& other) { return DataView{}; });

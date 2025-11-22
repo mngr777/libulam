@@ -163,10 +163,9 @@ ExprRes EvalCast::cast_class(
             arg = arg.type()->is_ref() ? deref(std::move(arg))
                                        : take_ref(node, std::move(arg));
         }
-        if (arg.type()->is_same(to))
-            return std::move(arg);
-
-        return cast_default(node, to, std::move(arg), expl);
+        return (!arg.type()->is_same(to))
+                   ? cast_default(node, to, std::move(arg), expl)
+                   : std::move(arg);
 
     } else {
         arg = cast_class_fun(node, *convs.begin(), std::move(arg), expl);
