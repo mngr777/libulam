@@ -70,7 +70,7 @@ void Resolver::resolve(Ref<Program> program) {
 
     debug() << "fully resolved classes:\n";
     for (auto cls : processed)
-        debug() << " - " << cls->name() << "\n";
+        debug() << " - " << cls->full_name() << "\n";
 }
 
 bool Resolver::init(Ref<Class> cls) {

@@ -65,11 +65,12 @@ const std::string_view Class::full_name() const {
             utils::Strf strf{program()};
             bool is_first = true;
             for (const auto param : params()) {
-                if (is_first)
+                if (!is_first)
                     ss << ", ";
                 strf.str(ss, param->type(), param->value());
                 is_first = false;
             }
+            ss << ")";
         }
         _full_name = ss.str();
     }
