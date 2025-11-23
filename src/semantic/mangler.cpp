@@ -16,25 +16,31 @@ namespace ulam {
 // see ULAM SymbolClassNameTemplate::formatAnInstancesArgValuesAsAString
 std::string Mangler::mangled(const TypedValueList& values) {
     std::stringstream ss;
-    for (const auto& tv : values)
-        write_mangled(ss, tv);
+    for (auto it = values.begin(); it != values.end(); ++it) {
+        if (it != values.begin())
+            ss << '_';
+        write_mangled(ss, *it);
+    }
     debug() << ss.str() << "\n";
     return ss.str();
 }
 
 std::string Mangler::mangled(const TypeList& types) {
     std::stringstream ss;
-    for (const auto type : types)
-        write_mangled(ss, type);
+    for (auto it = types.begin(); it != types.end(); ++it) {
+        if (it != types.begin())
+            ss << '_';
+        write_mangled(ss, *it);
+    }
     return ss.str();
 }
 
 void Mangler::write_mangled(std::ostream& os, const TypedValue& tv) {
-    // TODO: visit RValue to avoid copying
-    auto rval = tv.value().copy_rvalue();
-    assert(!rval.empty());
     write_mangled(os, tv.type());
-    write_mangled(os, rval);
+    tv.value().with_rvalue([&](const RValue& rval) {
+        assert(!rval.empty());
+        write_mangled(os, rval);
+    });
 }
 
 // see ULAM {UlamType,UlamTypeClass}::getUlamTypeMangledType()

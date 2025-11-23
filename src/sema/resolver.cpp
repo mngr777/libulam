@@ -11,7 +11,6 @@
 #include <libulam/semantic/type/builtin/void.hpp>
 #include <libulam/semantic/type/class_tpl.hpp>
 
-#define DEBUG_SEMA_RESOLVER // TMP
 #ifdef DEBUG_SEMA_RESOLVER
 #    define ULAM_DEBUG
 #    define ULAM_DEBUG_PREFIX "[sema::Resolver] "
@@ -778,6 +777,8 @@ Resolver::do_eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
 std::pair<TypedValueList, bool>
 Resolver::do_eval_tpl_args_compat(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
+    debug() << __FUNCTION__ << tpl->name() << "\n" << line_at(args) << "\n";
+
     std::pair<TypedValueList, bool> res;
 
     // eval args

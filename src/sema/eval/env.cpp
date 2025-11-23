@@ -1,5 +1,4 @@
-#include "libulam/ast/nodes/stmts.hpp"
-#include "libulam/sema/eval/cond_res.hpp"
+#include <algorithm>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -95,6 +94,9 @@ EvalEnv::VarDefaultsRaii::operator=(VarDefaultsRaii&& other) {
 EvalEnv::VarDefaultsRaii::VarDefaultsRaii(
     EvalEnv& env, VarDefaults&& var_defaults):
     _env{&env}, _var_set{make_set(var_defaults)} {
+    assert(std::none_of(_var_set.begin(), _var_set.end(), [&](const auto ref) {
+        return env._var_defaults.count(ref) > 0;
+    }));
     env._var_defaults.merge(var_defaults);
 }
 

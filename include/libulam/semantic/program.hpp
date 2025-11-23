@@ -20,6 +20,7 @@
 
 #ifndef NDEBUG
 #    include <libulam/sema/debug/out.hpp>
+#    include <libulam/semantic/utils/strf.hpp>
 #endif
 
 namespace ulam::ast {
@@ -66,6 +67,7 @@ public:
 
 #ifndef NDEBUG
     sema::dbg::Out dbg;
+    utils::Strf strf;
 #endif
 
 private:

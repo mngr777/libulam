@@ -8,10 +8,10 @@
 
 namespace ulam {
 
-Program::Program(
-    Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
+Program::Program(Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
 #ifndef NDEBUG
     dbg{this},
+    strf{this},
 #endif
     _ctx{ctx},
     _str_pool{str_pool},
@@ -19,7 +19,8 @@ Program::Program(
     _type_id_gen{},
     _elements{ctx.options.class_options},
     _builtins{this},
-    _mangler{_text_pool} {}
+    _mangler{_text_pool} {
+}
 
 Program::~Program() {}
 
