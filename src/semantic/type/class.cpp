@@ -580,6 +580,12 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
         return;
 
     // import ancestor types
+    // TODO: report ambiguous names, e.g.
+    // ```
+    // quark A: B(0) + B(1) {
+    //   B.foo(); // `B(0)` or `B(1)` (may not even be direct ancestor)?
+    // }
+    // ```
     for (auto anc : cls->_ancestry.ancestors()) {
         auto name_id = anc->cls()->name_id();
         if (!inh_scope()->has(name_id))
@@ -592,9 +598,8 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
             continue;
         if (members().import_sym(name_id, sym)) {
             auto name_id_ = name_id; // C++17 cannot capture struct-d bindings
-            // TEST
-            debug() << "importing " << cls->name() << "."
-                    << program()->str_pool().get(name_id) << " into " << name()
+            debug() << "importing " << cls->full_name() << "."
+                    << program()->str_pool().get(name_id) << " into " << full_name()
                     << "\n";
             sym.accept([&](auto mem) { inh_scope()->set(name_id_, mem); });
         }
@@ -645,6 +650,11 @@ void Class::init_layout() {
         if (!is_union())
             off += prop->bitsize();
     }
+}
+
+void Class::set_init_bits(Bits&& bits) {
+    assert(_init_bits.len() == 0);
+    _init_bits = std::move(bits);
 }
 
 Ref<Program> Class::program() const { return module()->program(); }

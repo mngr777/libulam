@@ -448,8 +448,13 @@ Ref<Type> Resolver::resolve_type_spec(
         return self_cls->super();
     }
 
+    bool is_tpl = type_spec->has_args();
     auto name_id = ident->name_id();
     auto class_tpl_to_type = [&](Ref<ClassTpl> class_tpl) -> Ref<Type> {
+        if (!is_tpl) {
+            diag().error(type_spec, "no template arguments provided");
+            return {};
+        }
         auto [args, success] = eval_tpl_args(type_spec->args(), class_tpl);
         if (!success)
             return {};
@@ -462,14 +467,32 @@ Ref<Type> Resolver::resolve_type_spec(
         sgp.except = exclude_alias;
         auto sym = scope()->get(name_id, sgp);
         if (sym) {
-            return sym->accept(
+            auto type = sym->accept(
                 class_tpl_to_type,
                 [&](Ref<UserType> type) -> Ref<Type> {
+                    // NOTE:
+                    // * class ancestor can be added into class scope
+                    //   under same name as template:
+                    //   ```
+                    //   quark A(Int cP) { Void foo() {<...>} }
+                    //   quark B : A(1) {
+                    //     A.foo(); // `A` resolves to `A(1)` in class scope
+                    //   }
+                    //   ```
+                    // * same for typedef shadowing template (see t3651, broken?):
+                    //   ```
+                    //   quark A(Int cp) {}
+                    //   typedef A(0) A;
+                    //   ```
+                    if (is_tpl)
+                        return {};
                     return (!type->is_alias() || resolve(type->as_alias()))
                                ? type
                                : nullptr;
                 },
                 [&](auto&&) -> Ref<Type> { assert(false); });
+            if (type)
+                return type;
         }
     }
 
@@ -711,6 +734,7 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
 std::pair<TypedValueList, bool>
 Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n" << line_at(args);
+    assert(args);
 
     auto fr = env().add_flags_raii(evl::Consteval);
     return !program()->scope_options().allow_access_before_def

@@ -136,11 +136,11 @@ bool ClassResolver::check_bitsize() {
 }
 
 void ClassResolver::init_default_data() {
-    _cls._init_bits = Bits{_cls.bitsize()};
+    Bits bits{_cls.bitsize()};
 
     // element ID
     if (_cls.is_element())
-        _cls._init_bits.write(AtomEltIdOff, AtomEltIdSize, _cls._elt_id);
+        bits.write(AtomEltIdOff, AtomEltIdSize, _cls._elt_id);
 
     TypeIdSet unions; // initialized Unions
     for (auto prop : _cls.all_props()) {
@@ -152,8 +152,9 @@ void ClassResolver::init_default_data() {
         }
         _resolver.init_default_value(prop);
         auto off = prop->data_off_in(&_cls);
-        prop->type()->store(_cls._init_bits, off, prop->default_value());
+        prop->type()->store(bits, off, prop->default_value());
     }
+    _cls.set_init_bits(std::move(bits));
 }
 
 bool ClassResolver::do_init_ancestors() {

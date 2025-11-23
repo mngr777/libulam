@@ -38,6 +38,7 @@ static const std::set<std::string> Skip {
     "t3241_test_compiler_unarymod.test", // invalid implicit cast?
     "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
     "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
+    "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve
     "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
     "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-

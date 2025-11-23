@@ -152,6 +152,7 @@ private:
 
     void merge_fsets();
     void init_layout();
+    void set_init_bits(Bits&& bits);
 
     auto& convs() { return _convs; }
     auto& fsets() { return _fsets; }

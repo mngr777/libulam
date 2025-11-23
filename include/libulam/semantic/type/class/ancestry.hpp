@@ -67,10 +67,10 @@ public:
 
     bitsize_t data_off(Ref<const Class> cls) const;
 
-    auto& parents() { return _parents; }
+    // auto& parents() { return _parents; }
     const auto& parents() const { return _parents; }
 
-    auto& ancestors() { return _ancestors; }
+    // auto& ancestors() { return _ancestors; }
     const auto& ancestors() const { return _ancestors; }
 
 private:
