@@ -85,11 +85,14 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     {
         auto iter_sr = env().scope_raii();
         auto cond = node->cond();
-        auto cond_res = env().eval_cond(cond);
-
-        // body
-        if (node->has_body())
-            maybe_wrap_stmt(node->body(), cond->is_as_cond());
+        auto loop = [&]() { maybe_wrap_stmt(node->body(), cond->is_as_cond()); };
+        auto [is_true, as_cond_ctx] = env().eval_cond(cond);
+        if (!as_cond_ctx.empty()) {
+            auto sr = env().as_cond_scope_raii(as_cond_ctx);
+            loop();
+        } else {
+            loop();
+        }
     }
 
     gen().append("_" + gen().next_tmp_idx_str() + ":");
@@ -113,10 +116,14 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     auto sr = env().scope_raii(ulam::scp::BreakAndContinue);
     gen().block_open();
 
-    auto cond_res = env().eval_cond(node->cond());
-
-    // body
-    node->body()->accept(*this);
+    auto loop = [&]() { node->body()->accept(*this); };
+    auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
+    if (!as_cond_ctx.empty()) {
+        auto sr = env().as_cond_scope_raii(as_cond_ctx);
+        loop();
+    } else {
+        loop();
+    }
 
     gen().append("_" + tmp_idx + ": while");
     gen().block_close();

@@ -20,7 +20,7 @@ public:
         _self_cls{self_cls},
         _self{self} {}
 
-    explicit AsCondScope(
+    AsCondScope(
         Ref<Var> var, Scope* parent, scope_flags_t flags = scp::NoFlags):
         BasicScope{parent, (scope_flags_t)(flags | scp::AsCond)},
         _self_cls{},
@@ -34,9 +34,7 @@ public:
 
     bool has_self() const override { return _self_cls; }
 
-    LValue self() const override {
-        return has_self() ? _self : Scope::self();
-    }
+    LValue self() const override { return has_self() ? _self : Scope::self(); }
 
 private:
     Ref<Class> _self_cls;

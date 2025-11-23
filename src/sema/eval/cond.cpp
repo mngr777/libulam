@@ -88,8 +88,6 @@ EvalCond::VarDefPair EvalCond::make_as_cond_var(
     auto var = make<Var>(
         node->type_name(), ulam::ref(def),
         TypedValue{type->ref_type(), Value{lval}});
-    // var->set_scope_lvl(env().stack_size());
-    //scope()->set(var->name_id(), std::move(var));
     return {std::move(def), std::move(var)};
 }
 
