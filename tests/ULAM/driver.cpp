@@ -31,19 +31,31 @@ static const std::set<std::string> DefOrder = {
     "t41224_test_compiler_elementregularwithinheritedclassparameterquarktemplate.test", // -"- (postfix doesn't match)
     "t41226_test_compiler_elementtemplatewithinheritedclassparameterquarktemplatedependent_thegoal.test", // -"-
     "t41228_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor.test", // -"-
+    "t41438_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // tpl constant used as default tpl param value
+    "t41439_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // -"-
+    "t41444_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwmemberconstantdefaults_unseencase_ish.test", // -"-
+    "t41445_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwmemberconstantdefaults_seencase_ish.test", // -"-
+    "t41452_test_compiler_templateclasseswiththreewayreferencingtypedefs.test", // class typedef used in parent list
+    "t41453_test_compiler_templateclasseswithmembertypedefbaseclasses.test", // -"-
+    "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // class typedef used in parent list (postfix doesnt't match)
+    "t41524_test_compiler_elementmultiinheritance_shadowingtypedefsinhierarchy.test", // -"-
+    "t41647_test_compiler_elementinheritedquarks_multibase_templatebaseclasswithdmandfuncnotfound.test", // class typedef used in parent list
+    "t41648_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocalnone_issue.test", // -"-
+    "t41649_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocaldm_issue.test", // -"-
+    "t41650_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedeflocals_issue.test", // -"-
+    "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // -"-
 };
 
 static const std::set<std::string> Skip {
     "t3241_test_compiler_unarymod.test", // invalid implicit cast?
+    "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
     "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
-    "t3501_test_compiler_elementandquarkcaarray_unsignedindex_issue.test", // ambiguous funcall as intended
-    "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve
-    "t3774_test_compiler_transientwithfuncswrefarg_undefinedtemp_issue.test", // empty Atom ref argument for Mob.visit -- cannot eval condition
-    "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue", // -"-
-    "t3779_test_compiler_transientwithfuncswrefarg_castvoidreturn_issue.test", // -"-
+    "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve, Tar is not a template
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // parent class const used as tpl params
-    "t41043_test_compiler_forascond.test", // Int i(4) is correct
-    "t41046_test_compiler_switchascondcases.test", // cannot evaluate native aref
+    "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
+    "t41042_test_compiler_whileascond.test", // while-as, FIXME
+    "t41043_test_compiler_forascond.test", // TODO
+    "t41046_test_compiler_switchascondcases.test", // cannot evaluate native aref, TODO
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
@@ -53,8 +65,8 @@ static const std::set<std::string> Skip {
     "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
     "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
+    "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
     "t41266_test_compiler_constantclassarrayoftransients.test", // module-local constant `keyexpr_x13` addressed as `KeyExprRep.keyexpr_x13` ??
-    "t41285_test_compiler_localdefquestioncolon_usingtemplateinstanceconstant_filescope.test",
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
     "t41316_test_compiler_transientandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
@@ -68,46 +80,27 @@ static const std::set<std::string> Skip {
     "t41392_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant2.test", // -"-
     "t41393_test_compiler_elementandquark_multibases_virtualfuncsselectwselfSelfandclassidconstant3.test", // -"-
     "t41402_test_compiler_classidtemplatearg_ish.test", // Ele1.classid != 1u due to different resolution order (`local constant Unsigned c_ele2 = Ele2.classidof` resolved first)
-    "t41414_test_compiler_castingquarkreftobits_ish.test", // ref to base to Bits(Base.sizeof), TODO?? -- need "known dynamic type" flag similar to consteval for values?
     "t41421_test_compiler_castingbitstotransientwstring.test", // clobbered String ID is invalid. TODO: fallback
     "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
     "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
-    "t41438_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // tpl constant used as default tpl param value
-    "t41439_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwconstantdefaults_ish.test", // -"-
-    "t41444_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwmemberconstantdefaults_unseencase_ish.test", // -"-
-    "t41445_test_compiler_elementtemplatewithdefaultclassparametersandquarktemplateancestorwmemberconstantdefaults_seencase_ish.test", // -"-
-    "t41447_test_compiler_quarktemplatewithtypedefanddmfrombasesbaseclasstemplateclassinstance.test", // native function result used in condition
-    "t41452_test_compiler_templateclasseswiththreewayreferencingtypedefs.test", // class typedef used in parent list
-    "t41453_test_compiler_templateclasseswithmembertypedefbaseclasses.test", // -"-
     "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
     "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
-    "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // class typedef used in parent list
-    "t41524_test_compiler_elementmultiinheritance_shadowingtypedefsinhierarchy.test", // -"-
     "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
     "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
-    "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
-    "t41619_test_compiler_positionofdatamemberinbaseclassofbaseclassnoref.test", // positionof base type chain, TODO
-    "t41621_test_compiler_elementpositionofdatamemberusingSelf.test", // instanceof base type chain, TODO
-    "t41647_test_compiler_elementinheritedquarks_multibase_templatebaseclasswithdmandfuncnotfound.test", // class typedef used in parent list
-    "t41648_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocalnone_issue.test", // -"-
-    "t41649_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocaldm_issue.test", // -"-
-    "t41650_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedeflocals_issue.test", // -"-
-    "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
-    "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
-    "t41042_test_compiler_whileascond.test", // while-as, native aref cannot be evaluated
-    "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
-    "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // class typedef used in parent list
     "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
     "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
     "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
     "t41589_test_compiler_transientwithatomdmassignedatomref_ish.test", // ew[0] is overwritten in the process, needs to be handled in compiler (explicitly pass old class?)
     "t41590_test_compiler_transientwithatomarraydmassignedatomref.test", // -"-
-    "t41591_test_compiler_transientwithatomarraydmassignedatomarrayitem.test", // EventWindow.aref is native, so mAtoo[0] is initialized to empty Atom (not Empty atom!)
+    "t41591_test_compiler_transientwithatomarraydmassignedatomarrayitem.test", // test case parser, FIXME
+    "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
+    "t41619_test_compiler_positionofdatamemberinbaseclassofbaseclassnoref.test", // positionof base type chain, TODO
     "t41615_test_compiler_positionofdatamemberconstantofandnonref.test", // positionof, TODO
     "t41616_test_compiler_positionofdatamemberascond.test", // -"-
     "t41617_test_compiler_positionofascondref.test", // -"-
     "t41618_test_compiler_positionofreftodatamember.test", // -"-
     "t41620_test_compiler_elementpositionofdatamemberinbaseclassofbaseclassnoref.test", // -"-
+    "t41621_test_compiler_elementpositionofdatamemberusingSelf.test", // instanceof base type chain, TODO
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
@@ -248,6 +241,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41506_test_compiler_elementinheritedquark_constantof_withsuper.test", // Unsigned format
     "t41507_test_compiler_elementandquark_memberselectonconstantof_issue.test", // return const member access fully folded (not true for all tests, TODO: revisit)
     "t41512_test_compiler_transientconstantwelementarraydatamemberinitwconstantof.test", // `Bool m_testb(true);  Int m_testi(99);` is correct (tested)
+    "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // `cast` vs `cast cast`
     "t41529_test_compiler_elementandquark_templateinstanceconstantof.test", // return const member access folding (similar to t41507)
     "t41569_test_compiler_bitwisetwiddleonbigtransient.test", // `Int m_i(-1);` is correct
     "t41594_test_compiler_transientwithtransientbasesfuncselfreset_ish.test", // autofilled array output
