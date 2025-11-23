@@ -82,9 +82,9 @@ void EvalVisitor::visit(Ref<ast::For> node) {
     };
 
     bool done = false;
-    unsigned loop_count = 1;
+    int loop_count = 0;
     while (!done) {
-        if (loop_count++ == 150) // TODO: max loops option
+        if (loop_count++ == program()->eval_options().max_loop_iterations)
             throw EvalExceptError("for loop limit exceeded");
 
         auto sr = env().scope_raii();
@@ -162,9 +162,9 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     };
 
     bool done = false;
-    unsigned loop_count = 1;
+    int loop_count = 0;
     while (!done) {
-        if (loop_count++ == 150) // TODO: max loops option
+        if (loop_count++ == program()->eval_options().max_loop_iterations)
             throw EvalExceptError("for loop limit exceeded");
 
         auto sr = env().scope_raii();

@@ -13,6 +13,8 @@ struct EvalOptions {
     // }
     // ```
     bool cast_deref_as_dyn_type{true};
+
+    int max_loop_iterations{150}; // -1 for no limit
 };
 
 constexpr EvalOptions DefaultEvalOptions{};

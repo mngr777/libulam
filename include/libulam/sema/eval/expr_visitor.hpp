@@ -41,7 +41,7 @@ public:
     ExprRes visit(Ref<ast::ClassConstAccess> node) override;
     ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
-    // TODO: protected
+protected:
 
     virtual ExprRes check(Ref<ast::Expr> node, ExprRes&& res);
 
@@ -55,7 +55,6 @@ public:
     virtual Ref<Class>
     class_base(Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident);
 
-protected:
     virtual ExprRes binary_op(
         Ref<ast::Expr> node,
         Op op,
