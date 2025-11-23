@@ -107,13 +107,13 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3412_test_compiler_elementandquarkwargs_functoint.test", // single test using _toIntHelper to cast returned quark
     "t3747_test_compiler_elementinheritedquark_instanceof_withsuper.test", // "u" suffix
     "t3521_test_compiler_elementandquarkswclassargs_wdefaultparam.test", // constant sum correctly folded
-    "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // using result of native `aref`
+    "t3549_test_compiler_elementandquarkcaarray_withquarkinitandinheritance_localuse.test", // `Bool(3) 3(true)` is correct
     "t3652_test_compiler_elementandquarksinherited_unseentypedef_unaryclassarg_ish.test", // classid of non-const expr
     "t3714_test_compiler_bigtransient.test", // ta(551) is correct (tested in MFM)
     "t3715_test_compiler_transientwithtransientdm.test", // similar to t3714
     "t3748_test_compiler_elementinheritedquark_sizeof_withsuper.test", // Bits "u" suffix
     "t3749_test_compiler_elementinheritedquark_datamember_withsuper.test", // -"-
-    "t3805_test_compiler_transientsandelements_virtualfuncsandrefargs.test", // cannot use `System.assert(false)` without evaluating native funs
+    "t3805_test_compiler_transientsandelements_virtualfuncsandrefargs.test", // `Int mChecks(-16)` is correct
     "t3811_test_compiler_transientarraywithelementarraydm_funccallrefarg.test", // b(true), c(true) are correct (tested in MFM)
     "t3812_test_compiler_transientarraywithatomarraydm_funccallrefarg.test", // similar to t3811
     "t3814_test_compiler_transientarraywithelementarrayref.test", // -"-
@@ -126,7 +126,6 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3833_test_compiler_transientwithatomdm.test", // -"-
     "t3837_test_compiler_element_quarkrefatomof_issue.test", // -"-
     "t3850_test_compiler_mixedlongbinaryops.test", // mixing 32/64-bit Ints, why `mixprod32 / mixdiv64` -> `mixprod32 cast mixdiv64 / cast cast 4 cast ==`?
-    "t3887_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefshadow.test", // local `b` used instead of tpl parameter, TODO: address in compat mode
     "t3902_test_compiler_funcdef_forloopcontinue_issue.test", // `d(0)` is correct (tested) `d(5)` means `--i` is ignored?
     "t3906_test_compiler_elementandquark_atomofmemberselectarrayitem.test", // tmp, .atomof
     "t3908_test_compiler_elementandquark_atomofmemberselectarrayitemlval.test", // -"-
@@ -160,8 +159,6 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
     "t41014_test_compiler_logicalorandprecedence_issue.test", // ULAM has same precedence for || and && ?
     "t41039_test_compiler_controlswitch_nonconstantcaseexpressions.test", // seems to require runtime values to work; z = 4 does happen, so ok to skip
-    "t41072_test_compiler_assignto_questioncolon.test", // ULAM parses `ok ? a : b = 2` as `(ok ? a : b) = 2`?
-    "t41073_test_compiler_assigntoarrayitem_questioncolon.test", // -"-
     "t41093_test_compiler_elementandquark_quarkunionstring.test", // .lenghtof, similar to t3930
     "t41131_test_compiler_elementandquark_overloadfunccallrefargsubclass_issue.test", // unsigned value format
     "t41139_test_compiler_castatomreftoatom_issue.test", // redundant cast from Stretch.instanceof to Atom?
@@ -181,7 +178,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41182_test_compiler_classdminitarrayofquarksinherited_localvar.test", // array format
     "t41183_test_compiler_classdminit_inheritedtemplateString_localvar.test", // obj map format
     "t41184_test_compiler_classdminitwithconstructor_localvar.test", // -"-
-    "t41185_test_compiler_classdminitarrayofquarksinquark_issue.test", // tmp
+    "t41185_test_compiler_classdminitarrayofquarksinquark_issue.test", // test case parser issue, FIXME
     "t41198_test_compiler_constantclasswish.test", // constant `b1 = QFoo.c_qbar.iou == 7` folded correctly
     "t41206_test_compiler_classdminitarraysnull_localvar.test", // array format
     "t41209_test_compiler_elementwithclassparameterquarktemplate.test", // object param format (is prefix in hex classid?), folding, casts
@@ -197,7 +194,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41232_test_compiler_transientconstantwelementdatamember.test", // `Bool m_testb(true);  Int m_testi(77);` is correct
     "t41233_test_compiler_transientconstantwelementdatamemberinitialized.test", // similar to t41232
     "t41234_test_compiler_transientconstantwelementarraydatamember.test", // -"-
-    "t41267_test_compiler_constantclassarrayoftransients_withelementdm.test", // class const `KeyExprNode.m_elfoo` is evaluated with default eval, no codegen
+    "t41267_test_compiler_constantclassarrayoftransients_withelementdm.test", // init value output
     "t41268_test_compiler_constantclassarrayoftransientswithelementdm_asconstreffuncarg.test", // -"-
     "t41269_test_compiler_constantclassarrayoftransients_withtransientdm.test", // obj value format: init expr not available at compile time
     "t41270_test_compiler_constantclassarrayoftransientswithtransientdm_asconstreffuncarg.test", // -"-
@@ -219,7 +216,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41383_test_compiler_elementandquarkswclassargs_classidofSelf_issue.test", // TODO: classid
     "t41394_test_compiler_elementandquark_multibases_virtualfuncsselectwextrashallowbase_issue.test", // array format
     "t41395_test_compiler_transientclassdminitwithconstructor_localvar.test", // folding: .lengthof, non-const property
-    "t41402_test_compiler_classidtemplatearg_ish.test", // TODO: classids don't match, use separate ID for classes
+    "t41402_test_compiler_classidtemplatearg_ish.test", // classids don't match
     "t41426_test_compiler_quarkunion_datamemberbitsizezero.test", // UNINITIALIZED_STRING
     "t41434_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestorwlocalscontext_ish.test", // Bool format, TODO: investigate props with `Type prop( value)` format
     "t41468_test_compiler_stringdatamemberuninitialized_ish.test", // UNINITIALIZED_STRING
