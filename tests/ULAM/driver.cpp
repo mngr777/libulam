@@ -53,7 +53,6 @@ static const std::set<std::string> Skip {
     "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve, Tar is not a template
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // parent class const used as tpl params
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
-    "t41046_test_compiler_switchascondcases.test", // cannot evaluate native aref, TODO
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref

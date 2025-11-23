@@ -72,7 +72,15 @@ bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
     auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
     gen_ctx.set_case_has_breaks(false);
     bool is_default = match_conds(ctx, case_->conds());
-    env().eval_stmt(case_->branch());
+
+    auto branch = [&]() { env().eval_stmt(case_->branch()); };
+    if (!ctx.as_cond_ctx.empty()) {
+        auto sr = env().as_cond_scope_raii(ctx.as_cond_ctx);
+        branch();
+    } else {
+        branch();
+    }
+
     if (!is_default) {
         gen().append("if");
     } else {
@@ -87,6 +95,7 @@ bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
     return false;
 }
 
+// NOTE: repurposing return value to mean "is default"
 bool EvalWhich::match_conds(
     Context& ctx, ulam::Ref<ulam::ast::WhichCaseCondList> case_conds) {
     if (!codegen_enabled())
@@ -105,8 +114,8 @@ bool EvalWhich::match_conds(
         }
     }
 
-    gen_ctx.inc_non_default_num();
     for (unsigned n = 0; n < case_conds->child_num(); ++n) {
+        gen_ctx.inc_non_default_num();
         auto case_cond = case_conds->get(n);
         match(ctx, case_cond);
     }
@@ -114,50 +123,6 @@ bool EvalWhich::match_conds(
     gen().append("cond");
     return false;
 }
-
-// bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase>
-// case_) {
-//     if (!codegen_enabled())
-//         return Base::eval_case(ctx, case_);
-
-//     bool is_default = case_->is_default();
-//     bool has_branch = case_->has_branch();
-
-//     auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
-//     bool prev_has_breaks = gen_ctx.case_has_breaks();
-//     gen_ctx.set_case_has_breaks(false);
-//     if (!is_default)
-//         gen_ctx.inc_non_default_num();
-
-//     ctx.matched = false;
-//     match(ctx, case_->case_cond());
-//     if (!is_default) {
-//         if (has_branch) {
-//             gen().append(gen_ctx.move_cond_str());
-//             gen().append("cond");
-//         }
-//     } else {
-//         if (!gen_ctx.has_non_default()) {
-//             // default case is the only one (first one?), t41038
-//             gen().append("true");
-//             gen().append("cond");
-//         }
-//     }
-
-//     if (has_branch) {
-//         env().eval_stmt(case_->branch());
-//         if (!is_default) {
-//             gen().append("if");
-//         } else {
-//             if (gen_ctx.has_non_default() && prev_has_breaks) {
-//                 // single "else" after "case -1" falls through before end
-//                 label,
-//                 // t41021
-//                 gen().append("else");
-//             }
-//         }
-//     }
-// }
 
 ExprRes EvalWhich::match_expr_res(
     Context& ctx, ulam::Ref<ulam::ast::Expr> case_expr, ExprRes&& case_res) {

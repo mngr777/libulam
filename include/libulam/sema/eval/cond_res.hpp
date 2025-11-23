@@ -27,12 +27,15 @@ public:
     AsCondContext(AsCondContext&&) = default;
     AsCondContext& operator=(AsCondContext&&) = default;
 
-    bool empty() const { return !_type; }
+    bool empty() const { return !has_var() && !is_self(); }
 
     Ref<Type> type() const { return _type; }
 
-    bool has_var() const { return var(); }
-    Ref<Var> var() const { return ref(_var); }
+    bool has_var() const { return ref(_var); }
+    Ref<Var> var() const {
+        assert(has_var());
+        return ref(_var);
+    }
 
     bool is_self() const { return _is_self; }
     LValue self() const {

@@ -60,8 +60,10 @@ bool EvalWhich::match_conds(
         if (case_conds->get(n)->is_default())
             return true;
     }
-    for (unsigned n = 0; n < case_conds->child_num(); ++n) {
-        if (match(ctx, case_conds->get(n)))
+    const unsigned CondNum = case_conds->child_num();
+    for (unsigned n = 0; n < CondNum; ++n) {
+        auto case_cond = case_conds->get(n);
+        if (match(ctx, case_cond))
             return true;
     }
     return false;
