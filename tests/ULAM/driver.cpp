@@ -33,7 +33,6 @@ static const std::set<std::string> DefOrder = {
     "t41228_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor.test", // -"-
 };
 
-// TODO: native classes
 static const std::set<std::string> Skip {
     "t3241_test_compiler_unarymod.test", // invalid implicit cast?
     "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
