@@ -1,6 +1,7 @@
 #include "./codegen.hpp"
 #include "../out.hpp"
 #include <cassert>
+#include <sstream>
 
 Stringifier Codegen::make_strf() { return Stringifier{_program}; }
 
@@ -21,16 +22,30 @@ void Codegen::append(std::string data, bool nospace) {
     _code += std::move(data);
 }
 
+std::string Codegen::as_cond_str(
+    ulam::Ref<ulam::ast::AsCond> as_cond, ulam::Ref<ulam::Type> type) {
+    std::stringstream ss;
+    auto strf = make_strf();
+    auto name = _program->str_pool().get(as_cond->ident()->name_id());
+    ss << name << " "
+       << out::type_str(strf, type, false) << " as";
+    return ss.str();
+}
+
 void Codegen::add_as_cond(
     ulam::Ref<ulam::ast::AsCond> as_cond, ulam::Ref<ulam::Type> type) {
-    std::string name{_program->str_pool().get(as_cond->ident()->name_id())};
-    auto strf = make_strf();
-    append(name);
-    append(out::type_str(strf, type, false));
-    append("as");
+    append(as_cond_str(as_cond, type));
     append("cond");
-    set_next_prefix(
-        " " + out::type_str(strf, type->ref_type()) + " " + name + "; ");
+    set_next_prefix(as_cond_prefix_str(as_cond, type));
+}
+
+std::string Codegen::as_cond_prefix_str(
+    ulam::Ref<ulam::ast::AsCond> as_cond, ulam::Ref<ulam::Type> type) {
+    std::stringstream ss;
+    auto strf = make_strf();
+    auto name = _program->str_pool().get(as_cond->ident()->name_id());
+    ss << " " << out::type_str(strf, type->ref_type()) << " " << name << "; ";
+    return ss.str();
 }
 
 bool Codegen::has_next_prefix() const {

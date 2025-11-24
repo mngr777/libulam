@@ -7,6 +7,7 @@ class EvalWhich : public ::EvalHelper, public ulam::sema::EvalWhich {
 public:
     using Base = ulam::sema::EvalWhich;
     using ExprRes = ulam::sema::ExprRes;
+    using EvalCond = ulam::sema::EvalCond;
 
     explicit EvalWhich(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
@@ -29,6 +30,11 @@ protected:
         Context& ctx,
         ulam::Ref<ulam::ast::Expr> case_expr,
         ExprRes&& case_res) override;
+
+    bool do_match_as_cond(
+        Context& ctx,
+        EvalCond& ec,
+        ulam::Ref<ulam::ast::AsCond> as_cond) override;
 
     ExprRes make_which_expr(Context& ctx) override;
 };

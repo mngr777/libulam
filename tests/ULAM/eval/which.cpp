@@ -5,7 +5,9 @@
 #include "./expr_res.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/stmts.hpp>
+#include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/utils/leximited.hpp>
+#include <sstream>
 
 using ExprRes = EvalWhich::ExprRes;
 
@@ -17,6 +19,14 @@ void EvalWhich::eval_which(ulam::Ref<ulam::ast::Which> node) {
             ulam::detail::leximited((ulam::Unsigned)gen().next_tmp_idx());
         cr = gen().ctx_stack().raii(gen::WhichContext{label_idx, tmp_idx});
         gen().block_open();
+
+        if (!node->has_expr()) {
+            // which-as
+            auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
+            gen().append("typedef");
+            gen().append(std::string{builtins().boolean()->name()});
+            gen().append(gen_ctx.tmp_type_name() + "; ");
+        }
     }
 
     Base::eval_which(node);
@@ -92,7 +102,7 @@ bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
             gen().append("else");
         }
     }
-    return false;
+    return false; // not default case
 }
 
 // NOTE: repurposing return value to mean "is default"
@@ -114,13 +124,25 @@ bool EvalWhich::match_conds(
         }
     }
 
+    ulam::Ref<ulam::ast::AsCond> as_cond{};
     for (unsigned n = 0; n < case_conds->child_num(); ++n) {
         gen_ctx.inc_non_default_num();
         auto case_cond = case_conds->get(n);
         match(ctx, case_cond);
+
+        // remember ast::AsCond node (not added to AsCondContext yet)
+        if (case_cond->is_as_cond())
+            as_cond = case_cond->as_cond();
     }
     gen().append(gen_ctx.move_cond_str());
     gen().append("cond");
+
+    if (!ctx.as_cond_ctx.empty()) {
+        assert(as_cond);
+        auto type = ctx.as_cond_ctx.type();
+        gen().set_next_prefix(gen().as_cond_prefix_str(as_cond, type));
+    }
+
     return false;
 }
 
@@ -132,6 +154,17 @@ ExprRes EvalWhich::match_expr_res(
         gen_ctx.add_cond(exp::data(res));
     }
     return res;
+}
+
+bool EvalWhich::do_match_as_cond(
+    Context& ctx, EvalCond& ec, ulam::Ref<ulam::ast::AsCond> as_cond) {
+    Base::do_match_as_cond(ctx, ec, as_cond);
+    if (codegen_enabled()) {
+        auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
+        auto type = ctx.as_cond_ctx.type();
+        gen_ctx.add_cond(gen().as_cond_str(as_cond, type));
+    }
+    return false; // not default case
 }
 
 ExprRes EvalWhich::make_which_expr(Context& ctx) {

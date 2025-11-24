@@ -8,6 +8,7 @@
 
 namespace ulam::sema {
 
+// TODO: add ast::AsCond for codegen, see tests/ULAM/eval/which.cpp
 class AsCondContext {
 public:
     // (a as A), match

@@ -20,6 +20,10 @@ public:
 
     void add_as_cond(
         ulam::Ref<ulam::ast::AsCond> as_cond, ulam::Ref<ulam::Type> type);
+    std::string as_cond_str(
+        ulam::Ref<ulam::ast::AsCond> as_cond, ulam::Ref<ulam::Type> type);
+    std::string as_cond_prefix_str(
+        ulam::Ref<ulam::ast::AsCond> as_cond, ulam::Ref<ulam::Type> type);
 
     bool has_next_prefix() const;
     void set_next_prefix(std::string prefix);

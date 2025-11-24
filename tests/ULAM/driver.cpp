@@ -156,6 +156,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
     "t41014_test_compiler_logicalorandprecedence_issue.test", // ULAM has same precedence for || and && ?
     "t41039_test_compiler_controlswitch_nonconstantcaseexpressions.test", // seems to require runtime values to work; z = 4 does happen, so ok to skip
+    "t41046_test_compiler_switchascondcases.test", // ew[i] to Atom cast
     "t41093_test_compiler_elementandquark_quarkunionstring.test", // .lenghtof, similar to t3930
     "t41131_test_compiler_elementandquark_overloadfunccallrefargsubclass_issue.test", // unsigned value format
     "t41139_test_compiler_castatomreftoatom_issue.test", // redundant cast from Stretch.instanceof to Atom?
