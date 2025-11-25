@@ -42,7 +42,6 @@ public:
     ExprRes visit(Ref<ast::ArrayAccess> node) override;
 
 protected:
-
     virtual ExprRes check(Ref<ast::Expr> node, ExprRes&& res);
 
     virtual bool check_is_assignable(Ref<ast::Expr> node, const Value& value);
@@ -71,6 +70,9 @@ protected:
         ExprRes&& left,
         Ref<ast::Expr> r_node,
         ExprRes&& right);
+
+    virtual ExprRes call_negation_op(
+        Ref<ast::Expr> node, Op op, ExprRes&& left, ExprResList&& args);
 
     virtual ExprRes unary_op(
         Ref<ast::Expr> node,
@@ -152,8 +154,9 @@ protected:
     virtual ExprRes
     as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);
 
-    virtual ExprRes
-    assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
+    virtual ExprRes assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
+
+    virtual ExprRes negate(Ref<ast::Expr> node, ExprRes&& res);
 
     virtual ExprResList eval_args(Ref<ast::ArgList> args);
 

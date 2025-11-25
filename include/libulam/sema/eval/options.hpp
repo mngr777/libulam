@@ -15,6 +15,8 @@ struct EvalOptions {
     bool cast_deref_as_dyn_type{true};
 
     int max_loop_iterations{150}; // -1 for no limit
+
+    bool implicit_class_negation_op{true};
 };
 
 constexpr EvalOptions DefaultEvalOptions{};

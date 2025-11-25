@@ -1,6 +1,7 @@
 #pragma once
 #include "./env.hpp"
 #include "./helper.hpp"
+#include "libulam/ast/nodes/expr.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/flags.hpp>
@@ -110,6 +111,10 @@ protected:
         ulam::Ref<ulam::FunSet> fset,
         ulam::sema::ExprRes&& obj,
         ulam::Ref<ulam::Class> base) override;
+
+    ExprRes negate(
+        ulam::Ref<ulam::ast::Expr> node,
+        ExprRes&& res) override;
 
     ExprRes as_base(
         ulam::Ref<ulam::ast::Expr> node,

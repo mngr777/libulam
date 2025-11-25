@@ -457,7 +457,6 @@ ExprRes EvalExprVisitor::binary_op(
         lval_res = left.derived(left.type(), Value{left.value().lvalue()});
     }
 
-    auto type_errors = binary_op_type_check(op, left, right);
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
                       ExprRes&& arg) -> ExprRes {
         switch (error.status) {
@@ -488,6 +487,11 @@ ExprRes EvalExprVisitor::binary_op(
         };
     };
 
+    type_check_flags_t type_check_flags = NoTypeCheckFlags;
+    if (program()->eval_options().implicit_class_negation_op)
+        type_check_flags |= TypeCheckImplicitClassNegationOp;
+    auto type_errors = binary_op_type_check(op, left, right, type_check_flags);
+
     // cast left
     left = recast(l_node, type_errors.first, std::move(left));
     if (!left)
@@ -514,6 +518,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
 
     auto l_type = left.type()->actual();
     auto r_type = right.type()->actual();
+
     if (left.type()->actual()->is_prim()) {
         if (op != Op::Assign) {
             // primitive binary op
@@ -528,12 +533,27 @@ ExprRes EvalExprVisitor::apply_binary_op(
         auto cls = left.type()->actual()->as_class();
         if (op != Op::Assign || cls->has_op(Op::Assign)) {
             auto cls = left.type()->actual()->as_class();
+
+            // get class op (or negation) fset
+            bool is_negation = false;
             auto fset = cls->op(op);
+            if (!fset && program()->eval_options().implicit_class_negation_op) {
+                auto neg_op = ops::negation(op);
+                assert(neg_op != Op::None);
+                fset = cls->op(neg_op);
+                is_negation = true;
+            }
             assert(fset);
+
+            // bind to object
             left = bind(node, fset, std::move(left));
             ExprResList args;
             args.push_back(std::move(right));
-            return env().call(node, std::move(left), std::move(args));
+
+            return is_negation
+                       ? call_negation_op(
+                             node, op, std::move(left), std::move(args))
+                       : env().call(node, std::move(left), std::move(args));
         }
     }
 
@@ -544,6 +564,12 @@ ExprRes EvalExprVisitor::apply_binary_op(
         return assign(node, std::move(lval_res), std::move(right));
     }
     return std::move(right);
+}
+
+ExprRes EvalExprVisitor::call_negation_op(
+    Ref<ast::Expr> node, Op op, ExprRes&& left, ExprResList&& args) {
+    auto res = env().call(node, std::move(left), std::move(args));
+    return negate(node, std::move(res));
 }
 
 ExprRes EvalExprVisitor::unary_op(
@@ -1044,6 +1070,18 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
     if (has_flag(evl::NoExec))
         return std::move(to);
     return to.derived(to.type(), lval.assign(from.move_value().move_rvalue()));
+}
+
+ExprRes EvalExprVisitor::negate(Ref<ast::Expr> node, ExprRes&& res) {
+    assert(res.type()->is(BoolId));
+    auto val = res.move_value();
+    if (!val.empty()) {
+        auto type = dynamic_cast<BoolType*>(res.type());
+        assert(type);
+        auto rval = type->construct(!type->is_true(val.move_rvalue()));
+        val = Value{std::move(rval)};
+    }
+    return res.derived(res.type(), std::move(val));
 }
 
 ExprResList EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {

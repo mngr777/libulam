@@ -66,6 +66,7 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
     const Value& l_val,
     Ref<PrimType> r_type,
     const Value& r_val) {
+
     assert(is_numeric(r_type));
     TypeErrorPair errors;
 
@@ -79,20 +80,6 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
         }
         return false;
     };
-
-    // for equality op, avoid casting to commont type if possible, t41292
-    // if (ops::kind(op) == ops::Kind::Equality &&
-    //     (l_val.is_consteval() || r_val.is_consteval())) {
-    //     if (r_val.is_consteval() && r_type->is_impl_castable_to(l_type,
-    //     r_val)) {
-    //         errors.second = {TypeError::ImplCastRequired, l_type};
-    //         return errors;
-    //     } else if (l_val.is_consteval() &&
-    //     l_type->is_impl_castable_to(r_type, l_val)) {
-    //         errors.first = {TypeError::ImplCastRequired, r_type};
-    //         return errors;
-    //     }
-    // }
 
     if (is_numeric(l_type) || is_numeric(l_type)) {
         // same type?
@@ -184,12 +171,18 @@ TypeErrorPair prim_binary_op_type_check(
     return errors;
 }
 
-TypeErrorPair
-class_binary_op_type_check(Op op, Ref<Class> cls, Ref<const Type> r_type) {
+TypeErrorPair class_binary_op_type_check(
+    Op op, Ref<Class> cls, Ref<const Type> r_type, type_check_flags_t flags) {
     assert(r_type->is_actual());
     TypeErrorPair errors;
     if (cls->has_op(op))
         return errors;
+
+    if (flags & TypeCheckImplicitClassNegationOp) {
+        Op neg_op = ops::negation(op);
+        if (neg_op != Op::None && cls->has_op(neg_op))
+            return errors;
+    }
 
     if (op == Op::Assign) {
         errors.second = check_type_match(r_type, Value{}, cls);
@@ -263,9 +256,12 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
 }
 
 TypeErrorPair binary_op_type_check(
-    Op op, const sema::ExprRes& left, const sema::ExprRes& right) {
+    Op op,
+    const sema::ExprRes& left,
+    const sema::ExprRes& right,
+    type_check_flags_t flags) {
     return binary_op_type_check(
-        op, left.type(), left.value(), right.type(), right.value());
+        op, left.type(), left.value(), right.type(), right.value(), flags);
 }
 
 TypeErrorPair binary_op_type_check(
@@ -273,7 +269,9 @@ TypeErrorPair binary_op_type_check(
     Ref<Type> l_type,
     const Value& l_val,
     Ref<Type> r_type,
-    const Value& r_val) {
+    const Value& r_val,
+    type_check_flags_t flags) {
+
     auto l_actual = l_type->actual();
     if (l_actual->is_prim())
         return prim_binary_op_type_check(
@@ -281,7 +279,7 @@ TypeErrorPair binary_op_type_check(
 
     if (l_actual->is_class())
         return class_binary_op_type_check(
-            op, l_actual->as_class(), r_type->actual());
+            op, l_actual->as_class(), r_type->actual(), flags);
 
     if (l_actual->is(AtomId))
         return atom_binary_op_type_check(op, l_actual, r_type->deref());

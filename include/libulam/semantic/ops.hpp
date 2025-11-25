@@ -34,6 +34,8 @@ bool is_overloadable(Op op);
 
 Kind kind(Op op);
 
+Op negation(Op os);
+
 bool is_numeric(Op op);
 bool is_logical(Op op);
 bool is_bitwise(Op op);

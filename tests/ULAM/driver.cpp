@@ -11,6 +11,8 @@
 
 constexpr char UlamPathEnv[] = "ULAM_PATH";
 
+// clang-format off
+
 // require symbol lookup work the same as in original ULAM
 static const std::set<std::string> DefOrder = {
     "t3504_test_compiler_arraywithconstantindex.test", // constant used before definition
@@ -46,6 +48,12 @@ static const std::set<std::string> DefOrder = {
     "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // -"-
 };
 
+static const std::set<std::string> ImplicitOps {
+    "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
+    "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
+    "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
+};
+
 static const std::set<std::string> Skip {
     "t3241_test_compiler_unarymod.test", // invalid implicit cast?
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
@@ -59,10 +67,7 @@ static const std::set<std::string> Skip {
     "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
     "t41089_test_compiler_assigntofuncreturnvalueonlhs_evalerr.test", // assignment to rvalue
     "t41092_test_compiler_elementandquark_constructorcallonfuncreturninstance.test", // -"-
-    "t41109_test_compiler_elementandtransient_comparisonoperatoroverloadequalequal.test", // implicit `!=' operator
-    "t41112_test_compiler_elementandtransient_comparisonoperatoroverloads.test", // implicit `>=' operator
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
-    "t41134_test_compiler_elementandquark_overloadequalitycomplement.test", // implicit operator!=
     "t41266_test_compiler_constantclassarrayoftransients.test", // module-local constant `keyexpr_x13` addressed as `KeyExprRep.keyexpr_x13` ??
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
@@ -266,6 +271,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41661_test_compiler_functionreturnclassarrayitemwithquestioncolon_gencode_issue.test", // TODO
 };
 
+// clang-format on
+
 using Path = std::filesystem::path;
 
 static void exit_usage(std::string name) {
@@ -286,7 +293,8 @@ static bool run(Path stdlib_dir, const Path& path, bool single) {
     }
 }
 
-static bool run(Path stdlib_dir, unsigned n, std::vector<Path> test_paths, bool single) {
+static bool
+run(Path stdlib_dir, unsigned n, std::vector<Path> test_paths, bool single) {
     assert(n > 0);
     auto& path = test_paths[n - 1];
     std::cout << "# " << std::dec << n << " " << path.filename() << "\n";
@@ -348,11 +356,14 @@ int main(int argc, char** argv) {
         }
 
     } else if (!test_name.empty()) {
-        auto it = std::find_if(test_paths.begin(), test_paths.end(), [&](const Path& path) {
-            return path.filename().string().substr(0, test_name.size()) == test_name;
-        });
+        auto it = std::find_if(
+            test_paths.begin(), test_paths.end(), [&](const Path& path) {
+                return path.filename().string().substr(0, test_name.size()) ==
+                       test_name;
+            });
         if (it != test_paths.end()) {
-            run(stdlib_dir, std::distance(test_paths.begin(), it) + 1, test_paths, true);
+            run(stdlib_dir, std::distance(test_paths.begin(), it) + 1,
+                test_paths, true);
         } else {
             std::cout << "test not found\n";
         }

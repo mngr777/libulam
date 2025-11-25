@@ -140,7 +140,18 @@ ExprRes EvalExprVisitor::apply_binary_op(
     bool l_is_ref = left.type()->is_ref();
     bool r_is_ref = right.type()->is_ref();
 
-    bool is_class_op = l_type->is_class() && l_type->as_class()->has_op(op);
+    bool is_class_op = false;
+    if (l_type->is_class()) {
+        auto cls = l_type->as_class();
+        is_class_op = cls->has_op(op);
+        if (!is_class_op) {
+            auto neg_op = ulam::ops::negation(op);
+            if (neg_op != ulam::Op::None && 
+                program()->eval_options().implicit_class_negation_op) {
+                is_class_op = cls->has_op(neg_op);
+            }
+        }
+    }
     if (is_class_op) {
         // class op is a funcall, no need to update data
         return Base::apply_binary_op(
@@ -630,6 +641,17 @@ ExprRes EvalExprVisitor::bind(
         exp::add_member_access(res, FuncallPh, is_self);
     }
     return res;
+}
+
+ExprRes
+EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
+    res = Base::negate(node, std::move(res));
+    if (codegen_enabled()) {
+        exp::remove_member_access_op(res);
+        exp::append(res, "!");
+        exp::append(res, ".");
+    }
+    return std::move(res);
 }
 
 ExprRes EvalExprVisitor::as_base(

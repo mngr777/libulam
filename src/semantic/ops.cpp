@@ -132,6 +132,25 @@ Kind kind(Op op) {
     }
 }
 
+Op negation(Op op) {
+    switch (op) {
+    case Op::Equal:
+        return Op::NotEqual;
+    case Op::NotEqual:
+        return Op::Equal;
+    case Op::Less:
+        return Op::GreaterOrEq;
+    case Op::GreaterOrEq:
+        return Op::Less;
+    case Op::Greater:
+        return Op::LessOrEq;
+    case Op::LessOrEq:
+        return Op::Greater;
+    default:
+        return Op::None;
+    }
+}
+
 bool is_numeric(Op op) { return kind(op) == Kind::Numeric; }
 
 bool is_logical(Op op) { return kind(op) == Kind::Logical; }
