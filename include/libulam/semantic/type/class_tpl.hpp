@@ -33,6 +33,9 @@ class ClassTpl : public TypeTpl, public ClassBase, public Decl {
     friend Class;
 
 public:
+    using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
+    using MemberList = std::list<Member>;
+
     ClassTpl(
         const std::string_view name,
         Ref<ast::ClassDef> node,
@@ -58,12 +61,12 @@ public:
 
     Ref<Class> type(TypedValueList&& args);
 
+    const MemberList& ordered_members() const { return _ordered_members; }
+
 protected:
     using ClassBase::add_param;
 
 private:
-    using Member = detail::RefVariant<AliasType, Var, Prop, Fun>;
-
     Ptr<Class> inst(TypedValueList&& args);
 
     std::string type_args_str(const TypedValueList& args);

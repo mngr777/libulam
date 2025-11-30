@@ -23,7 +23,8 @@ static const std::set<std::string> DefOrder = {
     "t41431_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestor_asdatamember_ish.test", // local contstant used be before definition
     "t41516_test_compiler_elementinheritance_withmultiplelocaldefskeywordpriority.test", // typedefs are (supposed to be) used before definition
     "t3888_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdm.test", // tpl const used as param default value
-    "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
+    "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // parent class const used as tpl params
+    "t3890_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // tpl const used as param default value
     "t3891_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_localdefconstantarrayitem.test", // -"-
     "t41214_test_compiler_elementwithclassparameterquarktemplate_Sfirstwdefault.test", // tpl param used in previous param definition (postfix doesn't match)
     "t41215_test_compiler_elementandquarkswclassargs_dependentprimitivebitsizewdefault.test", // -"- 
@@ -46,6 +47,8 @@ static const std::set<std::string> DefOrder = {
     "t41649_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedefnonlocaldm_issue.test", // -"-
     "t41650_test_compiler_elementinheritedquarks_templatebaseclasswithrecursivetypedeflocals_issue.test", // -"-
     "t41481_test_compiler_switchontypefromanotherclassinfuncoftemplatedsuper_ish.test", // -"-
+    "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
+    "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
 };
 
 static const std::set<std::string> ImplicitOps {
@@ -59,7 +62,6 @@ static const std::set<std::string> Skip {
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
     "t3494_test_compiler_divideandmodmixedtypes.test", // impl. casting Int to Int(4): `k = (g % e)`, non-constant
     "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve, Tar is not a template
-    "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // parent class const used as tpl params
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
     "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
@@ -75,9 +77,6 @@ static const std::set<std::string> Skip {
     "t41421_test_compiler_castingbitstotransientwstring.test", // clobbered String ID is invalid. TODO: fallback
     "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
     "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
-    "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
-    "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
-    "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
     "t41533_test_compiler_instanceofconstructorandclassidof.test", // `B2D.instanceof(w,h).classidof` is not constant (since w, h are not), so cannot be implicitly casted to Unsigned(8)
     "t41537_test_compiler_instanceofclassidofmaxof.test", // classidof.maxof, getClassid -- TODO ??
     "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
@@ -216,6 +215,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41426_test_compiler_quarkunion_datamemberbitsizezero.test", // UNINITIALIZED_STRING
     "t41434_test_compiler_elementtemplatewithinheritedclassparameterquarktemplateandancestorwlocalscontext_ish.test", // Bool format, TODO: investigate props with `Type prop( value)` format
     "t41468_test_compiler_stringdatamemberuninitialized_ish.test", // UNINITIALIZED_STRING
+    "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // `Bool(true)` vs `Bool(1u)`
     "t41473_test_compiler_funccallonrefinsideifconditionafterothercalls_gencode_ish.test", // `Bool m_border(false)` is correct?
     "t41478_test_compiler_classconstantofsametemplateclass_ish.test", // constant folding, consteval cast
     "t41480_test_compiler_datamemberinitusingclassconstantoftypedefofsametemplateclass.test", // object as hex formatting: why so many zeros?

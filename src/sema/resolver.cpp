@@ -1,3 +1,5 @@
+#include "libulam/semantic/scope.hpp"
+#include "libulam/semantic/type.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -782,9 +784,8 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     // param types and default values (if needed) are resolved in tpl scope
     auto scope_view = tpl->scope()->view(0);
-    PersScope inh_scope{&scope_view}; // tmp inheritance scope
-    auto inh_scope_view = inh_scope.view(0);
-    PersScope param_scope{&inh_scope_view, scp::Params}; // tmp param scope
+    BasicScope inh_scope{&scope_view};              // tmp inheritance scope
+    PersScope param_scope{&inh_scope, scp::Params}; // tmp param scope
 
     // create tmp class params
     EvalEnv::VarDefaults var_defaults;
@@ -807,15 +808,66 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         }
     }
 
+    // switch to tmp param scope
+    auto param_scope_view = param_scope.view(0);
+    auto ssr = env().scope_switch_raii(&param_scope_view);
+    // set provided param values as defaults
+    auto vdr = env().var_defaults_raii(std::move(var_defaults));
+
     if (program()->scope_options().allow_access_before_def) {
+        Scope::GetParams sgp;
+        sgp.current = true;
+
+        // resolve parents, copy constants and typedefs
         if (tpl->node()->has_parents()) {
+            auto parent_list = tpl->node()->parents();
+            for (unsigned n = 0; n < parent_list->child_num(); ++n) {
+                auto type_name = parent_list->get(n);
+                auto parent = resolve_class_name(type_name);
+                if (!parent)
+                    return res;
+                // typedefs
+                for (auto alias : parent->type_defs()) {
+                    auto name_id = alias->name_id();
+                    if (!inh_scope.has(name_id, sgp))
+                        inh_scope.set(name_id, alias);
+                }
+                // consts
+                for (auto var : parent->consts()) {
+                    auto name_id = var->name_id();
+                    if (!inh_scope.has(name_id, sgp))
+                        inh_scope.set(name_id, var);
+                }
+            }
+        }
+
+        // add copies of template constants and typedefs
+        for (const auto& member : tpl->ordered_members()) {
+            member.accept(
+                [&](Ref<AliasType> alias) {
+                    // typedef
+                    auto name_id = alias->name_id();
+                    if (inh_scope.has(name_id, sgp))
+                        return;
+                    auto copy = make<AliasType>(
+                        program()->str_pool(), program()->builtins(),
+                        &program()->type_id_gen(), alias->node());
+                    inh_scope.set(name_id, std::move(copy));
+                },
+                [&](Ref<Var> var) {
+                    // const
+                    auto name_id = var->name_id();
+                    if (inh_scope.has(name_id, sgp))
+                        return;
+                    auto copy = make<Var>(
+                        var->type_node(), var->node(), Ref<Type>{}, Var::Const);
+                    inh_scope.set(name_id, std::move(copy));
+                },
+                [&](auto&& other) {});
         }
     }
 
     // resolve params
-    auto param_scope_view = param_scope.view(0);
-    auto ssr = env().scope_switch_raii(&param_scope_view);
-    auto vdr = env().var_defaults_raii(std::move(var_defaults));
     for (auto& param : params) {
         if (!resolve(ref(param)))
             return res;
