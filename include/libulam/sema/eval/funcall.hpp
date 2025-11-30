@@ -37,13 +37,18 @@ protected:
         Ref<ast::Node> node,
         Ref<Fun> fun,
         ExprRes&& callable,
-        ExprResList&& args);
+        ExprResList&& args,
+        Ref<Class> eff_cls = {});
 
     virtual ExprRes funcall_obj(
         Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
 
     virtual ExprRes do_funcall(
-        Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args);
+        Ref<ast::Node> node,
+        Ref<Fun> fun,
+        LValue self,
+        ExprResList&& args,
+        Ref<Class> eff_cls = {});
 
     virtual ExprRes do_funcall_native(
         Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args);

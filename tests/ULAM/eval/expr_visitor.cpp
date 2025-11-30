@@ -648,7 +648,7 @@ ExprRes EvalExprVisitor::bind(
 ExprRes
 EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
     res = Base::negate(node, std::move(res));
-    if (codegen_enabled()) {
+    if (!has_flag(evl::NoCodegen)) {
         exp::remove_member_access_op(res);
         exp::append(res, "!");
         exp::append(res, ".");
@@ -656,37 +656,27 @@ EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
     return std::move(res);
 }
 
-ExprRes EvalExprVisitor::as_base(
+ulam::Ref<ulam::Class> EvalExprVisitor::class_base_ident(
     ulam::Ref<ulam::ast::Expr> node,
-    ulam::Ref<ulam::ast::BaseTypeSelect> base_type,
-    ExprRes&& obj) {
-    std::string data;
-    if (!has_flag(evl::NoCodegen))
-        data = exp::data(obj);
-    auto res = Base::as_base(node, base_type, std::move(obj));
-    if (!data.empty()) {
-        auto base_type_str = base_type_select_str(base_type);
-        exp::set_data(
-            res, exp::data_combine(data, std::move(base_type_str), "."));
+    ExprRes& obj,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Ref<ulam::ast::TypeIdent> ident) {
+    if (!has_flag(evl::NoCodegen)) {
+        exp::append(obj, std::string{str(ident->name_id())});
+        exp::append(obj, ".");
     }
-    return res;
+    return Base::class_base_ident(node, obj, cls, ident);
 }
 
-std::string EvalExprVisitor::base_type_select_str(
-    ulam::Ref<ulam::ast::BaseTypeSelect> base_type) {
-    std::stringstream ss;
-    for (unsigned n = 0; n < base_type->type_spec_num(); ++n) {
-        if (n > 0)
-            ss << '.';
-        auto type_spec = base_type->type_spec(n);
-        assert(type_spec->has_ident()); // cannot be builtin type
-        if (type_spec->has_args()) {
-            Stringifier strf{program()};
-            auto type = env().resolver(true).resolve_type_spec(type_spec);
-            ss << out::type_str(strf, type);
-        } else {
-            ss << str(type_spec->ident()->name_id());
-        }
+ulam::Ref<ulam::Class> EvalExprVisitor::class_base_classid(
+    ulam::Ref<ulam::ast::Expr> expr,
+    ExprRes& obj,
+    ulam::Ref<ulam::Class> cls,
+    ExprRes&& classid) {
+    if (!has_flag(evl::NoCodegen)) {
+        exp::remove_member_access_op(obj);
+        exp::append(obj, exp::data(classid));
+        exp::append(obj, ".[]");
     }
-    return ss.str();
+    return Base::class_base_classid(expr, obj, cls, std::move(classid));
 }

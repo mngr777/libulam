@@ -52,12 +52,25 @@ protected:
         Ref<ast::Expr> node, Ref<const Type> type, bool deref = false);
 
     virtual Ref<Class> class_super(Ref<ast::Expr> node, Ref<Class> cls);
+
+    // TODO: as_class_*, return ExprRes
     virtual Ref<Class> class_base(
         Ref<ast::Expr> node,
+        ExprRes& obj,
         Ref<Class> cls,
         Ref<ast::BaseTypeSelect> base_type);
-    virtual Ref<Class>
-    class_base(Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident);
+
+    virtual Ref<Class> class_base_ident(
+        Ref<ast::Expr> node,
+        ExprRes& obj,
+        Ref<Class> cls,
+        Ref<ast::TypeIdent> ident);
+
+    virtual Ref<Class> class_base_classid(
+        Ref<ast::Expr> expr, ExprRes& obj, Ref<Class> cls, ExprRes&& classid);
+
+    virtual ExprRes
+    classid_expr(Ref<ast::Expr> node, ExprRes& obj, Ref<ast::Expr> expr);
 
     virtual ExprRes binary_op(
         Ref<ast::Expr> node,

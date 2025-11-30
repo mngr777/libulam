@@ -115,11 +115,15 @@ protected:
 
     ExprRes negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) override;
 
-    ExprRes as_base(
+    ulam::Ref<ulam::Class> class_base_ident(
         ulam::Ref<ulam::ast::Expr> node,
-        ulam::Ref<ulam::ast::BaseTypeSelect> base_type,
-        ExprRes&& obj) override;
+        ExprRes& obj,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Ref<ulam::ast::TypeIdent> ident) override;
 
-    std::string
-    base_type_select_str(ulam::Ref<ulam::ast::BaseTypeSelect> base_type);
+    ulam::Ref<ulam::Class> class_base_classid(
+        ulam::Ref<ulam::ast::Expr> expr,
+        ExprRes& obj,
+        ulam::Ref<ulam::Class> cls,
+        ExprRes&& classid) override;
 };

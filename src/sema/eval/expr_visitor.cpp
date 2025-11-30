@@ -1,4 +1,6 @@
 #include "libulam/ast/nodes/type.hpp"
+#include "libulam/sema/eval/flags.hpp"
+#include "libulam/semantic/type/class.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -406,13 +408,19 @@ Ref<Class> EvalExprVisitor::class_super(Ref<ast::Expr> node, Ref<Class> cls) {
 }
 
 Ref<Class> EvalExprVisitor::class_base(
-    Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::BaseTypeSelect> base_type) {
+    Ref<ast::Expr> node,
+    ExprRes& obj,
+    Ref<Class> cls,
+    Ref<ast::BaseTypeSelect> base_type) {
     assert(base_type);
+
+    // *.Base1.Base2(p1, p2)
     for (unsigned n = 0; n < base_type->type_spec_num(); ++n) {
         auto type_spec = base_type->type_spec(n);
         if (type_spec->has_args()) {
             // Type(arg1, arg2)
-            auto type = env().resolver(true).resolve_type_spec(type_spec, true);
+            auto type =
+                env().resolver(true).resolve_type_spec(type_spec, false);
             if (!type)
                 return {};
             if (!type->is_class()) {
@@ -422,14 +430,25 @@ Ref<Class> EvalExprVisitor::class_base(
             cls = type->as_class();
         } else {
             // Type
-            cls = class_base(node, cls, type_spec->ident());
+            cls = class_base_ident(node, obj, cls, type_spec->ident());
         }
     }
+
+    // *.Base1.Base2(p1, p2)[classid]
+    if (base_type->has_classid()) {
+        auto classid = classid_expr(node, obj, base_type->classid());
+        cls = class_base_classid(
+            base_type->classid(), obj, cls, std::move(classid));
+    }
+
     return cls;
 }
 
-Ref<Class> EvalExprVisitor::class_base(
-    Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident) {
+Ref<Class> EvalExprVisitor::class_base_ident(
+    Ref<ast::Expr> node,
+    ExprRes& obj,
+    Ref<Class> cls,
+    Ref<ast::TypeIdent> ident) {
     assert(ident);
 
     if (ident->is_self())
@@ -464,6 +483,38 @@ Ref<Class> EvalExprVisitor::class_base(
         return {};
     }
     return base;
+}
+
+Ref<Class> EvalExprVisitor::class_base_classid(
+    Ref<ast::Expr> expr, ExprRes& obj, Ref<Class> cls, ExprRes&& classid) {
+    assert(expr);
+
+    if (classid.value().empty() && has_flag(evl::NoExec))
+        return cls; // return current class if not executing
+
+    auto int_class_id = classid.value().copy_rvalue().get<Integer>();
+    if (int_class_id < 0 || int_class_id == NoClassId) {
+        diag().error(expr, "invalid class ID");
+        return {};
+    }
+    auto base_cls_id = static_cast<cls_id_t>(int_class_id);
+    auto base = program()->classes().get(base_cls_id);
+    if (!cls->is_base_of(base)) {
+        auto message = "class `" + std::string{cls->full_name()} +
+                       "' is not a base of `" + std::string{base->full_name()};
+        diag().error(expr, message);
+        return {};
+    }
+    return base;
+}
+
+ExprRes EvalExprVisitor::classid_expr(
+    Ref<ast::Expr> node, ExprRes& obj, Ref<ast::Expr> expr) {
+    auto res = expr->accept(*this);
+    res = env().cast_to_idx(expr, std::move(res));
+    if (!res)
+        return {};
+    return res;
 }
 
 ExprRes EvalExprVisitor::binary_op(
@@ -922,7 +973,8 @@ ExprRes EvalExprVisitor::ident_prop(Ref<ast::Ident> node, Ref<Prop> prop) {
 }
 
 ExprRes EvalExprVisitor::ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset) {
-    return {builtins().fun_type(), Value{scope()->self().bound_fset(fset)}};
+    auto bfset = scope()->self().bound_fset(fset);
+    return {builtins().fun_type(), Value{std::move(bfset)}};
 }
 
 ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
@@ -1069,8 +1121,8 @@ ExprRes EvalExprVisitor::bind(
 ExprRes EvalExprVisitor::as_base(
     Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj) {
     auto cls = obj.type()->deref()->as_class();
-    cls = class_base(node, cls, base_type);
-    return {cls, Value{obj.move_value()}};
+    cls = class_base(node, obj, cls, base_type);
+    return obj.derived(cls, Value{obj.move_value().as(cls)});
 }
 
 ExprRes

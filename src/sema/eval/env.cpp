@@ -244,10 +244,10 @@ EvalEnv::ScopeRaii EvalEnv::scope_raii(Scope* parent, scope_flags_t flags) {
     return _scope_stack.raii<BasicScope>(parent, flags);
 }
 
-EvalEnv::FunScopeRaii
-EvalEnv::fun_scope_raii(Ref<Fun> fun, LValue self, scope_flags_t flags) {
+EvalEnv::FunScopeRaii EvalEnv::fun_scope_raii(
+    Ref<Fun> fun, LValue self, Ref<Class> eff_cls, scope_flags_t flags) {
     assert(!_scope_override);
-    return _scope_stack.raii<FunScope>(fun, self, flags);
+    return _scope_stack.raii<FunScope>(fun, self, eff_cls, flags);
 }
 
 EvalEnv::AsCondScopeRaii

@@ -145,7 +145,10 @@ public:
     ScopeRaii scope_raii(Scope* parent, scope_flags_t flags = scp::NoFlags);
 
     FunScopeRaii fun_scope_raii(
-        Ref<Fun> fun, LValue self, scope_flags_t flags = scp::NoFlags);
+        Ref<Fun> fun,
+        LValue self,
+        Ref<Class> eff_cls,
+        scope_flags_t flags = scp::NoFlags);
 
     AsCondScopeRaii as_cond_scope_raii(
         AsCondContext& as_cond_ctx, scope_flags_t flags = scp::NoFlags);

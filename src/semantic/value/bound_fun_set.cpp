@@ -6,8 +6,8 @@
 
 namespace ulam {
 
-BoundFunSet::BoundFunSet(DataView self, Ref<FunSet> fset, Ref<Class> dyn_cls):
-    _self{self}, _fset{fset}, _dyn_cls{dyn_cls} {
+BoundFunSet::BoundFunSet(DataView self, Ref<FunSet> fset, Ref<Class> eff_cls):
+    _self{self}, _fset{fset}, _eff_cls{eff_cls} {
     assert(!_self || _self.type(true)->is_class());
 }
 
@@ -19,11 +19,13 @@ DataView BoundFunSet::self() const {
 }
 
 Ref<Class> BoundFunSet::dyn_cls() const {
-    if (_dyn_cls)
-        return _dyn_cls;
+    if (_eff_cls)
+        return _eff_cls;
     if (has_self())
         return self().type(true)->as_class();
     return _fset->cls();
 }
+
+Ref<Class> BoundFunSet::eff_cls() const { return _eff_cls; }
 
 } // namespace ulam

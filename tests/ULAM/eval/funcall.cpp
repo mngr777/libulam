@@ -1,8 +1,7 @@
 #include "./funcall.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
-#include "./native.hpp"
-#include "libulam/sema/expr_error.hpp"
+#include <libulam/sema/expr_error.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <string>
 
@@ -42,15 +41,16 @@ ExprRes EvalFuncall::funcall_callable(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
     ExprRes&& callable,
-    ExprResList&& args) {
+    ExprResList&& args,
+    ulam::Ref<ulam::Class> eff_cls) {
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
         data = exp::data(callable);
         replace(data, "{args}", arg_data(args));
         replace(data, "{fun}", str(fun->name_id()));
     }
-    auto res =
-        Base::funcall_callable(node, fun, std::move(callable), std::move(args));
+    auto res = Base::funcall_callable(
+        node, fun, std::move(callable), std::move(args), eff_cls);
     if (!data.empty())
         exp::set_data(res, data);
     return res;
@@ -77,20 +77,21 @@ ExprRes EvalFuncall::do_funcall(
     ulam::Ref<ulam::ast::Node> node,
     ulam::Ref<ulam::Fun> fun,
     ulam::LValue self,
-    ExprResList&& args) {
+    ExprResList&& args,
+    ulam::Ref<ulam::Class> eff_cls) {
 
     EvalEnv::FlagsRaii fr;
     EvalEnv::EvalTestContextRaii tcr;
     if (env().stack_size() == 0 && fun->name() == "test") {
-        // set NoExec after `test` is called, unless executing (NoCodegen is set)
+        // set NoExec after `test` is called, unless executing (NoCodegen is
+        // set)
         if (!has_flag(evl::NoCodegen))
             fr = env().add_flags_raii(ulam::sema::evl::NoExec);
         // if executing, set exec context
         if (!has_flag(ulam::sema::evl::NoExec))
             tcr = test_ctx_raii(self);
     }
-
-    return Base::do_funcall(node, fun, self, std::move(args));
+    return Base::do_funcall(node, fun, self, std::move(args), eff_cls);
 }
 
 ExprRes EvalFuncall::do_funcall_native(

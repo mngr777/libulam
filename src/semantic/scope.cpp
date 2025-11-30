@@ -47,7 +47,7 @@ Ref<Class> Scope::self_cls() const {
 
 Ref<Class> Scope::eff_cls() const {
     auto cur = this;
-    while ((cur = cur->parent(scp::Class | scp::AsCond))) {
+    while ((cur = cur->parent(scp::Class | scp::Fun | scp::AsCond))) {
         auto cls = cur->eff_cls();
         if (cls)
             return cls;

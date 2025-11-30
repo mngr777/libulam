@@ -1988,6 +1988,7 @@ Ptr<ast::BaseTypeSelect> Parser::parse_base_type_select() {
             panic(tok::BracketR);
         }
         expect(tok::BracketR);
+        expect(tok::Period);
     }
 
     return base_type;

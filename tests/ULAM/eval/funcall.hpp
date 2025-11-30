@@ -22,7 +22,8 @@ protected:
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
         ExprRes&& callable,
-        ExprResList&& args) override;
+        ExprResList&& args,
+        ulam::Ref<ulam::Class> eff_cls = {}) override;
 
     ExprRes funcall_obj(
         ulam::Ref<ulam::ast::Node> node,
@@ -34,7 +35,8 @@ protected:
         ulam::Ref<ulam::ast::Node> node,
         ulam::Ref<ulam::Fun> fun,
         ulam::LValue self,
-        ExprResList&& args) override;
+        ExprResList&& args,
+        ulam::Ref<ulam::Class> eff_cls = {}) override;
 
     ExprRes do_funcall_native(
         ulam::Ref<ulam::ast::Node> node,

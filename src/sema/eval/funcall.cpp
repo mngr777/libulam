@@ -53,7 +53,8 @@ EvalFuncall::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
     auto fun = *match_res.begin();
 
     args = cast_args(node, fun, std::move(args));
-    return funcall_callable(node, fun, std::move(callable), std::move(args));
+    return funcall_callable(
+        node, fun, std::move(callable), std::move(args), bfset.eff_cls());
 }
 
 ExprRes EvalFuncall::funcall(
@@ -79,13 +80,17 @@ ExprRes EvalFuncall::construct_funcall(
 }
 
 ExprRes EvalFuncall::funcall_callable(
-    Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& callable, ExprResList&& args) {
+    Ref<ast::Node> node,
+    Ref<Fun> fun,
+    ExprRes&& callable,
+    ExprResList&& args,
+    Ref<Class> eff_cls) {
     assert(callable.type()->is(FunId));
     if (has_flag(evl::NoExec))
         return empty_ret_val(node, fun);
     auto val = callable.move_value();
     assert(!val.empty());
-    return do_funcall(node, fun, val.self(), std::move(args));
+    return do_funcall(node, fun, val.self(), std::move(args), eff_cls);
 }
 
 ExprRes EvalFuncall::funcall_obj(
@@ -99,7 +104,12 @@ ExprRes EvalFuncall::funcall_obj(
 }
 
 ExprRes EvalFuncall::do_funcall(
-    Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args) {
+    Ref<ast::Node> node,
+    Ref<Fun> fun,
+    LValue self,
+    ExprResList&& args,
+    Ref<Class> eff_cls) {
+
     if (fun->is_native()) {
         return do_funcall_native(node, fun, self, std::move(args));
     }
@@ -113,7 +123,7 @@ ExprRes EvalFuncall::do_funcall(
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(env().scope_lvl() + 1);
     auto stack_raii = env().stack_raii(fun, self);
-    auto sr = env().fun_scope_raii(fun, self);
+    auto sr = env().fun_scope_raii(fun, self, eff_cls);
 
     // bind params
     std::list<Ptr<ast::VarDef>> tmp_defs{};

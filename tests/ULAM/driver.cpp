@@ -72,20 +72,12 @@ static const std::set<std::string> Skip {
     "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
     "t41316_test_compiler_transientandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
-    "t41376_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccall.test", // classid magic, TODO
-    "t41379_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingclassidofref.test", // -"-
-    "t41380_test_compiler_elementandquark_multibases_constantspecificbasevariablevirtualfunccall.test", // -"-
-    "t41381_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingconstantclassidofref.test", // -"-
     "t41382_test_compiler_elementandquarkswclassargs_wdefaultparamvalueandtype_insertCLASS.test", // __CLASS_*__, TODO
     "t41384_test_compiler_elementandquarkwclassargs_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // base class access args, TODO
-    "t41391_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant.test", // classid magic, TODO
-    "t41392_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant2.test", // -"-
-    "t41393_test_compiler_elementandquark_multibases_virtualfuncsselectwselfSelfandclassidconstant3.test", // -"-
     "t41402_test_compiler_classidtemplatearg_ish.test", // Ele1.classid != 1u due to different resolution order (`local constant Unsigned c_ele2 = Ele2.classidof` resolved first)
     "t41421_test_compiler_castingbitstotransientwstring.test", // clobbered String ID is invalid. TODO: fallback
     "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
     "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
-    "t41461_test_compiler_elementandquark_multibases_virtualfuncsselectwselfandclassidconstant_atomref.test", // classid magic, TODO
     "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
     "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
     "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
@@ -216,6 +208,10 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41336_test_compiler_multiinheritance_referenceinit.test", // deref cast omitted, similar to t41333
     "t41360_test_compiler_elementandquarks_multibases_atomofcasting_issue.test", // Bool value format
     "t41365_test_compiler_elementsandquarks_multibases_virtualfuncs_nestedascond_ish.test", // redundant cast for `as` var
+    "t41376_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccall.test", // `Int m_a4(510)` is correct
+    "t41379_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingclassidofref.test", // -"-
+    "t41380_test_compiler_elementandquark_multibases_constantspecificbasevariablevirtualfunccall.test", // -"-
+    "t41381_test_compiler_elementandquark_multibases_specificbasevariablevirtualfunccallusingconstantclassidofref.test", // -"-
     "t41383_test_compiler_elementandquarkswclassargs_classidofSelf_issue.test", // TODO: classid
     "t41394_test_compiler_elementandquark_multibases_virtualfuncsselectwextrashallowbase_issue.test", // array format
     "t41395_test_compiler_transientclassdminitwithconstructor_localvar.test", // folding: .lengthof, non-const property
