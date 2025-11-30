@@ -187,11 +187,11 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
         _os << " ";
         visit(node->params());
     }
-    // ancestors
-    if (node->has_ancestors()) {
-        assert(node->ancestors()->child_num() > 0);
+    // parents
+    if (node->has_parents()) {
+        assert(node->parents()->child_num() > 0);
         _os << " : ";
-        traverse_list(node->ancestors(), " + ");
+        traverse_list(node->parents(), " + ");
     }
     // body
     assert(node->has_body());

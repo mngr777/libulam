@@ -57,13 +57,13 @@ public:
         ClassKind kind,
         ast::Str name,
         Ptr<ParamList>&& params,
-        Ptr<TypeNameList>&& ancestors):
-        Tuple{std::move(params), std::move(ancestors), make<ClassDefBody>()},
+        Ptr<TypeNameList>&& parents):
+        Tuple{std::move(params), std::move(parents), make<ClassDefBody>()},
         Named{name},
         _kind{kind} {}
 
     ULAM_AST_TUPLE_PROP(params, 0)
-    ULAM_AST_TUPLE_PROP(ancestors, 1)
+    ULAM_AST_TUPLE_PROP(parents, 1)
     ULAM_AST_TUPLE_PROP(body, 2)
 
     ClassKind kind() const { return _kind; }

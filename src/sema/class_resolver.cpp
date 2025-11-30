@@ -158,7 +158,7 @@ void ClassResolver::init_default_data() {
 }
 
 bool ClassResolver::do_init_ancestors() {
-    if (!_cls.node()->has_ancestors())
+    if (!_cls.node()->has_parents())
         return true;
 
     const auto& params = _cls.params();
@@ -167,8 +167,8 @@ bool ClassResolver::do_init_ancestors() {
     auto scope_view = _cls.scope()->view(scope_version);
     auto ssr = env().scope_switch_raii(&scope_view);
 
-    for (unsigned n = 0; n < _cls.node()->ancestors()->child_num(); ++n) {
-        auto cls_name = _cls.node()->ancestors()->get(n);
+    for (unsigned n = 0; n < _cls.node()->parents()->child_num(); ++n) {
+        auto cls_name = _cls.node()->parents()->get(n);
         auto anc = _resolver.resolve_class_name(cls_name, false);
         if (!anc)
             return false;

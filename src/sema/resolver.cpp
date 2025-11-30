@@ -782,7 +782,9 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     // param types and default values (if needed) are resolved in tpl scope
     auto scope_view = tpl->scope()->view(0);
-    PersScope param_scope(&scope_view, scp::Params); // tmp scope
+    PersScope inh_scope{&scope_view}; // tmp inheritance scope
+    auto inh_scope_view = inh_scope.view(0);
+    PersScope param_scope{&inh_scope_view, scp::Params}; // tmp param scope
 
     // create tmp class params
     EvalEnv::VarDefaults var_defaults;
@@ -802,6 +804,11 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
         } else if (!param->node()->has_init()) {
             diag().error(args->loc_id(), 1, "not enough arguments");
             return res;
+        }
+    }
+
+    if (program()->scope_options().allow_access_before_def) {
+        if (tpl->node()->has_parents()) {
         }
     }
 

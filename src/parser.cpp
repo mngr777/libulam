@@ -1,5 +1,3 @@
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/type.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -212,16 +210,16 @@ Ptr<ast::ClassDef> Parser::parse_class_def_head() {
             panic(tok::Colon, tok::Plus, tok::BraceL);
     }
 
-    // ancestors
-    Ptr<ast::TypeNameList> ancestors{};
+    // parents
+    Ptr<ast::TypeNameList> parents{};
     if (_tok.in(tok::Plus, tok::Colon))
-        ancestors = parse_class_ancestor_list();
+        parents = parse_class_parent_list();
 
     return tree_loc<ast::ClassDef>(
-        loc_id, kind, name, std::move(params), std::move(ancestors));
+        loc_id, kind, name, std::move(params), std::move(parents));
 }
 
-Ptr<ast::TypeNameList> Parser::parse_class_ancestor_list() {
+Ptr<ast::TypeNameList> Parser::parse_class_parent_list() {
     assert(_tok.in(tok::Plus, tok::Colon));
     auto loc_id = _tok.loc_id;
     consume();
@@ -242,11 +240,11 @@ Ptr<ast::TypeNameList> Parser::parse_class_ancestor_list() {
             auto plus = _tok;
             consume();
             if (_tok.is(tok::BraceL))
-                diag(plus, "trailing plus in ancestor list");
+                diag(plus, "trailing plus in parent list");
         }
     }
     if (node->child_num() == 0) {
-        diag(loc_id, 1, "ancestor list is empty");
+        diag(loc_id, 1, "parent list is empty");
         return {};
     }
     return node;

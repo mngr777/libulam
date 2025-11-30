@@ -92,7 +92,7 @@ private:
     Ptr<ast::TypeDef> parse_module_type_def(bool is_marked_local);
     Ptr<ast::ClassDef> parse_class_def();
     Ptr<ast::ClassDef> parse_class_def_head();
-    Ptr<ast::TypeNameList> parse_class_ancestor_list();
+    Ptr<ast::TypeNameList> parse_class_parent_list();
     void parse_class_def_body(Ref<ast::ClassDef> node);
     Ptr<ast::TypeDef> parse_type_def();
     bool parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node);
