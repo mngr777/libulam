@@ -72,12 +72,6 @@ private:
     std::pair<TypedValueList, bool>
     eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
 
-    std::pair<TypedValueList, bool>
-    do_eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
-
-    std::pair<TypedValueList, bool>
-    do_eval_tpl_args_compat(Ref<ast::ArgList> args, Ref<ClassTpl> tpl);
-
     std::pair<ExprResList, bool> eval_args(Ref<ast::ArgList> args);
 
     PersScopeView decl_scope_view(Ref<Decl> decl);

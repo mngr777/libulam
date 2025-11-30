@@ -771,74 +771,8 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n" << line_at(args);
     assert(args);
 
+    std::pair<TypedValueList, bool> res;
     auto fr = env().add_flags_raii(evl::Consteval);
-    return !program()->scope_options().allow_access_before_def
-               ? do_eval_tpl_args(args, tpl)
-               : do_eval_tpl_args_compat(args, tpl);
-}
-
-std::pair<TypedValueList, bool>
-Resolver::do_eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
-    std::pair<TypedValueList, bool> res;
-
-    // eval args
-    ExprResList arg_res_list;
-    std::tie(arg_res_list, res.second) = eval_args(args);
-    if (!res.second)
-        return res;
-
-    // resolve param types and default values (if needed) in tpl scope
-    auto scope_view = tpl->scope()->view(0);
-    BasicScope param_scope(&scope_view); // tmp scope
-    auto ssr = env().scope_switch_raii(&param_scope);
-    std::list<Ptr<Var>> params; // tmp class params
-    for (auto tpl_param : tpl->params()) {
-        // make tmp class param
-        params.push_back(make<Var>(
-            tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
-            Value{RValue{}}, tpl_param->flags()));
-        auto param = ref(params.back());
-        auto type = resolve_var_decl_type(param->type_node(), param->node());
-        if (!type)
-            return res;
-        param->set_type(type);
-
-        // get class param value
-        ExprRes arg_res;
-        if (!arg_res_list.empty()) {
-            arg_res = arg_res_list.pop_front();
-        } else if (param->node()->has_init()) {
-            auto ok = env().init_var(param, param->node()->init(), true);
-            if (!ok)
-                return res;
-            arg_res = {param->type(), Value{param->value().copy_rvalue()}};
-        } else {
-            diag().error(args->loc_id(), 1, "not enough arguments");
-            return res;
-        }
-
-        // cast to param type
-        arg_res = env().cast(args, param->type(), std::move(arg_res), false);
-        if (!arg_res)
-            return res;
-
-        // set class param value and add to tmp scope
-        param->set_value(arg_res.move_value());
-        param_scope.set(param->name_id(), param);
-    }
-
-    // move param values into result
-    for (auto& param : params)
-        res.first.emplace_back(param->type(), param->move_value());
-    res.second = true;
-    return res;
-}
-
-std::pair<TypedValueList, bool>
-Resolver::do_eval_tpl_args_compat(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
-    debug() << __FUNCTION__ << tpl->name() << "\n" << line_at(args) << "\n";
-
-    std::pair<TypedValueList, bool> res;
 
     // eval args
     ExprResList arg_res_list;
