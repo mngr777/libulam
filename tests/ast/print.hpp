@@ -126,6 +126,7 @@ protected:
     void visit(ulam::Ref<ulam::ast::UnaryOp> node) override;
     void visit(ulam::Ref<ulam::ast::ArrayAccess> node) override;
     void visit(ulam::Ref<ulam::ast::MemberAccess> node) override;
+    void visit(ulam::Ref<ulam::ast::BaseTypeSelect> node) override;
     void visit(ulam::Ref<ulam::ast::ClassConstAccess> node) override;
 
     bool do_visit(ulam::Ref<ulam::ast::ModuleDef> node) override;

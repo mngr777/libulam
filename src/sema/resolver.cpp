@@ -310,12 +310,17 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
     return do_resolve_type_name(type_name, {}, resolve_class);
 }
 
+Ref<Type>
+Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, bool resolve_class) {
+    return do_resolve_type_spec(type_spec, {}, resolve_class);
+}
+
 Ref<Type> Resolver::do_resolve_type_name(
     Ref<ast::TypeName> type_name,
     Ref<AliasType> exclude_alias,
     bool resolve_class) {
     auto type_spec = type_name->first();
-    auto type = resolve_type_spec(type_spec, exclude_alias);
+    auto type = do_resolve_type_spec(type_spec, exclude_alias, false);
     if (!type)
         return {};
 
@@ -371,6 +376,8 @@ Ref<Type> Resolver::do_resolve_type_name(
                     return {};
             } else {
                 // base?
+                // TODO: allow type specs somehow and remove
+                // ast::BaseTypeSelect??
                 type = cls->base_by_name_id(name_id);
             }
             type = sym ? sym->get<UserType>() : cls->base_by_name_id(name_id);
@@ -385,26 +392,16 @@ Ref<Type> Resolver::do_resolve_type_name(
             return {};
     }
 
-    if (resolve_class) {
-        // fully resolve class or class dependencies, e.g. array type
-        // ClassName[2] depends on class ClassName
-        if (!resolve_class_deps(type)) {
-            diag().error(ident, "cannot resolve");
-            return {};
-        }
-    } else if (type->is_class()) {
-        // just init if class
-        if (!init(type->as_class())) {
-            diag().error(ident, "cannot resolve");
-            return {};
-        }
-    }
-
-    return type;
+    if (type && prepare_resolved_type(ident, type, resolve_class))
+        return type;
+    return {};
 }
 
-Ref<Type> Resolver::resolve_type_spec(
-    Ref<ast::TypeSpec> type_spec, Ref<AliasType> exclude_alias) {
+Ref<Type> Resolver::do_resolve_type_spec(
+    Ref<ast::TypeSpec> type_spec,
+    Ref<AliasType> exclude_alias,
+    bool resolve_class) {
+
     // builtin type?
     if (type_spec->is_builtin()) {
         auto bi_type_id = type_spec->builtin_type_id();
@@ -435,8 +432,11 @@ Ref<Type> Resolver::resolve_type_spec(
             return {};
         }
         // Self
-        if (ident->is_self())
-            return self_cls;
+        if (ident->is_self()) {
+            if (prepare_resolved_type(ident, self_cls, resolve_class))
+                return self_cls;
+            return {};
+        }
 
         // Super
         if (!self_cls->has_super()) {
@@ -445,7 +445,9 @@ Ref<Type> Resolver::resolve_type_spec(
                 std::string{self_cls->name()} + " does not have a superclass");
             return {};
         }
-        return self_cls->super();
+        if (prepare_resolved_type(ident, self_cls->super(), resolve_class))
+            return self_cls->super();
+        return {};
     }
 
     bool is_tpl = type_spec->has_args();
@@ -458,7 +460,10 @@ Ref<Type> Resolver::resolve_type_spec(
         auto [args, success] = eval_tpl_args(type_spec->args(), class_tpl);
         if (!success)
             return {};
-        return class_tpl->type(std::move(args));
+        auto type = class_tpl->type(std::move(args));
+        if (type && prepare_resolved_type(ident, type, resolve_class))
+            return type;
+        return {};
     };
 
     {
@@ -479,20 +484,28 @@ Ref<Type> Resolver::resolve_type_spec(
                     //     A.foo(); // `A` resolves to `A(1)` in class scope
                     //   }
                     //   ```
-                    // * same for typedef shadowing template (see t3651, broken?):
+                    // * same for typedef shadowing template (see t3651,
+                    // broken?):
                     //   ```
                     //   quark A(Int cp) {}
                     //   typedef A(0) A;
                     //   ```
-                    if (is_tpl)
+                    if (is_tpl || !type->is_alias())
                         return {};
-                    return (!type->is_alias() || resolve(type->as_alias()))
-                               ? type
-                               : nullptr;
+
+                    assert(type->is_alias());
+                    if (!resolve(type->as_alias()))
+                        return {};
+                    if (prepare_resolved_type(ident, type, resolve_class))
+                        return type;
+                    return {};
                 },
                 [&](auto&&) -> Ref<Type> { assert(false); });
-            if (type)
-                return type;
+            if (type) {
+                if (prepare_resolved_type(ident, type, resolve_class))
+                    return type;
+                return {};
+            }
         }
     }
 
@@ -504,7 +517,7 @@ Ref<Type> Resolver::resolve_type_spec(
 
     // import into module, TODO: add and use Module::add_import instead
     auto module = scope()->module();
-    return exp->sym()->accept(
+    auto type = exp->sym()->accept(
         [&](Ref<ClassTpl> class_tpl) -> Ref<Type> {
             if (module)
                 module->env_scope()->set(name_id, class_tpl); // TODO
@@ -516,6 +529,9 @@ Ref<Type> Resolver::resolve_type_spec(
             return cls;
         },
         [&](auto&&) -> Ref<Type> { assert(false); });
+    if (type && prepare_resolved_type(ident, type, resolve_class))
+        return type;
+    return {};
 }
 
 bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
@@ -580,6 +596,25 @@ PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
         assert(false);
     }
     return scope->view(decl->scope_version());
+}
+
+bool Resolver::prepare_resolved_type(
+    Ref<ast::TypeIdent> ident, Ref<Type> type, bool resolve_class) {
+    if (resolve_class) {
+        // fully resolve class or class dependencies, e.g. array type
+        // ClassName[2] depends on class ClassName
+        if (!resolve_class_deps(type)) {
+            diag().error(ident, "cannot resolve");
+            return false;
+        }
+    } else if (type->is_class()) {
+        // just init if class
+        if (!init(type->as_class())) {
+            diag().error(ident, "cannot resolve");
+            return false;
+        }
+    }
+    return true;
 }
 
 bool Resolver::resolve_class_deps(Ref<Type> type) {

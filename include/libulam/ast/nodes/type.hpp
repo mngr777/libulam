@@ -77,8 +77,47 @@ class TypeNameList : public List<Node, TypeName> {
     ULAM_AST_NODE
 };
 
+class TypeSpecList : public List<Node, TypeSpec> {
+    ULAM_AST_NODE
+};
+
+// a.Base1.Base2(p1, p2)[classId]
+class BaseTypeSelect : public Tuple<List<Node, TypeSpec>, Expr> {
+    ULAM_AST_NODE
+public:
+    using Tuple::Tuple;
+
+    BaseTypeSelect(): Tuple{{}} {}
+
+    ULAM_AST_TUPLE_PROP(classid, 0)
+
+    unsigned type_spec_num() const {
+        return List::child_num();
+    }
+
+    Ref<TypeSpec> type_spec(unsigned n) {
+        return List::get(n);
+    }
+
+    Ref<const TypeSpec> type_spec(unsigned n) const {
+        return List::get(n);
+    }
+
+    unsigned child_num() const override {
+        return Tuple::child_num() + List::child_num();
+    }
+
+    Ref<Node> child(unsigned n) override {
+        return (n < List::child_num()) ? List::child(n) : classid();
+    }
+
+    Ref<const Node> child(unsigned n) const override {
+        return (n < List::child_num()) ? List::child(n) : classid();
+    }
+};
+
 // TypeName[2][4]&
-class FullTypeName : public Tuple<Stmt, TypeName, ExprList> {
+class FullTypeName : public Tuple<Node, TypeName, ExprList> {
     ULAM_AST_NODE
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
 public:

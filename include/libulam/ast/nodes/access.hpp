@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/semantic/ops.hpp>
 #include <cassert>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/args.hpp>
@@ -26,21 +27,28 @@ public:
     }
 };
 
-class MemberAccess : public Tuple<OpExpr, Expr, Ident, TypeIdent> {
+class MemberAccess : public Tuple<OpExpr, Expr, Ident, BaseTypeSelect> {
     ULAM_AST_EXPR
     ULAM_AST_SIMPLE_ATTR(Op, op, Op::None)
 public:
     MemberAccess(
-        Ptr<Expr>&& obj, Ptr<Ident>&& ident, Ptr<TypeIdent>&& base = {}):
+        Ptr<Expr>&& obj,
+        Ptr<Ident>&& ident,
+        Ptr<BaseTypeSelect> base_type = {}):
         Tuple{
-            std::move(obj), std::move(ident), std::move(base),
+            std::move(obj), std::move(ident), std::move(base_type),
             Op::MemberAccess} {}
+
+    MemberAccess(Ptr<Expr>&& obj, Op op, Ptr<BaseTypeSelect> base_type = {}):
+        Tuple{std::move(obj), {}, std::move(base_type), Op::MemberAccess} {
+        set_op(op);
+    }
 
     bool is_op() const { return op() != Op::None; }
 
     ULAM_AST_TUPLE_PROP(obj, 0);
     ULAM_AST_TUPLE_PROP(ident, 1);
-    ULAM_AST_TUPLE_PROP(base, 2);
+    ULAM_AST_TUPLE_PROP(base_type, 2);
 };
 
 class ClassConstAccess : public Tuple<OpExpr, TypeName, Ident> {

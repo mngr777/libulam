@@ -2,6 +2,7 @@
 #include "./env.hpp"
 #include "./helper.hpp"
 #include "libulam/ast/nodes/expr.hpp"
+#include "libulam/ast/nodes/type.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/flags.hpp>
@@ -112,12 +113,13 @@ protected:
         ulam::sema::ExprRes&& obj,
         ulam::Ref<ulam::Class> base) override;
 
-    ExprRes negate(
-        ulam::Ref<ulam::ast::Expr> node,
-        ExprRes&& res) override;
+    ExprRes negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) override;
 
     ExprRes as_base(
         ulam::Ref<ulam::ast::Expr> node,
-        ulam::Ref<ulam::ast::TypeIdent> base,
+        ulam::Ref<ulam::ast::BaseTypeSelect> base_type,
         ExprRes&& obj) override;
+
+    std::string
+    base_type_select_str(ulam::Ref<ulam::ast::BaseTypeSelect> base_type);
 };

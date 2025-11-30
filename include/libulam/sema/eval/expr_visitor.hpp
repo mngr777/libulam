@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/type.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -51,6 +52,10 @@ protected:
         Ref<ast::Expr> node, Ref<const Type> type, bool deref = false);
 
     virtual Ref<Class> class_super(Ref<ast::Expr> node, Ref<Class> cls);
+    virtual Ref<Class> class_base(
+        Ref<ast::Expr> node,
+        Ref<Class> cls,
+        Ref<ast::BaseTypeSelect> base_type);
     virtual Ref<Class>
     class_base(Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident);
 
@@ -151,8 +156,8 @@ protected:
         ExprRes&& obj,
         Ref<Class> base = {});
 
-    virtual ExprRes
-    as_base(Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj);
+    virtual ExprRes as_base(
+        Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj);
 
     virtual ExprRes assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
 

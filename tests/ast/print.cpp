@@ -490,8 +490,8 @@ void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {
 void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
     assert(node->has_obj());
     paren_l();
-    if (node->has_base())
-        accept_me(node->base());
+    if (node->has_base_type())
+        accept_me(node->base_type());
     accept_me(node->obj());
     _os << ".";
     if (node->is_op()) {
@@ -501,6 +501,21 @@ void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
         accept_me(node->ident());
     }
     paren_r();
+}
+
+void Printer::visit(ulam::Ref<ulam::ast::BaseTypeSelect> node) {
+    assert(node);
+    assert(node->type_spec_num() > 0);
+    for (unsigned n = 0; n < node->type_spec_num(); ++n) {
+        _os << ".";
+        accept_me(node->type_spec(n));
+    }
+    if (node->has_classid()) {
+        _os << "[";
+        accept_me(node->classid());
+        _os << "]";
+    }
+    _os << ".";
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ClassConstAccess> node) {

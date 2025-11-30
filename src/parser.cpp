@@ -1,3 +1,5 @@
+#include "libulam/ast/nodes/access.hpp"
+#include "libulam/ast/nodes/type.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -1497,7 +1499,7 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
             lhs = parse_array_access(std::move(lhs));
             break;
         case Op::MemberAccess:
-            lhs = parse_member_access_type_op_or_op_call(std::move(lhs));
+            lhs = parse_member_access_or_type_op_or_op_call(std::move(lhs));
             break;
         case Op::Ternary:
             lhs = parse_ternary_rest(std::move(lhs));
@@ -1636,21 +1638,12 @@ Ptr<ast::Expr> Parser::parse_class_const_access_or_type_op() {
     return parse_type_op_rest(std::move(type_name), {});
 }
 
-Ptr<ast::TypeOpExpr>
-Parser::parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr) {
+Ptr<ast::TypeOpExpr> Parser::parse_type_op_rest(
+    Ptr<ast::TypeName>&& type,
+    Ptr<ast::Expr>&& expr,
+    Ptr<ast::BaseTypeSelect>&& base_type) {
     assert((bool)type != (bool)expr);
-
-    // obj.Base.<type_op>
-    Ptr<ast::TypeIdent> base{};
-    if (_tok.is(tok::TypeIdent)) {
-        if (!expr) {
-            unexpected();
-            return {};
-        }
-        base = parse_type_ident(TypeAllowSuper);
-        if (!base || !expect(tok::Period))
-            return {};
-    }
+    assert(_tok.is_type_op());
 
     // op
     auto type_op = _tok.type_op();
@@ -1674,7 +1667,7 @@ Parser::parse_type_op_rest(Ptr<ast::TypeName>&& type, Ptr<ast::Expr>&& expr) {
 
     auto loc_id = type ? type->loc_id() : expr->loc_id();
     return tree_loc<ast::TypeOpExpr>(
-        loc_id, type_op, std::move(type), std::move(expr), std::move(base),
+        loc_id, type_op, std::move(type), std::move(expr), std::move(base_type),
         std::move(args));
 }
 
@@ -1889,87 +1882,73 @@ Ptr<ast::ArrayAccess> Parser::parse_array_access(Ptr<ast::Expr>&& array) {
 }
 
 Ptr<ast::Expr>
-Parser::parse_member_access_type_op_or_op_call(Ptr<ast::Expr>&& obj) {
+Parser::parse_member_access_or_type_op_or_op_call(Ptr<ast::Expr>&& obj) {
     assert(_tok.is(tok::Period));
     auto op_loc_id = _tok.loc_id;
     consume();
 
-    if (_tok.in(tok::Ident, tok::Operator)) {
-        // <obj>.ident | <obj>.operator<op>
-        return parse_member_access_or_op_call_rest(std::move(obj), op_loc_id);
-    }
-
-    // <obj>.Type.
+    Ptr<ast::BaseTypeSelect> base_type;
     if (_tok.is(tok::TypeIdent)) {
-        // Type
-        auto ident_tok = _tok;
-        consume();
-        // .
-        if (!match(tok::Period))
+        // obj.Base1.Base2(p1, p2).<...>
+        base_type = parse_base_type_select();
+        if (!base_type)
             return {};
-        auto period_tok = _tok;
-        consume();
-        auto cur = _tok;
-        putback(period_tok);
-        putback(ident_tok);
-        if (cur.is_type_op()) {
-            // <obj>.Type.<type_op>
-            return parse_type_op_rest({}, std::move(obj));
-        }
-        // <obj>.Type.ident?
-        return parse_member_access_or_op_call_rest(std::move(obj), op_loc_id);
     }
 
-    // <obj>.<type_op>
-    if (_tok.is_type_op())
-        return parse_type_op_rest({}, std::move(obj));
-
-    unexpected();
-    return {};
+    switch (_tok.type) {
+    case tok::Ident:
+        // obj.Base1.Base2(p1, p2)[classid].prop
+        return parse_member_access_rest(
+            op_loc_id, std::move(obj), std::move(base_type));
+    case tok::Operator:
+        // obj.Base1.Base2(p1, p2)[classid].operator<op>
+        return parse_op_call_rest(
+            op_loc_id, std::move(obj), std::move(base_type));
+    default:
+        if (_tok.is_type_op())
+            return parse_type_op_rest({}, std::move(obj), std::move(base_type));
+        unexpected();
+        return {};
+    }
 }
 
-Ptr<ast::Expr> Parser::parse_member_access_or_op_call_rest(
-    Ptr<ast::Expr>&& obj, loc_id_t op_loc_id) {
-    assert(_tok.in(tok::Ident, tok::TypeIdent, tok::Operator));
+Ptr<ast::MemberAccess> Parser::parse_member_access_rest(
+    loc_id_t op_loc_id,
+    Ptr<ast::Expr>&& obj,
+    Ptr<ast::BaseTypeSelect>&& base_type) {
+    assert(_tok.is(tok::Ident));
+    auto ident = parse_ident();
+    return tree_loc<ast::MemberAccess>(
+        op_loc_id, std::move(obj), std::move(ident), std::move(base_type));
+}
 
-    // obj.Base.mem
-    Ptr<ast::TypeIdent> base{};
-    if (_tok.is(tok::TypeIdent)) {
-        base = parse_type_ident(TypeAllowSuper);
-        if (!base || !expect(tok::Period))
-            return {};
+Ptr<ast::FunCall> Parser::parse_op_call_rest(
+    loc_id_t op_loc_id,
+    Ptr<ast::Expr>&& obj,
+    Ptr<ast::BaseTypeSelect>&& base_type) {
+    assert(_tok.in(tok::Operator));
+    consume();
+
+    tok::Type op_tok_type = _tok.type;
+    if (!_tok.is_overloadable_op()) {
+        unexpected();
+        return {};
     }
+    consume();
 
-    Ptr<ast::Ident> ident{};
-    tok::Type op_tok_type = tok::Eof;
-    if (_tok.is(tok::Operator)) {
-        consume();
-        op_tok_type = _tok.type;
-        if (!_tok.is_overloadable_op()) {
-            unexpected();
-            return {};
-        }
-        consume();
+    // NOTE: cannot determine op before parsing funcall:
+    // for ++/-- number of arguments determines if op is pre or post variant
 
-    } else {
-        if (!match(tok::Ident))
-            return {};
-
-        ident = parse_ident();
-        if (!ident)
-            return {};
-    }
-
-    // obj.mem or obj.Base.mem
+    // obj.mem
     auto mem_access = tree_loc<ast::MemberAccess>(
-        op_loc_id, std::move(obj), std::move(ident), std::move(base));
-    if (op_tok_type == tok::Eof)
-        return mem_access;
+        op_loc_id, std::move(obj), Op::None, std::move(base_type));
+    auto mem_access_ref = ref(mem_access);
 
     // obj.operator<op>()
     if (!match(tok::ParenL))
         return {};
-    auto mem_access_ref = ref(mem_access);
+
+    // obj.operator<op>(<args>)
     auto op_call = parse_funcall(std::move(mem_access));
     Op op = Op::None;
     if (op_call->arg_num() == 0) {
@@ -1982,6 +1961,36 @@ Ptr<ast::Expr> Parser::parse_member_access_or_op_call_rest(
     assert(op != Op::None);
     mem_access_ref->set_op(op);
     return op_call;
+}
+
+Ptr<ast::BaseTypeSelect> Parser::parse_base_type_select() {
+    assert(_tok.is(tok::TypeIdent));
+    auto base_type = tree_loc<ast::BaseTypeSelect>(_tok.loc_id);
+
+    // Base1.Base2(p1, p2).<...>
+    do {
+        auto type_spec = parse_type_spec();
+        if (!type_spec)
+            return {};
+        base_type->add(std::move(type_spec));
+
+        // .
+        consume_if(tok::Period);
+    } while (_tok.is(tok::TypeIdent));
+
+    // [classid]
+    if (_tok.is(tok::BracketL)) {
+        consume();
+        auto expr = parse_expr();
+        if (expr) {
+            base_type->replace_classid(std::move(expr));
+        } else {
+            panic(tok::BracketR);
+        }
+        expect(tok::BracketR);
+    }
+
+    return base_type;
 }
 
 Ptr<ast::Ternary> Parser::parse_ternary_rest(Ptr<ast::Expr>&& cond) {

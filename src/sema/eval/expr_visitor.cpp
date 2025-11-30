@@ -1,5 +1,4 @@
-#include "libulam/sema/eval/flags.hpp"
-#include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/ast/nodes/type.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -244,9 +243,9 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
         return {ExprError::NotClass};
 
     Ref<Class> base{};
-    if (node->has_base()) {
+    if (node->has_base_type()) {
         // foo.Base.bar
-        obj = as_base(node, node->base(), std::move(obj));
+        obj = as_base(node, node->base_type(), std::move(obj));
         if (!obj)
             return obj;
         base = obj.type()->as_class();
@@ -407,10 +406,36 @@ Ref<Class> EvalExprVisitor::class_super(Ref<ast::Expr> node, Ref<Class> cls) {
 }
 
 Ref<Class> EvalExprVisitor::class_base(
+    Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::BaseTypeSelect> base_type) {
+    assert(base_type);
+    for (unsigned n = 0; n < base_type->type_spec_num(); ++n) {
+        auto type_spec = base_type->type_spec(n);
+        if (type_spec->has_args()) {
+            // Type(arg1, arg2)
+            auto type = env().resolver(true).resolve_type_spec(type_spec, true);
+            if (!type)
+                return {};
+            if (!type->is_class()) {
+                diag().error(type_spec, "not a class");
+                return {};
+            }
+            cls = type->as_class();
+        } else {
+            // Type
+            cls = class_base(node, cls, type_spec->ident());
+        }
+    }
+    return cls;
+}
+
+Ref<Class> EvalExprVisitor::class_base(
     Ref<ast::Expr> node, Ref<Class> cls, Ref<ast::TypeIdent> ident) {
+    assert(ident);
+
+    if (ident->is_self())
+        return cls;
     if (ident->is_super())
         return class_super(node, cls);
-    assert(!ident->is_self());
 
     // search in class scope
     auto sym = cls->scope()->get(ident->name_id());
@@ -778,8 +803,8 @@ EvalExprVisitor::type_op_default(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
 ExprRes
 EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     // obj.Base.<type_op>?
-    if (node->has_base()) {
-        arg = as_base(node, node->base(), std::move(arg));
+    if (node->has_base_type()) {
+        arg = as_base(node, node->base_type(), std::move(arg));
         if (!arg)
             return std::move(arg);
     }
@@ -1042,14 +1067,9 @@ ExprRes EvalExprVisitor::bind(
 }
 
 ExprRes EvalExprVisitor::as_base(
-    Ref<ast::Expr> node, Ref<ast::TypeIdent> base, ExprRes&& obj) {
+    Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj) {
     auto cls = obj.type()->deref()->as_class();
-    cls = class_base(node, cls, base);
-    if (!cls) {
-        auto error =
-            base->is_super() ? ExprError::NoSuper : ExprError::BaseNotFound;
-        return {error};
-    }
+    cls = class_base(node, cls, base_type);
     return {cls, Value{obj.move_value()}};
 }
 

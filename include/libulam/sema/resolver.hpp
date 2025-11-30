@@ -18,6 +18,7 @@ namespace ulam::sema {
 
 // TODO: better diagnostics, trace type/value resolution somehow
 // TODO: split into eval helper and program/module resolver?
+// TODO: use flags for resolve_class
 
 class EvalEnv;
 
@@ -44,6 +45,9 @@ public:
     Ref<Type>
     resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class = false);
 
+    Ref<Type>
+    resolve_type_spec(Ref<ast::TypeSpec> type_spec, bool resolve_class = false);
+
 private:
     using ClassSet = std::unordered_set<Ref<Class>>;
 
@@ -52,8 +56,10 @@ private:
         Ref<AliasType> exclude_alias,
         bool resolve_class);
 
-    Ref<Type> resolve_type_spec(
-        Ref<ast::TypeSpec> type_spec, Ref<AliasType> exclude_alias);
+    Ref<Type> do_resolve_type_spec(
+        Ref<ast::TypeSpec> type_spec,
+        Ref<AliasType> exclude_alias,
+        bool resolve_class);
 
     bitsize_t bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id);
 
@@ -76,6 +82,8 @@ private:
 
     PersScopeView decl_scope_view(Ref<Decl> decl);
 
+    bool prepare_resolved_type(
+        Ref<ast::TypeIdent> ident, Ref<Type> type, bool resolve_class = false);
     bool resolve_class_deps(Ref<Type> type);
 
     Ref<Type> resolve_var_decl_type(

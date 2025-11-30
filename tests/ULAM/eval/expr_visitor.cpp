@@ -5,8 +5,10 @@
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
+#include "libulam/ast/nodes/type.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -146,7 +148,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
         is_class_op = cls->has_op(op);
         if (!is_class_op) {
             auto neg_op = ulam::ops::negation(op);
-            if (neg_op != ulam::Op::None && 
+            if (neg_op != ulam::Op::None &&
                 program()->eval_options().implicit_class_negation_op) {
                 is_class_op = cls->has_op(neg_op);
             }
@@ -656,13 +658,35 @@ EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
 
 ExprRes EvalExprVisitor::as_base(
     ulam::Ref<ulam::ast::Expr> node,
-    ulam::Ref<ulam::ast::TypeIdent> base,
+    ulam::Ref<ulam::ast::BaseTypeSelect> base_type,
     ExprRes&& obj) {
     std::string data;
     if (!has_flag(evl::NoCodegen))
         data = exp::data(obj);
-    auto res = Base::as_base(node, base, std::move(obj));
-    if (!data.empty())
-        exp::set_data(res, exp::data_combine(data, str(base->name_id()), "."));
+    auto res = Base::as_base(node, base_type, std::move(obj));
+    if (!data.empty()) {
+        auto base_type_str = base_type_select_str(base_type);
+        exp::set_data(
+            res, exp::data_combine(data, std::move(base_type_str), "."));
+    }
     return res;
+}
+
+std::string EvalExprVisitor::base_type_select_str(
+    ulam::Ref<ulam::ast::BaseTypeSelect> base_type) {
+    std::stringstream ss;
+    for (unsigned n = 0; n < base_type->type_spec_num(); ++n) {
+        if (n > 0)
+            ss << '.';
+        auto type_spec = base_type->type_spec(n);
+        assert(type_spec->has_ident()); // cannot be builtin type
+        if (type_spec->has_args()) {
+            Stringifier strf{program()};
+            auto type = env().resolver(true).resolve_type_spec(type_spec);
+            ss << out::type_str(strf, type);
+        } else {
+            ss << str(type_spec->ident()->name_id());
+        }
+    }
+    return ss.str();
 }

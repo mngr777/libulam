@@ -14,26 +14,27 @@ namespace ulam::ast {
 
 // NOTE: type operators can work on both expressions and types, e.g.
 // `T a; assert(T.maxof == a.maxof)
-class TypeOpExpr : public Tuple<Expr, TypeName, Expr, TypeIdent, ArgList> {
+// TODO: split into TypeOpExpr/ExprTypeOpExpr
+class TypeOpExpr : public Tuple<Expr, TypeName, Expr, BaseTypeSelect, ArgList> {
     ULAM_AST_EXPR
 public:
     TypeOpExpr(
         TypeOp op,
         Ptr<TypeName>&& type,
         Ptr<Expr>&& expr,
-        Ptr<TypeIdent> base,
+        Ptr<BaseTypeSelect> base,
         Ptr<ArgList> args):
         Tuple{
             std::move(type), std::move(expr), std::move(base), std::move(args)},
         _op{op} {
         assert(op != TypeOp::None);
         assert(has_type_name() != has_expr());
-        assert(has_expr() || !has_base());
+        assert(has_expr() || !has_base_type());
     }
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
     ULAM_AST_TUPLE_PROP(expr, 1)
-    ULAM_AST_TUPLE_PROP(base, 2)
+    ULAM_AST_TUPLE_PROP(base_type, 2)
     ULAM_AST_TUPLE_PROP(args, 3)
 
     TypeOp op() const { return _op; }

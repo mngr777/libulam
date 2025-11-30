@@ -1,3 +1,4 @@
+#include <libulam/ast/nodes/exprs.hpp>
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 

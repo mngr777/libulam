@@ -3,6 +3,7 @@
 
 namespace ulam::ast {
 
+// TODO: move to .inc.hpp file
 class Expr;
 class TypeOpExpr;
 class Ident;
