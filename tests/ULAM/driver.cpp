@@ -81,8 +81,8 @@ static const std::set<std::string> Skip {
     "t41471_test_compiler_constantfromanotherclasssuperarg_ish.test", // class constant used as parent tpl argument
     "t41527_test_compiler_elementtemplateinheritance_funcinbasetemplateinstance_ish.test", // parent class typedef used in class tpl param list
     "t41528_test_compiler_elementtemplateinheritance_classparametertypenotinlocalsscope_ish.test", // -"-
-    "t41533_test_compiler_instanceofconstructorandclassidof.test", // classid, TODO
-    "t41537_test_compiler_instanceofclassidofmaxof.test", // -"-
+    "t41533_test_compiler_instanceofconstructorandclassidof.test", // `B2D.instanceof(w,h).classidof` is not constant (since w, h are not), so cannot be implicitly casted to Unsigned(8)
+    "t41537_test_compiler_instanceofclassidofmaxof.test", // classidof.maxof, getClassid -- TODO ??
     "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
     "t41589_test_compiler_transientwithatomdmassignedatomref_ish.test", // ew[0] is overwritten in the process, needs to be handled in compiler (explicitly pass old class?)
     "t41590_test_compiler_transientwithatomarraydmassignedatomref.test", // -"-
