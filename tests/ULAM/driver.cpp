@@ -57,7 +57,7 @@ static const std::set<std::string> ImplicitOps {
 static const std::set<std::string> Skip {
     "t3241_test_compiler_unarymod.test", // invalid implicit cast?
     "t3450_test_compiler_minmaxsizeoffunccallreturns.test", // converting String.lengthof from Unsigned to Int(7), TODO: consteval functions?
-    "t3494_test_compiler_divideandmodmixedtypes.test", // carrying consteval flag through props?
+    "t3494_test_compiler_divideandmodmixedtypes.test", // impl. casting Int to Int(4): `k = (g % e)`, non-constant
     "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve, Tar is not a template
     "t3889_test_compiler_elementandquarkswclassargs_wdefaultparamvaluefromanotherclass_constantdminancestor.test", // parent class const used as tpl params
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
