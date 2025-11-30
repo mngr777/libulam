@@ -69,9 +69,6 @@ static const std::set<std::string> Skip {
     "t41092_test_compiler_elementandquark_constructorcallonfuncreturninstance.test", // -"-
     "t41129_test_compiler_elementandquark_overloadoperatorsquareeventwindow_isparse.test", // ambiguous aref/operator[] call
     "t41266_test_compiler_constantclassarrayoftransients.test", // module-local constant `keyexpr_x13` addressed as `KeyExprRep.keyexpr_x13` ??
-    "t41310_test_compiler_elementandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
-    "t41311_test_compiler_elementandquark_multibases_virtualfuncsselectwself.test", // -"-
-    "t41316_test_compiler_transientandquark_multibases_virtualfuncsselectwdatamembersandtypedefs.test", // using local alias to access base class, potentially ambiguous?
     "t41382_test_compiler_elementandquarkswclassargs_wdefaultparamvalueandtype_insertCLASS.test", // __CLASS_*__, TODO
     "t41384_test_compiler_elementandquarkwclassargs_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // base class access args, TODO
     "t41402_test_compiler_classidtemplatearg_ish.test", // Ele1.classid != 1u due to different resolution order (`local constant Unsigned c_ele2 = Ele2.classidof` resolved first)

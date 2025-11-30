@@ -453,11 +453,15 @@ Ref<Class> EvalExprVisitor::class_base_ident(
     if (ident->is_super())
         return class_super(node, cls);
 
-    // search in class scope
-    auto sym = cls->scope()->get(ident->name_id());
+    auto name_id = ident->name_id();
+    auto sym = scope()->get(name_id);
     if (!sym) {
-        diag().error(ident, "base type not found");
-        return {};
+        // search in class scope
+        sym = cls->scope()->get(name_id);
+        if (!sym) {
+            diag().error(ident, "base type not found");
+            return {};
+        }
     }
     assert(sym->is<UserType>());
     auto type = sym->get<UserType>();
@@ -476,7 +480,8 @@ Ref<Class> EvalExprVisitor::class_base_ident(
 
     auto base = type->as_class();
     if (!base->is_same_or_base_of(cls)) {
-        diag().error(ident, "not an ancestor of " + std::string{cls->name()});
+        diag().error(
+            ident, "not an ancestor of " + std::string{cls->full_name()});
         return {};
     }
     return base;
