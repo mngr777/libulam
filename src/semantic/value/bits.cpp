@@ -238,9 +238,39 @@ const Bits& BitsView::data() const {
 
 // Bits
 
+Bits::Bits(size_t len): _len{len} { init_storage(); }
+
+Bits::~Bits() { destroy_storage(); }
+
+Bits::Bits(Bits&& other): _len{0} {
+    init_storage();
+    operator=(std::move(other));
+}
+
+Bits& Bits::operator=(Bits&& other) {
+    if (this == &other)
+        return *this;
+
+    destroy_storage();
+    _len = other._len;
+    if (_len == 0)
+        return *this;
+
+    if (other.is_storage_dynamic()) {
+        _storage.ptr = other._storage.ptr;
+        other._storage.ptr = nullptr;
+    } else {
+        std::copy_n(other._storage.array, storage_size(), _storage.array);
+    }
+
+    other._len = 0;
+    return *this;
+}
+
 Bits Bits::copy() const {
     Bits bv{len()};
-    bv._bits = _bits;
+    assert(is_storage_dynamic() == bv.is_storage_dynamic());
+    std::copy_n(storage(), storage_size(), bv.storage());
     return bv;
 }
 
@@ -255,7 +285,7 @@ const BitsView Bits::view_right(size_t len) const {
 
 bool Bits::read_bit(size_t idx) const {
     assert(idx < _len);
-    return _bits[to_unit_idx(idx)] & (MSB >> to_off(idx));
+    return storage()[to_unit_idx(idx)] & (MSB >> to_off(idx));
 }
 
 void Bits::write_bit(size_t idx, bool bit) {
@@ -263,9 +293,9 @@ void Bits::write_bit(size_t idx, bool bit) {
     const unit_idx_t unit_idx = to_unit_idx(idx);
     const unit_t mask = MSB >> to_off(idx);
     if (bit) {
-        _bits[unit_idx] |= mask;
+        storage()[unit_idx] |= mask;
     } else {
-        _bits[unit_idx] &= ~mask;
+        storage()[unit_idx] &= ~mask;
     }
 }
 
@@ -276,7 +306,7 @@ Bits::unit_t Bits::read(size_t idx, size_t len) const {
     const size_t off = to_off(idx);
     if (off + len <= UnitSize)
         return read(unit_idx, off, len);
-    assert(unit_idx + 1u < _bits.size());
+    assert(unit_idx + 1u < storage_size());
     const size_t len_1 = UnitSize - off;
     const size_t len_2 = len - len_1;
     return (read(unit_idx, off, len_1) << len_2) |
@@ -292,7 +322,7 @@ void Bits::write(size_t idx, size_t len, unit_t value) {
         write(unit_idx, off, len, value);
         return;
     }
-    assert(unit_idx + 1u < _bits.size());
+    assert(unit_idx + 1u < storage_size());
     const size_t len_1 = UnitSize - off;
     const size_t len_2 = len - len_1;
     write(unit_idx, off, len_1, value >> len_2);
@@ -312,28 +342,28 @@ void Bits::write_right(size_t len, unit_t value) {
 }
 
 Bits::unit_t Bits::read(unit_idx_t unit_idx, size_t off, size_t len) const {
-    assert(unit_idx < _bits.size());
+    assert(unit_idx < storage_size());
     assert(off + len <= UnitSize);
     if (len == 0)
         return 0;
     const size_t shift = UnitSize - (off + len);
     const unit_t mask = make_mask(len, 0);
-    return (_bits[unit_idx] >> shift) & mask;
+    return (storage()[unit_idx] >> shift) & mask;
 }
 
 void Bits::write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
-    assert(unit_idx < _bits.size());
+    assert(unit_idx < storage_size());
     assert(start + len <= UnitSize);
     if (len == 0)
         return;
     const size_t shift = UnitSize - (start + len);
     const unit_t mask = make_mask(len, shift);
-    _bits[unit_idx] = (_bits[unit_idx] & ~mask) | (value << shift);
+    storage()[unit_idx] = (storage()[unit_idx] & ~mask) | (value << shift);
 }
 
 bool Bits::empty() const {
-    for (unit_idx_t unit_idx = 0; unit_idx < _bits.size(); ++unit_idx) {
-        unit_t unit = _bits[unit_idx];
+    for (unit_idx_t unit_idx = 0; unit_idx < storage_size(); ++unit_idx) {
+        unit_t unit = storage()[unit_idx];
         assert(unit_idx + 1 < unit_idx || (unit & last_unit_mask()) == unit);
         if (unit != 0)
             return false;
@@ -344,13 +374,14 @@ bool Bits::empty() const {
 void Bits::flip() {
     if (_len == 0)
         return;
-    for (auto& unit : _bits)
-        unit = ~unit;
-    _bits[_bits.size() - 1] &= last_unit_mask();
+    for (unit_idx_t unit_idx = 0; unit_idx < storage_size(); ++unit_idx)
+        storage()[unit_idx] = ~(storage()[unit_idx]);
+    storage()[storage_size() - 1] &= last_unit_mask();
 }
 
 bool Bits::operator==(const Bits& other) const {
-    return _len == other._len && _bits == other._bits;
+    return _len == other._len &&
+           std::equal(storage(), storage() + storage_size(), other.storage());
 }
 
 bool Bits::operator!=(const Bits& other) const { return !operator==(other); }
@@ -373,20 +404,21 @@ Bits& Bits::operator<<=(size_t shift) {
     const size_t ShiftRem = shift % UnitSize;
     if (ShiftRem > 0) {
         const unit_t Mask = make_mask(ShiftRem, UnitSize - ShiftRem);
-        auto to = _bits.begin();
+        auto to = storage();
         auto from = to + ShiftUnits;
         while (true) {
             *to = *from << ShiftRem;
-            if (++from == _bits.end())
+            if (++from == storage() + storage_size())
                 break;
             *to |= (*from & Mask) >> (UnitSize - ShiftRem);
             ++to;
         }
     } else {
-        std::copy(_bits.begin() + ShiftUnits, _bits.end(), _bits.begin());
+        std::copy(
+            storage() + ShiftUnits, storage() + storage_size(), storage());
     }
-    assert((*(_bits.end() - 1) & ~last_unit_mask()) == 0);
-    std::fill_n(_bits.end() - ShiftUnits, ShiftUnits, 0);
+    assert((storage()[storage_size() - 1] & ~last_unit_mask()) == 0);
+    std::fill_n(storage() + storage_size() - ShiftUnits, ShiftUnits, 0);
     return *this;
 }
 
@@ -402,11 +434,11 @@ Bits& Bits::operator>>=(size_t shift) {
     const size_t ShiftRem = shift % UnitSize;
     if (ShiftRem > 0) {
         const unit_t Mask = make_mask(ShiftRem, 0);
-        auto to = _bits.end() - 1;
-        auto from = _bits.end() - 1 - ShiftUnits;
+        auto to = storage() + storage_size() - 1;
+        auto from = storage() + storage_size() - 1 - ShiftUnits;
         while (true) {
             *to = *from >> ShiftRem;
-            if (from == _bits.begin())
+            if (from == storage())
                 break;
             --from;
             *to |= (*from & Mask) << (UnitSize - ShiftRem);
@@ -414,10 +446,11 @@ Bits& Bits::operator>>=(size_t shift) {
         }
     } else {
         std::copy_backward(
-            _bits.begin(), _bits.end() - ShiftUnits, _bits.end());
+            storage(), storage() + storage_size() - ShiftUnits,
+            storage() + storage_size());
     }
-    *(_bits.end() - 1) &= last_unit_mask();
-    std::fill_n(_bits.begin(), ShiftUnits, 0);
+    storage()[storage_size() - 1] &= last_unit_mask();
+    std::fill_n(storage(), ShiftUnits, 0);
     return *this;
 }
 
@@ -489,11 +522,43 @@ std::string Bits::hex() const {
     return os.str();
 }
 
-void Bits::clear() { std::fill(_bits.begin(), _bits.end(), 0); }
+void Bits::clear() { std::fill(storage(), storage() + storage_size(), 0); }
 
 Bits::unit_t Bits::last_unit_mask() const {
     size_t rem = _len % UnitSize;
     return (rem == 0) ? make_mask(UnitSize, 0) : make_mask(rem, UnitSize - rem);
+}
+
+void Bits::init_storage() {
+    if (is_storage_dynamic()) {
+        _storage.ptr = new unit_t[storage_size()];
+    } else {
+        *_storage.array = {0};
+    }
+    std::fill(storage(), storage() + storage_size(), 0);
+}
+
+void Bits::destroy_storage() {
+    if (is_storage_dynamic() && _storage.ptr) {
+        delete[] _storage.ptr;
+        _storage.ptr = nullptr;
+    }
+}
+
+bool Bits::is_storage_dynamic() const {
+    return storage_size() > sizeof(_storage.array) / UnitSize;
+}
+
+Bits::unit_idx_t Bits::storage_size() const {
+    return (_len + UnitSize - 1) / UnitSize;
+}
+
+Bits::unit_t* Bits::storage() {
+    return is_storage_dynamic() ? _storage.ptr : _storage.array;
+}
+
+const Bits::unit_t* Bits::storage() const {
+    return const_cast<Bits&>(*this).storage();
 }
 
 } // namespace ulam

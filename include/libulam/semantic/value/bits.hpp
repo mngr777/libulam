@@ -2,7 +2,6 @@
 #include <functional>
 #include <libulam/semantic/value/types.hpp>
 #include <ostream>
-#include <vector>
 
 namespace ulam {
 
@@ -83,11 +82,11 @@ private:
 
 class Bits : public _Bits {
 public:
-    explicit Bits(size_t len):
-        _len{len}, _bits((len + UnitSize - 1) / UnitSize, 0) {}
+    explicit Bits(size_t len = 0);
+    ~Bits();
 
-    Bits(Bits&& other) = default;
-    Bits& operator=(Bits&&) = default;
+    Bits(Bits&& other);
+    Bits& operator=(Bits&&);
 
     BitsView view() { return BitsView{*this}; }
     const BitsView view() const {
@@ -154,8 +153,20 @@ private:
     void clear();
     unit_t last_unit_mask() const;
 
+    void init_storage();
+    void destroy_storage();
+    bool is_storage_dynamic() const;
+    unit_idx_t storage_size() const;
+
+    unit_t* storage();
+    const unit_t* storage() const;
+
     size_t _len;
-    std::vector<unit_t> _bits;
+
+    union {
+        unit_t array[1];
+        unit_t* ptr;
+    } _storage;
 };
 
 } // namespace ulam
