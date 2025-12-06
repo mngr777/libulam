@@ -12,6 +12,7 @@
 namespace ulam {
 
 // TODO: replace boolean flags with int flags
+// TODO: constness is an attribute of lvalue !!
 
 using scope_lvl_t = std::uint16_t;
 constexpr scope_lvl_t NoScopeLvl = -1;
