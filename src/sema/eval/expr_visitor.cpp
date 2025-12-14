@@ -936,8 +936,13 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     }
 
     auto tv = type->type_op(node->op(), val);
-    if (!tv)
+    if (!tv) {
+        const auto name = ops::str(node->op());
+        assert(name);
+        diag().error(
+            node->loc_id(), 1, std::string("operation `") + name + "' failed");
         return {ExprError::InvalidTypeOperator};
+    }
 
     type = tv.type();
     val = tv.move_value();
