@@ -44,17 +44,12 @@ EvalEnv::EvalTestContextRaii::EvalTestContextRaii(
 // EvalEnv
 
 ExprRes EvalEnv::eval(ulam::Ref<ulam::ast::Block> block) {
-    // exec
-    ExprRes res;
-    {
-        auto fr = add_flags_raii(evl::NoCodegen);
-        res = Base::eval(block);
-    }
-
     // codegen
     Base::eval(block);
 
-    return res;
+    // exec
+    auto fr = add_flags_raii(evl::NoCodegen);
+    return Base::eval(block);
 }
 
 void EvalEnv::eval_stmt(ulam::Ref<ulam::ast::Stmt> stmt) {

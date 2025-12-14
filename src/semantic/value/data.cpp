@@ -24,7 +24,7 @@ DataPtr Data::copy() const { return make_s<Data>(_type, _bits.copy()); }
 
 DataView Data::view() { return {shared_from_this(), _type, 0}; }
 
-const DataView Data::view() const { return const_cast<Data*>(this)->view(); }
+const DataView Data::view() const { return const_cast<Data&>(*this).view(); }
 
 DataView Data::as(Ref<Type> type) { return view().as(type); }
 
@@ -36,7 +36,7 @@ DataView Data::array_item(array_idx_t idx) {
 }
 
 const DataView Data::array_item(array_idx_t idx) const {
-    return const_cast<Data*>(this)->array_item(idx);
+    return const_cast<Data&>(*this).array_item(idx);
 }
 
 DataView Data::prop(Ref<Prop> prop_) {
@@ -45,13 +45,13 @@ DataView Data::prop(Ref<Prop> prop_) {
 }
 
 const DataView Data::prop(Ref<Prop> prop_) const {
-    return const_cast<Data*>(this)->prop(prop_);
+    return const_cast<Data&>(*this).prop(prop_);
 }
 
 DataView Data::atom_of() { return type()->is_atom() ? view() : DataView{}; }
 
 const DataView Data::atom_of() const {
-    return const_cast<Data*>(this)->atom_of();
+    return const_cast<Data&>(*this).atom_of();
 }
 
 Ref<Type> Data::type() const {
@@ -102,7 +102,7 @@ DataView DataView::as(Ref<Type> view_type) {
 }
 
 const DataView DataView::as(Ref<Type> type) const {
-    return const_cast<DataView*>(this)->as(type);
+    return const_cast<DataView&>(*this).as(type);
 }
 
 DataView DataView::array_item(array_idx_t idx) {
@@ -115,7 +115,7 @@ DataView DataView::array_item(array_idx_t idx) {
 }
 
 const DataView DataView::array_item(array_idx_t idx) const {
-    return const_cast<DataView*>(this)->array_item(idx);
+    return const_cast<DataView&>(*this).array_item(idx);
 }
 
 DataView DataView::prop(Ref<Prop> prop_) {
@@ -146,7 +146,7 @@ DataView DataView::prop(Ref<Prop> prop_) {
 }
 
 const DataView DataView::prop(Ref<Prop> prop_) const {
-    return const_cast<DataView*>(this)->prop(prop_);
+    return const_cast<DataView&>(*this).prop(prop_);
 }
 
 DataView DataView::atom_of() {
@@ -157,12 +157,21 @@ DataView DataView::atom_of() {
 }
 
 const DataView DataView::atom_of() const {
-    return const_cast<DataView*>(this)->atom_of();
+    return const_cast<DataView&>(*this).atom_of();
 }
 
 bitsize_t DataView::position_of() const {
-    // TODO
-    return _off;
+    auto off = _off;
+    auto type = dyn_type();
+    if (_view_type && _view_type != type && _view_type->is_class() &&
+        type->is_class()) {
+        // path.to.field.BaseClass.positionof
+        auto cls = type->as_class();
+        auto view_cls = _view_type->as_class();
+        if (view_cls->is_base_of(cls))
+            off += cls->base_off(view_cls);
+    }
+    return off;
 }
 
 Ref<Type> DataView::type(bool real) const {
@@ -174,7 +183,7 @@ BitsView DataView::bits() {
 }
 
 const BitsView DataView::bits() const {
-    return _storage->bits().view(_off, _type->bitsize());
+    return const_cast<DataView&>(*this).bits();
 }
 
 void DataView::set_view_type(Ref<Type> view_type) {

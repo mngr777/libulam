@@ -85,7 +85,9 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     {
         auto iter_sr = env().scope_raii();
         auto cond = node->cond();
-        auto loop = [&]() { maybe_wrap_stmt(node->body(), cond->is_as_cond()); };
+        auto loop = [&]() {
+            maybe_wrap_stmt(node->body(), cond->is_as_cond());
+        };
         auto [is_true, as_cond_ctx] = env().eval_cond(cond);
         if (!as_cond_ctx.empty()) {
             auto sr = env().as_cond_scope_raii(as_cond_ctx);
