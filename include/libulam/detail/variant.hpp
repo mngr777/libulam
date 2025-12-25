@@ -43,6 +43,10 @@ public:
         return std::holds_alternative<T>(_value);
     }
 
+    template <typename ...Us> bool in() const {
+        return is<Us...>() || false;
+    }
+
     template <typename T> T& get() { return std::get<T>(_value); }
     template <typename T> const T& get() const { return std::get<T>(_value); }
 

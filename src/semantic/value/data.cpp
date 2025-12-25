@@ -9,16 +9,26 @@
 
 namespace ulam {
 
+namespace {
+Ref<AtomType> atom_type(Ref<Type> type) {
+    assert(type->is_atom());
+    return type->is_class() ? type->as_class()->builtins().atom_type()
+                            : dynamic_cast<AtomType*>(type);
+}
+
+} // namespace
+
 // Data
 
 Data::Data(Ref<Type> type, Bits&& bits): _type{}, _bits{std::move(bits)} {
     assert(type->is_array() || type->is_object());
-    if (type->is_atom())
-        type = type->builtins().atom_type();
+    // if (type->is_atom())
+    //     type = type->builtins().atom_type(); // same for placeholders??
     _type = type;
 }
 
-Data::Data(Ref<Type> type): Data{type, Bits{type->bitsize()}} {}
+Data::Data(Ref<Type> type, bool is_ph):
+    _type{type}, _bits{is_ph ? (bitsize_t)0 : type->bitsize()}, _is_ph{is_ph} {}
 
 DataPtr Data::copy() const { return make_s<Data>(_type, _bits.copy()); }
 
@@ -55,8 +65,8 @@ const DataView Data::atom_of() const {
 }
 
 Ref<Type> Data::type() const {
-    return _type->is(AtomId)
-               ? dynamic_cast<AtomType*>(_type)->data_type(_bits.view(), 0)
+    return (!is_ph() && _type->is_atom())
+               ? atom_type(_type)->data_type(_bits.view(), 0)
                : _type;
 }
 
@@ -70,8 +80,8 @@ DataView::DataView(
     Ref<Type> atom_type):
     _storage{storage}, _type{}, _off{off}, _atom{atom_off, atom_type} {
 
-    if (type->is_atom())
-        type = type->builtins().atom_type();
+    // if (type->is_atom())
+    //     type = type->builtins().atom_type();
     _type = type;
 
     if (_atom.off == NoBitsize && _type->is_atom()) {
@@ -81,10 +91,12 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
+    assert(*this && !is_ph());
     dyn_type()->store(_storage->bits(), _off, std::move(rval));
 }
 
 RValue DataView::load(bool real) const {
+    assert(*this && !is_ph());
     auto rval = _type->load(_storage->bits(), _off);
     auto type = dyn_type();
     if (!real && _view_type && !_view_type->is_same(type)) {
@@ -192,8 +204,8 @@ void DataView::set_view_type(Ref<Type> view_type) {
 }
 
 Ref<Type> DataView::dyn_type() const {
-    return _type->is(AtomId)
-               ? dynamic_cast<AtomType*>(_type)->data_type(bits(), 0)
+    return (!is_ph() && _type->is_atom())
+               ? atom_type(_type)->data_type(bits(), 0)
                : _type;
 }
 

@@ -18,7 +18,7 @@ class Type;
 class Data : public std::enable_shared_from_this<Data> {
 public:
     Data(Ref<Type> type, Bits&& bits);
-    explicit Data(Ref<Type>);
+    explicit Data(Ref<Type> type, bool is_ph = false);
 
     Data(Data&&) = delete;
     Data& operator=(Data&&) = delete;
@@ -45,9 +45,12 @@ public:
     Bits& bits() { return _bits; }
     const Bits& bits() const { return _bits; }
 
+    bool is_ph() const { return _is_ph; }
+
 private:
     Ref<Type> _type;
     Bits _bits;
+    bool _is_ph{false};
 };
 
 // TODO: move additional data to shared object
@@ -63,6 +66,8 @@ public:
     DataView() {}
 
     operator bool() const { return _storage.get(); }
+
+    bool is_ph() const { return _storage && _storage->is_ph(); }
 
     void store(RValue&& rval);
     RValue load(bool real = false) const;
