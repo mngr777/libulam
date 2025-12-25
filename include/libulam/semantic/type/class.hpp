@@ -87,8 +87,8 @@ public:
 
     bool is_constructible() const override { return true; }
     RValue construct() override;
-
     RValue construct(Bits&& bits);
+    RValue construct_ph() override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;

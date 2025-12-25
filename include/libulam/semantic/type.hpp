@@ -69,6 +69,7 @@ public:
 
     virtual bool is_constructible() const { return false; }
     virtual RValue construct();
+    virtual RValue construct_ph();
 
     RValue load(const Bits& data, bitsize_t off);
     void store(Bits& data, bitsize_t off, const RValue& rval);
@@ -227,6 +228,7 @@ public:
 
     bool is_constructible() const override;
     RValue construct() override;
+    RValue construct_ph() override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
@@ -319,6 +321,7 @@ public:
 
     bool is_constructible() const override { return true; }
     RValue construct() override;
+    RValue construct_ph() override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;

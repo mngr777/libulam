@@ -19,6 +19,8 @@ Type::~Type() {}
 
 RValue Type::construct() { assert(false); }
 
+RValue Type::construct_ph() { assert(false); }
+
 RValue Type::load(const Bits& data, bitsize_t off) {
     return load(data.view(), off);
 }
@@ -309,6 +311,8 @@ bool AliasType::is_constructible() const {
 
 RValue AliasType::construct() { return non_alias()->construct(); }
 
+RValue AliasType::construct_ph() { return non_alias()->construct_ph(); }
+
 RValue AliasType::load(const BitsView data, bitsize_t off) {
     return non_alias()->load(data, off);
 }
@@ -443,7 +447,11 @@ RValue ArrayType::construct() {
         item_type()->store(data->bits(), off, rval);
         off += item_type()->bitsize();
     }
-    return RValue{data, true};
+    return RValue{data};
+}
+
+RValue ArrayType::construct_ph() {
+    return RValue{make_s<Data>(this, true)};
 }
 
 RValue ArrayType::load(const BitsView data, bitsize_t off) {

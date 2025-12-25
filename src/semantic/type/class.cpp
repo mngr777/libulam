@@ -246,6 +246,10 @@ RValue Class::construct(Bits&& bits) {
     return RValue{make_s<Data>(this, std::move(bits))};
 }
 
+RValue Class::construct_ph() {
+    return RValue{make_s<Data>(this, true)};
+}
+
 RValue Class::load(const BitsView data, bitsize_t off) {
     assert(!is_element() || read_element_id(data, off) == _elt_id);
     return RValue{make_s<Data>(this, data.view(off, bitsize()).copy())};
