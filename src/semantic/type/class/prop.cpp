@@ -5,11 +5,14 @@
 namespace ulam {
 
 RValue Prop::load(DataPtr obj) const {
+    if (obj->is_ph())
+        return type()->construct_ph();
     auto off = data_off_in(obj);
     return type()->canon()->load(obj->bits(), off);
 }
 
 void Prop::store(DataPtr obj, RValue&& rval) const {
+    assert(!obj->is_ph());
     auto off = data_off_in(obj);
     type()->canon()->store(obj->bits(), off, std::move(rval));
 }

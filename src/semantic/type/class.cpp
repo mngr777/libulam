@@ -322,7 +322,7 @@ bool Class::is_castable_to(
     if (is_same(type))
         return true;
 
-    if (!val.empty()) {
+    if (val.has_rvalue()) {
         auto dyn_type = val.dyn_obj_type(true);
         if (!is_same(dyn_type))
             return dyn_type->is_castable_to(type, val, expl);
@@ -339,7 +339,7 @@ bool Class::is_castable_to(
     // NOTE: assuming element dyn type for unknown values, TODO: check if `type`
     // has element descendants
     if (type->is(AtomId))
-        return is_element() || val.empty();
+        return is_element() || !val.has_rvalue();
 
     if (!type->is_class())
         return false;
@@ -373,7 +373,7 @@ bool Class::is_assignable_to(Ref<const Type> type, const Value& val) const {
     if (is_same(type))
         return true;
 
-    if (!val.empty() && type->is_object()) {
+    if (val.has_rvalue() && type->is_object()) {
         auto dyn_type = val.dyn_obj_type(true);
         if (!is_same(dyn_type))
             return dyn_type->is_assignable_to(type, val);
@@ -383,7 +383,7 @@ bool Class::is_assignable_to(Ref<const Type> type, const Value& val) const {
     // NOTE: assuming element dyn type for unknown values, TODO: check if `type`
     // has element descendants
     if (type->is(AtomId))
-        return is_element() || val.empty();
+        return is_element() || !val.has_rvalue();
 
     if (!type->is_class())
         return false;
@@ -407,15 +407,15 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
 
     assert(convs(type, true).empty()); // must use conversion function otherwise
 
-    if (!val.empty()) {
+    if (val.has_rvalue()) {
         auto dyn_type = val.dyn_obj_type();
         if (!is_same(dyn_type))
             return dyn_type->cast_to(type, std::move(val));
     }
 
     auto rval = val.move_rvalue();
-    if (rval.empty())
-        return Value{RValue{}};
+    if (!rval.has_rvalue())
+        return Value{type->construct_ph()};
     assert(rval.is<DataPtr>());
 
     bool is_consteval = rval.is_consteval();

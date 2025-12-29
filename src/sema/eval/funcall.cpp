@@ -1,3 +1,4 @@
+#include "libulam/semantic/utils/strf.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -158,18 +159,24 @@ ExprRes EvalFuncall::do_funcall(
         env().eval_stmt(fun->body_node());
     } catch (EvalExceptReturn& ret) {
         debug() << "}\n";
+#ifdef ULAM_DEBUG
+        utils::Strf strf{program()};
+        debug() << "retval: " << strf.str(fun->ret_type(), ret.res().value())
+                << "\n";
+#endif
         return ret.move_res();
     }
     debug() << "}\n";
 
-    if (!fun->ret_type()->is(VoidId)) {
+    auto ret_type = fun->ret_type();
+    if (!ret_type->is(VoidId)) {
         if (has_flag(evl::NoExec)) {
-            if (fun->ret_type()->is_ref()) {
+            if (ret_type->is_ref()) {
                 LValue lval;
                 lval.set_is_xvalue(false);
-                return {fun->ret_type(), Value{lval}};
+                return {ret_type, Value{lval}};
             }
-            return {fun->ret_type(), Value{RValue{}}};
+            return {ret_type, Value{ret_type->construct_ph()}};
         } else {
             return {ExprError::NoReturn};
         }

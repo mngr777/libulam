@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/bound_fun_set.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -354,8 +355,9 @@ ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
         }
         if (has_flag(evl::NoExec) &&
             !(val.is_lvalue() && val.lvalue().is<BoundFunSet>())) {
-            auto empty = val.is_lvalue() ? Value{val.lvalue().derived()}
-                                         : Value{RValue{}};
+            auto empty = val.is_lvalue()
+                             ? Value{val.lvalue().derived()}
+                             : Value{RValue{res.type()->construct_ph()}};
             return res.derived(res.type(), std::move(empty), true);
         }
     }
@@ -811,11 +813,12 @@ ExprRes EvalExprVisitor::ternary_eval(
     bool cond_bool = builtins().boolean()->is_true(cond_rval);
 
     // use noexec result if possible
-    if (cond_bool && (has_flag(evl::NoExec) || !if_true_res.value().empty())) {
+    if (cond_bool &&
+        (has_flag(evl::NoExec) || if_true_res.value().has_rvalue())) {
         return env().cast(node->if_true(), type, std::move(if_true_res));
     }
     if (!cond_bool &&
-        (has_flag(evl::NoExec) || !if_false_res.value().empty())) {
+        (has_flag(evl::NoExec) || if_false_res.value().has_rvalue())) {
         return env().cast(node->if_false(), type, std::move(if_false_res));
     }
 

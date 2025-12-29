@@ -1,3 +1,4 @@
+#include "libulam/semantic/utils/strf.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/funcall.hpp>
@@ -146,7 +147,7 @@ ExprRes EvalCast::cast_atom(
     if (!cls->is_element()) {
         // value is unknown, assume dynamic type is element derived from arg
         // class
-        if (arg.value().empty())
+        if (!arg.value().has_rvalue())
             return cast_atom_to_nonelement_empty(node, cls, std::move(arg));
     }
     return cast_default(node, to, std::move(arg), expl);
@@ -223,10 +224,10 @@ ExprRes EvalCast::cast_default(
 
 ExprRes EvalCast::cast_atom_to_nonelement_empty(
     Ref<ast::Node> node, Ref<Class> to, ExprRes&& arg) {
-    assert(arg.value().empty());
+    assert(!arg.value().has_rvalue());
     assert(to->is_quark());
     auto val = arg.value().is_lvalue() ? Value{arg.value().lvalue().derived()}
-                                       : Value{RValue{}};
+                                       : Value{to->construct_ph()};
     return {to, std::move(val)};
 }
 
@@ -259,8 +260,10 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     assert(arg.value().is_lvalue());
     bool deref_as_dyn_type = program()->eval_options().cast_deref_as_dyn_type;
     Value val = arg.move_value().deref(deref_as_dyn_type);
-    if (!arg.type()->deref()->is_object() || val.empty())
+
+    if (!arg.type()->deref()->is_object() || !val.has_rvalue())
         return arg.derived(arg.type()->deref(), std::move(val));
+
     return arg.derived(val.dyn_obj_type(), std::move(val));
 }
 

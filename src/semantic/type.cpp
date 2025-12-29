@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -19,7 +18,7 @@ Type::~Type() {}
 
 RValue Type::construct() { assert(false); }
 
-RValue Type::construct_ph() { assert(false); }
+RValue Type::construct_ph() { return RValue{}; }
 
 RValue Type::load(const Bits& data, bitsize_t off) {
     return load(data.view(), off);
@@ -450,9 +449,7 @@ RValue ArrayType::construct() {
     return RValue{data};
 }
 
-RValue ArrayType::construct_ph() {
-    return RValue{make_s<Data>(this, true)};
-}
+RValue ArrayType::construct_ph() { return RValue{make_s<Data>(this, true)}; }
 
 RValue ArrayType::load(const BitsView data, bitsize_t off) {
     auto rval = construct();

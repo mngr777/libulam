@@ -108,6 +108,8 @@ public:
     RValue(RValue&&) = default;
     RValue& operator=(RValue&&) = default;
 
+    bool has_rvalue() const;
+
     RValue copy() const;
 
     DataView data_view();

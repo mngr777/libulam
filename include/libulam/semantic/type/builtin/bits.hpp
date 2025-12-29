@@ -25,7 +25,6 @@ public:
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
     RValue construct() override;
-
     RValue construct(Bits&& bits);
 
     bool is_castable_to(

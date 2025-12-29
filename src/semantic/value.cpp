@@ -7,6 +7,16 @@
 
 namespace ulam {
 
+namespace {
+RValue
+load_rvalue(const DataView& data, bool use_real_type, bool is_consteval) {
+    auto rval =
+        !data.is_ph() ? data.load(use_real_type) : data.type()->construct_ph();
+    rval.set_is_consteval(is_consteval);
+    return rval;
+}
+} // namespace
+
 // LValue
 
 LValue::LValue(): Base{std::monostate{}} {}
@@ -22,7 +32,7 @@ LValue::LValue(BoundFunSet bfset): Base{bfset} {}
 bool LValue::has_rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->value().has_rvalue(); },
-        [&](const DataView& data) { return true; },
+        [&](const DataView& data) { return !data.is_ph(); },
         [&](const BoundFunSet&) -> bool { assert(false); },
         [&](const std::monostate&) { return false; });
 }
@@ -31,9 +41,7 @@ RValue LValue::rvalue(bool real) const {
     return accept(
         [&](Ref<const Var> var) { return var->rvalue(); },
         [&](const DataView& data) {
-            auto rval = data.load(real);
-            rval.set_is_consteval(is_consteval());
-            return rval;
+            return load_rvalue(data, real, is_consteval());
         },
         [&](const BoundFunSet&) -> RValue { assert(false); },
         [&](const std::monostate&) { return RValue{}; });
@@ -44,8 +52,7 @@ void LValue::with_rvalue(
     accept(
         [&](Ref<const Var> var) { var->value().with_rvalue(cb, real); },
         [&](const DataView& data) {
-            RValue rval = data.load(real);
-            rval.set_is_consteval(_is_consteval);
+            auto rval = load_rvalue(data, real, is_consteval());
             cb(rval);
         },
         [&](const BoundFunSet& bound_fset) { assert(false); },
@@ -168,6 +175,10 @@ Value LValue::assign(RValue&& rval) {
 
 // RValue
 
+bool RValue::has_rvalue() const {
+    return is<DataPtr>() ? !get<DataPtr>()->is_ph() : !empty();
+}
+
 RValue RValue::copy() const {
     if (empty())
         return RValue{};
@@ -282,7 +293,7 @@ bool Value::empty() const {
 bool Value::has_rvalue() const {
     return accept(
         [&](const LValue& lval) { return lval.has_rvalue(); },
-        [&](const RValue& rval) { return !rval.empty(); });
+        [&](const RValue& rval) { return rval.has_rvalue(); });
 }
 
 DataView Value::data_view() {

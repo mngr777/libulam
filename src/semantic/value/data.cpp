@@ -22,8 +22,6 @@ Ref<AtomType> atom_type(Ref<Type> type) {
 
 Data::Data(Ref<Type> type, Bits&& bits): _type{}, _bits{std::move(bits)} {
     assert(type->is_array() || type->is_object());
-    // if (type->is_atom())
-    //     type = type->builtins().atom_type(); // same for placeholders??
     _type = type;
 }
 
@@ -80,8 +78,6 @@ DataView::DataView(
     Ref<Type> atom_type):
     _storage{storage}, _type{}, _off{off}, _atom{atom_off, atom_type} {
 
-    // if (type->is_atom())
-    //     type = type->builtins().atom_type();
     _type = type;
 
     if (_atom.off == NoBitsize && _type->is_atom()) {
