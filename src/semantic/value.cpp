@@ -176,7 +176,7 @@ Value LValue::assign(RValue&& rval) {
 // RValue
 
 bool RValue::has_rvalue() const {
-    return is<DataPtr>() ? !get<DataPtr>()->is_ph() : !empty();
+    return !empty() && !(is<DataPtr>() && get<DataPtr>()->is_ph());
 }
 
 RValue RValue::copy() const {

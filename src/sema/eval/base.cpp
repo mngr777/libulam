@@ -7,7 +7,7 @@ namespace ulam::sema {
 bool EvalBase::is_true(const ExprRes& res, bool default_value) {
     assert(res.type()->is(BoolId));
     bool is_truth = default_value;
-    if (!res.value().empty()) {
+    if (res.value().has_rvalue()) {
         res.value().with_rvalue([&](const auto& rval) {
             is_truth = builtins().bool_type()->is_true(rval);
         });

@@ -49,7 +49,7 @@ Datum BoolType::to_datum(const RValue& rval) {
 }
 
 TypedValue BoolType::unary_op(Op op, RValue&& rval) {
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return {this, Value{std::move(rval)}};
 
     bool is_truth = is_true(rval);
@@ -69,11 +69,11 @@ TypedValue BoolType::unary_op(Op op, RValue&& rval) {
 TypedValue BoolType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(BoolId));
-    assert(l_rval.empty() || l_rval.is<Unsigned>());
-    assert(r_rval.empty() || r_rval.is<Unsigned>());
+    assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
+    assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
 
     auto type = builtins().bool_type(std::max(bitsize(), bitsize()));
-    bool is_unknown = l_rval.empty() || r_rval.empty();
+    bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
     if (is_unknown)
         return {type, Value{RValue{}}};
 
@@ -159,7 +159,7 @@ TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue BoolType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return std::move(rval);
 
     bool is_consteval = rval.is_consteval();

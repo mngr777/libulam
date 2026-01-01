@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -67,7 +68,11 @@ void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
 
 void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
     var_init_common(var, in_expr);
-    var->set_value(Value{var->type()->construct()});
+    auto type = var->type();
+    auto rval = (!has_flag(evl::NoExec) || var->is_const())
+                    ? type->construct()
+                    : type->construct_ph();
+    var->set_value(Value{std::move(rval)});
 }
 
 void EvalInit::var_init_common(Ref<Var> var, bool in_expr) {

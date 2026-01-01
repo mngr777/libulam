@@ -26,7 +26,7 @@ TypedValue StringType::type_op(TypeOp op, Value& val) {
     switch (op) {
     case TypeOp::LengthOf: {
         auto type = builtins().unsigned_type();
-        if (val.empty())
+        if (!val.has_rvalue())
             return {type, Value{RValue{}}};
         str_len_t len_ = len(val);
         assert(len_ != NoStrLen);
@@ -53,21 +53,21 @@ Datum StringType::to_datum(const RValue& rval) {
 }
 
 str_len_t StringType::len(const Value& val) const {
-    if (val.empty())
+    if (!val.has_rvalue())
         return NoStrLen;
     return text(val).size();
 }
 
 std::uint8_t StringType::chr(const Value& val, array_idx_t idx) const {
-    if (val.empty())
+    if (!val.has_rvalue())
         return '\0';
     assert(idx < len(val));
     return text(val)[idx];
 }
 
 std::string_view StringType::text(const Value& val) const {
-    if (val.empty())
-        return "";
+    if (!val.has_rvalue())
+        return ""; // ??
     RValue rval = val.copy_rvalue();
     auto str = rval.get<String>();
     assert(str.is_valid());
@@ -77,12 +77,12 @@ std::string_view StringType::text(const Value& val) const {
 TypedValue StringType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(StringId));
-    assert(l_rval.empty() || l_rval.get<String>().is_valid());
-    assert(r_rval.empty() || r_rval.get<String>().is_valid());
+    assert(!l_rval.has_rvalue() || l_rval.get<String>().is_valid());
+    assert(!r_rval.has_rvalue() || r_rval.get<String>().is_valid());
 
-    bool is_unknown = l_rval.empty() || r_rval.empty();
-    String l_str = l_rval.empty() ? String{} : l_rval.get<String>();
-    String r_str = r_rval.empty() ? String{} : r_rval.get<String>();
+    bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
+    String l_str = l_rval.has_rvalue() ? l_rval.get<String>() : String{};
+    String r_str = r_rval.has_rvalue() ? r_rval.get<String>() : String{};
 
     bool is_consteval =
         !is_unknown && l_rval.is_consteval() && r_rval.is_consteval();
@@ -135,7 +135,7 @@ bool StringType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
 TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
 
-    bool is_unknown = rval.empty();
+    bool is_unknown = !rval.has_rvalue();
     bool is_consteval = !is_unknown && rval.is_consteval();
 
     switch (id) {
@@ -155,7 +155,7 @@ TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue StringType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return std::move(rval);
 
     bool is_consteval = rval.is_consteval();

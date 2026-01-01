@@ -42,7 +42,7 @@ Datum IntType::to_datum(const RValue& rval) {
 }
 
 TypedValue IntType::unary_op(Op op, RValue&& rval) {
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return {this, Value{std::move(rval)}};
 
     bool is_consteval = rval.is_consteval();
@@ -77,12 +77,12 @@ TypedValue IntType::unary_op(Op op, RValue&& rval) {
 TypedValue IntType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(IntId));
-    assert(l_rval.empty() || l_rval.is<Integer>());
-    assert(r_rval.empty() || r_rval.is<Integer>());
+    assert(!l_rval.has_rvalue() || l_rval.is<Integer>());
+    assert(!r_rval.has_rvalue() || r_rval.is<Integer>());
 
-    bool is_unknown = l_rval.empty() || r_rval.empty();
-    Integer l_int = l_rval.empty() ? 0 : l_rval.get<Integer>();
-    Integer r_int = r_rval.empty() ? 0 : r_rval.get<Integer>();
+    bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
+    Integer l_int = l_rval.has_rvalue() ? l_rval.get<Integer>() : 0;
+    Integer r_int = r_rval.has_rvalue() ? r_rval.get<Integer>() : 0;
 
     bool is_wider =
         (bitsize() > DefaultSize || r_type->bitsize() > DefaultSize);
@@ -250,7 +250,7 @@ bool IntType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
 bool IntType::is_impl_castable_to_prim(
     Ref<const PrimType> type, const Value& val) const {
     auto rval = val.copy_rvalue();
-    if (rval.empty() || !rval.is_consteval())
+    if (!rval.has_rvalue() || !rval.is_consteval())
         return is_castable_to_prim(type, false);
 
     assert(rval.is<Integer>());
@@ -277,7 +277,7 @@ bool IntType::is_impl_castable_to_prim(
         return is_castable_to_prim(bi_type_id, false);
 
     auto rval = val.copy_rvalue();
-    if (rval.empty() || !rval.is_consteval())
+    if (!rval.has_rvalue() || !rval.is_consteval())
         return is_castable_to_prim(bi_type_id, false);
 
     assert(rval.is<Integer>());
@@ -288,7 +288,7 @@ bool IntType::is_impl_castable_to_prim(
 TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
 
-    bool is_unknown = rval.empty();
+    bool is_unknown = !rval.has_rvalue();
     bool is_wider = bitsize() > DefaultSize;
     bool is_consteval = !is_unknown && rval.is_consteval();
     auto int_val = is_unknown ? 0 : rval.get<Integer>();
@@ -347,7 +347,7 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue IntType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return std::move(rval);
 
     auto int_val = rval.get<Integer>();

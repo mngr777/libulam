@@ -19,7 +19,7 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
     assert(!type->is_ref());
 
     bool is_match = false;
-    if (!res.value().empty()) {
+    if (res.value().has_rvalue()) {
         auto dyn_type = res.value().dyn_obj_type(true);
         is_match = dyn_type->is_impl_refable_as(type, res.value());
     }
@@ -67,7 +67,7 @@ Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
 LValue
 EvalCond::as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
     LValue lval;
-    if (!res.value().empty()) {
+    if (res.value().has_rvalue()) {
         assert(res.value().is_lvalue());
         lval = res.move_value().lvalue().as(type);
     } else {

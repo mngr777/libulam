@@ -8,7 +8,7 @@
 namespace ulam {
 
 Unsigned UnaryType::unsigned_value(const RValue& rval) {
-    assert(!rval.empty());
+    assert(rval.has_rvalue());
     Unsigned uns_val = utils::count_ones(rval.get<Unsigned>());
     assert(uns_val <= bitsize());
     return uns_val;
@@ -46,7 +46,7 @@ Datum UnaryType::to_datum(const RValue& rval) {
 }
 
 TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return {this, Value{RValue{}}};
 
     bool is_consteval = rval.is_consteval();
@@ -82,14 +82,14 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
 TypedValue UnaryType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(UnaryId));
-    assert(l_rval.empty() || l_rval.is<Unsigned>());
-    assert(r_rval.empty() || r_rval.is<Unsigned>());
+    assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
+    assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
 
-    bool is_unknown = l_rval.empty() || r_rval.empty();
+    bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
 
-    Unsigned l_uns = l_rval.empty() ? 0 : unsigned_value(l_rval);
+    Unsigned l_uns = l_rval.has_rvalue() ? unsigned_value(l_rval) : 0;
     auto r_unary_type = builtins().unary_type(r_type->bitsize());
-    Unsigned r_uns = r_rval.empty() ? 0 : r_unary_type->unsigned_value(r_rval);
+    Unsigned r_uns = r_rval.has_rvalue() ? r_unary_type->unsigned_value(r_rval) : 0;
 
     bool is_consteval =
         !is_unknown && l_rval.is_consteval() && r_rval.is_consteval();
@@ -166,7 +166,7 @@ bool UnaryType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
 TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     assert(is_expl_castable_to(id));
 
-    bool is_unknown = rval.empty();
+    bool is_unknown = !rval.has_rvalue();
     bool is_consteval = rval.is_consteval();
     auto uns_val = is_unknown ? 0 : unsigned_value(rval);
 
@@ -223,7 +223,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return std::move(rval);
 
     auto unary_type = builtins().unary_type(type->bitsize());

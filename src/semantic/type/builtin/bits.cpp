@@ -38,7 +38,7 @@ Value BitsType::cast_to(Ref<Type> type, Value&& val) {
     if (type->is_class()) {
         assert(type->bitsize() == bitsize());
         auto cls = type->as_class();
-        if (val.empty())
+        if (!val.has_rvalue())
             return Value{cls->construct()};
 
         auto rval = val.move_rvalue();
@@ -53,7 +53,7 @@ Value BitsType::cast_to(Ref<Type> type, Value&& val) {
     // atom?
     if (type->is(AtomId)) {
         assert(bitsize() == ULAM_ATOM_SIZE);
-        if (val.empty())
+        if (!val.has_rvalue())
             return Value{type->construct()};
 
         auto rval = val.move_rvalue();
@@ -81,7 +81,7 @@ conv_cost_t BitsType::conv_cost(Ref<const Type> type, bool allow_cast) const {
 }
 
 TypedValue BitsType::unary_op(Op op, RValue&& rval) {
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return {this, Value{std::move(rval)}};
 
     switch (op) {
@@ -99,8 +99,8 @@ TypedValue BitsType::unary_op(Op op, RValue&& rval) {
 TypedValue BitsType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
     assert(r_type->is(BitsId) || r_type->is(UnsignedId));
-    assert(l_rval.empty() || l_rval.is<Bits>());
-    bool is_unknown = l_rval.empty() || r_rval.empty();
+    assert(!l_rval.has_rvalue() || l_rval.is<Bits>());
+    bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
     bool is_consteval = !ops::is_assign(op) && !is_unknown &&
                         l_rval.is_consteval() && r_rval.is_consteval();
 
@@ -160,7 +160,7 @@ TypedValue BitsType::binary_op(
         };
 
         bitsize_t size = bitsize();
-        if (!l_rval.empty() && l_rval.is_consteval() && size <= 64) {
+        if (l_rval.has_rvalue() && l_rval.is_consteval() && size <= 64) {
             // const value, bitsize <= 64, can we use less bits?
             const Bits& bits = l_rval.get<Bits>();
             size = std::min(
@@ -169,7 +169,7 @@ TypedValue BitsType::binary_op(
 
         if (is_unknown) {
             // assume 1-bit shift if unknown or not consteval
-            bitsize_t shift = (!r_rval.empty() && r_rval.is_consteval())
+            bitsize_t shift = (r_rval.has_rvalue() && r_rval.is_consteval())
                                   ? r_rval.get<Unsigned>()
                                   : 1;
             return {tpl()->type(res_bitsize(size, shift)), Value{RValue{}}};
@@ -286,7 +286,7 @@ TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
 RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     assert(is_expl_castable_to(type));
-    if (rval.empty())
+    if (!rval.has_rvalue())
         return std::move(rval);
 
     bool is_consteval = rval.is_consteval();

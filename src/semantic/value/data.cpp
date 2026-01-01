@@ -28,7 +28,11 @@ Data::Data(Ref<Type> type, Bits&& bits): _type{}, _bits{std::move(bits)} {
 Data::Data(Ref<Type> type, bool is_ph):
     _type{type}, _bits{is_ph ? (bitsize_t)0 : type->bitsize()}, _is_ph{is_ph} {}
 
-DataPtr Data::copy() const { return make_s<Data>(_type, _bits.copy()); }
+DataPtr Data::copy() const {
+    return !is_ph()
+        ? make_s<Data>(_type, _bits.copy())
+        : make_s<Data>(_type, true);
+}
 
 DataView Data::view() { return {shared_from_this(), _type, 0}; }
 

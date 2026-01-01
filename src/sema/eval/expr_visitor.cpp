@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include "libulam/semantic/value/bound_fun_set.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
@@ -354,7 +355,8 @@ ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
             return {ExprError::NotConsteval};
         }
         if (has_flag(evl::NoExec) &&
-            !(val.is_lvalue() && val.lvalue().is<BoundFunSet>())) {
+            !(val.is_lvalue() && val.lvalue().is<BoundFunSet>()) &&
+            val.has_rvalue()) {
             auto empty = val.is_lvalue()
                              ? Value{val.lvalue().derived()}
                              : Value{RValue{res.type()->construct_ph()}};
@@ -931,7 +933,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 
     // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
     if (use_dyn_type) {
-        if (type->is_object() && !val.empty()) {
+        if (type->is_object() && val.has_rvalue()) {
             // using "real" type, implied by usage of `super.contstantof` in
             // t41506
             type = val.dyn_obj_type(true);
@@ -1032,7 +1034,7 @@ ExprRes EvalExprVisitor::array_access_string(
     auto char_type = builtins().char_type();
 
     // empty string or index value?
-    if (obj.value().empty() || idx.value().empty()) {
+    if (!obj.value().has_rvalue() || !idx.value().has_rvalue()) {
         if (obj.value().is_rvalue())
             return {char_type, Value{RValue{}}};
         auto lval = obj.value().lvalue().derived();

@@ -264,6 +264,7 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     if (!arg.type()->deref()->is_object() || !val.has_rvalue())
         return arg.derived(arg.type()->deref(), std::move(val));
 
+    assert(val.has_rvalue());
     return arg.derived(val.dyn_obj_type(), std::move(val));
 }
 
