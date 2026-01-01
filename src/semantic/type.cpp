@@ -144,13 +144,12 @@ TypedValue Type::type_op(TypeOp op, Value& val) {
     }
     case TypeOp::PositionOf: {
         auto uns_type = builtins().unsigned_type();
-        if (val.empty() || !val.has_rvalue())
+        if (val.empty()) // TODO: error
             return {uns_type, Value{RValue{}}};
         auto pos = val.position_of();
         if (pos == NoBitsize)
             return {};
-        RValue rval{(Unsigned)pos};
-        rval.set_is_consteval(val.is_consteval());
+        RValue rval{(Unsigned)pos, true};
         return {uns_type, Value{std::move(rval)}};
     }
     default:

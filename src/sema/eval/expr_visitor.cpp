@@ -951,7 +951,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 
     type = tv.type();
     val = tv.move_value();
-    val.set_is_consteval(is_consteval);
+    val.set_is_consteval(val.is_consteval() || is_consteval);
     return {type, std::move(val)};
 }
 

@@ -9,7 +9,7 @@ inline bool can_fold(ulam::Ref<const ulam::Type> type) {
 }
 
 inline bool can_fold(const ulam::sema::ExprRes& res) {
-    bool is_foldable = !res.value().empty() && res.value().is_consteval() &&
+    bool is_foldable = res.value().has_rvalue() && res.value().is_consteval() &&
                        can_fold(res.type());
     if (is_foldable) {
         res.value().with_rvalue(
