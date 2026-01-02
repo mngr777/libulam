@@ -29,9 +29,8 @@ Data::Data(Ref<Type> type, bool is_ph):
     _type{type}, _bits{is_ph ? (bitsize_t)0 : type->bitsize()}, _is_ph{is_ph} {}
 
 DataPtr Data::copy() const {
-    return !is_ph()
-        ? make_s<Data>(_type, _bits.copy())
-        : make_s<Data>(_type, true);
+    return !is_ph() ? make_s<Data>(_type, _bits.copy())
+                    : make_s<Data>(_type, true);
 }
 
 DataView Data::view() { return {shared_from_this(), _type, 0}; }
@@ -187,7 +186,17 @@ bitsize_t DataView::position_of() const {
 }
 
 Ref<Type> DataView::type(bool real) const {
-    return (!real && _view_type) ? _view_type : dyn_type();
+    // NOTE: for placeholders, assume view type is real value type (t41613),
+    // example:
+    // ```
+    // Base& foo = get_derived_instance(); // non-const
+    // if (foo as Derived) {
+    //   foo.bar(); // "real" value (placeholder) type is `Base`, since value is
+    //              // not known at compile time, but at runtime it must be
+    //              // `Derived` within if-as block
+    // }
+    // ```
+    return ((!real || is_ph()) && _view_type) ? _view_type : dyn_type();
 }
 
 BitsView DataView::bits() {

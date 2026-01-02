@@ -67,7 +67,7 @@ Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
 LValue
 EvalCond::as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
     LValue lval;
-    if (res.value().has_rvalue()) {
+    if (!res.value().empty()) {
         assert(res.value().is_lvalue());
         lval = res.move_value().lvalue().as(type);
     } else {

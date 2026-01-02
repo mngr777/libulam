@@ -8,7 +8,9 @@ namespace ulam {
 
 BoundFunSet::BoundFunSet(DataView self, Ref<FunSet> fset, Ref<Class> eff_cls):
     _self{self}, _fset{fset}, _eff_cls{eff_cls} {
-    assert(!_self || _self.type(true)->is_class());
+    assert(
+        !_self || _self.type(true)->is_class() ||
+        (_self.is_ph() && _self.type()->is_atom()));
 }
 
 bool BoundFunSet::has_self() const { return _self; }
