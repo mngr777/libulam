@@ -84,10 +84,6 @@ static const std::set<std::string> Skip {
     "t41590_test_compiler_transientwithatomarraydmassignedatomref.test", // -"-
     "t41591_test_compiler_transientwithatomarraydmassignedatomarrayitem.test", // test case parser, FIXME
     "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
-    "t41616_test_compiler_positionofdatamemberascond.test", // positionof
-    "t41617_test_compiler_positionofascondref.test", // -"-
-    "t41618_test_compiler_positionofreftodatamember.test", // -"-
-    "t41620_test_compiler_elementpositionofdatamemberinbaseclassofbaseclassnoref.test", // -"-
     "t41621_test_compiler_elementpositionofdatamemberusingSelf.test", // instanceof base type chain, TODO
 };
 
@@ -242,6 +238,9 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41600_test_compiler_twoelementswithsame64bitquarkbase_ish.test", // autofilled array output
     "t41601_test_compiler_twoelementswithsame64bitquarkbase_variation.test", // -"-
     "t41613_test_compiler_elementinheritedquark_instanceof_withsuper_withinatomdatamember.test", // `Bool brtn[3](true, true, true);` is correct, Unsigned format
+    "t41616_test_compiler_positionofdatamemberascond.test", // positionof const folding
+    "t41617_test_compiler_positionofascondref.test", // -"-
+    "t41618_test_compiler_positionofreftodatamember.test", // -"-
     "t41622_test_compiler_quarkunion_dmsizeswithaquarkunion.test", // output format
     "t41623_test_compiler_funcdef_returnsarraytoreturnbangitem_ish.test", // `Bool m_b(true)` is correct
     "t41625_test_compiler_elementandquarkinheritancetemplatemix_refsbasedatamembercast_ish.test", // output format, TODO: recheck

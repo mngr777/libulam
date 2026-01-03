@@ -139,7 +139,6 @@ DataView DataView::prop(Ref<Prop> prop_) {
         // (in ulam::Options::class_options)
         assert(type->is_atom());
         assert(_view_type->is_class());
-        assert(_view_type->as_class()->is_element());
         type = _view_type;
     }
     assert(type->is_class());
