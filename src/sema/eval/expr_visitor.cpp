@@ -400,7 +400,9 @@ bool EvalExprVisitor::check_is_class(
 
 Ref<Class> EvalExprVisitor::class_super(Ref<ast::Expr> node, Ref<Class> cls) {
     if (!cls->has_super()) {
-        diag().error(node, "class does not have a superclass");
+        auto message = "class `" + std::string(cls->full_name()) +
+                       "' does not have a superclass";
+        diag().error(node, message);
         return {};
     }
     return cls->super();
@@ -859,10 +861,12 @@ EvalExprVisitor::type_op_default(Ref<ast::TypeOpExpr> node, Ref<Type> type) {
 ExprRes
 EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
     // obj.Base.<type_op>?
+    Ref<Class> base{};
     if (node->has_base_type()) {
         arg = as_base(node, node->base_type(), std::move(arg));
         if (!arg)
             return std::move(arg);
+        base = arg.type()->as_class();
     }
 
     // class type op may require an evaluator
@@ -880,7 +884,7 @@ EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
             }
         }
     }
-    return type_op_expr_default(node, std::move(arg));
+    return type_op_expr_default(node, std::move(arg), base);
 }
 
 ExprRes EvalExprVisitor::type_op_expr_construct(
@@ -899,7 +903,7 @@ ExprRes EvalExprVisitor::type_op_expr_fun(
 }
 
 ExprRes EvalExprVisitor::type_op_expr_default(
-    Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
+    Ref<ast::TypeOpExpr> node, ExprRes&& arg, Ref<Class> base) {
     bool is_consteval = true;
     bool use_dyn_type = false;
     switch (node->op()) {
@@ -929,8 +933,10 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     auto type = arg.type()->deref();
     auto val = arg.move_value();
 
-    // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
-    if (use_dyn_type) {
+    if (base) {
+        type = base;
+    } else if (use_dyn_type) {
+        // NOTE: instanceof uses dynamic type, but not e.g. sizeof (t3583)
         if (type->is_object() && val.has_rvalue()) {
             // using "real" type, implied by usage of `super.contstantof` in
             // t41506

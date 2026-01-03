@@ -129,8 +129,8 @@ protected:
     type_op_expr_construct(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
     virtual ExprRes type_op_expr_fun(
         Ref<ast::TypeOpExpr> node, Ref<FunSet> fset, ExprRes&& arg);
-    virtual ExprRes
-    type_op_expr_default(Ref<ast::TypeOpExpr> node, ExprRes&& arg);
+    virtual ExprRes type_op_expr_default(
+        Ref<ast::TypeOpExpr> node, ExprRes&& arg, Ref<Class> base = {});
 
     virtual ExprRes ident_self(Ref<ast::Ident> node);
     virtual ExprRes ident_super(Ref<ast::Ident> node);

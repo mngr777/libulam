@@ -56,7 +56,9 @@ protected:
         ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) override;
 
     ExprRes type_op_expr_default(
-        ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) override;
+        ulam::Ref<ulam::ast::TypeOpExpr> node,
+        ExprRes&& arg,
+        ulam::Ref<ulam::Class> base = {}) override;
 
     ExprRes ident_self(ulam::Ref<ulam::ast::Ident> node) override;
 

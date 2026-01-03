@@ -374,7 +374,10 @@ ExprRes EvalExprVisitor::type_op_expr_construct(
 }
 
 ExprRes EvalExprVisitor::type_op_expr_default(
-    ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
+    ulam::Ref<ulam::ast::TypeOpExpr> node,
+    ExprRes&& arg,
+    ulam::Ref<ulam::Class> base) {
+
     std::string data;
     if (!has_flag(evl::NoCodegen)) {
         if (node->op() == ulam::TypeOp::AtomOf &&
@@ -388,7 +391,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
         }
         data = exp::data(arg);
     }
-    auto res = Base::type_op_expr_default(node, std::move(arg));
+    auto res = Base::type_op_expr_default(node, std::move(arg), base);
 
     if (!data.empty()) {
         if (util::can_fold(res)) {

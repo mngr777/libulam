@@ -84,7 +84,6 @@ static const std::set<std::string> Skip {
     "t41590_test_compiler_transientwithatomarraydmassignedatomref.test", // -"-
     "t41591_test_compiler_transientwithatomarraydmassignedatomarrayitem.test", // test case parser, FIXME
     "t41597_test_compiler_anotherclassconstantinsquarebracketslhs_ish.test", // out-of-range error is correct?
-    "t41621_test_compiler_elementpositionofdatamemberusingSelf.test", // instanceof base type chain, TODO
 };
 
 static const std::set<std::string> SkipAnswerCheck = {
