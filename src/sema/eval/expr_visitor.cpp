@@ -13,7 +13,9 @@
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
+#include <libulam/semantic/type/class_name_kind.hpp>
 #include <libulam/semantic/type/ops.hpp>
+#include <libulam/semantic/utils/class_name.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 #ifdef DEBUG_EVAL_EXPR_VISITOR
@@ -781,6 +783,17 @@ ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {
     // cast bo Bool(1)
     auto boolean = builtins().boolean();
     return env().cast(node, boolean, std::move(cond_res));
+}
+
+ExprRes EvalExprVisitor::visit(Ref<ast::ClassName> node) {
+    auto cls = scope()->self_cls();
+    if (!cls) {
+        diag().error(node->loc_id(), 1, "not in class");
+        return {ExprError::NotInClass};
+    }
+    auto str_id = utils::class_name_id(program(), cls, node->kind());
+    RValue rval{String{str_id}, true};
+    return {builtins().string_type(), Value{std::move(rval)}};
 }
 
 ExprResPair

@@ -33,6 +33,7 @@ public:
     ExprRes visit(Ref<ast::UnaryOp> node) override;
     ExprRes visit(Ref<ast::Cast> node) override;
     ExprRes visit(Ref<ast::Ternary> node) override;
+    ExprRes visit(Ref<ast::ClassName> node) override;
     ExprRes visit(Ref<ast::BoolLit> node) override;
     ExprRes visit(Ref<ast::NumLit> node) override;
     ExprRes visit(Ref<ast::StrLit> node) override;

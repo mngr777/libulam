@@ -12,6 +12,7 @@ class BinaryOp;
 class UnaryOp;
 class Cast;
 class Ternary;
+class ClassName;
 class BoolLit;
 class NumLit;
 class StrLit;
@@ -31,6 +32,7 @@ public:
     virtual ExprRes visit(Ref<BinaryOp> node);
     virtual ExprRes visit(Ref<Cast> node);
     virtual ExprRes visit(Ref<Ternary> node);
+    virtual ExprRes visit(Ref<ClassName> node);
     virtual ExprRes visit(Ref<BoolLit> node);
     virtual ExprRes visit(Ref<NumLit> node);
     virtual ExprRes visit(Ref<StrLit> node);

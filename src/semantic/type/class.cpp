@@ -77,6 +77,10 @@ const std::string_view Class::full_name() const {
     return _full_name;
 }
 
+str_id_t Class::full_name_id() const {
+    return program()->str_pool().put(full_name());
+}
+
 const std::string_view Class::mangled_name() const {
     if (_mangled_name.empty()) {
         std::stringstream ss;
@@ -92,6 +96,10 @@ const std::string_view Class::mangled_name() const {
         _mangled_name = ss.str();
     }
     return _mangled_name;
+}
+
+str_id_t Class::mangled_name_id() const {
+    return program()->str_pool().put(mangled_name());
 }
 
 cls_id_t Class::class_id() const {

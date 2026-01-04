@@ -49,7 +49,10 @@ public:
     str_id_t name_id() const override;
 
     const std::string_view full_name() const;
+    str_id_t full_name_id() const;
+
     const std::string_view mangled_name() const;
+    str_id_t mangled_name_id() const;
 
     cls_id_t class_id() const;
     elt_id_t element_id() const;

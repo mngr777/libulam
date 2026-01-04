@@ -1,3 +1,4 @@
+#include "libulam/semantic/type/class_name_kind.hpp"
 #include "src/detail/string.hpp"
 #include <cassert>
 #include <libulam/semantic/ops.hpp>
@@ -70,6 +71,25 @@ ClassKind class_kind(Type type) {
         return ClassKind::Union;
     default:
         assert(false);
+    }
+}
+
+bool is_class_name(Type type) { return class_name_kind(type) != NotClassName; }
+
+ClassNameKind class_name_kind(Type type) {
+    switch (type) {
+    case __Class:
+        return ClassName;
+    case __ClassSignature:
+        return ClassSignature;
+    case __ClassPretty:
+        return ClassNamePretty;
+    case __ClassSimple:
+        return ClassNameSimple;
+    case __ClassMangled:
+        return ClassNameMangled;
+    default:
+        return NotClassName;
     }
 }
 

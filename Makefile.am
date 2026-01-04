@@ -68,6 +68,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type/class/prop.hpp \
 	include/libulam/semantic/type/class/registry.hpp \
 	include/libulam/semantic/type/class_kind.hpp \
+	include/libulam/semantic/type/class_name_kind.hpp \
 	include/libulam/semantic/type/conv.hpp \
 	include/libulam/semantic/type/element.hpp \
 	include/libulam/semantic/type/ops.hpp \
@@ -76,6 +77,7 @@ SEMANTIC_HEADER_FILES = \
 	include/libulam/semantic/type_ops.hpp \
 	include/libulam/semantic/type_ops.inc.hpp \
 	include/libulam/semantic/type_tpl.hpp \
+	include/libulam/semantic/utils/class_name.hpp \
 	include/libulam/semantic/utils/strf.hpp \
 	include/libulam/semantic/value.hpp \
 	include/libulam/semantic/value/bits.hpp \
@@ -121,6 +123,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/element.cpp \
 	src/semantic/type/ops.cpp \
 	src/semantic/type_tpl.cpp \
+	src/semantic/utils/class_name.cpp \
 	src/semantic/utils/strf.cpp \
 	src/semantic/value.cpp \
 	src/semantic/value/bits.cpp \

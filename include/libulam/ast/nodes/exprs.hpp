@@ -6,6 +6,7 @@
 #include <libulam/ast/str.hpp>
 #include <libulam/semantic/number.hpp>
 #include <libulam/semantic/ops.hpp>
+#include <libulam/semantic/type/class_name_kind.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/src_loc.hpp>
@@ -125,6 +126,17 @@ public:
     ULAM_AST_TUPLE_PROP(cond, 0)
     ULAM_AST_TUPLE_PROP(if_true, 1)
     ULAM_AST_TUPLE_PROP(if_false, 2)
+};
+
+class ClassName : public Expr {
+    ULAM_AST_EXPR
+public:
+    ClassName(ClassNameKind kind): _kind{kind} {}
+
+    ClassNameKind kind() const { return _kind; }
+
+private:
+    ClassNameKind _kind;
 };
 
 template <typename T> class _Literal : public Expr {

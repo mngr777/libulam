@@ -116,7 +116,7 @@ void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
 }
 
 Ptr<ast::ModuleDef> Parser::parse_module(const std::string_view name) {
-    auto node = tree_loc<ast::ModuleDef>(_tok.loc_id);
+    auto node = tree_at<ast::ModuleDef>(_tok.loc_id);
     node->set_ulam_version(_pp.version());
     node->set_name_id(_str_pool.put(name));
     while (!_tok.is(tok::Eof)) {
@@ -215,7 +215,7 @@ Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     if (_tok.in(tok::Plus, tok::Colon))
         parents = parse_class_parent_list();
 
-    return tree_loc<ast::ClassDef>(
+    return tree_at<ast::ClassDef>(
         loc_id, kind, name, std::move(params), std::move(parents));
 }
 
@@ -576,7 +576,7 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
     if (!ok)
         return {};
 
-    auto node = tree_loc<ast::VarDef>(
+    auto node = tree_at<ast::VarDef>(
         name.loc_id(), name, std::move(array_dims), std::move(init));
     node->set_is_ref(is_ref);
     node->set_is_const(flags & VarIsConst);
@@ -699,7 +699,7 @@ Ptr<ast::FunDef> Parser::parse_constructor_def_rest(ast::Str name) {
 Ptr<ast::ParamList> Parser::parse_param_list(bool allow_ellipsis) {
     assert(_tok.is(tok::ParenL));
     // (
-    auto node = tree_loc<ast::ParamList>(_tok.loc_id);
+    auto node = tree_at<ast::ParamList>(_tok.loc_id);
     consume();
     bool requires_value = false;
     Ref<ast::Param> prev{};
@@ -790,7 +790,7 @@ Ptr<ast::Param> Parser::parse_param(bool requires_value) {
     if (!ok)
         return {};
 
-    auto node = tree_loc<ast::Param>(
+    auto node = tree_at<ast::Param>(
         name.loc_id(), name, std::move(type), std::move(array_dims),
         std::move(init));
     node->set_is_const(is_const);
@@ -817,12 +817,12 @@ std::pair<Ptr<ast::InitValue>, bool> Parser::parse_init(
             [&](Ptr<ast::InitList>& list) {
                 if (!list)
                     return Ptr<ast::InitValue>{};
-                return tree_loc<ast::InitValue>(loc_id, std::move(list));
+                return tree_at<ast::InitValue>(loc_id, std::move(list));
             },
             [&](Ptr<ast::InitMap>& map) {
                 if (!map)
                     return Ptr<ast::InitValue>{};
-                return tree_loc<ast::InitValue>(loc_id, std::move(map));
+                return tree_at<ast::InitValue>(loc_id, std::move(map));
             });
         auto ok = (bool)val;
         return std::pair{std::move(val), ok};
@@ -843,7 +843,7 @@ std::pair<Ptr<ast::InitValue>, bool> Parser::parse_init(
             auto expr = parse_expr();
             if (!expr)
                 return {};
-            return {tree_loc<ast::InitValue>(loc_id, std::move(expr)), true};
+            return {tree_at<ast::InitValue>(loc_id, std::move(expr)), true};
         }
     } else if (is_array && array_dims->has_empty()) {
         diag("array value is required to fill array dimensions");
@@ -876,7 +876,7 @@ Parser::parse_init_list_or_map() {
 Ptr<ast::InitList> Parser::parse_init_list() {
     assert(_tok.in(tok::BraceL, tok::ParenL));
     // { or (
-    auto node = tree_loc<ast::InitList>(_tok.loc_id);
+    auto node = tree_at<ast::InitList>(_tok.loc_id);
     node->set_is_constr_call(_tok.is(tok::ParenL));
     tok::Type closing = _tok.is(tok::BraceL) ? tok::BraceR : tok::ParenR;
     consume();
@@ -917,7 +917,7 @@ Panic:
 Ptr<ast::InitMap> Parser::parse_init_map() {
     assert(_tok.is(tok::BraceL));
     // {
-    auto node = tree_loc<ast::InitMap>(_tok.loc_id);
+    auto node = tree_at<ast::InitMap>(_tok.loc_id);
     consume();
     while (!_tok.is(tok::BraceR)) {
         // .<label>
@@ -1142,7 +1142,7 @@ Ptr<ast::If> Parser::parse_if() {
     if (!ok)
         return {};
 
-    return tree_loc<ast::If>(
+    return tree_at<ast::If>(
         loc_id, std::move(cond), std::move(if_branch), std::move(else_branch));
 }
 
@@ -1226,7 +1226,7 @@ Ptr<ast::While> Parser::parse_while() {
     if (!ok)
         return {};
 
-    return tree_loc<ast::While>(loc_id, std::move(cond), std::move(body));
+    return tree_at<ast::While>(loc_id, std::move(cond), std::move(body));
 }
 
 Ptr<ast::Which> Parser::parse_which() {
@@ -1256,7 +1256,7 @@ Ptr<ast::Which> Parser::parse_which() {
 
     Ptr<ast::Which> node{};
     if (ok)
-        node = tree_loc<ast::Which>(loc_id, std::move(expr));
+        node = tree_at<ast::Which>(loc_id, std::move(expr));
 
     // case list
     // {
@@ -1301,7 +1301,7 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
     // TODO: keep parsing on errors, throw out result
 
     auto loc_id = _tok.loc_id;
-    auto conds = tree_loc<ast::WhichCaseCondList>(_tok.loc_id);
+    auto conds = tree_at<ast::WhichCaseCondList>(_tok.loc_id);
     do {
         bool is_default = _tok.is(tok::Otherwise);
         consume();
@@ -1325,7 +1325,7 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
             }
             as_cond = expr_ctx.as_cond;
         }
-        conds->add(tree_loc<ast::WhichCaseCond>(
+        conds->add(tree_at<ast::WhichCaseCond>(
             cond_loc_id, std::move(expr), as_cond));
 
         // :
@@ -1341,7 +1341,7 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
             return {};
     }
 
-    return tree_loc<ast::WhichCase>(loc_id, std::move(conds), std::move(block));
+    return tree_at<ast::WhichCase>(loc_id, std::move(conds), std::move(block));
 }
 
 Ptr<ast::Cond> Parser::parse_cond() {
@@ -1349,7 +1349,7 @@ Ptr<ast::Cond> Parser::parse_cond() {
     auto expr = parse_expr(expr_ctx);
     if (!expr)
         return {};
-    return tree_loc<ast::Cond>(
+    return tree_at<ast::Cond>(
         expr->loc_id(), std::move(expr), expr_ctx.as_cond);
 }
 
@@ -1372,7 +1372,7 @@ Ptr<ast::Return> Parser::parse_return() {
     if (!ok)
         return {};
 
-    return tree_loc<ast::Return>(loc_id, std::move(expr));
+    return tree_at<ast::Return>(loc_id, std::move(expr));
 }
 
 Ptr<ast::Break> Parser::parse_break() {
@@ -1380,7 +1380,7 @@ Ptr<ast::Break> Parser::parse_break() {
     auto loc_id = _tok.loc_id;
     consume();
     expect(tok::Semicol);
-    return tree_loc<ast::Break>(loc_id);
+    return tree_at<ast::Break>(loc_id);
 }
 
 Ptr<ast::Continue> Parser::parse_continue() {
@@ -1388,7 +1388,7 @@ Ptr<ast::Continue> Parser::parse_continue() {
     auto loc_id = _tok.loc_id;
     consume();
     expect(tok::Semicol);
-    return tree_loc<ast::Continue>(loc_id);
+    return tree_at<ast::Continue>(loc_id);
 }
 
 Ptr<ast::Expr> Parser::parse_expr(ExprContext& ctx) {
@@ -1412,7 +1412,7 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec, ExprContext& ctx) {
 
         auto loc_id = _tok.loc_id;
         consume();
-        lhs = tree_loc<ast::UnaryOp>(
+        lhs = tree_at<ast::UnaryOp>(
             loc_id, op, parse_expr_climb(ops::prec(op), ctx));
 
     } else {
@@ -1473,13 +1473,13 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
 
             if (op == Op::As) {
                 // as-cond
-                auto as_cond = tree_loc<ast::AsCond>(
+                auto as_cond = tree_at<ast::AsCond>(
                     op_loc_id, std::move(lhs), std::move(type_name), ident);
                 ctx.as_cond = ref(as_cond);
                 lhs = std::move(as_cond);
             } else {
                 // other unary ops
-                lhs = tree_loc<ast::UnaryOp>(
+                lhs = tree_at<ast::UnaryOp>(
                     op_loc_id, op, std::move(lhs), std::move(type_name));
             }
             continue;
@@ -1504,7 +1504,7 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
             break;
         default:
             consume();
-            lhs = tree_loc<ast::BinaryOp>(
+            lhs = tree_at<ast::BinaryOp>(
                 op_loc_id, op, std::move(lhs),
                 parse_expr_climb(ops::right_prec(op), ctx));
         }
@@ -1544,6 +1544,8 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(ExprContext& ctx) {
     case tok::Char:
         return parse_char_lit();
     case tok::String:
+        if (_tok.is_class_name())
+            return parse_class_name();
         return parse_str_lit();
     case tok::ParenL:
         return parse_paren_expr_or_cast(ctx);
@@ -1603,7 +1605,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
             auto expr = parse_expr_climb(ops::prec(Op::Cast), ctx);
             if (!expr)
                 goto Panic;
-            return tree_loc<ast::Cast>(
+            return tree_at<ast::Cast>(
                 loc_id, std::move(full_type_name), std::move(expr));
         }
         // type op
@@ -1620,7 +1622,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
     }
     if (!inner || !expect(tok::ParenR))
         goto Panic;
-    return tree_loc<ast::ParenExpr>(loc_id, std::move(inner));
+    return tree_at<ast::ParenExpr>(loc_id, std::move(inner));
 
 Panic:
     panic(tok::ParenR);
@@ -1664,7 +1666,7 @@ Ptr<ast::TypeOpExpr> Parser::parse_type_op_rest(
     }
 
     auto loc_id = type ? type->loc_id() : expr->loc_id();
-    return tree_loc<ast::TypeOpExpr>(
+    return tree_at<ast::TypeOpExpr>(
         loc_id, type_op, std::move(type), std::move(expr), std::move(base_type),
         std::move(args));
 }
@@ -1700,7 +1702,7 @@ Ptr<ast::TypeExpr> Parser::parse_type_expr() {
 
 Ptr<ast::ExprList> Parser::parse_array_dims(bool allow_empty) {
     assert(_tok.is(tok::BracketL));
-    auto node = tree_loc<ast::ExprList>(_tok.loc_id);
+    auto node = tree_at<ast::ExprList>(_tok.loc_id);
     consume();
     while (!_tok.is(tok::Eof)) {
         Ptr<ast::Expr> expr;
@@ -1734,7 +1736,7 @@ Ptr<ast::FullTypeName> Parser::parse_full_type_name(bool maybe_type_op) {
         // &
         is_ref = parse_is_ref();
     }
-    auto node = tree_loc<ast::FullTypeName>(
+    auto node = tree_at<ast::FullTypeName>(
         type_name->loc_id(), std::move(type_name), std::move(array_dims));
     node->set_is_ref(is_ref);
     return node;
@@ -1746,7 +1748,7 @@ Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
         return {};
     }
     auto loc_id = _tok.loc_id;
-    auto node = tree_loc<ast::TypeName>(loc_id, parse_type_spec());
+    auto node = tree_at<ast::TypeName>(loc_id, parse_type_spec());
     while (_tok.is(tok::Period)) {
         consume();
         if (maybe_type_op_or_const &&
@@ -1805,7 +1807,7 @@ Ptr<ast::FunCall> Parser::parse_funcall(Ptr<ast::Expr>&& callable) {
     assert(_tok.is(tok::ParenL));
     auto args = parse_arg_list();
     auto loc_id = args->loc_id();
-    return tree_loc<ast::FunCall>(loc_id, std::move(callable), std::move(args));
+    return tree_at<ast::FunCall>(loc_id, std::move(callable), std::move(args));
 }
 
 Ptr<ast::FunCall> Parser::parse_op_call() {
@@ -1839,7 +1841,7 @@ Ptr<ast::ArgList> Parser::parse_arg_list() {
     assert(_tok.is(tok::ParenL));
     auto loc_id = _tok.loc_id;
     consume();
-    auto args = tree_loc<ast::ArgList>(loc_id);
+    auto args = tree_at<ast::ArgList>(loc_id);
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         auto expr = parse_expr();
         if (!expr)
@@ -1875,7 +1877,7 @@ Ptr<ast::ArrayAccess> Parser::parse_array_access(Ptr<ast::Expr>&& array) {
         consume_if(tok::BracketR);
         return {};
     }
-    return tree_loc<ast::ArrayAccess>(
+    return tree_at<ast::ArrayAccess>(
         loc_id, std::move(array), std::move(index));
 }
 
@@ -1916,7 +1918,7 @@ Ptr<ast::MemberAccess> Parser::parse_member_access_rest(
     Ptr<ast::BaseTypeSelect>&& base_type) {
     assert(_tok.is(tok::Ident));
     auto ident = parse_ident();
-    return tree_loc<ast::MemberAccess>(
+    return tree_at<ast::MemberAccess>(
         op_loc_id, std::move(obj), std::move(ident), std::move(base_type));
 }
 
@@ -1938,7 +1940,7 @@ Ptr<ast::FunCall> Parser::parse_op_call_rest(
     // for ++/-- number of arguments determines if op is pre or post variant
 
     // obj.mem
-    auto mem_access = tree_loc<ast::MemberAccess>(
+    auto mem_access = tree_at<ast::MemberAccess>(
         op_loc_id, std::move(obj), Op::None, std::move(base_type));
     auto mem_access_ref = ref(mem_access);
 
@@ -1963,7 +1965,7 @@ Ptr<ast::FunCall> Parser::parse_op_call_rest(
 
 Ptr<ast::BaseTypeSelect> Parser::parse_base_type_select() {
     assert(_tok.is(tok::TypeIdent));
-    auto base_type = tree_loc<ast::BaseTypeSelect>(_tok.loc_id);
+    auto base_type = tree_at<ast::BaseTypeSelect>(_tok.loc_id);
 
     // Base1.Base2(p1, p2).<...>
     do {
@@ -2013,7 +2015,7 @@ Ptr<ast::Ternary> Parser::parse_ternary_rest(Ptr<ast::Expr>&& cond) {
     if (!if_true || !if_false)
         return {};
 
-    return tree_loc<ast::Ternary>(
+    return tree_at<ast::Ternary>(
         loc_id, std::move(cond), std::move(if_true), std::move(if_false));
 }
 
@@ -2026,7 +2028,7 @@ Parser::parse_class_const_access_rest(Ptr<ast::TypeName> type_name) {
         return {};
 
     auto loc_id = ident->loc_id();
-    return tree_loc<ast::ClassConstAccess>(
+    return tree_at<ast::ClassConstAccess>(
         loc_id, std::move(type_name), std::move(ident));
 }
 
@@ -2111,7 +2113,7 @@ Ptr<ast::Ident> Parser::parse_ident(ident_flags_t flags) {
         diag(str.loc_id(), 1, "`super' is not allowed in this context");
         return {};
     }
-    auto ident = tree_loc<ast::Ident>(str.loc_id(), str);
+    auto ident = tree_at<ast::Ident>(str.loc_id(), str);
     ident->set_is_self(is_self);
     ident->set_is_super(is_super);
     ident->set_is_local(is_local);
@@ -2125,12 +2127,20 @@ bool Parser::parse_is_ref() {
     return is_ref;
 }
 
+Ptr<ast::ClassName> Parser::parse_class_name() {
+    assert(_tok.is_class_name());
+    auto kind = _tok.class_name_kind();
+    auto loc_id = _tok.loc_id;
+    consume();
+    return tree_at<ast::ClassName>(loc_id, kind);
+}
+
 Ptr<ast::BoolLit> Parser::parse_bool_lit() {
     assert(_tok.in(tok::True, tok::False));
     bool value = _tok.is(tok::True);
     auto loc_id = _tok.loc_id;
     consume();
-    return tree_loc<ast::BoolLit>(loc_id, value);
+    return tree_at<ast::BoolLit>(loc_id, value);
 }
 
 Ptr<ast::NumLit> Parser::parse_num_lit() {
@@ -2138,7 +2148,7 @@ Ptr<ast::NumLit> Parser::parse_num_lit() {
     auto loc_id = _tok.loc_id;
     auto number = num_lit_number();
     consume();
-    return tree_loc<ast::NumLit>(loc_id, std::move(number));
+    return tree_at<ast::NumLit>(loc_id, std::move(number));
 }
 
 Ptr<ast::NumLit> Parser::parse_char_lit() {
@@ -2146,16 +2156,16 @@ Ptr<ast::NumLit> Parser::parse_char_lit() {
     auto loc_id = _tok.loc_id;
     auto number = detail::parse_char_str(_ctx.diag(), _tok.loc_id, tok_str());
     consume();
-    return tree_loc<ast::NumLit>(loc_id, std::move(number));
+    return tree_at<ast::NumLit>(loc_id, std::move(number));
 }
 
 Ptr<ast::StrLit> Parser::parse_str_lit() {
-    assert(_tok.is(tok::String));
+    assert(_tok.is(tok::String) && !_tok.is_class_name());
     auto loc_id = _tok.loc_id;
     auto text = str_lit_text();
     consume();
     auto str_id = _text_pool.put(text);
-    return tree_loc<ast::StrLit>(loc_id, String{str_id});
+    return tree_at<ast::StrLit>(loc_id, String{str_id});
 }
 
 Number Parser::num_lit_number() {
@@ -2180,12 +2190,6 @@ std::string Parser::str_lit_text() {
         return _pp.current_path().filename();
     case tok::__FilePath:
         return _pp.current_path();
-    case tok::__Class:
-        if (!_cur_cls_def) {
-            diag("__CLASS__ macro defined outside of class body");
-            return {};
-        }
-        return std::string{_str_pool.get(_cur_cls_def->name_id())};
     case tok::__Func:
         if (!_cur_fun_def) {
             diag("__FUN__ macro outside of function body");
@@ -2202,7 +2206,7 @@ template <typename N, typename... Args> Ptr<N> Parser::tree(Args&&... args) {
 }
 
 template <typename N, typename... Args>
-Ptr<N> Parser::tree_loc(loc_id_t loc_id, Args&&... args) {
+Ptr<N> Parser::tree_at(loc_id_t loc_id, Args&&... args) {
     auto node = make<N>(std::forward<Args>(args)...);
     node->set_loc_id(loc_id);
     return node;

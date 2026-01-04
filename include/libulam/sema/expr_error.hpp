@@ -49,7 +49,8 @@ enum class ExprError {
     InitPropNotInClass,
     InitNotProp,
     TernaryNonMatchingTypes,
-    CannotEvalNative
+    CannotEvalNative,
+    NotInClass
 };
 
 }

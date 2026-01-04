@@ -71,6 +71,10 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::__File:
         case tok::__FilePath:
         case tok::__Class:
+        case tok::__ClassSignature:
+        case tok::__ClassPretty:
+        case tok::__ClassSimple:
+        case tok::__ClassMangled:
         case tok::__Func:
             token.type = tok::String;
             return *this;

@@ -2,6 +2,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
+#include <libulam/semantic/type/class_name_kind.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>
 #include <string_view>
@@ -22,6 +23,9 @@ const char* type_name(Type type);
 tok::Type type_by_keyword(const std::string_view str);
 
 ClassKind class_kind(Type type);
+
+bool is_class_name(Type type);
+ClassNameKind class_name_kind(Type type);
 
 // TODO: shorten
 bool is_builtin_type_id(Type type);
@@ -57,6 +61,11 @@ struct Token {
     bool in() { return false; }
 
     ClassKind class_kind() const { return tok::class_kind(type); }
+
+    bool is_class_name() const { return tok::is_class_name(orig_type); }
+    ClassNameKind class_name_kind() const {
+        return tok::class_name_kind(orig_type);
+    }
 
     BuiltinTypeId builtin_type_id() const {
         return tok::builtin_type_id(orig_type);

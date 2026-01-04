@@ -180,6 +180,7 @@ private:
     Ptr<ast::TypeIdent> parse_type_ident(type_flags_t = NoTypeFlags);
     Ptr<ast::Ident> parse_ident(ident_flags_t flags = NoIdentFlags);
     bool parse_is_ref();
+    Ptr<ast::ClassName> parse_class_name();
     Ptr<ast::BoolLit> parse_bool_lit();
     Ptr<ast::NumLit> parse_num_lit();
     Ptr<ast::NumLit> parse_char_lit();
@@ -187,7 +188,7 @@ private:
 
     template <typename N, typename... Args> Ptr<N> tree(Args&&... args);
     template <typename N, typename... Args>
-    Ptr<N> tree_loc(loc_id_t loc_id, Args&&... args);
+    Ptr<N> tree_at(loc_id_t loc_id, Args&&... args);
 
     std::string str_lit_text();
     Number num_lit_number();
