@@ -63,7 +63,6 @@ static const std::set<std::string> Skip {
     "t3494_test_compiler_divideandmodmixedtypes.test", // impl. casting Int to Int(4): `k = (g % e)`, non-constant
     "t3651_test_compiler_elementandquark_localarrayref.test", // Tar(cx) should not resolve, Tar is not a template
     "t3933_test_compiler_string_lengthof.test", // similar to t3930 in SkipCheckAnswer, `Unsigned` to `Int(8)` cast fails because .lenghtof is not consteval
-    "t41050_test_compiler_controlswitch_emptyvalueemptybody.test", // -"-
     "t41052_test_compiler_elementandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41053_test_compiler_transientandquark_castreffuncreturnvalue.test", // rvalue ref
     "t41074_test_compiler_elementandquark_customarrayonfunccallreturn.test", // assignment to xvalue
