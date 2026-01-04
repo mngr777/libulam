@@ -13,6 +13,14 @@ auto make_fun_op_table() {
     return table;
 }
 
+auto make_op_fun_table() {
+    std::map<Op, std::string_view> table;
+#define FUN_OP(name, op) table[Op::op] = name;
+#include <libulam/semantic/fun_ops.inc.hpp>
+#undef FUN_OP
+    return table;
+}
+
 } // namespace
 
 const char* str(Op op) {
@@ -31,6 +39,12 @@ Op fun_name_op(const std::string_view name) {
     static auto table{make_fun_op_table()};
     auto it = table.find(name);
     return (it != table.end()) ? it->second : Op::None;
+}
+
+const std::string_view op_fun_name(Op op) {
+    static auto table{make_op_fun_table()};
+    auto it = table.find(op);
+    return it != table.end() ? it->second : "";
 }
 
 bool is_overloadable(Op op) {

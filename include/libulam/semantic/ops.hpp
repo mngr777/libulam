@@ -29,6 +29,7 @@ enum class Assoc { Left, Right };
 const char* str(Op op);
 
 Op fun_name_op(const std::string_view name);
+const std::string_view op_fun_name(Op op);
 
 bool is_overloadable(Op op);
 

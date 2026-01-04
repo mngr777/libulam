@@ -1,3 +1,4 @@
+#include "libulam/semantic/ops.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
@@ -127,14 +128,27 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
     }
 
     if (node->is_constructor()) {
+        // constructor
         constructors()->add(std::move(fun));
     } else {
-        if (!node->is_op() || node->is_op_alias()) {
-            if (node->is_op())
-                find_op_fset(node->op())->add(ref);
+        if (node->is_op_alias()) {
+            // op alias (`aref`)
             find_fset(name_id)->add(std::move(fun));
-        } else {
+            find_op_fset(node->op())->add(ref);
+
+        } else if (node->is_op()) {
+            // op
+            auto op_alias = ops::op_fun_name(node->op());
+            if (!op_alias.empty()) {
+                // create alias fun
+                auto fset_name_id = program->str_pool().put(op_alias);
+                find_fset(fset_name_id)->add(ref);
+            }
             find_op_fset(node->op())->add(std::move(fun));
+
+        } else {
+            // regular fun
+            find_fset(name_id)->add(std::move(fun));
         }
     }
 
