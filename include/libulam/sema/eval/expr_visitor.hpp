@@ -178,6 +178,8 @@ protected:
 
     virtual ExprResList eval_args(Ref<ast::ArgList> args);
 
+    virtual ExprRes class_name(Ref<ast::ClassName> node, Ref<Class> cls);
+
     Ref<Type> common_type(const ExprRes& res1, const ExprRes& res2);
 };
 

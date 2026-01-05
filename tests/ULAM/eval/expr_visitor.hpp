@@ -117,6 +117,14 @@ protected:
 
     ExprRes negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) override;
 
+    ExprRes class_name(
+        ulam::Ref<ulam::ast::ClassName> node,
+        ulam::Ref<ulam::Class> cls) override;
+
+    ExprRes class_name_mangled(
+        ulam::Ref<ulam::ast::ClassName> node,
+        ulam::Ref<ulam::Class> cls);
+
     ulam::Ref<ulam::Class> class_base_ident(
         ulam::Ref<ulam::ast::Expr> node,
         ExprRes& obj,

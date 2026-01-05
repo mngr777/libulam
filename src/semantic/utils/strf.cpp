@@ -67,7 +67,7 @@ void Strf::write_prim(
         os << rval.get<Integer>();
     } break;
     case UnsignedId: {
-        os << rval.get<Unsigned>();
+        os << rval.get<Unsigned>() << 'u';
     } break;
     case UnaryId:
     case BoolId: {

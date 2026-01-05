@@ -204,7 +204,11 @@ bitsize_t Class::required_bitsize() const {
 }
 
 bitsize_t Class::direct_bitsize() const {
-    bitsize_t total = data_off();
+    return data_off() + props_bitsize();
+}
+
+bitsize_t Class::props_bitsize() const {
+    bitsize_t total = 0;
     for (auto prop : props()) {
         if (is_union()) {
             total = std::max(total, prop->bitsize());

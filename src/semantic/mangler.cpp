@@ -57,7 +57,7 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
 
     // []
     while (type->is_array()) {
-        auto array = type->canon()->as_array();
+        auto array = type->as_array();
         assert(array);
         auto size = array->array_size();
         if (size == 0 || size == UnknownArraySize) { // TODO: is this correct?
@@ -65,7 +65,7 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         } else {
             detail::write_leximited(os, (Unsigned)size);
         }
-        type = array->item_type()->canon();
+        type = array->item_type();
     }
 
     // bitsize
@@ -84,6 +84,7 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
     } else if (type->is_builtin()) {
         os << builtin_type_code(type->bi_type_id());
     } else {
+        // TODO: remove?
         assert(type->is_prim());
         detail::write_leximited(os, builtin_type_code(type->bi_type_id()));
         if (has_bitsize(type->bi_type_id()))

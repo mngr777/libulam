@@ -1,17 +1,18 @@
 #include "./expr_visitor.hpp"
 #include "../out.hpp"
+#include "../utils.hpp"
 #include "./expr_flags.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
-#include "libulam/ast/nodes/type.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
+#include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value.hpp>
 
@@ -657,6 +658,30 @@ EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
         exp::append(res, ".");
     }
     return std::move(res);
+}
+
+ExprRes EvalExprVisitor::class_name(
+    ulam::Ref<ulam::ast::ClassName> node, ulam::Ref<ulam::Class> cls) {
+    auto res = (node->kind() == ulam::ClassNameMangled)
+                   ? class_name_mangled(node, cls)
+                   : Base::class_name(node, cls);
+    if (!has_flag(evl::NoCodegen)) {
+        assert(res.type()->is(ulam::StringId));
+        assert(res.value().is_rvalue());
+        assert(res.value().rvalue().is<ulam::String>());
+        auto strf = gen().make_strf();
+        auto data = strf.stringify(res.type(), res.value().rvalue());
+        exp::set_data(res, data);
+    }
+    return res;
+}
+
+ExprRes EvalExprVisitor::class_name_mangled(
+    ulam::Ref<ulam::ast::ClassName> node, ulam::Ref<ulam::Class> cls) {
+    auto name = ::class_name_mangled(program(), cls);
+    auto str_id = text_pool().put(name);
+    ulam::RValue rval{ulam::String{str_id}, true};
+    return {builtins().string_type(), ulam::Value{std::move(rval)}};
 }
 
 ulam::Ref<ulam::Class> EvalExprVisitor::class_base_ident(

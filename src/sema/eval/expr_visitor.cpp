@@ -791,6 +791,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassName> node) {
         diag().error(node->loc_id(), 1, "not in class");
         return {ExprError::NotInClass};
     }
+    return class_name(node, cls);
+}
+
+ExprRes EvalExprVisitor::class_name(Ref<ast::ClassName> node, Ref<Class> cls) {
+    assert(cls);
     auto str_id = utils::class_name_id(program(), cls, node->kind());
     RValue rval{String{str_id}, true};
     return {builtins().string_type(), Value{std::move(rval)}};

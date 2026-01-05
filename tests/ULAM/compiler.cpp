@@ -1,8 +1,7 @@
 #include "./compiler.hpp"
 #include "./out.hpp"
-#include "libulam/ast/nodes/init.hpp"
+#include "./utils.hpp"
 #include "tests/ast/print.hpp"
-#include <iostream> // TEST
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -14,24 +13,7 @@
 #include <utility>
 
 namespace {
-
 constexpr char NoMain[] = "<NOMAIN>";
-
-std::string class_prefix(ulam::ClassKind kind) {
-    switch (kind) {
-    case ulam::ClassKind::Element:
-        return "Ue_";
-    case ulam::ClassKind::Transient:
-        return "Un_";
-    default:
-        return "Uq_";
-    }
-}
-
-std::string class_name(ulam::Ref<ulam::Class> cls) {
-    return class_prefix(cls->kind()) + std::string{cls->name()};
-}
-
 } // namespace
 
 void Compiler::parse_module_file(const Path& path) {

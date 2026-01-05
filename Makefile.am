@@ -338,5 +338,7 @@ test_ulam_SOURCES = \
 	tests/ULAM/test_case.hpp \
 	tests/ULAM/test_case.cpp \
 	tests/ULAM/test_case/parser.hpp \
-	tests/ULAM/test_case/parser.cpp
+	tests/ULAM/test_case/parser.cpp \
+	tests/ULAM/utils.hpp \
+	tests/ULAM/utils.cpp
 test_ulam_LDADD = $(TEST_LIBS)

@@ -82,6 +82,7 @@ public:
     bitsize_t data_bitsize() const;
     bitsize_t required_bitsize() const;
     bitsize_t direct_bitsize() const;
+    bitsize_t props_bitsize() const;
     bitsize_t max_bitsize() const;
     bitsize_t data_off() const;
 
