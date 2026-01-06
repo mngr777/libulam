@@ -75,7 +75,6 @@ static const std::set<std::string> Skip {
     "t41421_test_compiler_castingbitstotransientwstring.test", // clobbered String ID is invalid. TODO: fallback
     "t41422_test_compiler_castingstringtobitsandbitstostring.test", // Bits to String, ??
     "t41425_test_compiler_castingstringtobooltovalidatestringindex.test", // -"-
-    "t41533_test_compiler_instanceofconstructorandclassidof.test", // `B2D.instanceof(w,h).classidof` is not constant (since w, h are not), so cannot be implicitly casted to Unsigned(8)
     "t41537_test_compiler_instanceofclassidofmaxof.test", // classidof.maxof, getClassid -- TODO ??
     "t41549_test_compiler_constantsclassidofmaxofsizeof_ish.test", // -"-
     "t41589_test_compiler_transientwithatomdmassignedatomref_ish.test", // ew[0] is overwritten in the process, needs to be handled in compiler (explicitly pass old class?)
@@ -227,6 +226,7 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41512_test_compiler_transientconstantwelementarraydatamemberinitwconstantof.test", // `Bool m_testb(true);  Int m_testi(99);` is correct (tested)
     "t41522_test_compiler_elementinheritance_withoutlocaldefkeyword_andvalidmembertypedef_whenclassseenfirst.test", // `cast` vs `cast cast`
     "t41529_test_compiler_elementandquark_templateinstanceconstantof.test", // return const member access folding (similar to t41507)
+    "t41533_test_compiler_instanceofconstructorandclassidof.test", // classids don't match, different init order
     "t41569_test_compiler_bitwisetwiddleonbigtransient.test", // `Int m_i(-1);` is correct
     "t41594_test_compiler_transientwithtransientbasesfuncselfreset_ish.test", // autofilled array output
     "t41595_test_compiler_elementwithbasesfuncselfreset.test", // -"-
