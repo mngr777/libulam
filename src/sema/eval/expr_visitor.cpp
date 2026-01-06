@@ -1,3 +1,4 @@
+#include "libulam/sema/expr_error.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -422,15 +423,7 @@ Ref<Class> EvalExprVisitor::class_base(
         auto type_spec = base_type->type_spec(n);
         if (type_spec->has_args()) {
             // Type(arg1, arg2)
-            auto type =
-                env().resolver(true).resolve_type_spec(type_spec, false);
-            if (!type)
-                return {};
-            if (!type->is_class()) {
-                diag().error(type_spec, "not a class");
-                return {};
-            }
-            cls = type->as_class();
+            cls = class_base_type_spec(node, obj, cls, type_spec);
         } else {
             // Type
             cls = class_base_ident(node, obj, cls, type_spec->ident());
@@ -487,7 +480,35 @@ Ref<Class> EvalExprVisitor::class_base_ident(
     auto base = type->as_class();
     if (!base->is_same_or_base_of(cls)) {
         diag().error(
-            ident, "not an ancestor of " + std::string{cls->full_name()});
+            ident,
+            "not an ancestor of `" + std::string{cls->full_name()} + "'");
+        return {};
+    }
+    return base;
+}
+
+Ref<Class> EvalExprVisitor::class_base_type_spec(
+    Ref<ast::Expr> node,
+    ExprRes& obj,
+    Ref<Class> cls,
+    Ref<ast::TypeSpec> type_spec) {
+    assert(type_spec && type_spec->has_args());
+
+    auto ident = type_spec->ident();
+    assert(!ident->is_self() && !ident->is_super()); // TODO: check in parser
+
+    auto type = env().resolver(true).resolve_type_spec(type_spec, false);
+    if (!type)
+        return {};
+    if (!type->is_class()) {
+        diag().error(type_spec, "type is not a class");
+        return {};
+    }
+    auto base = type->as_class();
+    if (!base->is_base_of(cls)) {
+        diag().error(
+            type_spec,
+            "not and ancestor of `" + std::string{cls->full_name()} + "'");
         return {};
     }
     return base;

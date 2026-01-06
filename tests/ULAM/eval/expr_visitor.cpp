@@ -560,6 +560,7 @@ ExprRes EvalExprVisitor::member_access_prop(
     ulam::Ref<ulam::ast::MemberAccess> node,
     ExprRes&& obj,
     ulam::Ref<ulam::Prop> prop) {
+
     if (!obj)
         return std::move(obj);
 
@@ -694,6 +695,19 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_ident(
         exp::append(obj, ".");
     }
     return Base::class_base_ident(node, obj, cls, ident);
+}
+
+ulam::Ref<ulam::Class> EvalExprVisitor::class_base_type_spec(
+    ulam::Ref<ulam::ast::Expr> node,
+    ExprRes& obj,
+    ulam::Ref<ulam::Class> cls,
+    ulam::Ref<ulam::ast::TypeSpec> type_spec) {
+    if (!has_flag(evl::NoCodegen)) {
+        // NOTE: ident string only, t41384
+        exp::append(obj, std::string{str(type_spec->ident()->name_id())});
+        exp::append(obj, ".");
+    }
+    return Base::class_base_type_spec(node, obj, cls, type_spec);
 }
 
 ulam::Ref<ulam::Class> EvalExprVisitor::class_base_classid(

@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/type.hpp"
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>
@@ -65,6 +66,12 @@ protected:
         ExprRes& obj,
         Ref<Class> cls,
         Ref<ast::TypeIdent> ident);
+
+    virtual Ref<Class> class_base_type_spec(
+        Ref<ast::Expr> node,
+        ExprRes& obj,
+        Ref<Class> cls,
+        Ref<ast::TypeSpec> type_spec);
 
     virtual Ref<Class> class_base_classid(
         Ref<ast::Expr> expr, ExprRes& obj, Ref<Class> cls, ExprRes&& classid);

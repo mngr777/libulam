@@ -131,6 +131,12 @@ protected:
         ulam::Ref<ulam::Class> cls,
         ulam::Ref<ulam::ast::TypeIdent> ident) override;
 
+    ulam::Ref<ulam::Class> class_base_type_spec(
+        ulam::Ref<ulam::ast::Expr> node,
+        ExprRes& obj,
+        ulam::Ref<ulam::Class> cls,
+        ulam::Ref<ulam::ast::TypeSpec> type_spec) override;
+
     ulam::Ref<ulam::Class> class_base_classid(
         ulam::Ref<ulam::ast::Expr> expr,
         ExprRes& obj,
