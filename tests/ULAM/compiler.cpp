@@ -84,6 +84,9 @@ void Compiler::compile_class(
     text += "foo;\n";
 
     auto obj = eval.eval(text);
+    if (has_test)
+        _statuses.push_back(eval.status());
+
     assert(obj);
     assert(obj.type()->is_class());
     assert(obj.value().is_rvalue());

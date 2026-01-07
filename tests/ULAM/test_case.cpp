@@ -11,6 +11,8 @@
 
 namespace {
 
+constexpr int ExitStatusUnevaluable = -11;
+
 std::map<std::string, Answer> parse_answers(const std::string_view text) {
     std::map<std::string, Answer> answers;
     std::size_t pos{0};
@@ -28,6 +30,30 @@ std::map<std::string, Answer> parse_answers(const std::string_view text) {
         answers.emplace(std::move(name), std::move(answer));
     }
     return answers;
+}
+
+bool compare_statuses(
+    const std::vector<int>& statuses, const std::vector<int>& answers) {
+    if (statuses.size() != answers.size())
+        return false;
+    for (std::size_t i = 0; i < statuses.size(); ++i) {
+        // NOTE: ignoring "unevaluable" status
+        if (statuses[i] != answers[i] && answers[i] != ExitStatusUnevaluable)
+            return false;
+    }
+    return true;
+}
+
+void print_statuses(const std::vector<int>& statuses) {
+    std::cout << "{";
+    for (std::size_t i = 0; i < statuses.size(); ++i) {
+        if (i != 0)
+            std::cout << ", ";
+        std::cout << statuses[i];
+        if (statuses[i] == ExitStatusUnevaluable)
+            std::cout << " (unevaluable)";
+    }
+    std::cout << "}";
 }
 
 } // namespace
@@ -77,6 +103,18 @@ bool TestCase::run() {
         if (!(_flags & SkipAnswerCheck))
             compare_answer_maps(_answers, answers);
         ok = true;
+
+        // check exit statuses
+        std::cout << "Statuses: ";
+        print_statuses(compiler.statuses());
+        std::cout << ", answers: ";
+        print_statuses(_exit_statuses);
+        std::cout << "\n";
+        if (!(_flags & SkipExitStatusCheck) &&
+            !compare_statuses(compiler.statuses(), _exit_statuses)) {
+            ok = false;
+            std::cout << "statuses do not match\n";
+        }
 
     } catch (const ulam::sema::EvalExceptError& e) {
         std::cout << "eval error: " << e.message() << "\n";

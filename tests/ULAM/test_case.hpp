@@ -11,6 +11,7 @@ public:
     using flags_t = std::uint8_t;
     static constexpr flags_t NoFlags = 0;
     static constexpr flags_t SkipAnswerCheck = 1;
+    static constexpr flags_t SkipExitStatusCheck = 2;
 
     TestCase(const Path& stdlib_dir, const Path& path, flags_t flags = NoFlags);
 

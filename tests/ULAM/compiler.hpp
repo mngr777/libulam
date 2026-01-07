@@ -11,6 +11,7 @@
 #include <libulam/semantic/type.hpp>
 #include <set>
 #include <string>
+#include <vector>
 
 class Compiler {
 public:
@@ -29,6 +30,8 @@ public:
     ulam::Ref<ulam::Program> analyze();
 
     void compile(std::ostream& os);
+
+    const auto& statuses() { return _statuses; }
 
 private:
     void
@@ -100,4 +103,5 @@ private:
     ulam::Ptr<ulam::ast::Root> _ast;
     ulam::Parser _parser;
     std::set<ulam::str_id_t> _module_name_ids;
+    std::vector<int> _statuses;
 };

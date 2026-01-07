@@ -7,5 +7,6 @@ ulam::sema::ExprRes Eval::do_eval(ulam::Ref<ulam::ast::Block> block) {
     EvalEnv env{program};
     auto res = env.eval(block);
     _code = env.gen().code();
+    _status = env.status();
     return res;
 }

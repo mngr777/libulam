@@ -26,6 +26,8 @@ public:
         ulam::LValue self,
         ulam::sema::ExprResList&& args);
 
+    void set_status(int status) { _env.set_status(status); }
+
 private:
     EvalEnv& _env;
 };

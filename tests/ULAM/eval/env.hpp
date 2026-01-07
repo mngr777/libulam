@@ -9,6 +9,7 @@
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/value.hpp>
+#include <limits>
 
 class EvalEnv : public ulam::sema::EvalEnv {
 public:
@@ -101,7 +102,11 @@ public:
 
     EvalTestContext& test_ctx();
 
+    void set_status(int status) { _status = status; }
+    int status() { return _status; }
+
 private:
     Codegen _codegen;
     EvalTestContext _test_ctx{};
+    int _status{std::numeric_limits<int>::min()};
 };

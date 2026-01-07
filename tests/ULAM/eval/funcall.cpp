@@ -1,8 +1,10 @@
 #include "./funcall.hpp"
 #include "./expr_res.hpp"
 #include "./flags.hpp"
-#include <libulam/sema/expr_error.hpp>
+#include "libulam/semantic/type/builtin_type_id.hpp"
+#include "libulam/semantic/value/types.hpp"
 #include <libulam/sema/eval/flags.hpp>
+#include <libulam/sema/expr_error.hpp>
 #include <string>
 
 #define NO_EXEC(fr)
@@ -82,7 +84,8 @@ ExprRes EvalFuncall::do_funcall(
 
     EvalEnv::FlagsRaii fr;
     EvalEnv::EvalTestContextRaii tcr;
-    if (env().stack_size() == 0 && fun->name() == "test") {
+    bool is_test = (env().stack_size() == 0 && fun->name() == "test");
+    if (is_test) {
         // set NoExec after `test` is called, unless executing (NoCodegen is
         // set)
         if (!has_flag(evl::NoCodegen))
@@ -91,7 +94,16 @@ ExprRes EvalFuncall::do_funcall(
         if (!has_flag(ulam::sema::evl::NoExec))
             tcr = test_ctx_raii(self);
     }
-    return Base::do_funcall(node, fun, self, std::move(args), eff_cls);
+    auto res = Base::do_funcall(node, fun, self, std::move(args), eff_cls);
+    if (is_test && !has_flag(ulam::sema::evl::NoExec)) {
+        // executed test function, set return value as status
+        assert(res.type()->bi_type_id() == ulam::IntId);
+        assert(res.value().is_rvalue());
+        assert(res.value().rvalue().is<ulam::Integer>());
+        auto int_val = static_cast<int>(res.value().rvalue().get<ulam::Integer>());
+        set_status(int_val);
+    }
+    return res;
 }
 
 ExprRes EvalFuncall::do_funcall_native(

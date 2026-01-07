@@ -257,6 +257,11 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t41661_test_compiler_functionreturnclassarrayitemwithquestioncolon_gencode_issue.test", // TODO
 };
 
+static const std::set<std::string> SkipExitStatusCheck = {
+    "t3902_test_compiler_funcdef_forloopcontinue_issue.test", // see SkipAnswerCheck
+    "t41384_test_compiler_elementandquarkwclassargs_multibasesisasbase_virtualfuncswsharedancestoranddatamembercopies.test", // unconditional `return 0`, but answer is 1
+};
+
 // clang-format on
 
 using Path = std::filesystem::path;
@@ -271,6 +276,8 @@ static bool run(Path stdlib_dir, const Path& path, bool single) {
         TestCase::flags_t flags = TestCase::NoFlags;
         if (!single && SkipAnswerCheck.count(path.filename()) > 0)
             flags |= TestCase::SkipAnswerCheck;
+        if (!single && SkipExitStatusCheck.count(path.filename()) > 0)
+            flags |= TestCase::SkipExitStatusCheck;
         TestCase test_case{stdlib_dir, path, flags};
         return test_case.run();
     } catch (std::invalid_argument& e) {
