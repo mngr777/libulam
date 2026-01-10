@@ -27,7 +27,10 @@ public:
     // TODO: alignment
     Buf(): _data{nullptr}, _size{0} {}
 
-    Buf(std::size_t size): _data{new char[size]()} {}
+    Buf(std::size_t size): _data{std::make_unique<char[]>(size)}, _size{size} {}
+
+    Buf(Buf&&) = default;
+    Buf& operator=(Buf&&) = default;
 
     BufRef ref() const { return {_data.get(), _size}; }
 

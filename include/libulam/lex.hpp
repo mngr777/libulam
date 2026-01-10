@@ -48,8 +48,8 @@ private:
 
     const char* _cur;
     const char* _line;
-    const char* _tok_start;
-    Token* _tok;
+    const char* _tok_start{};
+    Token* _tok{};
 
     linum_t _linum{1};
     chr_t _chr{1};

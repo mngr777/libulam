@@ -49,8 +49,10 @@ const mem::BufRef Src::line(linum_t linum) {
 }
 
 const mem::BufRef FileSrc::content() {
+    // TODO: error handling
     if (!_buf)
         _buf = file_content(_path);
+    assert(_buf);
     return _buf->ref();
 }
 

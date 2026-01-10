@@ -1,7 +1,7 @@
 #pragma once
-#include "libulam/memory/buf.hpp"
-#include "libulam/src_loc.hpp"
 #include <filesystem>
+#include <libulam/memory/buf.hpp>
+#include <libulam/src_loc.hpp>
 #include <optional>
 #include <string>
 #include <utility>
@@ -11,7 +11,8 @@ namespace ulam {
 
 class Src {
 public:
-    Src(src_id_t id, std::filesystem::path path): _id{id}, _path{std::move(path)} {}
+    Src(src_id_t id, std::filesystem::path path):
+        _id{id}, _path{std::move(path)} {}
     virtual ~Src() {}
 
     Src(Src&&) = default;
