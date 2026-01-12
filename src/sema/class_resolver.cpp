@@ -1,5 +1,3 @@
-#include "libulam/semantic/scope/version.hpp"
-#include "libulam/semantic/type/class_tpl.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/resolver.hpp>

@@ -2,6 +2,7 @@
 #include "./out.hpp"
 #include "./utils.hpp"
 #include "tests/ast/print.hpp"
+#include <iostream>
 #include <libulam/sema.hpp>
 #include <libulam/sema/eval.hpp>
 #include <libulam/sema/eval/except.hpp>

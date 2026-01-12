@@ -131,7 +131,7 @@ bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
     assert(scope()->is(scp::Module));
     auto synced = sync_scope(node);
     assert(synced);
-    return true;
+    return synced;
 }
 
 bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
@@ -163,7 +163,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
 bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
     auto synced = sync_scope(node);
     assert(synced);
-    return true;
+    return synced;
 }
 
 bool RecVisitor::sync_scope(Ref<ast::DefNode> node) {

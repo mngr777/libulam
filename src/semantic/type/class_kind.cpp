@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/semantic/type/class_kind.hpp>
 
@@ -14,7 +15,7 @@ const std::string_view class_kind_str(ClassKind kind) {
     case ClassKind::Union:
         return "union";
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

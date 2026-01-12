@@ -62,6 +62,7 @@ constexpr std::uint8_t radix_to_int(Radix radix) {
         return 16;
     default:
         assert(false);
+        return {};
     }
 }
 
@@ -77,6 +78,7 @@ constexpr const char* radix_to_str(Radix radix) {
         return "hexadecimal";
     default:
         assert(false);
+        return {};
     }
 }
 

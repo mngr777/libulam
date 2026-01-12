@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
@@ -74,7 +75,7 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
             --uns_val;
         break;
     default:
-        assert(false);
+        utils::unreachable();
     }
     return {this, Value{RValue(utils::ones(uns_val), is_consteval)}};
 }
@@ -112,7 +113,7 @@ TypedValue UnaryType::binary_op(
         return {type, Value{std::move(rval)}};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -136,7 +137,7 @@ bool UnaryType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -159,7 +160,7 @@ bool UnaryType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -204,8 +205,8 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {boolean, Value{std::move(rval)}};
     }
     case UnaryId: {
-        assert(false);
-        return {this, Value{std::move(rval)}};
+        utils::unreachable();
+        // return {this, Value{std::move(rval)}};
     }
     case BitsId: {
         auto size = bitsize();
@@ -217,7 +218,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {type, Value{RValue{std::move(val), is_consteval}}};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -260,7 +261,7 @@ RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return bits_rval;
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <algorithm>
 #include <cassert>
 #include <libulam/ast/nodes/expr.hpp>
@@ -8,8 +9,8 @@
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
-#include <libulam/utils/integer.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/utils/integer.hpp>
 
 namespace ulam {
 
@@ -69,7 +70,7 @@ TypedValue IntType::unary_op(Op op, RValue&& rval) {
             --int_val;
         break;
     default:
-        assert(false);
+        utils::unreachable();
     }
     return {this, Value{RValue{int_val, is_consteval}}};
 }
@@ -197,7 +198,7 @@ TypedValue IntType::binary_op(
         return make_res(type, type->construct(l_int >= r_int));
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -220,7 +221,7 @@ bool IntType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -243,7 +244,7 @@ bool IntType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -295,8 +296,8 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
     switch (id) {
     case IntId: {
-        assert(false);
-        return {this, Value{std::move(rval)}};
+        utils::unreachable();
+        // return {this, Value{std::move(rval)}};
     }
     case UnsignedId: {
         Unsigned uns_val = std::max<Integer>(0, int_val);
@@ -341,7 +342,7 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {type, Value{RValue{std::move(val), is_consteval}}};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -383,7 +384,7 @@ RValue IntType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return bits_rval;
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

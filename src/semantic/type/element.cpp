@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/types.hpp"
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/element.hpp>
 
@@ -32,8 +31,7 @@ elt_id_t ElementRegistry::add(Ref<Class> cls) {
 
 Ref<Class> ElementRegistry::get(elt_id_t id) const {
     assert(id < _elements.size());
-    auto elt = _elements[id];
-    assert(elt || (id == NoEltId && _class_options.empty_element_name.empty()));
+    assert(_elements[id] || (id == NoEltId && _class_options.empty_element_name.empty()));
     return _elements[id];
 }
 

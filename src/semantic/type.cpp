@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -16,9 +17,12 @@ namespace ulam {
 
 Type::~Type() {}
 
-RValue Type::construct() { assert(false); }
+RValue Type::construct() { utils::unreachable(); }
 
-RValue Type::construct_ph() { return RValue{}; }
+RValue Type::construct_ph() {
+    assert(is_constructible());
+    return RValue{};
+}
 
 RValue Type::load(const Bits& data, bitsize_t off) {
     return load(data.view(), off);
@@ -26,12 +30,6 @@ RValue Type::load(const Bits& data, bitsize_t off) {
 
 void Type::store(Bits& data, bitsize_t off, const RValue& rval) {
     store(data.view(), off, rval);
-}
-
-RValue Type::load(const BitsView data, bitsize_t off) { assert(false); }
-
-void Type::store(BitsView data, bitsize_t off, const RValue& rval) {
-    assert(false);
 }
 
 bool Type::is_actual() const { return actual() == this; }
@@ -278,8 +276,6 @@ conv_cost_t
 Type::conv_cost(Ref<const Type> type, const Value& val, bool allow_cast) const {
     return conv_cost(type, allow_cast);
 }
-
-Value Type::cast_to(Ref<Type> type, Value&& val) { assert(false); }
 
 Ptr<ArrayType> Type::make_array_type(array_size_t size) {
     return make<ArrayType>(_builtins, _id_gen, this, size);
@@ -558,6 +554,14 @@ bitsize_t RefType::bitsize() const {
     return _refd->bitsize();
 }
 
+RValue RefType::load(const BitsView data, bitsize_t off) {
+    utils::unreachable();
+}
+
+void RefType::store(BitsView data, bitsize_t off, const RValue& rval) {
+    utils::unreachable();
+}
+
 void RefType::set_canon(Ref<RefType> canon) {
     assert(canon);
     assert(canon->refd() == refd()->canon());
@@ -582,11 +586,11 @@ bool RefType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 
 bool RefType::is_refable_as(
     Ref<const Type> type, const Value& val, bool expl) const {
-    assert(false);
+    utils::unreachable();
 }
 
 bool RefType::is_assignable_to(Ref<const Type> type, const Value& val) const {
-    assert(false);
+    utils::unreachable();
 }
 
 conv_cost_t RefType::conv_cost(Ref<const Type> type, bool allow_cast) const {
@@ -607,8 +611,10 @@ Value RefType::cast_to(Ref<Type> type, Value&& val) {
     return Value{val.lvalue().as(type)};
 }
 
-Ptr<ArrayType> RefType::make_array_type(array_size_t size) { assert(false); }
+Ptr<ArrayType> RefType::make_array_type(array_size_t size) {
+    utils::unreachable();
+}
 
-Ptr<RefType> RefType::make_ref_type() { assert(false); }
+Ptr<RefType> RefType::make_ref_type() { utils::unreachable(); }
 
 } // namespace ulam

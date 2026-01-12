@@ -48,8 +48,10 @@ int main() {
         bits2.flip();
         auto copy1 = bits1.view(1000, 337).copy();
         std::cerr << copy1.hex();
-        if (copy1 != bits2)
-            std::cerr << " != " << bits2.hex();
+        if (copy1 != bits2) {
+            std::cerr << " != " << bits2.hex() << "\n";
+            return -1;
+        }
         std::cerr << "\n";
     }
     return 0;

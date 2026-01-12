@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -109,7 +110,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
             [&](Ref<Fun> fun) -> Ref<Decl> {
                 return cls->add_fun(fun->node());
             },
-            [&](auto) -> Ref<Decl> { assert(false); });
+            [&](auto) -> Ref<Decl> { utils::unreachable(); });
         decl->set_cls_tpl(this);
     }
     return cls;

@@ -1,4 +1,4 @@
-#include "libulam/sema/expr_error.hpp"
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -75,7 +75,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
         std::bind(std::mem_fn(&EvalExprVisitor::ident_var), this, node, _1),
         std::bind(std::mem_fn(&EvalExprVisitor::ident_prop), this, node, _1),
         std::bind(std::mem_fn(&EvalExprVisitor::ident_fset), this, node, _1),
-        [&](auto value) -> ExprRes { assert(false); });
+        [&](auto value) -> ExprRes { utils::unreachable(); });
     return check(node, std::move(res));
 }
 
@@ -146,12 +146,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Cast> node) {
 
 ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
     debug() << __FUNCTION__ << " Ternary\n" << line_at(node);
-    auto boolean = builtins().boolean();
 
     auto cond_res = ternary_eval_cond(node);
     if (!cond_res)
         return cond_res;
-    assert(cond_res.type()->is_same(boolean));
+    assert(cond_res.type()->is_same(builtins().boolean()));
 
     auto [if_true_res, if_false_res] = ternary_eval_branches_noexec(node);
     if (!if_true_res)
@@ -279,7 +278,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
         [&](Ref<FunSet> fset) -> ExprRes {
             return member_access_fset(node, std::move(obj), fset, base);
         },
-        [&](auto other) -> ExprRes { assert(false); });
+        [&](auto other) -> ExprRes { utils::unreachable(); });
     return check(node, std::move(res));
 }
 
@@ -494,8 +493,9 @@ Ref<Class> EvalExprVisitor::class_base_type_spec(
     Ref<ast::TypeSpec> type_spec) {
     assert(type_spec && type_spec->has_args());
 
-    auto ident = type_spec->ident();
-    assert(!ident->is_self() && !ident->is_super()); // TODO: check in parser
+    assert(
+        !type_spec->ident()->is_self() &&
+        !type_spec->ident()->is_super()); // TODO: check in parser
 
     auto type = env().resolver(true).resolve_type_spec(type_spec, false);
     if (!type)
@@ -588,7 +588,7 @@ ExprRes EvalExprVisitor::binary_op(
         case TypeError::Ok:
             return std::move(arg);
         default:
-            assert(false);
+            utils::unreachable();
         };
     };
 
@@ -785,7 +785,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
             return env().call(node, std::move(arg), std::move(args));
         }
     }
-    assert(false);
+    utils::unreachable();
 }
 
 ExprRes EvalExprVisitor::post_inc_dec_dummy() {

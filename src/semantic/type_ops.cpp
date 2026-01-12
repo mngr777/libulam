@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/semantic/type_ops.hpp>
 
@@ -10,7 +11,7 @@ const char* str(TypeOp op) {
     switch (op) {
 #include <libulam/semantic/type_ops.inc.hpp>
     default:
-        assert(false);
+        utils::unreachable();
     }
 #undef OP
 }

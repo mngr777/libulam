@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/atom.hpp>
@@ -92,7 +93,7 @@ TypedValue BitsType::unary_op(Op op, RValue&& rval) {
         return {this, Value{std::move(rval)}};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -211,7 +212,7 @@ TypedValue BitsType::binary_op(
     case Op::BwXor:
         return binop(bw_xor, false);
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -234,7 +235,7 @@ bool BitsType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -257,7 +258,7 @@ bool BitsType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -281,7 +282,8 @@ bool BitsType::is_impl_castable_to_prim(
 }
 
 TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
-    assert(false && "Bits is not implicitly castable to other types");
+    // Bits values are not implicitly castable to other types
+    utils::unreachable();
 }
 
 RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
@@ -309,7 +311,7 @@ RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return RValue{std::move(copy), is_consteval};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

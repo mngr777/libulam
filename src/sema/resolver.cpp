@@ -1,5 +1,4 @@
-#include "libulam/semantic/scope.hpp"
-#include "libulam/semantic/type.hpp"
+#include "src/utils/unreachable.hpp"
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -502,7 +501,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
                         return type;
                     return {};
                 },
-                [&](auto&&) -> Ref<Type> { assert(false); });
+                [&](auto&&) -> Ref<Type> { utils::unreachable(); });
             if (type) {
                 if (prepare_resolved_type(ident, type, resolve_class))
                     return type;
@@ -530,7 +529,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
                 module->env_scope()->set(name_id, cls); // TODO
             return cls;
         },
-        [&](auto&&) -> Ref<Type> { assert(false); });
+        [&](auto&&) -> Ref<Type> { utils::unreachable(); });
     if (type && prepare_resolved_type(ident, type, resolve_class))
         return type;
     return {};
@@ -595,7 +594,7 @@ PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
     } else if (decl->has_module()) {
         scope = decl->module()->scope();
     } else {
-        assert(false);
+        utils::unreachable();
     }
     return scope->view(decl->scope_version());
 }

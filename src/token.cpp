@@ -1,5 +1,5 @@
-#include "libulam/semantic/type/class_name_kind.hpp"
 #include "src/detail/string.hpp"
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/token.hpp>
@@ -30,7 +30,7 @@ const char* type_str(tok::Type type) {
 #include <libulam/token.inc.hpp>
 #undef TOK
     default:
-        assert(false && "Unknown token type");
+        utils::unreachable();
     }
 }
 
@@ -42,7 +42,7 @@ const char* type_name(tok::Type type) {
 #include <libulam/token.inc.hpp>
 #undef TOK
     default:
-        assert(false && "Unknown token type");
+        utils::unreachable();
     }
 }
 
@@ -70,7 +70,7 @@ ClassKind class_kind(Type type) {
     case Union:
         return ClassKind::Union;
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

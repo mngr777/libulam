@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <libulam/semantic/utils/class_name.hpp>
 #include <libulam/semantic/utils/strf.hpp>
 #include <sstream>
@@ -89,7 +90,7 @@ class_name_id(Ref<Program> program, Ref<Class> cls, ClassNameKind kind) {
     case ClassNameMangled:
         return class_name_mangled_id(program, cls);
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

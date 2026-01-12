@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
@@ -53,7 +54,7 @@ Ref<PrimTypeTpl> Builtins::prim_type_tpl(BuiltinTypeId id) {
     case BoolId:
         return ref(_bool_tpl);
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -75,7 +76,7 @@ Ref<PrimType> Builtins::prim_type(BuiltinTypeId id, bitsize_t size) {
     case VoidId:
         return ref(_void_type);
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -101,7 +102,7 @@ Ref<Type> Builtins::type(BuiltinTypeId id, bitsize_t size) {
     case FunId:
         return ref(_fun_type);
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

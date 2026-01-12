@@ -63,7 +63,7 @@ public:
     bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
 
-    virtual const std::string_view name() const { assert(false); }
+    virtual const std::string_view name() const = 0;
 
     virtual bitsize_t bitsize() const = 0;
 
@@ -74,8 +74,8 @@ public:
     RValue load(const Bits& data, bitsize_t off);
     void store(Bits& data, bitsize_t off, const RValue& rval);
 
-    virtual RValue load(const BitsView data, bitsize_t off);
-    virtual void store(BitsView data, bitsize_t off, const RValue& rval);
+    virtual RValue load(const BitsView data, bitsize_t off) = 0;
+    virtual void store(BitsView data, bitsize_t off, const RValue& rval) = 0;
 
     // canonical non-reference type, type of value
     bool is_actual() const;
@@ -158,7 +158,7 @@ public:
     virtual conv_cost_t conv_cost(
         Ref<const Type> type, const Value& val, bool allow_cast = false) const;
 
-    virtual Value cast_to(Ref<Type> type, Value&& val);
+    virtual Value cast_to(Ref<Type> type, Value&& val) = 0;
 
     virtual Ref<Type> deref() { return this; }
     virtual Ref<const Type> deref() const { return this; }
@@ -376,6 +376,9 @@ public:
     const std::string_view name() const override;
 
     bitsize_t bitsize() const override;
+
+    RValue load(const BitsView data, bitsize_t off) override;
+    void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
     Ref<Type> canon() override { return _canon; }
     Ref<const Type> canon() const override { return _canon; }

@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -154,7 +155,7 @@ bool Module::resolve(sema::Resolver& resolver) {
                 auto scope_view = scope()->view(var->scope_version());
                 return resolver.resolve(var);
             },
-            [&](auto) -> bool { assert(false); });
+            [&](auto) -> bool { utils::unreachable(); });
         ok = ok && resolved;
     }
     return ok;

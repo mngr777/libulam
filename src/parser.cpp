@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
@@ -1325,8 +1326,8 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
             }
             as_cond = expr_ctx.as_cond;
         }
-        conds->add(tree_at<ast::WhichCaseCond>(
-            cond_loc_id, std::move(expr), as_cond));
+        conds->add(
+            tree_at<ast::WhichCaseCond>(cond_loc_id, std::move(expr), as_cond));
 
         // :
         if (!expect(tok::Colon))
@@ -2177,7 +2178,7 @@ Number Parser::num_lit_number() {
         return {
             Radix::Decimal, (Unsigned)_ctx.src_man().loc(_tok.loc_id).linum()};
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -2197,7 +2198,7 @@ std::string Parser::str_lit_text() {
         }
         return std::string{_str_pool.get(_cur_fun_def->name_id())};
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

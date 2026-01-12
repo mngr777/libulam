@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -99,7 +100,8 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
         // suggest casting to Int or Unsigned
         if (suggest(IntId) || suggest(UnsignedId))
             return errors;
-        assert(false);
+
+        utils::unreachable();
 
     } else {
         // suggest casting to Int
@@ -251,7 +253,7 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
             return {TypeError::Incompatible};
         return {};
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

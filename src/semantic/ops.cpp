@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/semantic/ops.hpp>
 #include <map>
@@ -30,7 +31,7 @@ const char* str(Op op) {
     switch (op) {
 #include <libulam/semantic/ops.inc.hpp>
     default:
-        assert(false);
+        utils::unreachable();
     }
 #undef OP
 }
@@ -142,7 +143,7 @@ Kind kind(Op op) {
     case Op::As:
         return Kind::Objective;
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -374,7 +375,7 @@ Assoc assoc(Op op) {
     case Op::AssignBwOr:
         return Assoc::Right;
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

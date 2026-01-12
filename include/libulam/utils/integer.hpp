@@ -234,6 +234,7 @@ constexpr std::pair<Integer, bool> safe_prod(Integer left, Integer right) {
     }
     default:
         assert(false);
+        return {};
     }
 }
 
@@ -245,4 +246,4 @@ template <typename T> T safe_rem(T left, T right) {
     return right == 0 ? left : left % right;
 }
 
-} // namespace ulam::detail
+} // namespace ulam::utils

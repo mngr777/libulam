@@ -29,6 +29,7 @@ Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
         return "Atom";
 
     assert(false);
+    return {};
 }
 
 std::string Stringifier::stringify_prim(
@@ -72,6 +73,7 @@ std::string Stringifier::stringify_prim(
     }
     default:
         assert(false); // TODO
+        return {};
     }
 }
 
@@ -86,6 +88,7 @@ std::string Stringifier::stringify_class(
         return stringify_class_map(cls, rval);
     default:
         assert(false);
+        return {};
     }
 }
 
@@ -154,8 +157,7 @@ std::string Stringifier::stringify_array_leximited(
     auto data = rval.data_view();
 
     // t3894
-    const auto item_size = array_type->item_type()->bitsize();
-    assert(item_size < sizeof(ulam::Unsigned) * 8);
+    assert(array_type->item_type()->bitsize() < sizeof(ulam::Unsigned) * 8);
     for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
         auto item_rval = data.array_item(idx).load();
         item_rval.accept(

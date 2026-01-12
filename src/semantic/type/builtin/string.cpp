@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
@@ -105,7 +106,7 @@ TypedValue StringType::binary_op(
         return {type, Value{std::move(rval)}};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -115,7 +116,7 @@ bool StringType::is_castable_to_prim(
     case BoolId:
         return expl;
     case StringId:
-        assert(false);
+        utils::unreachable();
     default:
         return false;
     }
@@ -126,7 +127,7 @@ bool StringType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case BoolId:
         return expl;
     case StringId:
-        assert(false);
+        utils::unreachable();
     default:
         return false;
     }
@@ -149,7 +150,7 @@ TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {boolean, Value{std::move(new_rval)}};
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 
@@ -169,7 +170,7 @@ RValue StringType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return new_rval;
     }
     default:
-        assert(false);
+        utils::unreachable();
     }
 }
 

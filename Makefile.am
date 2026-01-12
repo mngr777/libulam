@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -std=c++17 -I$(srcdir)/include -iquote $(srcdir)/include -iquote $(srcdir) -Wall -Wpedantic -Werror -O2
+AM_CXXFLAGS = -std=c++17 -I$(srcdir)/include -iquote $(srcdir)/include -iquote $(srcdir) -Wall -Wpedantic -Werror # -O2
 CXXFLAGS = $(AM_CXXFLAGS) # temp hack to make libtool stop adding flags
 
 AST_HEADER_FILES = \
@@ -114,10 +114,12 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtin/atom.cpp \
 	src/semantic/type/builtin/bits.cpp \
 	src/semantic/type/builtin/bool.cpp \
+	src/semantic/type/builtin/fun.cpp \
 	src/semantic/type/builtin/int.cpp \
 	src/semantic/type/builtin/string.cpp \
 	src/semantic/type/builtin/unary.cpp \
 	src/semantic/type/builtin/unsigned.cpp \
+	src/semantic/type/builtin/void.cpp \
 	src/semantic/type/builtins.cpp \
 	src/semantic/type/conv.cpp \
 	src/semantic/type/element.cpp \
@@ -224,7 +226,8 @@ SOURCE_FILES = \
 	src/src_man.cpp \
 	src/str_pool.cpp \
 	src/token.cpp \
-	src/utils/leximited.cpp
+	src/utils/leximited.cpp \
+	src/utils/unreachable.hpp
 
 lib_LTLIBRARIES = libulam.la
 libulam_ladir = $(includedir)

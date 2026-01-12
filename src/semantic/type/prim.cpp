@@ -1,3 +1,4 @@
+#include "src/utils/unreachable.hpp"
 #include <cassert>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -21,6 +22,10 @@ RValue PrimType::load(const BitsView data, bitsize_t off) {
 void PrimType::store(BitsView data, bitsize_t off, const RValue& rval) {
     data.write(off, bitsize(), to_datum(rval));
 }
+
+RValue PrimType::from_datum(Datum datum) { utils::unreachable(); }
+
+Datum PrimType::to_datum(const RValue& rval) { utils::unreachable(); }
 
 Ref<Type> PrimType::common(Ref<Type> type) {
     if (!type->is_prim())
@@ -58,6 +63,16 @@ Value PrimType::cast_to(Ref<Type> type, Value&& val) {
 
 TypedValue PrimType::cast_to(BuiltinTypeId bi_type_id, Value&& val) {
     return cast_to_prim(bi_type_id, val.move_rvalue());
+}
+
+TypedValue PrimType::unary_op(Op op, RValue&& rval) { utils::unreachable(); }
+
+TypedValue PrimType::binary_op(
+    Op op,
+    RValue&& left_rval,
+    Ref<const PrimType> right_type,
+    RValue&& right_rval) {
+    utils::unreachable();
 }
 
 conv_cost_t PrimType::conv_cost(Ref<const Type> type, bool allow_cast) const {
@@ -123,6 +138,14 @@ bool PrimType::is_impl_castable_to_prim(
 bool PrimType::is_impl_castable_to_prim(
     BuiltinTypeId bi_type_id, const Value& value) const {
     return is_castable_to_prim(bi_type_id, false);
+}
+
+TypedValue PrimType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
+    utils::unreachable();
+}
+
+RValue PrimType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
+    utils::unreachable();
 }
 
 // PrimTypeTpl

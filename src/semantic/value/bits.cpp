@@ -535,7 +535,7 @@ void Bits::init_storage() {
     } else {
         *_storage.array = {0};
     }
-    std::fill(storage(), storage() + storage_size(), 0);
+    clear();
 }
 
 void Bits::destroy_storage() {

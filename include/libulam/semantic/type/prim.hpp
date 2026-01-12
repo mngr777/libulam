@@ -33,8 +33,8 @@ public:
 
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
-    virtual RValue from_datum(Datum datum) { assert(false); }
-    virtual Datum to_datum(const RValue& rval) { assert(false); }
+    virtual RValue from_datum(Datum datum);
+    virtual Datum to_datum(const RValue& rval);
 
     Ref<Type> common(Ref<Type> type) override;
     Ref<Type>
@@ -61,15 +61,13 @@ public:
     Value cast_to(Ref<Type> type, Value&& val) override;
     TypedValue cast_to(BuiltinTypeId bi_type_id, Value&& val);
 
-    virtual TypedValue unary_op(Op op, RValue&& rval) { assert(false); }
+    virtual TypedValue unary_op(Op op, RValue&& rval);
 
     virtual TypedValue binary_op(
         Op op,
         RValue&& left_rval,
         Ref<const PrimType> right_type,
-        RValue&& right_rval) {
-        assert(false);
-    };
+        RValue&& right_rval);
 
 protected:
     Ref<Type> common_prim(Ref<PrimType> type);
@@ -88,13 +86,8 @@ protected:
     virtual bool
     is_impl_castable_to_prim(BuiltinTypeId bi_type_id, const Value& val) const;
 
-    // TODO: make pure virtual
-    virtual TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) {
-        assert(false);
-    }
-    virtual RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) {
-        assert(false);
-    }
+    virtual TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval);
+    virtual RValue cast_to_prim(Ref<PrimType> type, RValue&& rval);
 
     Ref<PrimType> _as_prim() override { return this; }
     Ref<const PrimType> _as_prim() const override { return this; }
