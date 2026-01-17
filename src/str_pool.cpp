@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/str_pool.hpp>
 
 namespace ulam {
@@ -6,13 +6,13 @@ namespace ulam {
 // StrPoolBase
 
 bool StrPoolBase::has_id(str_id_t id) const {
-    assert(id != NoStrId);
+    ulam_assert(id != NoStrId);
     return id < _index.size();
 }
 
 const std::string_view StrPoolBase::get(str_id_t id) const {
-    assert(id != NoStrId);
-    assert(id < _index.size());
+    ulam_assert(id != NoStrId);
+    ulam_assert(id < _index.size());
     return _index[id];
 }
 
@@ -48,14 +48,14 @@ str_id_t UniqStrPool::id(const std::string_view str) const {
 
 const std::string_view UniqStrPool::get(str_id_t id) const {
     if (id < _offset) {
-        assert(_parent);
+        ulam_assert(_parent);
         return _parent->get(id);
     }
     return StrPoolBase::get(id - _offset);
 }
 
 str_id_t UniqStrPool::put(const std::string_view str, bool copy) {
-    assert(!_is_locked);
+    ulam_assert(!_is_locked);
     if (_parent) {
         auto str_id = _parent->id(str);
         if (str_id != NoStrId)

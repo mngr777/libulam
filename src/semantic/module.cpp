@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
@@ -34,7 +34,7 @@ Ref<AliasType> Module::add_type_def(Ref<ast::TypeDef> node) {
     type->set_module(this);
     scope()->set(name_id, std::move(type));
 
-    assert(!node->has_scope_version());
+    ulam_assert(!node->has_scope_version());
     node->set_scope_version(scope()->version());
     return ref;
 }
@@ -51,7 +51,7 @@ Module::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDef> node) {
     var->set_module(this);
     scope()->set(ref->name_id(), std::move(var));
 
-    assert(!node->has_scope_version());
+    ulam_assert(!node->has_scope_version());
     node->set_var(ref);
     node->set_scope_version(scope()->version());
     return ref;
@@ -67,7 +67,7 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
     auto sym = set(name_id, ref);
     add_export(node, name_id, sym);
 
-    assert(!node->has_scope_version());
+    ulam_assert(!node->has_scope_version());
     node->set_cls(ref);
     node->set_scope_version(scope()->version());
 
@@ -76,7 +76,7 @@ Ref<Class> Module::add_class(Ref<ast::ClassDef> node) {
 }
 
 Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
-    assert(node->params()->child_num() > 0);
+    ulam_assert(node->params()->child_num() > 0);
     const auto& str_pool = program()->str_pool();
     auto& diag = program()->diag();
 
@@ -98,7 +98,7 @@ Ref<ClassTpl> Module::add_class_tpl(Ref<ast::ClassDef> node) {
     auto sym = set(name_id, ref);
     add_export(node, name_id, sym);
 
-    assert(!node->has_scope_version());
+    ulam_assert(!node->has_scope_version());
     node->set_cls_tpl(ref);
     node->set_scope_version(scope()->version());
 
@@ -112,7 +112,7 @@ void Module::export_symbols(Scope* scope) {
         if (sym.is<Class>()) {
             scope->set<UserType>(name_id, sym.get<Class>());
         } else {
-            assert(sym.is<ClassTpl>());
+            ulam_assert(sym.is<ClassTpl>());
             scope->set<ClassTpl>(name_id, sym.get<ClassTpl>());
         }
     }
@@ -142,7 +142,7 @@ bool Module::resolve(sema::Resolver& resolver) {
         bool resolved = sym->accept(
             [&](Ref<UserType> type) {
                 if (type->is_alias()) {
-                    assert(type->is_alias());
+                    ulam_assert(type->is_alias());
                     auto scope_version = type->as_alias()->scope_version();
                     auto scope_view = scope()->view(scope_version);
                     return resolver.resolve(type->as_alias()) && ok;
@@ -155,7 +155,7 @@ bool Module::resolve(sema::Resolver& resolver) {
                 auto scope_view = scope()->view(var->scope_version());
                 return resolver.resolve(var);
             },
-            [&](auto) -> bool { utils::unreachable(); });
+            [&](auto) -> bool { unreachable(); });
         ok = ok && resolved;
     }
     return ok;
@@ -167,7 +167,7 @@ void Module::add_export(Ref<ast::Node> node, str_id_t name_id, Symbol* sym) {
 
     auto existing = program()->add_export(name_id, {this, sym});
     if (existing) {
-        assert(existing->module() != this);
+        ulam_assert(existing->module() != this);
         auto other_module_name = str_pool.get(existing->module()->name_id());
         auto message =
             "name conflicts with name in " + std::string{other_module_name};

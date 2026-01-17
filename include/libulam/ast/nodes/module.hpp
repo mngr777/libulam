@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/exprs.hpp>
@@ -69,7 +69,7 @@ public:
     ClassKind kind() const { return _kind; }
 
     bool is_tpl() const {
-        assert(!has_params() || params()->child_num() > 0);
+        ulam_assert(!has_params() || params()->child_num() > 0);
         return has_params();
     }
 
@@ -103,8 +103,8 @@ public:
     ULAM_AST_TUPLE_PROP(type_expr, 1)
 
     Str alias() {
-        assert(has_type_expr());
-        assert(type_expr()->has_ident());
+        ulam_assert(has_type_expr());
+        ulam_assert(type_expr()->has_ident());
         return type_expr()->ident()->name();
     }
 
@@ -154,7 +154,7 @@ public:
     ULAM_AST_TUPLE_PROP(body, 2)
 
     unsigned param_num() const {
-        assert(has_params());
+        ulam_assert(has_params());
         return params()->child_num();
     }
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/params.hpp>
 #include <libulam/diag.hpp>
@@ -170,7 +170,7 @@ public:
 
 private:
     Ref<T> get(bitsize_t size) {
-        assert(T::MinSize <= size && size <= T::MaxSize);
+        ulam_assert(T::MinSize <= size && size <= T::MaxSize);
         {
             auto it = _types.find(size);
             if (it != _types.end())

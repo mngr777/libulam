@@ -1,6 +1,6 @@
 #include "src/parser/number.hpp"
 #include "src/detail/string.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <limits>
@@ -27,8 +27,8 @@ constexpr std::uint64_t radix_threshold_rem(Radix radix) {
 // NOTE: numeric literals cannot have a sign
 // TODO: implement exp notation
 Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
-    assert(str.size() > 0);
-    assert(is_digit(str[0])); // guaranteed by lexer
+    ulam_assert(str.size() > 0);
+    ulam_assert(is_digit(str[0])); // guaranteed by lexer
 
     std::size_t cur = 0;
     Unsigned value = 0; // abs value
@@ -129,7 +129,7 @@ Number parse_num_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
 }
 
 Number parse_char_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
-    assert(str[0] == '\'');
+    ulam_assert(str[0] == '\'');
 
     Unsigned value = 0;
     Radix radix = Radix::Decimal;
@@ -143,7 +143,7 @@ Number parse_char_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     }
 
     auto check_closed_after = [&](std::size_t pos) {
-        assert(str.size() > 0);
+        ulam_assert(str.size() > 0);
         if (str[str.size() - 1] != '\'') {
             diag.error(loc_id, pos, 1, "unterminated char literal");
         } else if (str.size() > pos + 2) {

@@ -26,7 +26,7 @@ mem::Buf file_content(const std::filesystem::path& path) {
 } // namespace
 
 const mem::BufRef Src::line(linum_t linum) {
-    assert(linum > 0);
+    ulam_assert(linum > 0);
     const auto buf = content();
     const char* start = buf.start();
     if (linum > _line_off.size()) {
@@ -52,7 +52,7 @@ const mem::BufRef FileSrc::content() {
     // TODO: error handling
     if (!_buf)
         _buf = file_content(_path);
-    assert(_buf);
+    ulam_assert(_buf);
     return _buf->ref();
 }
 

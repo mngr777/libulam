@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/ops.hpp>
@@ -68,7 +68,7 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
     Ref<PrimType> r_type,
     const Value& r_val) {
 
-    assert(is_numeric(r_type));
+    ulam_assert(is_numeric(r_type));
     TypeErrorPair errors;
 
     auto suggest = [&](BuiltinTypeId target) -> bool {
@@ -101,7 +101,7 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
         if (suggest(IntId) || suggest(UnsignedId))
             return errors;
 
-        utils::unreachable();
+        unreachable();
 
     } else {
         // suggest casting to Int
@@ -113,7 +113,7 @@ TypeErrorPair numeric_prim_binary_op_type_check_prim(
 
 TypeErrorPair numeric_prim_binary_op_type_check_class(
     Op op, Ref<PrimType> left, Ref<Class> right) {
-    assert(is_numeric(left));
+    ulam_assert(is_numeric(left));
     TypeErrorPair errors;
     if (left->is(IntId)) {
         errors.second = check_type_match(right, IntId);
@@ -175,7 +175,7 @@ TypeErrorPair prim_binary_op_type_check(
 
 TypeErrorPair class_binary_op_type_check(
     Op op, Ref<Class> cls, Ref<const Type> r_type, type_check_flags_t flags) {
-    assert(r_type->is_actual());
+    ulam_assert(r_type->is_actual());
     TypeErrorPair errors;
     if (cls->has_op(op))
         return errors;
@@ -198,7 +198,7 @@ TypeErrorPair class_binary_op_type_check(
 
 TypeErrorPair
 atom_binary_op_type_check(Op op, Ref<Type> type, Ref<const Type> r_type) {
-    assert(type->is(AtomId));
+    ulam_assert(type->is(AtomId));
     TypeErrorPair errors;
     switch (op) {
     case Op::Assign:
@@ -214,18 +214,18 @@ atom_binary_op_type_check(Op op, Ref<Type> type, Ref<const Type> r_type) {
 } // namespace
 
 TypeError::TypeError(Status status): status{status} {
-    assert(status == Ok || status == Incompatible);
+    ulam_assert(status == Ok || status == Incompatible);
 }
 
 TypeError::TypeError(Status status, Ref<Type> cast_type):
     status{status}, cast_type{cast_type} {
-    assert(status == ImplCastRequired || status == ExplCastRequired);
+    ulam_assert(status == ImplCastRequired || status == ExplCastRequired);
 }
 
 TypeError::TypeError(Status status, BuiltinTypeId cast_bi_type_id):
     status{status}, cast_bi_type_id{cast_bi_type_id} {
-    assert(status == ImplCastRequired || status == ExplCastRequired);
-    assert(is_prim(cast_bi_type_id));
+    ulam_assert(status == ImplCastRequired || status == ExplCastRequired);
+    ulam_assert(is_prim(cast_bi_type_id));
 }
 
 TypeError unary_op_type_check(Op op, Ref<Type> type) {
@@ -253,7 +253,7 @@ TypeError unary_op_type_check(Op op, Ref<Type> type) {
             return {TypeError::Incompatible};
         return {};
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

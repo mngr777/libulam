@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/type.hpp>
@@ -14,7 +14,7 @@
 namespace ulam::ast {
 
 // NOTE: type operators can work on both expressions and types, e.g.
-// `T a; assert(T.maxof == a.maxof)
+// `T a; ulam_assert(T.maxof == a.maxof)
 // TODO: split into TypeOpExpr/ExprTypeOpExpr
 class TypeOpExpr : public Tuple<Expr, TypeName, Expr, BaseTypeSelect, ArgList> {
     ULAM_AST_EXPR
@@ -28,9 +28,9 @@ public:
         Tuple{
             std::move(type), std::move(expr), std::move(base), std::move(args)},
         _op{op} {
-        assert(op != TypeOp::None);
-        assert(has_type_name() != has_expr());
-        assert(has_expr() || !has_base_type());
+        ulam_assert(op != TypeOp::None);
+        ulam_assert(has_type_name() != has_expr());
+        ulam_assert(has_expr() || !has_base_type());
     }
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
@@ -63,7 +63,7 @@ public:
 
 class OpExpr : public Expr {
 public:
-    explicit OpExpr(Op op): _op{op} { assert(op != Op::None); }
+    explicit OpExpr(Op op): _op{op} { ulam_assert(op != Op::None); }
 
     Op op() const { return _op; }
 
@@ -97,7 +97,7 @@ class AsCond : public UnaryOp {
 public:
     AsCond(Ptr<Expr>&& arg, Ptr<TypeName>&& type_name, Ref<Ident> ident):
         UnaryOp{Op::As, std::move(arg), std::move(type_name)}, _ident{ident} {
-        assert(ident);
+        ulam_assert(ident);
     }
 
     Ref<Ident> ident() { return _ident; }

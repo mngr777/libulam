@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/class/ancestry.hpp>
 
@@ -9,36 +9,36 @@ namespace ulam::cls {
 bool Ancestor::has_data_off() const { return _data_off != NoBitsize; }
 
 bitsize_t Ancestor::data_off() const {
-    assert(has_data_off());
+    ulam_assert(has_data_off());
     return _data_off;
 }
 
 bool Ancestor::has_size_added() const { return _size_added != NoBitsize; }
 
 bitsize_t Ancestor::size_added() const {
-    assert(has_size_added());
+    ulam_assert(has_size_added());
     return _size_added;
 }
 
 void Ancestor::set_data_off(bitsize_t data_off) {
-    assert(!has_data_off());
+    ulam_assert(!has_data_off());
     _data_off = data_off;
 }
 
 void Ancestor::set_size_added(bitsize_t size_added) {
-    assert(!has_size_added());
+    ulam_assert(!has_size_added());
     _size_added = size_added;
 }
 
 void Ancestor::add_dep_added(Ref<Ancestor> anc) {
-    // assert(anc->cls()->is_base_of(cls()));
+    // ulam_assert(anc->cls()->is_base_of(cls()));
     _deps_added.push_back(anc);
 }
 
 // Ancestry
 
 bool Ancestry::add(Ref<Class> cls, Ref<ast::TypeName> node) {
-    assert(node);
+    ulam_assert(node);
     auto [anc, added] = do_add(cls, node);
     if (added || !anc->is_parent()) {
         anc->set_is_parent(true);
@@ -95,7 +95,7 @@ void Ancestry::init() {
         if (added_ids.insert(cls->id()).second) {
             added += direct;
             for (auto dep : anc->_deps_added) {
-                assert(added_ids.count(dep->cls()->id()) == 0);
+                ulam_assert(added_ids.count(dep->cls()->id()) == 0);
                 added_ids.insert(dep->cls()->id());
                 added += dep->cls()->direct_bitsize();
             }
@@ -105,7 +105,7 @@ void Ancestry::init() {
 }
 
 bool Ancestry::is_base(Ref<const Class> cls) const {
-    assert(cls->id() != NoTypeId);
+    ulam_assert(cls->id() != NoTypeId);
     return _map.count(cls->id()) == 1;
 }
 
@@ -115,7 +115,7 @@ Ref<Ancestor> Ancestry::base(str_id_t name_id) {
 }
 
 bitsize_t Ancestry::data_off(Ref<const Class> cls) const {
-    assert(is_base(cls));
+    ulam_assert(is_base(cls));
     return _map.at(cls->id())->data_off();
 }
 

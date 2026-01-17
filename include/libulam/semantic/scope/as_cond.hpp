@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/flags.hpp>

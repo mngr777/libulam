@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -85,7 +85,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
     // create params
     TypedValue tv;
     for (auto tpl_param : params()) {
-        assert(args.size() > 0);
+        ulam_assert(args.size() > 0);
         std::swap(tv, args.front());
         args.pop_front();
 
@@ -110,7 +110,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
             [&](Ref<Fun> fun) -> Ref<Decl> {
                 return cls->add_fun(fun->node());
             },
-            [&](auto) -> Ref<Decl> { utils::unreachable(); });
+            [&](auto) -> Ref<Decl> { unreachable(); });
         decl->set_cls_tpl(this);
     }
     return cls;

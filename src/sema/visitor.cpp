@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -26,7 +26,7 @@ RecVisitor::~RecVisitor() {}
 void RecVisitor::analyze() { visit(_ast); }
 
 void RecVisitor::visit(Ref<ast::Root> node) {
-    assert(node->program());
+    ulam_assert(node->program());
     _program = node->program();
     _eval_env = make<EvalEnv>(_program); // ??
 
@@ -35,7 +35,7 @@ void RecVisitor::visit(Ref<ast::Root> node) {
 }
 
 void RecVisitor::visit(Ref<ast::ModuleDef> node) {
-    assert(node->module());
+    ulam_assert(node->module());
     auto mod = node->module();
     _module_def = node;
     auto sr =
@@ -50,7 +50,7 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
             traverse(node);
         }
     }
-    assert(scope()->is(scp::Module));
+    ulam_assert(scope()->is(scp::Module));
     _module_def = {};
 }
 
@@ -73,9 +73,9 @@ void RecVisitor::visit(Ref<ast::ClassDef> node) {
 }
 
 void RecVisitor::traverse(Ref<ast::ClassDefBody> node) {
-    assert(pass() == Pass::Classes || pass() == Pass::FunBodies);
-    assert(_class_def);
-    assert((bool)_class_def->cls() != (bool)_class_def->cls_tpl());
+    ulam_assert(pass() == Pass::Classes || pass() == Pass::FunBodies);
+    ulam_assert(_class_def);
+    ulam_assert((bool)_class_def->cls() != (bool)_class_def->cls_tpl());
 
     auto scope_version = (pass() == Pass::Classes) ? 0 : NoScopeVersion;
     auto sr = _scope_stack.raii<PersScopeView>(
@@ -93,7 +93,7 @@ void RecVisitor::visit(Ref<ast::FunDef> node) {
     if (pass() == Pass::Classes) {
         do_visit(node);
     } else {
-        assert(pass() == Pass::FunBodies);
+        ulam_assert(pass() == Pass::FunBodies);
         _fun_def = node;
         traverse(node);
         _fun_def = {};
@@ -101,12 +101,12 @@ void RecVisitor::visit(Ref<ast::FunDef> node) {
 }
 
 void RecVisitor::visit(Ref<ast::FunDefBody> node) {
-    assert(pass() == Pass::FunBodies);
-    assert(_fun_def);
+    ulam_assert(pass() == Pass::FunBodies);
+    ulam_assert(_fun_def);
     auto sr = _scope_stack.raii<BasicScope>(scope(), scp::Fun);
     if (do_visit(node))
         traverse(node);
-    assert(scope()->is(scp::Fun));
+    ulam_assert(scope()->is(scp::Fun));
 }
 
 void RecVisitor::visit(Ref<ast::Block> node) {
@@ -128,9 +128,9 @@ void RecVisitor::visit(Ref<ast::While> node) {
 }
 
 bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
-    assert(scope()->is(scp::Module));
+    ulam_assert(scope()->is(scp::Module));
     auto synced = sync_scope(node);
-    assert(synced);
+    ulam_assert(synced);
     return synced;
 }
 
@@ -162,7 +162,7 @@ void RecVisitor::visit(Ref<ast::VarDefList> node) {
 
 bool RecVisitor::do_visit(Ref<ast::FunDef> node) {
     auto synced = sync_scope(node);
-    assert(synced);
+    ulam_assert(synced);
     return synced;
 }
 

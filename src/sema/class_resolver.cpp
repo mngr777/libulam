@@ -43,7 +43,7 @@ bool ClassResolver::do_resolve() {
     case Decl::Unresolvable:
         return false;
     default:
-        assert(_cls.state() == Decl::Initialized);
+        ulam_assert(_cls.state() == Decl::Initialized);
         _cls.set_state(Decl::Resolving);
     }
 
@@ -128,7 +128,7 @@ bool ClassResolver::check_bitsize() {
     }
 
     auto parent = _cls.first_parent_over_max_bitsize();
-    assert(parent);
+    ulam_assert(parent);
     diag().error(parent->node(), "size limit exceeded");
     return false;
 }
@@ -188,7 +188,7 @@ bool ClassResolver::add_common_base() {
         return false;
     }
 
-    assert(sym->is<Class>());
+    ulam_assert(sym->is<Class>());
     auto urself_type = exp->sym()->get<Class>();
     if (urself_type->is_class()) {
         auto urself = urself_type->as_class();

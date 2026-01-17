@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/detail/variant.hpp>
@@ -96,7 +96,7 @@ public:
     bool has(str_id_t name_id) const { return _map.count(name_id) == 1; }
 
     void add(str_id_t name_id, Ref<N> node) {
-        assert(!has(name_id));
+        ulam_assert(!has(name_id));
         _map[name_id] = node;
     }
 
@@ -178,16 +178,16 @@ public:
     void add(Ptr<N>&& item) { _items.push_back(std::move(item)); }
 
     Ref<N> get(unsigned n) {
-        assert(n < _items.size());
+        ulam_assert(n < _items.size());
         return ref(_items[n]);
     }
     const Ref<N> get(unsigned n) const {
-        assert(n < _items.size());
+        ulam_assert(n < _items.size());
         return ref(_items[n]);
     }
 
     ItemT replace(unsigned n, Ptr<N>&& repl) {
-        assert(n < _items.size());
+        ulam_assert(n < _items.size());
         _items[n].swap(repl);
         return std::move(repl);
     }
@@ -212,11 +212,11 @@ public:
     }
 
     ItemT& get(unsigned n) {
-        assert(n < _items.size());
+        ulam_assert(n < _items.size());
         return _items[n];
     }
     const ItemT& get(unsigned n) const {
-        assert(n < _items.size());
+        ulam_assert(n < _items.size());
         return _items[n];
     }
 
@@ -224,7 +224,7 @@ public:
         return replace(ItemT{repl});
     }
     template <typename N> ItemT replace(unsigned n, ItemT&& repl) {
-        assert(n < _items.size());
+        ulam_assert(n < _items.size());
         _items[n].swap(repl);
         return repl;
     }

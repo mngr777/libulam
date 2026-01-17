@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type_ops.hpp>
 
 namespace ulam::ops {
@@ -11,7 +11,7 @@ const char* str(TypeOp op) {
     switch (op) {
 #include <libulam/semantic/type_ops.inc.hpp>
     default:
-        utils::unreachable();
+        unreachable();
     }
 #undef OP
 }

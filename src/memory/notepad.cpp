@@ -16,7 +16,7 @@ const std::string_view Notepad::write(const std::string_view text) {
     const auto len = text.size();
     if (!_last || _last->freespace() < len + 1)
         alloc_next(std::max(_pagesize, len + 1));
-    assert(_last);
+    ulam_assert(_last);
     char* cur = _last->cur;
     text.copy(cur, len);
     cur[len] = '\0';

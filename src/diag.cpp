@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <libulam/ast/node.hpp>
@@ -29,7 +29,7 @@ const char* level_prefix(Diag::Level lvl) {
     case Diag::Debug:
         return DebugPrefix;
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

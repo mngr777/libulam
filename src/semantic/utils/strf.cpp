@@ -56,7 +56,7 @@ void Strf::str(std::ostream& os, Ref<Type> type, const RValue& rval) {
     } else if (type->is_atom()) {
         os << Atom;
     } else {
-        assert(false);
+        ulam_assert(false);
     }
 }
 
@@ -87,7 +87,7 @@ void Strf::write_prim(
         break;
     }
     default:
-        assert(false);
+        ulam_assert(false);
     }
 }
 

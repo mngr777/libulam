@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <cstdint>
 #include <libulam/semantic/value/types.hpp>
 #include <ostream>
@@ -27,7 +27,7 @@ public:
 
     Unsigned as_unsigned() const {
         if (is_signed()) {
-            assert(value<Integer>() >= 0);
+            ulam_assert(value<Integer>() >= 0);
             return (Unsigned)value<Integer>();
         }
         return value<Unsigned>();
@@ -36,7 +36,7 @@ public:
     std::uint8_t bitsize() const;
 
     template <typename T> T value() const {
-        assert(std::holds_alternative<T>(_value));
+        ulam_assert(std::holds_alternative<T>(_value));
         return std::get<T>(_value);
     }
 
@@ -61,7 +61,7 @@ constexpr std::uint8_t radix_to_int(Radix radix) {
     case Radix::Hexadecimal:
         return 16;
     default:
-        assert(false);
+        ulam_assert(false);
         return {};
     }
 }
@@ -77,7 +77,7 @@ constexpr const char* radix_to_str(Radix radix) {
     case Radix::Hexadecimal:
         return "hexadecimal";
     default:
-        assert(false);
+        ulam_assert(false);
         return {};
     }
 }

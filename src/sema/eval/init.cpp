@@ -33,8 +33,8 @@ bool EvalInit::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
 }
 
 bool EvalInit::init_var_with(Ref<Var> var, ExprRes&& init) {
-    assert(init);
-    assert(var->has_type());
+    ulam_assert(init);
+    ulam_assert(var->has_type());
     init = env().cast(var->node(), var->type(), std::move(init));
     if (!init)
         return false;
@@ -56,12 +56,12 @@ bool EvalInit::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
 }
 
 ExprRes EvalInit::eval_init(Ref<VarBase> var, Ref<ast::InitValue> init) {
-    assert(var->has_type());
+    ulam_assert(var->has_type());
     return eval_v(var, var->type(), LValue{}, init->get(), 1);
 }
 
 void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
-    assert(init);
+    ulam_assert(init);
     var_init_common(var, in_expr);
     var->set_value(init.move_value());
 }
@@ -76,12 +76,12 @@ void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
 }
 
 void EvalInit::var_init_common(Ref<Var> var, bool in_expr) {
-    assert(var && var->has_type());
-    assert(var->value().empty());
+    ulam_assert(var && var->has_type());
+    ulam_assert(var->value().empty());
 }
 
 void EvalInit::prop_init_expr(Ref<Prop> prop, ExprRes&& init) {
-    assert(init);
+    ulam_assert(init);
     prop_init_common(prop);
     prop->set_default_value(init.move_value().move_rvalue());
 }
@@ -92,8 +92,8 @@ void EvalInit::prop_init_default(Ref<Prop> prop) {
 }
 
 void EvalInit::prop_init_common(Ref<Prop> prop) {
-    assert(prop && prop->has_type());
-    assert(!prop->has_default_value());
+    ulam_assert(prop && prop->has_type());
+    ulam_assert(!prop->has_default_value());
 }
 
 ExprRes EvalInit::eval_v(
@@ -128,7 +128,7 @@ ExprRes EvalInit::cast_expr_res(
     Ref<ast::Expr> expr,
     ExprRes&& res,
     unsigned depth) {
-    assert(res);
+    ulam_assert(res);
     return env().cast(expr, type, std::move(res));
 }
 
@@ -264,7 +264,7 @@ ExprRes EvalInit::eval_class_map(
     unsigned depth) {
     // construct
     auto obj = make_obj(var, cls, default_lval);
-    assert(map->size() > 0);
+    ulam_assert(map->size() > 0);
 
     for (auto key : map->keys()) {
         auto sym = cls->get(key);
@@ -324,8 +324,8 @@ ExprRes EvalInit::array_set(
     ExprRes&& item,
     bool autofill,
     unsigned depth) {
-    assert(array.type()->is_array());
-    assert(idx < array.type()->as_array()->array_size());
+    ulam_assert(array.type()->is_array());
+    ulam_assert(idx < array.type()->as_array()->array_size());
 
     auto rval = array.move_value().move_rvalue();
     auto item_rval = item.move_value().move_rvalue();
@@ -361,8 +361,8 @@ ExprRes EvalInit::obj_set(
     Ref<Prop> prop,
     ExprRes&& prop_res,
     unsigned depth) {
-    assert(obj.type()->is_class());
-    assert(prop_res.type()->is_same(prop->type()));
+    ulam_assert(obj.type()->is_class());
+    ulam_assert(prop_res.type()->is_same(prop->type()));
 
     auto rval = obj.move_value().move_rvalue();
     auto prop_rval = prop_res.move_value().move_rvalue();

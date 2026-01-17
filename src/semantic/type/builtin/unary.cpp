@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
@@ -9,9 +9,9 @@
 namespace ulam {
 
 Unsigned UnaryType::unsigned_value(const RValue& rval) {
-    assert(rval.has_rvalue());
+    ulam_assert(rval.has_rvalue());
     Unsigned uns_val = utils::count_ones(rval.get<Unsigned>());
-    assert(uns_val <= bitsize());
+    ulam_assert(uns_val <= bitsize());
     return uns_val;
 }
 
@@ -35,14 +35,14 @@ TypedValue UnaryType::type_op(TypeOp op) {
 RValue UnaryType::construct() { return construct(0); }
 
 RValue UnaryType::construct(Unsigned uns_val) {
-    assert(uns_val <= bitsize());
+    ulam_assert(uns_val <= bitsize());
     return RValue{utils::ones(uns_val)};
 }
 
 RValue UnaryType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
 
 Datum UnaryType::to_datum(const RValue& rval) {
-    assert(rval.is<Unsigned>());
+    ulam_assert(rval.is<Unsigned>());
     return (Datum)rval.get<Unsigned>();
 }
 
@@ -55,7 +55,7 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
     switch (op) {
     case Op::UnaryMinus: {
         bitsize_t size = utils::bitsize(uns_val);
-        assert(size <= IntType::DefaultSize);
+        ulam_assert(size <= IntType::DefaultSize);
         return {
             builtins().int_type(size),
             Value{RValue{(-(Integer)uns_val), is_consteval}}};
@@ -75,16 +75,16 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
             --uns_val;
         break;
     default:
-        utils::unreachable();
+        unreachable();
     }
     return {this, Value{RValue(utils::ones(uns_val), is_consteval)}};
 }
 
 TypedValue UnaryType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
-    assert(r_type->is(UnaryId));
-    assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
-    assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
+    ulam_assert(r_type->is(UnaryId));
+    ulam_assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
+    ulam_assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
 
     bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
 
@@ -113,7 +113,7 @@ TypedValue UnaryType::binary_op(
         return {type, Value{std::move(rval)}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -137,7 +137,7 @@ bool UnaryType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -160,12 +160,12 @@ bool UnaryType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
-    assert(is_expl_castable_to(id));
+    ulam_assert(is_expl_castable_to(id));
 
     bool is_unknown = !rval.has_rvalue();
     bool is_consteval = rval.is_consteval();
@@ -196,7 +196,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         }
     }
     case BoolId: {
-        assert(bitsize() == 1);
+        ulam_assert(bitsize() == 1);
         auto boolean = builtins().boolean();
         if (is_unknown)
             return {boolean, Value{RValue{}}};
@@ -205,7 +205,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {boolean, Value{std::move(rval)}};
     }
     case UnaryId: {
-        utils::unreachable();
+        unreachable();
         // return {this, Value{std::move(rval)}};
     }
     case BitsId: {
@@ -218,12 +218,12 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {type, Value{RValue{std::move(val), is_consteval}}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
+    ulam_assert(is_expl_castable_to(type));
     if (!rval.has_rvalue())
         return std::move(rval);
 
@@ -241,7 +241,7 @@ RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return RValue{uns_val, is_consteval};
     }
     case BoolId: {
-        assert(bitsize() == 1);
+        ulam_assert(bitsize() == 1);
         auto rval =
             builtins().bool_type(type->bitsize())->construct(uns_val > 0);
         rval.set_is_consteval(is_consteval);
@@ -261,7 +261,7 @@ RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return bits_rval;
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

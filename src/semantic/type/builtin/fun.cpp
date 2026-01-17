@@ -1,22 +1,22 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/fun.hpp>
 
 namespace ulam {
 
-bitsize_t FunType::bitsize() const { utils::unreachable(); }
+bitsize_t FunType::bitsize() const { unreachable(); }
 
 RValue FunType::load(const BitsView data, bitsize_t off) {
-    utils::unreachable();
+    unreachable();
 }
 
 void FunType::store(BitsView data, bitsize_t off, const RValue& rval) {
-    utils::unreachable();
+    unreachable();
 }
 
-Value FunType::cast_to(Ref<Type> type, Value&& val) { utils::unreachable(); }
+Value FunType::cast_to(Ref<Type> type, Value&& val) { unreachable(); }
 
-Ref<ArrayType> FunType::array_type(array_size_t size) { utils::unreachable(); }
+Ref<ArrayType> FunType::array_type(array_size_t size) { unreachable(); }
 
-Ref<RefType> FunType::ref_type() { utils::unreachable(); }
+Ref<RefType> FunType::ref_type() { unreachable(); }
 
 } // namespace ulam

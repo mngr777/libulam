@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -37,7 +37,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::TypeOpExpr> node) {
             return {ExprError::UnresolvableType};
         res = type_op(node, type);
     } else {
-        assert(node->has_expr());
+        ulam_assert(node->has_expr());
         auto expr_res = node->expr()->accept(*this);
         if (!expr_res)
             return expr_res;
@@ -75,7 +75,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ident> node) {
         std::bind(std::mem_fn(&EvalExprVisitor::ident_var), this, node, _1),
         std::bind(std::mem_fn(&EvalExprVisitor::ident_prop), this, node, _1),
         std::bind(std::mem_fn(&EvalExprVisitor::ident_fset), this, node, _1),
-        [&](auto value) -> ExprRes { utils::unreachable(); });
+        [&](auto value) -> ExprRes { unreachable(); });
     return check(node, std::move(res));
 }
 
@@ -86,7 +86,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ParenExpr> node) {
 
 ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
     debug() << __FUNCTION__ << " BinaryOp\n" << line_at(node);
-    assert(node->has_lhs() && node->has_rhs());
+    ulam_assert(node->has_lhs() && node->has_rhs());
 
     Op op = node->op();
 
@@ -150,7 +150,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
     auto cond_res = ternary_eval_cond(node);
     if (!cond_res)
         return cond_res;
-    assert(cond_res.type()->is_same(builtins().boolean()));
+    ulam_assert(cond_res.type()->is_same(builtins().boolean()));
 
     auto [if_true_res, if_false_res] = ternary_eval_branches_noexec(node);
     if (!if_true_res)
@@ -171,8 +171,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::Ternary> node) {
 
 Ref<Type>
 EvalExprVisitor::common_type(const ExprRes& res1, const ExprRes& res2) {
-    assert(res1);
-    assert(res2);
+    ulam_assert(res1);
+    ulam_assert(res2);
 
     auto type1 = res1.type();
     auto type2 = res2.type();
@@ -232,7 +232,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
 
 ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
     debug() << __FUNCTION__ << " MemberAccess\n" << line_at(node);
-    assert(node->has_obj());
+    ulam_assert(node->has_obj());
 
     // eval object expr
     auto obj = node->obj()->accept(*this);
@@ -278,7 +278,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::MemberAccess> node) {
         [&](Ref<FunSet> fset) -> ExprRes {
             return member_access_fset(node, std::move(obj), fset, base);
         },
-        [&](auto other) -> ExprRes { utils::unreachable(); });
+        [&](auto other) -> ExprRes { unreachable(); });
     return check(node, std::move(res));
 }
 
@@ -308,8 +308,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassConstAccess> node) {
 
 ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
     debug() << __FUNCTION__ << " ArrayAccess\n" << line_at(node);
-    assert(node->has_array());
-    assert(node->has_index());
+    ulam_assert(node->has_array());
+    ulam_assert(node->has_index());
 
     // eval array expr
     auto obj = node->array()->accept(*this);
@@ -376,7 +376,7 @@ bool EvalExprVisitor::check_is_assignable(
         diag().error(node, "cannot assign to xvalue");
         return false;
     }
-    assert(value.is_lvalue() && !value.lvalue().is_xvalue());
+    ulam_assert(value.is_lvalue() && !value.lvalue().is_xvalue());
     return true;
 }
 
@@ -415,7 +415,7 @@ Ref<Class> EvalExprVisitor::class_base(
     ExprRes& obj,
     Ref<Class> cls,
     Ref<ast::BaseTypeSelect> base_type) {
-    assert(base_type);
+    ulam_assert(base_type);
 
     // *.Base1.Base2(p1, p2)
     for (unsigned n = 0; n < base_type->type_spec_num(); ++n) {
@@ -444,7 +444,7 @@ Ref<Class> EvalExprVisitor::class_base_ident(
     ExprRes& obj,
     Ref<Class> cls,
     Ref<ast::TypeIdent> ident) {
-    assert(ident);
+    ulam_assert(ident);
 
     if (ident->is_self())
         return cls;
@@ -461,7 +461,7 @@ Ref<Class> EvalExprVisitor::class_base_ident(
             return {};
         }
     }
-    assert(sym->is<UserType>());
+    ulam_assert(sym->is<UserType>());
     auto type = sym->get<UserType>();
 
     // resolve aliases
@@ -491,9 +491,9 @@ Ref<Class> EvalExprVisitor::class_base_type_spec(
     ExprRes& obj,
     Ref<Class> cls,
     Ref<ast::TypeSpec> type_spec) {
-    assert(type_spec && type_spec->has_args());
+    ulam_assert(type_spec && type_spec->has_args());
 
-    assert(
+    ulam_assert(
         !type_spec->ident()->is_self() &&
         !type_spec->ident()->is_super()); // TODO: check in parser
 
@@ -516,7 +516,7 @@ Ref<Class> EvalExprVisitor::class_base_type_spec(
 
 Ref<Class> EvalExprVisitor::class_base_classid(
     Ref<ast::Expr> expr, ExprRes& obj, Ref<Class> cls, ExprRes&& classid) {
-    assert(expr);
+    ulam_assert(expr);
 
     if (classid.value().empty() && has_flag(evl::NoExec))
         return cls; // return current class if not executing
@@ -582,13 +582,13 @@ ExprRes EvalExprVisitor::binary_op(
         case TypeError::ImplCastRequired: {
             if (error.cast_bi_type_id != NoBuiltinTypeId)
                 return env().cast(expr, error.cast_bi_type_id, std::move(arg));
-            assert(error.cast_type);
+            ulam_assert(error.cast_type);
             return env().cast(expr, error.cast_type, std::move(arg));
         }
         case TypeError::Ok:
             return std::move(arg);
         default:
-            utils::unreachable();
+            unreachable();
         };
     };
 
@@ -627,7 +627,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
     if (left.type()->actual()->is_prim()) {
         if (op != Op::Assign) {
             // primitive binary op
-            assert(r_type->is_prim());
+            ulam_assert(r_type->is_prim());
             auto l_rval = left.move_value().move_rvalue();
             auto r_rval = right.move_value().move_rvalue();
             right = {l_type->as_prim()->binary_op(
@@ -644,11 +644,11 @@ ExprRes EvalExprVisitor::apply_binary_op(
             auto fset = cls->op(op);
             if (!fset && program()->eval_options().implicit_class_negation_op) {
                 auto neg_op = ops::negation(op);
-                assert(neg_op != Op::None);
+                ulam_assert(neg_op != Op::None);
                 fset = cls->op(neg_op);
                 is_negation = true;
             }
-            assert(fset);
+            ulam_assert(fset);
 
             // bind to object
             left = bind(node, fset, std::move(left));
@@ -699,13 +699,13 @@ ExprRes EvalExprVisitor::unary_op(
         return {ExprError::InvalidOperandType};
     case TypeError::ExplCastRequired:
         if (ops::is_inc_dec(op)) {
-            // assert ??
+            // ulam_assert ??
             diag().error(node, "incompatible");
             return {ExprError::InvalidOperandType};
         }
         return {ExprError::CastRequired};
     case TypeError::ImplCastRequired: {
-        assert(!ops::is_inc_dec(op));
+        ulam_assert(!ops::is_inc_dec(op));
         arg = env().cast(node, error.cast_bi_type_id, std::move(arg));
         if (!arg)
             return std::move(arg);
@@ -751,7 +751,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
             }
             if (ops::is_unary_pre_op(op))
                 return {std::move(lval_res)};
-            assert(ops::is_unary_post_op(op));
+            ulam_assert(ops::is_unary_post_op(op));
             return lval_res.derived(
                 lval_res.type(), Value{std::move(orig_rval)});
         }
@@ -759,15 +759,15 @@ ExprRes EvalExprVisitor::apply_unary_op(
 
     } else if (arg_type->is_object()) {
         if (op == Op::Is) {
-            assert(type);
+            ulam_assert(type);
             if (!check_is_object(node, type))
                 return {ExprError::NotObject};
-            assert(op == Op::Is);
+            ulam_assert(op == Op::Is);
             if (!arg.value().has_rvalue())
                 return {builtins().boolean(), Value{RValue{}}};
             // NOTE: using "real" dyn type, see t41365
             auto dyn_type = arg.value().dyn_obj_type(true);
-            assert(type->is_class()); // TODO: check upstream
+            ulam_assert(type->is_class()); // TODO: check upstream
             bool is =
                 dyn_type->is_class() &&
                 type->as_class()->is_same_or_base_of(dyn_type->as_class());
@@ -777,7 +777,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
         } else if (arg_type->is_class()) {
             auto cls = arg_type->as_class();
             auto fset = cls->op(op);
-            assert(fset);
+            ulam_assert(fset);
             ExprResList args;
             if (op == Op::PostInc || op == Op::PostDec)
                 args.push_back(post_inc_dec_dummy());
@@ -785,7 +785,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
             return env().call(node, std::move(arg), std::move(args));
         }
     }
-    utils::unreachable();
+    unreachable();
 }
 
 ExprRes EvalExprVisitor::post_inc_dec_dummy() {
@@ -796,7 +796,7 @@ ExprRes EvalExprVisitor::post_inc_dec_dummy() {
 }
 
 ExprRes EvalExprVisitor::ternary_eval_cond(Ref<ast::Ternary> node) {
-    assert(node->has_cond());
+    ulam_assert(node->has_cond());
     auto cond_res = node->cond()->accept(*this);
     if (!cond_res)
         return cond_res;
@@ -816,7 +816,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassName> node) {
 }
 
 ExprRes EvalExprVisitor::class_name(Ref<ast::ClassName> node, Ref<Class> cls) {
-    assert(cls);
+    ulam_assert(cls);
     auto str_id = utils::class_name_id(program(), cls, node->kind());
     RValue rval{String{str_id}, true};
     return {builtins().string_type(), Value{std::move(rval)}};
@@ -928,7 +928,7 @@ EvalExprVisitor::type_op_expr(Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
 
 ExprRes EvalExprVisitor::type_op_expr_construct(
     Ref<ast::TypeOpExpr> node, ExprRes&& arg) {
-    assert(arg.type()->is_class());
+    ulam_assert(arg.type()->is_class());
     auto args = eval_args(node->args());
     if (!args)
         return {args.error()};
@@ -986,7 +986,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     auto tv = type->type_op(node->op(), val);
     if (!tv) {
         const auto name = ops::str(node->op());
-        assert(name);
+        ulam_assert(name);
         diag().error(
             node->loc_id(), 1, std::string("operation `") + name + "' failed");
         return {ExprError::InvalidTypeOperator};
@@ -1033,7 +1033,7 @@ ExprRes EvalExprVisitor::ident_fset(Ref<ast::Ident> node, Ref<FunSet> fset) {
 }
 
 ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
-    assert(node->is_op_call());
+    ulam_assert(node->is_op_call());
     auto lval = scope()->self();
     auto cls = scope()->eff_cls();
     auto fset = cls->op(node->fun_op());
@@ -1046,7 +1046,7 @@ ExprRes EvalExprVisitor::callable_op(Ref<ast::FunCall> node) {
 
 ExprRes EvalExprVisitor::array_access_class(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
-    assert(obj.type()->actual()->is_class());
+    ulam_assert(obj.type()->actual()->is_class());
 
     // op fset
     auto cls = obj.type()->actual()->as_class();
@@ -1071,8 +1071,8 @@ ExprRes EvalExprVisitor::array_access_class(
 
 ExprRes EvalExprVisitor::array_access_string(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
-    assert(obj.type()->actual()->is(StringId));
-    assert(idx.type()->actual()->is(IntId));
+    ulam_assert(obj.type()->actual()->is(StringId));
+    ulam_assert(idx.type()->actual()->is(IntId));
 
     auto char_type = builtins().char_type();
 
@@ -1099,11 +1099,11 @@ ExprRes EvalExprVisitor::array_access_string(
 
 ExprRes EvalExprVisitor::array_access_array(
     Ref<ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
-    assert(obj.type()->actual()->is_array());
-    assert(idx.type()->actual()->is(IntId));
+    ulam_assert(obj.type()->actual()->is_array());
+    ulam_assert(idx.type()->actual()->is(IntId));
 
     auto array_type = obj.type()->non_alias()->deref()->non_alias()->as_array();
-    assert(array_type);
+    ulam_assert(array_type);
     auto item_type = array_type->item_type();
     auto array_val = obj.move_value();
 
@@ -1155,8 +1155,8 @@ ExprRes EvalExprVisitor::member_access_fset(
 
 ExprRes EvalExprVisitor::class_const_access(
     Ref<ast::ClassConstAccess> node, Ref<Var> var) {
-    assert(var->has_cls());
-    assert(var->is_const());
+    ulam_assert(var->has_cls());
+    ulam_assert(var->is_const());
 
     auto resolver = env().resolver(true);
     if (!var->has_type() && !resolver.resolve(var))
@@ -1169,7 +1169,7 @@ ExprRes EvalExprVisitor::class_const_access(
 
 ExprRes EvalExprVisitor::bind(
     Ref<ast::Expr> node, Ref<FunSet> fset, ExprRes&& obj, Ref<Class> base) {
-    assert(obj.type()->actual()->is_class());
+    ulam_assert(obj.type()->actual()->is_class());
     return {builtins().fun_type(), obj.move_value().bound_fset(fset, base)};
 }
 
@@ -1200,11 +1200,11 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
 }
 
 ExprRes EvalExprVisitor::negate(Ref<ast::Expr> node, ExprRes&& res) {
-    assert(res.type()->is(BoolId));
+    ulam_assert(res.type()->is(BoolId));
     auto val = res.move_value();
     if (!val.empty()) {
         auto type = dynamic_cast<BoolType*>(res.type());
-        assert(type);
+        ulam_assert(type);
         auto rval = type->construct(!type->is_true(val.move_rvalue()));
         val = Value{std::move(rval)};
     }

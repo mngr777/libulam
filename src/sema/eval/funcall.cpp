@@ -34,16 +34,16 @@ ExprRes EvalFuncall::construct(
 
 ExprRes
 EvalFuncall::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
-    assert(callable);
-    assert(args);
-    assert(callable.type()->is(FunId));
+    ulam_assert(callable);
+    ulam_assert(args);
+    ulam_assert(callable.type()->is(FunId));
 
     if (flags() & evl::Consteval)
         return {ExprError::NotConsteval};
 
     const auto& val = callable.value();
-    assert(val.is_lvalue());
-    assert(val.lvalue().is<BoundFunSet>());
+    ulam_assert(val.is_lvalue());
+    ulam_assert(val.lvalue().is<BoundFunSet>());
     const auto& bfset = val.lvalue().get<BoundFunSet>();
 
     auto fset = bfset.fset();
@@ -60,7 +60,7 @@ EvalFuncall::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
 
 ExprRes EvalFuncall::funcall(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
-    assert(args);
+    ulam_assert(args);
 
     if (flags() & evl::Consteval)
         return {ExprError::NotConsteval};
@@ -86,17 +86,17 @@ ExprRes EvalFuncall::funcall_callable(
     ExprRes&& callable,
     ExprResList&& args,
     Ref<Class> eff_cls) {
-    assert(callable.type()->is(FunId));
+    ulam_assert(callable.type()->is(FunId));
     if (has_flag(evl::NoExec))
         return empty_ret_val(node, fun);
     auto val = callable.move_value();
-    assert(!val.empty());
+    ulam_assert(!val.empty());
     return do_funcall(node, fun, val.self(), std::move(args), eff_cls);
 }
 
 ExprRes EvalFuncall::funcall_obj(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
-    assert(obj.type()->actual()->is_class());
+    ulam_assert(obj.type()->actual()->is_class());
     if (has_flag(evl::NoExec))
         return empty_ret_val(node, fun);
     auto val = obj.move_value();
@@ -118,8 +118,8 @@ ExprRes EvalFuncall::do_funcall(
         diag().error(node, "function is pure virtual");
         return {ExprError::FunctionIsPureVirtual};
     }
-    assert(fun->node()->has_body());
-    assert(!self.empty());
+    ulam_assert(fun->node()->has_body());
+    ulam_assert(!self.empty());
 
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(env().scope_lvl() + 1);
@@ -130,12 +130,12 @@ ExprRes EvalFuncall::do_funcall(
     std::list<Ptr<ast::VarDef>> tmp_defs{};
     std::list<Ptr<Var>> tmp_vars{};
     for (const auto& param : fun->params()) {
-        assert(!args.empty());
+        ulam_assert(!args.empty());
         auto arg = args.pop_front();
 
         // binding rvalue or xvalue lvalue to const ref via tmp variable
         if (param->type()->is_ref() && arg.value().is_tmp()) {
-            assert(param->is_const());
+            ulam_assert(param->is_const());
             // create tmp var default
             auto def = make<ast::VarDef>(param->node()->name());
             auto var = make<Var>(
@@ -146,7 +146,7 @@ ExprRes EvalFuncall::do_funcall(
             tmp_defs.push_back(std::move(def));
             tmp_vars.push_back(std::move(var));
         }
-        assert(arg.type()->is_same(param->type()));
+        ulam_assert(arg.type()->is_same(param->type()));
 
         auto var = make<Var>(
             param->type_node(), param->node(), param->type(), param->flags());
@@ -220,14 +220,14 @@ std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(
 
 ExprResList
 EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
-    assert(fun->has_ellipsis() || fun->params().size() == args.size());
-    assert(!fun->has_ellipsis() || fun->params().size() <= args.size());
+    ulam_assert(fun->has_ellipsis() || fun->params().size() == args.size());
+    ulam_assert(!fun->has_ellipsis() || fun->params().size() <= args.size());
 
     auto arg_it = args.begin();
     auto param_it = fun->params().begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
         if (param_it == fun->params().end()) {
-            assert(fun->has_ellipsis());
+            ulam_assert(fun->has_ellipsis());
             break;
         }
         auto& arg = *arg_it;
@@ -236,12 +236,12 @@ EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
 
         // binding rvalue or xvalue lvalue to const ref
         if (param_type->is_ref() && arg.value().is_tmp()) {
-            assert(param->is_const());
+            ulam_assert(param->is_const());
             param_type = param_type->deref(); // cast to non-ref type if casting
         }
 
         arg = cast_arg(node, fun, ref(param), param_type, std::move(arg));
-        assert(arg);
+        ulam_assert(arg);
     }
     return std::move(args);
 }

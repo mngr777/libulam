@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -32,7 +32,7 @@ RValue BoolType::construct(bool value) {
 }
 
 bool BoolType::is_true(const RValue& rval) const {
-    assert(rval.is<Unsigned>());
+    ulam_assert(rval.is<Unsigned>());
     auto uns_val = rval.get<Unsigned>();
     return utils::count_ones(uns_val) >= (bitsize() + 1u) / 2;
 }
@@ -43,7 +43,7 @@ RValue BoolType::from_datum(Datum datum) {
 }
 
 Datum BoolType::to_datum(const RValue& rval) {
-    assert(rval.is<Unsigned>());
+    ulam_assert(rval.is<Unsigned>());
     auto rval_upd = construct(is_true(rval));
     auto uns_val = rval_upd.get<Unsigned>();
     return uns_val;
@@ -63,15 +63,15 @@ TypedValue BoolType::unary_op(Op op, RValue&& rval) {
         return {this, Value{std::move(rval)}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 TypedValue BoolType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
-    assert(r_type->is(BoolId));
-    assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
-    assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
+    ulam_assert(r_type->is(BoolId));
+    ulam_assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
+    ulam_assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
 
     auto type = builtins().bool_type(std::max(bitsize(), bitsize()));
     bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
@@ -91,7 +91,7 @@ TypedValue BoolType::binary_op(
     case Op::Or:
         return {type, Value{type->construct(left || right)}};
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -125,12 +125,12 @@ bool BoolType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
-    assert(is_expl_castable_to(id));
+    ulam_assert(is_expl_castable_to(id));
 
     switch (id) {
     case IntId: {
@@ -146,7 +146,7 @@ TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {type, Value{cast_to_prim(type, std::move(rval))}};
     }
     case BoolId: {
-        utils::unreachable();
+        unreachable();
         // return {this, Value{std::move(rval)}};
     }
     case BitsId: {
@@ -154,12 +154,12 @@ TypedValue BoolType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {type, Value{cast_to_prim(type, std::move(rval))}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 RValue BoolType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
+    ulam_assert(is_expl_castable_to(type));
     if (!rval.has_rvalue())
         return std::move(rval);
 
@@ -190,7 +190,7 @@ RValue BoolType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return bits_rval;
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

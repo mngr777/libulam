@@ -40,13 +40,13 @@ bool ClassBase::has_fun(const std::string_view name) const {
 }
 
 Ref<FunSet> ClassBase::fun(str_id_t name_id) {
-    assert(has_fun(name_id));
+    ulam_assert(has_fun(name_id));
     auto sym = get(name_id);
     return sym->get<FunSet>();
 }
 
 Ref<FunSet> ClassBase::fun(const std::string_view name) {
-    assert(has_fun(name));
+    ulam_assert(has_fun(name));
     auto sym = get(name);
     return sym->get<FunSet>();
 }
@@ -80,7 +80,7 @@ Ref<FunSet> ClassBase::op(Op op) {
 Ref<Var> ClassBase::add_param(Ptr<Var>&& var) {
     auto ref = ulam::ref(var);
     auto name_id = ref->name_id();
-    assert(!has(name_id));
+    ulam_assert(!has(name_id));
 
     scope()->set(name_id, std::move(var));
     set(name_id, ref);
@@ -97,7 +97,7 @@ Ref<Var> ClassBase::add_param(Ptr<Var>&& var) {
 Ref<AliasType> ClassBase::add_type_def(Ref<ast::TypeDef> node) {
     auto name_id = node->alias_id();
     auto program = _module->program();
-    assert(!has(name_id));
+    ulam_assert(!has(name_id));
 
     Ptr<UserType> type = make<AliasType>(
         program->str_pool(), program->builtins(), &program->type_id_gen(),
@@ -162,7 +162,7 @@ Ref<Fun> ClassBase::add_fun(Ref<ast::FunDef> node) {
 Ref<Var>
 ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
-    assert(!scope()->defines(name_id));
+    ulam_assert(!scope()->defines(name_id));
 
     auto var = make<Var>(type_node, node, Ref<Type>{}, Var::Const);
     auto ref = ulam::ref(var);
@@ -180,7 +180,7 @@ ClassBase::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 Ref<Prop>
 ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     auto name_id = node->name_id();
-    assert(!scope()->defines(name_id));
+    ulam_assert(!scope()->defines(name_id));
 
     auto prop = make<Prop>(type_node, node, Ref<Type>{}, Var::NoFlags);
     auto ref = ulam::ref(prop);
@@ -198,7 +198,7 @@ ClassBase::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 bool ClassBase::has_constructors() const { return (bool)_constructors; }
 
 Ref<FunSet> ClassBase::constructors() {
-    assert(_constructors);
+    ulam_assert(_constructors);
     return ref(_constructors);
 }
 
@@ -206,7 +206,7 @@ Ref<PersScope> ClassBase::scope() { return ref(_scope); }
 
 Ref<FunSet> ClassBase::find_fset(str_id_t name_id) {
     auto sym = get(name_id);
-    assert(!sym || sym->is<FunSet>());
+    ulam_assert(!sym || sym->is<FunSet>());
     return sym ? sym->get<FunSet>() : add_fset(name_id);
 }
 
@@ -224,7 +224,7 @@ Ref<FunSet> ClassBase::add_fset(str_id_t name_id) {
 }
 
 Ref<FunSet> ClassBase::add_op_fset(Op op) {
-    assert(_ops.count(op) == 0);
+    ulam_assert(_ops.count(op) == 0);
     auto fset = make<FunSet>();
     auto ref = ulam::ref(fset);
     _ops[op] = std::move(fset);

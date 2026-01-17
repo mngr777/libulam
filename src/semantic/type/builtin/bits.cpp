@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <algorithm>
 #include <functional>
 #include <libulam/semantic/type/builtin/atom.hpp>
@@ -16,14 +16,14 @@ RValue BitsType::load(const BitsView data, bitsize_t off) {
 }
 
 void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) {
-    assert(rval.is<Bits>());
+    ulam_assert(rval.is<Bits>());
     data.write(off, rval.get<Bits>().view());
 }
 
 RValue BitsType::construct() { return RValue{Bits{bitsize()}}; }
 
 RValue BitsType::construct(Bits&& bits) {
-    assert(bits.len());
+    ulam_assert(bits.len());
     return RValue{std::move(bits)};
 }
 
@@ -37,13 +37,13 @@ bool BitsType::is_castable_to(
 Value BitsType::cast_to(Ref<Type> type, Value&& val) {
     // class?
     if (type->is_class()) {
-        assert(type->bitsize() == bitsize());
+        ulam_assert(type->bitsize() == bitsize());
         auto cls = type->as_class();
         if (!val.has_rvalue())
             return Value{cls->construct()};
 
         auto rval = val.move_rvalue();
-        assert(rval.is<Bits>());
+        ulam_assert(rval.is<Bits>());
         bool is_consteval = rval.is_consteval();
         auto& bits = rval.get<Bits>();
         auto new_rval = cls->construct(std::move(bits));
@@ -53,12 +53,12 @@ Value BitsType::cast_to(Ref<Type> type, Value&& val) {
 
     // atom?
     if (type->is(AtomId)) {
-        assert(bitsize() == ULAM_ATOM_SIZE);
+        ulam_assert(bitsize() == ULAM_ATOM_SIZE);
         if (!val.has_rvalue())
             return Value{type->construct()};
 
         auto rval = val.move_rvalue();
-        assert(rval.is<Bits>());
+        ulam_assert(rval.is<Bits>());
         bool is_consteval = rval.is_consteval();
         auto& bits = rval.get<Bits>();
         auto new_rval = builtins().atom_type()->construct(std::move(bits));
@@ -87,20 +87,20 @@ TypedValue BitsType::unary_op(Op op, RValue&& rval) {
 
     switch (op) {
     case Op::BwNot: {
-        assert(rval.is<Bits>());
+        ulam_assert(rval.is<Bits>());
         auto& bits = rval.get<Bits>();
         bits.flip();
         return {this, Value{std::move(rval)}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 TypedValue BitsType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
-    assert(r_type->is(BitsId) || r_type->is(UnsignedId));
-    assert(!l_rval.has_rvalue() || l_rval.is<Bits>());
+    ulam_assert(r_type->is(BitsId) || r_type->is(UnsignedId));
+    ulam_assert(!l_rval.has_rvalue() || l_rval.is<Bits>());
     bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
     bool is_consteval = !ops::is_assign(op) && !is_unknown &&
                         l_rval.is_consteval() && r_rval.is_consteval();
@@ -185,7 +185,7 @@ TypedValue BitsType::binary_op(
             tmp_bits |= bits;
             std::swap(tmp_bits, bits);
         }
-        assert(bits.len() == type->bitsize());
+        ulam_assert(bits.len() == type->bitsize());
         bits <<= shift;
         auto rval = type->construct(std::move(bits));
         rval.set_is_consteval(is_consteval);
@@ -212,7 +212,7 @@ TypedValue BitsType::binary_op(
     case Op::BwXor:
         return binop(bw_xor, false);
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -235,7 +235,7 @@ bool BitsType::is_castable_to_prim(Ref<const PrimType> type, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -258,7 +258,7 @@ bool BitsType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -266,7 +266,7 @@ bool BitsType::is_impl_castable_to_prim(
     Ref<const PrimType> type, const Value& val) const {
     if (!type->is(BitsId))
         return is_castable_to_prim(type, false);
-    assert(type->bitsize() != bitsize());
+    ulam_assert(type->bitsize() != bitsize());
     if (type->bitsize() < bitsize())
         return true;
     if (!val.has_rvalue() || type->bitsize() > 64)
@@ -283,11 +283,11 @@ bool BitsType::is_impl_castable_to_prim(
 
 TypedValue BitsType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     // Bits values are not implicitly castable to other types
-    utils::unreachable();
+    unreachable();
 }
 
 RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
+    ulam_assert(is_expl_castable_to(type));
     if (!rval.has_rvalue())
         return std::move(rval);
 
@@ -311,7 +311,7 @@ RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return RValue{std::move(copy), is_consteval};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

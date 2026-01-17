@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/str_pool.hpp>
@@ -29,7 +29,7 @@ public:
     bool has(str_id_t name_id) const { return _map.count(name_id) > 0; }
 
     auto& get(str_id_t name_id) {
-        assert(has(name_id));
+        ulam_assert(has(name_id));
         unsigned idx = _map[name_id];
         return ListOf::get(idx);
     }
@@ -39,7 +39,7 @@ public:
     }
 
     template <typename N> void add(str_id_t name_id, Ptr<N>&& item) {
-        assert(_map.count(name_id) == 0);
+        ulam_assert(_map.count(name_id) == 0);
         unsigned n = child_num();
         ListOf::add(std::move(item));
         _keys.push_back(name_id);
@@ -47,7 +47,7 @@ public:
     }
 
     Ref<Node> child_by_key(str_id_t name_id) {
-        assert(_map.count(name_id) == 1);
+        ulam_assert(_map.count(name_id) == 1);
         unsigned n = _map[name_id];
         return InitList::child(n);
     }

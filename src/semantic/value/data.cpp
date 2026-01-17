@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtins.hpp>
@@ -11,7 +11,7 @@ namespace ulam {
 
 namespace {
 Ref<AtomType> atom_type(Ref<Type> type) {
-    assert(type->is_atom());
+    ulam_assert(type->is_atom());
     return type->is_class() ? type->as_class()->builtins().atom_type()
                             : dynamic_cast<AtomType*>(type);
 }
@@ -21,7 +21,7 @@ Ref<AtomType> atom_type(Ref<Type> type) {
 // Data
 
 Data::Data(Ref<Type> type, Bits&& bits): _type{}, _bits{std::move(bits)} {
-    assert(type->is_array() || type->is_object());
+    ulam_assert(type->is_array() || type->is_object());
     _type = type;
 }
 
@@ -90,16 +90,16 @@ DataView::DataView(
 }
 
 void DataView::store(RValue&& rval) {
-    assert(*this && !is_ph());
+    ulam_assert(*this && !is_ph());
     dyn_type()->store(_storage->bits(), _off, std::move(rval));
 }
 
 RValue DataView::load(bool real) const {
-    assert(*this && !is_ph());
+    ulam_assert(*this && !is_ph());
     auto rval = _type->load(_storage->bits(), _off);
     auto type = dyn_type();
     if (!real && _view_type && !_view_type->is_same(type)) {
-        assert(type->is_expl_castable_to(_view_type));
+        ulam_assert(type->is_expl_castable_to(_view_type));
         auto val = type->cast_to(_view_type, Value{std::move(rval)});
         return val.move_rvalue();
     }
@@ -117,7 +117,7 @@ const DataView DataView::as(Ref<Type> type) const {
 }
 
 DataView DataView::array_item(array_idx_t idx) {
-    assert(type()->is_array());
+    ulam_assert(type()->is_array());
     auto type_ = type();
     auto array_type = type_->as_array();
     auto item_type = type_->as_array()->item_type();
@@ -137,15 +137,15 @@ DataView DataView::prop(Ref<Prop> prop_) {
     if (!type->is_class()) {
         // NOTE: cannot be raw atom if empty element is defined
         // (in ulam::Options::class_options)
-        assert(type->is_atom());
-        assert(_view_type->is_class());
+        ulam_assert(type->is_atom());
+        ulam_assert(_view_type->is_class());
         type = _view_type;
     }
-    assert(type->is_class());
+    ulam_assert(type->is_class());
 
     auto cls = type->as_class();
     auto prop_cls = prop_->cls();
-    assert(
+    ulam_assert(
         prop_cls->is_same_or_base_of(cls) ||
         (cls->is_element() && prop_cls->is_element()));
 
@@ -162,7 +162,7 @@ const DataView DataView::prop(Ref<Prop> prop_) const {
 DataView DataView::atom_of() {
     if (_atom.off == NoBitsize)
         return {};
-    assert(_atom.type);
+    ulam_assert(_atom.type);
     return {_storage, _atom.type, _atom.off, _atom.off, _atom.type};
 }
 
@@ -207,7 +207,7 @@ const BitsView DataView::bits() const {
 }
 
 void DataView::set_view_type(Ref<Type> view_type) {
-    assert(dyn_type()->is_expl_refable_as(view_type, Value{RValue{}}));
+    ulam_assert(dyn_type()->is_expl_refable_as(view_type, Value{RValue{}}));
     _view_type = view_type;
 }
 

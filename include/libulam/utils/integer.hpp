@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <limits>
@@ -39,8 +39,8 @@ constexpr Unsigned log2(Unsigned value) {
 }
 
 constexpr Datum integer_to_datum(Integer value, bitsize_t size) {
-    assert(size > 0);
-    assert(size <= sizeof(value) * 8);
+    ulam_assert(size > 0);
+    ulam_assert(size <= sizeof(value) * 8);
 
     auto datum = (Datum)value;
 #ifndef NDEBUG
@@ -54,8 +54,8 @@ constexpr Datum integer_to_datum(Integer value, bitsize_t size) {
 }
 
 constexpr Integer integer_from_datum(Datum datum, bitsize_t size) {
-    assert(size > 0);
-    assert(size <= sizeof(datum) * 8);
+    ulam_assert(size > 0);
+    ulam_assert(size <= sizeof(datum) * 8);
 
     const int Shift = sizeof(datum) * 8 - size;
     if (Shift > 0 && (1 << (size - 1) & datum)) {
@@ -80,18 +80,18 @@ constexpr Unsigned count_ones(Unsigned value) {
 }
 
 constexpr Unsigned unsigned_max(bitsize_t size) {
-    assert(0 < size && size <= sizeof(Unsigned) * 8);
+    ulam_assert(0 < size && size <= sizeof(Unsigned) * 8);
     return (size == (sizeof(Unsigned) * 8)) ? max<Unsigned>()
                                             : ((Unsigned)1 << size) - 1;
 }
 
 constexpr Integer integer_min(bitsize_t size) {
-    assert(0 < size && size <= sizeof(Integer) * 8);
+    ulam_assert(0 < size && size <= sizeof(Integer) * 8);
     return (size == 1) ? -1 : -unsigned_max(size - 1) - 1;
 }
 
 constexpr Integer integer_max(bitsize_t size) {
-    assert(0 < size && size <= sizeof(Integer) * 8);
+    ulam_assert(0 < size && size <= sizeof(Integer) * 8);
     return (size == 1) ? 0 : unsigned_max(size - 1);
 }
 
@@ -205,35 +205,35 @@ constexpr std::pair<Integer, bool> safe_prod(Integer left, Integer right) {
             return {Max, true};
         auto right_threshold = Max / left;
         if (right_threshold < 0) {
-            assert(left < 0 && right < 0);
+            ulam_assert(left < 0 && right < 0);
             bool is_truncated = (right < right_threshold);
             return {is_truncated ? Max : left * right, is_truncated};
         } else {
-            assert(right_threshold > 0);
-            assert(left > 0 && right > 0);
+            ulam_assert(right_threshold > 0);
+            ulam_assert(left > 0 && right > 0);
             bool is_truncated = (right > right_threshold);
             return {is_truncated ? Max : left * right, is_truncated};
         }
     }
     case -1: {
         if (left == -1) {
-            assert(right > 0);
+            ulam_assert(right > 0);
             return {-right, false};
         }
         auto right_threshold = Min / left;
         if (right_threshold < 0) {
-            assert(left > 0 && right < 0);
+            ulam_assert(left > 0 && right < 0);
             bool is_truncated = (right < right_threshold);
             return {is_truncated ? Min : left * right, is_truncated};
         } else {
-            assert(left < 0 && right > 0);
-            assert(right_threshold > 0);
+            ulam_assert(left < 0 && right > 0);
+            ulam_assert(right_threshold > 0);
             bool is_truncated = (right > right_threshold);
             return {is_truncated ? Min : left * right, is_truncated};
         }
     }
     default:
-        assert(false);
+        ulam_assert(false);
         return {};
     }
 }

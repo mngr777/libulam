@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/root.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -47,7 +47,7 @@ Ref<Module> Program::module(str_id_t id) {
 }
 
 Ref<Module> Program::add_module(Ref<ast::ModuleDef> node) {
-    assert(_modules_by_name_id.count(node->name_id()) == 0);
+    ulam_assert(_modules_by_name_id.count(node->name_id()) == 0);
     auto mod = make<Module>(this, node);
     auto ref = ulam::ref(mod);
     _module_ptrs.push_back(std::move(mod));

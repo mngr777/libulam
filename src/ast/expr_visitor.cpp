@@ -1,7 +1,7 @@
-#include <libulam/ast/nodes/exprs.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
-#include "src/utils/unreachable.hpp"
+#include <libulam/ast/nodes/exprs.hpp>
 
 namespace ulam::ast {
 
@@ -27,7 +27,7 @@ DEF(ClassConstAccess)
 DEF(ArrayAccess)
 
 ExprVisitor::ExprRes ExprVisitor::visit_default(Ref<Expr> node) {
-    utils::unreachable();
+    unreachable();
 }
 
 } // namespace ulam::ast

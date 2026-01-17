@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/visitor.hpp>
@@ -43,8 +43,8 @@ void EvalVisitor::visit(Ref<ast::FunDefBody> node) {
 
 void EvalVisitor::visit(Ref<ast::If> node) {
     debug() << __FUNCTION__ << " If\n";
-    assert(node->has_cond());
-    assert(node->has_if_branch());
+    ulam_assert(node->has_cond());
+    ulam_assert(node->has_if_branch());
 
     auto sr = env().scope_raii();
     auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
@@ -143,7 +143,7 @@ void EvalVisitor::visit(Ref<ast::EmptyStmt> node) {
 
 void EvalVisitor::visit(Ref<ast::While> node) {
     debug() << __FUNCTION__ << " While\n";
-    assert(node->has_cond());
+    ulam_assert(node->has_cond());
 
     auto sr = env().scope_raii(scp::BreakAndContinue);
 
@@ -243,7 +243,7 @@ ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
         res = {builtins().type(VoidId), Value{RValue{}}};
     }
 
-    assert(scope()->fun());
+    ulam_assert(scope()->fun());
     auto ret_type = scope()->fun()->ret_type();
 
     // Check if Void fun returns value and vice versa

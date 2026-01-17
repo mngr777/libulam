@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/type.hpp>
@@ -17,10 +17,10 @@ namespace ulam {
 
 Type::~Type() {}
 
-RValue Type::construct() { utils::unreachable(); }
+RValue Type::construct() { unreachable(); }
 
 RValue Type::construct_ph() {
-    assert(is_constructible());
+    ulam_assert(is_constructible());
     return RValue{};
 }
 
@@ -41,7 +41,7 @@ Ref<const Type> Type::actual() const { return canon()->deref(); }
 bool Type::is_canon() const { return canon() == this; }
 
 bool Type::is(BuiltinTypeId id) const {
-    assert(id != NoBuiltinTypeId);
+    ulam_assert(id != NoBuiltinTypeId);
     return bi_type_id() == id;
 }
 
@@ -52,51 +52,51 @@ bool Type::is_atom() const {
 }
 
 Ref<PrimType> Type::as_prim() {
-    assert(_as_prim());
+    ulam_assert(_as_prim());
     return _as_prim();
 }
 
 Ref<const PrimType> Type::as_prim() const {
-    assert(_as_prim());
+    ulam_assert(_as_prim());
     return _as_prim();
 }
 
 Ref<Class> Type::as_class() {
-    assert(_as_class());
+    ulam_assert(_as_class());
     return _as_class();
 }
 
 Ref<const Class> Type::as_class() const {
-    assert(_as_class());
+    ulam_assert(_as_class());
     return _as_class();
 }
 
 Ref<AliasType> Type::as_alias() {
-    assert(_as_alias());
+    ulam_assert(_as_alias());
     return _as_alias();
 }
 
 Ref<const AliasType> Type::as_alias() const {
-    assert(_as_alias());
+    ulam_assert(_as_alias());
     return _as_alias();
 }
 
 Ref<ArrayType> Type::as_array() {
-    assert(_as_array());
+    ulam_assert(_as_array());
     return _as_array();
 }
 Ref<const ArrayType> Type::as_array() const {
-    assert(_as_array());
+    ulam_assert(_as_array());
     return _as_array();
 }
 
 Ref<RefType> Type::as_ref() {
-    assert(_as_ref());
+    ulam_assert(_as_ref());
     return _as_ref();
 }
 
 Ref<const RefType> Type::as_ref() const {
-    assert(_as_ref());
+    ulam_assert(_as_ref());
     return _as_ref();
 }
 
@@ -137,7 +137,7 @@ TypedValue Type::type_op(TypeOp op, Value& val) {
         lval = val.atom_of();
         if (lval.empty())
             return {};
-        assert(lval.type()->is_atom());
+        ulam_assert(lval.type()->is_atom());
         return {type, Value{lval}};
     }
     case TypeOp::PositionOf: {
@@ -288,14 +288,14 @@ Ptr<RefType> Type::make_ref_type() {
 // AliasType
 
 const std::string_view AliasType::name() const {
-    assert(_canon);
+    ulam_assert(_canon);
     return _str_pool.get(name_id());
 }
 
 str_id_t AliasType::name_id() const { return _node->alias_id(); }
 
 bitsize_t AliasType::bitsize() const {
-    assert(_canon);
+    ulam_assert(_canon);
     return _canon->bitsize();
 }
 
@@ -348,20 +348,20 @@ Value AliasType::cast_to(Ref<Type> type, Value&& val) {
 }
 
 void AliasType::set_aliased(Ref<Type> type) {
-    assert(type);
-    assert(!_aliased);
+    ulam_assert(type);
+    ulam_assert(!_aliased);
     _aliased = type;
     _canon = type->canon();
     _non_alias = type->non_alias();
 }
 
 Ref<ast::TypeName> AliasType::type_name() {
-    assert(_node->type_name());
+    ulam_assert(_node->type_name());
     return _node->type_name();
 }
 
 Ref<ast::TypeExpr> AliasType::type_expr() {
-    assert(_node->type_expr());
+    ulam_assert(_node->type_expr());
     return _node->type_expr();
 }
 
@@ -387,16 +387,16 @@ Ref<RefType> AliasType::_as_ref() { return non_alias()->_as_ref(); }
 Ref<const RefType> AliasType::_as_ref() const { return non_alias()->_as_ref(); }
 
 Ptr<ArrayType> AliasType::make_array_type(array_size_t size) {
-    assert(_canon);
+    ulam_assert(_canon);
     auto type = Type::make_array_type(size);
-    assert(type->canon() == _canon->array_type(size));
+    ulam_assert(type->canon() == _canon->array_type(size));
     return type;
 }
 
 Ptr<RefType> AliasType::make_ref_type() {
-    assert(_canon);
+    ulam_assert(_canon);
     auto type = Type::make_ref_type();
-    assert(type->canon() == _canon->ref_type());
+    ulam_assert(type->canon() == _canon->ref_type());
     return type;
 }
 
@@ -412,11 +412,11 @@ ArrayType::ArrayType(
     _array_size{size},
     _canon{
         item_type->is_canon() ? this : item_type->canon()->array_type(size)} {
-    assert(size != UnknownArraySize);
+    ulam_assert(size != UnknownArraySize);
 }
 
 const std::string_view ArrayType::name() const {
-    assert(_item_type);
+    ulam_assert(_item_type);
     if (_name.empty()) {
         std::string size_str;
         if (_array_size != UnknownArraySize)
@@ -427,7 +427,7 @@ const std::string_view ArrayType::name() const {
 }
 
 bitsize_t ArrayType::bitsize() const {
-    assert(_item_type);
+    ulam_assert(_item_type);
     return _array_size * _item_type->bitsize();
 }
 
@@ -454,7 +454,7 @@ RValue ArrayType::load(const BitsView data, bitsize_t off) {
 }
 
 void ArrayType::store(BitsView data, bitsize_t off, const RValue& rval) {
-    assert(rval.is<DataPtr>());
+    ulam_assert(rval.is<DataPtr>());
     if (bitsize() > 0)
         data.write(off, rval.get<DataPtr>()->bits().view());
 }
@@ -473,7 +473,7 @@ TypedValue ArrayType::type_op(TypeOp op) {
 
 bool ArrayType::is_castable_to(
     Ref<const Type> type, const Value& val, bool expl) const {
-    assert(!is_same(type));
+    ulam_assert(!is_same(type));
     if (!type->is_array())
         return false;
 
@@ -481,17 +481,17 @@ bool ArrayType::is_castable_to(
     if (array_type->array_size() != array_size())
         return false;
 
-    assert(!array_type->item_type()->is_same(item_type()));
+    ulam_assert(!array_type->item_type()->is_same(item_type()));
     return (item_type()->is_castable_to(array_type->item_type(), expl));
 }
 
 Value ArrayType::cast_to(Ref<Type> type, Value&& val) {
-    assert(!is_same(type));
-    assert(type->is_array());
+    ulam_assert(!is_same(type));
+    ulam_assert(type->is_array());
 
     auto array_type = type->as_array();
-    assert(array_type->array_size() == array_size());
-    assert(!array_type->item_type()->is_same(item_type()));
+    ulam_assert(array_type->array_size() == array_size());
+    ulam_assert(!array_type->item_type()->is_same(item_type()));
 
     auto rval = type->construct();
     rval.set_is_consteval(val.is_consteval());
@@ -508,9 +508,9 @@ Value ArrayType::cast_to(Ref<Type> type, Value&& val) {
 }
 
 void ArrayType::set_canon(Ref<ArrayType> canon) {
-    assert(canon);
-    assert(canon->item_type() == item_type()->canon());
-    assert(canon->array_size() == array_size());
+    ulam_assert(canon);
+    ulam_assert(canon->item_type() == item_type()->canon());
+    ulam_assert(canon->array_size() == array_size());
     _canon = canon;
 }
 
@@ -519,7 +519,7 @@ Ref<Type> ArrayType::non_array() {
         Ref<ArrayType> type = this;
         while (true) {
             auto item_type = type->item_type();
-            assert(item_type);
+            ulam_assert(item_type);
             if (!item_type->is_array()) {
                 _non_array = item_type;
                 break;
@@ -535,7 +535,7 @@ Ref<const Type> ArrayType::non_array() const {
 }
 
 bitsize_t ArrayType::item_off(array_idx_t idx) const {
-    assert(idx < _array_size);
+    ulam_assert(idx < _array_size);
     return item_type()->bitsize() * idx;
 }
 
@@ -543,28 +543,28 @@ bitsize_t ArrayType::item_off(array_idx_t idx) const {
 
 const std::string_view RefType::name() const {
     if (_name.empty()) {
-        assert(_refd);
+        ulam_assert(_refd);
         _name = std::string{_refd->name()} + "&";
     }
     return _name;
 }
 
 bitsize_t RefType::bitsize() const {
-    assert(_refd);
+    ulam_assert(_refd);
     return _refd->bitsize();
 }
 
 RValue RefType::load(const BitsView data, bitsize_t off) {
-    utils::unreachable();
+    unreachable();
 }
 
 void RefType::store(BitsView data, bitsize_t off, const RValue& rval) {
-    utils::unreachable();
+    unreachable();
 }
 
 void RefType::set_canon(Ref<RefType> canon) {
-    assert(canon);
-    assert(canon->refd() == refd()->canon());
+    ulam_assert(canon);
+    ulam_assert(canon->refd() == refd()->canon());
     _canon = canon;
 }
 
@@ -586,11 +586,11 @@ bool RefType::is_castable_to(BuiltinTypeId bi_type_id, bool expl) const {
 
 bool RefType::is_refable_as(
     Ref<const Type> type, const Value& val, bool expl) const {
-    utils::unreachable();
+    unreachable();
 }
 
 bool RefType::is_assignable_to(Ref<const Type> type, const Value& val) const {
-    utils::unreachable();
+    unreachable();
 }
 
 conv_cost_t RefType::conv_cost(Ref<const Type> type, bool allow_cast) const {
@@ -603,18 +603,18 @@ conv_cost_t RefType::conv_cost(
 }
 
 Value RefType::cast_to(Ref<Type> type, Value&& val) {
-    assert(val.is_lvalue());
+    ulam_assert(val.is_lvalue());
     if (!type->is_ref())
         return refd()->cast_to(type, std::move(val));
     type = type->deref();
-    assert(refd()->is_expl_refable_as(type, val));
+    ulam_assert(refd()->is_expl_refable_as(type, val));
     return Value{val.lvalue().as(type)};
 }
 
 Ptr<ArrayType> RefType::make_array_type(array_size_t size) {
-    utils::unreachable();
+    unreachable();
 }
 
-Ptr<RefType> RefType::make_ref_type() { utils::unreachable(); }
+Ptr<RefType> RefType::make_ref_type() { unreachable(); }
 
 } // namespace ulam

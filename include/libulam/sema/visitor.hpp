@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/context.hpp>
@@ -60,18 +60,18 @@ protected:
     Pass pass() { return _pass; }
 
     Ref<ast::Root> ast() {
-        assert(_ast);
+        ulam_assert(_ast);
         return _ast;
     }
 
     Ref<Program> program() {
-        assert(_program);
+        ulam_assert(_program);
         return _program;
     }
 
     Ref<Module> module() {
-        assert(module_def());
-        assert(module_def()->module());
+        ulam_assert(module_def());
+        ulam_assert(module_def()->module());
         return module_def()->module();
     }
 

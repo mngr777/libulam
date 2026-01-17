@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <cstddef>
 #include <string_view>
 
@@ -20,7 +20,7 @@ private:
 
 public:
     explicit Notepad(std::size_t pagesize = 512): _pagesize(pagesize) {
-        assert(pagesize % 8 == 0);
+        ulam_assert(pagesize % 8 == 0);
     }
     ~Notepad();
 

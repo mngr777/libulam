@@ -1,5 +1,5 @@
 #include "src/parser/string.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <charconv>
 #include <libulam/context.hpp>
 #include <libulam/preproc.hpp>
@@ -15,13 +15,13 @@
 namespace ulam {
 
 void Preproc::main_file(Path path) {
-    assert(_stack.empty());
+    ulam_assert(_stack.empty());
     auto src = _ctx.src_man().file(std::move(path));
     push(src);
 }
 
 void Preproc::main_string(std::string text, Path path) {
-    assert(_stack.empty());
+    ulam_assert(_stack.empty());
     auto src = _ctx.src_man().string(std::move(text), std::move(path));
     push(src);
 }
@@ -31,7 +31,7 @@ void Preproc::add_string(std::string text, Path path) {
 }
 
 Preproc& Preproc::operator>>(Token& token) {
-    assert(!_stack.empty());
+    ulam_assert(!_stack.empty());
     while (true) {
         lex(token);
         token.orig_type = token.type;
@@ -93,18 +93,18 @@ Preproc& Preproc::operator>>(Token& token) {
 }
 
 const Preproc::Path& Preproc::current_path() const {
-    assert(!_stack.empty());
+    ulam_assert(!_stack.empty());
     return _stack.top().first->path();
 }
 
 void Preproc::push(Src* src) {
-    assert(src);
-    assert(src->content().start());
+    ulam_assert(src);
+    ulam_assert(src->content().start());
     _stack.emplace(src, Lex{*this, _ctx.src_man(), src->id(), src->content()});
 }
 
 Lex& Preproc::lexer() {
-    assert(!_stack.empty());
+    ulam_assert(!_stack.empty());
     return _stack.top().second;
 }
 

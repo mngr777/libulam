@@ -1,6 +1,6 @@
 #include "src/detail/string.hpp"
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/token.hpp>
 #include <map>
@@ -30,7 +30,7 @@ const char* type_str(tok::Type type) {
 #include <libulam/token.inc.hpp>
 #undef TOK
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -42,13 +42,13 @@ const char* type_name(tok::Type type) {
 #include <libulam/token.inc.hpp>
 #undef TOK
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 Type type_by_keyword(std::string_view str) {
     static auto table{make_keyword_type_table()};
-    assert(str[0] == '@' || detail::is_word(str[0]));
+    ulam_assert(str[0] == '@' || detail::is_word(str[0]));
     auto it = table.find(str);
     if (it != table.end())
         return it->second;
@@ -70,7 +70,7 @@ ClassKind class_kind(Type type) {
     case Union:
         return ClassKind::Union;
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

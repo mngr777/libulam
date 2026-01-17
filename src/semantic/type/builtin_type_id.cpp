@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 
 namespace ulam {
@@ -24,7 +24,7 @@ const std::string_view builtin_type_str(BuiltinTypeId id) {
     case FunId:
         return "FunId";
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -49,7 +49,7 @@ const char builtin_type_code(BuiltinTypeId id) {
     case FunId:
         // fallthru
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

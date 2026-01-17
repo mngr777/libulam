@@ -1,6 +1,9 @@
 #pragma once
+#include <cassert>
 
-namespace ulam::utils {
+#define ulam_assert(cond) assert(cond)
+
+namespace ulam {
 
 [[noreturn]] inline void unreachable() {
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -10,4 +13,4 @@ namespace ulam::utils {
 #endif
 }
 
-} // namespace ulam::utils
+} // namespace ulam

@@ -115,7 +115,7 @@ Scope::Symbol* ScopeBase::do_set(str_id_t name_id, Symbol&& symbol) {
 
 BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
     ScopeBase{parent, flags} {
-    assert(!is(scp::Persistent));
+    ulam_assert(!is(scp::Persistent));
 }
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
@@ -157,7 +157,7 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
             (params.local || scope->self_cls() != eff_cls_)) {
             // store current module scope
             module_scope = scope->parent(scp::Module);
-            assert(module_scope);
+            ulam_assert(module_scope);
             if (params.local) {
                 // skip class scopes
                 scope = module_scope;
@@ -209,7 +209,7 @@ Scope::FindRes PersScope::find(str_id_t name_id) {
 }
 
 str_id_t PersScope::last_change(version_t version) const {
-    assert(version <= _changes.size());
+    ulam_assert(version <= _changes.size());
     return (version > 0) ? _changes[version - 1] : NoStrId;
 }
 
@@ -218,7 +218,7 @@ PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
     // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
     // scp::Module) count as local symbols: t3875
     if (params.local && is(scp::Class | scp::Params)) {
-        assert(in(scp::Module));
+        ulam_assert(in(scp::Module));
         return parent(scp::Module)->get(name_id, params);
     }
 
@@ -258,7 +258,7 @@ PersScope::version_t PersScope::version() const { return _changes.size(); }
 Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
     auto sym = ScopeBase::do_set(name_id, std::move(symbol));
     auto decl = sym->as_decl();
-    assert(!decl->has_scope_version());
+    ulam_assert(!decl->has_scope_version());
     decl->set_scope_version(version());
     _changes.push_back(name_id);
     return sym;

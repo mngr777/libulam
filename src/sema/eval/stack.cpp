@@ -19,7 +19,7 @@ void EvalStack::push(Ref<Fun> fun, LValue self) {
 }
 
 void EvalStack::pop() {
-    assert(!empty());
+    ulam_assert(!empty());
     _stack.pop();
 }
 

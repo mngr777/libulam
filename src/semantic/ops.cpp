@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <map>
 
@@ -31,7 +31,7 @@ const char* str(Op op) {
     switch (op) {
 #include <libulam/semantic/ops.inc.hpp>
     default:
-        utils::unreachable();
+        unreachable();
     }
 #undef OP
 }
@@ -143,7 +143,7 @@ Kind kind(Op op) {
     case Op::As:
         return Kind::Objective;
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -216,7 +216,7 @@ Op non_assign(Op op) {
     case Op::AssignBwOr:
         return Op::BwOr;
     default:
-        assert(!is_assign(op));
+        ulam_assert(!is_assign(op));
         return op;
     }
 }
@@ -375,7 +375,7 @@ Assoc assoc(Op op) {
     case Op::AssignBwOr:
         return Assoc::Right;
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

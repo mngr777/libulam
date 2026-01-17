@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
@@ -30,7 +30,7 @@ TypedValue StringType::type_op(TypeOp op, Value& val) {
         if (!val.has_rvalue())
             return {type, Value{RValue{}}};
         str_len_t len_ = len(val);
-        assert(len_ != NoStrLen);
+        ulam_assert(len_ != NoStrLen);
         return {type, Value{RValue{(Unsigned)len_, true}}};
     }
     default:
@@ -39,7 +39,7 @@ TypedValue StringType::type_op(TypeOp op, Value& val) {
 }
 
 RValue StringType::construct() {
-    assert(_text_pool.has(""));
+    ulam_assert(_text_pool.has(""));
     return RValue{String{_text_pool.id("")}};
 }
 
@@ -48,7 +48,7 @@ RValue StringType::from_datum(Datum datum) {
 }
 
 Datum StringType::to_datum(const RValue& rval) {
-    assert(rval.is<String>());
+    ulam_assert(rval.is<String>());
     Datum datum = rval.get<String>().id;
     return datum;
 }
@@ -62,7 +62,7 @@ str_len_t StringType::len(const Value& val) const {
 std::uint8_t StringType::chr(const Value& val, array_idx_t idx) const {
     if (!val.has_rvalue())
         return '\0';
-    assert(idx < len(val));
+    ulam_assert(idx < len(val));
     return text(val)[idx];
 }
 
@@ -71,15 +71,15 @@ std::string_view StringType::text(const Value& val) const {
         return ""; // ??
     RValue rval = val.copy_rvalue();
     auto str = rval.get<String>();
-    assert(str.is_valid());
+    ulam_assert(str.is_valid());
     return _text_pool.get(str.id);
 }
 
 TypedValue StringType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
-    assert(r_type->is(StringId));
-    assert(!l_rval.has_rvalue() || l_rval.get<String>().is_valid());
-    assert(!r_rval.has_rvalue() || r_rval.get<String>().is_valid());
+    ulam_assert(r_type->is(StringId));
+    ulam_assert(!l_rval.has_rvalue() || l_rval.get<String>().is_valid());
+    ulam_assert(!r_rval.has_rvalue() || r_rval.get<String>().is_valid());
 
     bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
     String l_str = l_rval.has_rvalue() ? l_rval.get<String>() : String{};
@@ -106,7 +106,7 @@ TypedValue StringType::binary_op(
         return {type, Value{std::move(rval)}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -116,7 +116,7 @@ bool StringType::is_castable_to_prim(
     case BoolId:
         return expl;
     case StringId:
-        utils::unreachable();
+        unreachable();
     default:
         return false;
     }
@@ -127,14 +127,14 @@ bool StringType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case BoolId:
         return expl;
     case StringId:
-        utils::unreachable();
+        unreachable();
     default:
         return false;
     }
 }
 
 TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
-    assert(is_expl_castable_to(id));
+    ulam_assert(is_expl_castable_to(id));
 
     bool is_unknown = !rval.has_rvalue();
     bool is_consteval = !is_unknown && rval.is_consteval();
@@ -150,12 +150,12 @@ TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {boolean, Value{std::move(new_rval)}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 RValue StringType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
+    ulam_assert(is_expl_castable_to(type));
     if (!rval.has_rvalue())
         return std::move(rval);
 
@@ -170,7 +170,7 @@ RValue StringType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return new_rval;
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

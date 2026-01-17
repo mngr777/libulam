@@ -16,7 +16,7 @@ CondRes EvalCond::eval_cond(Ref<ast::Cond> cond) {
 CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
     auto res = eval_as_cond_ident(as_cond->ident());
     auto type = resolve_as_cond_type(as_cond->type_name());
-    assert(!type->is_ref());
+    ulam_assert(!type->is_ref());
 
     bool is_match = false;
     if (res.value().has_rvalue()) {
@@ -68,7 +68,7 @@ LValue
 EvalCond::as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
     LValue lval;
     if (!res.value().empty()) {
-        assert(res.value().is_lvalue());
+        ulam_assert(res.value().is_lvalue());
         lval = res.move_value().lvalue().as(type);
     } else {
         if (!has_flag(evl::NoExec)) {
@@ -81,7 +81,7 @@ EvalCond::as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
 
 EvalCond::VarDefPair EvalCond::make_as_cond_var(
     Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
-    assert(!node->ident()->is_self());
+    ulam_assert(!node->ident()->is_self());
 
     auto lval = as_cond_lvalue(node, std::move(res), type);
     auto def = make<ast::VarDef>(node->ident()->name());

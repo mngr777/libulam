@@ -60,7 +60,7 @@ EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
         arg = cast_ref(node, to, std::move(arg), expl);
 
     } else {
-        assert(false);
+        ulam_assert(false);
     }
 
     auto status = arg.ok() ? CastOk : CastError;
@@ -82,15 +82,15 @@ CastRes EvalCast::do_cast(
         // class conversion
         auto cls = from->deref()->as_class();
         auto convs = cls->convs(bi_type_id, true);
-        assert(convs.size() == 1);
+        ulam_assert(convs.size() == 1);
 
         arg = cast_class_fun(node, *convs.begin(), std::move(arg), expl);
-        assert(arg.type()->is_prim());
+        ulam_assert(arg.type()->is_prim());
         if (!arg.type()->is(bi_type_id))
             arg = cast_default(node, bi_type_id, std::move(arg), expl);
 
     } else {
-        assert(false);
+        ulam_assert(false);
     }
 
     auto status = arg.ok() ? CastOk : CastError;
@@ -99,7 +99,7 @@ CastRes EvalCast::do_cast(
 
 ExprRes EvalCast::cast_prim(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    assert(arg.type()->is_prim());
+    ulam_assert(arg.type()->is_prim());
     if (to->is_ref()) {
         arg = take_ref(node, std::move(arg));
         if (!arg || arg.type()->is_same(to))
@@ -110,8 +110,8 @@ ExprRes EvalCast::cast_prim(
 
 ExprRes EvalCast::cast_array(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    assert(arg.type()->is_array());
-    assert(!arg.type()->is_same(to));
+    ulam_assert(arg.type()->is_array());
+    ulam_assert(!arg.type()->is_same(to));
 
     if (to->is_ref()) {
         arg = take_ref(node, std::move(arg));
@@ -123,8 +123,8 @@ ExprRes EvalCast::cast_array(
 
 ExprRes EvalCast::cast_atom(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    assert(arg.type()->deref()->is(AtomId));
-    assert(!arg.type()->is_same(to));
+    ulam_assert(arg.type()->deref()->is(AtomId));
+    ulam_assert(!arg.type()->is_same(to));
 
     if (arg.type()->is_ref() != to->is_ref()) {
         arg = arg.type()->is_ref() ? deref(std::move(arg))
@@ -137,7 +137,7 @@ ExprRes EvalCast::cast_atom(
     }
     if (arg.type()->is_ref())
         return cast_default(node, to, std::move(arg), expl);
-    assert(arg.type()->is(AtomId));
+    ulam_assert(arg.type()->is(AtomId));
 
     if (!to->is_class()) {
         return {ExprError::InvalidCast};
@@ -155,7 +155,7 @@ ExprRes EvalCast::cast_atom(
 
 ExprRes EvalCast::cast_class(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    assert(arg.type()->deref()->is_class());
+    ulam_assert(arg.type()->deref()->is_class());
     auto cls = arg.type()->deref()->as_class();
 
     auto convs = cls->convs(to, true);
@@ -171,7 +171,7 @@ ExprRes EvalCast::cast_class(
     } else {
         arg = cast_class_fun(node, *convs.begin(), std::move(arg), expl);
         if (!arg.type()->is_same(to)) {
-            assert(arg.type()->is_castable_to(to, arg.value(), expl));
+            ulam_assert(arg.type()->is_castable_to(to, arg.value(), expl));
             arg = cast_default(node, to, std::move(arg), expl);
         }
         return std::move(arg);
@@ -180,13 +180,13 @@ ExprRes EvalCast::cast_class(
 
 ExprRes EvalCast::cast_ref(
     Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
-    assert(arg.type()->is_ref());
-    assert(!arg.type()->deref()->is_class());
-    assert(!arg.type()->is_same(to));
+    ulam_assert(arg.type()->is_ref());
+    ulam_assert(!arg.type()->deref()->is_class());
+    ulam_assert(!arg.type()->is_same(to));
 
     if (!to->is_ref()) {
         arg = deref(std::move(arg));
-        assert(arg);
+        ulam_assert(arg);
         if (arg.type()->is_same(to))
             return std::move(arg);
     }
@@ -224,8 +224,8 @@ ExprRes EvalCast::cast_default(
 
 ExprRes EvalCast::cast_atom_to_nonelement_empty(
     Ref<ast::Node> node, Ref<Class> to, ExprRes&& arg) {
-    assert(!arg.value().has_rvalue());
-    assert(to->is_quark());
+    ulam_assert(!arg.value().has_rvalue());
+    ulam_assert(to->is_quark());
     auto val = arg.value().is_lvalue() ? Value{arg.value().lvalue().derived()}
                                        : Value{to->construct_ph()};
     return {to, std::move(val)};
@@ -233,7 +233,7 @@ ExprRes EvalCast::cast_atom_to_nonelement_empty(
 
 ExprRes EvalCast::cast_class_fun(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& arg, bool expl) {
-    assert(arg.type()->deref()->is_class());
+    ulam_assert(arg.type()->deref()->is_class());
     auto res = env().funcall(node, fun, std::move(arg), {});
     if (!res)
         diag().error(node, "conversion failed");
@@ -257,14 +257,14 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
 }
 
 ExprRes EvalCast::deref(ExprRes&& arg) {
-    assert(arg.value().is_lvalue());
+    ulam_assert(arg.value().is_lvalue());
     bool deref_as_dyn_type = program()->eval_options().cast_deref_as_dyn_type;
     Value val = arg.move_value().deref(deref_as_dyn_type);
 
     if (!arg.type()->deref()->is_object() || !val.has_rvalue())
         return arg.derived(arg.type()->deref(), std::move(val));
 
-    assert(val.has_rvalue());
+    ulam_assert(val.has_rvalue());
     return arg.derived(val.dyn_obj_type(), std::move(val));
 }
 

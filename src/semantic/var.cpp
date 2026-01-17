@@ -4,7 +4,7 @@ namespace ulam {
 
 Var::Var(Ref<Type> type, Value&& value, flags_t flags):
     Var{{}, {}, type, std::move(value), flags} {
-    assert(type);
+    ulam_assert(type);
 }
 
 Var::Var(TypedValue&& tv, flags_t flags): Var{{}, {}, std::move(tv), flags} {}

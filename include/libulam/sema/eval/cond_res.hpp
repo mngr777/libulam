@@ -34,13 +34,13 @@ public:
 
     bool has_var() const { return ref(_var); }
     Ref<Var> var() const {
-        assert(has_var());
+        ulam_assert(has_var());
         return ref(_var);
     }
 
     bool is_self() const { return _is_self; }
     LValue self() const {
-        assert(_is_self);
+        ulam_assert(_is_self);
         return _self;
     }
 

@@ -1,5 +1,5 @@
 #include "libulam/semantic/scope/program.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -27,23 +27,23 @@
 namespace ulam::sema {
 
 void Init::visit(Ref<ast::Root> node) {
-    assert(!node->program());
+    ulam_assert(!node->program());
     node->set_program(
         make<Program>(ctx(), node->ctx().str_pool(), node->ctx().text_pool()));
     RecVisitor::visit(node);
 }
 
 void Init::visit(Ref<ast::ModuleDef> node) {
-    assert(!node->module());
+    ulam_assert(!node->module());
     auto module = program()->add_module(node);
     node->set_module(module);
     RecVisitor::visit(node);
 }
 
 bool Init::do_visit(Ref<ast::ClassDef> node) {
-    assert(pass() == Pass::Module);
-    assert(!node->cls() && !node->cls_tpl());
-    assert(scope()->is(scp::Module));
+    ulam_assert(pass() == Pass::Module);
+    ulam_assert(!node->cls() && !node->cls_tpl());
+    ulam_assert(scope()->is(scp::Module));
 
     // already defined?
     auto name_id = node->name_id();
@@ -56,7 +56,7 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
     }
 
     if (node->has_params()) {
-        assert(node->params()->child_num() > 0);
+        ulam_assert(node->params()->child_num() > 0);
         module()->add_class_tpl(node);
     } else {
         module()->add_class(node);
@@ -68,7 +68,7 @@ bool Init::do_visit(Ref<ast::ClassDef> node) {
 
 void Init::visit(Ref<ast::TypeDef> node) {
     // visit TypeName
-    assert(node->has_type_name());
+    ulam_assert(node->has_type_name());
     node->type_name()->accept(*this);
 
     auto alias_id = node->alias_id();
@@ -84,7 +84,7 @@ void Init::visit(Ref<ast::TypeDef> node) {
             module()->add_type_def(node);
         } else if (scope()->is(scp::Class | scp::ClassTpl)) {
             auto class_base = class_def()->cls_or_tpl();
-            assert(class_base);
+            ulam_assert(class_base);
             class_base->add_type_def(node);
         }
         sync_scope(node);
@@ -98,7 +98,7 @@ void Init::visit(Ref<ast::TypeDef> node) {
 
 void Init::visit(Ref<ast::VarDefList> node) {
     // visit `TypeName`
-    assert(node->has_type_name());
+    ulam_assert(node->has_type_name());
     node->type_name()->accept(*this);
 
     // add module/class/tpl variables/properties
@@ -124,7 +124,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
             module()->add_const(node->type_name(), def);
         } else if (scope()->is(scp::Class | scp::ClassTpl)) {
             auto cls_base = class_def()->cls_or_tpl();
-            assert(cls_base);
+            ulam_assert(cls_base);
             if (node->is_const()) {
                 cls_base->add_const(node->type_name(), def);
             } else {
@@ -136,11 +136,11 @@ void Init::visit(Ref<ast::VarDefList> node) {
 }
 
 bool Init::do_visit(Ref<ast::FunDef> node) {
-    assert(scope()->is(scp::Class | scp::ClassTpl));
+    ulam_assert(scope()->is(scp::Class | scp::ClassTpl));
 
     // get class/tpl, name
     auto cls_base = class_def()->cls_or_tpl();
-    assert(cls_base);
+    ulam_assert(cls_base);
 
     auto name_id = node->name_id();
     auto sym = cls_base->get(name_id);

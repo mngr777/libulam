@@ -1,6 +1,6 @@
 #pragma once
 #include <libulam/semantic/ops.hpp>
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/ast/nodes/args.hpp>
 #include <libulam/ast/nodes/exprs.hpp>
@@ -22,7 +22,7 @@ public:
     bool is_op_call() const { return fun_op() != Op::None; }
 
     unsigned arg_num() const {
-        assert(has_args());
+        ulam_assert(has_args());
         return args()->child_num();
     }
 };

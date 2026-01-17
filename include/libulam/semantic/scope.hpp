@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <forward_list>
 #include <functional>
 #include <libulam/memory/ptr.hpp>

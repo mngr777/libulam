@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/nodes/var_decl.hpp>
@@ -104,21 +104,21 @@ str_id_t Class::mangled_name_id() const {
 
 cls_id_t Class::class_id() const {
     if (_cls_id == NoClassId) {
-        assert(program()->class_options().lazy_class_id);
+        ulam_assert(program()->class_options().lazy_class_id);
         const_cast<Class*>(this)->register_class();
     }
-    assert(_cls_id != NoClassId);
+    ulam_assert(_cls_id != NoClassId);
     return _cls_id;
 }
 
 elt_id_t Class::element_id() const {
-    assert(is_element());
-    assert(_elt_id != NoEltId);
+    ulam_assert(is_element());
+    ulam_assert(_elt_id != NoEltId);
     return _elt_id;
 }
 
 Ref<Var> Class::add_param(Ptr<Var>&& var) {
-    assert(var->has_value());
+    ulam_assert(var->has_value());
     auto ref = ClassBase::add_param(std::move(var));
     ref->set_cls(this);
     return ref;
@@ -165,7 +165,7 @@ bool Class::is_same_or_base_of(Ref<const Class> other) const {
 bool Class::has_super() const { return !_ancestry.parents().empty(); }
 
 Ref<Class> Class::super() {
-    assert(!_ancestry.parents().empty());
+    ulam_assert(!_ancestry.parents().empty());
     return (*_ancestry.parents().begin())->cls();
 }
 
@@ -175,7 +175,7 @@ Ref<Class> Class::base_by_name_id(str_id_t name_id) {
 }
 
 bitsize_t Class::base_off(Ref<const Class> base) const {
-    assert(base->is_base_of(this));
+    ulam_assert(base->is_base_of(this));
     return direct_bitsize() + _ancestry.data_off(base);
 }
 
@@ -192,7 +192,7 @@ bitsize_t Class::bitsize() const {
 }
 
 bitsize_t Class::data_bitsize() const {
-    assert(bitsize() >= data_off());
+    ulam_assert(bitsize() >= data_off());
     return bitsize() - data_off();
 }
 
@@ -254,7 +254,7 @@ RValue Class::construct() {
 }
 
 RValue Class::construct(Bits&& bits) {
-    assert(bits.len() == bitsize());
+    ulam_assert(bits.len() == bitsize());
     return RValue{make_s<Data>(this, std::move(bits))};
 }
 
@@ -263,24 +263,24 @@ RValue Class::construct_ph() {
 }
 
 RValue Class::load(const BitsView data, bitsize_t off) {
-    assert(!is_element() || read_element_id(data, off) == _elt_id);
+    ulam_assert(!is_element() || read_element_id(data, off) == _elt_id);
     return RValue{make_s<Data>(this, data.view(off, bitsize()).copy())};
 }
 
 void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
-    assert(rval.is<DataPtr>());
+    ulam_assert(rval.is<DataPtr>());
     auto obj_data = rval.get<DataPtr>();
     auto type = obj_data->type();
 
     // atom to atom: full rewrite, including element ID
     if (is_element() && type->is_atom()) {
-        assert(is_element());
+        ulam_assert(is_element());
         data.write(off, obj_data->bits().view());
         return;
     }
 
     // not Atom, must be a class
-    assert(type->is_class());
+    ulam_assert(type->is_class());
     auto cls = type->as_class();
 
     // same class
@@ -291,7 +291,7 @@ void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
     }
 
     // upcast/downcast
-    assert(is_base_of(cls) || cls->is_base_of(this));
+    ulam_assert(is_base_of(cls) || cls->is_base_of(this));
     auto props = is_base_of(cls) ? all_props() : cls->all_props();
     for (auto prop : props) {
         auto data_off = prop->data_off_in(this);
@@ -417,7 +417,7 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
     if (is_same(type))
         return std::move(val);
 
-    assert(convs(type, true).empty()); // must use conversion function otherwise
+    ulam_assert(convs(type, true).empty()); // must use conversion function otherwise
 
     if (val.has_rvalue()) {
         auto dyn_type = val.dyn_obj_type();
@@ -428,12 +428,12 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
     auto rval = val.move_rvalue();
     if (!rval.has_rvalue())
         return Value{type->construct_ph()};
-    assert(rval.is<DataPtr>());
+    ulam_assert(rval.is<DataPtr>());
 
     bool is_consteval = rval.is_consteval();
 
     auto obj = rval.get<DataPtr>();
-    assert(obj->type()->is_same(this));
+    ulam_assert(obj->type()->is_same(this));
 
     // to Bits
     if (type->is(BitsId)) {
@@ -445,15 +445,15 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
 
     // to Atom
     if (type->is(AtomId)) {
-        assert(is_element());
+        ulam_assert(is_element());
         return Value{std::move(rval)};
     }
 
-    assert(type->is_class());
+    ulam_assert(type->is_class());
     auto cls = type->as_class();
 
     // upcast/downcast
-    assert(is_base_of(cls) || cls->is_base_of(this));
+    ulam_assert(is_base_of(cls) || cls->is_base_of(this));
     auto new_rval = cls->construct();
     auto new_obj = new_rval.get<DataPtr>();
     auto props = is_base_of(cls) ? all_props() : cls->all_props();
@@ -483,13 +483,13 @@ conv_cost_t Class::conv_cost(Ref<const Type> type, bool allow_cast) const {
     if (type->is(AtomId))
         return ElementToAtomConvCost;
 
-    assert(type->is_class());
+    ulam_assert(type->is_class());
     auto cls = type->as_class();
     // downcast
     if (cls->is_base_of(this))
         return ClassDowncastCost;
     // upcast
-    assert(is_base_of(cls));
+    ulam_assert(is_base_of(cls));
     return ClassUpcastCost;
 }
 
@@ -546,14 +546,14 @@ ConvList Class::convs(BuiltinTypeId bi_type_id, bool allow_cast) const {
 
 void Class::add_conv(Ref<Fun> fun) {
     auto ret_canon = fun->ret_type()->canon();
-    assert(_convs.count(ret_canon->id()) == 0);
+    ulam_assert(_convs.count(ret_canon->id()) == 0);
     _convs[ret_canon->id()] = fun;
 }
 
 Ref<FunSet> Class::add_fset(str_id_t name_id) {
     auto fset = ClassBase::add_fset(name_id);
     fset->set_cls(this);
-    assert(_fsets.count(name_id) == 0);
+    ulam_assert(_fsets.count(name_id) == 0);
     _fsets[name_id] = fset;
     return fset;
 }
@@ -575,18 +575,18 @@ void Class::init(Ref<Module> module) {
 }
 
 void Class::register_class() {
-    assert(_cls_id == NoClassId);
+    ulam_assert(_cls_id == NoClassId);
     _cls_id = program()->classes().add(this);
 }
 
 void Class::register_element() {
-    assert(is_element());
-    assert(_elt_id == NoEltId);
+    ulam_assert(is_element());
+    ulam_assert(_elt_id == NoEltId);
     _elt_id = program()->elements().add(this);
 }
 
 elt_id_t Class::read_element_id(const BitsView data, bitsize_t off) {
-    assert(is_element());
+    ulam_assert(is_element());
     return data.read(off + AtomEltIdOff, AtomEltIdSize);
 }
 
@@ -669,7 +669,7 @@ void Class::init_layout() {
 }
 
 void Class::set_init_bits(Bits&& bits) {
-    assert(_init_bits.len() == 0);
+    ulam_assert(_init_bits.len() == 0);
     _init_bits = std::move(bits);
 }
 

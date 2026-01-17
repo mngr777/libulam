@@ -184,6 +184,7 @@ HEADER_FILES = \
 	$(AST_HEADER_FILES) \
 	$(SEMANTIC_HEADER_FILES) \
 	$(SEMA_HEADER_FILES) \
+	include/libulam/assert.hpp \
 	include/libulam/context.hpp \
 	include/libulam/detail/variant.hpp \
 	include/libulam/diag.hpp \
@@ -226,8 +227,7 @@ SOURCE_FILES = \
 	src/src_man.cpp \
 	src/str_pool.cpp \
 	src/token.cpp \
-	src/utils/leximited.cpp \
-	src/utils/unreachable.hpp
+	src/utils/leximited.cpp
 
 lib_LTLIBRARIES = libulam.la
 libulam_ladir = $(includedir)

@@ -47,7 +47,7 @@ public:
     }
 
     Scope* top() {
-        assert(!empty());
+        ulam_assert(!empty());
         return _stack.top().accept([&](auto scope) -> Scope* { return scope; });
     }
 

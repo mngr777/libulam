@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>

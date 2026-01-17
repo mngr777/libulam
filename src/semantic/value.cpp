@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/types.hpp>
@@ -34,7 +34,7 @@ bool LValue::has_rvalue() const {
     return accept(
         [&](Ref<const Var> var) { return var->value().has_rvalue(); },
         [&](const DataView& data) { return !data.is_ph(); },
-        [&](const BoundFunSet&) -> bool { utils::unreachable(); },
+        [&](const BoundFunSet&) -> bool { unreachable(); },
         [&](const std::monostate&) { return false; });
 }
 
@@ -44,7 +44,7 @@ RValue LValue::rvalue(bool real) const {
         [&](const DataView& data) {
             return load_rvalue(data, real, is_consteval());
         },
-        [&](const BoundFunSet&) -> RValue { utils::unreachable(); },
+        [&](const BoundFunSet&) -> RValue { unreachable(); },
         [&](const std::monostate&) { return RValue{}; });
 }
 
@@ -56,7 +56,7 @@ void LValue::with_rvalue(
             auto rval = load_rvalue(data, real, is_consteval());
             cb(rval);
         },
-        [&](const BoundFunSet& bound_fset) { utils::unreachable(); },
+        [&](const BoundFunSet& bound_fset) { unreachable(); },
         [&](const std::monostate&) {
             RValue rval;
             cb(rval);
@@ -68,9 +68,9 @@ Ref<Type> LValue::type() const {
         [&](Ref<const Var> var) { return var->type(); },
         [&](const DataView& data) { return data.type(); },
         [&](const BoundFunSet& bound_fset) -> Ref<Type> {
-            utils::unreachable();
+            unreachable();
         },
-        [&](const std::monostate&) -> Ref<Type> { utils::unreachable(); });
+        [&](const std::monostate&) -> Ref<Type> { unreachable(); });
 }
 
 DataView LValue::data_view() {
@@ -92,7 +92,7 @@ Ref<Class> LValue::dyn_cls(bool real) const {
 
 Ref<Type> LValue::dyn_obj_type(bool real) const {
     auto type = data_view().type(real);
-    assert(type->is_object());
+    ulam_assert(type->is_object());
     return type;
 }
 
@@ -103,7 +103,7 @@ LValue LValue::self() {
         [&](BoundFunSet& bfset) {
             return bfset.has_self() ? LValue{bfset.self()} : LValue{};
         },
-        [&](std::monostate&) -> LValue { utils::unreachable(); }))};
+        [&](std::monostate&) -> LValue { unreachable(); }))};
     lval.set_scope_lvl(AutoScopeLvl);
     lval.set_is_xvalue(false);
     return lval;
@@ -169,7 +169,7 @@ Value LValue::assign(RValue&& rval) {
             lval.set_is_consteval(false);
             return Value{lval};
         },
-        [&](const BoundFunSet&) -> Value { utils::unreachable(); },
+        [&](const BoundFunSet&) -> Value { unreachable(); },
         [&](const std::monostate&) -> Value {
             // pretend assign for empty value
             return Value{derived(std::monostate{})};
@@ -208,7 +208,7 @@ Ref<Class> RValue::dyn_cls(bool real) const {
 
 Ref<Type> RValue::dyn_obj_type(bool real) const {
     auto type = data_view().type(real);
-    assert(type->is_object());
+    ulam_assert(type->is_object());
     return type;
 }
 
@@ -217,7 +217,7 @@ LValue RValue::self() {
     if (!empty()) {
         lval = LValue{accept(
             [&](DataPtr& data) { return data->view(); },
-            [&](auto& other) -> DataView { utils::unreachable(); })};
+            [&](auto& other) -> DataView { unreachable(); })};
     }
     lval.set_scope_lvl(AutoScopeLvl);
     lval.set_is_xvalue(false);
@@ -227,7 +227,7 @@ LValue RValue::self() {
 LValue RValue::as(Ref<Type> type) {
     LValue lval{accept(
         [&](DataPtr& data) { return data->view().as(type); },
-        [&](auto& other) -> DataView { utils::unreachable(); })};
+        [&](auto& other) -> DataView { unreachable(); })};
     lval.set_scope_lvl(AutoScopeLvl);
     return lval;
 }
@@ -250,10 +250,10 @@ LValue RValue::array_access(array_idx_t idx, bool is_consteval_idx) {
             return lval;
         },
         [&](std::monostate) {
-            assert(idx == UnknownArrayIdx);
+            ulam_assert(idx == UnknownArrayIdx);
             return LValue{};
         },
-        [&](auto& other) -> LValue { utils::unreachable(); });
+        [&](auto& other) -> LValue { unreachable(); });
 }
 
 const LValue
@@ -269,7 +269,7 @@ LValue RValue::prop(Ref<Prop> prop) {
             return lval;
         },
         [&](std::monostate) { return LValue{}; },
-        [&](auto& other) -> LValue { utils::unreachable(); });
+        [&](auto& other) -> LValue { unreachable(); });
 }
 
 const LValue RValue::prop(Ref<Prop> prop) const {
@@ -284,7 +284,7 @@ LValue RValue::bound_fset(Ref<FunSet> fset, Ref<Class> base) {
         [&](std::monostate) {
             return LValue{BoundFunSet{DataView{}, fset, base}};
         },
-        [&](auto& other) -> LValue { utils::unreachable(); });
+        [&](auto& other) -> LValue { unreachable(); });
 }
 
 // Value

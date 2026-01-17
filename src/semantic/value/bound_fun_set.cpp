@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value/bound_fun_set.hpp>
@@ -8,7 +8,7 @@ namespace ulam {
 
 BoundFunSet::BoundFunSet(DataView self, Ref<FunSet> fset, Ref<Class> eff_cls):
     _self{self}, _fset{fset}, _eff_cls{eff_cls} {
-    assert(
+    ulam_assert(
         !_self || _self.type(true)->is_class() ||
         (_self.is_ph() && _self.type()->is_atom()));
 }
@@ -16,7 +16,7 @@ BoundFunSet::BoundFunSet(DataView self, Ref<FunSet> fset, Ref<Class> eff_cls):
 bool BoundFunSet::has_self() const { return _self; }
 
 DataView BoundFunSet::self() const {
-    assert(_self);
+    ulam_assert(_self);
     return _self;
 }
 

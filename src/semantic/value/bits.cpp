@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/value/bits.hpp>
 #include <limits>
 #include <sstream>
@@ -82,34 +82,34 @@ template <typename T> void _write_hex(std::ostream& out, const T& bits) {
 
 BitsView::BitsView(Bits& data, size_t off, size_t len):
     _data{&data}, _off{off}, _len{len} {
-    assert(off + len <= data.len());
+    ulam_assert(off + len <= data.len());
 }
 
 BitsView::BitsView(Bits& data): BitsView{data, 0, data.len()} {}
 
 bool BitsView::read_bit(size_t idx) const {
-    assert(idx < _len);
+    ulam_assert(idx < _len);
     return data().read_bit(_off + idx);
 }
 
 void BitsView::write_bit(size_t idx, bool bit) {
-    assert(idx < _len);
+    ulam_assert(idx < _len);
     data().write_bit(_off + idx, bit);
 }
 
 BitsView::unit_t BitsView::read(size_t idx, size_t len) const {
-    assert(idx + len <= _len);
+    ulam_assert(idx + len <= _len);
     return data().read(_off + idx, len);
 }
 
 void BitsView::write(size_t idx, size_t len, unit_t value) {
-    assert(idx + len <= _len);
+    ulam_assert(idx + len <= _len);
     data().write(_off + idx, len, value);
 }
 
 void BitsView::write(size_t idx, const BitsView other) {
-    assert(idx < _len);
-    assert(idx + other.len() <= _len);
+    ulam_assert(idx < _len);
+    ulam_assert(idx + other.len() <= _len);
     for (size_t idx2 = 0; idx2 < other.len(); idx2 += UnitSize) {
         size_t size = std::min<bitsize_t>(UnitSize, other.len() - idx2);
         write(idx, size, other.read(idx2, size));
@@ -118,12 +118,12 @@ void BitsView::write(size_t idx, const BitsView other) {
 }
 
 BitsView::unit_t BitsView::read_right(size_t len) const {
-    assert(len <= _len);
+    ulam_assert(len <= _len);
     return data().read(_off + _len - len, len);
 }
 
 void BitsView::write_right(size_t len, unit_t value) {
-    assert(len <= _len);
+    ulam_assert(len <= _len);
     data().write(_off + _len - len, len, value);
 }
 
@@ -218,8 +218,8 @@ void BitsView::bin_op(const BitsView& other, UnitBinOp op) {
                 size2 = other.len() + size1 - off1;
                 off2 = other.len();
             }
-            assert(off2 <= other.len());
-            assert(size2 > 0);
+            ulam_assert(off2 <= other.len());
+            ulam_assert(size2 > 0);
             u2 = other.read(other.len() - off2, size2);
         }
         write(len() - off1, size1, op(u1, u2));
@@ -227,12 +227,12 @@ void BitsView::bin_op(const BitsView& other, UnitBinOp op) {
 }
 
 Bits& BitsView::data() {
-    assert(_data);
+    ulam_assert(_data);
     return *_data;
 }
 
 const Bits& BitsView::data() const {
-    assert(_data);
+    ulam_assert(_data);
     return *_data;
 }
 
@@ -269,13 +269,13 @@ Bits& Bits::operator=(Bits&& other) {
 
 Bits Bits::copy() const {
     Bits bv{len()};
-    assert(is_storage_dynamic() == bv.is_storage_dynamic());
+    ulam_assert(is_storage_dynamic() == bv.is_storage_dynamic());
     std::copy_n(storage(), storage_size(), bv.storage());
     return bv;
 }
 
 BitsView Bits::view_right(size_t len) {
-    assert(len <= _len);
+    ulam_assert(len <= _len);
     return BitsView{*this, (size_t)(_len - len), len};
 }
 
@@ -284,12 +284,12 @@ const BitsView Bits::view_right(size_t len) const {
 }
 
 bool Bits::read_bit(size_t idx) const {
-    assert(idx < _len);
+    ulam_assert(idx < _len);
     return storage()[to_unit_idx(idx)] & (MSB >> to_off(idx));
 }
 
 void Bits::write_bit(size_t idx, bool bit) {
-    assert(idx < _len);
+    ulam_assert(idx < _len);
     const unit_idx_t unit_idx = to_unit_idx(idx);
     const unit_t mask = MSB >> to_off(idx);
     if (bit) {
@@ -300,13 +300,13 @@ void Bits::write_bit(size_t idx, bool bit) {
 }
 
 Bits::unit_t Bits::read(size_t idx, size_t len) const {
-    assert(idx < _len);
-    assert(len <= UnitSize);
+    ulam_assert(idx < _len);
+    ulam_assert(len <= UnitSize);
     const unit_idx_t unit_idx = to_unit_idx(idx);
     const size_t off = to_off(idx);
     if (off + len <= UnitSize)
         return read(unit_idx, off, len);
-    assert(unit_idx + 1u < storage_size());
+    ulam_assert(unit_idx + 1u < storage_size());
     const size_t len_1 = UnitSize - off;
     const size_t len_2 = len - len_1;
     return (read(unit_idx, off, len_1) << len_2) |
@@ -314,15 +314,15 @@ Bits::unit_t Bits::read(size_t idx, size_t len) const {
 }
 
 void Bits::write(size_t idx, size_t len, unit_t value) {
-    assert(idx < _len);
-    assert(len <= UnitSize);
+    ulam_assert(idx < _len);
+    ulam_assert(len <= UnitSize);
     const unit_idx_t unit_idx = to_unit_idx(idx);
     const size_t off = to_off(idx);
     if (off + len <= UnitSize) {
         write(unit_idx, off, len, value);
         return;
     }
-    assert(unit_idx + 1u < storage_size());
+    ulam_assert(unit_idx + 1u < storage_size());
     const size_t len_1 = UnitSize - off;
     const size_t len_2 = len - len_1;
     write(unit_idx, off, len_1, value >> len_2);
@@ -332,18 +332,18 @@ void Bits::write(size_t idx, size_t len, unit_t value) {
 void Bits::write(size_t idx, const BitsView view_) { view().write(idx, view_); }
 
 Bits::unit_t Bits::read_right(size_t len) const {
-    assert(len <= _len);
+    ulam_assert(len <= _len);
     return read(_len - len, len);
 }
 
 void Bits::write_right(size_t len, unit_t value) {
-    assert(len <= _len);
+    ulam_assert(len <= _len);
     return write(_len - len, len, value);
 }
 
 Bits::unit_t Bits::read(unit_idx_t unit_idx, size_t off, size_t len) const {
-    assert(unit_idx < storage_size());
-    assert(off + len <= UnitSize);
+    ulam_assert(unit_idx < storage_size());
+    ulam_assert(off + len <= UnitSize);
     if (len == 0)
         return 0;
     const size_t shift = UnitSize - (off + len);
@@ -352,8 +352,8 @@ Bits::unit_t Bits::read(unit_idx_t unit_idx, size_t off, size_t len) const {
 }
 
 void Bits::write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
-    assert(unit_idx < storage_size());
-    assert(start + len <= UnitSize);
+    ulam_assert(unit_idx < storage_size());
+    ulam_assert(start + len <= UnitSize);
     if (len == 0)
         return;
     const size_t shift = UnitSize - (start + len);
@@ -364,7 +364,7 @@ void Bits::write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
 bool Bits::empty() const {
     for (unit_idx_t unit_idx = 0; unit_idx < storage_size(); ++unit_idx) {
         unit_t unit = storage()[unit_idx];
-        assert(unit_idx + 1 < unit_idx || (unit & last_unit_mask()) == unit);
+        ulam_assert(unit_idx + 1 < unit_idx || (unit & last_unit_mask()) == unit);
         if (unit != 0)
             return false;
     }
@@ -417,7 +417,7 @@ Bits& Bits::operator<<=(size_t shift) {
         std::copy(
             storage() + ShiftUnits, storage() + storage_size(), storage());
     }
-    assert((storage()[storage_size() - 1] & ~last_unit_mask()) == 0);
+    ulam_assert((storage()[storage_size() - 1] & ~last_unit_mask()) == 0);
     std::fill_n(storage() + storage_size() - ShiftUnits, ShiftUnits, 0);
     return *this;
 }

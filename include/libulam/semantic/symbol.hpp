@@ -99,7 +99,7 @@ public:
     }
 
     void unset(str_id_t name_id) {
-        assert(_symbols.count(name_id) == 1);
+        ulam_assert(_symbols.count(name_id) == 1);
         _symbols.erase(name_id);
     }
 

@@ -26,7 +26,7 @@ class Cond : public Tuple<Stmt, Expr> {
 public:
     Cond(Ptr<Expr>&& expr, Ref<AsCond> as_cond = {}):
         Tuple{std::move(expr)}, _as_cond{as_cond} {
-        assert(!as_cond || as_cond->has_type_name());
+        ulam_assert(!as_cond || as_cond->has_type_name());
     }
 
     ULAM_AST_TUPLE_PROP(expr, 0)

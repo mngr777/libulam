@@ -11,8 +11,8 @@ ElementRegistry::ElementRegistry(const ClassOptions& class_options):
 }
 
 elt_id_t ElementRegistry::add(Ref<Class> cls) {
-    assert(cls->is_element());
-    assert(
+    ulam_assert(cls->is_element());
+    ulam_assert(
         std::find(_elements.begin(), _elements.end(), cls) == _elements.end());
 
     elt_id_t id = NoEltId;
@@ -22,7 +22,7 @@ elt_id_t ElementRegistry::add(Ref<Class> cls) {
         _elements[NoEltId] = cls;
     } else {
         // non-Empty element
-        assert(cls->name() != _class_options.empty_element_name);
+        ulam_assert(cls->name() != _class_options.empty_element_name);
         id = _elements.size();
         _elements.push_back(cls);
     }
@@ -30,8 +30,8 @@ elt_id_t ElementRegistry::add(Ref<Class> cls) {
 }
 
 Ref<Class> ElementRegistry::get(elt_id_t id) const {
-    assert(id < _elements.size());
-    assert(_elements[id] || (id == NoEltId && _class_options.empty_element_name.empty()));
+    ulam_assert(id < _elements.size());
+    ulam_assert(_elements[id] || (id == NoEltId && _class_options.empty_element_name.empty()));
     return _elements[id];
 }
 

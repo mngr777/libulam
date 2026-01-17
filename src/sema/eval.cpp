@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/sema/eval.hpp>
@@ -14,7 +14,7 @@
 namespace ulam::sema {
 
 Eval::Eval(Context& ctx, Ref<ast::Root> ast): _ctx{ctx}, _ast{ast} {
-    assert(_ast->program());
+    ulam_assert(_ast->program());
 }
 
 ExprRes Eval::eval(const std::string& text) {

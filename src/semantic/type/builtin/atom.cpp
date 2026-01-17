@@ -17,12 +17,12 @@ RValue AtomType::load(const BitsView data, bitsize_t off) {
 }
 
 void AtomType::store(BitsView data, bitsize_t off, const RValue& rval) {
-    assert(rval.is<DataPtr>());
+    ulam_assert(rval.is<DataPtr>());
     data.write(off, rval.get<DataPtr>()->bits().view());
 }
 
 Ref<Type> AtomType::data_type(const BitsView data, bitsize_t off) {
-    assert(data.len() - off >= ULAM_ATOM_SIZE);
+    ulam_assert(data.len() - off >= ULAM_ATOM_SIZE);
     Ref<Type> type{this};
     auto elt_id = read_element_id(data, off);
     auto elt_type = _elements.get(elt_id);
@@ -38,7 +38,7 @@ RValue AtomType::construct() {
 }
 
 RValue AtomType::construct(Bits&& bits) {
-    assert(bits.len() == bitsize());
+    ulam_assert(bits.len() == bitsize());
     auto type = data_type(bits.view(), 0);
     return RValue{make_s<Data>(type, std::move(bits))};
 }
@@ -84,13 +84,13 @@ Value AtomType::cast_to(Ref<Type> type, Value&& val) {
             return dyn_type->cast_to(type, std::move(val));
     }
 
-    assert(is_expl_castable_to(type));
-    assert(type->is_class() && type->as_class()->is_element());
+    ulam_assert(is_expl_castable_to(type));
+    ulam_assert(type->is_class() && type->as_class()->is_element());
     if (!val.has_rvalue())
         return std::move(val);
 
     auto rval = val.move_rvalue();
-    assert(rval.is<DataPtr>());
+    ulam_assert(rval.is<DataPtr>());
     auto& bits = rval.get<DataPtr>()->bits();
     auto elt_rval = type->as_class()->construct();
     elt_rval.get<DataPtr>()->bits().write(0, bits.view());

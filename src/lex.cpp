@@ -236,7 +236,7 @@ void Lex::lex_path(Token& token) {
 }
 
 void Lex::advance(std::size_t len) {
-    assert(_cur + len <= _buf.end());
+    ulam_assert(_cur + len <= _buf.end());
     _cur += len;
 }
 
@@ -269,13 +269,13 @@ void Lex::start(Token& token) {
 }
 
 void Lex::complete(tok::Type type) {
-    assert(_tok);
+    ulam_assert(_tok);
     _tok->type = type;
     _tok->size = _cur - _tok_start;
 }
 
 void Lex::newline(std::size_t size) {
-    assert(size < 3);
+    ulam_assert(size < 3);
     advance(size);
     ++_linum;
     _line = _cur;
@@ -438,8 +438,8 @@ Done:
 }
 
 void Lex::lex_number() {
-    assert(_tok_start);
-    assert(detail::is_digit(_tok_start[0]));
+    ulam_assert(_tok_start);
+    ulam_assert(detail::is_digit(_tok_start[0]));
 
     auto is_digit = &detail::is_digit;
     auto digits_start = _cur - 1;
@@ -473,8 +473,8 @@ void Lex::lex_number() {
 }
 
 void Lex::lex_word() {
-    assert(_tok_start);
-    assert(_cur[-1] == '@' || detail::is_word(_cur[-1]));
+    ulam_assert(_tok_start);
+    ulam_assert(_cur[-1] == '@' || detail::is_word(_cur[-1]));
     while (detail::is_word(_cur[0]))
         advance();
     auto type = tok::type_by_keyword(

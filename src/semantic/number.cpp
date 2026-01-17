@@ -11,12 +11,12 @@ namespace ulam {
 
 Number::Number(Radix radix, Integer value, bitsize_t size):
     _radix{radix}, _value{value}, _size{size} {
-    assert(size == 0 || size >= utils::bitsize(value));
+    ulam_assert(size == 0 || size >= utils::bitsize(value));
 }
 
 Number::Number(Radix radix, Unsigned value, bitsize_t size):
     _radix{radix}, _value{value}, _size{size} {
-    assert(size == 0 || size >= utils::bitsize(value));
+    ulam_assert(size == 0 || size >= utils::bitsize(value));
 }
 
 Number::Number(): Number{Radix::Decimal, (Integer)0} {}

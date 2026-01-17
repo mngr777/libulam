@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/memory/ptr.hpp>
 
 namespace ulam::ast {

@@ -1,5 +1,5 @@
-#include "src/utils/unreachable.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -31,7 +31,7 @@ RValue UnsignedType::construct(Unsigned uns_val) {
 RValue UnsignedType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
 
 Datum UnsignedType::to_datum(const RValue& rval) {
-    assert(rval.is<Unsigned>());
+    ulam_assert(rval.is<Unsigned>());
     auto uns_val = rval.get<Unsigned>();
     return (Datum)uns_val;
 }
@@ -66,16 +66,16 @@ TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
             --uns_val;
         break;
     default:
-        utils::unreachable();
+        unreachable();
     }
     return {this, Value{RValue{uns_val, is_consteval}}};
 }
 
 TypedValue UnsignedType::binary_op(
     Op op, RValue&& l_rval, Ref<const PrimType> r_type, RValue&& r_rval) {
-    assert(r_type->is(UnsignedId));
-    assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
-    assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
+    ulam_assert(r_type->is(UnsignedId));
+    ulam_assert(!l_rval.has_rvalue() || l_rval.is<Unsigned>());
+    ulam_assert(!r_rval.has_rvalue() || r_rval.is<Unsigned>());
 
     bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
     Unsigned l_uns = l_rval.has_rvalue() ? l_rval.get<Unsigned>() : 0;
@@ -191,7 +191,7 @@ TypedValue UnsignedType::binary_op(
         return make_res(type, type->construct(l_uns >= r_uns));
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -220,7 +220,7 @@ bool UnsignedType::is_castable_to_prim(
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -243,7 +243,7 @@ bool UnsignedType::is_castable_to_prim(BuiltinTypeId id, bool expl) const {
     case FunId:
     case VoidId:
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
@@ -253,7 +253,7 @@ bool UnsignedType::is_impl_castable_to_prim(
     if (!rval.has_rvalue() || !rval.is_consteval())
         return is_castable_to_prim(type, false);
 
-    assert(rval.is<Unsigned>());
+    ulam_assert(rval.is<Unsigned>());
     auto uns_val = rval.get<Unsigned>();
 
     switch (type->bi_type_id()) {
@@ -273,7 +273,7 @@ bool UnsignedType::is_impl_castable_to_prim(
 }
 
 TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
-    assert(is_expl_castable_to(id));
+    ulam_assert(is_expl_castable_to(id));
 
     bool is_unknown = !rval.has_rvalue();
     bool is_wider = bitsize() > DefaultSize;
@@ -299,11 +299,11 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         }
     }
     case UnsignedId: {
-        utils::unreachable();
+        unreachable();
         // return {this, Value{std::move(rval)}};
     }
     case BoolId: {
-        assert(bitsize() == 1);
+        ulam_assert(bitsize() == 1);
         auto boolean = builtins().boolean();
         if (is_unknown)
             return {boolean, Value{RValue{}}};
@@ -341,12 +341,12 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         return {type, Value{RValue{std::move(val), is_consteval}}};
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 
 RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
-    assert(is_expl_castable_to(type));
+    ulam_assert(is_expl_castable_to(type));
     if (!rval.has_rvalue())
         return std::move(rval);
 
@@ -365,7 +365,7 @@ RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return std::move(rval);
     }
     case BoolId: {
-        assert(bitsize() == 1);
+        ulam_assert(bitsize() == 1);
         auto rval =
             builtins().bool_type(type->bitsize())->construct(uns_val > 0);
         rval.set_is_consteval(is_consteval);
@@ -384,7 +384,7 @@ RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return bits_rval;
     }
     default:
-        utils::unreachable();
+        unreachable();
     }
 }
 

@@ -69,7 +69,7 @@ public:
     bool has_data() const { return _data.has_value(); }
 
     template <typename T> T data() const {
-        assert(has_data());
+        ulam_assert(has_data());
         return std::any_cast<T>(_data);
     }
 
@@ -107,17 +107,17 @@ public:
     operator bool() const { return ok(); }
 
     ExprError error() {
-        assert(!empty());
+        ulam_assert(!empty());
         return _list.back().error();
     }
 
     void push_back(ExprRes&& res) {
-        assert(ok());
+        ulam_assert(ok());
         _list.push_back(std::move(res));
     }
 
     ExprRes pop_front() {
-        assert(!empty());
+        ulam_assert(!empty());
         auto res = std::move(_list.front());
         _list.pop_front();
         return res;

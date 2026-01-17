@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <string_view>
 
 namespace ulam {
@@ -18,12 +18,12 @@ enum BuiltinTypeId {
 };
 
 constexpr bool is_prim(BuiltinTypeId id) {
-    assert(id != NoBuiltinTypeId);
+    ulam_assert(id != NoBuiltinTypeId);
     return id != AtomId && id != FunId;
 }
 
 constexpr bool has_bitsize(BuiltinTypeId id) {
-    assert(id != NoBuiltinTypeId);
+    ulam_assert(id != NoBuiltinTypeId);
     return id != AtomId && id != VoidId && id != StringId && id != FunId;
 }
 

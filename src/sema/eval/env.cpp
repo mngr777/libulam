@@ -94,7 +94,7 @@ EvalEnv::VarDefaultsRaii::operator=(VarDefaultsRaii&& other) {
 EvalEnv::VarDefaultsRaii::VarDefaultsRaii(
     EvalEnv& env, VarDefaults&& var_defaults):
     _env{&env}, _var_set{make_set(var_defaults)} {
-    assert(std::none_of(_var_set.begin(), _var_set.end(), [&](const auto ref) {
+    ulam_assert(std::none_of(_var_set.begin(), _var_set.end(), [&](const auto ref) {
         return env._var_defaults.count(ref) > 0;
     }));
     env._var_defaults.merge(var_defaults);
@@ -104,7 +104,7 @@ EvalEnv::VarDefaultsRaii::VarSet
 EvalEnv::VarDefaultsRaii::make_set(const VarDefaults& var_defaults) {
     VarSet set;
     for (const auto& [var, res] : var_defaults) {
-        assert(_env && _env->_var_defaults.count(var) == 0);
+        ulam_assert(_env && _env->_var_defaults.count(var) == 0);
         set.insert(var);
     }
     return set;
@@ -240,24 +240,24 @@ EvalEnv::ScopeRaii EvalEnv::scope_raii(scope_flags_t flags) {
 }
 
 EvalEnv::ScopeRaii EvalEnv::scope_raii(Scope* parent, scope_flags_t flags) {
-    assert(!_scope_override);
+    ulam_assert(!_scope_override);
     return _scope_stack.raii<BasicScope>(parent, flags);
 }
 
 EvalEnv::FunScopeRaii EvalEnv::fun_scope_raii(
     Ref<Fun> fun, LValue self, Ref<Class> eff_cls, scope_flags_t flags) {
-    assert(!_scope_override);
+    ulam_assert(!_scope_override);
     return _scope_stack.raii<FunScope>(fun, self, eff_cls, flags);
 }
 
 EvalEnv::AsCondScopeRaii
 EvalEnv::as_cond_scope_raii(AsCondContext& as_cond_ctx, scope_flags_t flags) {
-    assert(!_scope_override);
-    assert(!as_cond_ctx.empty());
+    ulam_assert(!_scope_override);
+    ulam_assert(!as_cond_ctx.empty());
 
     if (as_cond_ctx.is_self()) {
         // (self as A)
-        assert(as_cond_ctx.type()->is_class());
+        ulam_assert(as_cond_ctx.type()->is_class());
         auto cls = as_cond_ctx.type()->as_class();
         auto self = as_cond_ctx.self();
         return _scope_stack.raii<AsCondScope>(cls, self, scope(), flags);
@@ -291,7 +291,7 @@ EvalEnv::var_defaults_raii(VarDefaults&& var_defaults) {
 }
 
 const EvalStack::Item& EvalEnv::stack_top() const {
-    assert(!_stack.empty());
+    ulam_assert(!_stack.empty());
     return _stack.top();
 }
 
@@ -302,7 +302,7 @@ Scope* EvalEnv::scope() {
 }
 
 scope_lvl_t EvalEnv::scope_lvl() const {
-    assert(!_scope_override);
+    ulam_assert(!_scope_override);
     return _scope_stack.size();
 }
 

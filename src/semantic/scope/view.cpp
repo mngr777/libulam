@@ -13,10 +13,10 @@ void PersScopeView::sync() { set_version(_scope->version()); }
 std::pair<str_id_t, Scope::Symbol*> PersScopeView::advance() {
     if (_version == scope()->version())
         return {NoStrId, nullptr};
-    assert(_version < scope()->version());
+    ulam_assert(_version < scope()->version());
     ++_version;
     auto name_id = last_change();
-    assert(name_id != NoStrId && find(name_id).first);
+    ulam_assert(name_id != NoStrId && find(name_id).first);
     return {name_id, find(name_id).first};
 }
 
@@ -49,13 +49,13 @@ str_id_t PersScopeView::last_change() const {
 }
 
 void PersScopeView::set_version(scope_version_t version) {
-    assert(version != NoScopeVersion);
-    assert(version <= scope()->version());
+    ulam_assert(version != NoScopeVersion);
+    ulam_assert(version <= scope()->version());
     _version = version;
 }
 
 void PersScopeView::set_version_after(scope_version_t version) {
-    assert(version != NoScopeVersion);
+    ulam_assert(version != NoScopeVersion);
     set_version(version + 1);
 }
 
@@ -74,19 +74,19 @@ bool PersScopeView::operator!=(const PersScopeView& other) const {
 }
 
 Scope::Symbol* PersScopeView::do_set(str_id_t name_id, Symbol&& symbol) {
-    assert(_version == scope()->version());
+    ulam_assert(_version == scope()->version());
     auto sym = scope()->do_set(name_id, std::move(symbol));
     sync();
     return sym;
 }
 
 PersScope* PersScopeView::scope() {
-    assert(_scope);
+    ulam_assert(_scope);
     return _scope;
 }
 
 const PersScope* PersScopeView::scope() const {
-    assert(_scope);
+    ulam_assert(_scope);
     return _scope;
 }
 

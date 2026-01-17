@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/semantic/type.hpp>
 
@@ -55,7 +55,7 @@ void ExprRes::set_is_super(bool is_super) {
 }
 
 TypedValue ExprRes::move_typed_value() {
-    assert(!is_nil());
+    ulam_assert(!is_nil());
     _error = ExprError::Nil;
     return std::exchange(_typed_value, {});
 }

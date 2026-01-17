@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/mangler.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -38,27 +38,27 @@ std::string Mangler::mangled(const TypeList& types) {
 void Mangler::write_mangled(std::ostream& os, const TypedValue& tv) {
     write_mangled(os, tv.type());
     tv.value().with_rvalue([&](const RValue& rval) {
-        assert(!rval.empty());
+        ulam_assert(!rval.empty());
         write_mangled(os, rval);
     });
 }
 
 // see ULAM {UlamType,UlamTypeClass}::getUlamTypeMangledType()
 void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
-    assert(type && type->canon());
+    ulam_assert(type && type->canon());
     type = type->canon();
 
     // &
     if (type->is_ref()) {
         os << "r";
         type = type->as_ref()->refd()->canon();
-        assert(type);
+        ulam_assert(type);
     }
 
     // []
     while (type->is_array()) {
         auto array = type->as_array();
-        assert(array);
+        ulam_assert(array);
         auto size = array->array_size();
         if (size == 0 || size == UnknownArraySize) { // TODO: is this correct?
             detail::write_leximited(os, (Integer)-1);
@@ -85,7 +85,7 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         os << builtin_type_code(type->bi_type_id());
     } else {
         // TODO: remove?
-        assert(type->is_prim());
+        ulam_assert(type->is_prim());
         detail::write_leximited(os, builtin_type_code(type->bi_type_id()));
         if (has_bitsize(type->bi_type_id()))
             detail::write_leximited(os, (Unsigned)type->bitsize());
@@ -100,7 +100,7 @@ void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
         },
         [&](const Bits& val) { val.write_hex(os); },
         [&](const DataPtr& val) { val->bits().write_hex(os); },
-        [&](const std::monostate&) { assert(false); });
+        [&](const std::monostate&) { ulam_assert(false); });
 }
 
 } // namespace ulam

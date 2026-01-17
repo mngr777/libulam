@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/stmts.hpp>

@@ -1,4 +1,4 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/sema.hpp>
 #include <libulam/sema/init.hpp>
 #include <libulam/sema/resolver.hpp>

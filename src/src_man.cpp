@@ -1,11 +1,11 @@
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/src_man.hpp>
 
 namespace ulam {
 
 Src* SrcMan::string(std::string text, Path path) {
-    assert(_src_map.count(path) == 0);
+    ulam_assert(_src_map.count(path) == 0);
     auto ptr = std::make_unique<StrSrc>(_srcs.size(), std::move(text), path);
     if (!path.empty())
         _src_map[path] = ptr.get();
@@ -14,7 +14,7 @@ Src* SrcMan::string(std::string text, Path path) {
 }
 
 Src* SrcMan::file(Path path) {
-    assert(_src_map.count(path) == 0);
+    ulam_assert(_src_map.count(path) == 0);
     auto ptr = std::make_unique<FileSrc>(_srcs.size(), path);
     if (!path.empty())
         _src_map[path] = ptr.get();
@@ -23,7 +23,7 @@ Src* SrcMan::file(Path path) {
 }
 
 Src* SrcMan::src(src_id_t src_id) {
-    assert(src_id < _srcs.size());
+    ulam_assert(src_id < _srcs.size());
     return _srcs[src_id].get();
 }
 
@@ -40,8 +40,8 @@ SrcMan::loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t chr) {
 }
 
 SrcLoc SrcMan::loc(loc_id_t loc_id) {
-    assert(loc_id != NoLocId);
-    assert(loc_id < _locs.size());
+    ulam_assert(loc_id != NoLocId);
+    ulam_assert(loc_id < _locs.size());
     return _locs[loc_id];
 }
 

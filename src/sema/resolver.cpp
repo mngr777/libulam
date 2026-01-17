@@ -1,4 +1,4 @@
-#include "src/utils/unreachable.hpp"
+#include <libulam/assert.hpp>
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -129,7 +129,7 @@ bool Resolver::resolve(Ref<Var> var) {
                 diag().error(
                     type_name, "class constant cannot have reference type");
             } else {
-                assert(var->has_module());
+                ulam_assert(var->has_module());
                 diag().error(
                     type_name, "module constant cannot have reference type");
             }
@@ -367,7 +367,7 @@ Ref<Type> Resolver::do_resolve_type_name(
             }
             type = cls->super();
         } else {
-            assert(!ident->is_self());
+            ulam_assert(!ident->is_self());
             // alias or base class?
             auto sym = cls->get(name_id);
             if (sym) {
@@ -410,7 +410,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
             return builtins().type(bi_type_id);
 
         auto args = type_spec->args();
-        assert(args->child_num() > 0);
+        ulam_assert(args->child_num() > 0);
         bitsize_t size = bitsize_for(args->get(0), bi_type_id);
         if (size == NoBitsize)
             return {};
@@ -420,12 +420,12 @@ Ref<Type> Resolver::do_resolve_type_spec(
         }
         return builtins().prim_type(bi_type_id, size);
     }
-    assert(type_spec->has_ident());
+    ulam_assert(type_spec->has_ident());
     auto ident = type_spec->ident();
 
     // Self or Super?
     if (ident->is_self() || ident->is_super()) {
-        assert(!type_spec->has_args());
+        ulam_assert(!type_spec->has_args());
         auto self_cls = scope()->self_cls();
         if (!self_cls) {
             std::string name{ident->is_self() ? "Self" : "Super"};
@@ -494,14 +494,14 @@ Ref<Type> Resolver::do_resolve_type_spec(
                     if (is_tpl || !type->is_alias())
                         return {};
 
-                    assert(type->is_alias());
+                    ulam_assert(type->is_alias());
                     if (!resolve(type->as_alias()))
                         return {};
                     if (prepare_resolved_type(ident, type, resolve_class))
                         return type;
                     return {};
                 },
-                [&](auto&&) -> Ref<Type> { utils::unreachable(); });
+                [&](auto&&) -> Ref<Type> { unreachable(); });
             if (type) {
                 if (prepare_resolved_type(ident, type, resolve_class))
                     return type;
@@ -529,7 +529,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
                 module->env_scope()->set(name_id, cls); // TODO
             return cls;
         },
-        [&](auto&&) -> Ref<Type> { utils::unreachable(); });
+        [&](auto&&) -> Ref<Type> { unreachable(); });
     if (type && prepare_resolved_type(ident, type, resolve_class))
         return type;
     return {};
@@ -537,7 +537,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
 
 bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     debug() << __FUNCTION__ << "\n" << line_at(expr);
-    assert(bi_type_id != NoBuiltinTypeId);
+    ulam_assert(bi_type_id != NoBuiltinTypeId);
 
     // can have bitsize?
     if (!has_bitsize(bi_type_id)) {
@@ -586,7 +586,7 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
 }
 
 PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
-    assert(!decl->is_local());
+    ulam_assert(!decl->is_local());
     Ref<PersScope> scope{};
     if (decl->has_cls()) {
         // TODO: params, fun params, ...
@@ -594,7 +594,7 @@ PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
     } else if (decl->has_module()) {
         scope = decl->module()->scope();
     } else {
-        utils::unreachable();
+        unreachable();
     }
     return scope->view(decl->scope_version());
 }
@@ -670,9 +670,9 @@ Ref<Type> Resolver::apply_array_dims(Ref<Type> type, Ref<ast::ExprList> dims) {
 
 Ref<Type> Resolver::apply_array_dims(
     Ref<Type> type, Ref<ast::ExprList> dims, Ref<ast::InitValue> init) {
-    assert(type);
-    assert(dims && dims->child_num() > 0);
-    assert(!dims->has_empty() || init);
+    ulam_assert(type);
+    ulam_assert(dims && dims->child_num() > 0);
+    ulam_assert(!dims->has_empty() || init);
 
     // get dimension list
     ArrayDimList dim_list;
@@ -700,7 +700,7 @@ Ref<Type> Resolver::apply_array_dims(
                 return {};
         } else {
             // size defined by init list
-            assert(n < dim_list.size());
+            ulam_assert(n < dim_list.size());
             size = dim_list[n];
         }
         type = type->array_type(size);
@@ -727,7 +727,7 @@ array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
     auto rval = res.move_value().move_rvalue();
     if (rval.empty())
         return UnknownArraySize;
-    assert(rval.is_consteval());
+    ulam_assert(rval.is_consteval());
 
     auto int_val = rval.get<Integer>();
     if (int_val < 0) {
@@ -739,7 +739,7 @@ array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
 
 std::pair<ArrayDimList, bool>
 Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
-    assert(num > 0);
+    ulam_assert(num > 0);
     ArrayDimList dims;
     bool ok = true;
 
@@ -770,7 +770,7 @@ Resolver::array_dims(unsigned num, Ref<ast::InitValue> init) {
 std::pair<TypedValueList, bool>
 Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     debug() << __FUNCTION__ << "\n" << line_at(args);
-    assert(args);
+    ulam_assert(args);
 
     std::pair<TypedValueList, bool> res;
     auto fr = env().add_flags_raii(evl::Consteval);
@@ -795,7 +795,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
             tpl_param->type_node(), tpl_param->node(), Ref<Type>{},
             Value{RValue{}}, tpl_param->flags()));
         auto param = ref(params.back());
-        assert(param->is_local());
+        ulam_assert(param->is_local());
         param_scope.set(param->name_id(), param);
 
         // if arg provided, set default value override

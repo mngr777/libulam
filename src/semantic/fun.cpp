@@ -30,7 +30,7 @@ Fun::Fun(
     _mangler{mangler},
     _param_scope{make<PersScope>(scope)},
     _node{node} {
-    assert(node);
+    ulam_assert(node);
     if (node->is_marked_virtual())
         set_is_virtual(true);
 }
@@ -67,8 +67,8 @@ bool Fun::is_native() const { return _node->is_native(); }
 bool Fun::has_ellipsis() const { return _node->params()->has_ellipsis(); }
 
 void Fun::add_param(Ptr<Var>&& param) {
-    assert(params_node());
-    assert(_params.size() < params_node()->child_num());
+    ulam_assert(params_node());
+    ulam_assert(_params.size() < params_node()->child_num());
     _param_scope->set(param->name_id(), ref(param));
     _params.push_back(std::move(param));
 }
@@ -102,7 +102,7 @@ Fun::MatchRes Fun::match(const TypedValueRefList& args) {
     auto param_it = _params.begin();
     for (; arg_it != args.end(); ++arg_it, ++param_it) {
         if (param_it == _params.end()) {
-            assert(has_ellipsis());
+            ulam_assert(has_ellipsis());
             break;
         }
         auto& param = (*param_it);
@@ -137,26 +137,26 @@ Ref<Fun> Fun::find_override(Ref<const Class> cls) {
 Ref<PersScope> Fun::scope() { return cls()->scope(); }
 
 Ref<ast::FunRetType> Fun::ret_type_node() const {
-    assert(_node->has_ret_type());
+    ulam_assert(_node->has_ret_type());
     return _node->ret_type();
 }
 
 Ref<ast::ParamList> Fun::params_node() const {
-    assert(_node->has_params());
+    ulam_assert(_node->has_params());
     return _node->params();
 }
 
 Ref<ast::FunDefBody> Fun::body_node() const { return _node->body(); }
 
 void Fun::add_override(Ref<Fun> fun, Ref<Class> cls) {
-    assert(is_virtual()); // must be already marked as virtual
-    assert(
+    ulam_assert(is_virtual()); // must be already marked as virtual
+    ulam_assert(
         fun->mangled_param_types() ==
         mangled_param_types()); // parameters must match
 
     if (_overrides.count(cls->id()) == 1) {
         // can happen with multible inheritance
-        assert(_overrides[cls->id()] == fun);
+        ulam_assert(_overrides[cls->id()] == fun);
         return;
     }
 
@@ -172,12 +172,12 @@ void Fun::add_override(Ref<Fun> fun, Ref<Class> cls) {
 bool Fun::has_overridden() const { return _overridden; }
 
 Ref<Fun> Fun::overridden() {
-    assert(_overridden);
+    ulam_assert(_overridden);
     return _overridden;
 }
 
 void Fun::set_overridden(Ref<Fun> fun) {
-    assert(!_overridden);
+    ulam_assert(!_overridden);
     _overridden = fun;
 }
 
@@ -216,7 +216,7 @@ FunSet::FunSet(str_id_t name_id): _name_id{name_id} {
 bool FunSet::has_name_id() const { return _name_id != NoStrId; }
 
 str_id_t FunSet::name_id() const {
-    assert(has_name_id());
+    ulam_assert(has_name_id());
     return _name_id;
 }
 
@@ -267,7 +267,7 @@ void FunSet::add(Ref<Fun> fun) {
 
 void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     // debug() << __FUNCTION__ << "\n";
-    assert(!_map.has_value());
+    ulam_assert(!_map.has_value());
     _map.emplace();
 
     // group funs by param types (hopefully one per group)
@@ -300,7 +300,7 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
 }
 
 void FunSet::merge(Ref<FunSet> other, Ref<Class> cls, Ref<Class> from_cls) {
-    assert(_map.has_value());
+    ulam_assert(_map.has_value());
     for (auto fun : *other) {
         if (from_cls && fun->cls() != from_cls)
             continue;
