@@ -1,5 +1,5 @@
 #include "./stringifier.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <cstdint>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
@@ -12,7 +12,7 @@
 
 std::string
 Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
-    assert(!rval.empty());
+    ulam_assert(!rval.empty());
 
     type = type->deref();
 
@@ -28,7 +28,7 @@ Stringifier::stringify(ulam::Ref<ulam::Type> type, const ulam::RValue& rval) {
     if (type->is_atom())
         return "Atom";
 
-    assert(false);
+    ulam_assert(false);
     return {};
 }
 
@@ -72,7 +72,7 @@ std::string Stringifier::stringify_prim(
         return str_lit(str);
     }
     default:
-        assert(false); // TODO
+        ulam_assert(false); // TODO
         return {};
     }
 }
@@ -87,7 +87,7 @@ std::string Stringifier::stringify_class(
     case ObjectFmt::Map:
         return stringify_class_map(cls, rval);
     default:
-        assert(false);
+        ulam_assert(false);
         return {};
     }
 }
@@ -102,7 +102,7 @@ std::string Stringifier::stringify_class_chunks(
 
 std::string Stringifier::stringify_class_hex_str(
     ulam::Ref<ulam::Class> cls, const ulam::RValue& rval) {
-    assert(rval.is<ulam::DataPtr>());
+    ulam_assert(rval.is<ulam::DataPtr>());
     auto data = rval.get<ulam::DataPtr>();
     auto data_view = data->bits().view(cls->data_off(), cls->data_bitsize());
     return data_view.hex();
@@ -157,13 +157,13 @@ std::string Stringifier::stringify_array_leximited(
     auto data = rval.data_view();
 
     // t3894
-    assert(array_type->item_type()->bitsize() < sizeof(ulam::Unsigned) * 8);
+    ulam_assert(array_type->item_type()->bitsize() < sizeof(ulam::Unsigned) * 8);
     for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
         auto item_rval = data.array_item(idx).load();
         item_rval.accept(
             [&](ulam::Unsigned val) { ulam::detail::write_leximited(ss, val); },
             [&](ulam::Integer val) { ulam::detail::write_leximited(ss, val); },
-            [&](auto&&) { assert(false); });
+            [&](auto&&) { ulam_assert(false); });
     }
     return ss.str();
 }

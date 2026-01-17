@@ -1,6 +1,6 @@
 #include "./answer.hpp"
 #include "./answer/parser.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <iostream>
 #include <stack>
 #include <stdexcept>
@@ -25,7 +25,7 @@ std::string Answer::type_def(const std::string& alias) const {
 }
 
 void Answer::add_type_def(std::string alias, std::string text) {
-    assert(!has_type_def(alias));
+    ulam_assert(!has_type_def(alias));
     _type_defs.emplace(std::move(alias), std::move(text));
 }
 
@@ -39,7 +39,7 @@ std::string Answer::const_(const std::string& name) const {
 }
 
 void Answer::add_const(std::string name, std::string text) {
-    assert(!has_const(name));
+    ulam_assert(!has_const(name));
     _consts.emplace(std::move(name), std::move(text));
 }
 
@@ -53,7 +53,7 @@ std::string Answer::prop(const std::string& name) const {
 }
 
 void Answer::add_prop(std::string name, std::string text) {
-    assert(!has_prop(name));
+    ulam_assert(!has_prop(name));
     _props.emplace(std::move(name), std::move(text));
 }
 
@@ -72,7 +72,7 @@ void AnswerBasePrefixStack::push(std::string name) {
 }
 
 void AnswerBasePrefixStack::pop() {
-    assert(!_stack.empty());
+    ulam_assert(!_stack.empty());
     _stack.pop();
 }
 
@@ -135,7 +135,7 @@ Answer parse_answer(const std::string_view text) {
             auto [alias, text] = p.read_type_def();
             auto alias_str = pref.add_prefix(alias);
             // t41058: `Ue_Content` has 2 `Dir` typedefs
-            assert(
+            ulam_assert(
                 !answer.has_type_def(alias_str) ||
                 answer.type_def(alias_str) == text);
             if (!answer.has_type_def(alias_str))
@@ -191,7 +191,7 @@ void compare_answer_maps(
 }
 
 void compare_answers(const Answer& truth, const Answer& answer) {
-    assert(truth.class_name() == answer.class_name());
+    ulam_assert(truth.class_name() == answer.class_name());
 
     // parents
     {
@@ -210,8 +210,8 @@ void compare_answers(const Answer& truth, const Answer& answer) {
         auto truth_it = truth.parents().begin();
         unsigned n = 1;
         for (; truth_it != truth.parents().end(); ++truth_it, ++it) {
-            assert(it != parents.end());
-            assert(truth_it != truth.parents().end());
+            ulam_assert(it != parents.end());
+            ulam_assert(truth_it != truth.parents().end());
             if (*it != *truth_it) {
                 auto message = std::string{
                     "class `" + answer.class_name() +

@@ -17,7 +17,7 @@ using ExprResList = EvalFuncall::ExprResList;
 void replace(
     std::string& data, const std::string_view ph, const std::string_view repl) {
     auto pos = data.rfind(ph);
-    assert(pos != std::string::npos);
+    ulam_assert(pos != std::string::npos);
     data.replace(pos, ph.size(), repl);
 }
 
@@ -97,9 +97,9 @@ ExprRes EvalFuncall::do_funcall(
     auto res = Base::do_funcall(node, fun, self, std::move(args), eff_cls);
     if (is_test && !has_flag(ulam::sema::evl::NoExec)) {
         // executed test function, set return value as status
-        assert(res.type()->bi_type_id() == ulam::IntId);
-        assert(res.value().is_rvalue());
-        assert(res.value().rvalue().is<ulam::Integer>());
+        ulam_assert(res.type()->bi_type_id() == ulam::IntId);
+        ulam_assert(res.value().is_rvalue());
+        ulam_assert(res.value().rvalue().is<ulam::Integer>());
         auto int_val = static_cast<int>(res.value().rvalue().get<ulam::Integer>());
         set_status(int_val);
     }

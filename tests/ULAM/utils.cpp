@@ -20,7 +20,7 @@ void write_mangled_rval(
         },
         [&](const ulam::Bits& val) { val.write_hex(os); },
         [&](const ulam::DataPtr& val) { val->bits().write_hex(os); },
-        [&](const std::monostate&) { assert(false); });
+        [&](const std::monostate&) { ulam_assert(false); });
 }
 
 void write_mangled_type_name(
@@ -61,7 +61,7 @@ void write_mangled_type_name(
             });
         }
     } else {
-        assert(type->is_builtin());
+        ulam_assert(type->is_builtin());
         // bitsize
         write_leximited(os, (ulam::Unsigned)type->bitsize());
         // type code

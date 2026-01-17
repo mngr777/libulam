@@ -1,5 +1,5 @@
 #include "./parser.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <stdexcept>
 
 Parser::~Parser() {}
@@ -14,7 +14,7 @@ bool Parser::at(const std::string& str) const {
 }
 
 bool Parser::eof() const {
-    assert(_pos <= _text.size());
+    ulam_assert(_pos <= _text.size());
     return _pos == _text.size();
 }
 
@@ -112,7 +112,7 @@ void Parser::skip_spaces() {
 }
 
 const std::string_view Parser::read_line(bool with_nl) {
-    assert(!eof());
+    ulam_assert(!eof());
     auto start = _pos;
     move_to("\n", SearchOrEof);
     if (with_nl)
@@ -131,10 +131,10 @@ const std::string_view Parser::read_block(char open, char close, char esc) {
     unsigned opened = 1;
     while (!eof() && opened > 0) {
         if (at(close)) {
-            assert(opened > 0);
+            ulam_assert(opened > 0);
             --opened;
         } else if (at(open)) {
-            assert(close != open);
+            ulam_assert(close != open);
             ++opened;
         } else if (at(esc)) {
             advance();
@@ -166,14 +166,14 @@ int Parser::read_int() {
 }
 
 const std::string_view Parser::substr_from(std::size_t start) const {
-    assert(start <= _pos);
+    ulam_assert(start <= _pos);
     return _text.substr(start, _pos - start);
 }
 
 void Parser::error(const std::string& message, std::size_t pos) const {
     if (pos == std::string::npos)
         pos = _pos;
-    assert(pos <= _pos);
+    ulam_assert(pos <= _pos);
     throw std::invalid_argument(
         message + " (chr:" + std::to_string(_pos) + ") `" +
         std::string{_text.substr(_pos, 16)} + "'");

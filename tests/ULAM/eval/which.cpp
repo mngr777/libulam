@@ -3,7 +3,7 @@
 #include "./codegen.hpp"
 #include "./codegen/context_stack.hpp"
 #include "./expr_res.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/utils/leximited.hpp>
@@ -42,7 +42,7 @@ EvalWhich::make_which_var(Context& ctx, ulam::Ref<ulam::ast::Expr> expr) {
 
     auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
     auto res = env().eval_expr(expr);
-    assert(res);
+    ulam_assert(res);
 
     auto strf = gen().make_strf();
     auto type = res.type()->canon();
@@ -138,7 +138,7 @@ bool EvalWhich::match_conds(
     gen().append("cond");
 
     if (!ctx.as_cond_ctx.empty()) {
-        assert(as_cond);
+        ulam_assert(as_cond);
         auto type = ctx.as_cond_ctx.type();
         gen().set_next_prefix(gen().as_cond_prefix_str(as_cond, type));
     }

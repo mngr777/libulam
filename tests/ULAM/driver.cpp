@@ -1,6 +1,6 @@
 #include "./test_case.hpp"
 #include <algorithm>
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -288,7 +288,7 @@ static bool run(Path stdlib_dir, const Path& path, bool single) {
 
 static bool
 run(Path stdlib_dir, unsigned n, std::vector<Path> test_paths, bool single) {
-    assert(n > 0);
+    ulam_assert(n > 0);
     auto& path = test_paths[n - 1];
     std::cout << "# " << std::dec << n << " " << path.filename() << "\n";
     bool ok = true;

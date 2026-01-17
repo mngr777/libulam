@@ -15,14 +15,14 @@ using ExprRes = ulam::sema::ExprRes;
 namespace exp {
 
 std::string data(const ExprRes& res) {
-    assert(res.has_data());
-    assert(!res.data<std::string>().empty());
+    ulam_assert(res.has_data());
+    ulam_assert(!res.data<std::string>().empty());
     auto data = res.data<std::string>();
     return data;
 }
 
 void set_data(ExprRes& res, std::string data) {
-    assert(!data.empty());
+    ulam_assert(!data.empty());
     res.set_flags(exp::NoFlags);
     res.set_data<std::string>(std::move(data));
 }
@@ -36,7 +36,7 @@ void set_data(ExprRes& res, const char* data) {
 }
 
 void set_self(ExprRes& res) {
-    assert(!res.has_data());
+    ulam_assert(!res.has_data());
     set_data(res, "self");
     res.set_flag(exp::Self);
 }
@@ -73,13 +73,13 @@ void remove_member_access_op(ExprRes& res, bool remove_ident) {
     auto size = data.size();
 
     // .
-    assert(size > 2 && data[size - 2] == ' ' && data[size - 1] == '.');
+    ulam_assert(size > 2 && data[size - 2] == ' ' && data[size - 1] == '.');
     data = data.substr(0, size - 2);
 
     // member ident
     if (remove_ident) {
         auto pos = data.rfind(' ');
-        assert(pos != std::string::npos);
+        ulam_assert(pos != std::string::npos);
         data = data.substr(0, pos);
     }
 
@@ -114,7 +114,7 @@ void append(ExprRes& res, const std::string& data, const std::string& sep) {
 
 std::string
 data_append(std::string data1, std::string data2, const std::string& sep) {
-    assert(!data1.empty() && !data2.empty());
+    ulam_assert(!data1.empty() && !data2.empty());
     return data1 + sep + data2;
 }
 

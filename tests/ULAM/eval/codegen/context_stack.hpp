@@ -1,5 +1,5 @@
 #pragma once
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <cstdint>
 #include <list>
 #include <stack>
@@ -97,7 +97,7 @@ public:
     }
 
     template <typename T> T& top() {
-        assert(!empty());
+        ulam_assert(!empty());
         return std::get<T>(_stack.top());
     }
 

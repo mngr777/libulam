@@ -4,7 +4,7 @@
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -155,7 +155,7 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
     } else {
         auto no_fold = has_flag(evl::NoConstFold);
         if (!no_fold && util::can_fold(res)) {
-            assert(res.value().is_consteval());
+            ulam_assert(res.value().is_consteval());
             res.value().with_rvalue([&](const ulam::RValue& rval) {
                 Stringifier stringifier{program()};
                 stringifier.options.unary_as_unsigned_lit = true;

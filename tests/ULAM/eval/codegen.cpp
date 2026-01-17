@@ -1,6 +1,6 @@
 #include "./codegen.hpp"
 #include "../out.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <sstream>
 
 Stringifier Codegen::make_strf() { return Stringifier{_program}; }
@@ -53,8 +53,8 @@ bool Codegen::has_next_prefix() const {
 }
 
 void Codegen::set_next_prefix(std::string prefix) {
-    assert(!prefix.empty());
-    assert(_next_prefix.empty());
+    ulam_assert(!prefix.empty());
+    ulam_assert(_next_prefix.empty());
     _next_prefix = prefix;
 }
 

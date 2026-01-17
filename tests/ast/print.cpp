@@ -1,7 +1,5 @@
 #include "./print.hpp"
-#include "libulam/ast/nodes/expr.hpp"
-#include "libulam/ast/nodes/stmts.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/module.hpp>
@@ -16,7 +14,7 @@ namespace test::ast {
 PrinterBase::PrinterBase(std::ostream& os, ulam::Ref<ulam::ast::Root> ast):
     _os{os}, _ast{ast} {}
 
-PrinterBase::~PrinterBase() { assert(_lvl == 0); }
+PrinterBase::~PrinterBase() { ulam_assert(_lvl == 0); }
 
 void PrinterBase::print() { visit(_ast); }
 
@@ -95,7 +93,7 @@ void PrinterBase::print_var_decl(ulam::Ref<ulam::ast::VarDecl> node) {
 }
 
 void PrinterBase::print_array_dims(ulam::Ref<ulam::ast::ExprList> exprs) {
-    assert(exprs->child_num() > 0);
+    ulam_assert(exprs->child_num() > 0);
     for (unsigned n = 0; n < exprs->child_num(); ++n) {
         _os << "[";
         auto expr = exprs->get(n);
@@ -153,14 +151,14 @@ const std::string_view PrinterBase::str(ulam::str_id_t str_id) {
 }
 
 ulam::Ref<ulam::ast::Root> PrinterBase::ast() {
-    assert(_ast);
+    ulam_assert(_ast);
     return _ast;
 }
 
 void PrinterBase::inc_lvl() { ++_lvl; }
 
 void PrinterBase::dec_lvl() {
-    assert(_lvl > 0);
+    ulam_assert(_lvl > 0);
     --_lvl;
 }
 
@@ -183,18 +181,18 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
     _os << class_kind_str(node->kind()) << " " << name(node);
     // params
     if (node->has_params()) {
-        assert(node->params()->child_num() > 0);
+        ulam_assert(node->params()->child_num() > 0);
         _os << " ";
         visit(node->params());
     }
     // parents
     if (node->has_parents()) {
-        assert(node->parents()->child_num() > 0);
+        ulam_assert(node->parents()->child_num() > 0);
         _os << " : ";
         traverse_list(node->parents(), " + ");
     }
     // body
-    assert(node->has_body());
+    ulam_assert(node->has_body());
     _os << " {";
     nl();
     visit(node->body());
@@ -205,7 +203,7 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
 void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) { print_var_decl(node); }
 
 void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
-    assert(node->has_ret_type() || node->is_constructor());
+    ulam_assert(node->has_ret_type() || node->is_constructor());
     // ret type, name
     if (node->is_constructor()) {
         _os << name(node);
@@ -214,7 +212,7 @@ void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
         _os << " " << name(node);
     }
     // params
-    assert(node->has_params());
+    ulam_assert(node->has_params());
     visit(node->params());
     // body
     if (node->has_body()) {
@@ -238,7 +236,7 @@ void Printer::visit(ulam::Ref<ulam::ast::TypeSpec> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::FullTypeName> node) {
-    assert(node->has_type_name());
+    ulam_assert(node->has_type_name());
     accept_me(node->type_name());
     if (node->has_array_dims())
         print_array_dims(node->array_dims());
@@ -254,7 +252,7 @@ void Printer::visit(ulam::Ref<ulam::ast::ParamList> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Param> node) {
-    assert(node->has_type_name());
+    ulam_assert(node->has_type_name());
     visit(node->type_name());
     _os << " ";
     print_var_decl(node);
@@ -307,13 +305,13 @@ void Printer::visit(ulam::Ref<ulam::ast::Block> node) {
 void Printer::visit(ulam::Ref<ulam::ast::EmptyStmt> node) { _os << ";"; }
 
 void Printer::visit(ulam::Ref<ulam::ast::Cond> node) {
-    assert(node->has_expr());
+    ulam_assert(node->has_expr());
     node->expr()->accept(*this);
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::If> node) {
-    assert(node->has_cond());
-    assert(node->has_if_branch());
+    ulam_assert(node->has_cond());
+    ulam_assert(node->has_if_branch());
     _os << "if (";
     accept_me(node->cond());
     _os << ")";
@@ -347,7 +345,7 @@ void Printer::visit(ulam::Ref<ulam::ast::For> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::While> node) {
-    assert(node->has_cond());
+    ulam_assert(node->has_cond());
 
     _os << "while (";
     accept_me(node->cond());
@@ -371,7 +369,7 @@ void Printer::visit(ulam::Ref<ulam::ast::Which> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::WhichCase> node) {
-    assert(node->has_branch());
+    ulam_assert(node->has_branch());
 
     accept_me(node->conds());
     accept_me(node->branch());
@@ -406,7 +404,7 @@ void Printer::visit(ulam::Ref<ulam::ast::Continue> node) { _os << "continue;"; }
 void Printer::visit(ulam::Ref<ulam::ast::Break> node) { _os << "break;"; }
 
 void Printer::visit(ulam::Ref<ulam::ast::TypeOpExpr> node) {
-    assert(node->has_type_name() != node->has_expr());
+    ulam_assert(node->has_type_name() != node->has_expr());
     if (node->has_type_name()) {
         accept_me(node->type_name());
     } else if (node->has_expr()) {
@@ -416,15 +414,15 @@ void Printer::visit(ulam::Ref<ulam::ast::TypeOpExpr> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ParenExpr> node) {
-    assert(node->has_inner());
+    ulam_assert(node->has_inner());
     _os << "(";
     accept_me(node->inner());
     _os << ")";
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Cast> node) {
-    assert(node->has_full_type_name());
-    assert(node->expr());
+    ulam_assert(node->has_full_type_name());
+    ulam_assert(node->expr());
     paren_l();
     _os << "(";
     accept_me(node->full_type_name());
@@ -434,9 +432,9 @@ void Printer::visit(ulam::Ref<ulam::ast::Cast> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::Ternary> node) {
-    assert(node->has_cond());
-    assert(node->has_if_true());
-    assert(node->has_if_false());
+    ulam_assert(node->has_cond());
+    ulam_assert(node->has_if_true());
+    ulam_assert(node->has_if_false());
     paren_l();
     accept_me(node->cond());
     _os << " ? ";
@@ -447,8 +445,8 @@ void Printer::visit(ulam::Ref<ulam::ast::Ternary> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::BinaryOp> node) {
-    assert(node->has_lhs());
-    assert(node->has_rhs());
+    ulam_assert(node->has_lhs());
+    ulam_assert(node->has_rhs());
     paren_l();
     accept_me(node->lhs());
     _os << " " << ulam::ops::str(node->op()) << " ";
@@ -457,12 +455,12 @@ void Printer::visit(ulam::Ref<ulam::ast::BinaryOp> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::UnaryOp> node) {
-    assert(node->op() != ulam::Op::None);
-    assert(node->has_arg());
+    ulam_assert(node->op() != ulam::Op::None);
+    ulam_assert(node->has_arg());
     paren_l();
     if (node->op() == ulam::Op::Is) {
         // `ident is Type`
-        assert(node->has_type_name());
+        ulam_assert(node->has_type_name());
         accept_me(node->arg());
         _os << " " << ulam::ops::str(node->op()) << " ";
         accept_me(node->type_name());
@@ -477,8 +475,8 @@ void Printer::visit(ulam::Ref<ulam::ast::UnaryOp> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {
-    assert(node->has_array());
-    assert(node->has_index());
+    ulam_assert(node->has_array());
+    ulam_assert(node->has_index());
     paren_l();
     accept_me(node->array());
     _os << "[";
@@ -488,7 +486,7 @@ void Printer::visit(ulam::Ref<ulam::ast::ArrayAccess> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
-    assert(node->has_obj());
+    ulam_assert(node->has_obj());
     paren_l();
     if (node->has_base_type())
         accept_me(node->base_type());
@@ -497,15 +495,15 @@ void Printer::visit(ulam::Ref<ulam::ast::MemberAccess> node) {
     if (node->is_op()) {
         _os << "operator" << ulam::ops::str(node->op());
     } else {
-        assert(node->has_ident());
+        ulam_assert(node->has_ident());
         accept_me(node->ident());
     }
     paren_r();
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::BaseTypeSelect> node) {
-    assert(node);
-    assert(node->type_spec_num() > 0);
+    ulam_assert(node);
+    ulam_assert(node->type_spec_num() > 0);
     for (unsigned n = 0; n < node->type_spec_num(); ++n) {
         _os << ".";
         accept_me(node->type_spec(n));
@@ -519,8 +517,8 @@ void Printer::visit(ulam::Ref<ulam::ast::BaseTypeSelect> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ClassConstAccess> node) {
-    assert(node->has_type_name());
-    assert(node->has_ident());
+    ulam_assert(node->has_type_name());
+    ulam_assert(node->has_ident());
     paren_l();
     accept_me(node->type_name());
     _os << ".";
@@ -534,7 +532,7 @@ bool Printer::do_visit(ulam::Ref<ulam::ast::ModuleDef> node) {
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
-    assert(node->has_expr());
+    ulam_assert(node->has_expr());
     accept_me(node->expr());
     _os << ";";
 }
@@ -560,7 +558,7 @@ void Printer::traverse(ulam::Ref<ulam::ast::VarDefList> node) {
         _os << "constant ";
     accept_me(node->type_name());
     _os << " ";
-    assert(node->def_num() > 0);
+    ulam_assert(node->def_num() > 0);
     for (unsigned n = 0; n < node->def_num(); ++n) {
         if (n > 0)
             _os << ", ";

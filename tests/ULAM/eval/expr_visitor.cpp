@@ -71,7 +71,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
         return std::move(if_true_res);
     if (!if_false_res)
         return std::move(if_false_res);
-    assert(if_true_res.type()->is_same(if_false_res.type()));
+    ulam_assert(if_true_res.type()->is_same(if_false_res.type()));
 
     auto cond_data = exp::data(cond_res);
     auto if_true_data = exp::data(if_true_res);
@@ -101,7 +101,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     if (has_flag(evl::NoCodegen))
         return res;
 
-    assert(res.value().is_consteval());
+    ulam_assert(res.value().is_consteval());
     res.value().with_rvalue([&](const auto& rval) {
         auto strf = gen().make_strf();
         strf.options.unary_as_unsigned_lit = true;
@@ -197,7 +197,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
             break;
 
         if (l_type->is_prim() && ulam::has_bitsize(l_type->bi_type_id())) {
-            assert(r_type->is(l_type->bi_type_id()));
+            ulam_assert(r_type->is(l_type->bi_type_id()));
             if (l_type->bitsize() < r_type->bitsize()) {
                 exp::add_cast(left);
             } else {
@@ -217,7 +217,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
             auto l_size = l_type->bitsize();
             auto r_size = r_type->bitsize();
             auto size = std::max(l_size, r_size);
-            assert(size <= 64);
+            ulam_assert(size <= 64);
             size = (size > 32) ? 64 : 32;
             if (l_size != size)
                 exp::add_cast(left);
@@ -619,8 +619,8 @@ ExprRes EvalExprVisitor::class_const_access(
             exp::set_data(res, str(var->name_id()));
             res.set_flag(exp::NoConstFold);
         } else {
-            assert(!res.value().empty());
-            assert(res.value().is_consteval());
+            ulam_assert(!res.value().empty());
+            ulam_assert(res.value().is_consteval());
             res.value().with_rvalue([&](const auto& rval) {
                 auto strf = gen().make_strf();
                 exp::set_data(res, strf.stringify(type, rval));
@@ -635,7 +635,7 @@ ExprRes EvalExprVisitor::bind(
     ulam::Ref<ulam::FunSet> fset,
     ulam::sema::ExprRes&& obj,
     ulam::Ref<ulam::Class> base) {
-    assert(obj);
+    ulam_assert(obj);
     std::string data;
     bool is_self = false;
     if (!has_flag(evl::NoCodegen)) {
@@ -667,9 +667,9 @@ ExprRes EvalExprVisitor::class_name(
                    ? class_name_mangled(node, cls)
                    : Base::class_name(node, cls);
     if (!has_flag(evl::NoCodegen)) {
-        assert(res.type()->is(ulam::StringId));
-        assert(res.value().is_rvalue());
-        assert(res.value().rvalue().is<ulam::String>());
+        ulam_assert(res.type()->is(ulam::StringId));
+        ulam_assert(res.value().is_rvalue());
+        ulam_assert(res.value().rvalue().is<ulam::String>());
         auto strf = gen().make_strf();
         auto data = strf.stringify(res.type(), res.value().rvalue());
         exp::set_data(res, data);

@@ -1,7 +1,7 @@
 #include "./native.hpp"
-#include <cassert>
 #include <functional>
 #include <iostream>
+#include <libulam/assert.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/expr_error.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
@@ -29,7 +29,7 @@ EvalNative::EvalNative(EvalEnv& env):
     do {                                                                       \
         namespace ph = std::placeholders;                                      \
         NamePair key{class_name, fun_name};                                    \
-        assert(_map.count(key) == 0);                                          \
+        ulam_assert(_map.count(key) == 0);                                     \
         _map.emplace(                                                          \
             key, std::bind(                                                    \
                      std::mem_fn(&EvalNative::method), this, ph::_1, ph::_2,   \
@@ -75,45 +75,45 @@ ExprRes EvalNative::call(
 
 ExprRes EvalNative::eval_system_print_int(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     auto arg = args.pop_front();
     auto rval = arg.move_value().move_rvalue();
-    assert(rval.is<ulam::Integer>());
+    ulam_assert(rval.is<ulam::Integer>());
     out() << rval.get<ulam::Integer>() << "\n";
     return void_res();
 }
 
 ExprRes EvalNative::eval_system_print_unsigned(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     auto arg = args.pop_front();
     auto rval = arg.move_value().move_rvalue();
-    assert(rval.is<ulam::Unsigned>());
+    ulam_assert(rval.is<ulam::Unsigned>());
     out() << rval.get<ulam::Unsigned>() << "\n";
     return void_res();
 }
 
 ExprRes EvalNative::eval_system_print_unsigned_hex(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     auto arg = args.pop_front();
     auto rval = arg.move_value().move_rvalue();
-    assert(rval.is<ulam::Unsigned>());
+    ulam_assert(rval.is<ulam::Unsigned>());
     out() << std::hex << rval.get<ulam::Unsigned>() << "\n";
     return void_res();
 }
 
 ExprRes EvalNative::eval_system_assert(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     if (!env().is_true(args.pop_front()))
-        throw ulam::sema::EvalExceptAssert("assert failed");
+        throw ulam::sema::EvalExceptAssert("ulam_assert failed");
     return void_res();
 }
 
 ExprRes EvalNative::eval_system_print_string(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     auto arg = args.pop_front();
     auto val = arg.move_value();
     auto str_type = builtins().string_type();
@@ -125,7 +125,7 @@ ExprRes EvalNative::eval_system_print_string(
 
 ExprRes EvalNative::eval_event_window_aref(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     auto idx_arg = args.pop_front();
 
     auto& ctx = test_ctx();
@@ -150,7 +150,7 @@ ExprRes EvalNative::eval_math_max(
             return arg;
 
         auto rval = arg.move_value().move_rvalue();
-        assert(rval.is<ulam::Integer>());
+        ulam_assert(rval.is<ulam::Integer>());
         auto int_val = rval.get<ulam::Integer>();
         if (int_val > max)
             max = std::min(int_val, Max);
@@ -167,9 +167,9 @@ ExprRes EvalNative::eval_math_max(
 
 ExprRes EvalNative::eval_bar_aref(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
-    assert(args.size() == 1);
+    ulam_assert(args.size() == 1);
     auto idx_arg = args.pop_front();
-    assert(idx_arg);
+    ulam_assert(idx_arg);
     auto type = builtins().atom_type()->ref_type();
     return {type, ulam::Value{_bar_atom.atom_of()}};
 }
@@ -179,9 +179,9 @@ ExprRes EvalNative::eval_bar_aref(
 ulam::LValue
 EvalNative::obj_prop(ulam::LValue obj, const std::string_view prop_name) {
     auto cls = obj.dyn_cls();
-    assert(cls);
+    ulam_assert(cls);
     auto sym = cls->get(prop_name);
-    assert(sym && sym->is<ulam::Prop>());
+    ulam_assert(sym && sym->is<ulam::Prop>());
     return obj.prop(sym->get<ulam::Prop>());
 }
 
@@ -191,9 +191,9 @@ EvalNative::array_item(ulam::LValue array, ulam::RValue&& idx_rval) {
 }
 
 ulam::array_idx_t EvalNative::array_idx(const ulam::RValue& idx_rval) {
-    assert(idx_rval.is<ulam::Integer>());
+    ulam_assert(idx_rval.is<ulam::Integer>());
     auto idx_int = idx_rval.get<ulam::Integer>();
-    assert(idx_int >= 0);
+    ulam_assert(idx_int >= 0);
     return static_cast<ulam::array_idx_t>(idx_int);
 }
 

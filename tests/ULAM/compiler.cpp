@@ -21,7 +21,7 @@ void Compiler::parse_module_file(const Path& path) {
     auto module = _parser.parse_module_file(path);
     std::cerr << "parsing " << path.filename() << "\n";
     if (module) {
-        assert(!_ast->has_module(module->name_id()));
+        ulam_assert(!_ast->has_module(module->name_id()));
         _ast->add_module(std::move(module));
     }
 }
@@ -51,7 +51,7 @@ ulam::Ref<ulam::Program> Compiler::analyze() {
     // }
 
     auto program = ulam::sema::init(_ctx, ulam::ref(_ast));
-    assert(program);
+    ulam_assert(program);
     ulam::sema::resolve(_ctx, program);
     return program;
 }
@@ -68,7 +68,7 @@ void Compiler::compile(std::ostream& os) {
                 std::string{"no main class in module "} +
                 std::string{module->name()});
         }
-        assert(sym->is<ulam::Class>() || sym->is<ulam::ClassTpl>());
+        ulam_assert(sym->is<ulam::Class>() || sym->is<ulam::ClassTpl>());
 
         for (auto cls : module->classes())
             compile_class(os, eval, cls);
@@ -88,9 +88,9 @@ void Compiler::compile_class(
     if (has_test)
         _statuses.push_back(eval.status());
 
-    assert(obj);
-    assert(obj.type()->is_class());
-    assert(obj.value().is_rvalue());
+    ulam_assert(obj);
+    ulam_assert(obj.type()->is_class());
+    ulam_assert(obj.value().is_rvalue());
     auto test_postfix =
         has_test ? "Int test() {  " + eval.code() + " }" : NoMain;
     write_obj(os, std::move(obj), test_postfix, has_test);
@@ -103,7 +103,7 @@ void Compiler::write_obj(
     const std::string& test_postfix,
     bool in_main) {
 
-    assert(obj.type()->is_class());
+    ulam_assert(obj.type()->is_class());
     auto cls = obj.type()->as_class();
     auto rval = obj.move_value().move_rvalue();
 
@@ -222,7 +222,7 @@ void Compiler::write_class_consts(
 
 void Compiler::write_class_const(
     std::ostream& os, Stringifier& stringifier, ulam::Ref<ulam::Var> var) {
-    assert(_ast->program());
+    ulam_assert(_ast->program());
     auto& str_pool = program()->str_pool();
     os << out::var_str(str_pool, stringifier, var) << "; ";
 }
@@ -311,7 +311,7 @@ void Compiler::write_obj_prop(
                             false, false, outer);
 
                     } else {
-                        assert(!item_type->is_array());
+                        ulam_assert(!item_type->is_array());
                         if (idx > 0)
                             os << ", ";
                         os << stringifier.stringify(item_type, item_rval);
@@ -341,6 +341,6 @@ void Compiler::write_obj_prop(
 }
 
 ulam::Ref<ulam::Program> Compiler::program() {
-    assert(_ast->program());
+    ulam_assert(_ast->program());
     return _ast->program();
 }

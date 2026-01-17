@@ -7,7 +7,7 @@
 #include "./init.hpp"
 #include "./visitor.hpp"
 #include "./which.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 
 using CondRes = EvalEnv::CondRes;
 using ExprRes = EvalEnv::ExprRes;
@@ -19,7 +19,7 @@ EvalEnv::EvalTestContextRaii::EvalTestContextRaii(): _env{} {}
 
 EvalEnv::EvalTestContextRaii::~EvalTestContextRaii() {
     if (_env) {
-        assert(!_env->_test_ctx.empty());
+        ulam_assert(!_env->_test_ctx.empty());
         _env->_test_ctx = {};
     }
 }
@@ -37,7 +37,7 @@ EvalEnv::EvalTestContextRaii::operator=(EvalTestContextRaii&& other) {
 EvalEnv::EvalTestContextRaii::EvalTestContextRaii(
     EvalEnv& env, ulam::LValue active_atom):
     _env{&env} {
-    assert(env._test_ctx.empty());
+    ulam_assert(env._test_ctx.empty());
     env._test_ctx = {env.builtins(), active_atom};
 }
 
@@ -144,7 +144,7 @@ ExprRes EvalEnv::funcall(
 }
 
 EvalTestContext& EvalEnv::test_ctx() {
-    assert(!_test_ctx.empty());
+    ulam_assert(!_test_ctx.empty());
     return _test_ctx;
 }
 

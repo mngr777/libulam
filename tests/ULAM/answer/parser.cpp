@@ -1,6 +1,6 @@
 #include "./parser.hpp"
 #include "../answer.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <map>
 
 namespace {
@@ -152,7 +152,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
     unsigned added = 0;
     auto add_obj_item = [&]() {
-        assert(val_type == ObjValue);
+        ulam_assert(val_type == ObjValue);
         // NOTE: empty strings are printed for empty string values, we still
         // want to separate them, see t3945
         if (is_array && added > 0)
@@ -175,7 +175,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
     };
 
     auto add_member = [&](std::string&& name, std::string&& text) {
-        assert(!name.empty() && !text.empty());
+        ulam_assert(!name.empty() && !text.empty());
         if (members.count(name) > 0) {
             if (is_array) {
                 // workaround for t3143, t3145:
@@ -225,7 +225,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
         } else if (at(TypeDef)) {
             // typedef
             if (val_type == ScalarValue) {
-                assert(is_array);
+                ulam_assert(is_array);
                 error("unexpected typedef in array value");
             }
             val_type = ObjValue;
@@ -238,7 +238,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
              !at("HexU64") && !at("UNINITIALIZED_STRING"))) {
             // constant/property
             if (val_type == ScalarValue) {
-                assert(is_array);
+                ulam_assert(is_array);
                 error("unexpected data member in array value");
             }
             val_type = ObjValue;
@@ -247,8 +247,8 @@ std::string AnswerParser::read_value_str(bool is_array) {
 
         } else if (at(".")) {
             // object map
-            assert(val_type == NoValueType);
-            assert(open_brace_pos != std::string::npos);
+            ulam_assert(val_type == NoValueType);
+            ulam_assert(open_brace_pos != std::string::npos);
             val_type = ObjMapValue;
             _pos = open_brace_pos;
             str = read_braces();
@@ -266,7 +266,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
             // NOTE: array may consist of empty objects in `Type
             // name[](),(),...()` format, t3942
             if (val_type == ObjValue || (is_array && val_type != ScalarValue)) {
-                assert(val_type != ObjMapValue);
+                ulam_assert(val_type != ObjMapValue);
                 val_type = ObjValue;
                 add_obj_item();
             }
@@ -301,7 +301,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
             val_type = ScalarValue;
             if (!str.empty()) {
                 // value string is already not empty, must be array item
-                // assert(is_array)
+                // ulam_assert(is_array)
                 is_array = true; // t41277, class as Bits chunk array
                 str += ", ";
             }
@@ -309,7 +309,7 @@ std::string AnswerParser::read_value_str(bool is_array) {
         }
         skip_spaces();
     }
-    assert(at(';'));
+    ulam_assert(at(';'));
 
     if (in_parens)
         open = '(', close = ')';

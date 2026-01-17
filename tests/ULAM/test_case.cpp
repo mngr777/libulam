@@ -1,7 +1,7 @@
 #include "./test_case.hpp"
 #include "./compiler.hpp"
 #include "./test_case/parser.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <fstream>
 #include <ios>
 #include <iostream> // TEST
@@ -26,7 +26,7 @@ std::map<std::string, Answer> parse_answers(const std::string_view text) {
         if (answer.is_tpl())
             continue; // TODO: compare template postfix
         auto name = answer.class_name();
-        assert(answers.count(name) == 0);
+        ulam_assert(answers.count(name) == 0);
         answers.emplace(std::move(name), std::move(answer));
     }
     return answers;
@@ -65,7 +65,7 @@ TestCase::TestCase(const Path& stdlib_dir, const Path& path, flags_t flags):
 }
 
 bool TestCase::run() {
-    assert(_srcs.size() > 0);
+    ulam_assert(_srcs.size() > 0);
     std::stringstream out;
     Compiler compiler;
 

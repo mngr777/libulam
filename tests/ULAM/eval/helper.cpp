@@ -1,13 +1,13 @@
 #include "./helper.hpp"
 #include "./flags.hpp"
 #include "./native.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 
 bool EvalHelper::in_main() const { return _env.stack_size() == 1; }
 
 bool EvalHelper::codegen_enabled() const {
     bool is_enabled = in_main() && !_env.has_flag(evl::NoCodegen);
-    assert(!is_enabled || _env.has_flag(ulam::sema::evl::NoExec));
+    ulam_assert(!is_enabled || _env.has_flag(ulam::sema::evl::NoExec));
     return is_enabled;
 }
 

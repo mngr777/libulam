@@ -53,8 +53,8 @@ class_param_str(Stringifier& stringifier, ulam::Ref<ulam::Class> cls) {
     for (auto param : params) {
         if (!str.empty())
             str += ",";
-        assert(param->has_value());
-        assert(param->has_type());
+        ulam_assert(param->has_value());
+        ulam_assert(param->has_type());
         param->value().with_rvalue([&](const auto& rval) {
             str += stringifier.stringify(param->type(), rval);
         });

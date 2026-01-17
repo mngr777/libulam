@@ -1,5 +1,5 @@
 #include "./test_context.hpp"
-#include <cassert>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <utility>
@@ -7,8 +7,8 @@
 namespace {
 
 constexpr ulam::array_idx_t site_to_idx(ulam::array_idx_t site) {
-    assert(site > 0);
-    assert(site <= EvalTestContext::NeighborNum);
+    ulam_assert(site > 0);
+    ulam_assert(site <= EvalTestContext::NeighborNum);
     return site - 1;
 }
 
@@ -36,17 +36,17 @@ EvalTestContext& EvalTestContext::operator=(EvalTestContext&& other) {
 bool EvalTestContext::empty() const { return !_builtins; }
 
 ulam::LValue EvalTestContext::active_atom() {
-    assert(!empty());
+    ulam_assert(!empty());
     return _active_atom;
 }
 
 ulam::LValue EvalTestContext::neighbor(ulam::array_idx_t site) const {
-    assert(!empty());
+    ulam_assert(!empty());
     return _neighbors.array_access(site_to_idx(site), false);
 }
 
 void EvalTestContext::set_neighbor(
     ulam::array_idx_t site, ulam::RValue&& rvalue) {
-    assert(!empty());
+    ulam_assert(!empty());
     neighbor(site_to_idx(site)).assign(std::move(rvalue));
 }
