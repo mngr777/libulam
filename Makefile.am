@@ -1,25 +1,25 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -std=c++17 -I$(srcdir)/include -iquote $(srcdir)/include -iquote $(srcdir) -Wall -Wpedantic -Werror -O2
-CXXFLAGS = $(AM_CXXFLAGS) # temp hack to make libtool stop adding flags
+AM_CXXFLAGS = -std=c++17 -I$(srcdir) -iquote $(srcdir) -Wall -Wpedantic -Werror -O2
+CXXFLAGS = $(AM_CXXFLAGS) # temp(?) hack to make libtool stop adding flags
 
 AST_HEADER_FILES = \
-	include/libulam/ast.hpp \
-	include/libulam/ast/context.hpp \
-	include/libulam/ast/expr_visitor.hpp \
-	include/libulam/ast/node.hpp \
-	include/libulam/ast/nodes/access.hpp \
-	include/libulam/ast/nodes/args.hpp \
-	include/libulam/ast/nodes/expr.hpp \
-	include/libulam/ast/nodes/exprs.hpp \
-	include/libulam/ast/nodes/init.hpp \
-	include/libulam/ast/nodes/params.hpp \
-	include/libulam/ast/nodes/root.hpp \
-	include/libulam/ast/nodes/stmt.hpp \
-	include/libulam/ast/nodes/stmts.hpp \
-	include/libulam/ast/nodes/type.hpp \
-	include/libulam/ast/nodes/var_decl.hpp \
-	include/libulam/ast/nodes.inc.hpp
+	libulam/ast.hpp \
+	libulam/ast/context.hpp \
+	libulam/ast/expr_visitor.hpp \
+	libulam/ast/node.hpp \
+	libulam/ast/nodes/access.hpp \
+	libulam/ast/nodes/args.hpp \
+	libulam/ast/nodes/expr.hpp \
+	libulam/ast/nodes/exprs.hpp \
+	libulam/ast/nodes/init.hpp \
+	libulam/ast/nodes/params.hpp \
+	libulam/ast/nodes/root.hpp \
+	libulam/ast/nodes/stmt.hpp \
+	libulam/ast/nodes/stmts.hpp \
+	libulam/ast/nodes/type.hpp \
+	libulam/ast/nodes/var_decl.hpp \
+	libulam/ast/nodes.inc.hpp
 
 AST_SOURCE_FILES = \
 	src/ast/expr_visitor.cpp \
@@ -29,63 +29,63 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
-	include/libulam/semantic/decl.hpp \
-	include/libulam/semantic/export.hpp \
-	include/libulam/semantic/mangler.hpp \
-	include/libulam/semantic/module.hpp \
-	include/libulam/semantic/number.hpp \
-	include/libulam/semantic/ops.hpp \
-	include/libulam/semantic/ops.inc.hpp \
-	include/libulam/semantic/program.hpp \
-	include/libulam/semantic/scope.hpp \
-	include/libulam/semantic/scope/as_cond.hpp \
-	include/libulam/semantic/scope/class.hpp \
-	include/libulam/semantic/scope/fun.hpp \
-	include/libulam/semantic/scope/iter.hpp \
-	include/libulam/semantic/scope/module.hpp \
-	include/libulam/semantic/scope/options.hpp \
-	include/libulam/semantic/scope/program.hpp \
-	include/libulam/semantic/scope/stack.hpp \
-	include/libulam/semantic/scope/version.hpp \
-	include/libulam/semantic/scope/view.hpp \
-	include/libulam/semantic/symbol.hpp \
-	include/libulam/semantic/type/builtin/atom.hpp \
-	include/libulam/semantic/type/builtin/bits.hpp \
-	include/libulam/semantic/type/builtin/bool.hpp \
-	include/libulam/semantic/type/builtin/fun.hpp \
-	include/libulam/semantic/type/builtin/int.hpp \
-	include/libulam/semantic/type/builtin/string.hpp \
-	include/libulam/semantic/type/builtin/unary.hpp \
-	include/libulam/semantic/type/builtin/unsigned.hpp \
-	include/libulam/semantic/type/builtin/void.hpp \
-	include/libulam/semantic/type/builtin_type_id.hpp \
-	include/libulam/semantic/type/builtins.hpp \
-	include/libulam/semantic/type/class.hpp \
-	include/libulam/semantic/type/class_tpl.hpp \
-	include/libulam/semantic/type/class/ancestry.hpp \
-	include/libulam/semantic/type/class/base.hpp \
-	include/libulam/semantic/type/class/options.hpp \
-	include/libulam/semantic/type/class/prop.hpp \
-	include/libulam/semantic/type/class/registry.hpp \
-	include/libulam/semantic/type/class_kind.hpp \
-	include/libulam/semantic/type/class_name_kind.hpp \
-	include/libulam/semantic/type/conv.hpp \
-	include/libulam/semantic/type/element.hpp \
-	include/libulam/semantic/type/ops.hpp \
-	include/libulam/semantic/type/prim.hpp \
-	include/libulam/semantic/type.hpp \
-	include/libulam/semantic/type_ops.hpp \
-	include/libulam/semantic/type_ops.inc.hpp \
-	include/libulam/semantic/type_tpl.hpp \
-	include/libulam/semantic/utils/class_name.hpp \
-	include/libulam/semantic/utils/strf.hpp \
-	include/libulam/semantic/value.hpp \
-	include/libulam/semantic/value/bits.hpp \
-	include/libulam/semantic/value/bound_fun_set.hpp \
-	include/libulam/semantic/value/data.hpp \
-	include/libulam/semantic/value/types.hpp \
-	include/libulam/semantic/var.hpp \
-	include/libulam/semantic/var/base.hpp
+	libulam/semantic/decl.hpp \
+	libulam/semantic/export.hpp \
+	libulam/semantic/mangler.hpp \
+	libulam/semantic/module.hpp \
+	libulam/semantic/number.hpp \
+	libulam/semantic/ops.hpp \
+	libulam/semantic/ops.inc.hpp \
+	libulam/semantic/program.hpp \
+	libulam/semantic/scope.hpp \
+	libulam/semantic/scope/as_cond.hpp \
+	libulam/semantic/scope/class.hpp \
+	libulam/semantic/scope/fun.hpp \
+	libulam/semantic/scope/iter.hpp \
+	libulam/semantic/scope/module.hpp \
+	libulam/semantic/scope/options.hpp \
+	libulam/semantic/scope/program.hpp \
+	libulam/semantic/scope/stack.hpp \
+	libulam/semantic/scope/version.hpp \
+	libulam/semantic/scope/view.hpp \
+	libulam/semantic/symbol.hpp \
+	libulam/semantic/type/builtin/atom.hpp \
+	libulam/semantic/type/builtin/bits.hpp \
+	libulam/semantic/type/builtin/bool.hpp \
+	libulam/semantic/type/builtin/fun.hpp \
+	libulam/semantic/type/builtin/int.hpp \
+	libulam/semantic/type/builtin/string.hpp \
+	libulam/semantic/type/builtin/unary.hpp \
+	libulam/semantic/type/builtin/unsigned.hpp \
+	libulam/semantic/type/builtin/void.hpp \
+	libulam/semantic/type/builtin_type_id.hpp \
+	libulam/semantic/type/builtins.hpp \
+	libulam/semantic/type/class.hpp \
+	libulam/semantic/type/class_tpl.hpp \
+	libulam/semantic/type/class/ancestry.hpp \
+	libulam/semantic/type/class/base.hpp \
+	libulam/semantic/type/class/options.hpp \
+	libulam/semantic/type/class/prop.hpp \
+	libulam/semantic/type/class/registry.hpp \
+	libulam/semantic/type/class_kind.hpp \
+	libulam/semantic/type/class_name_kind.hpp \
+	libulam/semantic/type/conv.hpp \
+	libulam/semantic/type/element.hpp \
+	libulam/semantic/type/ops.hpp \
+	libulam/semantic/type/prim.hpp \
+	libulam/semantic/type.hpp \
+	libulam/semantic/type_ops.hpp \
+	libulam/semantic/type_ops.inc.hpp \
+	libulam/semantic/type_tpl.hpp \
+	libulam/semantic/utils/class_name.hpp \
+	libulam/semantic/utils/strf.hpp \
+	libulam/semantic/value.hpp \
+	libulam/semantic/value/bits.hpp \
+	libulam/semantic/value/bound_fun_set.hpp \
+	libulam/semantic/value/data.hpp \
+	libulam/semantic/value/types.hpp \
+	libulam/semantic/var.hpp \
+	libulam/semantic/var/base.hpp
 
 SEMANTIC_SOURCE_FILES = \
 	src/semantic/decl.cpp \
@@ -135,28 +135,28 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/var/base.cpp
 
 SEMA_HEADER_FILES = \
-	include/libulam/sema.hpp \
-	include/libulam/sema/class_resolver.hpp \
-	include/libulam/sema/debug/out.hpp \
-	include/libulam/sema/eval.hpp \
-	include/libulam/sema/eval/cast.hpp \
-	include/libulam/sema/eval/cond.hpp \
-	include/libulam/sema/eval/cond_res.hpp \
-	include/libulam/sema/eval/env.hpp \
-	include/libulam/sema/eval/except.hpp \
-	include/libulam/sema/eval/expr_visitor.hpp \
-	include/libulam/sema/eval/flags.hpp \
-	include/libulam/sema/eval/funcall.hpp \
-	include/libulam/sema/eval/helper.hpp \
-	include/libulam/sema/eval/init.hpp \
-	include/libulam/sema/eval/stack.hpp \
-	include/libulam/sema/eval/visitor.hpp \
-	include/libulam/sema/eval/which.hpp \
-	include/libulam/sema/expr_error.hpp \
-	include/libulam/sema/expr_res.hpp \
-	include/libulam/sema/init.hpp \
-	include/libulam/sema/resolver.hpp \
-	include/libulam/sema/visitor.hpp
+	libulam/sema.hpp \
+	libulam/sema/class_resolver.hpp \
+	libulam/sema/debug/out.hpp \
+	libulam/sema/eval.hpp \
+	libulam/sema/eval/cast.hpp \
+	libulam/sema/eval/cond.hpp \
+	libulam/sema/eval/cond_res.hpp \
+	libulam/sema/eval/env.hpp \
+	libulam/sema/eval/except.hpp \
+	libulam/sema/eval/expr_visitor.hpp \
+	libulam/sema/eval/flags.hpp \
+	libulam/sema/eval/funcall.hpp \
+	libulam/sema/eval/helper.hpp \
+	libulam/sema/eval/init.hpp \
+	libulam/sema/eval/stack.hpp \
+	libulam/sema/eval/visitor.hpp \
+	libulam/sema/eval/which.hpp \
+	libulam/sema/expr_error.hpp \
+	libulam/sema/expr_res.hpp \
+	libulam/sema/init.hpp \
+	libulam/sema/resolver.hpp \
+	libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
@@ -184,25 +184,25 @@ HEADER_FILES = \
 	$(AST_HEADER_FILES) \
 	$(SEMANTIC_HEADER_FILES) \
 	$(SEMA_HEADER_FILES) \
-	include/libulam/assert.hpp \
-	include/libulam/context.hpp \
-	include/libulam/detail/variant.hpp \
-	include/libulam/diag.hpp \
-	include/libulam/lex.hpp \
-	include/libulam/memory/buf.hpp \
-	include/libulam/memory/notepad.hpp \
-	include/libulam/options.hpp \
-	include/libulam/parser.hpp \
-	include/libulam/parser/options.hpp \
-	include/libulam/preproc.hpp \
-	include/libulam/src.hpp \
-	include/libulam/src_loc.hpp \
-	include/libulam/src_man.hpp \
-	include/libulam/str_pool.hpp \
-	include/libulam/token.hpp \
-	include/libulam/types.hpp \
-	include/libulam/utils/integer.hpp \
-	include/libulam/utils/leximited.hpp
+	libulam/assert.hpp \
+	libulam/context.hpp \
+	libulam/detail/variant.hpp \
+	libulam/diag.hpp \
+	libulam/lex.hpp \
+	libulam/memory/buf.hpp \
+	libulam/memory/notepad.hpp \
+	libulam/options.hpp \
+	libulam/parser.hpp \
+	libulam/parser/options.hpp \
+	libulam/preproc.hpp \
+	libulam/src.hpp \
+	libulam/src_loc.hpp \
+	libulam/src_man.hpp \
+	libulam/str_pool.hpp \
+	libulam/token.hpp \
+	libulam/types.hpp \
+	libulam/utils/integer.hpp \
+	libulam/utils/leximited.hpp
 
 SOURCE_FILES = \
 	$(HEADER_FILES) \
