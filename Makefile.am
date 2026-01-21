@@ -13,13 +13,17 @@ AST_HEADER_FILES = \
 	libulam/ast/nodes/expr.hpp \
 	libulam/ast/nodes/exprs.hpp \
 	libulam/ast/nodes/init.hpp \
+	libulam/ast/nodes/module.hpp \
 	libulam/ast/nodes/params.hpp \
 	libulam/ast/nodes/root.hpp \
 	libulam/ast/nodes/stmt.hpp \
 	libulam/ast/nodes/stmts.hpp \
 	libulam/ast/nodes/type.hpp \
 	libulam/ast/nodes/var_decl.hpp \
-	libulam/ast/nodes.inc.hpp
+	libulam/ast/nodes.hpp \
+	libulam/ast/nodes.inc.hpp \
+	libulam/ast/str.hpp \
+	libulam/ast/visitor.hpp
 
 AST_SOURCE_FILES = \
 	src/ast/expr_visitor.cpp \
@@ -31,6 +35,7 @@ AST_SOURCE_FILES = \
 SEMANTIC_HEADER_FILES = \
 	libulam/semantic/decl.hpp \
 	libulam/semantic/export.hpp \
+	libulam/semantic/fun.hpp \
 	libulam/semantic/mangler.hpp \
 	libulam/semantic/module.hpp \
 	libulam/semantic/number.hpp \
@@ -40,6 +45,7 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/scope.hpp \
 	libulam/semantic/scope/as_cond.hpp \
 	libulam/semantic/scope/class.hpp \
+	libulam/semantic/scope/flags.hpp \
 	libulam/semantic/scope/fun.hpp \
 	libulam/semantic/scope/iter.hpp \
 	libulam/semantic/scope/module.hpp \
@@ -74,6 +80,7 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/type/ops.hpp \
 	libulam/semantic/type/prim.hpp \
 	libulam/semantic/type.hpp \
+	libulam/semantic/typed_value.hpp \
 	libulam/semantic/type_ops.hpp \
 	libulam/semantic/type_ops.inc.hpp \
 	libulam/semantic/type_tpl.hpp \
@@ -149,6 +156,7 @@ SEMA_HEADER_FILES = \
 	libulam/sema/eval/funcall.hpp \
 	libulam/sema/eval/helper.hpp \
 	libulam/sema/eval/init.hpp \
+	libulam/sema/eval/options.hpp \
 	libulam/sema/eval/stack.hpp \
 	libulam/sema/eval/visitor.hpp \
 	libulam/sema/eval/which.hpp \
@@ -191,6 +199,7 @@ HEADER_FILES = \
 	libulam/lex.hpp \
 	libulam/memory/buf.hpp \
 	libulam/memory/notepad.hpp \
+	libulam/memory/ptr.hpp \
 	libulam/options.hpp \
 	libulam/parser.hpp \
 	libulam/parser/options.hpp \
@@ -200,6 +209,7 @@ HEADER_FILES = \
 	libulam/src_man.hpp \
 	libulam/str_pool.hpp \
 	libulam/token.hpp \
+	libulam/token.inc.hpp \
 	libulam/types.hpp \
 	libulam/utils/integer.hpp \
 	libulam/utils/leximited.hpp
