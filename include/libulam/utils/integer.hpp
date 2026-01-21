@@ -43,13 +43,13 @@ constexpr Datum integer_to_datum(Integer value, bitsize_t size) {
     ulam_assert(size <= sizeof(value) * 8);
 
     auto datum = (Datum)value;
-#ifndef NDEBUG
+// #if 0 // TODO: why this triggers errors? recheck Bits
     const int Shift = sizeof(value) * 8 - size;
     if (Shift > 0) {
         // remove leading 1's
         datum = (datum << Shift) >> Shift;
     }
-#endif
+// #endif
     return datum;
 }
 

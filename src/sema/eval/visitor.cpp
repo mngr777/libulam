@@ -236,13 +236,9 @@ Ptr<Var> EvalVisitor::make_var(
 }
 
 ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
-    ExprRes res;
-    if (node->has_expr()) {
-        res = env().eval_expr(node->expr());
-    } else {
-        res = {builtins().type(VoidId), Value{RValue{}}};
-    }
-
+    auto res = node->has_expr()
+        ? env().eval_expr(node->expr())
+        : ExprRes{builtins().type(VoidId), Value{RValue{}}};
     ulam_assert(scope()->fun());
     auto ret_type = scope()->fun()->ret_type();
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "libulam/sema/eval/helper.hpp"
 #include <libulam/ast.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/visitor.hpp>
@@ -7,6 +6,7 @@
 #include <libulam/sema/eval/base.hpp>
 #include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/flags.hpp>
+#include <libulam/sema/eval/helper.hpp>
 #include <libulam/sema/eval/stack.hpp>
 #include <libulam/sema/expr_res.hpp>
 #include <libulam/sema/resolver.hpp>
