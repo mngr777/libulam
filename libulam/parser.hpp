@@ -1,12 +1,8 @@
 #pragma once
-#include "libulam/ast/nodes/access.hpp"
-#include "libulam/ast/nodes/type.hpp"
 #include <cstdint>
 #include <filesystem>
+#include <libulam/ast/context.hpp>
 #include <libulam/ast/nodes.hpp>
-#include <libulam/ast/nodes/exprs.hpp>
-#include <libulam/ast/nodes/module.hpp>
-#include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/detail/variant.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -24,6 +20,9 @@ class Preproc;
 class Parser {
 public:
     using Path = std::filesystem::path;
+
+    Parser(Context& ctx, ast::Context& ast_ctx):
+        Parser{ctx, ast_ctx.str_pool(), ast_ctx.text_pool()} {}
 
     Parser(Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
         _ctx{ctx}, _str_pool{str_pool}, _text_pool{text_pool}, _pp{ctx} {}
