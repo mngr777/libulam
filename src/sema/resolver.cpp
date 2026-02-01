@@ -313,7 +313,11 @@ Resolver::resolve_type_name(Ref<ast::TypeName> type_name, bool resolve_class) {
 
 Ref<Type>
 Resolver::resolve_type_spec(Ref<ast::TypeSpec> type_spec, bool resolve_class) {
-    return do_resolve_type_spec(type_spec, {}, resolve_class);
+    auto type = do_resolve_type_spec(type_spec, {}, resolve_class);
+    return (type &&
+            prepare_resolved_type(type_spec->ident(), type, resolve_class))
+               ? type
+               : Ref<Type>{};
 }
 
 Ref<Type> Resolver::do_resolve_type_name(
@@ -322,7 +326,8 @@ Ref<Type> Resolver::do_resolve_type_name(
     bool resolve_class) {
     auto type_spec = type_name->first();
     auto type = do_resolve_type_spec(type_spec, exclude_alias, false);
-    if (!type)
+    if (!type ||
+        !prepare_resolved_type(type_spec->ident(), type, resolve_class))
         return {};
 
     // builtin?
@@ -433,12 +438,8 @@ Ref<Type> Resolver::do_resolve_type_spec(
             return {};
         }
         // Self
-        if (ident->is_self()) {
-            if (prepare_resolved_type(ident, self_cls, resolve_class))
-                return self_cls;
-            return {};
-        }
-
+        if (ident->is_self())
+            return self_cls;
         // Super
         if (!self_cls->has_super()) {
             diag().error(
@@ -446,9 +447,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
                 std::string{self_cls->name()} + " does not have a superclass");
             return {};
         }
-        if (prepare_resolved_type(ident, self_cls->super(), resolve_class))
-            return self_cls->super();
-        return {};
+        return self_cls->super();
     }
 
     bool is_tpl = type_spec->has_args();
@@ -461,10 +460,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
         auto [args, success] = eval_tpl_args(type_spec->args(), class_tpl);
         if (!success)
             return {};
-        auto type = class_tpl->type(std::move(args));
-        if (type && prepare_resolved_type(ident, type, resolve_class))
-            return type;
-        return {};
+        return class_tpl->type(std::move(args));
     };
 
     {
@@ -493,23 +489,16 @@ Ref<Type> Resolver::do_resolve_type_spec(
                     //   ```
                     if (is_tpl || !type->is_alias())
                         return {};
-
                     ulam_assert(type->is_alias());
-                    if (!resolve(type->as_alias()))
-                        return {};
-                    if (prepare_resolved_type(ident, type, resolve_class))
-                        return type;
-                    return {};
+                    return resolve(type->as_alias()) ? type : Ref<Type>{};
                 },
                 [&](auto&&) -> Ref<Type> { unreachable(); });
-            if (type) {
-                if (prepare_resolved_type(ident, type, resolve_class))
-                    return type;
-                return {};
-            }
+            if (type)
+                return type;
         }
     }
 
+    // name not found, search for export
     auto exp = program()->exports().get(name_id);
     if (!exp) {
         diag().error(ident, std::string{str(name_id)} + " type not found");
@@ -530,9 +519,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
             return cls;
         },
         [&](auto&&) -> Ref<Type> { unreachable(); });
-    if (type && prepare_resolved_type(ident, type, resolve_class))
-        return type;
-    return {};
+    return type;
 }
 
 bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
