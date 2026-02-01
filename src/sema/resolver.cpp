@@ -675,6 +675,7 @@ Ref<Type> Resolver::apply_array_dims(
     ulam_assert(!dims->has_empty() || init);
 
     // get dimension list
+    // TODO: remove, see assertion above
     ArrayDimList dim_list;
     if (dims->has_empty()) {
         if (!init) {

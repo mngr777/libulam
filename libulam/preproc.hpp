@@ -16,8 +16,6 @@ class Preproc {
     friend Lex;
 
 public:
-    using Path = std::filesystem::path;
-
     explicit Preproc(Context& ctx): _ctx{ctx}, _version{DefaultVersion} {}
 
     Preproc(const Preproc&) = delete;

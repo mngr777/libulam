@@ -92,7 +92,7 @@ Preproc& Preproc::operator>>(Token& token) {
     }
 }
 
-const Preproc::Path& Preproc::current_path() const {
+const Path& Preproc::current_path() const {
     ulam_assert(!_stack.empty());
     return _stack.top().first->path();
 }
