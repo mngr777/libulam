@@ -505,19 +505,15 @@ Ref<Type> Resolver::do_resolve_type_spec(
         return {};
     }
 
-    // import into module, TODO: add and use Module::add_import instead
+    // import into module
     auto module = scope()->module();
+    if (module)
+        module->add_import(name_id, *exp);
+
+    // symbol to type
     auto type = exp->sym()->accept(
-        [&](Ref<ClassTpl> class_tpl) -> Ref<Type> {
-            if (module)
-                module->env_scope()->set(name_id, class_tpl); // TODO
-            return class_tpl_to_type(class_tpl);
-        },
-        [&](Ref<Class> cls) -> Ref<Type> {
-            if (module)
-                module->env_scope()->set(name_id, cls); // TODO
-            return cls;
-        },
+        [&](Ref<ClassTpl> tpl) -> Ref<Type> { return class_tpl_to_type(tpl); },
+        [&](Ref<Class> cls) -> Ref<Type> { return cls; },
         [&](auto&&) -> Ref<Type> { unreachable(); });
     return type;
 }

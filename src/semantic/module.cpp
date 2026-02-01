@@ -1,7 +1,7 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/semantic/export.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/flags.hpp>
@@ -159,6 +159,13 @@ bool Module::resolve(sema::Resolver& resolver) {
         ok = ok && resolved;
     }
     return ok;
+}
+
+void Module::add_import(str_id_t name_id, const Export& exp) {
+    exp.sym()->accept(
+        [&](Ref<ClassTpl> tpl) { _env_scope->set(name_id, tpl); },
+        [&](Ref<Class> cls) { _env_scope->set(name_id, cls); },
+        [&](auto&&) { unreachable(); });
 }
 
 void Module::add_export(Ref<ast::Node> node, str_id_t name_id, Symbol* sym) {

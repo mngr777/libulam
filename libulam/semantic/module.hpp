@@ -26,6 +26,7 @@ class Resolver;
 
 namespace ulam {
 
+class Export;
 class Program;
 class Module;
 
@@ -69,8 +70,7 @@ public:
 
     void export_symbols(Scope* scope);
 
-    // TODO: add and use add_import instead
-    Scope* env_scope() { return ref(_env_scope); }
+    // Scope* env_scope() { return ref(_env_scope); }
     ModuleScope* scope() { return ref(_scope); }
 
     Symbol* get(const std::string_view name);
@@ -84,6 +84,9 @@ public:
 
     // TODO: move out
     bool resolve(sema::Resolver& resolver);
+
+    // TODO: get name_id from symbol decl
+    void add_import(str_id_t name_id, const Export& exp);
 
 private:
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
