@@ -15,6 +15,7 @@
 #include <libulam/semantic/type/element.hpp>
 #include <libulam/src_man.hpp>
 #include <libulam/str_pool.hpp>
+#include <libulam/types.hpp>
 #include <list>
 #include <map>
 
@@ -53,6 +54,7 @@ public:
 
     Mangler& mangler() { return _mangler; }
 
+    const PathList& include_paths() const;
     const ClassOptions& class_options() const;
     const ScopeOptions& scope_options() const;
     const sema::EvalOptions& eval_options() const;

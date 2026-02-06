@@ -212,6 +212,7 @@ HEADER_FILES = \
 	libulam/token.inc.hpp \
 	libulam/types.hpp \
 	libulam/utils/integer.hpp \
+	libulam/utils/file.hpp \
 	libulam/utils/leximited.hpp
 
 SOURCE_FILES = \
@@ -237,6 +238,7 @@ SOURCE_FILES = \
 	src/src_man.cpp \
 	src/str_pool.cpp \
 	src/token.cpp \
+	src/utils/file.cpp \
 	src/utils/leximited.cpp
 
 lib_LTLIBRARIES = libulam.la

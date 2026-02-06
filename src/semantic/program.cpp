@@ -24,6 +24,10 @@ Program::Program(Context& ctx, UniqStrPool& str_pool, UniqStrPool& text_pool):
 
 Program::~Program() {}
 
+const PathList& Program::include_paths() const {
+    return _ctx.options.include_paths;
+}
+
 const ClassOptions& Program::class_options() const {
     return _ctx.options.class_options;
 }

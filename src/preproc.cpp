@@ -1,10 +1,13 @@
+#include "libulam/src.hpp"
 #include "src/parser/string.hpp"
-#include <libulam/assert.hpp>
 #include <charconv>
+#include <libulam/assert.hpp>
 #include <libulam/context.hpp>
+#include <libulam/parser/options.hpp>
 #include <libulam/preproc.hpp>
 #include <libulam/src_man.hpp>
 #include <libulam/token.hpp>
+#include <libulam/utils/file.hpp>
 
 #ifdef DEBUG_PREPROC
 #    define ULAM_DEBUG
@@ -13,6 +16,11 @@
 #include "src/debug.hpp"
 
 namespace ulam {
+
+Preproc::Preproc(Context& ctx):
+    _ctx{ctx},
+    _path_resolver{ctx.options.include_paths},
+    _version{DefaultVersion} {}
 
 void Preproc::main_file(Path path) {
     ulam_assert(_stack.empty());
@@ -103,6 +111,11 @@ void Preproc::push(Src* src) {
     _stack.emplace(src, Lex{*this, _ctx.src_man(), src->id(), src->content()});
 }
 
+Src& Preproc::src() {
+    ulam_assert(!_stack.empty());
+    return *_stack.top().first;
+}
+
 Lex& Preproc::lexer() {
     ulam_assert(!_stack.empty());
     return _stack.top().second;
@@ -153,17 +166,32 @@ bool Preproc::preproc_load() {
     Token path_tok;
     lexer().lex_path(path_tok);
 
-    std::string path{tok_str(path_tok)};
-    // bool global = (path[0] == '<'); // TODO
-    path = detail::parse_str(diag, path_tok.loc_id, path);
+    // TODO: refactoring
 
+    std::string_view path_str{tok_str(path_tok)};
+    assert(!empty(path_str));
+    bool global = (path_str[0] == '<');
+    Path path{detail::parse_str(diag, path_tok.loc_id, path_str)};
+
+    // hack for string sources
     auto src = src_man.src(path);
+    if (dynamic_cast<StrSrc*>(src)) {
+        push(src);
+        return true;
+    }
+
+    path = global ? _path_resolver.resolve(path)
+                  : utils::find_file_rel(path, this->src().path());
+    if (path.empty()) {
+        _ctx.diag().fatal(path_tok.loc_id, path_tok.size, "file not found");
+        return false;
+    }
+    src = src_man.src(path);
     if (!src)
         src = src_man.file(path);
     if (src) {
         push(src);
     } else {
-        _ctx.diag().fatal(path_tok.loc_id, path_tok.size, "file not found");
         return false;
     }
     return true;

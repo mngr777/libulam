@@ -94,9 +94,10 @@ EvalEnv::VarDefaultsRaii::operator=(VarDefaultsRaii&& other) {
 EvalEnv::VarDefaultsRaii::VarDefaultsRaii(
     EvalEnv& env, VarDefaults&& var_defaults):
     _env{&env}, _var_set{make_set(var_defaults)} {
-    ulam_assert(std::none_of(_var_set.begin(), _var_set.end(), [&](const auto ref) {
-        return env._var_defaults.count(ref) > 0;
-    }));
+    ulam_assert(
+        std::none_of(_var_set.begin(), _var_set.end(), [&](const auto ref) {
+            return env._var_defaults.count(ref) > 0;
+        }));
     env._var_defaults.merge(var_defaults);
 }
 
@@ -113,7 +114,10 @@ EvalEnv::VarDefaultsRaii::make_set(const VarDefaults& var_defaults) {
 // EvalEnv
 
 EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
-    EvalBase{program}, _flags{flags}, _program_scope{program} {
+    EvalBase{program},
+    _flags{flags},
+    _program_scope{program},
+    _path_resolver{program->include_paths()} {
     // init global scope
     _scope_stack.push(ScopeStack::Variant{&_program_scope});
     for (auto& mod : program->modules())
@@ -121,6 +125,8 @@ EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
 }
 
 Resolver EvalEnv::resolver(bool in_expr) { return {*this, in_expr}; }
+
+Export* EvalEnv::load_class(Ref<ast::TypeIdent> ident) { return {}; }
 
 ExprRes EvalEnv::eval(Ref<ast::Block> block) {
     debug() << __FUNCTION__ << "\n";

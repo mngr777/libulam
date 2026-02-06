@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/sema/eval/base.hpp>
 #include <libulam/sema/eval/cond_res.hpp>
 #include <libulam/sema/eval/flags.hpp>
@@ -12,6 +13,7 @@
 #include <libulam/semantic/scope/program.hpp>
 #include <libulam/semantic/scope/stack.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/utils/file.hpp>
 #include <unordered_set>
 
 namespace ulam::sema {
@@ -93,6 +95,8 @@ public:
     EvalEnv& operator=(EvalEnv&&) = default;
 
     Resolver resolver(bool in_expr);
+
+    virtual Export* load_class(Ref<ast::TypeIdent> ident);
 
     virtual ExprRes eval(Ref<ast::Block> block);
 
@@ -240,6 +244,7 @@ private:
     EvalStack _stack;
     ScopeStack _scope_stack;
     Scope* _scope_override{};
+    utils::PathResolver _path_resolver;
     VarDefaults _var_defaults;
 };
 

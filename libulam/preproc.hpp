@@ -4,6 +4,7 @@
 #include <libulam/src_loc.hpp>
 #include <libulam/token.hpp>
 #include <libulam/types.hpp>
+#include <libulam/utils/file.hpp>
 #include <stack>
 
 namespace ulam {
@@ -16,7 +17,7 @@ class Preproc {
     friend Lex;
 
 public:
-    explicit Preproc(Context& ctx): _ctx{ctx}, _version{DefaultVersion} {}
+    explicit Preproc(Context& ctx);
 
     Preproc(const Preproc&) = delete;
     Preproc& operator=(Preproc) = delete;
@@ -36,7 +37,9 @@ private:
     void push(Src* src);
     void pop();
 
+    Src& src();
     Lex& lexer();
+
     void lex(Token& token);
 
     template <typename... Ts>
@@ -52,6 +55,7 @@ private:
     const std::string_view tok_str(const Token& token);
 
     Context& _ctx;
+    utils::PathResolver _path_resolver;
     Version _version;
     std::stack<std::pair<Src*, Lex>> _stack;
 };

@@ -500,6 +500,8 @@ Ref<Type> Resolver::do_resolve_type_spec(
 
     // name not found, search for export
     auto exp = program()->exports().get(name_id);
+    if (!exp)
+        exp = env().load_class(ident);
     if (!exp) {
         diag().error(ident, std::string{str(name_id)} + " type not found");
         return {};
