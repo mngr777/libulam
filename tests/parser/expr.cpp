@@ -41,7 +41,7 @@ element A {
 int main() {
     ulam::Context ctx;
     auto ast = ulam::make<ulam::ast::Root>();
-    ulam::Parser parser{ctx, ast->ctx().str_pool(), ast->ctx().text_pool()};
+    ulam::Parser parser{ctx, ast->ctx()};
 
     std::string text{Program};
     ast->add(parser.parse_module_str(text, "A"));

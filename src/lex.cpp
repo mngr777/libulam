@@ -316,6 +316,7 @@ void Lex::lex_str(char closing) {
             advance();
             if (closing == '>' && !esc)
                 goto Done;
+            break;
         case '\\':
             advance();
             if (!esc) {

@@ -888,10 +888,7 @@ Ptr<ast::InitList> Parser::parse_init_list() {
             bool ok = list_map_v.accept([&](auto&& ptr) { return (bool)ptr; });
             if (!ok)
                 goto Panic;
-            list_map_v.accept(
-                [&](Ptr<ast::InitList>& list) { node->add(std::move(list)); },
-                [&](Ptr<ast::InitMap>& map) { node->add(std::move(map)); });
-
+            list_map_v.accept([&](auto&& ptr) { node->add(std::move(ptr)); });
         } else {
             // expr
             auto expr = parse_expr(ExprStopAtComma);
@@ -944,13 +941,7 @@ Ptr<ast::InitMap> Parser::parse_init_map() {
             bool ok = list_map_v.accept([&](auto&& ptr) { return (bool)ptr; });
             if (!ok)
                 goto Panic;
-            list_map_v.accept(
-                [&](Ptr<ast::InitList>& list) {
-                    node->add(name_id, std::move(list));
-                },
-                [&](Ptr<ast::InitMap>& map) {
-                    node->add(name_id, std::move(map));
-                });
+            list_map_v.accept([&](auto&& ptr) { node->add(name_id, std::move(ptr)); });
         } else {
             // expr
             auto expr = parse_expr(ExprStopAtComma);

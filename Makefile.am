@@ -146,6 +146,7 @@ SEMA_HEADER_FILES = \
 	libulam/sema/class_resolver.hpp \
 	libulam/sema/debug/out.hpp \
 	libulam/sema/eval.hpp \
+	libulam/sema/eval/base.hpp \
 	libulam/sema/eval/cast.hpp \
 	libulam/sema/eval/cond.hpp \
 	libulam/sema/eval/cond_res.hpp \
@@ -250,6 +251,7 @@ TESTS = \
 	test_memory_notepad1 \
 	test_lex_basic \
 	test_parser_expr \
+	test_parser_init_list1 \
 	test_semantic_bits \
 	test_sema_basic \
 	test_sema_color_utils \
@@ -279,6 +281,9 @@ TEST_SEMA_SOURCE_FILES = \
 
 test_parser_expr_SOURCES = tests/parser/expr.cpp $(TEST_AST_SOURCE_FILES)
 test_parser_expr_LDADD = $(TEST_LIBS)
+
+test_parser_init_list1_SOURCES = tests/parser/init_list1.cpp $(TEST_AST_SOURCE_FILES)
+test_parser_init_list1_LDADD = $(TEST_LIBS)
 
 test_semantic_bits_SOURCES = tests/semantic/bits.cpp
 test_semantic_bits_LDADD = $(TEST_LIBS)

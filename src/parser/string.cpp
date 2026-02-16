@@ -5,7 +5,6 @@
 
 namespace ulam::detail {
 
-// TODO: support hex/oct escape sequences
 std::string parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
     ulam_assert(str.size() > 0);
     std::string parsed;
@@ -25,7 +24,7 @@ std::string parse_str(Diag& diag, loc_id_t loc_id, const std::string_view str) {
             break;
         }
         if (ch == '\\') {
-            ulam_assert(cur + 1 < str.size());
+            ulam_assert(cur < str.size());
             unsigned short base = 0;
             unsigned digit_num = 0;
             if (detail::is_digit(str[cur])) {
