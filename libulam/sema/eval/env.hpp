@@ -238,7 +238,6 @@ protected:
         ExprResList&& args);
 
 private:
-    Ref<Program> _program;
     eval_flags_t _flags;
     ProgramScope _program_scope;
     EvalStack _stack;

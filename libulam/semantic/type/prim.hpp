@@ -144,6 +144,7 @@ private:
 class PrimTypeTpl : public TypeTpl {
 public:
     PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen);
+    virtual ~PrimTypeTpl();
 
     virtual Ref<PrimType> type(bitsize_t bitsize) = 0;
 

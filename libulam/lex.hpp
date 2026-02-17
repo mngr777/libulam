@@ -52,7 +52,6 @@ private:
     Token* _tok{};
 
     linum_t _linum{1};
-    chr_t _chr{1};
 
     bool _expect_path{false};
 };

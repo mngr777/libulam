@@ -8,8 +8,8 @@ class PathResolver {
 public:
     explicit PathResolver(const PathList& include_paths): _include_paths{include_paths} {}
 
-    PathResolver(PathResolver&) = delete;
-    PathResolver& operator=(PathResolver&) = delete;
+    PathResolver(PathResolver&&) = default;
+    PathResolver& operator=(PathResolver&&) = default;
 
     Path resolve(const Path& path);
 

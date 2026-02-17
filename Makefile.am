@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CXXFLAGS = -std=c++17 -I$(srcdir) -iquote $(srcdir) -Wall -Wpedantic -Werror -O2
-CXXFLAGS = $(AM_CXXFLAGS) # temp(?) hack to make libtool stop adding flags
+#CXXFLAGS = $(AM_CXXFLAGS) # temp(?) hack to make libtool stop adding flags
 
 AST_HEADER_FILES = \
 	libulam/ast.hpp \
@@ -252,6 +252,7 @@ TESTS = \
 	test_lex_basic \
 	test_parser_expr \
 	test_parser_init_list1 \
+	test_parser_cast1 \
 	test_semantic_bits \
 	test_sema_basic \
 	test_sema_color_utils \
@@ -284,6 +285,9 @@ test_parser_expr_LDADD = $(TEST_LIBS)
 
 test_parser_init_list1_SOURCES = tests/parser/init_list1.cpp $(TEST_AST_SOURCE_FILES)
 test_parser_init_list1_LDADD = $(TEST_LIBS)
+
+test_parser_cast1_SOURCES = tests/parser/cast1.cpp $(TEST_AST_SOURCE_FILES)
+test_parser_cast1_LDADD = $(TEST_LIBS)
 
 test_semantic_bits_SOURCES = tests/semantic/bits.cpp
 test_semantic_bits_LDADD = $(TEST_LIBS)

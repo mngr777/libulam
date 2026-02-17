@@ -153,4 +153,6 @@ RValue PrimType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
 PrimTypeTpl::PrimTypeTpl(Builtins& builtins, TypeIdGen& id_gen):
     TypeTpl{id_gen}, _builtins{builtins} {}
 
+PrimTypeTpl::~PrimTypeTpl() {}
+
 } // namespace ulam

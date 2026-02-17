@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <functional>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/src_man.hpp>
 
@@ -14,6 +15,9 @@ public:
     enum Level : std::uint8_t { Fatal = 0, Error, Warn, Notice, Debug };
 
     Diag(SrcMan& src_man): _src_man{src_man} {}
+
+    Diag(Diag&&) = default;
+    Diag& operator=(Diag&&) = default;
 
     template <typename... Ts> void fatal(Ts... args) {
         emit(Diag::Fatal, std::forward<Ts>(args)...);
@@ -52,7 +56,9 @@ public:
         const std::string& text);
 
 private:
-    SrcMan& _src_man;
+    SrcMan& src_man() { return _src_man; }
+
+    std::reference_wrapper<SrcMan> _src_man;
     unsigned _err_num{0};
 };
 
