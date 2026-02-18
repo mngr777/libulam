@@ -1,5 +1,4 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/parser.hpp>
@@ -149,7 +148,8 @@ Ptr<ast::ModuleDef> Parser::parse_module(const std::string_view name) {
 }
 
 void Parser::parse_module_var_or_type_def(Ref<ast::ModuleDef> node) {
-    ulam_assert(_tok.in(tok::Local, tok::Typedef, tok::Constant, tok::TypeIdent));
+    ulam_assert(
+        _tok.in(tok::Local, tok::Typedef, tok::Constant, tok::TypeIdent));
     // is marked as local?
     if (_tok.is(tok::Local)) {
         consume();
@@ -941,7 +941,8 @@ Ptr<ast::InitMap> Parser::parse_init_map() {
             bool ok = list_map_v.accept([&](auto&& ptr) { return (bool)ptr; });
             if (!ok)
                 goto Panic;
-            list_map_v.accept([&](auto&& ptr) { node->add(name_id, std::move(ptr)); });
+            list_map_v.accept(
+                [&](auto&& ptr) { node->add(name_id, std::move(ptr)); });
         } else {
             // expr
             auto expr = parse_expr(ExprStopAtComma);
@@ -1058,20 +1059,10 @@ Ptr<ast::Stmt> Parser::parse_stmt_local() {
 }
 
 Ptr<ast::Stmt> Parser::parse_stmt_type() {
-    auto type_name = parse_type_name(true);
+    auto type_name = parse_type_name(TypeNameAllowOpOrConst);
     if (_tok.is(tok::Period)) {
         consume();
-        Ptr<ast::Expr> expr{};
-        if (_tok.is(tok::Ident)) {
-            // Type.<ident>
-            expr = parse_class_const_access_rest(std::move(type_name));
-        } else if (_tok.is_type_op()) {
-            // Type.<type-op>
-            expr = parse_type_op_rest(std::move(type_name), {});
-        } else {
-            unexpected();
-            return {};
-        }
+        auto expr = parse_class_const_or_type_op_rest(std::move(type_name));
         return tree<ast::ExprStmt>(std::move(expr));
     } else if (_tok.in(tok::Ident, tok::Amp)) {
         // [&] first name
@@ -1520,7 +1511,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs(ExprContext& ctx) {
         return parse_expr_lhs_local(ctx);
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
-        return parse_class_const_access_or_type_op();
+        return parse_class_const_or_type_op();
     case tok::Ident: {
         auto ident = parse_ident(IdentAllowSelfOrSuper | IdentAllowLocal);
         ctx.last_ident = ref(ident);
@@ -1566,7 +1557,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs_local(ExprContext& ctx) {
     case tok::TypeIdent:
         putback(period);
         putback(local);
-        return parse_class_const_access_or_type_op();
+        return parse_class_const_or_type_op();
     case tok::Ident: {
         putback(period);
         putback(local);
@@ -1587,25 +1578,28 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
     Ptr<ast::Expr> inner{};
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
         ctx.set_flag(ExprIsNotEmpty);
-        // (Type) | (Type.<type_op>
-        auto full_type_name = parse_full_type_name(true);
-        if (!full_type_name)
+        // (Type) | (Type.<ident> | (Type.<type_op>
+        auto type_name = parse_type_name(TypeNameAllowOpOrConst);
+        if (!type_name)
             goto Panic;
-        if (_tok.is(tok::ParenR)) {
+        if (!_tok.is(tok::Period)) {
             // cast
-            consume();
+            auto full_type_name =
+                parse_full_type_name_rest(std::move(type_name));
+            if (!full_type_name)
+                goto Panic;
+            expect(tok::ParenR);
             auto expr = parse_expr_climb(ops::prec(Op::Cast), ctx);
             if (!expr)
                 goto Panic;
             return tree_at<ast::Cast>(
                 loc_id, std::move(full_type_name), std::move(expr));
         }
-        // type op
-        if (_tok.type_op() == TypeOp::None)
+        consume(); // .
+        // (Type.<ident> | (Type.<type_op>
+        inner = parse_class_const_or_type_op_rest(std::move(type_name));
+        if (!inner)
             goto Panic;
-        auto type_name = full_type_name->replace_type_name({});
-        inner = parse_type_op_rest(std::move(type_name), {});
-        ulam_assert(inner);
         ctx.uns_flag(ExprStopAtComma | ExprStopAtEqual);
         inner = parse_expr_climb_rest(std::move(inner), 0, ctx);
     } else {
@@ -1622,12 +1616,23 @@ Panic:
     return {};
 }
 
-Ptr<ast::Expr> Parser::parse_class_const_access_or_type_op() {
+Ptr<ast::Expr> Parser::parse_class_const_or_type_op() {
     ulam_assert(_tok.in(tok::Local, tok::BuiltinTypeIdent, tok::TypeIdent));
-    auto type_name = parse_type_name(true);
+    auto type_name = parse_type_name(TypeNameAllowOpOrConst);
+    if (!type_name)
+        return {};
+    if (!expect(tok::Period))
+        return {};
+    return parse_class_const_or_type_op_rest(std::move(type_name));
+}
+
+Ptr<ast::Expr> Parser::parse_class_const_or_type_op_rest(Ptr<ast::TypeName> type_name) {
     if (_tok.is(tok::Ident))
-        return parse_class_const_access_rest(std::move(type_name));
-    return parse_type_op_rest(std::move(type_name), {});
+        return parse_class_const_rest(std::move(type_name));
+    if (_tok.is_type_op())
+        return parse_type_op_rest(std::move(type_name), {});
+    unexpected();
+    return {};
 }
 
 Ptr<ast::TypeOpExpr> Parser::parse_type_op_rest(
@@ -1710,31 +1715,26 @@ Ptr<ast::ExprList> Parser::parse_array_dims(bool allow_empty) {
     return {};
 }
 
-Ptr<ast::FullTypeName> Parser::parse_full_type_name(bool maybe_type_op) {
-    auto type_name = parse_type_name(maybe_type_op);
-    if (!type_name)
-        return {};
-
+Ptr<ast::FullTypeName>
+Parser::parse_full_type_name_rest(Ptr<ast::TypeName> type_name) {
+    // []
     Ptr<ast::ExprList> array_dims{};
-    bool is_ref = false;
-    if (!maybe_type_op || _tok.type_op() == TypeOp::None) {
-        // []
-        if (_tok.is(tok::BracketL)) {
-            array_dims = parse_array_dims();
-            if (!array_dims)
-                return {};
-        }
-
-        // &
-        is_ref = parse_is_ref();
+    if (_tok.is(tok::BracketL)) {
+        array_dims = parse_array_dims();
+        if (!array_dims)
+            return {};
     }
+
+    // &
+    bool is_ref = parse_is_ref();
+
     auto node = tree_at<ast::FullTypeName>(
         type_name->loc_id(), std::move(type_name), std::move(array_dims));
     node->set_is_ref(is_ref);
     return node;
 }
 
-Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
+Ptr<ast::TypeName> Parser::parse_type_name(type_name_flags_t flags) {
     if (!_tok.in(tok::Local, tok::BuiltinTypeIdent, tok::TypeIdent)) {
         unexpected();
         return {};
@@ -1742,17 +1742,19 @@ Ptr<ast::TypeName> Parser::parse_type_name(bool maybe_type_op_or_const) {
     auto loc_id = _tok.loc_id;
     auto node = tree_at<ast::TypeName>(loc_id, parse_type_spec());
     while (_tok.is(tok::Period)) {
+        auto period_tok = _tok;
         consume();
-        if (maybe_type_op_or_const &&
+        if ((flags & TypeNameAllowOpOrConst) &&
             (_tok.is(tok::Ident) || _tok.is_type_op())) {
             // either Type.<const-var-ident> or Type.<typeop>
-            break; // NOTE: '.' consumed,
+            putback(period_tok);
+            break;
         }
         if (!_tok.is(tok::TypeIdent) || _tok.is_self_class()) {
             unexpected();
             return {};
         }
-        node->add(parse_type_ident(TypeAllowSuper));
+        node->add(parse_type_ident(TypeIdentAllowSuper));
     }
     return node;
 }
@@ -1772,8 +1774,8 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
         builtin_type_id = _tok.builtin_type_id();
         consume();
     } else {
-        ident =
-            parse_type_ident(TypeAllowSelf | TypeAllowSuper | TypeAllowLocal);
+        ident = parse_type_ident(
+            TypeIdentAllowSelf | TypeIdentAllowSuper | TypeIdentAllowLocal);
         is_self_or_super = ident->is_self() || ident->is_super();
         ok = ok && ident;
     }
@@ -2012,7 +2014,7 @@ Ptr<ast::Ternary> Parser::parse_ternary_rest(Ptr<ast::Expr>&& cond) {
 }
 
 Ptr<ast::ClassConstAccess>
-Parser::parse_class_const_access_rest(Ptr<ast::TypeName> type_name) {
+Parser::parse_class_const_rest(Ptr<ast::TypeName> type_name) {
     ulam_assert(_tok.is(tok::Ident));
 
     auto ident = parse_ident();
@@ -2024,13 +2026,13 @@ Parser::parse_class_const_access_rest(Ptr<ast::TypeName> type_name) {
         loc_id, std::move(type_name), std::move(ident));
 }
 
-Ptr<ast::TypeIdent> Parser::parse_type_ident(type_flags_t flags) {
+Ptr<ast::TypeIdent> Parser::parse_type_ident(type_ident_flags_t flags) {
     ulam_assert(_tok.in(tok::Local, tok::TypeIdent));
 
     // local
     bool is_local = false;
     if (_tok.is(tok::Local)) {
-        if (flags & TypeAllowLocal) {
+        if (flags & TypeIdentAllowLocal) {
             is_local = true;
         } else {
             diag("`local' is not allowed in this context");
@@ -2048,7 +2050,7 @@ Ptr<ast::TypeIdent> Parser::parse_type_ident(type_flags_t flags) {
     bool is_super = _tok.is_super_class();
     consume();
     if (is_self) {
-        if (!(flags & TypeAllowSelf)) {
+        if (!(flags & TypeIdentAllowSelf)) {
             diag(str.loc_id(), 1, "`Self' is not allowed in this context");
             return {};
         }
@@ -2057,7 +2059,7 @@ Ptr<ast::TypeIdent> Parser::parse_type_ident(type_flags_t flags) {
             return {};
         }
     } else if (is_super) {
-        if (!(flags & TypeAllowSuper)) {
+        if (!(flags & TypeIdentAllowSuper)) {
             diag(str.loc_id(), 1, "`Super' is not allowed in this context");
             return {};
         }

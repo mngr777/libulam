@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/ast/nodes/type.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/context.hpp>
@@ -50,11 +51,15 @@ private:
     static constexpr expr_flags_t ExprAllowAsCond = 1 << 3;
     static constexpr expr_flags_t ExprHasAsCond = 1 << 4;
 
-    using type_flags_t = std::uint8_t;
-    static constexpr type_flags_t NoTypeFlags = 0;
-    static constexpr type_flags_t TypeAllowSelf = 1;
-    static constexpr type_flags_t TypeAllowSuper = 1 << 1;
-    static constexpr type_flags_t TypeAllowLocal = 1 << 2;
+    using type_name_flags_t = std::uint8_t;
+    static constexpr type_name_flags_t NoTypeNameFlags = 0;
+    static constexpr type_name_flags_t TypeNameAllowOpOrConst = 1;
+
+    using type_ident_flags_t = std::uint8_t;
+    static constexpr type_ident_flags_t NoTypeIdentFlags = 0;
+    static constexpr type_ident_flags_t TypeIdentAllowSelf = 1;
+    static constexpr type_ident_flags_t TypeIdentAllowSuper = 1 << 1;
+    static constexpr type_ident_flags_t TypeIdentAllowLocal = 1 << 2;
 
     using ident_flags_t = std::uint8_t;
     static constexpr ident_flags_t NoIdentFlags = 0;
@@ -145,7 +150,8 @@ private:
     Ptr<ast::Expr> parse_expr_lhs(ExprContext& ctx);
     Ptr<ast::Expr> parse_expr_lhs_local(ExprContext& ctx);
     Ptr<ast::Expr> parse_paren_expr_or_cast(ExprContext& ctx);
-    Ptr<ast::Expr> parse_class_const_access_or_type_op();
+    Ptr<ast::Expr> parse_class_const_or_type_op();
+    Ptr<ast::Expr> parse_class_const_or_type_op_rest(Ptr<ast::TypeName> type_name);
     // TODO: split parse_{expr_,}_type_op_rest
     Ptr<ast::TypeOpExpr> parse_type_op_rest(
         Ptr<ast::TypeName>&& type,
@@ -154,8 +160,8 @@ private:
     Ptr<ast::TypeExpr> parse_type_expr();
     Ptr<ast::ExprList> parse_array_dims(bool allow_empty = false);
     Ptr<ast::FullTypeName>
-    parse_full_type_name(bool maybe_type_op_or_const = false);
-    Ptr<ast::TypeName> parse_type_name(bool maybe_type_op = false);
+    parse_full_type_name_rest(Ptr<ast::TypeName> type_name);
+    Ptr<ast::TypeName> parse_type_name(type_name_flags_t flags = NoTypeNameFlags);
     Ptr<ast::TypeSpec> parse_type_spec();
     Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& callable);
     Ptr<ast::FunCall> parse_op_call();
@@ -174,9 +180,9 @@ private:
     Ptr<ast::BaseTypeSelect> parse_base_type_select();
     Ptr<ast::Ternary> parse_ternary_rest(Ptr<ast::Expr>&& cond);
     Ptr<ast::ClassConstAccess>
-    parse_class_const_access_rest(Ptr<ast::TypeName> type_name);
+    parse_class_const_rest(Ptr<ast::TypeName> type_name);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
-    Ptr<ast::TypeIdent> parse_type_ident(type_flags_t = NoTypeFlags);
+    Ptr<ast::TypeIdent> parse_type_ident(type_ident_flags_t flags = NoTypeIdentFlags);
     Ptr<ast::Ident> parse_ident(ident_flags_t flags = NoIdentFlags);
     bool parse_is_ref();
     Ptr<ast::ClassName> parse_class_name();
