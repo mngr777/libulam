@@ -97,6 +97,9 @@ public:
 
     Ref<PersScope> scope();
 
+    auto& members() { return _members; }
+    const auto& members() const { return _members; }
+
 protected:
     // TODO: use refs
     using OpMap = std::map<Op, Ptr<FunSet>>;
@@ -110,8 +113,6 @@ protected:
     }
 
     Ref<BasicScope> inh_scope() { return ref(_inh_scope); }
-
-    auto& members() { return _members; }
 
     Ref<FunSet> find_fset(str_id_t name_id);
     Ref<FunSet> find_op_fset(Op op);

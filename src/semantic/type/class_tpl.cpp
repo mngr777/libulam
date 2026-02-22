@@ -70,12 +70,13 @@ ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 
 Ref<Class> ClassTpl::type(TypedValueList&& args) {
     auto key = type_args_str(args);
-    auto it = _classes.find(key);
-    if (it != _classes.end())
+    auto it = _class_map.find(key);
+    if (it != _class_map.end())
         return ref(it->second);
     auto cls = inst(std::move(args));
     auto cls_ref = ref(cls);
-    _classes.emplace(key, std::move(cls));
+    _class_map.emplace(key, std::move(cls));
+    _classes.push_back(cls_ref);
     return cls_ref;
 }
 

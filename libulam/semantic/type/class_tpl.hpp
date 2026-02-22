@@ -63,6 +63,9 @@ public:
 
     const MemberList& ordered_members() const { return _ordered_members; }
 
+    auto& classes() { return _classes; }
+    const auto& classes() const { return _classes; }
+
 protected:
     using ClassBase::add_param;
 
@@ -74,7 +77,8 @@ private:
     Ref<Program> program();
 
     Ref<ast::ClassDef> _node;
-    std::unordered_map<std::string, Ptr<Class>> _classes;
+    std::list<Ref<Class>> _classes;
+    std::unordered_map<std::string, Ptr<Class>> _class_map;
     std::list<Member> _ordered_members;
 
     std::string_view _name;
