@@ -12,9 +12,14 @@ Ref<Program> init(Context& ctx, Ref<ast::Root> ast) {
     return ast->program();
 }
 
+bool resolve(EvalEnv& env) {
+    env.resolver(false).resolve(env.program());
+    return true; // TMP
+}
+
 bool resolve(Context& ctx, Ref<Program> program) {
-    EvalEnv eval_env{program};
-    eval_env.resolver(false).resolve(program);
+    EvalEnv env{program};
+    resolve(env);
     return true; // TMP
 }
 

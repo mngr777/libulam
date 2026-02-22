@@ -8,6 +8,8 @@ namespace ulam::sema {
 
 Ref<Program> init(Context& ctx, Ref<ast::Root> ast);
 
+bool resolve(EvalEnv& env);
+
 bool resolve(Context& ctx, Ref<Program> program);
 
 } // namespace ulam::sema
