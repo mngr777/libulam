@@ -126,7 +126,9 @@ EvalEnv::EvalEnv(Ref<Program> program, eval_flags_t flags):
 
 Resolver EvalEnv::resolver(bool in_expr) { return {*this, in_expr}; }
 
-Export* EvalEnv::load_class(Ref<ast::TypeIdent> ident) { return {}; }
+const Export* EvalEnv::load_class(Ref<ast::TypeIdent> ident) { return {}; }
+
+void EvalEnv::on_tpl_inst(Ref<Class> cls) {}
 
 ExprRes EvalEnv::eval(Ref<ast::Block> block) {
     debug() << __FUNCTION__ << "\n";

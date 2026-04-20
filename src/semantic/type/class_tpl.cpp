@@ -68,16 +68,16 @@ ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
     return prop;
 }
 
-Ref<Class> ClassTpl::type(TypedValueList&& args) {
+std::pair<Ref<Class>, bool> ClassTpl::type(TypedValueList&& args) {
     auto key = type_args_str(args);
     auto it = _class_map.find(key);
     if (it != _class_map.end())
-        return ref(it->second);
+        return {ref(it->second), false};
     auto cls = inst(std::move(args));
     auto cls_ref = ref(cls);
     _class_map.emplace(key, std::move(cls));
     _classes.push_back(cls_ref);
-    return cls_ref;
+    return {cls_ref, true};
 }
 
 Ptr<Class> ClassTpl::inst(TypedValueList&& args) {

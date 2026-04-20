@@ -460,7 +460,10 @@ Ref<Type> Resolver::do_resolve_type_spec(
         auto [args, success] = eval_tpl_args(type_spec->args(), class_tpl);
         if (!success)
             return {};
-        return class_tpl->type(std::move(args));
+        auto [cls, added] = class_tpl->type(std::move(args));
+        if (added)
+            env().on_tpl_inst(cls);
+        return cls;
     };
 
     {
@@ -503,7 +506,7 @@ Ref<Type> Resolver::do_resolve_type_spec(
     if (!exp)
         exp = env().load_class(ident);
     if (!exp) {
-        diag().error(ident, std::string{str(name_id)} + " type not found");
+        diag().error(ident, "type not found");
         return {};
     }
 

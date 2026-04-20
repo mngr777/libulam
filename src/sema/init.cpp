@@ -1,4 +1,3 @@
-#include "libulam/semantic/scope/program.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -27,9 +26,7 @@
 namespace ulam::sema {
 
 void Init::visit(Ref<ast::Root> node) {
-    ulam_assert(!node->program());
-    node->set_program(
-        make<Program>(ctx(), node->ctx().str_pool(), node->ctx().text_pool()));
+    ulam_assert(node->program());
     RecVisitor::visit(node);
 }
 

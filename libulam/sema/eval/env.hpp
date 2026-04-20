@@ -96,7 +96,9 @@ public:
 
     Resolver resolver(bool in_expr);
 
-    virtual Export* load_class(Ref<ast::TypeIdent> ident);
+    virtual const Export* load_class(Ref<ast::TypeIdent> ident);
+
+    virtual void on_tpl_inst(Ref<Class> cls);
 
     virtual ExprRes eval(Ref<ast::Block> block);
 

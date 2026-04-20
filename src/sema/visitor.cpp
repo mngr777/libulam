@@ -16,20 +16,19 @@ namespace ulam::sema {
 RecVisitor::RecVisitor(Context& ctx, Ref<ast::Root> ast, bool skip_fun_bodies):
     _ctx{ctx},
     _ast{ast},
-    _program{},
+    _program{ast->program()},
     _eval_env{},
     _skip_fun_bodies{skip_fun_bodies},
-    _pass{Pass::Module} {}
+    _pass{Pass::Module} {
+    ulam_assert(_program);
+}
 
 RecVisitor::~RecVisitor() {}
 
 void RecVisitor::analyze() { visit(_ast); }
 
 void RecVisitor::visit(Ref<ast::Root> node) {
-    ulam_assert(node->program());
-    _program = node->program();
     _eval_env = make<EvalEnv>(_program); // ??
-
     if (do_visit(node))
         traverse(node);
 }

@@ -59,7 +59,7 @@ public:
     Ref<Prop>
     add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
 
-    Ref<Class> type(TypedValueList&& args);
+    std::pair<Ref<Class>, bool> type(TypedValueList&& args);
 
     const MemberList& ordered_members() const { return _ordered_members; }
 
