@@ -163,38 +163,42 @@ bool Preproc::preproc_load() {
     auto& src_man = _ctx.src_man();
     auto& diag = _ctx.diag();
 
-    Token path_tok;
-    lexer().lex_path(path_tok);
+    Token token;
+    lexer().lex_path(token);
 
     // TODO: refactoring
 
-    std::string_view path_str{tok_str(path_tok)};
+    std::string_view path_str{tok_str(token)};
     assert(!empty(path_str));
     bool global = (path_str[0] == '<');
-    Path path{detail::parse_str(diag, path_tok.loc_id, path_str)};
+    Path path{detail::parse_str(diag, token.loc_id, path_str)};
 
     // hack for string sources
     auto src = src_man.src(path);
     if (dynamic_cast<StrSrc*>(src)) {
-        push(src);
-        return true;
+        bool ok = expect(token, tok::Semicol, tok::Eof);
+        if (ok)
+            push(src);
+        return ok;
     }
 
     path = global ? _path_resolver.resolve(path)
                   : utils::find_file_rel(path, this->src().path());
     if (path.empty()) {
-        _ctx.diag().fatal(path_tok.loc_id, path_tok.size, "file not found");
+        _ctx.diag().fatal(token.loc_id, token.size, "file not found");
         return false;
     }
     src = src_man.src(path);
     if (!src)
         src = src_man.file(path);
     if (src) {
-        push(src);
-    } else {
-        return false;
+        bool ok = expect(token, tok::Semicol, tok::Eof);
+        if (ok) {
+            push(src);
+            return true;
+        }
     }
-    return true;
+    return false;
 }
 
 const std::string_view Preproc::tok_str(const Token& token) {
