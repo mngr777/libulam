@@ -74,7 +74,7 @@ void PrinterBase::traverse(ulam::Ref<ulam::ast::Block> node) {
     traverse_with_indent(node);
 }
 
-void PrinterBase::print_var_decl(ulam::Ref<ulam::ast::VarDecl> node) {
+void PrinterBase::print_var_def(ulam::Ref<ulam::ast::VarDefBase> node) {
     // &
     if (node->is_ref())
         _os << "&";
@@ -200,7 +200,7 @@ void Printer::visit(ulam::Ref<ulam::ast::ClassDef> node) {
     nl();
 }
 
-void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) { print_var_decl(node); }
+void Printer::visit(ulam::Ref<ulam::ast::VarDef> node) { print_var_def(node); }
 
 void Printer::visit(ulam::Ref<ulam::ast::FunDef> node) {
     ulam_assert(node->has_ret_type() || node->is_constructor());
@@ -255,7 +255,7 @@ void Printer::visit(ulam::Ref<ulam::ast::Param> node) {
     ulam_assert(node->has_type_name());
     visit(node->type_name());
     _os << " ";
-    print_var_decl(node);
+    print_var_def(node);
 }
 
 void Printer::visit(ulam::Ref<ulam::ast::ArgList> node) {

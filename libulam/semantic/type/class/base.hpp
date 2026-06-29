@@ -82,10 +82,10 @@ public:
     virtual Ref<Fun> add_fun(Ref<ast::FunDef> node);
 
     virtual Ref<Var>
-    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
+    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node);
 
     virtual Ref<Prop>
-    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
+    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node);
 
     const ParamList& params() const { return _params; }
 

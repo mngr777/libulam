@@ -85,7 +85,7 @@ public:
     // TODO: move out
     bool resolve(sema::Resolver& resolver);
 
-    // TODO: get name_id from symbol decl
+    // TODO: get name_id from symbol def
     void add_import(str_id_t name_id, const Export& exp);
 
 private:

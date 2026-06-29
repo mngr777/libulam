@@ -7,7 +7,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/nodes/type.hpp>
-#include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/ast/nodes/var_def.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <libulam/semantic/fun.hpp>
@@ -161,11 +161,11 @@ public:
     bool is_op() const { return op() != Op::None; }
 };
 
-class VarDef : public VarDecl {
+class VarDef : public VarDefBase {
     ULAM_AST_NODE
 public:
     VarDef(Str name, Ptr<ExprList>&& array_dims, Ptr<InitValue>&& init):
-        VarDecl{name, std::move(array_dims), std::move(init)} {}
+        VarDefBase{name, std::move(array_dims), std::move(init)} {}
     VarDef(Str name): VarDef{name, {}, {}} {}
 };
 

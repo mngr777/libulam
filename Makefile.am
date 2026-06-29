@@ -19,7 +19,7 @@ AST_HEADER_FILES = \
 	libulam/ast/nodes/stmt.hpp \
 	libulam/ast/nodes/stmts.hpp \
 	libulam/ast/nodes/type.hpp \
-	libulam/ast/nodes/var_decl.hpp \
+	libulam/ast/nodes/var_def.hpp \
 	libulam/ast/nodes.hpp \
 	libulam/ast/nodes.inc.hpp \
 	libulam/ast/str.hpp \
@@ -33,7 +33,7 @@ AST_SOURCE_FILES = \
 	src/ast/visitor.cpp
 
 SEMANTIC_HEADER_FILES = \
-	libulam/semantic/decl.hpp \
+	libulam/semantic/def.hpp \
 	libulam/semantic/export.hpp \
 	libulam/semantic/fun.hpp \
 	libulam/semantic/mangler.hpp \
@@ -95,7 +95,7 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/var/base.hpp
 
 SEMANTIC_SOURCE_FILES = \
-	src/semantic/decl.cpp \
+	src/semantic/def.cpp \
 	src/semantic/export.cpp \
 	src/semantic/fun.cpp \
 	src/semantic/number.cpp \

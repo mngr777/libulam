@@ -10,7 +10,7 @@
 
 namespace ulam::ast {
 
-class VarDecl : public Tuple<Stmt, ExprList, InitValue>,
+class VarDefBase : public Tuple<Stmt, ExprList, InitValue>,
                 public Named,
                 public DefNode {
     ULAM_AST_REF_ATTR(Var, var)
@@ -18,10 +18,11 @@ class VarDecl : public Tuple<Stmt, ExprList, InitValue>,
     ULAM_AST_SIMPLE_ATTR(bool, is_const, false)
     ULAM_AST_SIMPLE_ATTR(bool, is_parameter, false)
     ULAM_AST_SIMPLE_ATTR(bool, is_ref, false)
-public:
-    VarDecl(Str name, Ptr<ExprList>&& array_dims, Ptr<InitValue>&& init):
+protected:
+    VarDefBase(Str name, Ptr<ExprList>&& array_dims, Ptr<InitValue>&& init):
         Tuple{std::move(array_dims), std::move(init)}, Named{name} {}
 
+public:
     ULAM_AST_TUPLE_PROP(array_dims, 0)
     ULAM_AST_TUPLE_PROP(init, 1)
 };

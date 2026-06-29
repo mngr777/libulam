@@ -16,13 +16,13 @@ public:
     Var(TypedValue&& tv, flags_t flags = NoFlags);
 
     Var(Ref<ast::TypeName> type_node,
-        Ref<ast::VarDecl> node,
+        Ref<ast::VarDefBase> node,
         Ref<Type> type,
         Value&& val,
         flags_t flags = NoFlags);
 
     Var(Ref<ast::TypeName> type_node,
-        Ref<ast::VarDecl> node,
+        Ref<ast::VarDefBase> node,
         TypedValue&& tv,
         flags_t flags = NoFlags);
 

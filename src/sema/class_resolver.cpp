@@ -1,7 +1,7 @@
 #include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/resolver.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -10,19 +10,19 @@ namespace ulam::sema {
 
 bool ClassResolver::init() {
     switch (_cls.state()) {
-    case Decl::Initializing:
-    case Decl::Initialized:
-    case Decl::Resolved:
-    case Decl::Resolving:
+    case Def::Initializing:
+    case Def::Initialized:
+    case Def::Resolved:
+    case Def::Resolving:
         return true;
-    case Decl::Unresolvable:
+    case Def::Unresolvable:
         return false;
     default:
-        _cls.set_state(Decl::Initializing);
+        _cls.set_state(Def::Initializing);
     }
 
     bool ok = resolve_params() && init_ancestors();
-    _cls.set_state(ok ? Decl::Initialized : Decl::Unresolvable);
+    _cls.set_state(ok ? Def::Initialized : Def::Unresolvable);
     return ok;
 }
 
@@ -35,21 +35,21 @@ bool ClassResolver::do_resolve() {
         return false;
 
     switch (_cls.state()) {
-    case Decl::Resolved:
+    case Def::Resolved:
         return true;
-    case Decl::Resolving:
-        _cls.set_state(Decl::Unresolvable);
+    case Def::Resolving:
+        _cls.set_state(Def::Unresolvable);
         return false;
-    case Decl::Unresolvable:
+    case Def::Unresolvable:
         return false;
     default:
-        ulam_assert(_cls.state() == Decl::Initialized);
-        _cls.set_state(Decl::Resolving);
+        ulam_assert(_cls.state() == Def::Initialized);
+        _cls.set_state(Def::Resolving);
     }
 
     bool ok = resolve_ancestors() && resolve_props() && resolve_funs() &&
               check_bitsize();
-    _cls.set_state(ok ? Decl::Resolved : Decl::Unresolvable);
+    _cls.set_state(ok ? Def::Resolved : Def::Unresolvable);
     if (ok) {
         _cls.merge_fsets();
         _cls.init_layout();

@@ -1,7 +1,7 @@
 #pragma once
 #include <iterator>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/conv.hpp>
@@ -32,7 +32,7 @@ class Scope;
 class Type;
 class Var;
 
-class Fun : public Decl {
+class Fun : public Def {
     friend FunSet;
 
 public:
@@ -114,7 +114,7 @@ private:
     mutable std::string _mangled_name;
 };
 
-class FunSet : public Decl {
+class FunSet : public Def {
 private:
     // TODO: split refs/ptrs
     using FunList = std::list<RefPtr<Fun>>;

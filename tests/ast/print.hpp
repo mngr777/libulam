@@ -8,7 +8,7 @@
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/ast/nodes/type.hpp>
-#include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/ast/nodes/var_def.hpp>
 #include <libulam/ast/visitor.hpp>
 #include <ostream>
 
@@ -41,7 +41,7 @@ protected:
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void traverse(ulam::Ref<ulam::ast::Block> node) override;
 
-    void print_var_decl(ulam::Ref<ulam::ast::VarDecl> node);
+    void print_var_def(ulam::Ref<ulam::ast::VarDefBase> node);
     void print_array_dims(ulam::Ref<ulam::ast::ExprList> exprs);
     void traverse_with_indent(ulam::Ref<ulam::ast::Node> node);
 

@@ -1,58 +1,58 @@
 #include <libulam/assert.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/type/class.hpp>
 
 namespace ulam {
 
-bool Decl::has_module() const { return _module; }
+bool Def::has_module() const { return _module; }
 
-Ref<Module> Decl::module() const {
+Ref<Module> Def::module() const {
     ulam_assert(_module);
     return _module;
 }
 
-void Decl::set_module(Ref<Module> module) {
+void Def::set_module(Ref<Module> module) {
     ulam_assert(!_module);
     ulam_assert(module);
     _module = module;
 }
 
-bool Decl::has_cls() const { return _cls; }
+bool Def::has_cls() const { return _cls; }
 
-Ref<Class> Decl::cls() const {
+Ref<Class> Def::cls() const {
     ulam_assert(_cls);
     return _cls;
 }
 
-void Decl::set_cls(Ref<Class> cls) {
+void Def::set_cls(Ref<Class> cls) {
     ulam_assert(!_cls);
     ulam_assert(cls);
     _cls = cls;
     _module = cls->module();
 }
 
-bool Decl::has_cls_tpl() const { return _cls_tpl; }
+bool Def::has_cls_tpl() const { return _cls_tpl; }
 
-Ref<ClassTpl> Decl::cls_tpl() const {
+Ref<ClassTpl> Def::cls_tpl() const {
     ulam_assert(_cls_tpl);
     return _cls_tpl;
 }
 
-void Decl::set_cls_tpl(Ref<ClassTpl> cls_tpl) {
+void Def::set_cls_tpl(Ref<ClassTpl> cls_tpl) {
     ulam_assert(!_cls_tpl);
     _cls_tpl = cls_tpl;
 }
 
-bool Decl::has_scope_version() const {
+bool Def::has_scope_version() const {
     return _scope_version != NoScopeVersion;
 }
 
-scope_version_t Decl::scope_version() const {
+scope_version_t Def::scope_version() const {
     ulam_assert(has_scope_version());
     return _scope_version;
 }
 
-void Decl::set_scope_version(scope_version_t version) {
+void Def::set_scope_version(scope_version_t version) {
     ulam_assert(!has_scope_version());
     _scope_version = version;
 }

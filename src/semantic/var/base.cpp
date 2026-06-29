@@ -24,12 +24,12 @@ Ref<ast::TypeName> VarBase::type_node() {
 
 bool VarBase::has_node() const { return _node; }
 
-Ref<ast::VarDecl> VarBase::node() {
+Ref<ast::VarDefBase> VarBase::node() {
     ulam_assert(_node);
     return _node;
 }
 
-Ref<const ast::VarDecl> VarBase::node() const {
+Ref<const ast::VarDefBase> VarBase::node() const {
     ulam_assert(_node);
     return _node;
 }

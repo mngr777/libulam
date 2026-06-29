@@ -28,7 +28,7 @@ Ref<Var> ClassTpl::add_param(Ref<ast::Param> node) {
 }
 
 Ref<Var>
-ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+ClassTpl::add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) {
     auto var =
         make<Var>(type_node, node, Ref<Type>{}, Var::ClassParam | Var::Const);
     auto ref = ClassBase::add_param(std::move(var));
@@ -51,7 +51,7 @@ Ref<Fun> ClassTpl::add_fun(Ref<ast::FunDef> node) {
 }
 
 Ref<Var>
-ClassTpl::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+ClassTpl::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) {
     auto var = ClassBase::add_const(type_node, node);
     var->set_cls_tpl(this);
     var->set_flag(Var::Tpl);
@@ -60,7 +60,7 @@ ClassTpl::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 }
 
 Ref<Prop>
-ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+ClassTpl::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) {
     auto prop = ClassBase::add_prop(type_node, node);
     prop->set_cls_tpl(this);
     prop->set_flag(Var::Tpl);
@@ -98,21 +98,21 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
 
     // create other members
     for (auto& mem : _ordered_members) {
-        auto decl = mem.accept(
-            [&](Ref<AliasType> alias) -> Ref<Decl> {
+        auto def = mem.accept(
+            [&](Ref<AliasType> alias) -> Ref<Def> {
                 return cls->add_type_def(alias->node());
             },
-            [&](Ref<Var> var) -> Ref<Decl> {
+            [&](Ref<Var> var) -> Ref<Def> {
                 return cls->add_const(var->type_node(), var->node());
             },
-            [&](Ref<Prop> prop) -> Ref<Decl> {
+            [&](Ref<Prop> prop) -> Ref<Def> {
                 return cls->add_prop(prop->type_node(), prop->node());
             },
-            [&](Ref<Fun> fun) -> Ref<Decl> {
+            [&](Ref<Fun> fun) -> Ref<Def> {
                 return cls->add_fun(fun->node());
             },
-            [&](auto) -> Ref<Decl> { unreachable(); });
-        decl->set_cls_tpl(this);
+            [&](auto) -> Ref<Def> { unreachable(); });
+        def->set_cls_tpl(this);
     }
     return cls;
 }

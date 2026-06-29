@@ -3,7 +3,7 @@
 #include <forward_list>
 #include <functional>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/options.hpp>
@@ -44,7 +44,7 @@ public:
 
         bool current{false};
         bool local{false};
-        Decl* except{};
+        Def* except{};
     };
 
     Scope();
@@ -82,7 +82,7 @@ public:
 
     template <typename T> Symbol* set(str_id_t name_id, Ptr<T>&& value) {
         auto ref = ulam::ref(value);
-        _decls.push_front(std::move(value));
+        _defs.push_front(std::move(value));
         return do_set(name_id, Symbol{ref});
     }
     template <typename T> Symbol* set(str_id_t name_id, Ref<T> value) {
@@ -95,7 +95,7 @@ public:
 protected:
     virtual Symbol* do_set(str_id_t name_id, Symbol&& symbol) = 0;
 
-    std::forward_list<Ptr<Decl>> _decls;
+    std::forward_list<Ptr<Def>> _defs;
 };
 
 // ScopeBase
@@ -157,7 +157,7 @@ public:
  we cannot incrementally resolve class members by alterating between
  classes without skipping members.
 
- A scope version is associated with each scope object (`Decl`),
+ A scope version is associated with each scope object (`Def`),
  so a scope state at the point of definition can be later restored from any
  point, which allows to resolve dependencies recursively.
 */

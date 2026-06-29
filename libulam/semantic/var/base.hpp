@@ -1,18 +1,18 @@
 #pragma once
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/str_pool.hpp>
 
 namespace ulam::ast {
 class TypeName;
-class VarDecl;
+class VarDefBase;
 } // namespace ulam::ast
 
 namespace ulam {
 
-class VarBase : public Decl {
+class VarBase : public Def {
 public:
     using flags_t = std::uint8_t;
     static constexpr flags_t NoFlags = 0;
@@ -24,7 +24,7 @@ public:
 
     VarBase(
         Ref<ast::TypeName> type_node,
-        Ref<ast::VarDecl> node,
+        Ref<ast::VarDefBase> node,
         Ref<Type> type,
         flags_t flags = NoFlags):
         _type_node{type_node}, _node{node}, _type{type}, _flags{flags} {}
@@ -38,8 +38,8 @@ public:
     Ref<ast::TypeName> type_node();
 
     bool has_node() const;
-    Ref<ast::VarDecl> node();
-    Ref<const ast::VarDecl> node() const;
+    Ref<ast::VarDefBase> node();
+    Ref<const ast::VarDefBase> node() const;
 
     bool has_type() const;
     Ref<Type> type() const;
@@ -57,7 +57,7 @@ public:
 
 private:
     Ref<ast::TypeName> _type_node;
-    Ref<ast::VarDecl> _node;
+    Ref<ast::VarDefBase> _node;
     Ref<Type> _type{};
     flags_t _flags;
 };

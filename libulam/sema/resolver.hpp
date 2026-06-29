@@ -1,11 +1,11 @@
 #pragma once
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
-#include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/ast/nodes/var_def.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/helper.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -74,15 +74,15 @@ private:
 
     std::pair<ExprResList, bool> eval_args(Ref<ast::ArgList> args);
 
-    PersScopeView decl_scope_view(Ref<Decl> decl);
+    PersScopeView def_scope_view(Ref<Def> def);
 
     bool prepare_resolved_type(
         Ref<ast::TypeIdent> ident, Ref<Type> type, bool resolve_class = false);
     bool resolve_class_deps(Ref<Type> type);
 
-    Ref<Type> resolve_var_decl_type(
+    Ref<Type> resolve_var_def_type(
         Ref<ast::TypeName> type_name,
-        Ref<ast::VarDecl> node,
+        Ref<ast::VarDefBase> node,
         bool resolve_class = false);
 
     Ref<Type> resolve_fun_ret_type(Ref<ast::FunRetType> node);
@@ -92,8 +92,8 @@ private:
     Ref<Type> apply_array_dims(
         Ref<Type> type, Ref<ast::ExprList> dims, Ref<ast::InitValue> init);
 
-    std::optional<bool> check_state(Ref<Decl> decl);
-    void update_state(Ref<Decl> decl, bool is_resolved);
+    std::optional<bool> check_state(Ref<Def> def);
+    void update_state(Ref<Def> def, bool is_resolved);
 
     bool _in_expr;
     ClassSet _classes;

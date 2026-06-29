@@ -133,8 +133,8 @@ static const std::set<std::string> SkipAnswerCheck = {
     "t3985_test_compiler_stringasciiarray_variablelengthof.test", // tmp
     "t3993_test_compiler_longstringemptystring_lengthof.test", // .lengthof, similar to t3930
     "t3995_test_compiler_stringarray_assign_print.test", // -"-
-    "t41005_test_compiler_tmpvarnotdeclared_customarraygencode_issue.test", // unsigned value format
-    "t41006_test_compiler_tmpvarnotdeclared_lhsfunccallgencode.test", // -"-
+    "t41005_test_compiler_tmpvarnotdefared_customarraygencode_issue.test", // unsigned value format
+    "t41006_test_compiler_tmpvarnotdefared_lhsfunccallgencode.test", // -"-
     "t41007_test_compiler_addstubcopytoancestorclass_customarray_issue.test", // -"-
     "t41014_test_compiler_logicalorandprecedence_issue.test", // ULAM has same precedence for || and && ?
     "t41039_test_compiler_controlswitch_nonconstantcaseexpressions.test", // seems to require runtime values to work; z = 4 does happen, so ok to skip

@@ -2,9 +2,9 @@
 #include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/type.hpp>
-#include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/ast/nodes/var_def.hpp>
 #include <libulam/sema/resolver.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -138,7 +138,7 @@ Ref<Fun> Class::add_fun(Ref<ast::FunDef> node) {
 }
 
 Ref<Var>
-Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) {
     auto var = ClassBase::add_const(type_node, node);
     var->set_cls(this);
     _consts.push_back(var);
@@ -146,7 +146,7 @@ Class::add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
 }
 
 Ref<Prop>
-Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) {
+Class::add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) {
     auto prop = ClassBase::add_prop(type_node, node);
     prop->set_cls(this);
     _props.push_back(prop);

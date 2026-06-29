@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/conv.hpp>
@@ -201,10 +201,10 @@ using TypeList = std::list<Ref<Type>>;
 using TypeIdSet = std::set<type_id_t>;
 using TypeSet = std::set<Ref<Type>>;
 
-class UserType : public Type, public Decl {
+class UserType : public Type, public Def {
 public:
     UserType(Builtins& builtins, TypeIdGen* id_gen):
-        Type{builtins, id_gen}, Decl{} {}
+        Type{builtins, id_gen}, Def{} {}
 
     virtual str_id_t name_id() const = 0;
 };

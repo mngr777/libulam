@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type_tpl.hpp>
@@ -15,7 +15,7 @@ class ArgList;
 class ClassDef;
 class Param;
 class TypeName;
-class VarDecl;
+class VarDefBase;
 } // namespace ulam::ast
 
 namespace ulam::sema {
@@ -29,7 +29,7 @@ class Module;
 class Program;
 class Scope;
 
-class ClassTpl : public TypeTpl, public ClassBase, public Decl {
+class ClassTpl : public TypeTpl, public ClassBase, public Def {
     friend Class;
 
 public:
@@ -47,17 +47,17 @@ public:
 
     Ref<Var> add_param(Ref<ast::Param> node);
     Ref<Var>
-    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node);
+    add_param(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node);
 
     Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
 
     Ref<Fun> add_fun(Ref<ast::FunDef> node) override;
 
     Ref<Var>
-    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) override;
 
     Ref<Prop>
-    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) override;
 
     std::pair<Ref<Class>, bool> type(TypedValueList&& args);
 

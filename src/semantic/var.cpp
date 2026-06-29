@@ -11,7 +11,7 @@ Var::Var(TypedValue&& tv, flags_t flags): Var{{}, {}, std::move(tv), flags} {}
 
 Var::Var(
     Ref<ast::TypeName> type_node,
-    Ref<ast::VarDecl> node,
+    Ref<ast::VarDefBase> node,
     Ref<Type> type,
     Value&& val,
     flags_t flags):
@@ -19,7 +19,7 @@ Var::Var(
 
 Var::Var(
     Ref<ast::TypeName> type_node,
-    Ref<ast::VarDecl> node,
+    Ref<ast::VarDefBase> node,
     TypedValue&& tv,
     flags_t flags):
     Var{type_node, node, tv.type(), tv.move_value(), flags} {}

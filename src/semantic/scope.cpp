@@ -15,7 +15,7 @@ namespace ulam {
 namespace {
 
 bool is_excluded(const Scope::Symbol& sym, const Scope::GetParams& params) {
-    return sym.as_decl() == params.except;
+    return sym.as_def() == params.except;
 }
 
 } // namespace
@@ -249,7 +249,7 @@ const Scope::Symbol* PersScope::get(
 
 Scope::FindRes PersScope::find(str_id_t name_id, version_t version) {
     auto sym = _symbols.get(name_id);
-    bool is_final = sym && sym->as_decl()->scope_version() < version;
+    bool is_final = sym && sym->as_def()->scope_version() < version;
     return {sym, is_final};
 }
 
@@ -257,9 +257,9 @@ PersScope::version_t PersScope::version() const { return _changes.size(); }
 
 Scope::Symbol* PersScope::do_set(str_id_t name_id, Scope::Symbol&& symbol) {
     auto sym = ScopeBase::do_set(name_id, std::move(symbol));
-    auto decl = sym->as_decl();
-    ulam_assert(!decl->has_scope_version());
-    decl->set_scope_version(version());
+    auto def = sym->as_def();
+    ulam_assert(!def->has_scope_version());
+    def->set_scope_version(version());
     _changes.push_back(name_id);
     return sym;
 }

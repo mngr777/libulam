@@ -15,7 +15,7 @@ namespace ulam::ast {
 class ClassDef;
 class FunDef;
 class TypeName;
-class VarDecl;
+class VarDefBase;
 class VarDefList;
 } // namespace ulam::ast
 
@@ -61,9 +61,9 @@ public:
     Ref<AliasType> add_type_def(Ref<ast::TypeDef> node) override;
     Ref<Fun> add_fun(Ref<ast::FunDef> node) override;
     Ref<Var>
-    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    add_const(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) override;
     Ref<Prop>
-    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDecl> node) override;
+    add_prop(Ref<ast::TypeName> type_node, Ref<ast::VarDefBase> node) override;
 
     bool is_base_of(Ref<const Class> other) const;
     bool is_same_or_base_of(Ref<const Class> other) const;

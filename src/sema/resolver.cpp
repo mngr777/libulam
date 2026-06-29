@@ -18,24 +18,24 @@
 #endif
 #include "src/debug.hpp"
 
-#define CHECK_STATE(decl)                                                      \
+#define CHECK_STATE(def)                                                      \
     do {                                                                       \
-        auto is_resolved = check_state(decl);                                  \
+        auto is_resolved = check_state(def);                                  \
         if (is_resolved.has_value())                                           \
             return is_resolved.value();                                        \
     } while (false)
 
-#define RET_UPD_STATE(decl, is_resolved)                                       \
+#define RET_UPD_STATE(def, is_resolved)                                       \
     do {                                                                       \
-        update_state((decl), (is_resolved));                                   \
+        update_state((def), (is_resolved));                                   \
         return (is_resolved);                                                  \
     } while (false)
 
-#define DECL_SCOPE(decl, ssr, scope_view)                                      \
+#define DEF_SCOPE(def, ssr, scope_view)                                      \
     EvalEnv::ScopeSwitchRaii ssr;                                              \
     PersScopeView scope_view;                                                  \
-    if (!decl->is_local()) {                                                   \
-        scope_view = decl_scope_view(decl);                                    \
+    if (!def->is_local()) {                                                   \
+        scope_view = def_scope_view(def);                                    \
         ssr = env().scope_switch_raii(&scope_view);                            \
     }                                                                          \
     do {                                                                       \
@@ -95,7 +95,7 @@ bool Resolver::resolve(Ref<AliasType> alias) {
     auto type_expr = alias->node()->type_expr();
 
     // type
-    DECL_SCOPE(alias, ssr, scope_view);
+    DEF_SCOPE(alias, ssr, scope_view);
     Ref<Type> type = do_resolve_type_name(type_name, alias, false);
     if (!type)
         RET_UPD_STATE(alias, false);
@@ -119,11 +119,11 @@ bool Resolver::resolve(Ref<Var> var) {
     auto node = var->node();
     auto type_name = var->type_node();
 
-    DECL_SCOPE(var, ssr, scope_view);
+    DEF_SCOPE(var, ssr, scope_view);
 
     // type
     if (!var->has_type()) {
-        auto type = resolve_var_decl_type(type_name, node, true);
+        auto type = resolve_var_def_type(type_name, node, true);
         if (!var->is_local() && type->is_ref()) {
             if (var->has_cls()) {
                 diag().error(
@@ -171,10 +171,10 @@ bool Resolver::resolve(Ref<Var> var) {
 bool Resolver::resolve(Ref<Prop> prop) {
     CHECK_STATE(prop);
 
-    DECL_SCOPE(prop, ssr, scope_view);
+    DEF_SCOPE(prop, ssr, scope_view);
 
     // type
-    auto type = resolve_var_decl_type(prop->type_node(), prop->node(), true);
+    auto type = resolve_var_def_type(prop->type_node(), prop->node(), true);
     if (!type)
         RET_UPD_STATE(prop, false);
     // TODO: more type checks, e.g. for Void
@@ -195,7 +195,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
     if (prop->has_default_value())
         return true;
 
-    DECL_SCOPE(prop, ssr, scope_view);
+    DEF_SCOPE(prop, ssr, scope_view);
 
     auto fr = env().add_flags_raii(evl::Consteval);
     bool ok = env().init_prop(prop, prop->node()->init());
@@ -241,7 +241,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
     CHECK_STATE(fun);
     bool is_resolved = true;
 
-    DECL_SCOPE(fun, ssr, scope_view);
+    DEF_SCOPE(fun, ssr, scope_view);
 
     // return type
     if (fun->is_constructor()) {
@@ -259,7 +259,7 @@ bool Resolver::resolve(Ref<Fun> fun) {
 
     // params
     for (auto& param : fun->params()) {
-        auto type = resolve_var_decl_type(param->type_node(), param->node());
+        auto type = resolve_var_def_type(param->type_node(), param->node());
         if (!type) {
             is_resolved = false;
             continue;
@@ -573,18 +573,18 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     return size;
 }
 
-PersScopeView Resolver::decl_scope_view(Ref<Decl> decl) {
-    ulam_assert(!decl->is_local());
+PersScopeView Resolver::def_scope_view(Ref<Def> def) {
+    ulam_assert(!def->is_local());
     Ref<PersScope> scope{};
-    if (decl->has_cls()) {
+    if (def->has_cls()) {
         // TODO: params, fun params, ...
-        scope = decl->cls()->scope();
-    } else if (decl->has_module()) {
-        scope = decl->module()->scope();
+        scope = def->cls()->scope();
+    } else if (def->has_module()) {
+        scope = def->module()->scope();
     } else {
         unreachable();
     }
-    return scope->view(decl->scope_version());
+    return scope->view(def->scope_version());
 }
 
 bool Resolver::prepare_resolved_type(
@@ -616,8 +616,8 @@ bool Resolver::resolve_class_deps(Ref<Type> type) {
     return true;
 }
 
-Ref<Type> Resolver::resolve_var_decl_type(
-    Ref<ast::TypeName> type_name, Ref<ast::VarDecl> node, bool resolve_class) {
+Ref<Type> Resolver::resolve_var_def_type(
+    Ref<ast::TypeName> type_name, Ref<ast::VarDefBase> node, bool resolve_class) {
 
     // base type
     auto type = resolve_type_name(type_name, resolve_class);
@@ -880,19 +880,19 @@ std::pair<ExprResList, bool> Resolver::eval_args(Ref<ast::ArgList> args) {
     return res;
 }
 
-std::optional<bool> Resolver::check_state(Ref<Decl> obj) {
-    if (obj->state() == Decl::Resolved)
+std::optional<bool> Resolver::check_state(Ref<Def> obj) {
+    if (obj->state() == Def::Resolved)
         return true;
-    if (obj->state() == Decl::Resolving)
-        obj->set_state(Decl::Unresolvable);
-    if (obj->state() == Decl::Unresolvable)
+    if (obj->state() == Def::Resolving)
+        obj->set_state(Def::Unresolvable);
+    if (obj->state() == Def::Unresolvable)
         return false;
-    obj->set_state(Decl::Resolving);
+    obj->set_state(Def::Resolving);
     return {};
 }
 
-void Resolver::update_state(Ref<Decl> obj, bool is_resolved) {
-    obj->set_state(is_resolved ? Decl::Resolved : Decl::Unresolvable);
+void Resolver::update_state(Ref<Def> obj, bool is_resolved) {
+    obj->set_state(is_resolved ? Def::Resolved : Def::Unresolvable);
 }
 
 } // namespace ulam::sema

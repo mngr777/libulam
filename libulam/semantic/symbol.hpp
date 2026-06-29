@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
-#include <libulam/semantic/decl.hpp>
+#include <libulam/semantic/def.hpp>
 #include <libulam/semantic/fun.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type_tpl.hpp>
@@ -19,8 +19,8 @@ public:
     _Symbol(_Symbol&&) = default;
     _Symbol& operator=(_Symbol&&) = default;
 
-    Ref<Decl> as_decl() const {
-        return this->accept([](auto&& value) -> Ref<Decl> { return value; });
+    Ref<Def> as_def() const {
+        return this->accept([](auto&& value) -> Ref<Def> { return value; });
     }
 };
 

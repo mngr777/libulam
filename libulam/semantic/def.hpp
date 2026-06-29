@@ -8,7 +8,7 @@ class ClassTpl;
 class Class;
 class Module;
 
-class Decl {
+class Def {
 public:
     enum State {
         NotResolved,
@@ -19,8 +19,8 @@ public:
         Unresolvable
     };
 
-    Decl() {}
-    virtual ~Decl() {}
+    Def() {}
+    virtual ~Def() {}
 
     bool is_ready() const { return _state == Resolved; }
     bool is_resolving() const { return _state == Resolving; };

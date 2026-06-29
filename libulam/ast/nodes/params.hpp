@@ -4,13 +4,13 @@
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/stmt.hpp>
 #include <libulam/ast/nodes/type.hpp>
-#include <libulam/ast/nodes/var_decl.hpp>
+#include <libulam/ast/nodes/var_def.hpp>
 #include <libulam/ast/str.hpp>
 #include <libulam/src_loc.hpp>
 
 namespace ulam::ast {
 
-class Param : public Tuple<VarDecl, TypeName> {
+class Param : public Tuple<VarDefBase, TypeName> {
     ULAM_AST_NODE
 public:
     Param(
@@ -24,14 +24,14 @@ public:
 
     ULAM_AST_TUPLE_PROP(type_name, 0)
 
-    unsigned child_num() const override { return VarDecl::child_num() + 1; }
+    unsigned child_num() const override { return VarDefBase::child_num() + 1; }
 
     Ref<Node> child(unsigned n) override {
-        return (n == 0) ? Tuple::child(0) : VarDecl::child(n - 1);
+        return (n == 0) ? Tuple::child(0) : VarDefBase::child(n - 1);
     }
 
     Ref<const Node> child(unsigned n) const override {
-        return (n == 0) ? Tuple::child(0) : VarDecl::child(n - 1);
+        return (n == 0) ? Tuple::child(0) : VarDefBase::child(n - 1);
     }
 };
 
