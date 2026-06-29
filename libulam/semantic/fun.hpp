@@ -1,4 +1,5 @@
 #pragma once
+#include <forward_list>
 #include <iterator>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/def.hpp>
@@ -116,34 +117,10 @@ private:
 
 class FunSet : public Def {
 private:
-    // TODO: split refs/ptrs
-    using FunList = std::list<RefPtr<Fun>>;
+    using FunList = std::list<Ref<Fun>>;
 
 public:
     using Matches = std::unordered_set<Ref<Fun>>;
-
-    class Iter {
-        friend FunSet;
-
-    public:
-        using iterator_category = std::forward_iterator_tag;
-        using value_type = Ref<Fun>;
-        using pointer_type = Ref<Fun>;
-        using reference_type = Ref<Fun>;
-
-        Iter& operator++();
-
-        reference_type operator*();
-        pointer_type operator->();
-
-        bool operator==(const Iter& other);
-        bool operator!=(const Iter& other);
-
-    private:
-        explicit Iter(FunList::iterator it);
-
-        FunList::iterator _it;
-    };
 
     FunSet(str_id_t name_id = NoStrId);
 
@@ -159,8 +136,8 @@ public:
     void add(Ptr<Fun>&& fun);
     void add(Ref<Fun> fun);
 
-    Iter begin() { return Iter{_funs.begin()}; }
-    Iter end() { return Iter{_funs.end()}; }
+    auto begin() { return _funs.begin(); }
+    auto end() { return _funs.end(); }
 
     std::size_t size() const { return _funs.size(); }
     bool empty() const { return _funs.empty(); }
@@ -174,6 +151,7 @@ private:
 
     str_id_t _name_id;
     FunList _funs;
+    std::forward_list<Ptr<Fun>> _defs;
     std::optional<ParamTypeMap> _map;
 };
 

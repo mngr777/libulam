@@ -1,4 +1,3 @@
-#include "libulam/str_pool.hpp"
 #include <algorithm>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/ast/nodes/params.hpp>
@@ -10,6 +9,7 @@
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/var.hpp>
+#include <libulam/str_pool.hpp>
 
 #ifdef DEBUG_FUN
 #    define ULAM_DEBUG
@@ -191,22 +191,6 @@ std::string Fun::mangled_param_types() const {
     return key;
 }
 
-// FunSet::Iter
-
-FunSet::Iter::Iter(FunList::iterator it): _it{it} {}
-
-FunSet::Iter::reference_type FunSet::Iter::operator*() { return _it->ref(); }
-FunSet::Iter::pointer_type FunSet::Iter::operator->() { return _it->ref(); }
-
-bool FunSet::Iter::operator==(const Iter& other) { return _it == other._it; }
-
-bool FunSet::Iter::operator!=(const Iter& other) { return !operator==(other); }
-
-FunSet::Iter& FunSet::Iter::operator++() {
-    _it++;
-    return *this;
-}
-
 // FunSet
 
 FunSet::FunSet(str_id_t name_id): _name_id{name_id} {
@@ -234,7 +218,7 @@ FunSet::find_match(Ref<const Class> dyn_cls, const TypedValueRefList& args) {
 FunSet::Matches FunSet::find_match(const TypedValueRefList& args) {
     Matches matches;
     conv_cost_t min_conv_cost = MaxConvCost;
-    for (auto fun : *this) {
+    for (auto fun : _funs) {
         auto match_res = fun->match(args);
         switch (match_res.first) {
         case Fun::NoMatch:
@@ -256,7 +240,8 @@ FunSet::Matches FunSet::find_match(const TypedValueRefList& args) {
 }
 
 void FunSet::add(Ptr<Fun>&& fun) {
-    _funs.push_back(std::move(fun));
+    _funs.push_back(ref(fun));
+    _defs.push_front(std::move(fun));
     _map.reset();
 }
 
@@ -273,11 +258,8 @@ void FunSet::init_map(Diag& diag, UniqStrPool& str_pool) {
     // group funs by param types (hopefully one per group)
     using List = std::list<Ref<Fun>>;
     std::unordered_map<std::string, List> key_map;
-    for (auto& item : _funs) {
-        auto fun = item.ref();
+    for (auto fun : _funs) {
         auto key = fun->mangled_param_types();
-        // debug() << str_pool.get(fun->node()->name().str_id()) << " " << key
-        // << "\n";
         auto [it, _] = key_map.emplace(key, List{});
         it->second.push_back(fun);
     }
