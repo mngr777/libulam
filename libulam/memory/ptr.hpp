@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <utility>
-#include <variant>
 
 namespace ulam {
 
@@ -18,25 +17,6 @@ template <typename T, typename... Args> Ptr<T> make(Args&&... args) {
 
 template <typename T, typename... Args> SPtr<T> make_s(Args&&... args) {
     return std::make_shared<T>(std::forward<Args>(args)...);
-}
-
-template <typename... Ts> using Variant = std::variant<Ptr<Ts>...>;
-
-template <typename T, typename... Ts> bool is(const Variant<Ts...>& v) {
-    return std::holds_alternative<Ptr<T>>(v);
-}
-
-template <typename... Ts> using RefVariant = std::variant<Ref<Ts>...>;
-
-template <typename T, typename... Ts> bool is(const RefVariant<Ts...>& v) {
-    return std::holds_alternative<Ref<T>>(v);
-}
-
-template <typename T, typename... Ts> auto as_ref(Variant<Ts...>& v) {
-    return std::visit([](auto&& ptr) -> Ref<T> { return ref(ptr); }, v);
-}
-template <typename T, typename... Ts> auto as_ref(const Variant<Ts...>& v) {
-    return std::visit([](auto&& ptr) -> const Ref<T> { return ref(ptr); }, v);
 }
 
 } // namespace ulam
