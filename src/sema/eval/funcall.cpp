@@ -231,7 +231,7 @@ EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
             break;
         }
         auto& arg = *arg_it;
-        auto& param = *param_it;
+        auto param = *param_it;
         auto param_type = param->type();
 
         // binding rvalue or xvalue lvalue to const ref
@@ -240,7 +240,7 @@ EvalFuncall::cast_args(Ref<ast::Node> node, Ref<Fun> fun, ExprResList&& args) {
             param_type = param_type->deref(); // cast to non-ref type if casting
         }
 
-        arg = cast_arg(node, fun, ref(param), param_type, std::move(arg));
+        arg = cast_arg(node, fun, param, param_type, std::move(arg));
         ulam_assert(arg);
     }
     return std::move(args);

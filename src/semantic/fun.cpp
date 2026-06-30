@@ -73,8 +73,8 @@ void Fun::add_param(Ref<ast::Param> node) {
     auto param = make<Var>(node->type_name(), node, Ref<Type>{}, flags);
     ulam_assert(params_node());
     ulam_assert(_params.size() < params_node()->child_num());
-    _param_scope->set(param->name_id(), ref(param));
-    _params.push_back(std::move(param));
+    _params.push_back(ref(param));
+    _param_scope->set(param->name_id(), std::move(param));
 }
 
 unsigned Fun::min_param_num() const {

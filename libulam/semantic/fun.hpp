@@ -37,7 +37,7 @@ class Fun : public Def {
     friend FunSet;
 
 public:
-    using Params = std::list<Ptr<Var>>; // TODO: add list of refs
+    using Params = std::list<Ref<Var>>;
     enum MatchStatus { NoMatch, IsMatch, ExactMatch };
     using MatchRes = std::pair<MatchStatus, conv_cost_t>;
 
