@@ -18,24 +18,24 @@
 #endif
 #include "src/debug.hpp"
 
-#define CHECK_STATE(def)                                                      \
+#define CHECK_STATE(def)                                                       \
     do {                                                                       \
-        auto is_resolved = check_state(def);                                  \
+        auto is_resolved = check_state(def);                                   \
         if (is_resolved.has_value())                                           \
             return is_resolved.value();                                        \
     } while (false)
 
-#define RET_UPD_STATE(def, is_resolved)                                       \
+#define RET_UPD_STATE(def, is_resolved)                                        \
     do {                                                                       \
-        update_state((def), (is_resolved));                                   \
+        update_state((def), (is_resolved));                                    \
         return (is_resolved);                                                  \
     } while (false)
 
-#define DEF_SCOPE(def, ssr, scope_view)                                      \
+#define DEF_SCOPE(def, ssr, scope_view)                                        \
     EvalEnv::ScopeSwitchRaii ssr;                                              \
     PersScopeView scope_view;                                                  \
-    if (!def->is_local()) {                                                   \
-        scope_view = def_scope_view(def);                                    \
+    if (!def->is_local()) {                                                    \
+        scope_view = def_scope_view(def);                                      \
         ssr = env().scope_switch_raii(&scope_view);                            \
     }                                                                          \
     do {                                                                       \
@@ -617,7 +617,9 @@ bool Resolver::resolve_class_deps(Ref<Type> type) {
 }
 
 Ref<Type> Resolver::resolve_var_def_type(
-    Ref<ast::TypeName> type_name, Ref<ast::VarDefBase> node, bool resolve_class) {
+    Ref<ast::TypeName> type_name,
+    Ref<ast::VarDefBase> node,
+    bool resolve_class) {
 
     // base type
     auto type = resolve_type_name(type_name, resolve_class);
