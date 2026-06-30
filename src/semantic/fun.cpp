@@ -66,19 +66,15 @@ bool Fun::is_native() const { return _node->is_native(); }
 
 bool Fun::has_ellipsis() const { return _node->params()->has_ellipsis(); }
 
-void Fun::add_param(Ptr<Var>&& param) {
-    ulam_assert(params_node());
-    ulam_assert(_params.size() < params_node()->child_num());
-    _param_scope->set(param->name_id(), ref(param));
-    _params.push_back(std::move(param));
-}
-
 void Fun::add_param(Ref<ast::Param> node) {
     auto flags = Var::FunParam;
     if (node->is_const())
         flags |= Var::Const;
     auto param = make<Var>(node->type_name(), node, Ref<Type>{}, flags);
-    add_param(std::move(param));
+    ulam_assert(params_node());
+    ulam_assert(_params.size() < params_node()->child_num());
+    _param_scope->set(param->name_id(), ref(param));
+    _params.push_back(std::move(param));
 }
 
 unsigned Fun::min_param_num() const {

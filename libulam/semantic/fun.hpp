@@ -76,7 +76,7 @@ public:
 
     Params& params() { return _params; }
     const Params& param() const { return _params; }
-    void add_param(Ptr<Var>&& param); // TODO: remove
+
     void add_param(Ref<ast::Param> node);
 
     unsigned min_param_num() const;
