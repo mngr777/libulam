@@ -1,5 +1,4 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -198,12 +197,15 @@ ExprRes EvalExprVisitor::visit(Ref<ast::NumLit> node) {
     RValue rval{};
     if (number.is_signed()) {
         // Int(n)
-        type = builtins().int_type(number.bitsize());
-        rval = RValue{number.value<Integer>(), true};
+        auto int_type = builtins().int_type(number.bitsize());
+        type = int_type;
+        rval = int_type->construct(number.value<Integer>(), value::IsConsteval);
     } else {
         // Unsigned(n)
-        type = builtins().unsigned_type(number.bitsize());
-        rval = RValue{number.value<Unsigned>(), true};
+        auto uns_type = builtins().unsigned_type(number.bitsize());
+        type = uns_type;
+        rval =
+            uns_type->construct(number.value<Unsigned>(), value::IsConsteval);
     }
     return check(node, {type, Value{std::move(rval)}});
 }
@@ -211,7 +213,8 @@ ExprRes EvalExprVisitor::visit(Ref<ast::NumLit> node) {
 ExprRes EvalExprVisitor::visit(Ref<ast::StrLit> node) {
     debug() << __FUNCTION__ << " StrLit\n" << line_at(node);
     auto type = builtins().type(StringId);
-    return check(node, ExprRes{type, Value{RValue{node->value(), true}}});
+    auto val = Value::make_r(node->value(), value::IsConsteval);
+    return check(node, ExprRes{type, std::move(val)});
 }
 
 ExprRes EvalExprVisitor::visit(Ref<ast::FunCall> node) {
@@ -372,7 +375,9 @@ bool EvalExprVisitor::check_is_assignable(
         diag().error(node, "cannot assign to rvalue");
         return false;
     }
-    if (value.lvalue().is_xvalue()) {
+    // TODO: check if const
+    const LValue& lval = value.lvalue();
+    if (lval.is_xvalue()) {
         diag().error(node, "cannot assign to xvalue");
         return false;
     }
@@ -818,14 +823,16 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ClassName> node) {
 ExprRes EvalExprVisitor::class_name(Ref<ast::ClassName> node, Ref<Class> cls) {
     ulam_assert(cls);
     auto str_id = utils::class_name_id(program(), cls, node->kind());
-    RValue rval{String{str_id}, true};
+    auto rval = RValue::make(String{str_id}, value::IsConsteval);
     return {builtins().string_type(), Value{std::move(rval)}};
 }
 
 ExprResPair
 EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
     auto fr = env().flags_raii(flags() | evl::NoExec);
-    return {node->if_true()->accept(*this), node->if_false()->accept(*this)};
+    auto if_true = node->if_true();
+    auto if_false = node->if_false();
+    return {if_true->accept(*this), if_false->accept(*this)};
 }
 
 ExprRes EvalExprVisitor::ternary_eval(
@@ -1086,15 +1093,15 @@ ExprRes EvalExprVisitor::array_access_string(
     }
 
     auto int_idx = idx.value().copy_rvalue().get<Integer>();
-    auto type = builtins().string_type();
-    auto len = type->len(obj.value());
+    auto str_type = builtins().string_type();
+    auto len = str_type->len(obj.value());
     if (int_idx < 0 || int_idx + 1 > len) {
         diag().error(node->index(), "char index is out of range");
         return {ExprError::CharIndexOutOfRange};
     }
-    auto chr = type->chr(obj.value(), int_idx);
-    bool is_consteval = obj.value().is_consteval();
-    return {char_type, Value{RValue{(Unsigned)chr, is_consteval}}};
+    auto chr = str_type->chr(obj.value(), int_idx);
+    value::flags_t rval_flags = value::IsConsteval * obj.value().is_consteval();
+    return {char_type, Value{char_type->construct((Unsigned)chr, rval_flags)}};
 }
 
 ExprRes EvalExprVisitor::array_access_array(
@@ -1161,10 +1168,10 @@ ExprRes EvalExprVisitor::class_const_access(
     auto resolver = env().resolver(true);
     if (!var->has_type() && !resolver.resolve(var))
         return {ExprError::UnresolvableVar};
-    LValue lval{var};
+    auto lval = LValue::make(var);
     lval.set_is_xvalue(false);
     lval.set_scope_lvl(NoScopeLvl);
-    return {var->type(), Value{LValue{var}}};
+    return {var->type(), Value{lval}};
 }
 
 ExprRes EvalExprVisitor::bind(

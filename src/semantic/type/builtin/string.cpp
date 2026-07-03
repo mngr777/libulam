@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/string.hpp>
@@ -28,23 +29,24 @@ TypedValue StringType::type_op(TypeOp op, Value& val) {
     case TypeOp::LengthOf: {
         auto type = builtins().unsigned_type();
         if (!val.has_rvalue())
-            return {type, Value{RValue{}}};
+            return {type, Value::make_r_ph()};
         str_len_t len_ = len(val);
         ulam_assert(len_ != NoStrLen);
-        return {type, Value{RValue{(Unsigned)len_, true}}};
+        auto rval = type->construct((Unsigned)len_, value::IsConsteval);
+        return {type, Value{std::move(rval)}};
     }
     default:
         return Type::type_op(op, val);
     }
 }
 
-RValue StringType::construct() {
+RValue StringType::construct_default(value::flags_t rval_flags) {
     ulam_assert(_text_pool.has(""));
-    return RValue{String{_text_pool.id("")}};
+    return RValue::make(String{_text_pool.id("")}, rval_flags);
 }
 
 RValue StringType::from_datum(Datum datum) {
-    return RValue{String{(str_id_t)datum}};
+    return RValue::make(String{(str_id_t)datum});
 }
 
 Datum StringType::to_datum(const RValue& rval) {
@@ -87,23 +89,20 @@ TypedValue StringType::binary_op(
 
     bool is_consteval =
         !is_unknown && l_rval.is_consteval() && r_rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        auto rval = type->construct(l_str == r_str);
-        rval.set_is_consteval(is_consteval);
-        return {type, Value{std::move(rval)}};
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_str == r_str, rval_flags)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        auto rval = type->construct(l_str != r_str);
-        rval.set_is_consteval(is_consteval);
-        return {type, Value{std::move(rval)}};
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_str != r_str, rval_flags)}};
     }
     default:
         unreachable();
@@ -138,16 +137,15 @@ TypedValue StringType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
 
     bool is_unknown = !rval.has_rvalue();
     bool is_consteval = !is_unknown && rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     switch (id) {
     case BoolId: {
-        auto boolean = builtins().boolean();
+        auto type = builtins().boolean();
         if (is_unknown)
-            return {boolean, Value{RValue{}}};
+            return {type, Value::make_r_ph()};
         bool is_empty = len(Value{rval.copy()}) == 0;
-        auto new_rval = boolean->construct(!is_empty);
-        new_rval.set_is_consteval(is_consteval);
-        return {boolean, Value{std::move(new_rval)}};
+        return {type, Value{type->construct(!is_empty, rval_flags)}};
     }
     default:
         unreachable();
@@ -160,14 +158,13 @@ RValue StringType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
         return std::move(rval);
 
     bool is_consteval = rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     switch (type->bi_type_id()) {
     case BoolId: {
         auto boolean = builtins().bool_type(type->bitsize());
         bool is_empty = len(Value{rval.copy()}) == 0;
-        auto new_rval = boolean->construct(!is_empty);
-        new_rval.set_is_consteval(is_consteval);
-        return new_rval;
+        return boolean->construct(!is_empty, rval_flags);
     }
     default:
         unreachable();

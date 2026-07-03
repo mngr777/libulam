@@ -1,4 +1,5 @@
 #include "libulam/sema/eval/flags.hpp"
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
@@ -70,7 +71,7 @@ void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
     var_init_common(var, in_expr);
     auto type = var->type();
     auto rval = (!has_flag(evl::NoExec) || var->is_const())
-                    ? type->construct()
+                    ? type->construct_default()
                     : type->construct_ph();
     var->set_value(Value{std::move(rval)});
 }
@@ -88,7 +89,7 @@ void EvalInit::prop_init_expr(Ref<Prop> prop, ExprRes&& init) {
 
 void EvalInit::prop_init_default(Ref<Prop> prop) {
     prop_init_common(prop);
-    prop->set_default_value(prop->type()->construct());
+    prop->set_default_value(prop->type()->construct_default());
 }
 
 void EvalInit::prop_init_common(Ref<Prop> prop) {
@@ -311,9 +312,9 @@ ExprRes EvalInit::eval_array_list_item(
 
 ExprRes EvalInit::make_array(
     Ref<VarBase> var, Ref<ArrayType> array_type, LValue default_lval) {
-    auto rval = (!default_lval.empty()) ? default_lval.rvalue()
-                                        : array_type->construct();
-    rval.set_is_consteval(true);
+    auto rval = (!default_lval.empty())
+                    ? default_lval.rvalue()
+                    : array_type->construct_default(value::IsConsteval);
     return {array_type, Value{std::move(rval)}};
 }
 
@@ -336,9 +337,9 @@ ExprRes EvalInit::array_set(
 
 ExprRes
 EvalInit::make_obj(Ref<VarBase> var, Ref<Class> cls, LValue default_lval) {
-    RValue rval =
-        (!default_lval.empty()) ? default_lval.rvalue() : cls->construct();
-    rval.set_is_consteval(true);
+    RValue rval = (!default_lval.empty())
+                      ? default_lval.rvalue()
+                      : cls->construct_default(value::IsConsteval);
     return {cls, Value{std::move(rval)}};
 }
 
@@ -347,11 +348,8 @@ ExprRes EvalInit::construct_obj(
     Ref<Class> cls,
     Ref<ast::InitList> arg_list,
     ExprResList&& args) {
-    if (args.size() == 0) {
-        RValue rval = cls->construct();
-        rval.set_is_consteval(true);
-        return {cls, Value{std::move(rval)}};
-    }
+    if (args.size() == 0)
+        return {cls, Value{cls->construct_default(value::IsConsteval)}};
     return env().construct(arg_list, cls, std::move(args));
 }
 

@@ -6,6 +6,7 @@
 #include "./flags.hpp"
 #include "./stringifier.hpp"
 #include "./util.hpp"
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
@@ -681,8 +682,10 @@ ExprRes EvalExprVisitor::class_name_mangled(
     ulam::Ref<ulam::ast::ClassName> node, ulam::Ref<ulam::Class> cls) {
     auto name = ::class_name_mangled(program(), cls);
     auto str_id = text_pool().put(name);
-    ulam::RValue rval{ulam::String{str_id}, true};
-    return {builtins().string_type(), ulam::Value{std::move(rval)}};
+    auto str_type = builtins().string_type();
+    auto rval =
+        ulam::RValue::make(ulam::String{str_id}, ulam::value::IsConsteval);
+    return {str_type, ulam::Value{std::move(rval)}};
 }
 
 ulam::Ref<ulam::Class> EvalExprVisitor::class_base_ident(

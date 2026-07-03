@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
@@ -90,9 +91,9 @@ public:
     Ref<Prop> first_prop_over_max_bitsize();
 
     bool is_constructible() const override { return true; }
-    RValue construct() override;
-    RValue construct(Bits&& bits);
-    RValue construct_ph() override;
+    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct(Bits&& bits, value::flags_t rval_flags = value::NoFlags);
+    RValue construct_ph(value::flags_t rval_flags = value::NoFlags) override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;

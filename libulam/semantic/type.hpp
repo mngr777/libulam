@@ -7,6 +7,7 @@
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value/bits.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/str_pool.hpp>
 #include <list>
@@ -68,13 +69,14 @@ public:
     virtual bitsize_t bitsize() const = 0;
 
     virtual bool is_constructible() const { return false; }
-    virtual RValue construct();
-    virtual RValue construct_ph();
+    virtual RValue construct_default(value::flags_t rval_flags = value::NoFlags);
+    virtual RValue construct_ph(value::flags_t rval_flags = value::NoFlags);
 
-    RValue load(const Bits& data, bitsize_t off);
+    RValue load(const Bits& data, bitsize_t off /* rval_flags ?? */);
     void store(Bits& data, bitsize_t off, const RValue& rval);
 
-    virtual RValue load(const BitsView data, bitsize_t off) = 0;
+    virtual RValue
+    load(const BitsView data, bitsize_t off /* rval_flags ?? */) = 0;
     virtual void store(BitsView data, bitsize_t off, const RValue& rval) = 0;
 
     // canonical non-reference type, type of value
@@ -227,8 +229,8 @@ public:
     bitsize_t bitsize() const override;
 
     bool is_constructible() const override;
-    RValue construct() override;
-    RValue construct_ph() override;
+    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct_ph(value::flags_t rval_flags = value::NoFlags) override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
@@ -320,8 +322,8 @@ public:
     bitsize_t bitsize() const override;
 
     bool is_constructible() const override { return true; }
-    RValue construct() override;
-    RValue construct_ph() override;
+    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct_ph(value::flags_t rval_flags = value::NoFlags) override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;

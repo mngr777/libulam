@@ -1,4 +1,4 @@
-#include <libulam/assert.hpp>
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>
@@ -17,11 +17,11 @@ namespace ulam {
 
 Type::~Type() {}
 
-RValue Type::construct() { unreachable(); }
+RValue Type::construct_default(value::flags_t rval_flags) { unreachable(); }
 
-RValue Type::construct_ph() {
+RValue Type::construct_ph(value::flags_t rval_flags) {
     ulam_assert(is_constructible());
-    return RValue{};
+    return RValue::make_ph(rval_flags);
 }
 
 RValue Type::load(const Bits& data, bitsize_t off) {
@@ -105,20 +105,19 @@ TypedValue Type::type_op(TypeOp op) {
     case TypeOp::SizeOf: {
         return TypedValue{
             builtins().type(UnsignedId),
-            Value{RValue{(Unsigned)bitsize(), true}}};
+            Value::make_r((Unsigned)bitsize(), value::IsConsteval)};
     }
     case TypeOp::ConstantOf:
         // TODO: store constant in Program?
     case TypeOp::InstanceOf: {
         if (!is_constructible())
             return {};
-        auto rval = construct();
-        rval.set_is_consteval(true);
-        return {this, Value{std::move(rval)}};
+        return {this, Value{construct_default(value::IsConsteval)}};
     }
     case TypeOp::ClassIdOf: {
         Unsigned id = is_class() ? as_class()->id() : NoTypeId;
-        return TypedValue{builtins().type(UnsignedId), Value{RValue{id, true}}};
+        auto type = builtins().type(UnsignedId);
+        return {type, Value::make_r(id, value::IsConsteval)};
     }
     default:
         return {};
@@ -132,7 +131,7 @@ TypedValue Type::type_op(TypeOp op, Value& val) {
         auto type = builtins().atom_type()->ref_type();
         if (val.empty()) {
             lval.set_is_xvalue(false);
-            return {type, Value{std::move(lval)}};
+            return {type, Value{lval}};
         }
         lval = val.atom_of();
         if (lval.empty())
@@ -143,12 +142,11 @@ TypedValue Type::type_op(TypeOp op, Value& val) {
     case TypeOp::PositionOf: {
         auto uns_type = builtins().unsigned_type();
         if (val.empty()) // TODO: error
-            return {uns_type, Value{RValue{}}};
+            return {uns_type, Value::make_r_ph()};
         auto pos = val.position_of();
         if (pos == NoBitsize)
             return {};
-        RValue rval{(Unsigned)pos, true};
-        return {uns_type, Value{std::move(rval)}};
+        return {uns_type, Value::make_r((Unsigned)pos, value::IsConsteval)};
     }
     default:
         return type_op(op);
@@ -303,9 +301,13 @@ bool AliasType::is_constructible() const {
     return non_alias()->is_constructible();
 }
 
-RValue AliasType::construct() { return non_alias()->construct(); }
+RValue AliasType::construct_default(value::flags_t rval_flags) {
+    return non_alias()->construct_default(rval_flags);
+}
 
-RValue AliasType::construct_ph() { return non_alias()->construct_ph(); }
+RValue AliasType::construct_ph(value::flags_t rval_flags) {
+    return non_alias()->construct_ph(rval_flags);
+}
 
 RValue AliasType::load(const BitsView data, bitsize_t off) {
     return non_alias()->load(data, off);
@@ -431,23 +433,25 @@ bitsize_t ArrayType::bitsize() const {
     return _array_size * _item_type->bitsize();
 }
 
-RValue ArrayType::construct() {
+RValue ArrayType::construct_default(value::flags_t rval_flags) {
     auto data = make_s<Data>(this);
     RValue rval;
     if (array_size() > 0)
-        rval = item_type()->construct();
+        rval = item_type()->construct_default(value::NoFlags);
     bitsize_t off = 0;
     for (array_idx_t idx = 0; idx < array_size(); ++idx) {
         item_type()->store(data->bits(), off, rval);
         off += item_type()->bitsize();
     }
-    return RValue{data};
+    return RValue::make(data, rval_flags);
 }
 
-RValue ArrayType::construct_ph() { return RValue{make_s<Data>(this, true)}; }
+RValue ArrayType::construct_ph(value::flags_t rval_flags) {
+    return RValue::make(make_s<Data>(this, true), rval_flags);
+}
 
 RValue ArrayType::load(const BitsView data, bitsize_t off) {
-    auto rval = construct();
+    auto rval = construct_default();
     if (bitsize() > 0)
         rval.data_view().bits().write(0, data.view(off, bitsize()));
     return rval;
@@ -463,8 +467,8 @@ TypedValue ArrayType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::LengthOf: {
         auto type = builtins().unsigned_type();
-        RValue rval{(Unsigned)array_size(), true};
-        return {type, Value{std::move(rval)}};
+        auto val = Value::make_r((Unsigned)array_size(), value::IsConsteval);
+        return {type, std::move(val)};
     }
     default:
         return Type::type_op(op);
@@ -482,7 +486,7 @@ bool ArrayType::is_castable_to(
         return false;
 
     ulam_assert(!array_type->item_type()->is_same(item_type()));
-    return (item_type()->is_castable_to(array_type->item_type(), expl));
+    return item_type()->is_castable_to(array_type->item_type(), expl);
 }
 
 Value ArrayType::cast_to(Ref<Type> type, Value&& val) {
@@ -493,7 +497,7 @@ Value ArrayType::cast_to(Ref<Type> type, Value&& val) {
     ulam_assert(array_type->array_size() == array_size());
     ulam_assert(!array_type->item_type()->is_same(item_type()));
 
-    auto rval = type->construct();
+    auto rval = type->construct_default(); // flags ??
     rval.set_is_consteval(val.is_consteval());
     for (array_idx_t i = 0; i < array_size(); ++i) {
         auto item_lval = rval.array_access(i, true);
@@ -554,9 +558,7 @@ bitsize_t RefType::bitsize() const {
     return _refd->bitsize();
 }
 
-RValue RefType::load(const BitsView data, bitsize_t off) {
-    unreachable();
-}
+RValue RefType::load(const BitsView data, bitsize_t off) { unreachable(); }
 
 void RefType::store(BitsView data, bitsize_t off, const RValue& rval) {
     unreachable();
@@ -611,9 +613,7 @@ Value RefType::cast_to(Ref<Type> type, Value&& val) {
     return Value{val.lvalue().as(type)};
 }
 
-Ptr<ArrayType> RefType::make_array_type(array_size_t size) {
-    unreachable();
-}
+Ptr<ArrayType> RefType::make_array_type(array_size_t size) { unreachable(); }
 
 Ptr<RefType> RefType::make_ref_type() { unreachable(); }
 

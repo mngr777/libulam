@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
@@ -17,29 +18,27 @@ Unsigned UnaryType::unsigned_value(const RValue& rval) {
 
 TypedValue UnaryType::type_op(TypeOp op) {
     switch (op) {
-    case TypeOp::MinOf: {
-        auto rval = construct(0);
-        rval.set_is_consteval(true);
-        return {this, Value{std::move(rval)}};
-    }
-    case TypeOp::MaxOf: {
-        auto rval = construct(bitsize());
-        rval.set_is_consteval(true);
-        return {this, Value{std::move(rval)}};
-    }
+    case TypeOp::MinOf:
+        return {this, Value{construct(0, value::IsConsteval)}};
+    case TypeOp::MaxOf:
+        return {this, Value{construct(bitsize(), value::IsConsteval)}};
     default:
         return _PrimType::type_op(op);
     }
 }
 
-RValue UnaryType::construct() { return construct(0); }
-
-RValue UnaryType::construct(Unsigned uns_val) {
-    ulam_assert(uns_val <= bitsize());
-    return RValue{utils::ones(uns_val)};
+RValue UnaryType::construct_default(value::flags_t rval_flags) {
+    return construct(0, rval_flags);
 }
 
-RValue UnaryType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
+RValue UnaryType::construct(Unsigned uns_val, value::flags_t rval_flags) {
+    ulam_assert(uns_val <= bitsize());
+    return RValue::make(utils::ones(uns_val), rval_flags);
+}
+
+RValue UnaryType::from_datum(Datum datum) {
+    return RValue::make((Unsigned)datum);
+}
 
 Datum UnaryType::to_datum(const RValue& rval) {
     ulam_assert(rval.is<Unsigned>());
@@ -52,13 +51,14 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
 
     bool is_consteval = rval.is_consteval();
     Unsigned uns_val = unsigned_value(rval);
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
+
     switch (op) {
     case Op::UnaryMinus: {
         bitsize_t size = utils::bitsize(uns_val);
         ulam_assert(size <= IntType::DefaultSize);
-        return {
-            builtins().int_type(size),
-            Value{RValue{(-(Integer)uns_val), is_consteval}}};
+        auto type = builtins().int_type(size);
+        return {type, Value{type->construct(-(Integer)uns_val, rval_flags)}};
     }
     case Op::UnaryPlus:
         break;
@@ -77,7 +77,7 @@ TypedValue UnaryType::unary_op(Op op, RValue&& rval) {
     default:
         unreachable();
     }
-    return {this, Value{RValue(utils::ones(uns_val), is_consteval)}};
+    return {this, Value::make_r(utils::ones(uns_val), rval_flags)};
 }
 
 TypedValue UnaryType::binary_op(
@@ -90,27 +90,25 @@ TypedValue UnaryType::binary_op(
 
     Unsigned l_uns = l_rval.has_rvalue() ? unsigned_value(l_rval) : 0;
     auto r_unary_type = builtins().unary_type(r_type->bitsize());
-    Unsigned r_uns = r_rval.has_rvalue() ? r_unary_type->unsigned_value(r_rval) : 0;
+    Unsigned r_uns =
+        r_rval.has_rvalue() ? r_unary_type->unsigned_value(r_rval) : 0;
 
     bool is_consteval =
         !is_unknown && l_rval.is_consteval() && r_rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        auto rval = type->construct(l_uns == r_uns);
-        rval.set_is_consteval(is_consteval);
-        return {type, Value{std::move(rval)}};
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns == r_uns, rval_flags)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return {type, Value{RValue{}}};
-        auto rval = type->construct(l_uns != r_uns);
-        rval.set_is_consteval(is_consteval);
-        return {type, Value{std::move(rval)}};
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns != r_uns, rval_flags)}};
     }
     default:
         unreachable();
@@ -170,6 +168,7 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     bool is_unknown = !rval.has_rvalue();
     bool is_consteval = rval.is_consteval();
     auto uns_val = is_unknown ? 0 : unsigned_value(rval);
+    value::flags_t rval_flags = value::IsConsteval;
 
     switch (id) {
     case IntId: {
@@ -177,32 +176,34 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         if (is_consteval) {
             auto size = utils::bitsize(int_val);
             auto type = builtins().int_type(size);
-            return {type, Value{RValue{int_val, true}}};
+            return {type, Value{type->construct(int_val, rval_flags)}};
         } else {
             auto size = utils::bitsize((Integer)bitsize());
             auto type = builtins().int_type(size);
-            return {type, Value{!is_unknown ? RValue{int_val} : RValue{}}};
+            if (is_unknown)
+                return {type, Value::make_r_ph()};
+            return {type, Value{type->construct(int_val, rval_flags)}};
         }
     }
     case UnsignedId: {
         if (is_consteval) {
             auto size = utils::bitsize(uns_val);
             auto type = builtins().unsigned_type(size);
-            return {type, Value{RValue{uns_val, true}}};
+            return {type, Value{type->construct(uns_val, rval_flags)}};
         } else {
             auto size = utils::bitsize((Unsigned)bitsize());
             auto type = builtins().unsigned_type(size);
-            return {type, Value{!is_unknown ? RValue{uns_val} : RValue{}}};
+            if (is_unknown)
+                return {type, Value::make_r_ph()};
+            return {type, Value{type->construct(uns_val, rval_flags)}};
         }
     }
     case BoolId: {
         ulam_assert(bitsize() == 1);
-        auto boolean = builtins().boolean();
+        auto type = builtins().boolean();
         if (is_unknown)
-            return {boolean, Value{RValue{}}};
-        auto rval = boolean->construct(uns_val > 0);
-        rval.set_is_consteval(is_consteval);
-        return {boolean, Value{std::move(rval)}};
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(uns_val > 0, rval_flags)}};
     }
     case UnaryId: {
         unreachable();
@@ -213,9 +214,9 @@ TypedValue UnaryType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         auto type = builtins().prim_type(BitsId, size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        Bits val{size};
-        store(val.view(), 0, rval);
-        return {type, Value{RValue{std::move(val), is_consteval}}};
+        Bits bits_val{size};
+        store(bits_val.view(), 0, rval);
+        return {type, Value::make_r(std::move(bits_val), rval_flags)};
     }
     default:
         unreachable();
@@ -229,35 +230,33 @@ RValue UnaryType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
 
     auto unary_type = builtins().unary_type(type->bitsize());
     Unsigned uns_val = unary_type->unsigned_value(rval);
-    bool is_consteval = rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * rval.is_consteval();
+
     switch (type->bi_type_id()) {
     case IntId: {
         Unsigned int_max = utils::integer_max(type->bitsize());
-        Integer val = std::min(int_max, uns_val);
-        return RValue{val, is_consteval};
+        Integer int_val = std::min(int_max, uns_val);
+        return RValue::make(int_val, rval_flags);
     }
     case UnsignedId: {
         uns_val = std::min(utils::unsigned_max(type->bitsize()), uns_val);
-        return RValue{uns_val, is_consteval};
+        return RValue::make(uns_val, rval_flags);
     }
     case BoolId: {
         ulam_assert(bitsize() == 1);
-        auto rval =
-            builtins().bool_type(type->bitsize())->construct(uns_val > 0);
-        rval.set_is_consteval(is_consteval);
-        return rval;
+        auto bool_type = builtins().bool_type(type->bitsize());
+        return bool_type->construct(uns_val > 0, rval_flags);
     }
     case UnaryId: {
         uns_val = std::min<Unsigned>(type->bitsize(), uns_val);
-        return RValue{utils::ones(uns_val), is_consteval};
+        return RValue::make(utils::ones(uns_val), rval_flags);
     }
     case BitsId: {
         auto size = std::min(bitsize(), type->bitsize());
         uns_val = std::min<bitsize_t>(uns_val, size);
         Datum datum = utils::ones(uns_val);
-        auto bits_rval = type->construct();
+        auto bits_rval = type->construct_default(rval_flags);
         bits_rval.get<Bits>().write_right(size, datum);
-        bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }
     default:

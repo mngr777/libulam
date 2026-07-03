@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -31,16 +32,17 @@ Ref<Type> AtomType::data_type(const BitsView data, bitsize_t off) {
     return type;
 }
 
-RValue AtomType::construct() {
+RValue AtomType::construct_default(value::flags_t rval_flags) {
     auto data = make_s<Data>(this);
     data->bits().write(AtomEltIdOff, AtomEltIdSize, NoEltId);
-    return RValue{make_s<Data>(this)};
+    return RValue::make(make_s<Data>(this), rval_flags);
 }
 
-RValue AtomType::construct(Bits&& bits) {
+RValue AtomType::construct(Bits&& bits, value::flags_t rval_flags) {
     ulam_assert(bits.len() == bitsize());
     auto type = data_type(bits.view(), 0);
-    return RValue{make_s<Data>(type, std::move(bits))};
+    auto data = make_s<Data>(type, std::move(bits));
+    return RValue::make(data, rval_flags);
 }
 
 bool AtomType::is_castable_to(
@@ -92,7 +94,7 @@ Value AtomType::cast_to(Ref<Type> type, Value&& val) {
     auto rval = val.move_rvalue();
     ulam_assert(rval.is<DataPtr>());
     auto& bits = rval.get<DataPtr>()->bits();
-    auto elt_rval = type->as_class()->construct();
+    auto elt_rval = type->as_class()->construct_default();
     elt_rval.get<DataPtr>()->bits().write(0, bits.view());
     return Value{std::move(elt_rval)};
 }

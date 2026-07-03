@@ -54,7 +54,7 @@ DataView Var::data_view() {
 LValue Var::lvalue() {
     LValue lval = _value.accept(
         [&](LValue& lval) { return LValue{lval}; },
-        [&](auto& other) { return LValue{this}; });
+        [&](auto& other) { return LValue::make(this); });
     lval.set_scope_lvl(_scope_lvl);
     lval.set_is_xvalue(false);
     return lval;
@@ -67,7 +67,7 @@ RValue Var::rvalue(bool real) const {
 }
 
 Value Var::move_value() {
-    auto val = _value.is_lvalue() ? Value{LValue{}} : Value{RValue{}};
+    auto val = _value.is_lvalue() ? Value::make_l_ph() : Value::make_r_ph();
     std::swap(val, _value);
     return val;
 }

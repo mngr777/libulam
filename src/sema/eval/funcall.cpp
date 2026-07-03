@@ -21,7 +21,7 @@ ExprRes EvalFuncall::construct(
     if (!cls->has_constructors())
         return {ExprError::NoMatchingFunction};
 
-    auto rval = cls->construct();
+    auto rval = cls->construct_default();
     auto [match_res, error] =
         find_match(node, cls->constructors(), cls, args.typed_value_refs());
     if (error != ExprError::Ok)
@@ -142,7 +142,7 @@ ExprRes EvalFuncall::do_funcall(
                 param->type_node(), ref(def),
                 TypedValue{param->type()->deref(), arg.move_value().deref()},
                 param->flags() | Var::TmpFunParam);
-            arg = {param->type(), Value{LValue{ref(var)}}};
+            arg = {param->type(), Value::make_l(ref(var))};
             tmp_defs.push_back(std::move(def));
             tmp_vars.push_back(std::move(var));
         }

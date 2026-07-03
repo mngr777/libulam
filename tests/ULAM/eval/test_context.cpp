@@ -18,7 +18,8 @@ EvalTestContext::EvalTestContext(
     ulam::Builtins& builtins, ulam::LValue active_atom):
     _builtins{&builtins},
     _active_atom{active_atom},
-    _neighbors{builtins.atom_type()->array_type(NeighborNum)->construct()} {}
+    _neighbors{
+        builtins.atom_type()->array_type(NeighborNum)->construct_default()} {}
 
 EvalTestContext::EvalTestContext(): _builtins{} {}
 

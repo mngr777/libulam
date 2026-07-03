@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
@@ -20,8 +21,8 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct() override { return RValue{Unsigned{}}; }
-    RValue construct(bool value);
+    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct(bool value, value::flags_t rval_flags = value::NoFlags);
 
     bool is_true(const RValue& rval) const;
 

@@ -5,13 +5,13 @@
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/bound_fun_set.hpp>
 #include <libulam/semantic/value/data.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
 #include <variant>
 
 namespace ulam {
 
-// TODO: replace boolean flags with int flags
 // TODO: constness is an attribute of lvalue !!
 
 using scope_lvl_t = std::uint16_t;
@@ -33,15 +33,30 @@ class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
 
 public:
     LValue();
+
+private:
     LValue(std::monostate);
     LValue(Ref<Var> var);
     LValue(DataView data);
     LValue(BoundFunSet bfset);
 
+public:
+    static constexpr value::flags_t DefaultFlags = value::IsXvalue;
+
+    template <typename T>
+    static LValue make(T&& value, value::flags_t flags = DefaultFlags) {
+        LValue lval{std::forward<T>(value)};
+        lval._flags |= flags; // ??
+        return lval;
+    }
+
+    static LValue make_ph(value::flags_t flags = DefaultFlags) {
+        return make(std::monostate{}, flags);
+    }
+
     template <typename T> LValue derived(T&& value) const {
         LValue lval{std::forward<T>(value)};
-        lval._is_consteval = _is_consteval;
-        lval._is_xvalue = _is_xvalue;
+        lval._flags = _flags;
         lval._scope_lvl = _scope_lvl;
         return lval;
     }
@@ -76,11 +91,11 @@ public:
 
     Value assign(RValue&& rval);
 
-    bool is_consteval() const { return _is_consteval; }
-    void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; }
+    bool is_consteval() const;
+    void set_is_consteval(bool is_consteval);
 
-    bool is_xvalue() const { return _is_xvalue; }
-    void set_is_xvalue(bool is_xvalue) { _is_xvalue = is_xvalue; }
+    bool is_xvalue() const;
+    void set_is_xvalue(bool is_xvalue);
 
     bool has_scope_lvl() const { return _scope_lvl != NoScopeLvl; }
     bool has_auto_scope_lvl() const { return _scope_lvl == AutoScopeLvl; }
@@ -88,8 +103,7 @@ public:
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
-    bool _is_consteval{false};
-    bool _is_xvalue{true};
+    value::flags_t _flags{value::NoFlags};
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 
@@ -99,11 +113,26 @@ class RValue
         detail::NullableVariant<Integer, Unsigned, Bits, String, DataPtr>;
 
 public:
-    template <typename T>
-    explicit RValue(T&& value, bool is_consteval = false):
-        Base{std::forward<T>(value)}, _is_consteval{is_consteval} {}
+    RValue(): Base{} {}
 
-    RValue(): Base{}, _is_consteval{false} {}
+private:
+    template <typename T>
+    explicit RValue(T&& value, value::flags_t flags):
+        Base{std::forward<T>(value)}, _flags{flags} {
+        ulam_assert((_flags | value::RValueFlags) == value::RValueFlags);
+    }
+
+public:
+    // TODO: DefaultFlags
+
+    template <typename T>
+    static RValue make(T&& value, value::flags_t flags = value::NoFlags) {
+        return RValue{std::forward<T>(value), flags};
+    }
+
+    static RValue make_ph(value::flags_t flags = value::NoFlags) {
+        return make(std::monostate{}, flags);
+    }
 
     RValue(RValue&&) = default;
     RValue& operator=(RValue&&) = default;
@@ -130,11 +159,11 @@ public:
 
     LValue bound_fset(Ref<FunSet> fset, Ref<Class> base = {});
 
-    bool is_consteval() const { return _is_consteval; }
-    void set_is_consteval(bool is_consteval) { _is_consteval = is_consteval; }
+    bool is_consteval() const;
+    void set_is_consteval(bool is_consteval);
 
 private:
-    bool _is_consteval;
+    value::flags_t _flags{value::NoFlags};
 };
 
 class Value : public detail::Variant<LValue, RValue> {
@@ -142,6 +171,25 @@ public:
     explicit Value(LValue lval): Variant{std::move(lval)} {}
     explicit Value(RValue&& rval): Variant{std::move(rval)} {}
     Value(): Value{RValue{}} {}
+
+    // ?? remove and use Value{type->construct()}
+    template <typename T>
+    static Value make_l(T&& value, value::flags_t flags = value::NoFlags) {
+        return Value{LValue::make(std::forward<T>(value), flags)};
+    }
+
+    template <typename T>
+    static Value make_r(T&& value, value::flags_t flags = value::NoFlags) {
+        return Value{RValue::make(std::forward<T>(value), flags)};
+    }
+
+    static Value make_l_ph(value::flags_t flags = value::NoFlags) {
+        return Value{LValue::make_ph(flags)};
+    }
+
+    static Value make_r_ph(value::flags_t flags = value::NoFlags) {
+        return Value{RValue::make_ph(flags)};
+    }
 
     Value(Value&&) = default;
     Value& operator=(Value&&) = default;

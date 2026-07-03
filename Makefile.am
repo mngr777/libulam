@@ -89,6 +89,7 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/value.hpp \
 	libulam/semantic/value/bits.hpp \
 	libulam/semantic/value/bound_fun_set.hpp \
+	libulam/semantic/value/flags.hpp \
 	libulam/semantic/value/data.hpp \
 	libulam/semantic/value/types.hpp \
 	libulam/semantic/var.hpp \

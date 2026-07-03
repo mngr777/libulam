@@ -16,6 +16,10 @@ load_rvalue(const DataView& data, bool use_real_type, bool is_consteval) {
     rval.set_is_consteval(is_consteval);
     return rval;
 }
+
+void toggle_flag(value::flags_t& flags, value::flags_t flag, bool value) {
+    flags = (flags & ~flag) | (flag * value);
+}
 } // namespace
 
 // LValue
@@ -24,7 +28,9 @@ LValue::LValue(): Base{std::monostate{}} {}
 
 LValue::LValue(std::monostate): Base{std::monostate{}} {}
 
-LValue::LValue(Ref<Var> var): Base{var}, _is_consteval{var->is_consteval()} {}
+LValue::LValue(Ref<Var> var):
+    Base{var},
+    _flags{(value::flags_t)(value::IsConsteval * var->is_consteval())} {}
 
 LValue::LValue(DataView data): Base{data} {}
 
@@ -58,7 +64,7 @@ void LValue::with_rvalue(
         },
         [&](const BoundFunSet& bound_fset) { unreachable(); },
         [&](const std::monostate&) {
-            RValue rval;
+            auto rval = RValue::make_ph();
             cb(rval);
         });
 }
@@ -67,9 +73,7 @@ Ref<Type> LValue::type() const {
     return accept(
         [&](Ref<const Var> var) { return var->type(); },
         [&](const DataView& data) { return data.type(); },
-        [&](const BoundFunSet& bound_fset) -> Ref<Type> {
-            unreachable();
-        },
+        [&](const BoundFunSet& bound_fset) -> Ref<Type> { unreachable(); },
         [&](const std::monostate&) -> Ref<Type> { unreachable(); });
 }
 
@@ -176,6 +180,17 @@ Value LValue::assign(RValue&& rval) {
         });
 }
 
+bool LValue::is_consteval() const { return _flags & value::IsConsteval; }
+void LValue::set_is_consteval(bool is_consteval) {
+    toggle_flag(_flags, value::IsConsteval, is_consteval);
+}
+
+bool LValue::is_xvalue() const { return _flags & value::IsXvalue; }
+
+void LValue::set_is_xvalue(bool is_xvalue) {
+    toggle_flag(_flags, value::IsXvalue, is_xvalue);
+}
+
 // RValue
 
 bool RValue::has_rvalue() const {
@@ -215,9 +230,9 @@ Ref<Type> RValue::dyn_obj_type(bool real) const {
 LValue RValue::self() {
     LValue lval;
     if (!empty()) {
-        lval = LValue{accept(
+        lval = LValue::make(accept(
             [&](DataPtr& data) { return data->view(); },
-            [&](auto& other) -> DataView { unreachable(); })};
+            [&](auto& other) -> DataView { unreachable(); }));
     }
     lval.set_scope_lvl(AutoScopeLvl);
     lval.set_is_xvalue(false);
@@ -225,9 +240,9 @@ LValue RValue::self() {
 }
 
 LValue RValue::as(Ref<Type> type) {
-    LValue lval{accept(
+    auto lval = LValue::make(accept(
         [&](DataPtr& data) { return data->view().as(type); },
-        [&](auto& other) -> DataView { unreachable(); })};
+        [&](auto& other) -> DataView { unreachable(); }));
     lval.set_scope_lvl(AutoScopeLvl);
     return lval;
 }
@@ -236,22 +251,19 @@ LValue RValue::atom_of() {
     auto data = accept(
         [&](DataPtr& data) { return data->view(); },
         [&](auto& other) { return DataView{}; });
-    if (!data)
-        return LValue{};
-    return LValue{data.atom_of()};
+    return data ? LValue::make(data.atom_of()) : LValue::make_ph();
 }
 
 LValue RValue::array_access(array_idx_t idx, bool is_consteval_idx) {
-    bool is_consteval_ = is_consteval() && is_consteval_idx;
     return accept(
         [&](DataPtr& data) {
-            LValue lval{data->array_item(idx)};
-            lval.set_is_consteval(is_consteval_);
-            return lval;
+            value::flags_t flags =
+                value::IsConsteval * (is_consteval() && is_consteval_idx);
+            return LValue::make(data->array_item(idx), flags);
         },
         [&](std::monostate) {
             ulam_assert(idx == UnknownArrayIdx);
-            return LValue{};
+            return LValue::make_ph();
         },
         [&](auto& other) -> LValue { unreachable(); });
 }
@@ -264,9 +276,8 @@ RValue::array_access(array_idx_t idx, bool is_consteval_idx) const {
 LValue RValue::prop(Ref<Prop> prop) {
     return accept(
         [&](DataPtr data) {
-            LValue lval{data->prop(prop)};
-            lval.set_is_consteval(is_consteval());
-            return lval;
+            return LValue::make(
+                data->prop(prop), value::IsConsteval * is_consteval());
         },
         [&](std::monostate) { return LValue{}; },
         [&](auto& other) -> LValue { unreachable(); });
@@ -279,12 +290,18 @@ const LValue RValue::prop(Ref<Prop> prop) const {
 LValue RValue::bound_fset(Ref<FunSet> fset, Ref<Class> base) {
     return accept(
         [&](DataPtr data) {
-            return LValue{BoundFunSet{data->view(), fset, base}};
+            return LValue::make(BoundFunSet{data->view(), fset, base});
         },
         [&](std::monostate) {
-            return LValue{BoundFunSet{DataView{}, fset, base}};
+            return LValue::make(BoundFunSet{DataView{}, fset, base});
         },
         [&](auto& other) -> LValue { unreachable(); });
+}
+
+bool RValue::is_consteval() const { return _flags & value::IsConsteval; }
+
+void RValue::set_is_consteval(bool is_consteval) {
+    toggle_flag(_flags, value::IsConsteval, is_consteval);
 }
 
 // Value

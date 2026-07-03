@@ -1,3 +1,4 @@
+#include "libulam/semantic/value/flags.hpp"
 #include <algorithm>
 #include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
@@ -203,9 +204,7 @@ bitsize_t Class::required_bitsize() const {
     return size;
 }
 
-bitsize_t Class::direct_bitsize() const {
-    return data_off() + props_bitsize();
-}
+bitsize_t Class::direct_bitsize() const { return data_off() + props_bitsize(); }
 
 bitsize_t Class::props_bitsize() const {
     bitsize_t total = 0;
@@ -249,22 +248,26 @@ Ref<Prop> Class::first_prop_over_max_bitsize() {
     return {};
 }
 
-RValue Class::construct() {
-    return RValue{make_s<Data>(this, _init_bits.copy())};
+RValue Class::construct_default(value::flags_t rval_flags) {
+    auto obj_data = make_s<Data>(this, _init_bits.copy());
+    return RValue::make(obj_data, rval_flags);
 }
 
-RValue Class::construct(Bits&& bits) {
+RValue Class::construct(Bits&& bits, value::flags_t rval_flags) {
     ulam_assert(bits.len() == bitsize());
-    return RValue{make_s<Data>(this, std::move(bits))};
+    auto obj_data = make_s<Data>(this, std::move(bits));
+    return RValue::make(obj_data, rval_flags);
 }
 
-RValue Class::construct_ph() {
-    return RValue{make_s<Data>(this, true)};
+RValue Class::construct_ph(value::flags_t rval_flags) {
+    auto obj_data = make_s<Data>(this, true);
+    return RValue::make(obj_data, rval_flags);
 }
 
 RValue Class::load(const BitsView data, bitsize_t off) {
     ulam_assert(!is_element() || read_element_id(data, off) == _elt_id);
-    return RValue{make_s<Data>(this, data.view(off, bitsize()).copy())};
+    auto obj_data = make_s<Data>(this, data.view(off, bitsize()).copy());
+    return RValue::make(obj_data);
 }
 
 void Class::store(BitsView data, bitsize_t off, const RValue& rval) {
@@ -417,7 +420,8 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
     if (is_same(type))
         return std::move(val);
 
-    ulam_assert(convs(type, true).empty()); // must use conversion function otherwise
+    ulam_assert(
+        convs(type, true).empty()); // must use conversion function otherwise
 
     if (val.has_rvalue()) {
         auto dyn_type = val.dyn_obj_type();
@@ -430,17 +434,14 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
         return Value{type->construct_ph()};
     ulam_assert(rval.is<DataPtr>());
 
-    bool is_consteval = rval.is_consteval();
-
     auto obj = rval.get<DataPtr>();
     ulam_assert(obj->type()->is_same(this));
 
     // to Bits
     if (type->is(BitsId)) {
         auto bits_type = builtins().bits_type(type->bitsize());
-        auto new_rval = bits_type->construct(std::move(obj->bits()));
-        new_rval.set_is_consteval(is_consteval);
-        return Value{std::move(new_rval)};
+        value::flags_t rval_flags = value::IsConsteval * rval.is_consteval();
+        return Value{bits_type->construct(std::move(obj->bits()), rval_flags)};
     }
 
     // to Atom
@@ -454,12 +455,12 @@ Value Class::cast_to(Ref<Type> type, Value&& val) {
 
     // upcast/downcast
     ulam_assert(is_base_of(cls) || cls->is_base_of(this));
-    auto new_rval = cls->construct();
+    auto new_rval =
+        cls->construct_default(value::IsConsteval * rval.is_consteval());
     auto new_obj = new_rval.get<DataPtr>();
     auto props = is_base_of(cls) ? all_props() : cls->all_props();
     for (auto prop : props)
         prop->store(new_obj, prop->load(obj));
-    new_rval.set_is_consteval(is_consteval);
     return Value{std::move(new_rval)};
 }
 
@@ -615,8 +616,8 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
         if (members().import_sym(name_id, sym)) {
             auto name_id_ = name_id; // C++17 cannot capture struct-d bindings
             debug() << "importing " << cls->full_name() << "."
-                    << program()->str_pool().get(name_id) << " into " << full_name()
-                    << "\n";
+                    << program()->str_pool().get(name_id) << " into "
+                    << full_name() << "\n";
             sym.accept([&](auto mem) { inh_scope()->set(name_id_, mem); });
         }
     }

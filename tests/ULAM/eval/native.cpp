@@ -24,7 +24,7 @@ using EvalExceptAssert = ulam::sema::EvalExceptAssert;
 EvalNative::EvalNative(EvalEnv& env):
     ::EvalHelper{env},
     Base{env},
-    _bar_atom{builtins().atom_type()->construct()} {
+    _bar_atom{builtins().atom_type()->construct_default()} {
 #define ADD_METHOD(class_name, fun_name, method)                               \
     do {                                                                       \
         namespace ph = std::placeholders;                                      \
@@ -107,7 +107,7 @@ ExprRes EvalNative::eval_system_assert(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     ulam_assert(args.size() == 1);
     if (!env().is_true(args.pop_front()))
-        throw ulam::sema::EvalExceptAssert("ulam_assert failed");
+        throw ulam::sema::EvalExceptAssert("assert failed");
     return void_res();
 }
 

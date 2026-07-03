@@ -1,18 +1,19 @@
-#include <libulam/assert.hpp>
 #include <algorithm>
 #include <functional>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/builtin/bits.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtins.hpp>
 #include <libulam/semantic/type/class.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/utils/integer.hpp>
 
 namespace ulam {
 
 RValue BitsType::load(const BitsView data, bitsize_t off) {
-    Bits val{data.view(off, bitsize()).copy()};
-    return RValue{std::move(val)};
+    Bits value{data.view(off, bitsize()).copy()};
+    return RValue::make(std::move(value));
 }
 
 void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) {
@@ -20,11 +21,13 @@ void BitsType::store(BitsView data, bitsize_t off, const RValue& rval) {
     data.write(off, rval.get<Bits>().view());
 }
 
-RValue BitsType::construct() { return RValue{Bits{bitsize()}}; }
+RValue BitsType::construct_default(value::flags_t rval_flags) {
+    return RValue::make(Bits{bitsize()}, rval_flags);
+}
 
-RValue BitsType::construct(Bits&& bits) {
+RValue BitsType::construct(Bits&& bits, value::flags_t rval_flags) {
     ulam_assert(bits.len());
-    return RValue{std::move(bits)};
+    return RValue::make(std::move(bits), rval_flags);
 }
 
 bool BitsType::is_castable_to(
@@ -40,14 +43,14 @@ Value BitsType::cast_to(Ref<Type> type, Value&& val) {
         ulam_assert(type->bitsize() == bitsize());
         auto cls = type->as_class();
         if (!val.has_rvalue())
-            return Value{cls->construct()};
+            return Value{cls->construct_default()};
 
         auto rval = val.move_rvalue();
         ulam_assert(rval.is<Bits>());
-        bool is_consteval = rval.is_consteval();
+
         auto& bits = rval.get<Bits>();
-        auto new_rval = cls->construct(std::move(bits));
-        new_rval.set_is_consteval(is_consteval);
+        value::flags_t rval_flags = value::IsConsteval * rval.is_consteval();
+        auto new_rval = cls->construct(std::move(bits), rval_flags);
         return Value{std::move(new_rval)};
     }
 
@@ -55,14 +58,15 @@ Value BitsType::cast_to(Ref<Type> type, Value&& val) {
     if (type->is(AtomId)) {
         ulam_assert(bitsize() == ULAM_ATOM_SIZE);
         if (!val.has_rvalue())
-            return Value{type->construct()};
+            return Value::make_r_ph();
 
         auto rval = val.move_rvalue();
         ulam_assert(rval.is<Bits>());
-        bool is_consteval = rval.is_consteval();
+
         auto& bits = rval.get<Bits>();
-        auto new_rval = builtins().atom_type()->construct(std::move(bits));
-        new_rval.set_is_consteval(is_consteval);
+        value::flags_t rval_flags = value::IsConsteval * rval.is_consteval();
+        auto new_rval =
+            builtins().atom_type()->construct(std::move(bits), rval_flags);
         return Value{std::move(new_rval)};
     }
 
@@ -104,6 +108,7 @@ TypedValue BitsType::binary_op(
     bool is_unknown = !l_rval.has_rvalue() || !r_rval.has_rvalue();
     bool is_consteval = !ops::is_assign(op) && !is_unknown &&
                         l_rval.is_consteval() && r_rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     // &, |, ^
     using BinOp = std::function<Bits(const BitsView, const BitsView)>;
@@ -112,7 +117,7 @@ TypedValue BitsType::binary_op(
         if (assign)
             tpl()->type(std::max(bitsize(), r_type->bitsize()));
         if (is_unknown)
-            return {type, Value{RValue{}}};
+            return {type, Value::make_r_ph()};
         auto& l_bits = l_rval.get<Bits>();
         auto& r_bits = r_rval.get<Bits>();
         auto l_view = l_bits.view();
@@ -120,7 +125,7 @@ TypedValue BitsType::binary_op(
                           ? r_bits.view_right(bitsize())
                           : r_bits.view();
         Bits bits{op(l_view, r_view)};
-        return {type, Value{RValue{std::move(bits), is_consteval}}};
+        return {type, Value{construct(std::move(bits), rval_flags)}};
     };
 
     auto bw_and = [](auto v1, auto v2) { return v1 & v2; };
@@ -132,21 +137,20 @@ TypedValue BitsType::binary_op(
     case Op::NotEqual: {
         auto boolean = builtins().boolean();
         if (is_unknown)
-            return {boolean, Value{RValue{}}};
+            return {boolean, Value::make_r_ph()};
         auto& l_bits = l_rval.get<Bits>();
         auto& r_bits = r_rval.get<Bits>();
         bool is_equal = (l_bits == r_bits);
         bool val = (is_equal == (op == Op::Equal));
-        auto rval = boolean->construct(val);
-        rval.set_is_consteval(is_consteval);
+        auto rval = boolean->construct(val, rval_flags);
         return {boolean, Value{std::move(rval)}};
     }
     case Op::AssignShiftLeft: {
         if (is_unknown)
-            return {this, Value{RValue{}}};
+            return {this, Value::make_r_ph()};
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() << shift};
-        return {this, Value{RValue{std::move(bits), is_consteval}}};
+        return {this, Value{construct(std::move(bits), rval_flags)}};
     }
     case Op::ShiftLeft: {
         auto res_bitsize = [&](bitsize_t size, bitsize_t shift) -> bitsize_t {
@@ -173,7 +177,7 @@ TypedValue BitsType::binary_op(
             bitsize_t shift = (r_rval.has_rvalue() && r_rval.is_consteval())
                                   ? r_rval.get<Unsigned>()
                                   : 1;
-            return {tpl()->type(res_bitsize(size, shift)), Value{RValue{}}};
+            return {tpl()->type(res_bitsize(size, shift)), Value::make_r_ph()};
         }
 
         bitsize_t shift = r_rval.get<Unsigned>();
@@ -187,8 +191,7 @@ TypedValue BitsType::binary_op(
         }
         ulam_assert(bits.len() == type->bitsize());
         bits <<= shift;
-        auto rval = type->construct(std::move(bits));
-        rval.set_is_consteval(is_consteval);
+        auto rval = type->construct(std::move(bits), rval_flags);
         return {type, Value{std::move(rval)}};
     }
     case Op::AssignShiftRight:
@@ -197,7 +200,7 @@ TypedValue BitsType::binary_op(
             return {this, Value{RValue{}}};
         Unsigned shift = r_rval.get<Unsigned>();
         Bits bits{l_rval.get<Bits>() >> shift};
-        return {this, Value{RValue{std::move(bits), is_consteval}}};
+        return {this, Value{construct(std::move(bits), rval_flags)}};
     }
     case Op::AssignBwAnd:
         return binop(bw_and, true);
@@ -308,7 +311,7 @@ RValue BitsType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
     case BitsId: {
         Bits copy{type->bitsize()};
         copy |= bits;
-        return RValue{std::move(copy), is_consteval};
+        return RValue::make(std::move(copy), value::IsConsteval * is_consteval);
     }
     default:
         unreachable();

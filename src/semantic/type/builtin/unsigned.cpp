@@ -1,11 +1,11 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <libulam/utils/integer.hpp>
 
@@ -14,21 +14,28 @@ namespace ulam {
 TypedValue UnsignedType::type_op(TypeOp op) {
     switch (op) {
     case TypeOp::MinOf:
-        return {this, Value{RValue{(Unsigned)0, true}}};
+        return {this, Value::make_r((Unsigned)0, value::IsConsteval)};
     case TypeOp::MaxOf:
-        return {this, Value{RValue{utils::unsigned_max(bitsize()), true}}};
+        return {
+            this,
+            Value::make_r(utils::unsigned_max(bitsize()), value::IsConsteval)};
     default:
         return _PrimType::type_op(op);
     }
 }
 
-RValue UnsignedType::construct() { return construct(Unsigned{}); }
-
-RValue UnsignedType::construct(Unsigned uns_val) {
-    return RValue{std::min(uns_val, utils::unsigned_max(bitsize()))};
+RValue UnsignedType::construct_default(value::flags_t rval_flags) {
+    return construct(Unsigned{}, rval_flags);
 }
 
-RValue UnsignedType::from_datum(Datum datum) { return RValue{(Unsigned)datum}; }
+RValue UnsignedType::construct(Unsigned uns_val, value::flags_t rval_flags) {
+    uns_val = std::min(uns_val, utils::unsigned_max(bitsize()));
+    return RValue::make(uns_val, rval_flags);
+}
+
+RValue UnsignedType::from_datum(Datum datum) {
+    return RValue::make((Unsigned)datum);
+}
 
 Datum UnsignedType::to_datum(const RValue& rval) {
     ulam_assert(rval.is<Unsigned>());
@@ -38,10 +45,11 @@ Datum UnsignedType::to_datum(const RValue& rval) {
 
 TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
     if (!rval.has_rvalue())
-        return {this, Value{RValue{}}};
+        return {this, Value::make_r_ph()};
 
-    bool is_consteval = rval.is_consteval();
     auto uns_val = rval.get<Unsigned>();
+    value::flags_t rval_flags = value::IsConsteval * rval.is_consteval();
+
     switch (op) {
     case Op::UnaryMinus: {
         bitsize_t max_size = (bitsize() > DefaultSize) ? ULAM_MAX_INT_SIZE
@@ -49,26 +57,26 @@ TypedValue UnsignedType::unary_op(Op op, RValue&& rval) {
         auto size = std::min<bitsize_t>(bitsize() + 1, max_size);
         auto int_val = std::max<Integer>(utils::integer_min(size), -uns_val);
         auto type = builtins().prim_type(IntId, size);
-        return {type, Value{RValue{int_val, is_consteval}}};
+        return {type, Value::make_r(int_val, rval_flags)};
     }
     case Op::UnaryPlus:
         break;
     case Op::PreInc:
     case Op::PostInc:
-        is_consteval = false;
+        rval_flags &= ~value::IsConsteval;
         if (uns_val < utils::unsigned_max(bitsize()))
             ++uns_val;
         break;
     case Op::PreDec:
     case Op::PostDec:
-        is_consteval = false;
+        rval_flags &= ~value::IsConsteval;
         if (uns_val > 0)
             --uns_val;
         break;
     default:
         unreachable();
     }
-    return {this, Value{RValue{uns_val, is_consteval}}};
+    return {this, Value::make_r(uns_val, rval_flags)};
 }
 
 TypedValue UnsignedType::binary_op(
@@ -86,34 +94,28 @@ TypedValue UnsignedType::binary_op(
 
     bool is_consteval = !ops::is_assign(op) && !is_unknown &&
                         l_rval.is_consteval() && r_rval.is_consteval();
-
-    auto make_res = [&](Ref<Type> type, RValue&& rval) -> TypedValue {
-        rval.set_is_consteval(is_consteval);
-        return {type, Value{std::move(rval)}};
-    };
-    auto make_empty = [&](Ref<Type> type) -> TypedValue {
-        return {type, Value{RValue{}}};
-    };
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     switch (op) {
     case Op::Equal: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return make_empty(type);
-        return make_res(type, type->construct(l_uns == r_uns));
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns == r_uns, rval_flags)}};
     }
     case Op::NotEqual: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return make_empty(type);
-        return make_res(type, type->construct(l_uns != r_uns));
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns != r_uns, rval_flags)}};
     }
     case Op::AssignProd: {
         // (Unsigned(a) *= Unsigned(b)) = Unsigned(a)
         if (is_unknown)
-            return make_empty(this);
-        auto [val, _] = utils::safe_prod(l_uns, r_uns);
-        return make_res(this, RValue{utils::truncate(val, bitsize())});
+            return {this, Value::make_r_ph()};
+        auto [uns_val, _] = utils::safe_prod(l_uns, r_uns);
+        uns_val = utils::truncate(uns_val, bitsize());
+        return {this, Value::make_r(uns_val, rval_flags)};
     }
     case Op::Prod: {
         // Unsigned(a) * Unsigned(b) = Unsigned(a + b)
@@ -121,32 +123,34 @@ TypedValue UnsignedType::binary_op(
             std::min<bitsize_t>(max_size, bitsize() + r_type->bitsize());
         auto type = tpl()->type(size);
         if (is_unknown)
-            return make_empty(type);
+            return {type, Value::make_r_ph()};
         auto [val, _] = utils::safe_prod(l_uns, r_uns);
-        return make_res(type, RValue{val});
+        return {type, Value::make_r(val, rval_flags)};
     }
     case Op::AssignQuot:
     case Op::Quot: {
         // Unsigned(a) / Unsigned(b) = Int(a) NOTE: does not match
         // ULAM's max(a, b), TODO: investigate
         if (is_unknown)
-            return make_empty(this);
-        auto val = utils::safe_quot(l_uns, r_uns);
-        return make_res(this, RValue{val});
+            return {this, Value::make_r_ph()};
+        auto uns_val = utils::safe_quot(l_uns, r_uns);
+        return {this, Value::make_r(uns_val, rval_flags)};
     }
     case Op::AssignRem:
     case Op::Rem: {
         // Unsigned(a) % Unsigned(b) = Unsigned(a)
         if (is_unknown)
-            return make_empty(this);
-        return make_res(this, RValue{utils::safe_rem(l_uns, r_uns)});
+            return {this, Value::make_r_ph()};
+        auto uns_val = utils::safe_rem(l_uns, r_uns);
+        return {this, Value::make_r(uns_val, rval_flags)};
     }
     case Op::AssignSum: {
         // (Unsigned(a) += Unsigned(b)) = Unsigned(a)
         if (is_unknown)
-            return make_empty(this);
-        auto [val, _] = utils::safe_sum(l_uns, r_uns);
-        return make_res(this, RValue{utils::truncate(val, bitsize())});
+            return {this, Value::make_r_ph()};
+        auto [uns_val, _] = utils::safe_sum(l_uns, r_uns);
+        uns_val = utils::truncate(uns_val, bitsize());
+        return {this, Value::make_r(uns_val, rval_flags)};
     }
     case Op::Sum: {
         // Unsigned(a) + Unsigned(b) = Unsigned(max(a, b) + 1)
@@ -154,41 +158,41 @@ TypedValue UnsignedType::binary_op(
         size = std::min(size, max_size);
         auto type = tpl()->type(size);
         if (is_unknown)
-            return make_empty(type);
-        auto [val, _] = utils::safe_sum(l_uns, r_uns);
-        return make_res(type, RValue{val});
+            return {type, Value::make_r_ph()};
+        auto [uns_val, _] = utils::safe_sum(l_uns, r_uns);
+        return {type, Value::make_r(uns_val, rval_flags)};
     }
     case Op::AssignDiff:
     case Op::Diff: {
         // Unsigned(a) - Unsigned(b) = Unsigned(a)
         if (is_unknown)
-            return make_empty(this);
-        Unsigned val = (l_uns > r_uns) ? l_uns - r_uns : 0;
-        return make_res(this, RValue{val});
+            return {this, Value::make_r_ph()};
+        Unsigned uns_val = (l_uns > r_uns) ? l_uns - r_uns : 0;
+        return {this, Value::make_r(uns_val, rval_flags)};
     }
     case Op::Less: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return make_empty(type);
-        return make_res(type, type->construct(l_uns < r_uns));
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns < r_uns, rval_flags)}};
     }
     case Op::LessOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return make_empty(type);
-        return make_res(type, type->construct(l_uns <= r_uns));
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns <= r_uns, rval_flags)}};
     }
     case Op::Greater: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return make_empty(type);
-        return make_res(type, type->construct(l_uns > r_uns));
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns > r_uns, rval_flags)}};
     }
     case Op::GreaterOrEq: {
         auto type = builtins().boolean();
         if (is_unknown)
-            return make_empty(type);
-        return make_res(type, type->construct(l_uns >= r_uns));
+            return {type, Value::make_r_ph()};
+        return {type, Value{type->construct(l_uns >= r_uns, rval_flags)}};
     }
     default:
         unreachable();
@@ -279,6 +283,7 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
     bool is_wider = bitsize() > DefaultSize;
     bool is_consteval = !is_unknown && rval.is_consteval();
     auto uns_val = is_unknown ? 0 : rval.get<Unsigned>();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
 
     switch (id) {
     case IntId: {
@@ -289,13 +294,15 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
             auto type = builtins().int_type(size);
             Integer int_val =
                 std::min((Unsigned)utils::integer_max(size), uns_val);
-            return {type, Value{RValue{int_val, true}}};
+            return {type, Value::make_r(int_val, rval_flags)};
         } else {
             auto size = std::min<bitsize_t>(bitsize() + 1, max_size);
             auto type = builtins().int_type(size);
+            if (is_unknown)
+                return {type, Value::make_r_ph()};
             Integer int_val =
                 std::min((Unsigned)utils::integer_max(size), uns_val);
-            return {type, Value{!is_unknown ? RValue{int_val} : RValue{}}};
+            return {type, Value::make_r(int_val, rval_flags)};
         }
     }
     case UnsignedId: {
@@ -318,7 +325,7 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
             auto size = std::min<bitsize_t>(max_size, uns_val);
             auto type = builtins().unary_type(size);
             uns_val = std::min<Unsigned>(uns_val, size);
-            return {type, Value{RValue{uns_val, true}}};
+            return {type, Value::make_r(uns_val, rval_flags)};
         } else {
             auto size = max_size;
             if (bitsize() < max_size) {
@@ -327,8 +334,9 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
             }
             uns_val = std::min<Unsigned>(uns_val, size);
             auto type = builtins().unary_type(size);
-            Value val{!is_unknown ? RValue{utils::ones(uns_val)} : RValue{}};
-            return {type, std::move(val)};
+            if (is_unknown)
+                return {type, Value::make_r_ph()};
+            return {type, Value::make_r(utils::ones(uns_val), rval_flags)};
         }
     }
     case BitsId: {
@@ -336,9 +344,9 @@ TypedValue UnsignedType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
         auto type = builtins().prim_type(BitsId, size);
         if (is_unknown)
             return {type, Value{RValue{}}};
-        Bits val{size};
-        store(val.view(), 0, rval);
-        return {type, Value{RValue{std::move(val), is_consteval}}};
+        Bits bits_val{size};
+        store(bits_val.view(), 0, rval);
+        return {type, Value::make_r(std::move(bits_val), rval_flags)};
     }
     default:
         unreachable();
@@ -352,35 +360,34 @@ RValue UnsignedType::cast_to_prim(Ref<PrimType> type, RValue&& rval) {
 
     Unsigned uns_val = rval.get<Unsigned>();
     bool is_consteval = rval.is_consteval();
+    value::flags_t rval_flags = value::IsConsteval * is_consteval;
+
     switch (type->bi_type_id()) {
     case IntId: {
         Unsigned int_max = utils::integer_max(type->bitsize());
-        Integer val = std::min(int_max, uns_val);
-        return RValue{val, is_consteval};
+        Integer int_val = std::min(int_max, uns_val);
+        return RValue::make(int_val, rval_flags);
     }
     case UnsignedId: {
         auto uns_max = utils::unsigned_max(type->bitsize());
         if (uns_val > uns_max)
-            return RValue{uns_max, is_consteval};
+            return RValue::make(uns_max, rval_flags);
         return std::move(rval);
     }
     case BoolId: {
         ulam_assert(bitsize() == 1);
-        auto rval =
-            builtins().bool_type(type->bitsize())->construct(uns_val > 0);
-        rval.set_is_consteval(is_consteval);
-        return rval;
+        auto bool_type = builtins().bool_type(type->bitsize());
+        return bool_type->construct(uns_val != 0, rval_flags);
     }
     case UnaryId: {
         uns_val = std::min<Unsigned>(uns_val, type->bitsize());
-        Unsigned val = utils::ones(uns_val);
-        return RValue{val, is_consteval};
+        uns_val = utils::ones(uns_val);
+        return RValue::make(uns_val, rval_flags);
     }
     case BitsId: {
         auto size = std::min(bitsize(), type->bitsize());
-        auto bits_rval = type->construct();
+        auto bits_rval = type->construct_default(rval_flags);
         bits_rval.get<Bits>().write_right(size, (Datum)uns_val);
-        bits_rval.set_is_consteval(is_consteval);
         return bits_rval;
     }
     default:
