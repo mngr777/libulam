@@ -18,8 +18,8 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
-    RValue construct(Integer int_val, value::flags_t rval_flags = value::NoFlags);
+    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue construct(Integer int_val, value::flags_t rval_flags = RValue::DefaultFlags);
 
     RValue from_datum(Datum datum) override;
     Datum to_datum(const RValue& rval) override;

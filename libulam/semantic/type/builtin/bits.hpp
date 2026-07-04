@@ -24,8 +24,8 @@ public:
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
-    RValue construct(Bits&& bits, value::flags_t rval_flags = value::NoFlags);
+    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
 
     bool is_castable_to(
         Ref<const Type> type,

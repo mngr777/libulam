@@ -3,6 +3,7 @@
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/element.hpp>
+#include <libulam/semantic/value.hpp>
 
 namespace ulam {
 
@@ -19,8 +20,8 @@ public:
     bitsize_t bitsize() const override { return ULAM_ATOM_SIZE; }
 
     bool is_constructible() const override { return true; }
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
-    RValue construct(Bits&& bits, value::flags_t rval_flags = value::NoFlags);
+    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
 
     BuiltinTypeId bi_type_id() const override { return AtomId; }
 

@@ -26,7 +26,7 @@ public:
     TypedValue type_op(TypeOp op) override;
     TypedValue type_op(TypeOp op, Value& val) override;
 
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
 
     RValue from_datum(Datum datum) override;
     Datum to_datum(const RValue& rval) override;

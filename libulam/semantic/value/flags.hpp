@@ -7,7 +7,11 @@ using flags_t = std::uint8_t;
 constexpr flags_t NoFlags = 0;
 constexpr flags_t IsConsteval = 1;
 constexpr flags_t IsXvalue = 1 << 1;
+
 constexpr flags_t LValueFlags = IsConsteval | IsXvalue;
 constexpr flags_t RValueFlags = IsConsteval;
+
+constexpr flags_t LValueDefaultFlags = IsXvalue;
+constexpr flags_t RValueDefaultFlags = NoFlags;
 
 } // namespace value

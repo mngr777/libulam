@@ -21,8 +21,8 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
-    RValue construct(bool value, value::flags_t rval_flags = value::NoFlags);
+    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue construct(bool value, value::flags_t rval_flags = RValue::DefaultFlags);
 
     bool is_true(const RValue& rval) const;
 

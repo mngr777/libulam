@@ -33,7 +33,7 @@ class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
     using Base = detail::NullableVariant<Ref<Var>, DataView, BoundFunSet>;
 
 public:
-    static constexpr value::flags_t DefaultFlags = value::IsXvalue;
+    static constexpr value::flags_t DefaultFlags = value::LValueDefaultFlags;
 
     LValue();
 
@@ -124,14 +124,14 @@ private:
     }
 
 public:
-    // TODO: DefaultFlags
+    static constexpr value::flags_t DefaultFlags = value::NoFlags;
 
     template <typename T>
-    static RValue make(T&& value, value::flags_t flags = value::NoFlags) {
+    static RValue make(T&& value, value::flags_t flags = DefaultFlags) {
         return RValue{std::forward<T>(value), flags};
     }
 
-    static RValue make_ph(value::flags_t flags = value::NoFlags) {
+    static RValue make_ph(value::flags_t flags = DefaultFlags) {
         return make(std::monostate{}, flags);
     }
 
@@ -164,7 +164,7 @@ public:
     void set_is_consteval(bool is_consteval);
 
 private:
-    value::flags_t _flags{value::NoFlags};
+    value::flags_t _flags{DefaultFlags};
 };
 
 class Value : public detail::Variant<LValue, RValue> {
@@ -175,20 +175,20 @@ public:
 
     // ?? remove and use Value{type->construct()}
     template <typename T>
-    static Value make_l(T&& value, value::flags_t flags = value::NoFlags) {
+    static Value make_l(T&& value, value::flags_t flags = LValue::DefaultFlags) {
         return Value{LValue::make(std::forward<T>(value), flags)};
     }
 
     template <typename T>
-    static Value make_r(T&& value, value::flags_t flags = value::NoFlags) {
+    static Value make_r(T&& value, value::flags_t flags = RValue::DefaultFlags) {
         return Value{RValue::make(std::forward<T>(value), flags)};
     }
 
-    static Value make_l_ph(value::flags_t flags = value::NoFlags) {
+    static Value make_l_ph(value::flags_t flags = LValue::DefaultFlags) {
         return Value{LValue::make_ph(flags)};
     }
 
-    static Value make_r_ph(value::flags_t flags = value::NoFlags) {
+    static Value make_r_ph(value::flags_t flags = RValue::DefaultFlags) {
         return Value{RValue::make_ph(flags)};
     }
 

@@ -69,8 +69,10 @@ public:
     virtual bitsize_t bitsize() const = 0;
 
     virtual bool is_constructible() const { return false; }
-    virtual RValue construct_default(value::flags_t rval_flags = value::NoFlags);
-    virtual RValue construct_ph(value::flags_t rval_flags = value::NoFlags);
+    virtual RValue
+    construct_default(value::flags_t rval_flags = value::RValueDefaultFlags);
+    virtual RValue
+    construct_ph(value::flags_t rval_flags = value::RValueDefaultFlags);
 
     RValue load(const Bits& data, bitsize_t off /* rval_flags ?? */);
     void store(Bits& data, bitsize_t off, const RValue& rval);
@@ -229,8 +231,10 @@ public:
     bitsize_t bitsize() const override;
 
     bool is_constructible() const override;
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
-    RValue construct_ph(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct_default(
+        value::flags_t rval_flags = value::RValueDefaultFlags) override;
+    RValue construct_ph(
+        value::flags_t rval_flags = value::RValueDefaultFlags) override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
@@ -322,8 +326,10 @@ public:
     bitsize_t bitsize() const override;
 
     bool is_constructible() const override { return true; }
-    RValue construct_default(value::flags_t rval_flags = value::NoFlags) override;
-    RValue construct_ph(value::flags_t rval_flags = value::NoFlags) override;
+    RValue construct_default(
+        value::flags_t rval_flags = value::RValueDefaultFlags) override;
+    RValue construct_ph(
+        value::flags_t rval_flags = value::RValueDefaultFlags) override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
