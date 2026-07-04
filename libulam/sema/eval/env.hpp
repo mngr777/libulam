@@ -145,6 +145,8 @@ public:
     virtual ExprRes funcall(
         Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
 
+    virtual ExprRes funcall_noexec(Ref<Fun> fun);
+
     StackRaii stack_raii(Ref<Fun> fun, LValue self);
 
     ScopeRaii scope_raii(scope_flags_t flags = scp::NoFlags);
@@ -240,6 +242,8 @@ protected:
         ExprResList&& args);
 
 private:
+    ExprResList make_fun_args_ph(Ref<Fun> fun);
+
     eval_flags_t _flags;
     ProgramScope _program_scope;
     EvalStack _stack;

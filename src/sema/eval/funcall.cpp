@@ -1,4 +1,5 @@
 #include "libulam/semantic/utils/strf.hpp"
+#include "libulam/semantic/value/flags.hpp"
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -171,17 +172,16 @@ ExprRes EvalFuncall::do_funcall(
     auto ret_type = fun->ret_type();
     if (!ret_type->is(VoidId)) {
         if (has_flag(evl::NoExec)) {
-            if (ret_type->is_ref()) {
-                LValue lval;
-                lval.set_is_xvalue(false);
-                return {ret_type, Value{lval}};
-            }
-            return {ret_type, Value{ret_type->construct_ph()}};
+            auto val =
+                ret_type->is_ref()
+                    ? Value::make_l_ph(LValue::DefaultFlags & ~value::IsXvalue)
+                    : Value{ret_type->construct_ph()};
+            return {ret_type, std::move(val)};
         } else {
             return {ExprError::NoReturn};
         }
     }
-    return {builtins().void_type(), Value{RValue{}}};
+    return {builtins().void_type(), Value::make_r_ph()};
 }
 
 ExprRes EvalFuncall::do_funcall_native(
@@ -192,12 +192,11 @@ ExprRes EvalFuncall::do_funcall_native(
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
-    if (!fun->ret_type()->is_ref())
-        return {fun->ret_type(), Value{RValue{}}};
-
-    LValue lval;
-    lval.set_is_xvalue(false);
-    return {fun->ret_type(), Value{lval}};
+    auto ret_type = fun->ret_type();
+    auto val = ret_type->is_ref()
+                   ? Value::make_l_ph(LValue::DefaultFlags & ~value::IsXvalue)
+                   : Value::make_r_ph();
+    return {ret_type, std::move(val)};
 }
 
 std::pair<FunSet::Matches, ExprError> EvalFuncall::find_match(
