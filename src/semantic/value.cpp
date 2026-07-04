@@ -26,15 +26,12 @@ void toggle_flag(value::flags_t& flags, value::flags_t flag, bool value) {
 
 LValue::LValue(): Base{std::monostate{}} {}
 
-LValue::LValue(std::monostate): Base{std::monostate{}} {}
-
-LValue::LValue(Ref<Var> var):
+LValue::LValue(Ref<Var> var, value::flags_t flags):
     Base{var},
-    _flags{(value::flags_t)(value::IsConsteval * var->is_consteval())} {}
-
-LValue::LValue(DataView data): Base{data} {}
-
-LValue::LValue(BoundFunSet bfset): Base{bfset} {}
+    _flags{
+        (value::flags_t)(flags | (value::IsConsteval * var->is_consteval()))} {
+    ulam_assert((_flags | value::LValueFlags) == value::LValueFlags);
+}
 
 bool LValue::has_rvalue() const {
     return accept(
@@ -101,13 +98,13 @@ Ref<Type> LValue::dyn_obj_type(bool real) const {
 }
 
 LValue LValue::self() {
-    LValue lval{derived(accept(
-        [&](Ref<Var> var) { return LValue{var->data_view()}; },
-        [&](DataView& data) { return LValue{data}; },
+    LValue lval = accept(
+        [&](Ref<Var> var) { return derived(var->data_view()); },
+        [&](DataView& data) { return derived(data); },
         [&](BoundFunSet& bfset) {
-            return bfset.has_self() ? LValue{bfset.self()} : LValue{};
+            return bfset.has_self() ? derived(bfset.self()) : make_ph();
         },
-        [&](std::monostate&) -> LValue { unreachable(); }))};
+        [&](std::monostate&) -> LValue { unreachable(); });
     lval.set_scope_lvl(AutoScopeLvl);
     lval.set_is_xvalue(false);
     return lval;
@@ -127,7 +124,7 @@ LValue LValue::atom_of() {
         [&](BoundFunSet& bfset) { return DataView{}; },
         [&](std::monostate&) { return DataView{}; });
     if (!data_view)
-        return LValue{};
+        return make_ph();
     return derived(data_view);
 }
 
@@ -165,7 +162,7 @@ Value LValue::assign(RValue&& rval) {
     return accept(
         [&](Ref<Var> var) {
             var->set_rvalue(std::move(rval));
-            return Value{derived(var->lvalue())};
+            return Value{var->lvalue()};
         },
         [&](DataView& data) {
             data.store(std::move(rval));
@@ -176,7 +173,7 @@ Value LValue::assign(RValue&& rval) {
         [&](const BoundFunSet&) -> Value { unreachable(); },
         [&](const std::monostate&) -> Value {
             // pretend assign for empty value
-            return Value{derived(std::monostate{})};
+            return Value{derived()};
         });
 }
 
@@ -279,7 +276,7 @@ LValue RValue::prop(Ref<Prop> prop) {
             return LValue::make(
                 data->prop(prop), value::IsConsteval * is_consteval());
         },
-        [&](std::monostate) { return LValue{}; },
+        [&](std::monostate) { return LValue::make_ph(); },
         [&](auto& other) -> LValue { unreachable(); });
 }
 

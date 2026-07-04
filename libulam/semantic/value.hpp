@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/assert.hpp"
 #include <functional>
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
@@ -32,22 +33,23 @@ class LValue : public detail::NullableVariant<Ref<Var>, DataView, BoundFunSet> {
     using Base = detail::NullableVariant<Ref<Var>, DataView, BoundFunSet>;
 
 public:
+    static constexpr value::flags_t DefaultFlags = value::IsXvalue;
+
     LValue();
 
 private:
-    LValue(std::monostate);
-    LValue(Ref<Var> var);
-    LValue(DataView data);
-    LValue(BoundFunSet bfset);
-
-public:
-    static constexpr value::flags_t DefaultFlags = value::IsXvalue;
+    LValue(Ref<Var> var, value::flags_t flags);
 
     template <typename T>
+    LValue(T&& value, value::flags_t flags):
+        Base{std::forward<T>(value)}, _flags{flags} {
+        ulam_assert((_flags | value::LValueFlags) == value::LValueFlags);
+    }
+
+public:
+    template <typename T>
     static LValue make(T&& value, value::flags_t flags = DefaultFlags) {
-        LValue lval{std::forward<T>(value)};
-        lval._flags |= flags; // ??
-        return lval;
+        return {std::forward<T>(value), flags};
     }
 
     static LValue make_ph(value::flags_t flags = DefaultFlags) {
@@ -55,8 +57,7 @@ public:
     }
 
     template <typename T> LValue derived(T&& value) const {
-        LValue lval{std::forward<T>(value)};
-        lval._flags = _flags;
+        auto lval = make(std::forward<T>(value), _flags);
         lval._scope_lvl = _scope_lvl;
         return lval;
     }
@@ -103,7 +104,7 @@ public:
     void set_scope_lvl(scope_lvl_t scope_lvl) { _scope_lvl = scope_lvl; }
 
 private:
-    value::flags_t _flags{value::NoFlags};
+    value::flags_t _flags{DefaultFlags};
     scope_lvl_t _scope_lvl{NoScopeLvl};
 };
 
@@ -117,7 +118,7 @@ public:
 
 private:
     template <typename T>
-    explicit RValue(T&& value, value::flags_t flags):
+    RValue(T&& value, value::flags_t flags):
         Base{std::forward<T>(value)}, _flags{flags} {
         ulam_assert((_flags | value::RValueFlags) == value::RValueFlags);
     }
