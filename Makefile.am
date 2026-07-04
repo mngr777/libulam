@@ -144,7 +144,6 @@ SEMANTIC_SOURCE_FILES = \
 
 SEMA_HEADER_FILES = \
 	libulam/sema.hpp \
-	libulam/sema/class_resolver.hpp \
 	libulam/sema/debug/out.hpp \
 	libulam/sema/eval.hpp \
 	libulam/sema/eval/base.hpp \
@@ -166,11 +165,11 @@ SEMA_HEADER_FILES = \
 	libulam/sema/expr_res.hpp \
 	libulam/sema/init.hpp \
 	libulam/sema/resolver.hpp \
+	libulam/sema/resolver/class.hpp \
 	libulam/sema/visitor.hpp
 
 SEMA_SOURCE_FILES = \
 	src/sema.cpp \
-	src/sema/class_resolver.cpp \
 	src/sema/eval.cpp \
 	src/sema/eval/base.cpp \
 	src/sema/eval/cast.cpp \
@@ -188,6 +187,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/debug/out.cpp \
 	src/sema/init.cpp \
 	src/sema/resolver.cpp \
+	src/sema/resolver/class.cpp \
 	src/sema/visitor.cpp
 
 HEADER_FILES = \

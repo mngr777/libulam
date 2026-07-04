@@ -1,4 +1,4 @@
-#include <libulam/sema/class_resolver.hpp>
+#include <libulam/sema/resolver/class.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/def.hpp>

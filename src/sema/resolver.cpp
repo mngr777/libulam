@@ -1,9 +1,9 @@
 #include <libulam/assert.hpp>
-#include <libulam/sema/class_resolver.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
 #include <libulam/sema/eval/init.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/sema/resolver/class.hpp>
 #include <libulam/semantic/module.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
