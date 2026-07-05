@@ -179,15 +179,8 @@ ExprRes EvalFuncall::do_funcall(
 
     auto ret_type = fun->ret_type();
     if (!ret_type->is(VoidId)) {
-        if (has_flag(evl::NoExec)) {
-            auto val =
-                ret_type->is_ref()
-                    ? Value::make_l_ph(LValue::DefaultFlags & ~value::IsXvalue)
-                    : Value{ret_type->construct_ph()};
-            return {ret_type, std::move(val)};
-        } else {
-            return {ExprError::NoReturn};
-        }
+        diag().error(fun->body_node(), "no return value");
+        return {ExprError::NoReturn};
     }
     return {builtins().void_type(), Value::make_r_ph()};
 }

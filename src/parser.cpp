@@ -624,7 +624,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
             ok = false;
         }
         _cur_fun_def = ref(fun);
-        body = make<ast::FunDefBody>();
+        body = tree_at<ast::FunDefBody>(_tok.loc_id);
         parse_as_block(ref(body));
         _cur_fun_def = {};
     } else {
