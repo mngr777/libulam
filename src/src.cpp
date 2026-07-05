@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <libulam/assert.hpp>
 #include <libulam/memory/buf.hpp>
 #include <libulam/src.hpp>
 

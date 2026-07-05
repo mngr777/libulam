@@ -1,5 +1,4 @@
 #pragma once
-#include <libulam/assert.hpp>
 #include <cstddef>
 #include <memory>
 
@@ -14,6 +13,9 @@ public:
 
     std::size_t size() const { return _size; }
     bool empty() const { return _size == 0; }
+
+    BufRef sub(std::size_t off, std::size_t size);
+    const BufRef sub(std::size_t off, std::size_t size) const;
 
     operator bool() const { return !empty(); }
 

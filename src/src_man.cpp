@@ -33,9 +33,9 @@ Src* SrcMan::src(const Path& path) {
 }
 
 loc_id_t
-SrcMan::loc_id(src_id_t src_id, const char* ptr, linum_t linum, chr_t chr) {
+SrcMan::loc_id(src_id_t src_id, linum_t linum, chr_t chr) {
     loc_id_t id = _locs.size();
-    _locs.emplace_back(src_id, ptr, linum, chr);
+    _locs.emplace_back(src_id, linum, chr);
     return id;
 }
 
@@ -46,8 +46,12 @@ SrcLoc SrcMan::loc(loc_id_t loc_id) {
 }
 
 std::string_view SrcMan::str_at(const SrcLoc& loc, std::size_t size, int off) {
-    // TODO: remove ptr from loc
-    return {loc.ptr() + off, size};
+    ulam_assert(loc.chr() > 0);
+    ulam_assert(loc.chr() + off > 0); // no offsetting to prev line
+    auto line = src(loc.src_id())->line(loc.linum());
+    // NOTE: cannot get part of next line either
+    auto ref = line.sub((std::size_t)(loc.chr() - 1 + off), size);
+    return {ref.start(), ref.size()};
 }
 
 std::string_view SrcMan::str_at(loc_id_t loc_id, std::size_t size, int off) {
