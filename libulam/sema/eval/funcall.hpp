@@ -16,6 +16,8 @@ class EvalFuncall : public EvalHelper {
 public:
     using EvalHelper::EvalHelper;
 
+    virtual ExprRes eval_noexec(Ref<Fun> fun);
+
     virtual ExprRes
     construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);
 
@@ -52,6 +54,8 @@ protected:
 
     virtual ExprRes do_funcall_native(
         Ref<ast::Node> node, Ref<Fun> fun, LValue self, ExprResList&& args);
+
+    virtual ExprResList make_args_ph(Ref<Fun> fun);
 
     virtual ExprRes empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun);
 

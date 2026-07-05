@@ -1,4 +1,6 @@
 #include "libulam/sema/resolver.hpp"
+#include "libulam/semantic/value.hpp"
+#include "libulam/semantic/value/bound_fun_set.hpp"
 #include "libulam/semantic/value/flags.hpp"
 #include <algorithm>
 #include <libulam/sema/eval/cast.hpp>
@@ -156,6 +158,11 @@ ExprRes EvalEnv::eval(Ref<ast::Block> block) {
     return {builtins().type(VoidId), Value{RValue{}}};
 }
 
+ExprRes EvalEnv::eval_noexec(Ref<Fun> fun) {
+    EvalFuncall ef{*this};
+    return ef.eval_noexec(fun);
+}
+
 void EvalEnv::eval_stmt(Ref<ast::Stmt> stmt) {
     EvalVisitor vis{*this};
     return do_eval_stmt(vis, stmt);
@@ -240,20 +247,6 @@ ExprRes EvalEnv::funcall(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     EvalFuncall ef{*this};
     return do_funcall(ef, node, fun, std::move(obj), std::move(args));
-}
-
-ExprRes EvalEnv::funcall_noexec(Ref<Fun> fun) {
-    auto cls = fun->cls();
-    if (resolver(false).resolve(cls))
-        return {};
-
-    auto obj = cls->construct_ph();
-    ExprRes self = {cls->ref_type(), Value{obj.self()}};
-    auto args = make_fun_args_ph(fun);
-
-    auto fr = flags_raii(evl::NoExec);
-    EvalFuncall ef{*this};
-    return do_funcall(ef, fun->node(), fun, std::move(self), std::move(args));
 }
 
 EvalEnv::StackRaii EvalEnv::stack_raii(Ref<Fun> fun, LValue self) {
@@ -420,19 +413,6 @@ ExprRes EvalEnv::do_funcall(
     ExprRes&& obj,
     ExprResList&& args) {
     return ef.funcall(node, fun, std::move(obj), std::move(args));
-}
-
-ExprResList EvalEnv::make_fun_args_ph(Ref<Fun> fun) {
-    ulam_assert(fun->is_ready());
-    ExprResList args;
-    for (auto param : fun->params()) {
-        auto arg =
-            param->type()->is_ref()
-                ? Value::make_l_ph(LValue::DefaultFlags & ~value::IsXvalue)
-                : Value::make_r_ph();
-        args.push_back({param->type(), std::move(arg)});
-    }
-    return args;
 }
 
 } // namespace ulam::sema

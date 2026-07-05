@@ -102,6 +102,8 @@ public:
 
     virtual ExprRes eval(Ref<ast::Block> block);
 
+    virtual ExprRes eval_noexec(Ref<Fun> fun);
+
     virtual void eval_stmt(Ref<ast::Stmt> stmt);
 
     virtual void eval_which(Ref<ast::Which> which);
@@ -144,8 +146,6 @@ public:
 
     virtual ExprRes funcall(
         Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
-
-    virtual ExprRes funcall_noexec(Ref<Fun> fun);
 
     StackRaii stack_raii(Ref<Fun> fun, LValue self);
 
@@ -242,8 +242,6 @@ protected:
         ExprResList&& args);
 
 private:
-    ExprResList make_fun_args_ph(Ref<Fun> fun);
-
     eval_flags_t _flags;
     ProgramScope _program_scope;
     EvalStack _stack;

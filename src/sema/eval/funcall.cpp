@@ -17,6 +17,13 @@
 
 namespace ulam::sema {
 
+ExprRes EvalFuncall::eval_noexec(Ref<Fun> fun) {
+    auto fr = env().add_flags_raii(evl::NoExec);
+    auto obj = LValue::make_ph(LValue::DefaultFlags & ~value::IsXvalue);
+    auto args = make_args_ph(fun);
+    return do_funcall(fun->node(), fun, obj, std::move(args), fun->cls());
+}
+
 ExprRes EvalFuncall::construct(
     Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args) {
     if (!cls->has_constructors())
@@ -120,7 +127,7 @@ ExprRes EvalFuncall::do_funcall(
         return {ExprError::FunctionIsPureVirtual};
     }
     ulam_assert(fun->node()->has_body());
-    ulam_assert(!self.empty());
+    ulam_assert(!self.empty() || has_flag(evl::NoExec));
 
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(env().scope_lvl() + 1);
@@ -128,6 +135,7 @@ ExprRes EvalFuncall::do_funcall(
     auto sr = env().fun_scope_raii(fun, self, eff_cls);
 
     // bind params
+    // TODO: context subclass
     std::list<Ptr<ast::VarDef>> tmp_defs{};
     std::list<Ptr<Var>> tmp_vars{};
     for (const auto& param : fun->params()) {
@@ -189,6 +197,19 @@ ExprRes EvalFuncall::do_funcall_native(
     // can't eval, return empty value
     diag().notice(node, "cannot evaluate native function");
     return empty_ret_val(node, fun);
+}
+
+ExprResList EvalFuncall::make_args_ph(Ref<Fun> fun) {
+    ulam_assert(fun->is_ready());
+    ExprResList args;
+    for (auto param : fun->params()) {
+        auto arg =
+            param->type()->is_ref()
+                ? Value::make_l_ph(LValue::DefaultFlags & ~value::IsXvalue)
+                : Value::make_r_ph();
+        args.push_back({param->type(), std::move(arg)});
+    }
+    return args;
 }
 
 ExprRes EvalFuncall::empty_ret_val(Ref<ast::Node> node, Ref<Fun> fun) {
