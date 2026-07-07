@@ -1,5 +1,5 @@
+#include "libulam/src_loc.hpp"
 #include "src/detail/string.hpp"
-#include <libulam/assert.hpp>
 #include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/token.hpp>
@@ -266,3 +266,20 @@ Op unary_post_op(Type type) {
 }
 
 } // namespace ulam::tok
+
+namespace ulam {
+
+void Token::change_type(tok::Type type) {
+    ulam_assert(_type != tok::Eof);
+    ulam_assert(_type == _orig_type);
+    _type = type;
+}
+
+loc_id_t Token::loc_id() const {
+    ulam_assert(_src_man);
+    if (_loc_id == NoLocId)
+        _loc_id = _src_man->loc_id(_loc);
+    return _loc_id;
+}
+
+} // namespace ulam

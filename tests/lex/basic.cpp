@@ -47,14 +47,14 @@ int main() {
     do {
         lex.lex(token);
         if (token.in(ulam::tok::Ident, ulam::tok::Number, ulam::tok::String)) {
-            std::cout << "`" << ctx.src_man().str_at(token.loc_id, token.size)
+            std::cout << "`" << ctx.src_man().str_at(token.loc_id(), token.size())
                       << "'";
         } else {
             const char* str = token.type_str();
             std::cout << (str ? str : token.type_name());
         }
         std::cout << "\n";
-    } while (token.type != ulam::tok::Eof);
+    } while (!token.is(ulam::tok::Eof));
 
-    token.type = ulam::tok::Ident;
+    token.is(ulam::tok::Ident);
 }

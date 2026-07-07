@@ -30,9 +30,12 @@ private:
     void skip_whitespace();
     void newline(std::size_t size = 1);
 
-    loc_id_t loc_id();
     void start(Token& token);
     void complete(tok::Type type);
+
+    SrcLoc loc() const;
+    loc_id_t loc_id(const SrcLoc& loc);
+    loc_id_t loc_id();
 
     void lex_str(char closing);
     void lex_comment(); // TODO: structured comments
@@ -48,7 +51,8 @@ private:
 
     const char* _cur;
     const char* _line;
-    const char* _tok_start{};
+    const char* _start{};
+    SrcLoc _start_loc{};
     Token* _tok{};
 
     linum_t _linum{1};

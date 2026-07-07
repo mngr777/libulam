@@ -26,6 +26,8 @@ public:
     Src* src(src_id_t src_id);
     Src* src(const Path& path);
 
+    // NOTE: no uniqueness check for {src, linum, chr} combination
+    loc_id_t loc_id(const SrcLoc& loc);
     loc_id_t loc_id(src_id_t src_id, linum_t linum, chr_t chr);
     SrcLoc loc(loc_id_t loc_id);
 

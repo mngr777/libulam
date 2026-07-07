@@ -64,7 +64,7 @@ bool Parser::match(tok::Type type) {
     if (!_tok.is(type)) {
         auto text = std::string("unexpected ") + _tok.type_name() +
                     ", expecting " + tok::type_name(type);
-        _ctx.diag().emit(Diag::Error, _tok.loc_id, _tok.size, text);
+        _ctx.diag().emit(Diag::Error, _tok.loc_id(), _tok.size(), text);
         return false;
     }
     return true;
@@ -100,15 +100,16 @@ template <typename... Ts> void Parser::panic(Ts... stop) {
 
 void Parser::unexpected() {
     auto text = std::string("unexpected ") + _tok.type_name();
-    _ctx.diag().emit(Diag::Error, _tok.loc_id, _tok.size, text);
+    _ctx.diag().emit(Diag::Error, _tok.loc_id(), _tok.size(), text);
 }
 
 void Parser::diag(std::string text) {
-    _ctx.diag().emit(Diag::Error, _tok.loc_id, _tok.size, std::move(text));
+    _ctx.diag().emit(Diag::Error, _tok.loc_id(), _tok.size(), std::move(text));
 }
 
 void Parser::diag(const Token& token, std::string text) {
-    _ctx.diag().emit(Diag::Error, token.loc_id, token.size, std::move(text));
+    _ctx.diag().emit(
+        Diag::Error, token.loc_id(), token.size(), std::move(text));
 }
 
 void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
@@ -116,11 +117,11 @@ void Parser::diag(loc_id_t loc_id, std::size_t size, std::string text) {
 }
 
 Ptr<ast::ModuleDef> Parser::parse_module(const std::string_view name) {
-    auto node = tree_at<ast::ModuleDef>(_tok.loc_id);
+    auto node = tree_at<ast::ModuleDef>(_tok.loc_id());
     node->set_ulam_version(_pp.version());
     node->set_name_id(_str_pool.put(name));
     while (!_tok.is(tok::Eof)) {
-        switch (_tok.type) {
+        switch (_tok.type()) {
         case tok::Local:
         case tok::Typedef:
         case tok::Constant:
@@ -194,7 +195,7 @@ Ptr<ast::ClassDef> Parser::parse_class_def_head() {
 
     // element/quark/transient/union
     auto kind = _tok.class_kind();
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
 
     // name
@@ -222,7 +223,7 @@ Ptr<ast::ClassDef> Parser::parse_class_def_head() {
 
 Ptr<ast::TypeNameList> Parser::parse_class_parent_list() {
     ulam_assert(_tok.in(tok::Plus, tok::Colon));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
 
     // class Foo : <anc_1> + <anc_2> + ...
@@ -256,7 +257,7 @@ void Parser::parse_class_def_body(Ref<ast::ClassDef> node) {
     expect(tok::BraceL);
     while (!_tok.in(tok::BraceR, tok::Eof)) {
         bool ok = false;
-        switch (_tok.type) {
+        switch (_tok.type()) {
         case tok::Typedef: {
             auto type_def = parse_type_def();
             if (type_def) {
@@ -348,7 +349,7 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
                 continue;
             }
             is_virtual = true;
-            virtual_loc_id = _tok.loc_id;
+            virtual_loc_id = _tok.loc_id();
         } else {
             ulam_assert(_tok.is(tok::Override));
             if (is_override) {
@@ -394,7 +395,7 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
     // [] (return type only)
     auto brace_loc_id = NoLocId; // to complain if not a fun
     if (_tok.is(tok::BracketL)) {
-        brace_loc_id = _tok.loc_id;
+        brace_loc_id = _tok.loc_id();
         array_dims = parse_array_dims();
         if (!array_dims)
             return false;
@@ -463,9 +464,9 @@ bool Parser::parse_class_var_or_fun_def(Ref<ast::ClassDefBody> node) {
 }
 
 std::pair<ast::Str, tok::Type> Parser::parse_op_fun_name() {
-    auto name_loc_id = _tok.loc_id;
+    auto name_loc_id = _tok.loc_id();
     consume();
-    tok::Type op_tok_type = _tok.type;
+    tok::Type op_tok_type = _tok.type();
     if (!_tok.is_overloadable_op()) {
         unexpected();
         return {{}, tok::Eof};
@@ -589,7 +590,7 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
 
 Ptr<ast::FunDef>
 Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
-    ulam_assert(_tok.type == tok::ParenL);
+    ulam_assert(_tok.is(tok::ParenL));
 
     bool ok = true;
 
@@ -624,7 +625,7 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
             ok = false;
         }
         _cur_fun_def = ref(fun);
-        body = tree_at<ast::FunDefBody>(_tok.loc_id);
+        body = tree_at<ast::FunDefBody>(_tok.loc_id());
         parse_as_block(ref(body));
         _cur_fun_def = {};
     } else {
@@ -700,14 +701,14 @@ Ptr<ast::FunDef> Parser::parse_constructor_def_rest(ast::Str name) {
 Ptr<ast::ParamList> Parser::parse_param_list(bool allow_ellipsis) {
     ulam_assert(_tok.is(tok::ParenL));
     // (
-    auto node = tree_at<ast::ParamList>(_tok.loc_id);
+    auto node = tree_at<ast::ParamList>(_tok.loc_id());
     consume();
     bool requires_value = false;
     Ref<ast::Param> prev{};
     while (!_tok.in(tok::ParenR, tok::Eof)) {
         // ...
         if (_tok.is(tok::Ellipsis)) {
-            auto loc_id = _tok.loc_id;
+            auto loc_id = _tok.loc_id();
             consume();
             if (allow_ellipsis) {
                 if (node->has_ellipsis())
@@ -811,7 +812,7 @@ std::pair<Ptr<ast::InitValue>, bool> Parser::parse_init(
         allow_constr = false; // not constructor init syntax
         consume();
     }
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
 
     auto make_list_or_map = [&](auto&& list_map_v) {
         auto val = list_map_v.accept(
@@ -877,7 +878,7 @@ Parser::parse_init_list_or_map() {
 Ptr<ast::InitList> Parser::parse_init_list() {
     ulam_assert(_tok.in(tok::BraceL, tok::ParenL));
     // { or (
-    auto node = tree_at<ast::InitList>(_tok.loc_id);
+    auto node = tree_at<ast::InitList>(_tok.loc_id());
     node->set_is_constr_call(_tok.is(tok::ParenL));
     tok::Type closing = _tok.is(tok::BraceL) ? tok::BraceR : tok::ParenR;
     consume();
@@ -915,7 +916,7 @@ Panic:
 Ptr<ast::InitMap> Parser::parse_init_map() {
     ulam_assert(_tok.is(tok::BraceL));
     // {
-    auto node = tree_at<ast::InitMap>(_tok.loc_id);
+    auto node = tree_at<ast::InitMap>(_tok.loc_id());
     consume();
     while (!_tok.is(tok::BraceR)) {
         // .<label>
@@ -994,7 +995,7 @@ void Parser::parse_as_block(Ref<ast::Block> node, bool implicit_braces) {
 }
 
 Ptr<ast::Stmt> Parser::parse_stmt() {
-    switch (_tok.type) {
+    switch (_tok.type()) {
     case tok::Typedef:
         return parse_type_def();
     case tok::Local:
@@ -1042,7 +1043,7 @@ Ptr<ast::Stmt> Parser::parse_stmt_local() {
     consume();
 
     // Type/ident
-    switch (_tok.type) {
+    switch (_tok.type()) {
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
         putback(period);
@@ -1096,7 +1097,7 @@ Ptr<ast::If> Parser::parse_if() {
     bool ok = true;
 
     // if
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     // (
     if (!expect(tok::ParenL))
@@ -1185,7 +1186,7 @@ Ptr<ast::While> Parser::parse_while() {
     bool ok = true;
 
     // while
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
 
     // (
@@ -1215,7 +1216,7 @@ Ptr<ast::While> Parser::parse_while() {
 Ptr<ast::Which> Parser::parse_which() {
     ulam_assert(_tok.is(tok::Which));
     // which
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     bool ok = true;
     bool is_as_cond = false;
@@ -1283,12 +1284,12 @@ Ptr<ast::WhichCase> Parser::parse_which_case(bool is_as_cond) {
 
     // TODO: keep parsing on errors, throw out result
 
-    auto loc_id = _tok.loc_id;
-    auto conds = tree_at<ast::WhichCaseCondList>(_tok.loc_id);
+    auto loc_id = _tok.loc_id();
+    auto conds = tree_at<ast::WhichCaseCondList>(_tok.loc_id());
     do {
         bool is_default = _tok.is(tok::Otherwise);
         consume();
-        auto cond_loc_id = _tok.loc_id;
+        auto cond_loc_id = _tok.loc_id();
 
         // expr
         Ptr<ast::Expr> expr;
@@ -1338,7 +1339,7 @@ Ptr<ast::Cond> Parser::parse_cond() {
 
 Ptr<ast::Return> Parser::parse_return() {
     ulam_assert(_tok.is(tok::Return));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     bool ok = true;
 
@@ -1360,7 +1361,7 @@ Ptr<ast::Return> Parser::parse_return() {
 
 Ptr<ast::Break> Parser::parse_break() {
     ulam_assert(_tok.is(tok::Break));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     expect(tok::Semicol);
     return tree_at<ast::Break>(loc_id);
@@ -1368,7 +1369,7 @@ Ptr<ast::Break> Parser::parse_break() {
 
 Ptr<ast::Continue> Parser::parse_continue() {
     ulam_assert(_tok.is(tok::Continue));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     expect(tok::Semicol);
     return tree_at<ast::Continue>(loc_id);
@@ -1387,13 +1388,13 @@ Ptr<ast::Expr> Parser::parse_expr_climb(ops::Prec min_prec, ExprContext& ctx) {
     Ptr<ast::Expr> lhs;
 
     // unary prefix?
-    Op op = tok::unary_pre_op(_tok.type);
+    Op op = _tok.unary_pre_op();
     if (op != Op::None) {
         if (!check_expr_no_as_cond(ctx))
             return {};
         ctx.set_flag(ExprIsNotEmpty);
 
-        auto loc_id = _tok.loc_id;
+        auto loc_id = _tok.loc_id();
         consume();
         lhs = tree_at<ast::UnaryOp>(
             loc_id, op, parse_expr_climb(ops::prec(op), ctx));
@@ -1419,7 +1420,7 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
 
         // binary?
         Op op = _tok.bin_op();
-        auto op_loc_id = _tok.loc_id;
+        auto op_loc_id = _tok.loc_id();
         if (op == Op::None || ops::prec(op) < min_prec) {
             if (op != Op::None)
                 break;
@@ -1500,13 +1501,13 @@ Ptr<ast::Expr> Parser::parse_expr_climb_rest(
 Ptr<ast::Expr> Parser::parse_expr_lhs(ExprContext& ctx) {
     Ptr<ast::Expr> expr{};
 
-    if (_tok.type != tok::ParenL) {
+    if (!_tok.is(tok::ParenL)) {
         if (!check_expr_no_as_cond(ctx))
             return {};
         ctx.set_flag(ExprIsNotEmpty);
     }
 
-    switch (_tok.type) {
+    switch (_tok.type()) {
     case tok::Local:
         return parse_expr_lhs_local(ctx);
     case tok::BuiltinTypeIdent:
@@ -1552,7 +1553,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs_local(ExprContext& ctx) {
     consume();
 
     // Type/ident
-    switch (_tok.type) {
+    switch (_tok.type()) {
     case tok::BuiltinTypeIdent:
     case tok::TypeIdent:
         putback(period);
@@ -1573,7 +1574,7 @@ Ptr<ast::Expr> Parser::parse_expr_lhs_local(ExprContext& ctx) {
 
 Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
     ulam_assert(_tok.is(tok::ParenL));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     Ptr<ast::Expr> inner{};
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
@@ -1626,7 +1627,8 @@ Ptr<ast::Expr> Parser::parse_class_const_or_type_op() {
     return parse_class_const_or_type_op_rest(std::move(type_name));
 }
 
-Ptr<ast::Expr> Parser::parse_class_const_or_type_op_rest(Ptr<ast::TypeName> type_name) {
+Ptr<ast::Expr>
+Parser::parse_class_const_or_type_op_rest(Ptr<ast::TypeName> type_name) {
     if (_tok.is(tok::Ident))
         return parse_class_const_rest(std::move(type_name));
     if (_tok.is_type_op())
@@ -1674,7 +1676,7 @@ Ptr<ast::TypeExpr> Parser::parse_type_expr() {
     loc_id_t amp_loc_id{NoLocId};
     if (_tok.is(tok::Amp)) {
         is_ref = true;
-        amp_loc_id = _tok.loc_id;
+        amp_loc_id = _tok.loc_id();
         consume();
     }
 
@@ -1699,7 +1701,7 @@ Ptr<ast::TypeExpr> Parser::parse_type_expr() {
 
 Ptr<ast::ExprList> Parser::parse_array_dims(bool allow_empty) {
     ulam_assert(_tok.is(tok::BracketL));
-    auto node = tree_at<ast::ExprList>(_tok.loc_id);
+    auto node = tree_at<ast::ExprList>(_tok.loc_id());
     consume();
     while (!_tok.is(tok::Eof)) {
         Ptr<ast::Expr> expr;
@@ -1739,7 +1741,7 @@ Ptr<ast::TypeName> Parser::parse_type_name(type_name_flags_t flags) {
         unexpected();
         return {};
     }
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     auto node = tree_at<ast::TypeName>(loc_id, parse_type_spec());
     while (_tok.is(tok::Period)) {
         auto period_tok = _tok;
@@ -1769,7 +1771,7 @@ Ptr<ast::TypeSpec> Parser::parse_type_spec() {
     bool is_self_or_super = false;
     BuiltinTypeId builtin_type_id = NoBuiltinTypeId;
 
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     if (_tok.is(tok::BuiltinTypeIdent)) {
         builtin_type_id = _tok.builtin_type_id();
         consume();
@@ -1810,7 +1812,7 @@ Ptr<ast::FunCall> Parser::parse_op_call() {
     consume();
 
     // operator<op>
-    tok::Type op_tok_type = _tok.type;
+    tok::Type op_tok_type = _tok.type();
     if (!_tok.is_overloadable_op()) {
         unexpected();
         return {};
@@ -1833,7 +1835,7 @@ Ptr<ast::FunCall> Parser::parse_op_call() {
 
 Ptr<ast::ArgList> Parser::parse_arg_list() {
     ulam_assert(_tok.is(tok::ParenL));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     auto args = tree_at<ast::ArgList>(loc_id);
     while (!_tok.in(tok::ParenR, tok::Eof)) {
@@ -1861,7 +1863,7 @@ Panic:
 
 Ptr<ast::ArrayAccess> Parser::parse_array_access(Ptr<ast::Expr>&& array) {
     ulam_assert(_tok.is(tok::BracketL));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
 
     // [index]
@@ -1878,7 +1880,7 @@ Ptr<ast::ArrayAccess> Parser::parse_array_access(Ptr<ast::Expr>&& array) {
 Ptr<ast::Expr>
 Parser::parse_member_access_or_type_op_or_op_call(Ptr<ast::Expr>&& obj) {
     ulam_assert(_tok.is(tok::Period));
-    auto op_loc_id = _tok.loc_id;
+    auto op_loc_id = _tok.loc_id();
     consume();
 
     Ptr<ast::BaseTypeSelect> base_type;
@@ -1889,7 +1891,7 @@ Parser::parse_member_access_or_type_op_or_op_call(Ptr<ast::Expr>&& obj) {
             return {};
     }
 
-    switch (_tok.type) {
+    switch (_tok.type()) {
     case tok::Ident:
         // obj.Base1.Base2(p1, p2)[classid].prop
         return parse_member_access_rest(
@@ -1923,7 +1925,7 @@ Ptr<ast::FunCall> Parser::parse_op_call_rest(
     ulam_assert(_tok.in(tok::Operator));
     consume();
 
-    tok::Type op_tok_type = _tok.type;
+    tok::Type op_tok_type = _tok.type();
     if (!_tok.is_overloadable_op()) {
         unexpected();
         return {};
@@ -1959,7 +1961,7 @@ Ptr<ast::FunCall> Parser::parse_op_call_rest(
 
 Ptr<ast::BaseTypeSelect> Parser::parse_base_type_select() {
     ulam_assert(_tok.is(tok::TypeIdent));
-    auto base_type = tree_at<ast::BaseTypeSelect>(_tok.loc_id);
+    auto base_type = tree_at<ast::BaseTypeSelect>(_tok.loc_id());
 
     // Base1.Base2(p1, p2).<...>
     do {
@@ -1991,7 +1993,7 @@ Ptr<ast::BaseTypeSelect> Parser::parse_base_type_select() {
 Ptr<ast::Ternary> Parser::parse_ternary_rest(Ptr<ast::Expr>&& cond) {
     ulam_assert(_tok.is(tok::Quest));
     // ?
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
 
     auto flags = NoExprFlags;
@@ -2124,7 +2126,7 @@ bool Parser::parse_is_ref() {
 Ptr<ast::ClassName> Parser::parse_class_name() {
     ulam_assert(_tok.is_class_name());
     auto kind = _tok.class_name_kind();
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     return tree_at<ast::ClassName>(loc_id, kind);
 }
@@ -2132,14 +2134,14 @@ Ptr<ast::ClassName> Parser::parse_class_name() {
 Ptr<ast::BoolLit> Parser::parse_bool_lit() {
     ulam_assert(_tok.in(tok::True, tok::False));
     bool value = _tok.is(tok::True);
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     consume();
     return tree_at<ast::BoolLit>(loc_id, value);
 }
 
 Ptr<ast::NumLit> Parser::parse_num_lit() {
     ulam_assert(_tok.is(tok::Number));
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     auto number = num_lit_number();
     consume();
     return tree_at<ast::NumLit>(loc_id, std::move(number));
@@ -2147,15 +2149,15 @@ Ptr<ast::NumLit> Parser::parse_num_lit() {
 
 Ptr<ast::NumLit> Parser::parse_char_lit() {
     ulam_assert(_tok.is(tok::Char));
-    auto loc_id = _tok.loc_id;
-    auto number = detail::parse_char_str(_ctx.diag(), _tok.loc_id, tok_str());
+    auto loc_id = _tok.loc_id();
+    auto number = detail::parse_char_str(_ctx.diag(), _tok.loc_id(), tok_str());
     consume();
     return tree_at<ast::NumLit>(loc_id, std::move(number));
 }
 
 Ptr<ast::StrLit> Parser::parse_str_lit() {
     ulam_assert(_tok.is(tok::String) && !_tok.is_class_name());
-    auto loc_id = _tok.loc_id;
+    auto loc_id = _tok.loc_id();
     auto text = str_lit_text();
     consume();
     auto str_id = _text_pool.put(text);
@@ -2164,12 +2166,13 @@ Ptr<ast::StrLit> Parser::parse_str_lit() {
 
 Number Parser::num_lit_number() {
     ulam_assert(_tok.is(tok::Number));
-    switch (_tok.orig_type) {
+    switch (_tok.orig_type()) {
     case tok::Number:
-        return detail::parse_num_str(_ctx.diag(), _tok.loc_id, tok_str());
+        return detail::parse_num_str(_ctx.diag(), _tok.loc_id(), tok_str());
     case tok::__Line:
         return {
-            Radix::Decimal, (Unsigned)_ctx.src_man().loc(_tok.loc_id).linum()};
+            Radix::Decimal,
+            (Unsigned)_ctx.src_man().loc(_tok.loc_id()).linum()};
     default:
         unreachable();
     }
@@ -2177,9 +2180,9 @@ Number Parser::num_lit_number() {
 
 std::string Parser::str_lit_text() {
     ulam_assert(_tok.is(tok::String));
-    switch (_tok.orig_type) {
+    switch (_tok.orig_type()) {
     case tok::String:
-        return detail::parse_str(_ctx.diag(), _tok.loc_id, tok_str());
+        return detail::parse_str(_ctx.diag(), _tok.loc_id(), tok_str());
     case tok::__File:
         return _pp.current_path().filename();
     case tok::__FilePath:
@@ -2209,12 +2212,12 @@ Ptr<N> Parser::tree_at(loc_id_t loc_id, Args&&... args) {
 const std::string_view Parser::tok_str() {
     ulam_assert(_tok.in(
         tok::Ident, tok::TypeIdent, tok::Number, tok::Char, tok::String));
-    return _ctx.src_man().str_at(_tok.loc_id, _tok.size);
+    return _ctx.src_man().str_at(_tok.loc_id(), _tok.size());
 }
 
 ast::Str Parser::tok_ast_str() {
     ulam_assert(_tok.in(tok::Ident, tok::TypeIdent));
-    return {tok_str_id(), _tok.loc_id};
+    return {tok_str_id(), _tok.loc_id()};
 }
 
 str_id_t Parser::tok_str_id() {

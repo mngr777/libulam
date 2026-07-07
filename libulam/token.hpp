@@ -1,4 +1,5 @@
 #pragma once
+#include "libulam/src_man.hpp"
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
@@ -42,50 +43,66 @@ Op unary_post_op(Type type);
 
 } // namespace tok
 
-struct Token {
+class Token {
+public:
     using size_t = std::uint16_t;
 
-    tok::Type type{tok::Eof};
-    tok::Type orig_type{tok::Eof};
-    size_t size{0};
-    loc_id_t loc_id{NoLocId};
+    Token() {}
+    Token(SrcMan& src_man, SrcLoc loc, tok::Type type, size_t size):
+        _src_man(&src_man), _loc{loc}, _type{type}, _orig_type{type}, _size{size} {}
 
-    const char* type_str() const { return tok::type_str(type); }
-    const char* type_name() const { return tok::type_name(type); }
+    const char* type_str() const { return tok::type_str(_type); }
+    const char* type_name() const { return tok::type_name(_type); }
 
-    bool is(tok::Type type_) const { return type_ == type; }
+    bool is(tok::Type type) const { return type == _type; }
 
     template <typename T, typename... Ts> bool in(T first, Ts... rest) {
         return is(first) || in(rest...);
     }
     bool in() { return false; }
 
-    ClassKind class_kind() const { return tok::class_kind(type); }
+    ClassKind class_kind() const { return tok::class_kind(_type); }
 
-    bool is_class_name() const { return tok::is_class_name(orig_type); }
+    bool is_class_name() const { return tok::is_class_name(_orig_type); }
     ClassNameKind class_name_kind() const {
-        return tok::class_name_kind(orig_type);
+        return tok::class_name_kind(_orig_type);
     }
 
     BuiltinTypeId builtin_type_id() const {
-        return tok::builtin_type_id(orig_type);
+        return tok::builtin_type_id(_orig_type);
     }
 
-    bool is_type_op() const { return tok::is_type_op(type); }
-    TypeOp type_op() const { return tok::type_op(type); }
+    bool is_type_op() const { return tok::is_type_op(_type); }
+    TypeOp type_op() const { return tok::type_op(_type); }
 
-    bool is_op() const { return tok::is_op(type); }
-    bool is_overloadable_op() const { return tok::is_overloadable_op(type); }
+    bool is_op() const { return tok::is_op(_type); }
+    bool is_overloadable_op() const { return tok::is_overloadable_op(_type); }
 
-    Op bin_op() const { return tok::bin_op(type); }
-    Op unary_pre_op() const { return tok::unary_pre_op(type); }
-    Op unary_post_op() const { return tok::unary_post_op(type); }
+    Op bin_op() const { return tok::bin_op(_type); }
+    Op unary_pre_op() const { return tok::unary_pre_op(_type); }
+    Op unary_post_op() const { return tok::unary_post_op(_type); }
 
-    bool is_self() const { return orig_type == tok::Self; }
-    bool is_self_class() const { return orig_type == tok::SelfClass; }
+    bool is_self() const { return _orig_type == tok::Self; }
+    bool is_self_class() const { return _orig_type == tok::SelfClass; }
 
-    bool is_super() const { return orig_type == tok::Super; }
-    bool is_super_class() const { return orig_type == tok::SuperClass; }
+    bool is_super() const { return _orig_type == tok::Super; }
+    bool is_super_class() const { return _orig_type == tok::SuperClass; }
+
+    tok::Type type() const { return _type; }
+    void change_type(tok::Type type);
+
+    tok::Type orig_type() const { return _orig_type; }
+    size_t size() const { return _size; }
+
+    loc_id_t loc_id() const;
+
+private:
+    SrcMan* _src_man;
+    SrcLoc _loc;
+    tok::Type _type{tok::Eof};
+    tok::Type _orig_type{tok::Eof};
+    size_t _size{0};
+    mutable loc_id_t _loc_id{NoLocId};
 };
 
 } // namespace ulam

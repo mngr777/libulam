@@ -15,7 +15,7 @@ void Lex::lex(Token& token) {
     switch (ch) {
     case '\0':
         if (_cur != _buf.end())
-            _pp.diag(_tok->loc_id, "\\0 before end of input");
+            _pp.diag(loc_id(_start_loc), "\\0 before end of input");
         complete(tok::Eof);
         break;
     case '!':
@@ -260,19 +260,23 @@ void Lex::skip_whitespace() {
     }
 }
 
-loc_id_t Lex::loc_id() { return _src_man.loc_id(_src_id, _linum, chr()); }
-
 void Lex::start(Token& token) {
-    _tok_start = _cur;
+    _start = _cur;
+    _start_loc = loc();
     _tok = &token;
-    token.loc_id = loc_id();
 }
 
 void Lex::complete(tok::Type type) {
     ulam_assert(_tok);
-    _tok->type = type;
-    _tok->size = _cur - _tok_start;
+    Token::size_t size = _cur - _start;
+    *_tok = Token{_src_man, _start_loc, type, size};
 }
+
+SrcLoc Lex::loc() const { return {_src_id, _linum, chr()}; }
+
+loc_id_t Lex::loc_id(const SrcLoc& loc) { return _src_man.loc_id(loc); }
+
+loc_id_t Lex::loc_id() { return loc_id(loc()); }
 
 void Lex::newline(std::size_t size) {
     ulam_assert(size < 3);
@@ -439,12 +443,12 @@ Done:
 }
 
 void Lex::lex_number() {
-    ulam_assert(_tok_start);
-    ulam_assert(detail::is_digit(_tok_start[0]));
+    ulam_assert(_start);
+    ulam_assert(detail::is_digit(_start[0]));
 
     auto is_digit = &detail::is_digit;
     auto digits_start = _cur - 1;
-    if (_tok_start[0] == '0') {
+    if (_start[0] == '0') {
         // scroll over `0x' or `0b' prefix if there's a digit after
         if (at('x')) {
             is_digit = &detail::is_xdigit;
@@ -474,12 +478,12 @@ void Lex::lex_number() {
 }
 
 void Lex::lex_word() {
-    ulam_assert(_tok_start);
+    ulam_assert(_start);
     ulam_assert(_cur[-1] == '@' || detail::is_word(_cur[-1]));
     while (detail::is_word(_cur[0]))
         advance();
-    auto type = tok::type_by_keyword(
-        {_tok_start, static_cast<std::size_t>(_cur - _tok_start)});
+    auto type =
+        tok::type_by_keyword({_start, static_cast<std::size_t>(_cur - _start)});
     complete(type);
 }
 

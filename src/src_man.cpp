@@ -32,8 +32,11 @@ Src* SrcMan::src(const Path& path) {
     return (it != _src_map.end()) ? it->second : nullptr;
 }
 
-loc_id_t
-SrcMan::loc_id(src_id_t src_id, linum_t linum, chr_t chr) {
+loc_id_t SrcMan::loc_id(const SrcLoc& loc) {
+    return loc_id(loc.src_id(), loc.linum(), loc.chr());
+}
+
+loc_id_t SrcMan::loc_id(src_id_t src_id, linum_t linum, chr_t chr) {
     loc_id_t id = _locs.size();
     _locs.emplace_back(src_id, linum, chr);
     return id;

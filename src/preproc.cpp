@@ -42,8 +42,7 @@ Preproc& Preproc::operator>>(Token& token) {
     ulam_assert(!_stack.empty());
     while (true) {
         lex(token);
-        token.orig_type = token.type;
-        switch (token.type) {
+        switch (token.type()) {
         case tok::Ulam:
             preproc_ulam();
             break;
@@ -60,11 +59,11 @@ Preproc& Preproc::operator>>(Token& token) {
             break;
         case tok::Self:
         case tok::Super:
-            token.type = tok::Ident;
+            token.change_type(tok::Ident);
             return *this;
         case tok::SelfClass:
         case tok::SuperClass:
-            token.type = tok::TypeIdent;
+            token.change_type(tok::TypeIdent);
             return *this;
         case tok::IntT:
         case tok::UnsignedT:
@@ -74,7 +73,7 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::AtomT:
         case tok::VoidT:
         case tok::StringT:
-            token.type = tok::BuiltinTypeIdent;
+            token.change_type(tok::BuiltinTypeIdent);
             return *this;
         case tok::__File:
         case tok::__FilePath:
@@ -84,10 +83,10 @@ Preproc& Preproc::operator>>(Token& token) {
         case tok::__ClassSimple:
         case tok::__ClassMangled:
         case tok::__Func:
-            token.type = tok::String;
+            token.change_type(tok::String);
             return *this;
         case tok::__Line:
-            token.type = tok::Number;
+            token.change_type(tok::Number);
             return *this;
         case tok::Eof:
             _stack.pop();
@@ -132,7 +131,7 @@ bool Preproc::expect(Token& token, tok::Type type, Ts... stop) {
         lex(token);
         if (token.in(stop...))
             break;
-        diag(token.loc_id, "Unexpected token");
+        diag(token.loc_id(), "Unexpected token");
     }
     return false;
 }
@@ -146,7 +145,7 @@ void Preproc::preproc_ulam() {
         if (ec == std::errc{}) {
             _version = version;
         } else {
-            diag(token.loc_id, "invalid version number");
+            diag(token.loc_id(), "invalid version number");
         }
         expect(token, tok::Semicol, tok::Eof);
     }
@@ -171,7 +170,7 @@ bool Preproc::preproc_load() {
     std::string_view path_str{tok_str(token)};
     assert(!empty(path_str));
     bool global = (path_str[0] == '<');
-    Path path{detail::parse_str(diag, token.loc_id, path_str)};
+    Path path{detail::parse_str(diag, token.loc_id(), path_str)};
 
     // hack for string sources
     auto src = src_man.src(path);
@@ -185,7 +184,7 @@ bool Preproc::preproc_load() {
     path = global ? _path_resolver.resolve(path)
                   : utils::find_file_rel(path, this->src().path());
     if (path.empty()) {
-        _ctx.diag().fatal(token.loc_id, token.size, "file not found");
+        _ctx.diag().fatal(token.loc_id(), token.size(), "file not found");
         return false;
     }
     src = src_man.src(path);
@@ -202,7 +201,7 @@ bool Preproc::preproc_load() {
 }
 
 const std::string_view Preproc::tok_str(const Token& token) {
-    return _ctx.src_man().str_at(token.loc_id, token.size);
+    return _ctx.src_man().str_at(token.loc_id(), token.size());
 }
 
 } // namespace ulam
