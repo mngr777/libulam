@@ -1,11 +1,11 @@
 #pragma once
-#include "libulam/src_man.hpp"
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
 #include <libulam/semantic/type/class_name_kind.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/src_loc.hpp>
+#include <libulam/src_man.hpp>
 #include <string_view>
 
 namespace ulam {
@@ -49,7 +49,11 @@ public:
 
     Token() {}
     Token(SrcMan& src_man, SrcLoc loc, tok::Type type, size_t size):
-        _src_man(&src_man), _loc{loc}, _type{type}, _orig_type{type}, _size{size} {}
+        _src_man(&src_man),
+        _loc{loc},
+        _type{type},
+        _orig_type{type},
+        _size{size} {}
 
     const char* type_str() const { return tok::type_str(_type); }
     const char* type_name() const { return tok::type_name(_type); }

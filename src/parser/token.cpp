@@ -1,8 +1,8 @@
-#include "libulam/src_loc.hpp"
 #include "src/detail/string.hpp"
 #include <libulam/assert.hpp>
+#include <libulam/parser/token.hpp>
 #include <libulam/semantic/ops.hpp>
-#include <libulam/token.hpp>
+#include <libulam/src_loc.hpp>
 #include <map>
 
 namespace ulam::tok {
@@ -15,7 +15,7 @@ auto make_keyword_type_table() {
 #define TOK(str, type)                                                         \
     if (str && (*((char*)str) == '@' || detail::is_word(*(char*)str)))         \
         table[str ? str : "_dummy_"] = type;
-#include <libulam/token.inc.hpp>
+#include <libulam/parser/token.inc.hpp>
 #undef TOK
     return table;
 }
@@ -27,7 +27,7 @@ const char* type_str(tok::Type type) {
 #define TOK(str, type)                                                         \
     case type:                                                                 \
         return str;
-#include <libulam/token.inc.hpp>
+#include <libulam/parser/token.inc.hpp>
 #undef TOK
     default:
         unreachable();
@@ -39,7 +39,7 @@ const char* type_name(tok::Type type) {
 #define TOK(str, type)                                                         \
     case type:                                                                 \
         return #type;
-#include <libulam/token.inc.hpp>
+#include <libulam/parser/token.inc.hpp>
 #undef TOK
     default:
         unreachable();

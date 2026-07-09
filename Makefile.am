@@ -198,20 +198,20 @@ HEADER_FILES = \
 	libulam/context.hpp \
 	libulam/detail/variant.hpp \
 	libulam/diag.hpp \
-	libulam/lex.hpp \
 	libulam/memory/buf.hpp \
 	libulam/memory/notepad.hpp \
 	libulam/memory/ptr.hpp \
 	libulam/options.hpp \
 	libulam/parser.hpp \
 	libulam/parser/options.hpp \
-	libulam/preproc.hpp \
+	libulam/parser/lex.hpp \
+	libulam/parser/preproc.hpp \
+	libulam/parser/token.hpp \
+	libulam/parser/token.inc.hpp \
 	libulam/src.hpp \
 	libulam/src_loc.hpp \
 	libulam/src_man.hpp \
 	libulam/str_pool.hpp \
-	libulam/token.hpp \
-	libulam/token.inc.hpp \
 	libulam/types.hpp \
 	libulam/utils/integer.hpp \
 	libulam/utils/file.hpp \
@@ -226,20 +226,20 @@ SOURCE_FILES = \
 	src/detail/string.hpp \
 	src/detail/variant.hpp \
 	src/diag.cpp \
-	src/lex.cpp \
 	src/memory/notepad.cpp \
 	src/memory/buf.cpp \
 	src/parser.cpp \
+	src/parser/lex.cpp \
 	src/parser/number.hpp \
 	src/parser/number.cpp \
+	src/parser/preproc.cpp \
 	src/parser/string.hpp \
 	src/parser/string.cpp \
-	src/preproc.cpp \
+	src/parser/token.cpp \
 	src/src.cpp \
 	src/src_loc.cpp \
 	src/src_man.cpp \
 	src/str_pool.cpp \
-	src/token.cpp \
 	src/utils/file.cpp \
 	src/utils/leximited.cpp
 

@@ -1,14 +1,13 @@
 #pragma once
-#include "libulam/ast/nodes/type.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <libulam/ast/context.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/detail/variant.hpp>
-#include <libulam/preproc.hpp>
+#include <libulam/parser/preproc.hpp>
+#include <libulam/parser/token.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/str_pool.hpp>
-#include <libulam/token.hpp>
 #include <stack>
 #include <string_view>
 #include <utility>
@@ -151,7 +150,8 @@ private:
     Ptr<ast::Expr> parse_expr_lhs_local(ExprContext& ctx);
     Ptr<ast::Expr> parse_paren_expr_or_cast(ExprContext& ctx);
     Ptr<ast::Expr> parse_class_const_or_type_op();
-    Ptr<ast::Expr> parse_class_const_or_type_op_rest(Ptr<ast::TypeName> type_name);
+    Ptr<ast::Expr>
+    parse_class_const_or_type_op_rest(Ptr<ast::TypeName> type_name);
     // TODO: split parse_{expr_,}_type_op_rest
     Ptr<ast::TypeOpExpr> parse_type_op_rest(
         Ptr<ast::TypeName>&& type,
@@ -161,7 +161,8 @@ private:
     Ptr<ast::ExprList> parse_array_dims(bool allow_empty = false);
     Ptr<ast::FullTypeName>
     parse_full_type_name_rest(Ptr<ast::TypeName> type_name);
-    Ptr<ast::TypeName> parse_type_name(type_name_flags_t flags = NoTypeNameFlags);
+    Ptr<ast::TypeName>
+    parse_type_name(type_name_flags_t flags = NoTypeNameFlags);
     Ptr<ast::TypeSpec> parse_type_spec();
     Ptr<ast::FunCall> parse_funcall(Ptr<ast::Expr>&& callable);
     Ptr<ast::FunCall> parse_op_call();
@@ -182,7 +183,8 @@ private:
     Ptr<ast::ClassConstAccess>
     parse_class_const_rest(Ptr<ast::TypeName> type_name);
     Ptr<ast::TypeOpExpr> parse_expr_type_op(Ptr<ast::Expr>&& obj);
-    Ptr<ast::TypeIdent> parse_type_ident(type_ident_flags_t flags = NoTypeIdentFlags);
+    Ptr<ast::TypeIdent>
+    parse_type_ident(type_ident_flags_t flags = NoTypeIdentFlags);
     Ptr<ast::Ident> parse_ident(ident_flags_t flags = NoIdentFlags);
     bool parse_is_ref();
     Ptr<ast::ClassName> parse_class_name();

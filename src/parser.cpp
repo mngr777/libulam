@@ -3,7 +3,6 @@
 #include <libulam/diag.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/src_loc.hpp>
-#include <libulam/token.hpp>
 #include <src/parser/number.hpp>
 #include <src/parser/string.hpp>
 #include <string>

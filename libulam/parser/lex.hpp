@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/memory/buf.hpp>
 #include <libulam/src_loc.hpp>
-#include <libulam/token.hpp>
+#include <libulam/parser/token.hpp>
 
 namespace ulam {
 

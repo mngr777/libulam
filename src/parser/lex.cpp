@@ -1,8 +1,7 @@
 #include "src/detail/string.hpp"
-#include <libulam/lex.hpp>
-#include <libulam/preproc.hpp>
+#include <libulam/parser/lex.hpp>
+#include <libulam/parser/preproc.hpp>
 #include <libulam/src_man.hpp>
-#include <libulam/token.hpp>
 #include <string_view>
 
 namespace ulam {

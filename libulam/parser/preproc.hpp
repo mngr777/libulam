@@ -1,8 +1,8 @@
 #pragma once
 #include <libulam/diag.hpp>
-#include <libulam/lex.hpp>
+#include <libulam/parser/lex.hpp>
 #include <libulam/src_loc.hpp>
-#include <libulam/token.hpp>
+#include <libulam/parser/token.hpp>
 #include <libulam/types.hpp>
 #include <libulam/utils/file.hpp>
 #include <stack>

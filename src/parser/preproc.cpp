@@ -3,10 +3,9 @@
 #include <libulam/assert.hpp>
 #include <libulam/context.hpp>
 #include <libulam/parser/options.hpp>
-#include <libulam/preproc.hpp>
+#include <libulam/parser/preproc.hpp>
 #include <libulam/src.hpp>
 #include <libulam/src_man.hpp>
-#include <libulam/token.hpp>
 #include <libulam/utils/file.hpp>
 
 #ifdef DEBUG_PREPROC
