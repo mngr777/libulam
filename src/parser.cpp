@@ -2211,7 +2211,7 @@ Ptr<N> Parser::tree_at(loc_id_t loc_id, Args&&... args) {
 const std::string_view Parser::tok_str() {
     ulam_assert(_tok.in(
         tok::Ident, tok::TypeIdent, tok::Number, tok::Char, tok::String));
-    return _ctx.src_man().str_at(_tok.loc_id(), _tok.size());
+    return {_tok.ptr(), _tok.size()};
 }
 
 ast::Str Parser::tok_ast_str() {

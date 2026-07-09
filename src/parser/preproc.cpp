@@ -52,8 +52,9 @@ Preproc& Preproc::operator>>(Token& token) {
             if (!preproc_load())
                 return *this;
             break;
-        case tok::Comment:
         case tok::MlComment:
+            // TODO: lex meta
+        case tok::Comment:
             // ignore comments
             break;
         case tok::Self:

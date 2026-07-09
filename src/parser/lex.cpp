@@ -268,7 +268,7 @@ void Lex::start(Token& token) {
 void Lex::complete(tok::Type type) {
     ulam_assert(_tok);
     Token::size_t size = _cur - _start;
-    *_tok = Token{_src_man, _start_loc, type, size};
+    *_tok = Token{_src_man, _start_loc, type, _start, size};
 }
 
 SrcLoc Lex::loc() const { return {_src_id, _linum, chr()}; }
@@ -389,7 +389,7 @@ void Lex::lex_ml_comment() {
         case '*':
             if (_cur[1] == '/') {
                 advance(2);
-                complete(tok::Comment);
+                complete(tok::MlComment);
                 return;
             } else {
                 advance();

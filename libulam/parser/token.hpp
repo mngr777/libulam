@@ -48,11 +48,12 @@ public:
     using size_t = std::uint16_t;
 
     Token() {}
-    Token(SrcMan& src_man, SrcLoc loc, tok::Type type, size_t size):
+    Token(SrcMan& src_man, SrcLoc loc, tok::Type type, const char* ptr, size_t size):
         _src_man(&src_man),
         _loc{loc},
         _type{type},
         _orig_type{type},
+        _ptr{ptr},
         _size{size} {}
 
     const char* type_str() const { return tok::type_str(_type); }
@@ -96,6 +97,7 @@ public:
     void change_type(tok::Type type);
 
     tok::Type orig_type() const { return _orig_type; }
+    const char* ptr() const { return _ptr; }
     size_t size() const { return _size; }
 
     loc_id_t loc_id() const;
@@ -105,6 +107,7 @@ private:
     SrcLoc _loc;
     tok::Type _type{tok::Eof};
     tok::Type _orig_type{tok::Eof};
+    const char* _ptr{};
     size_t _size{0};
     mutable loc_id_t _loc_id{NoLocId};
 };
