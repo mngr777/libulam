@@ -17,6 +17,12 @@ enum Type : std::uint8_t {
 #undef TOK
 };
 
+using flags_t = std::uint8_t;
+namespace flags {
+constexpr flags_t NoFlags = 0;
+constexpr flags_t HasMeta = 1;
+} // namespace flags
+
 // NOTE: `type_str' may return nullptr
 const char* type_str(Type type);
 const char* type_name(Type type);
@@ -48,7 +54,12 @@ public:
     using size_t = std::uint16_t;
 
     Token() {}
-    Token(SrcMan& src_man, SrcLoc loc, tok::Type type, const char* ptr, size_t size):
+    Token(
+        SrcMan& src_man,
+        SrcLoc loc,
+        tok::Type type,
+        const char* ptr,
+        size_t size):
         _src_man(&src_man),
         _loc{loc},
         _type{type},
@@ -96,11 +107,15 @@ public:
     tok::Type type() const { return _type; }
     void change_type(tok::Type type);
 
+    const SrcLoc& loc() const { return _loc; }
     tok::Type orig_type() const { return _orig_type; }
     const char* ptr() const { return _ptr; }
     size_t size() const { return _size; }
 
     loc_id_t loc_id() const;
+
+    bool has_flag(tok::flags_t flag) const { return _flags & flag; }
+    void set_flag(tok::flags_t flag) { _flags |= flag; }
 
 private:
     SrcMan* _src_man;
@@ -109,6 +124,8 @@ private:
     tok::Type _orig_type{tok::Eof};
     const char* _ptr{};
     size_t _size{0};
+    tok::flags_t _flags{tok::flags::NoFlags};
+
     mutable loc_id_t _loc_id{NoLocId};
 };
 

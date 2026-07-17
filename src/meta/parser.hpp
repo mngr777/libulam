@@ -4,8 +4,6 @@
 #include <libulam/meta.hpp>
 #include <libulam/src_loc.hpp>
 
-// TODO: move to src
-
 namespace ulam {
 class Context;
 }

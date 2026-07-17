@@ -4,6 +4,7 @@
 #include <libulam/ast/context.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/detail/variant.hpp>
+#include <libulam/meta.hpp>
 #include <libulam/parser/preproc.hpp>
 #include <libulam/parser/token.hpp>
 #include <libulam/semantic/ops.hpp>
@@ -193,6 +194,8 @@ private:
     Ptr<ast::NumLit> parse_char_lit();
     Ptr<ast::StrLit> parse_str_lit();
 
+    Meta parse_meta();
+
     template <typename N, typename... Args> Ptr<N> tree(Args&&... args);
     template <typename N, typename... Args>
     Ptr<N> tree_at(loc_id_t loc_id, Args&&... args);
@@ -215,7 +218,7 @@ private:
     Token _tok;
     std::stack<Token> _back;
 
-    Ref<ast::ClassDef> _cur_cls_def{};
+    Ref<ast::ClassDef> _cur_class_def{};
     Ref<ast::FunDef> _cur_fun_def{};
 };
 

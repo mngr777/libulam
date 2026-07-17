@@ -1,10 +1,11 @@
+#include "src/meta/parser.hpp"
+#include "src/parser/number.hpp"
+#include "src/parser/string.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/context.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/parser.hpp>
 #include <libulam/src_loc.hpp>
-#include <src/parser/number.hpp>
-#include <src/parser/string.hpp>
 #include <string>
 
 #ifdef DEBUG_PARSER
@@ -182,15 +183,20 @@ void Parser::parse_module_var_or_type_def(Ref<ast::ModuleDef> node) {
 Ptr<ast::ClassDef> Parser::parse_class_def() {
     auto node = parse_class_def_head();
     if (node) {
-        _cur_cls_def = ref(node);
+        _cur_class_def = ref(node);
         parse_class_def_body(ref(node));
-        _cur_cls_def = {};
+        _cur_class_def = {};
     }
     return node;
 }
 
 Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     ulam_assert(_tok.in(tok::Element, tok::Quark, tok::Transient, tok::Union));
+
+    // metadata
+    Meta meta;
+    if (_tok.has_flag(tok::flags::HasMeta))
+        meta = parse_meta(); // TODO: pass object type (class)
 
     // element/quark/transient/union
     auto kind = _tok.class_kind();
@@ -216,8 +222,11 @@ Ptr<ast::ClassDef> Parser::parse_class_def_head() {
     if (_tok.in(tok::Plus, tok::Colon))
         parents = parse_class_parent_list();
 
-    return tree_at<ast::ClassDef>(
+    auto node = tree_at<ast::ClassDef>(
         loc_id, kind, name, std::move(params), std::move(parents));
+    if (!meta.empty())
+        node->set_meta(std::move(meta));
+    return node;
 }
 
 Ptr<ast::TypeNameList> Parser::parse_class_parent_list() {
@@ -321,8 +330,8 @@ Ptr<ast::TypeDef> Parser::parse_type_def() {
     // ;
     expect(tok::Semicol);
     node = tree<ast::TypeDef>(std::move(type_name), std::move(type_expr));
-    if (_cur_cls_def)
-        node->set_is_in_tpl(_cur_cls_def->is_tpl());
+    if (_cur_class_def)
+        node->set_is_in_tpl(_cur_class_def->is_tpl());
     return node;
 
 Panic:
@@ -582,8 +591,8 @@ Parser::parse_var_def_rest(ast::Str name, bool is_ref, var_flags_t flags) {
     node->set_is_ref(is_ref);
     node->set_is_const(flags & VarIsConst);
     node->set_is_parameter(flags & VarIsParameter);
-    if (_cur_cls_def)
-        node->set_is_in_tpl(_cur_cls_def->is_tpl());
+    if (_cur_class_def)
+        node->set_is_in_tpl(_cur_class_def->is_tpl());
     return node;
 }
 
@@ -655,8 +664,8 @@ Parser::parse_fun_def_rest(Ptr<ast::FunRetType>&& ret_type, ast::Str name) {
         fun->set_op(op);
     }
     fun->set_is_native(is_native);
-    if (_cur_cls_def)
-        fun->set_is_in_tpl(_cur_cls_def->is_tpl());
+    if (_cur_class_def)
+        fun->set_is_in_tpl(_cur_class_def->is_tpl());
     return fun;
 }
 
@@ -2163,10 +2172,18 @@ Ptr<ast::StrLit> Parser::parse_str_lit() {
     return tree_at<ast::StrLit>(loc_id, String{str_id});
 }
 
+Meta Parser::parse_meta() {
+    auto [str, loc] = _pp.move_last_meta_str();
+    ulam_assert(!str.empty());
+    meta::Parser parser{_ctx, loc, str};
+    return parser.parse();
+}
+
 Number Parser::num_lit_number() {
     ulam_assert(_tok.is(tok::Number));
     switch (_tok.orig_type()) {
     case tok::Number:
+        // TODO: don't call loc_id() yet (pass from `parse_num_lit`?)
         return detail::parse_num_str(_ctx.diag(), _tok.loc_id(), tok_str());
     case tok::__Line:
         return {
@@ -2181,6 +2198,7 @@ std::string Parser::str_lit_text() {
     ulam_assert(_tok.is(tok::String));
     switch (_tok.orig_type()) {
     case tok::String:
+        // TODO: don't call loc_id() yet
         return detail::parse_str(_ctx.diag(), _tok.loc_id(), tok_str());
     case tok::__File:
         return _pp.current_path().filename();

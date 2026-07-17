@@ -1,8 +1,8 @@
 #pragma once
 #include <libulam/diag.hpp>
 #include <libulam/parser/lex.hpp>
-#include <libulam/src_loc.hpp>
 #include <libulam/parser/token.hpp>
+#include <libulam/src_loc.hpp>
 #include <libulam/types.hpp>
 #include <libulam/utils/file.hpp>
 #include <stack>
@@ -33,6 +33,8 @@ public:
 
     Version version() const { return _version; }
 
+    std::pair<std::string_view, SrcLoc> move_last_meta_str();
+
 private:
     void push(Src* src);
     void pop();
@@ -58,6 +60,12 @@ private:
     utils::PathResolver _path_resolver;
     Version _version;
     std::stack<std::pair<Src*, Lex>> _stack;
+
+    struct {
+        std::string_view str;
+        SrcLoc loc;
+        bool flag{false};
+    } _meta;
 };
 
 } // namespace ulam

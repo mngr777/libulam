@@ -277,6 +277,7 @@ TESTS = \
 	test_sema_expr \
 	test_eval_virtual \
 	test_meta_parse1 \
+	test_meta_class1 \
 	test_ulam
 check_PROGRAMS = $(TESTS)
 
@@ -329,6 +330,9 @@ test_eval_virtual_LDADD = $(TEST_LIBS)
 
 test_meta_parse1_SOURCES = tests/meta/parse1.cpp
 test_meta_parse1_LDADD = $(TEST_LIBS)
+
+test_meta_class1_SOURCES = tests/meta/class1.cpp
+test_meta_class1_LDADD = $(TEST_LIBS)
 
 test_ulam_SOURCES = \
 	tests/ast/print.hpp \

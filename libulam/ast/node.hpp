@@ -4,6 +4,7 @@
 #include <libulam/ast/visitor.hpp>
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
+#include <libulam/meta.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/src_loc.hpp>
 #include <libulam/str_pool.hpp>
@@ -81,6 +82,16 @@ public:
     Named(Str name): _attr_name{name} {}
 
     str_id_t name_id() const { return name().str_id(); }
+};
+
+class HasMeta {
+public:
+    bool has_meta() const { return !_meta.empty(); }
+    const Meta& meta() const { return _meta; }
+    Meta set_meta(Meta&& meta) { return std::exchange(_meta, std::move(meta)); }
+
+private:
+    Meta _meta;
 };
 
 // Version number of persistent scope after definition

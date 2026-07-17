@@ -47,8 +47,9 @@ class ClassDefBody : public ListOf<Stmt, TypeDef, FunDef, VarDefList> {
 };
 
 class ClassDef : public Tuple<Stmt, ParamList, TypeNameList, ClassDefBody>,
+                 public DefNode,
                  public Named,
-                 public DefNode {
+                 public HasMeta {
     ULAM_AST_NODE
     ULAM_AST_REF_ATTR(Class, cls)
     ULAM_AST_REF_ATTR(ClassTpl, cls_tpl)

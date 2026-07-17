@@ -8,6 +8,7 @@
 #include <libulam/src.hpp>
 #include <libulam/src_man.hpp>
 #include <libulam/utils/file.hpp>
+#include <utility>
 
 #ifdef DEBUG_PREPROC
 #    define ULAM_DEBUG
@@ -105,6 +106,12 @@ const Path& Preproc::current_path() const {
     return _stack.top().first->path();
 }
 
+std::pair<std::string_view, SrcLoc> Preproc::move_last_meta_str() {
+    std::string_view str;
+    SrcLoc loc;
+    return {std::exchange(_meta.str, str), std::exchange(_meta.loc, loc)};
+}
+
 void Preproc::push(Src* src) {
     ulam_assert(src);
     ulam_assert(src->content().start());
@@ -122,7 +129,14 @@ Lex& Preproc::lexer() {
     return _stack.top().second;
 }
 
-void Preproc::lex(Token& token) { return lexer().lex(token); }
+void Preproc::lex(Token& token) {
+    bool has_meta = _meta.flag;
+    _meta.flag = false;
+
+    lexer().lex(token);
+
+    token.set_flag(tok::flags::HasMeta * has_meta);
+}
 
 template <typename... Ts>
 bool Preproc::expect(Token& token, tok::Type type, Ts... stop) {
@@ -173,6 +187,7 @@ bool Preproc::preproc_load() {
     std::string_view path_str{tok_str(token)};
     assert(!empty(path_str));
     bool global = (path_str[0] == '<');
+    // TODO: don't call loc_id() yet
     Path path{detail::parse_str(diag, token.loc_id(), path_str)};
 
     // hack for string sources
@@ -204,12 +219,19 @@ bool Preproc::preproc_load() {
 }
 
 void Preproc::preproc_meta(Token& token) {
-    // auto str = tok_str(token);
-    // TODO
+    // NOTE: "/* */" regular comments are processed to possibly suggest changing
+    // to "/** */"
+    auto str = tok_str(token);
+    ulam_assert(str.size() >= 4);
+    if (str[2] != '*' && str.size() > 4)
+        return; // ignoring regular comments for now
+
+    _meta.str = str;
+    _meta.flag = true;
 }
 
 const std::string_view Preproc::tok_str(const Token& token) {
-    return _ctx.src_man().str_at(token.loc_id(), token.size());
+    return _ctx.src_man().str_at(token.loc(), token.size());
 }
 
 } // namespace ulam

@@ -9,11 +9,11 @@ namespace ulam::meta {
 Parser::Parser(Context& ctx, SrcLoc loc, std::string_view text):
     _ctx{ctx}, _loc{loc}, _text{text} {
     pos_t size = text.size();
-    ulam_assert(text.size() > 4); // /*[*] */
+    ulam_assert(text.size() >= 4); // /**/
     ulam_assert(text[0] == '/' && text[1] == '*');
     ulam_assert(text[size - 2] == '*' && text[size - 1] == '/');
 
-    _is_meta = text[2] == '*'; // starts with /**
+    _is_meta = text[2] == '*' && size > 4; // starts with /**
     _pos = _is_meta ? 3 : 2;
 
     _linum = _loc.linum();
