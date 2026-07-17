@@ -190,10 +190,24 @@ SEMA_SOURCE_FILES = \
 	src/sema/resolver/class.cpp \
 	src/sema/visitor.cpp
 
+META_HEADER_FILES = \
+	libulam/meta.hpp \
+	libulam/meta/field.hpp \
+	libulam/meta/field.inc.hpp \
+	libulam/meta/id.hpp \
+	libulam/meta/type.hpp
+
+META_SOURCE_FILES = \
+	src/meta.cpp \
+	src/meta/field.cpp \
+	src/meta/parser.hpp \
+	src/meta/parser.cpp
+
 HEADER_FILES = \
 	$(AST_HEADER_FILES) \
 	$(SEMANTIC_HEADER_FILES) \
 	$(SEMA_HEADER_FILES) \
+	$(META_HEADER_FILES) \
 	libulam/assert.hpp \
 	libulam/context.hpp \
 	libulam/detail/variant.hpp \
@@ -222,6 +236,7 @@ SOURCE_FILES = \
 	$(AST_SOURCE_FILES) \
 	$(SEMANTIC_SOURCE_FILES) \
 	$(SEMA_SOURCE_FILES) \
+	$(META_SOURCE_FILES) \
 	src/debug.hpp \
 	src/detail/string.hpp \
 	src/detail/variant.hpp \
@@ -261,6 +276,7 @@ TESTS = \
 	test_sema_class_member \
 	test_sema_expr \
 	test_eval_virtual \
+	test_meta_parse1 \
 	test_ulam
 check_PROGRAMS = $(TESTS)
 
@@ -310,6 +326,9 @@ test_sema_expr_LDADD = $(TEST_LIBS)
 
 test_eval_virtual_SOURCES = tests/eval/virtual.cpp $(TEST_SEMA_SOURCE_FILES)
 test_eval_virtual_LDADD = $(TEST_LIBS)
+
+test_meta_parse1_SOURCES = tests/meta/parse1.cpp
+test_meta_parse1_LDADD = $(TEST_LIBS)
 
 test_ulam_SOURCES = \
 	tests/ast/print.hpp \

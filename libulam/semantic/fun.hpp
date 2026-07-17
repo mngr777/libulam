@@ -1,6 +1,5 @@
 #pragma once
 #include <forward_list>
-#include <iterator>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/def.hpp>
 #include <libulam/semantic/ops.hpp>
