@@ -1,5 +1,4 @@
 #include <iostream>
-
 #ifdef ULAM_DEBUG
 
 # ifndef ULAM_DEBUG_PREFIX

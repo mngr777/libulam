@@ -46,11 +46,11 @@ private:
     bool expect(Token& token, tok::Type type, Ts... stop);
 
     loc_id_t loc_id();
-    void diag(loc_id_t, std::string) {}
 
     void preproc_ulam();
     void preproc_use();
     bool preproc_load();
+    void preproc_meta(Token& token);
 
     const std::string_view tok_str(const Token& token);
 

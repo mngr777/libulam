@@ -5,14 +5,14 @@
 
 namespace ulam {
 
+class Diag;
 class Src;
 class SrcMan;
-class Preproc;
 
 class Lex {
 public:
-    Lex(Preproc& pp, SrcMan& src_man, src_id_t src_id, const mem::BufRef buf):
-        _pp{pp},
+    Lex(Diag& diag, SrcMan& src_man, src_id_t src_id, const mem::BufRef buf):
+        _diag{diag},
         _src_man{src_man},
         _src_id{src_id},
         _buf{buf},
@@ -44,7 +44,7 @@ private:
     void lex_number();
     void lex_word();
 
-    Preproc& _pp;
+    Diag& _diag;
     SrcMan& _src_man;
     const src_id_t _src_id;
     const mem::BufRef _buf;

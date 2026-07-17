@@ -2,6 +2,7 @@
 #include <charconv>
 #include <libulam/assert.hpp>
 #include <libulam/context.hpp>
+#include <libulam/diag.hpp>
 #include <libulam/parser/options.hpp>
 #include <libulam/parser/preproc.hpp>
 #include <libulam/src.hpp>
@@ -53,7 +54,7 @@ Preproc& Preproc::operator>>(Token& token) {
                 return *this;
             break;
         case tok::MlComment:
-            // TODO: lex meta
+            preproc_meta(token);
         case tok::Comment:
             // ignore comments
             break;
@@ -107,7 +108,8 @@ const Path& Preproc::current_path() const {
 void Preproc::push(Src* src) {
     ulam_assert(src);
     ulam_assert(src->content().start());
-    _stack.emplace(src, Lex{*this, _ctx.src_man(), src->id(), src->content()});
+    _stack.emplace(
+        src, Lex{_ctx.diag(), _ctx.src_man(), src->id(), src->content()});
 }
 
 Src& Preproc::src() {
@@ -131,7 +133,7 @@ bool Preproc::expect(Token& token, tok::Type type, Ts... stop) {
         lex(token);
         if (token.in(stop...))
             break;
-        diag(token.loc_id(), "Unexpected token");
+        _ctx.diag().error(token.loc_id(), token.size(), "Unexpected token");
     }
     return false;
 }
@@ -145,7 +147,8 @@ void Preproc::preproc_ulam() {
         if (ec == std::errc{}) {
             _version = version;
         } else {
-            diag(token.loc_id(), "invalid version number");
+            _ctx.diag().warn(
+                token.loc_id(), token.size(), "invalid version number");
         }
         expect(token, tok::Semicol, tok::Eof);
     }
@@ -198,6 +201,11 @@ bool Preproc::preproc_load() {
         }
     }
     return false;
+}
+
+void Preproc::preproc_meta(Token& token) {
+    // auto str = tok_str(token);
+    // TODO
 }
 
 const std::string_view Preproc::tok_str(const Token& token) {

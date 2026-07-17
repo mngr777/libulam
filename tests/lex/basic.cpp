@@ -1,7 +1,6 @@
 #include <iostream>
 #include <libulam/context.hpp>
 #include <libulam/parser/lex.hpp>
-#include <libulam/parser/preproc.hpp>
 #include <libulam/parser/token.hpp>
 #include <libulam/src.hpp>
 #include <libulam/src_man.hpp>
@@ -39,10 +38,9 @@ element A : B {
 
 int main() {
     ulam::Context ctx;
-    ulam::Preproc pp{ctx};
     std::string text{Program};
     auto src = ctx.src_man().string(text, "A");
-    ulam::Lex lex{pp, ctx.src_man(), src->id(), src->content()};
+    ulam::Lex lex{ctx.diag(), ctx.src_man(), src->id(), src->content()};
     ulam::Token token;
     do {
         lex.lex(token);

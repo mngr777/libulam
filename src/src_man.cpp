@@ -50,10 +50,7 @@ SrcLoc SrcMan::loc(loc_id_t loc_id) {
 
 std::string_view SrcMan::str_at(const SrcLoc& loc, std::size_t size, int off) {
     ulam_assert(loc.chr() > 0);
-    ulam_assert(loc.chr() + off > 0); // no offsetting to prev line
-    auto line = src(loc.src_id())->line(loc.linum());
-    // NOTE: cannot get part of next line either
-    auto ref = line.sub((std::size_t)(loc.chr() - 1 + off), size);
+    auto ref = src(loc.src_id())->str(loc.linum(), loc.chr(), size, off);
     return {ref.start(), ref.size()};
 }
 

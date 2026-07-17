@@ -27,26 +27,53 @@ mem::Buf file_content(const std::filesystem::path& path) {
 } // namespace
 
 const mem::BufRef Src::line(linum_t linum) {
-    ulam_assert(linum > 0);
-    const auto buf = content();
-    const char* start = buf.start();
-    if (linum > _line_off.size()) {
-        std::size_t off = _line_off.empty() ? 0 : _line_off.back();
-        const char* cur = start + off;
-        bool is_eof = false;
-        do {
-            while (cur[0] != '\n' && cur[0] != '\0')
-                ++cur;
-            is_eof = (cur[0] == '\0');
-            if (!is_eof)
-                ++cur;
-            _line_off.push_back(cur - start);
-        } while (linum > _line_off.size() && !is_eof);
-    }
-    if (linum > _line_off.size())
+    auto buf = content();
+
+    auto off = line_off(linum);
+    if (off == NoOff)
         return {buf.end(), 0};
-    std::size_t off = (linum < 2) ? 0 : _line_off[linum - 2];
-    return {start + off, _line_off[linum - 1] - off};
+
+    auto next_off = line_off(linum + 1);
+    if (next_off == NoOff)
+        next_off = buf.size();
+    return {buf.start() + off, next_off - 1 - off};
+}
+
+const mem::BufRef
+Src::str(linum_t linum, chr_t chr, std::size_t size, int off) {
+    auto buf = content();
+
+    ulam_assert(chr > 0);
+    off += chr - 1;
+
+    std::size_t start = line_off(linum);
+    if (start == NoOff)
+        return {buf.end(), 0};
+
+    ulam_assert(off > 0 || (std::size_t)-off <= start);
+    start += off;
+    return {buf.sub(start, size)};
+}
+
+std::size_t Src::line_off(linum_t linum) {
+    ulam_assert(linum > 0);
+    if (linum == 1)
+        return 0;
+
+    const auto idx = linum - 2; // result line offset idx
+
+    auto buf = content();
+    std::size_t off = _line_off.empty() ? 0 : _line_off.back();
+    const char* cur = buf.start() + off;
+    while (_line_off.size() <= idx) {
+        while (*cur != '\n' && *cur != '\0')
+            ++cur;
+        if (*cur == '\0')
+            break;
+        ++cur;
+        _line_off.push_back(cur - buf.start());
+    }
+    return (idx < _line_off.size()) ? _line_off[idx] : NoOff;
 }
 
 const mem::BufRef FileSrc::content() {

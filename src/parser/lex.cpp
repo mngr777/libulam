@@ -14,7 +14,7 @@ void Lex::lex(Token& token) {
     switch (ch) {
     case '\0':
         if (_cur != _buf.end())
-            _pp.diag(loc_id(_start_loc), "\\0 before end of input");
+            _diag.error(loc_id(_start_loc), 1, "\\0 before end of input");
         complete(tok::Eof);
         break;
     case '!':
@@ -472,7 +472,7 @@ void Lex::lex_number() {
 
     // check if separated from next token if required
     if (detail::is_word(_cur[0]) || detail::is_digit(_cur[0]))
-        _pp.diag(loc_id(), "Number not separated");
+        _diag.error(loc_id(), -1, 2, "Number not separated");
     complete(tok::Number);
 }
 

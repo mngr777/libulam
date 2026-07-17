@@ -21,11 +21,16 @@ public:
     virtual const mem::BufRef content() = 0;
 
     const mem::BufRef line(linum_t linum);
+    const mem::BufRef str(linum_t linum, chr_t chr, std::size_t size, int off = 0);
 
     const src_id_t id() const { return _id; }
     const std::filesystem::path& path() const { return _path; }
 
 private:
+    static constexpr std::size_t NoOff = -1;
+
+    std::size_t line_off(linum_t linum);
+
     src_id_t _id;
     std::filesystem::path _path;
     std::vector<std::size_t> _line_off; // line offsets, starting from 2nd line
