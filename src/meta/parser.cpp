@@ -8,6 +8,9 @@ namespace ulam::meta {
 
 Parser::Parser(Context& ctx, SrcLoc loc, std::string_view text):
     _ctx{ctx}, _loc{loc}, _text{text} {
+
+    ulam_assert(!loc.empty());
+
     pos_t size = text.size();
     ulam_assert(text.size() >= 4); // /**/
     ulam_assert(text[0] == '/' && text[1] == '*');

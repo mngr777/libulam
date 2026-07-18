@@ -107,9 +107,7 @@ const Path& Preproc::current_path() const {
 }
 
 std::pair<std::string_view, SrcLoc> Preproc::move_last_meta_str() {
-    std::string_view str;
-    SrcLoc loc;
-    return {std::exchange(_meta.str, str), std::exchange(_meta.loc, loc)};
+    return {std::exchange(_meta.str, {}), std::exchange(_meta.loc, {})};
 }
 
 void Preproc::push(Src* src) {
@@ -227,6 +225,7 @@ void Preproc::preproc_meta(Token& token) {
         return; // ignoring regular comments for now
 
     _meta.str = str;
+    _meta.loc = token.loc();
     _meta.flag = true;
 }
 
