@@ -4,3 +4,5 @@
 #endif
 
 FIELD("symbol", Symbol, String)
+
+#undef FIELD

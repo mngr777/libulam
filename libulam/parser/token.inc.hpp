@@ -134,3 +134,5 @@ TOK(nullptr, Char)
 TOK(nullptr, InvalidAtKeyword)
 TOK(nullptr, UnexpectedChar)
 TOK(nullptr, Eof)
+
+#undef TOK

@@ -10,7 +10,6 @@ auto make_fun_op_table() {
     std::map<std::string_view, Op> table;
 #define FUN_OP(name, op) table[name] = Op::op;
 #include <libulam/semantic/fun_ops.inc.hpp>
-#undef FUN_OP
     return table;
 }
 
@@ -18,7 +17,6 @@ auto make_op_fun_table() {
     std::map<Op, std::string_view> table;
 #define FUN_OP(name, op) table[Op::op] = name;
 #include <libulam/semantic/fun_ops.inc.hpp>
-#undef FUN_OP
     return table;
 }
 
@@ -33,7 +31,6 @@ const char* str(Op op) {
     default:
         unreachable();
     }
-#undef OP
 }
 
 Op fun_name_op(const std::string_view name) {

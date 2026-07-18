@@ -8,7 +8,6 @@ namespace {
 const std::unordered_map<std::string_view, Field> Fields = {
 #define FIELD(name, id, type) {name, Field{name, id, Type::type}},
 #include <libulam/meta/field.inc.hpp>
-#undef FIELD
 };
 
 } // namespace

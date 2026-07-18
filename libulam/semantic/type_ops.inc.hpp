@@ -13,3 +13,5 @@ OP("constantof", ConstantOf)
 OP("positionof", PositionOf)
 OP("atomof", AtomOf)
 OP("instanceof", InstanceOf)
+
+#undef OP

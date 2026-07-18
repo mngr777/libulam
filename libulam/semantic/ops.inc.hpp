@@ -49,3 +49,5 @@ OP("&=", AssignBwAnd)
 OP("|=", AssignBwOr)
 OP("^=", AssignBwXor)
 OP(",", Comma)
+
+#undef OP

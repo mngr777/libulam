@@ -16,6 +16,5 @@ namespace ulam::ast {
         }                                                                      \
     }
 #include <libulam/ast/nodes.inc.hpp>
-#undef NODE
 
 } // namespace ulam::ast

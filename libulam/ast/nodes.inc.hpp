@@ -56,3 +56,5 @@ NODE("Ternary", Ternary)
 NODE("BoolLit", BoolLit)
 NODE("NumLit", NumLit)
 NODE("StrLit", StrLit)
+
+#undef NODE

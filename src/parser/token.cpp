@@ -16,7 +16,6 @@ auto make_keyword_type_table() {
     if (str && (*((char*)str) == '@' || detail::is_word(*(char*)str)))         \
         table[str ? str : "_dummy_"] = type;
 #include <libulam/parser/token.inc.hpp>
-#undef TOK
     return table;
 }
 
@@ -28,7 +27,6 @@ const char* type_str(tok::Type type) {
     case type:                                                                 \
         return str;
 #include <libulam/parser/token.inc.hpp>
-#undef TOK
     default:
         unreachable();
     }
@@ -40,7 +38,6 @@ const char* type_name(tok::Type type) {
     case type:                                                                 \
         return #type;
 #include <libulam/parser/token.inc.hpp>
-#undef TOK
     default:
         unreachable();
     }

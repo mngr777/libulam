@@ -4,3 +4,5 @@
 #endif
 
 FUN_OP("aref", ArrayAccess)
+
+#undef FUN_OP

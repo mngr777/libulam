@@ -14,7 +14,6 @@ namespace tok {
 enum Type : std::uint8_t {
 #define TOK(str, type) type,
 #include "token.inc.hpp"
-#undef TOK
 };
 
 using flags_t = std::uint8_t;

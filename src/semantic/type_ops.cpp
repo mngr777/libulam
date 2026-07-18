@@ -13,7 +13,6 @@ const char* str(TypeOp op) {
     default:
         unreachable();
     }
-#undef OP
 }
 
 } // namespace ulam::ops
