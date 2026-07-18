@@ -193,7 +193,7 @@ SEMA_SOURCE_FILES = \
 META_HEADER_FILES = \
 	libulam/meta.hpp \
 	libulam/meta/field.hpp \
-	libulam/meta/field.inc.hpp \
+	libulam/meta/fields.inc.hpp \
 	libulam/meta/id.hpp \
 	libulam/meta/type.hpp
 

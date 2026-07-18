@@ -99,13 +99,10 @@ void Parser::parse_field() {
 
     auto field = find_field(name);
     Type type = field ? field->type() : Type::String;
+    bool is_multi = field && field->has_flag(meta::Field::IsMulti);
 
-    auto [value, is_valid] = parse_value(type);
-    if (!is_valid)
-        return;
-
-    bool added = _meta.add(std::move(name), std::move(value), true);
-    if (!added)
+    bool replaced = parse_value(std::move(name), type, is_multi);
+    if (replaced)
         _ctx.diag().warn(loc_id(), _pos - 1, 1, "value replaced");
 }
 
@@ -132,24 +129,34 @@ Meta Parser::parse() {
     return std::move(_meta);
 }
 
-Parser::ValueRes Parser::parse_value(Type type) {
+bool Parser::parse_value(std::string&& name, Type type, bool is_multi) {
+    skip_ws();
     switch (type) {
     case Type::String:
-        return parse_string();
+        return parse_string(std::move(name), is_multi);
     }
     ulam_assert(false);
 }
 
-Parser::ValueRes Parser::parse_string() {
-    skip_ws();
+bool Parser::parse_string(std::string&& name, bool is_multi) {
+    auto value = do_parse_string();
+    if (is_multi) {
+        _meta.append(std::move(name), Meta::List<std::string>{std::move(value)});
+        return false;
+    }
+    return !_meta.set(std::move(name), std::move(value));
+}
+
+std::string Parser::do_parse_string() {
+    ulam_assert(is_nl() || is_eod() || !detail::is_whitespace(get()));
+
     pos_t start = _pos;
     pos_t end = _pos;
     for (; !is_eod() && !is_nl(); advance()) {
         if (!detail::is_whitespace(get()))
             end = _pos + 1;
     }
-    std::string value = substr(start, end);
-    return {Meta::Value{std::move(value)}, end > start};
+    return substr(start, end);
 }
 
 std::string Parser::substr(pos_t start, pos_t end) const {

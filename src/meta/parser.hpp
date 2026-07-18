@@ -19,7 +19,6 @@ public:
 private:
     using pos_t = std::size_t;
     using pos_diff_t = std::ptrdiff_t;
-    using ValueRes = std::pair<Meta::Value, bool>;
 
     static constexpr pos_t NoPos = -1;
 
@@ -42,8 +41,10 @@ private:
 
     std::string read_name();
 
-    ValueRes parse_value(Type type);
-    ValueRes parse_string();
+    bool parse_value(std::string&& name, Type type, bool is_multi);
+    bool parse_string(std::string&& name, bool is_multi);
+
+    std::string do_parse_string();
 
     std::string substr(pos_t start, pos_t end) const;
 

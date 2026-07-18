@@ -3,9 +3,10 @@
 #include <iostream>
 
 static const char* MetaComment1 = R"END(/**
-A resettable single-shot latch with templated width.  Space cost
-    is 2*bitpairs + 1.
+    Test description
 
+    \sa EventWindow
+    \sa WindowServices
     \author Dave Ackley
     \version 2
     \license public-domain

@@ -5,9 +5,9 @@
 namespace ulam::meta {
 
 enum Id : std::uint8_t {
-#define FIELD(name, id, type) id,
+#define FIELD(name, id, type, flags) id,
     None,
-#include <libulam/meta/field.inc.hpp>
+#include <libulam/meta/fields.inc.hpp>
 };
 
 } // namespace ulam::meta
