@@ -1,11 +1,12 @@
 #pragma once
-#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type.hpp>
+#include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/value.hpp>
 
 namespace ulam {
 
 class FunType : public Type {
+    ULAM_TYPE
 public:
     FunType(Builtins& builtins, TypeIdGen& id_gen): Type{builtins, &id_gen} {}
 

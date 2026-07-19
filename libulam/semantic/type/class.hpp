@@ -35,6 +35,7 @@ class Type;
 class Value;
 
 class Class : public UserType, public ClassBase {
+    ULAM_TYPE
     friend ClassTpl;
     friend cls::Ancestry;
     friend sema::ClassResolver;

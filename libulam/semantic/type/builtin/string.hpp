@@ -15,6 +15,7 @@ class Program;
 class Value;
 
 class StringType : public PrimType {
+    ULAM_TYPE
 public:
     StringType(Builtins& builtins, TypeIdGen& id_gen, UniqStrPool& text_pool):
         PrimType{builtins, &id_gen}, _text_pool{text_pool} {}
@@ -26,7 +27,8 @@ public:
     TypedValue type_op(TypeOp op) override;
     TypedValue type_op(TypeOp op, Value& val) override;
 
-    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue construct_default(
+        value::flags_t rval_flags = RValue::DefaultFlags) override;
 
     RValue from_datum(Datum datum) override;
     Datum to_datum(const RValue& rval) override;

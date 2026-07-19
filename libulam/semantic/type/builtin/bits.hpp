@@ -11,6 +11,7 @@ class BinaryOp;
 namespace ulam {
 
 class BitsType : public _PrimType<BitsId, 1, 4096, 32> {
+    ULAM_TYPE
 public:
     using _PrimType::is_castable_to;
 
@@ -24,8 +25,10 @@ public:
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
 
-    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
-    RValue construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
+    RValue construct_default(
+        value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue
+    construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
 
     bool is_castable_to(
         Ref<const Type> type,
@@ -52,8 +55,8 @@ protected:
         Ref<const PrimType> type, bool expl = true) const override;
     bool is_castable_to_prim(BuiltinTypeId id, bool expl = true) const override;
 
-    bool
-    is_impl_castable_to_prim(Ref<const PrimType> type, const Value& val) const override;
+    bool is_impl_castable_to_prim(
+        Ref<const PrimType> type, const Value& val) const override;
 
     TypedValue cast_to_prim(BuiltinTypeId id, RValue&& rval) override;
     RValue cast_to_prim(Ref<PrimType> type, RValue&& rval) override;

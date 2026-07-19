@@ -1,8 +1,8 @@
 #pragma once
-#include <libulam/semantic/value/flags.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/value/flags.hpp>
 
 namespace ulam::ast {
 class BinaryOp;
@@ -11,6 +11,7 @@ class BinaryOp;
 namespace ulam {
 
 class BoolType : public _PrimType<BoolId, 1, ULAM_MAX_INT_SIZE, 1> {
+    ULAM_TYPE
 public:
     BoolType(
         Builtins& builtins,
@@ -21,8 +22,10 @@ public:
 
     TypedValue type_op(TypeOp op) override;
 
-    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
-    RValue construct(bool value, value::flags_t rval_flags = RValue::DefaultFlags);
+    RValue construct_default(
+        value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue
+    construct(bool value, value::flags_t rval_flags = RValue::DefaultFlags);
 
     bool is_true(const RValue& rval) const;
 

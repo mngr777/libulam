@@ -10,6 +10,7 @@ namespace ulam {
 class Builtins;
 
 class AtomType : public Type {
+    ULAM_TYPE
 public:
     using Type::is_castable_to;
 
@@ -20,8 +21,10 @@ public:
     bitsize_t bitsize() const override { return ULAM_ATOM_SIZE; }
 
     bool is_constructible() const override { return true; }
-    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
-    RValue construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
+    RValue construct_default(
+        value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue
+    construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
 
     BuiltinTypeId bi_type_id() const override { return AtomId; }
 

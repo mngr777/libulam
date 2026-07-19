@@ -5,6 +5,7 @@
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
 #include <libulam/semantic/type/conv.hpp>
+#include <libulam/semantic/type/visitor.hpp>
 #include <libulam/semantic/type_ops.hpp>
 #include <libulam/semantic/value/bits.hpp>
 #include <libulam/semantic/value/flags.hpp>
@@ -12,6 +13,12 @@
 #include <libulam/str_pool.hpp>
 #include <list>
 #include <set>
+
+#define ULAM_TYPE                                                              \
+public:                                                                        \
+    virtual void accept(TypeVisitor& v) override { v.visit(this); }            \
+                                                                               \
+private:
 
 namespace ulam::ast {
 class TypeDef;
@@ -63,6 +70,8 @@ public:
 
     bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
+
+    virtual void accept(TypeVisitor& v) = 0;
 
     virtual const std::string_view name() const = 0;
 
@@ -214,6 +223,7 @@ public:
 };
 
 class AliasType : public UserType {
+    ULAM_TYPE
 public:
     using UserType::is_castable_to;
 
@@ -310,6 +320,7 @@ private:
 };
 
 class ArrayType : public Type {
+    ULAM_TYPE
     friend AliasType;
 
 public:
@@ -371,6 +382,7 @@ private:
 };
 
 class RefType : public Type {
+    ULAM_TYPE
     friend AliasType;
 
 public:

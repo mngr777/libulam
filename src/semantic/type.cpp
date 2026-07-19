@@ -1,4 +1,3 @@
-#include "libulam/semantic/value/flags.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/semantic/scope.hpp>

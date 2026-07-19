@@ -13,6 +13,7 @@ namespace ulam {
 class Value;
 
 class VoidType : public PrimType {
+    ULAM_TYPE
 public:
     VoidType(Builtins& builtins, TypeIdGen& id_gen):
         PrimType{builtins, &id_gen} {}
