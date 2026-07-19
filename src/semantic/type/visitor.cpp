@@ -15,17 +15,17 @@
 namespace ulam {
 
 #define TYPE(name, cls)                                                        \
-    void TypeVisitor::visit(Ref<cls> type) { visit_default(type); }
+    void TypeVisitor::visit(Ref<const cls> type) { visit_default(type); }
 #define PRIM_TYPE(name, cls)                                                   \
-    void TypeVisitor::visit(Ref<cls> type) {                                   \
+    void TypeVisitor::visit(Ref<const cls> type) {                             \
         visit_prim_default(type->as_prim());                                   \
     }
 #include <libulam/semantic/types.inc.hpp>
 
-void TypeVisitor::visit_prim_default(Ref<PrimType> type) {
+void TypeVisitor::visit_prim_default(Ref<const PrimType> type) {
     visit_default(type);
 }
 
-void TypeVisitor::visit_default(Ref<Type> type) { unreachable(); }
+void TypeVisitor::visit_default(Ref<const Type> type) { unreachable(); }
 
 } // namespace ulam

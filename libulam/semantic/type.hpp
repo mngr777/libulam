@@ -16,7 +16,7 @@
 
 #define ULAM_TYPE                                                              \
 public:                                                                        \
-    virtual void accept(TypeVisitor& v) override { v.visit(this); }            \
+    virtual void accept(TypeVisitor& v) const override { v.visit(this); }      \
                                                                                \
 private:
 
@@ -71,7 +71,7 @@ public:
     bool has_id() { return _id != NoTypeId; }
     type_id_t id() const { return _id; }
 
-    virtual void accept(TypeVisitor& v) = 0;
+    virtual void accept(TypeVisitor& v) const = 0;
 
     virtual const std::string_view name() const = 0;
 
