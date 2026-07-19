@@ -5,26 +5,11 @@
 
 namespace ulam::ast {
 
-#define DEF(type)                                                              \
-    ExprVisitor::ExprRes ExprVisitor::visit(Ref<type> node) {                  \
+#define EXPR_NODE(name, cls)                                                   \
+    ExprVisitor::ExprRes ExprVisitor::visit(Ref<cls> node) {                   \
         return visit_default(node);                                            \
     }
-
-DEF(TypeOpExpr)
-DEF(Ident)
-DEF(ParenExpr)
-DEF(BinaryOp)
-DEF(UnaryOp)
-DEF(Cast)
-DEF(Ternary)
-DEF(ClassName)
-DEF(BoolLit)
-DEF(NumLit)
-DEF(StrLit)
-DEF(FunCall)
-DEF(MemberAccess)
-DEF(ClassConstAccess)
-DEF(ArrayAccess)
+#include <libulam/ast/expr_nodes.inc.hpp>
 
 ExprVisitor::ExprRes ExprVisitor::visit_default(Ref<Expr> node) {
     unreachable();

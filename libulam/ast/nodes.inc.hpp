@@ -1,7 +1,12 @@
-#if !defined(NODE)
-#    define NODE(str, cls)
+#ifndef NODE
+#    define NODE(name, cls)
 #    error "NODE() macro is not defined"
 #endif
+
+#ifndef EXPR_NODE
+#    define EXPR_NODE NODE
+#endif
+#include <libulam/ast/expr_nodes.inc.hpp>
 
 NODE("Root", Root)
 NODE("ModuleDef", ModuleDef)
@@ -35,10 +40,6 @@ NODE("ExprList", ExprList)
 NODE("InitValue", InitValue)
 NODE("InitList", InitList)
 NODE("InitMap", InitMap)
-NODE("FunCall", FunCall)
-NODE("MemberAccess", MemberAccess)
-NODE("ClassConstAccess", ClassConstAccess)
-NODE("ArrayAccess", ArrayAccess)
 NODE("TypeIdent", TypeIdent)
 NODE("TypeSpec", TypeSpec)
 NODE("TypeExpr", TypeExpr)
@@ -46,15 +47,5 @@ NODE("TypeName", TypeName)
 NODE("TypeNameList", TypeNameList)
 NODE("BaseTypeSelect", BaseTypeSelect)
 NODE("FullTypeName", FullTypeName)
-NODE("TypeOpExpr", TypeOpExpr)
-NODE("Ident", Ident)
-NODE("ParenExpr", ParenExpr)
-NODE("BinaryOp", BinaryOp)
-NODE("UnaryOp", UnaryOp)
-NODE("Cast", Cast)
-NODE("Ternary", Ternary)
-NODE("BoolLit", BoolLit)
-NODE("NumLit", NumLit)
-NODE("StrLit", StrLit)
 
 #undef NODE

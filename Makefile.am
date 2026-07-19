@@ -6,6 +6,7 @@ AM_CXXFLAGS = -std=c++17 -I$(srcdir) -iquote $(srcdir) -Wall -Wpedantic -Werror 
 AST_HEADER_FILES = \
 	libulam/ast.hpp \
 	libulam/ast/context.hpp \
+	libulam/ast/expr_nodes.inc.hpp \
 	libulam/ast/expr_visitor.hpp \
 	libulam/ast/node.hpp \
 	libulam/ast/nodes/access.hpp \
