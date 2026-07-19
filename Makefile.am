@@ -41,6 +41,7 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/number.hpp \
 	libulam/semantic/ops.hpp \
 	libulam/semantic/ops.inc.hpp \
+	libulam/semantic/prim_types.inc.hpp \
 	libulam/semantic/program.hpp \
 	libulam/semantic/scope.hpp \
 	libulam/semantic/scope/as_cond.hpp \
@@ -55,6 +56,7 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/scope/version.hpp \
 	libulam/semantic/scope/view.hpp \
 	libulam/semantic/symbol.hpp \
+	libulam/semantic/type/builtin_type_id.hpp \
 	libulam/semantic/type/builtin/atom.hpp \
 	libulam/semantic/type/builtin/bits.hpp \
 	libulam/semantic/type/builtin/bool.hpp \
@@ -64,7 +66,6 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/type/builtin/unary.hpp \
 	libulam/semantic/type/builtin/unsigned.hpp \
 	libulam/semantic/type/builtin/void.hpp \
-	libulam/semantic/type/builtin_type_id.hpp \
 	libulam/semantic/type/builtins.hpp \
 	libulam/semantic/type/class.hpp \
 	libulam/semantic/type/class_tpl.hpp \
@@ -79,7 +80,9 @@ SEMANTIC_HEADER_FILES = \
 	libulam/semantic/type/element.hpp \
 	libulam/semantic/type/ops.hpp \
 	libulam/semantic/type/prim.hpp \
+	libulam/semantic/type/visitor.hpp \
 	libulam/semantic/type.hpp \
+	libulam/semantic/types.inc.hpp \
 	libulam/semantic/typed_value.hpp \
 	libulam/semantic/type_ops.hpp \
 	libulam/semantic/type_ops.inc.hpp \
@@ -100,14 +103,6 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/export.cpp \
 	src/semantic/fun.cpp \
 	src/semantic/number.cpp \
-	src/semantic/type/builtin_type_id.cpp \
-	src/semantic/type/class.cpp \
-	src/semantic/type/class_tpl.cpp \
-	src/semantic/type/class/ancestry.cpp \
-	src/semantic/type/class/base.cpp \
-	src/semantic/type/class/prop.cpp \
-	src/semantic/type/class/registry.cpp \
-	src/semantic/type/class_kind.cpp \
 	src/semantic/type/prim.cpp \
 	src/semantic/mangler.cpp \
 	src/semantic/module.cpp \
@@ -119,6 +114,7 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/scope/stack.cpp \
 	src/semantic/scope/view.cpp \
 	src/semantic/type.cpp \
+	src/semantic/type/builtin_type_id.cpp \
 	src/semantic/type/builtin/atom.cpp \
 	src/semantic/type/builtin/bits.cpp \
 	src/semantic/type/builtin/bool.cpp \
@@ -129,9 +125,17 @@ SEMANTIC_SOURCE_FILES = \
 	src/semantic/type/builtin/unsigned.cpp \
 	src/semantic/type/builtin/void.cpp \
 	src/semantic/type/builtins.cpp \
+	src/semantic/type/class.cpp \
+	src/semantic/type/class_tpl.cpp \
+	src/semantic/type/class/ancestry.cpp \
+	src/semantic/type/class/base.cpp \
+	src/semantic/type/class/prop.cpp \
+	src/semantic/type/class/registry.cpp \
+	src/semantic/type/class_kind.cpp \
 	src/semantic/type/conv.cpp \
 	src/semantic/type/element.cpp \
 	src/semantic/type/ops.cpp \
+	src/semantic/type/visitor.cpp \
 	src/semantic/type_tpl.cpp \
 	src/semantic/utils/class_name.cpp \
 	src/semantic/utils/strf.cpp \
