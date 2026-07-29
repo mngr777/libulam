@@ -334,7 +334,7 @@ TypedValue IntType::cast_to_prim(BuiltinTypeId id, RValue&& rval) {
             uns_val = std::min<Unsigned>(uns_val, max_size);
             auto type = builtins().unary_type(uns_val);
             return {
-                type, Value{type->construct(utils::ones(uns_val), rval_flags)}};
+                type, Value{type->construct(uns_val, rval_flags)}};
         } else {
             auto size = max_size;
             if (bitsize() - 1 < max_size) {
