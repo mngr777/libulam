@@ -1,6 +1,6 @@
 #pragma once
-#include "libulam/assert.hpp"
 #include <functional>
+#include <libulam/assert.hpp>
 #include <libulam/detail/variant.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/value/bits.hpp>
@@ -175,12 +175,14 @@ public:
 
     // ?? remove and use Value{type->construct()}
     template <typename T>
-    static Value make_l(T&& value, value::flags_t flags = LValue::DefaultFlags) {
+    static Value
+    make_l(T&& value, value::flags_t flags = LValue::DefaultFlags) {
         return Value{LValue::make(std::forward<T>(value), flags)};
     }
 
     template <typename T>
-    static Value make_r(T&& value, value::flags_t flags = RValue::DefaultFlags) {
+    static Value
+    make_r(T&& value, value::flags_t flags = RValue::DefaultFlags) {
         return Value{RValue::make(std::forward<T>(value), flags)};
     }
 

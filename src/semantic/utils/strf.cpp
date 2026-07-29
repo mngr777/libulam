@@ -3,12 +3,6 @@
 #include <libulam/semantic/value/types.hpp>
 #include <sstream>
 
-namespace {
-constexpr const char NoValue[] = "<no-value>";
-constexpr const char InvalidStrId[] = "<invalid-str-id>";
-constexpr const char Atom[] = "<Atom>";
-} // namespace
-
 namespace ulam::utils {
 
 Strf::Strf(Ref<Program> program):
@@ -71,7 +65,7 @@ void Strf::write_prim(
     } break;
     case UnaryId:
     case BoolId: {
-        os << std::hex << "0x" << rval.get<Unsigned>();
+        os << "0x" << std::hex << rval.get<Unsigned>();
     } break;
     case BitsId: {
         os << rval.get<Bits>().hex();
