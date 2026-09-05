@@ -43,8 +43,7 @@ private:
 class If : public Tuple<Stmt, Cond, Stmt, Stmt> {
     ULAM_AST_NODE
 public:
-    If(Ptr<Cond>&& cond, Ptr<Stmt>&& if_branch, Ptr<Stmt>&& else_branch):
-        Tuple{std::move(cond), std::move(if_branch), std::move(else_branch)} {}
+    using Tuple::Tuple;
 
     ULAM_AST_TUPLE_PROP(cond, 0)
     ULAM_AST_TUPLE_PROP(if_branch, 1)
@@ -54,10 +53,7 @@ public:
 class For : public Tuple<Stmt, Stmt, Cond, Expr, Stmt> {
     ULAM_AST_NODE
 public:
-    For(Ptr<Stmt>&& init, Ptr<Cond>&& cond, Ptr<Expr>&& upd, Ptr<Stmt>&& body):
-        Tuple{
-            std::move(init), std::move(cond), std::move(upd), std::move(body)} {
-    }
+    using Tuple::Tuple;
 
     ULAM_AST_TUPLE_PROP(init, 0)
     ULAM_AST_TUPLE_PROP(cond, 1)
@@ -68,8 +64,7 @@ public:
 class While : public Tuple<Stmt, Cond, Stmt> {
     ULAM_AST_NODE
 public:
-    While(Ptr<Cond>&& cond, Ptr<Stmt>&& body):
-        Tuple{std::move(cond), std::move(body)} {}
+    using Tuple::Tuple;
 
     ULAM_AST_TUPLE_PROP(cond, 0)
     ULAM_AST_TUPLE_PROP(body, 1)
@@ -93,8 +88,7 @@ public:
 class WhichCase : public Tuple<Stmt, WhichCaseCondList, Block> {
     ULAM_AST_NODE
 public:
-    WhichCase(Ptr<WhichCaseCondList>&& conds, Ptr<Block>&& branch):
-        Tuple{std::move(conds), std::move(branch)} {}
+    using Tuple::Tuple;
 
     explicit WhichCase(Ptr<Block>&& branch):
         WhichCase{make<WhichCaseCondList>(), std::move(branch)} {}

@@ -122,7 +122,7 @@ void PrinterBase::accept_me(ulam::Ref<ulam::ast::Node> node) {
 void PrinterBase::on_empty() { _os << "<empty>"; }
 
 std::ostream& PrinterBase::indent() {
-    for (unsigned i = 0; i < _lvl * options.ident; ++i)
+    for (unsigned i = 0; i < _lvl * options.indent; ++i)
         _os << " ";
     return _os;
 }

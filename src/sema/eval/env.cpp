@@ -1,7 +1,3 @@
-#include "libulam/sema/resolver.hpp"
-#include "libulam/semantic/value.hpp"
-#include "libulam/semantic/value/bound_fun_set.hpp"
-#include "libulam/semantic/value/flags.hpp"
 #include <algorithm>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/cond.hpp>
@@ -162,6 +158,8 @@ ExprRes EvalEnv::eval_noexec(Ref<Fun> fun) {
     EvalFuncall ef{*this};
     return ef.eval_noexec(fun);
 }
+
+void EvalEnv::eval_fun_body(Ref<ast::FunDefBody> body) { eval_stmt(body); }
 
 void EvalEnv::eval_stmt(Ref<ast::Stmt> stmt) {
     EvalVisitor vis{*this};

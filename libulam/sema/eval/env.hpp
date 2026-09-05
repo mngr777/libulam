@@ -94,7 +94,7 @@ public:
     EvalEnv(EvalEnv&&) = default;
     EvalEnv& operator=(EvalEnv&&) = default;
 
-    Resolver resolver(bool in_expr);
+    Resolver resolver(bool in_expr = false);
 
     virtual const Export* load_class(Ref<ast::TypeIdent> ident);
 
@@ -103,6 +103,8 @@ public:
     virtual ExprRes eval(Ref<ast::Block> block);
 
     virtual ExprRes eval_noexec(Ref<Fun> fun);
+
+    virtual void eval_fun_body(Ref<ast::FunDefBody> body);
 
     virtual void eval_stmt(Ref<ast::Stmt> stmt);
 

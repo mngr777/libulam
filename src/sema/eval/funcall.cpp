@@ -165,7 +165,7 @@ ExprRes EvalFuncall::do_funcall(
 
     // eval
     try {
-        env().eval_stmt(fun->body_node());
+        env().eval_fun_body(fun->body_node());
     } catch (EvalExceptReturn& ret) {
         debug() << "}\n";
 #ifdef ULAM_DEBUG

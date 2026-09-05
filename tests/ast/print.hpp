@@ -22,7 +22,7 @@ public:
     void print();
 
     struct {
-        unsigned ident = 2;
+        unsigned indent = 2;
         bool expl_parens = true;
     } options;
 
