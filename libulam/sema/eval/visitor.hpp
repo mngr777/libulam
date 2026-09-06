@@ -36,13 +36,6 @@ public:
     void visit(Ref<ast::Continue> node) override;
     void visit(Ref<ast::ExprStmt> node) override;
     void visit(Ref<ast::EmptyStmt> node) override;
-    void visit(Ref<ast::UnaryOp> node) override;
-    void visit(Ref<ast::BinaryOp> node) override;
-    void visit(Ref<ast::FunCall> node) override;
-    void visit(Ref<ast::ArrayAccess> node) override;
-    void visit(Ref<ast::MemberAccess> node) override;
-    void visit(Ref<ast::TypeOpExpr> node) override;
-    void visit(Ref<ast::Ident> node) override;
 
 protected:
     virtual Ref<AliasType> type_def(Ref<ast::TypeDef> node);

@@ -104,7 +104,7 @@ void EvalVisitor::visit(Ref<ast::For> node) {
         }
 
         if (!done && node->has_upd())
-            node->upd()->accept(*this);
+            env().eval_expr(node->upd());
     }
 }
 
@@ -189,20 +189,6 @@ void EvalVisitor::visit(Ref<ast::Which> node) {
     debug() << __FUNCTION__ << "Which\n";
     return env().eval_which(node);
 }
-
-void EvalVisitor::visit(Ref<ast::UnaryOp> node) { env().eval_expr(node); }
-
-void EvalVisitor::visit(Ref<ast::BinaryOp> node) { env().eval_expr(node); }
-
-void EvalVisitor::visit(Ref<ast::FunCall> node) { env().eval_expr(node); }
-
-void EvalVisitor::visit(Ref<ast::ArrayAccess> node) { env().eval_expr(node); }
-
-void EvalVisitor::visit(Ref<ast::MemberAccess> node) { env().eval_expr(node); }
-
-void EvalVisitor::visit(Ref<ast::TypeOpExpr> node) { env().eval_expr(node); }
-
-void EvalVisitor::visit(Ref<ast::Ident> node) { env().eval_expr(node); }
 
 Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type = make<AliasType>(str_pool(), builtins(), nullptr, node);
