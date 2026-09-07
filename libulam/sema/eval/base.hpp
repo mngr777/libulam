@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/types.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/semantic/program.hpp>
@@ -42,7 +43,7 @@ public:
     UniqStrPool& text_pool() { return _program->text_pool(); }
     const UniqStrPool& text_pool() const { return _program->text_pool(); }
 
-    bool is_true(const ExprRes& res, bool default_value = false);
+    OptBool is_true(const ExprRes& res);
 
 private:
     Ref<Program> _program;

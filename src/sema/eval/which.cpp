@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -34,14 +35,17 @@ Ptr<Var> EvalWhich::make_which_var(Context& ctx, Ref<ast::Expr> expr) {
 void EvalWhich::eval_cases(Context& ctx) {
     for (unsigned i = 0; i < ctx.node->case_num(); ++i) {
         auto case_ = ctx.node->case_(i);
-        if (eval_case(ctx, case_))
+        auto matched = eval_case(ctx, case_);
+        if (matched.is_true())
             break;
     }
 }
 
-bool EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
-    bool matched = match_conds(ctx, case_->conds());
-    if (matched) {
+OptBool EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
+    auto matched = match_conds(ctx, case_->conds());
+    if (!matched.has_value() && !has_flag(evl::NoExec))
+        throw EvalExceptError("cannot eval conditions");
+    if (matched.value_or(true)) {
         auto branch = [&]() { env().eval_stmt(case_->branch()); };
         if (!ctx.as_cond_ctx.empty()) {
             auto sr = env().as_cond_scope_raii(ctx.as_cond_ctx);
@@ -54,22 +58,27 @@ bool EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
     return matched;
 }
 
-bool EvalWhich::match_conds(
-    Context& ctx, Ref<ast::WhichCaseCondList> case_conds) {
+OptBool
+EvalWhich::match_conds(Context& ctx, Ref<ast::WhichCaseCondList> case_conds) {
     for (unsigned n = 0; n < case_conds->child_num(); ++n) {
         if (case_conds->get(n)->is_default())
             return true;
     }
+
+    OptBool result{false};
     const unsigned CondNum = case_conds->child_num();
     for (unsigned n = 0; n < CondNum; ++n) {
         auto case_cond = case_conds->get(n);
-        if (match(ctx, case_cond))
+        auto is_match = match(ctx, case_cond);
+        if (is_match.is_true())
             return true;
+        if (!is_match.has_value())
+            result = {};
     }
-    return false;
+    return result;
 }
 
-bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
+OptBool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
     if (case_cond->is_default())
         return true;
 
@@ -77,7 +86,7 @@ bool EvalWhich::match(Context& ctx, Ref<ast::WhichCaseCond> case_cond) {
                                    : match_expr(ctx, case_cond->expr());
 }
 
-bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {
+OptBool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {
     auto case_res = env().eval_expr(case_expr);
     if (!case_res)
         throw EvalExceptError("failed to eval which case");
@@ -85,14 +94,14 @@ bool EvalWhich::match_expr(Context& ctx, Ref<ast::Expr> case_expr) {
     return is_true(res);
 }
 
-bool EvalWhich::match_as_cond(Context& ctx, Ref<ast::AsCond> as_cond) {
+OptBool EvalWhich::match_as_cond(Context& ctx, Ref<ast::AsCond> as_cond) {
     EvalCond ec{env()};
     return do_match_as_cond(ctx, ec, as_cond);
 }
 
-bool EvalWhich::do_match_as_cond(
+OptBool EvalWhich::do_match_as_cond(
     Context& ctx, EvalCond& ec, Ref<ast::AsCond> as_cond) {
-    bool is_match{};
+    OptBool is_match;
     std::tie(is_match, ctx.as_cond_ctx) = ec.eval_as_cond(as_cond);
     return is_match;
 }

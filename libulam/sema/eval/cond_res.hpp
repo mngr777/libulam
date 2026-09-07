@@ -4,6 +4,7 @@
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/value.hpp>
+#include <libulam/types.hpp>
 #include <utility>
 
 namespace ulam::sema {
@@ -52,6 +53,6 @@ private:
     bool _is_self{false};
 };
 
-using CondRes = std::pair<bool, AsCondContext>;
+using CondRes = std::pair<OptBool, AsCondContext>;
 
 } // namespace ulam::sema

@@ -4,9 +4,9 @@
 
 namespace ulam::sema {
 
-bool EvalBase::is_true(const ExprRes& res, bool default_value) {
+OptBool EvalBase::is_true(const ExprRes& res) {
     ulam_assert(res.type()->is(BoolId));
-    bool is_truth = default_value;
+    OptBool is_truth;
     if (res.value().has_rvalue()) {
         res.value().with_rvalue([&](const auto& rval) {
             is_truth = builtins().bool_type()->is_true(rval);

@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/except.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -96,8 +97,10 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
     // short-circuit?
     if (!has_flag(evl::NoExec) && (op == Op::And || op == Op::Or)) {
         auto bool_res = env().to_boolean(node->lhs(), left.copy());
-        bool truth = is_true(bool_res);
-        if (truth == (op == Op::Or))
+        auto truth = is_true(bool_res);
+        if (!truth.has_value())
+            throw EvalExceptError("truth value is unknown");
+        if (truth.value() == (op == Op::Or))
             return left;
     }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include <libulam/types.hpp>
 #include <libulam/ast/nodes/expr.hpp>
 #include <libulam/ast/nodes/exprs.hpp>
 #include <libulam/ast/nodes/stmts.hpp>
@@ -28,15 +29,16 @@ protected:
     virtual Ptr<Var> make_which_var(Context& ctx, Ref<ast::Expr> expr);
 
     virtual void eval_cases(Context& ctx);
-    virtual bool eval_case(Context& ctx, Ref<ast::WhichCase> case_);
+    virtual OptBool eval_case(Context& ctx, Ref<ast::WhichCase> case_);
 
-    virtual bool match_conds(Context& ctx, Ref<ast::WhichCaseCondList> case_conds);
-    virtual bool match(Context& ctx, Ref<ast::WhichCaseCond> case_cond);
+    virtual OptBool
+    match_conds(Context& ctx, Ref<ast::WhichCaseCondList> case_conds);
+    virtual OptBool match(Context& ctx, Ref<ast::WhichCaseCond> case_cond);
 
-    virtual bool match_expr(Context& ctx, Ref<ast::Expr> case_expr);
-    virtual bool match_as_cond(Context& ctx, Ref<ast::AsCond> as_cond);
+    virtual OptBool match_expr(Context& ctx, Ref<ast::Expr> case_expr);
+    virtual OptBool match_as_cond(Context& ctx, Ref<ast::AsCond> as_cond);
 
-    virtual bool
+    virtual OptBool
     do_match_as_cond(Context& ctx, EvalCond& ec, Ref<ast::AsCond> as_cond);
 
     virtual ExprRes

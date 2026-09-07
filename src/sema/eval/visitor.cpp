@@ -48,15 +48,20 @@ void EvalVisitor::visit(Ref<ast::If> node) {
 
     auto sr = env().scope_raii();
     auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-    if (is_true) {
+    if (!is_true.has_value() && !has_flag(evl::NoExec))
+        throw EvalExceptError("condition cannot be evaluated");
+
+    if (has_flag(evl::NoExec) || is_true.value()) {
         if (!as_cond_ctx.empty()) {
             auto sr = env().as_cond_scope_raii(as_cond_ctx);
             node->if_branch()->accept(*this);
         } else {
             node->if_branch()->accept(*this);
         }
-    } else if (node->has_else_branch()) {
-        node->else_branch()->accept(*this);
+    }
+    if (has_flag(evl::NoExec) || !is_true.value()) {
+        if (node->has_else_branch())
+            node->else_branch()->accept(*this);
     }
 }
 
@@ -90,7 +95,10 @@ void EvalVisitor::visit(Ref<ast::For> node) {
         auto sr = env().scope_raii();
         if (node->has_cond()) {
             auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            done = !is_true;
+            if (!is_true.has_value() && !has_flag(evl::NoExec))
+                throw EvalExceptError("condition cannot be evaluated");
+
+            done = !is_true.has_value() || !is_true.value();
             if (!done) {
                 if (!as_cond_ctx.empty()) {
                     auto sr = env().as_cond_scope_raii(as_cond_ctx);
@@ -105,6 +113,9 @@ void EvalVisitor::visit(Ref<ast::For> node) {
 
         if (!done && node->has_upd())
             env().eval_expr(node->upd());
+
+        if (has_flag(evl::NoExec))
+            break;
     }
 }
 
@@ -170,7 +181,10 @@ void EvalVisitor::visit(Ref<ast::While> node) {
         auto sr = env().scope_raii();
         if (node->has_cond()) {
             auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            done = !is_true;
+            if (!is_true.has_value() && !has_flag(evl::NoExec))
+                throw EvalExceptError("condition cannot be evaluated");
+
+            done = !is_true.has_value() || !is_true.value();
             if (!done) {
                 if (!as_cond_ctx.empty()) {
                     auto sr = env().as_cond_scope_raii(as_cond_ctx);
@@ -182,6 +196,9 @@ void EvalVisitor::visit(Ref<ast::While> node) {
         } else {
             done = loop();
         }
+
+        if (has_flag(evl::NoExec))
+            break;
     }
 }
 
@@ -223,8 +240,8 @@ Ptr<Var> EvalVisitor::make_var(
 
 ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
     auto res = node->has_expr()
-        ? env().eval_expr(node->expr())
-        : ExprRes{builtins().type(VoidId), Value{RValue{}}};
+                   ? env().eval_expr(node->expr())
+                   : ExprRes{builtins().type(VoidId), Value{RValue{}}};
     ulam_assert(scope()->fun());
     auto ret_type = scope()->fun()->ret_type();
 
@@ -248,7 +265,8 @@ ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
         }
         const LValue lval = res.value().lvalue();
         // TODO: only xvalues to have scope lvl?
-        if (lval.is_xvalue() && lval.has_scope_lvl() && !lval.has_auto_scope_lvl() &&
+        if (lval.is_xvalue() && lval.has_scope_lvl() &&
+            !lval.has_auto_scope_lvl() &&
             lval.scope_lvl() >= env().scope_lvl()) {
             diag().error(node, "reference to local variable");
             return {ExprError::ReferenceToLocal};

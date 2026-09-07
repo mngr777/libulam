@@ -1,6 +1,5 @@
 #pragma once
 #include <libulam/types.hpp>
-#include <unordered_map>
 
 namespace ulam::utils {
 

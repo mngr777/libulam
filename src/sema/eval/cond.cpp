@@ -1,3 +1,4 @@
+#include <libulam/types.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -18,12 +19,12 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
     auto type = resolve_as_cond_type(as_cond->type_name());
     ulam_assert(!type->is_ref());
 
-    bool is_match = false;
+    OptBool is_match;
     if (res.value().has_rvalue()) {
         auto dyn_type = res.value().dyn_obj_type(true);
         is_match = dyn_type->is_impl_refable_as(type, res.value());
     }
-    if (!is_match && !has_flag(evl::NoExec))
+    if (is_match.is_false() && !has_flag(evl::NoExec))
         return {is_match, AsCondContext{type}};
 
     if (as_cond->ident()->is_self()) {

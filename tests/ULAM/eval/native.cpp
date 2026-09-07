@@ -106,7 +106,7 @@ ExprRes EvalNative::eval_system_print_unsigned_hex(
 ExprRes EvalNative::eval_system_assert(
     NodeRef node, FunRef fun, ulam::LValue self, ExprResList&& args) {
     ulam_assert(args.size() == 1);
-    if (!env().is_true(args.pop_front()))
+    if (!env().is_true(args.pop_front()).value_or(false))
         throw ulam::sema::EvalExceptAssert("assert failed");
     return void_res();
 }

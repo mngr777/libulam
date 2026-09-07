@@ -2,6 +2,7 @@
 #include "./env.hpp"
 #include "./helper.hpp"
 #include <libulam/sema/eval/which.hpp>
+#include <libulam/types.hpp>
 
 class EvalWhich : public ::EvalHelper, public ulam::sema::EvalWhich {
 public:
@@ -19,10 +20,10 @@ protected:
 
     void eval_cases(Context& ctx) override;
 
-    bool
+    ulam::OptBool
     eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) override;
 
-    bool match_conds(
+    ulam::OptBool match_conds(
         Context& ctx,
         ulam::Ref<ulam::ast::WhichCaseCondList> case_conds) override;
 
@@ -31,7 +32,7 @@ protected:
         ulam::Ref<ulam::ast::Expr> case_expr,
         ExprRes&& case_res) override;
 
-    bool do_match_as_cond(
+    ulam::OptBool do_match_as_cond(
         Context& ctx,
         EvalCond& ec,
         ulam::Ref<ulam::ast::AsCond> as_cond) override;

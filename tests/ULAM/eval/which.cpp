@@ -75,13 +75,13 @@ void EvalWhich::eval_cases(Context& ctx) {
     }
 }
 
-bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
+ulam::OptBool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
     if (!codegen_enabled())
         return Base::eval_case(ctx, case_);
 
     auto& gen_ctx = gen().ctx_stack().top<gen::WhichContext>();
     gen_ctx.set_case_has_breaks(false);
-    bool is_default = match_conds(ctx, case_->conds());
+    bool is_default = match_conds(ctx, case_->conds()).is_true();
 
     auto branch = [&]() { env().eval_stmt(case_->branch()); };
     if (!ctx.as_cond_ctx.empty()) {
@@ -106,7 +106,7 @@ bool EvalWhich::eval_case(Context& ctx, ulam::Ref<ulam::ast::WhichCase> case_) {
 }
 
 // NOTE: repurposing return value to mean "is default"
-bool EvalWhich::match_conds(
+ulam::OptBool EvalWhich::match_conds(
     Context& ctx, ulam::Ref<ulam::ast::WhichCaseCondList> case_conds) {
     if (!codegen_enabled())
         return Base::match_conds(ctx, case_conds);
@@ -156,7 +156,7 @@ ExprRes EvalWhich::match_expr_res(
     return res;
 }
 
-bool EvalWhich::do_match_as_cond(
+ulam::OptBool EvalWhich::do_match_as_cond(
     Context& ctx, EvalCond& ec, ulam::Ref<ulam::ast::AsCond> as_cond) {
     Base::do_match_as_cond(ctx, ec, as_cond);
     if (codegen_enabled()) {
