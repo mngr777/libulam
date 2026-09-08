@@ -3,7 +3,7 @@
 
 // see `ULAM/src/ulam/UlamUtils.cpp`
 
-namespace ulam::detail {
+namespace ulam::utils {
 namespace {
 // see `MFM/src/core/util/Util.h`
 // NOTE: this version returns 1 for value = 0
@@ -19,14 +19,14 @@ Unsigned digit_num(Unsigned value, Unsigned base = 10) {
 void write_header(std::ostream& os, Unsigned len) {
     os << len;
     if (len >= 9)
-        write_header(os, digit_num(len));
+        write_header(os << '9', digit_num(len));
 }
 } // namespace
 
 void write_leximited(std::ostream& os, Integer value) {
     switch (ulam::utils::sign(value)) {
     case -1:
-        os << "n";
+        os << 'n';
         if (value == ulam::utils::min<Integer>()) {
             os << "10"; // "n10" is special case for min negative
         } else {

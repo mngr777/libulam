@@ -5,8 +5,7 @@
 #include <string>
 #include <string_view>
 
-// TODO: rename to ulam::utils
-namespace ulam::detail {
+namespace ulam::utils {
 
 void write_leximited(std::ostream& os, Integer value);
 void write_leximited(std::ostream& os, Unsigned value);

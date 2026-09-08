@@ -7,7 +7,6 @@
 #include <libulam/ast/nodes/stmts.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/utils/leximited.hpp>
-#include <sstream>
 
 using ExprRes = EvalWhich::ExprRes;
 
@@ -16,7 +15,7 @@ void EvalWhich::eval_which(ulam::Ref<ulam::ast::Which> node) {
     if (codegen_enabled()) {
         auto label_idx = gen().next_tmp_idx_str();
         auto tmp_idx =
-            ulam::detail::leximited((ulam::Unsigned)gen().next_tmp_idx());
+            ulam::utils::leximited((ulam::Unsigned)gen().next_tmp_idx());
         cr = gen().ctx_stack().raii(gen::WhichContext{label_idx, tmp_idx});
         gen().block_open();
 

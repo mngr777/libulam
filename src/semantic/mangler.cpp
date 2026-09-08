@@ -61,21 +61,21 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
         ulam_assert(array);
         auto size = array->array_size();
         if (size == 0 || size == UnknownArraySize) { // TODO: is this correct?
-            detail::write_leximited(os, (Integer)-1);
+            utils::write_leximited(os, (Integer)-1);
         } else {
-            detail::write_leximited(os, (Unsigned)size);
+            utils::write_leximited(os, (Unsigned)size);
         }
         type = array->item_type();
     }
 
     // bitsize
     if (type->is_prim() && has_bitsize(type->bi_type_id()))
-        detail::write_leximited(os, (Unsigned)type->bitsize());
+        utils::write_leximited(os, (Unsigned)type->bitsize());
 
     // type name/code
     if (type->is_class()) {
         auto cls = type->as_class();
-        detail::write_leximited(os, cls->name());
+        utils::write_leximited(os, cls->name());
         for (auto var : cls->params()) {
             write_mangled(os, var->type());
             var->value().with_rvalue(
@@ -86,17 +86,17 @@ void Mangler::write_mangled(std::ostream& os, Ref<const Type> type) {
     } else {
         // TODO: remove?
         ulam_assert(type->is_prim());
-        detail::write_leximited(os, builtin_type_code(type->bi_type_id()));
+        utils::write_leximited(os, builtin_type_code(type->bi_type_id()));
         if (has_bitsize(type->bi_type_id()))
-            detail::write_leximited(os, (Unsigned)type->bitsize());
+            utils::write_leximited(os, (Unsigned)type->bitsize());
     }
 }
 
 void Mangler::write_mangled(std::ostream& os, const RValue& rval) {
     rval.accept(
-        [&](const auto& val) { detail::write_leximited(os, val); },
+        [&](const auto& val) { utils::write_leximited(os, val); },
         [&](const String& str) {
-            detail::write_leximited(os, _text_pool.get(str.id));
+            utils::write_leximited(os, _text_pool.get(str.id));
         },
         [&](const Bits& val) { val.write_hex(os); },
         [&](const DataPtr& val) { val->bits().write_hex(os); },

@@ -1,6 +1,6 @@
 #include "./stringifier.hpp"
-#include <libulam/assert.hpp>
 #include <cstdint>
+#include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/value/data.hpp>
@@ -157,12 +157,13 @@ std::string Stringifier::stringify_array_leximited(
     auto data = rval.data_view();
 
     // t3894
-    ulam_assert(array_type->item_type()->bitsize() < sizeof(ulam::Unsigned) * 8);
+    ulam_assert(
+        array_type->item_type()->bitsize() < sizeof(ulam::Unsigned) * 8);
     for (ulam::array_idx_t idx = 0; idx < array_type->array_size(); ++idx) {
         auto item_rval = data.array_item(idx).load();
         item_rval.accept(
-            [&](ulam::Unsigned val) { ulam::detail::write_leximited(ss, val); },
-            [&](ulam::Integer val) { ulam::detail::write_leximited(ss, val); },
+            [&](ulam::Unsigned val) { ulam::utils::write_leximited(ss, val); },
+            [&](ulam::Integer val) { ulam::utils::write_leximited(ss, val); },
             [&](auto&&) { ulam_assert(false); });
     }
     return ss.str();

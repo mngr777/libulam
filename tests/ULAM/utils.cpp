@@ -11,7 +11,7 @@ void write_mangled_rval(
     std::ostream& os,
     ulam::Ref<ulam::Program> program,
     const ulam::RValue& rval) {
-    using ulam::detail::write_leximited;
+    using ulam::utils::write_leximited;
 
     rval.accept(
         [&](const auto& val) { write_leximited(os, val); },
@@ -27,7 +27,7 @@ void write_mangled_type_name(
     std::ostream& os,
     ulam::Ref<ulam::Program> program,
     ulam::Ref<ulam::Type> type) {
-    using ulam::detail::write_leximited;
+    using ulam::utils::write_leximited;
 
     // use canonical type
     type = type->canon();
