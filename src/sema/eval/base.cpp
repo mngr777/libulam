@@ -1,5 +1,4 @@
 #include <libulam/sema/eval/base.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 
 namespace ulam::sema {

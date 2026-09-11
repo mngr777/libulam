@@ -1,7 +1,7 @@
 #include <libulam/assert.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
-#include <libulam/sema/eval/visitor.hpp>
+#include <libulam/sema/eval/stmt_visitor.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope/flags.hpp>
@@ -10,38 +10,38 @@
 
 #ifdef DEBUG_EVAL
 #    define ULAM_DEBUG
-#    define ULAM_DEBUG_PREFIX "[ulam::sema::EvalVisitor] "
+#    define ULAM_DEBUG_PREFIX "[ulam::sema::EvalStmtVisitor] "
 #endif
 #include "src/debug.hpp"
 
 namespace ulam::sema {
 
-void EvalVisitor::visit(Ref<ast::TypeDef> node) {
+void EvalStmtVisitor::visit(Ref<ast::TypeDef> node) {
     debug() << __FUNCTION__ << " TypeDef\n";
     type_def(node);
 }
 
-void EvalVisitor::visit(Ref<ast::VarDefList> node) {
+void EvalStmtVisitor::visit(Ref<ast::VarDefList> node) {
     debug() << __FUNCTION__ << " VarDefList\n";
     auto type_name = node->type_name();
     for (unsigned n = 0; n < node->def_num(); ++n)
         var_def(type_name, node->def(n), node->is_const());
 }
 
-void EvalVisitor::visit(Ref<ast::Block> node) {
+void EvalStmtVisitor::visit(Ref<ast::Block> node) {
     debug() << __FUNCTION__ << " Block\n";
     auto sr = env().scope_raii();
     for (unsigned n = 0; n < node->child_num(); ++n)
         node->get(n)->accept(*this);
 }
 
-void EvalVisitor::visit(Ref<ast::FunDefBody> node) {
+void EvalStmtVisitor::visit(Ref<ast::FunDefBody> node) {
     debug() << __FUNCTION__ << " FunDefBody\n";
     for (unsigned n = 0; n < node->child_num(); ++n)
         node->get(n)->accept(*this);
 }
 
-void EvalVisitor::visit(Ref<ast::If> node) {
+void EvalStmtVisitor::visit(Ref<ast::If> node) {
     debug() << __FUNCTION__ << " If\n";
     ulam_assert(node->has_cond());
     ulam_assert(node->has_if_branch());
@@ -65,7 +65,7 @@ void EvalVisitor::visit(Ref<ast::If> node) {
     }
 }
 
-void EvalVisitor::visit(Ref<ast::For> node) {
+void EvalStmtVisitor::visit(Ref<ast::For> node) {
     debug() << __FUNCTION__ << " For\n";
 
     auto sr = env().scope_raii(scp::BreakAndContinue);
@@ -119,12 +119,12 @@ void EvalVisitor::visit(Ref<ast::For> node) {
     }
 }
 
-void EvalVisitor::visit(Ref<ast::Return> node) {
+void EvalStmtVisitor::visit(Ref<ast::Return> node) {
     debug() << __FUNCTION__ << " Return\n";
     throw EvalExceptReturn(node, ret_res(node));
 }
 
-void EvalVisitor::visit(Ref<ast::Break> node) {
+void EvalStmtVisitor::visit(Ref<ast::Break> node) {
     debug() << __FUNCTION__ << " Break\n";
     if (scope()->in(scp::Break)) {
         throw EvalExceptBreak();
@@ -133,7 +133,7 @@ void EvalVisitor::visit(Ref<ast::Break> node) {
     }
 }
 
-void EvalVisitor::visit(Ref<ast::Continue> node) {
+void EvalStmtVisitor::visit(Ref<ast::Continue> node) {
     debug() << __FUNCTION__ << " Continue\n";
     if (scope()->in(scp::Continue)) {
         throw EvalExceptContinue();
@@ -142,17 +142,17 @@ void EvalVisitor::visit(Ref<ast::Continue> node) {
     }
 }
 
-void EvalVisitor::visit(Ref<ast::ExprStmt> node) {
+void EvalStmtVisitor::visit(Ref<ast::ExprStmt> node) {
     debug() << __FUNCTION__ << " ExprStmt\n";
     if (node->has_expr())
         env().eval_expr(node->expr());
 }
 
-void EvalVisitor::visit(Ref<ast::EmptyStmt> node) {
+void EvalStmtVisitor::visit(Ref<ast::EmptyStmt> node) {
     debug() << __FUNCTION__ << " EmptyStmt\n";
 }
 
-void EvalVisitor::visit(Ref<ast::While> node) {
+void EvalStmtVisitor::visit(Ref<ast::While> node) {
     debug() << __FUNCTION__ << " While\n";
     ulam_assert(node->has_cond());
 
@@ -202,12 +202,12 @@ void EvalVisitor::visit(Ref<ast::While> node) {
     }
 }
 
-void EvalVisitor::visit(Ref<ast::Which> node) {
+void EvalStmtVisitor::visit(Ref<ast::Which> node) {
     debug() << __FUNCTION__ << "Which\n";
     return env().eval_which(node);
 }
 
-Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
+Ref<AliasType> EvalStmtVisitor::type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type = make<AliasType>(str_pool(), builtins(), nullptr, node);
     auto ref = ulam::ref(type);
     if (!env().resolver(false).resolve(type->as_alias()))
@@ -216,7 +216,7 @@ Ref<AliasType> EvalVisitor::type_def(Ref<ast::TypeDef> node) {
     return ref->as_alias();
 }
 
-Ref<Var> EvalVisitor::var_def(
+Ref<Var> EvalStmtVisitor::var_def(
     Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const) {
     auto var = make_var(type_name, node, is_const);
     if (!var)
@@ -226,7 +226,7 @@ Ref<Var> EvalVisitor::var_def(
     return ref;
 }
 
-Ptr<Var> EvalVisitor::make_var(
+Ptr<Var> EvalStmtVisitor::make_var(
     Ref<ast::TypeName> type_name, Ref<ast::VarDef> node, bool is_const) {
     auto var_flags = is_const ? Var::Const : Var::NoFlags;
     auto var = make<Var>(type_name, node, Ref<Type>{}, var_flags);
@@ -238,7 +238,7 @@ Ptr<Var> EvalVisitor::make_var(
     return var;
 }
 
-ExprRes EvalVisitor::ret_res(Ref<ast::Return> node) {
+ExprRes EvalStmtVisitor::ret_res(Ref<ast::Return> node) {
     auto res = node->has_expr()
                    ? env().eval_expr(node->expr())
                    : ExprRes{builtins().type(VoidId), Value{RValue{}}};

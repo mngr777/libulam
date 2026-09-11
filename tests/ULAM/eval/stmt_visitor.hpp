@@ -2,14 +2,14 @@
 #include "./env.hpp"
 #include "./helper.hpp"
 #include <libulam/sema/eval/expr_visitor.hpp>
-#include <libulam/sema/eval/visitor.hpp>
+#include <libulam/sema/eval/stmt_visitor.hpp>
 
-class EvalVisitor : public EvalHelper, public ulam::sema::EvalVisitor {
+class EvalStmtVisitor : public EvalHelper, public ulam::sema::EvalStmtVisitor {
 public:
-    using Base = ulam::sema::EvalVisitor;
+    using Base = ulam::sema::EvalStmtVisitor;
     using CondRes = ulam::sema::CondRes;
 
-    explicit EvalVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
+    explicit EvalStmtVisitor(EvalEnv& env): ::EvalHelper{env}, Base{env} {}
 
     void visit(ulam::Ref<ulam::ast::Block> node) override;
     void visit(ulam::Ref<ulam::ast::If> node) override;

@@ -23,7 +23,7 @@ class EvalCond;
 class EvalExprVisitor;
 class EvalFuncall;
 class EvalInit;
-class EvalVisitor;
+class EvalStmtVisitor;
 class EvalWhich;
 
 class EvalEnv : public EvalBase {
@@ -183,7 +183,7 @@ public:
     ExprRes move_var_default(Ref<Var> var);
 
 protected:
-    virtual void do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt);
+    virtual void do_eval_stmt(EvalStmtVisitor& es, Ref<ast::Stmt> stmt);
 
     virtual void do_eval_which(EvalWhich& ew, Ref<ast::Which> which);
 

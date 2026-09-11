@@ -2,7 +2,6 @@
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/helper.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 
 namespace ulam::sema {

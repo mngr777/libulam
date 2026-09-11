@@ -18,9 +18,9 @@ namespace ulam::sema {
 
 class EvalWhich;
 
-class EvalVisitor : public ast::Visitor, public EvalHelper {
+class EvalStmtVisitor : public ast::Visitor, public EvalHelper {
 public:
-    explicit EvalVisitor(EvalEnv& env): EvalHelper{env} {}
+    explicit EvalStmtVisitor(EvalEnv& env): EvalHelper{env} {}
 
     void visit(Ref<ast::TypeDef> node) override;
     void visit(Ref<ast::VarDefList> node) override;

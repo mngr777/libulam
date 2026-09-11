@@ -7,7 +7,7 @@
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/init.hpp>
-#include <libulam/sema/eval/visitor.hpp>
+#include <libulam/sema/eval/stmt_visitor.hpp>
 #include <libulam/sema/eval/which.hpp>
 #include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
@@ -162,8 +162,8 @@ ExprRes EvalEnv::eval_noexec(Ref<Fun> fun) {
 void EvalEnv::eval_fun_body(Ref<ast::FunDefBody> body) { eval_stmt(body); }
 
 void EvalEnv::eval_stmt(Ref<ast::Stmt> stmt) {
-    EvalVisitor vis{*this};
-    return do_eval_stmt(vis, stmt);
+    EvalStmtVisitor sv{*this};
+    return do_eval_stmt(sv, stmt);
 }
 
 void EvalEnv::eval_which(Ref<ast::Which> which) {
@@ -327,8 +327,8 @@ ExprRes EvalEnv::move_var_default(Ref<Var> var) {
     return !node_h.empty() ? std::move(node_h.mapped()) : ExprRes{};
 }
 
-void EvalEnv::do_eval_stmt(EvalVisitor& vis, Ref<ast::Stmt> stmt) {
-    stmt->accept(vis);
+void EvalEnv::do_eval_stmt(EvalStmtVisitor& sv, Ref<ast::Stmt> stmt) {
+    stmt->accept(sv);
 }
 
 void EvalEnv::do_eval_which(EvalWhich& ew, Ref<ast::Which> which) {

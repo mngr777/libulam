@@ -9,8 +9,6 @@
 
 namespace ulam::sema {
 
-class EvalVisitor;
-
 class EvalBase {
 public:
     explicit EvalBase(Ref<Program> program): _program{program} {}

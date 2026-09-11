@@ -1,7 +1,6 @@
 #pragma once
 #include <libulam/memory/ptr.hpp>
 #include <libulam/sema/eval.hpp>
-#include <libulam/sema/eval/visitor.hpp>
 #include <limits>
 
 class Eval : public ulam::sema::Eval {

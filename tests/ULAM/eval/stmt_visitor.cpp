@@ -1,4 +1,3 @@
-#include "./visitor.hpp"
 #include "../out.hpp"
 #include "./cast.hpp"
 #include "./codegen.hpp"
@@ -6,6 +5,7 @@
 #include "./expr_res.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
+#include "./stmt_visitor.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -14,7 +14,7 @@
 #endif
 #include "src/debug.hpp"
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
     bool has_pref = false;
     std::size_t size{0};
     if (codegen_enabled()) {
@@ -30,7 +30,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Block> node) {
     }
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
         return;
@@ -67,7 +67,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     gen().block_close();
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
         return;
@@ -107,7 +107,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     gen().block_close();
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
         return;
@@ -131,7 +131,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     gen().block_close();
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
     if (!codegen_enabled())
         return Base::visit(node);
 
@@ -142,7 +142,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
     }
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::Break> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::Break> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
         return;
@@ -152,7 +152,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Break> node) {
     gen().append("break");
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::Continue> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::Continue> node) {
     if (!codegen_enabled()) {
         Base::visit(node);
         return;
@@ -160,7 +160,7 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::Continue> node) {
     gen().append("goto");
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
     if (!node->has_expr())
         return;
     auto res = env().eval_expr(node->expr());
@@ -168,13 +168,13 @@ void EvalVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
         gen().append(exp::data(res));
 }
 
-void EvalVisitor::visit(ulam::Ref<ulam::ast::EmptyStmt> node) {
+void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::EmptyStmt> node) {
     if (codegen_enabled())
         gen().append(";");
 }
 
 ulam::Ref<ulam::AliasType>
-EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
+EvalStmtVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
     auto alias_type = Base::type_def(node);
     if (alias_type && codegen_enabled()) {
         auto strf = gen().make_strf();
@@ -183,7 +183,7 @@ EvalVisitor::type_def(ulam::Ref<ulam::ast::TypeDef> node) {
     return alias_type;
 }
 
-ulam::Ptr<ulam::Var> EvalVisitor::make_var(
+ulam::Ptr<ulam::Var> EvalStmtVisitor::make_var(
     ulam::Ref<ulam::ast::TypeName> type_name,
     ulam::Ref<ulam::ast::VarDef> node,
     bool is_const) {
@@ -193,7 +193,8 @@ ulam::Ptr<ulam::Var> EvalVisitor::make_var(
     return Base::make_var(type_name, node, is_const);
 }
 
-void EvalVisitor::maybe_wrap_stmt(ulam::Ref<ulam::ast::Stmt> stmt, bool wrap) {
+void EvalStmtVisitor::maybe_wrap_stmt(
+    ulam::Ref<ulam::ast::Stmt> stmt, bool wrap) {
     bool needs_wrap = wrap && !stmt->is_block();
 
     if (needs_wrap)

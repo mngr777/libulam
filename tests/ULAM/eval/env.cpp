@@ -5,7 +5,7 @@
 #include "./flags.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
-#include "./visitor.hpp"
+#include "./stmt_visitor.hpp"
 #include "./which.hpp"
 #include <libulam/assert.hpp>
 
@@ -53,8 +53,8 @@ ExprRes EvalEnv::eval(ulam::Ref<ulam::ast::Block> block) {
 }
 
 void EvalEnv::eval_stmt(ulam::Ref<ulam::ast::Stmt> stmt) {
-    EvalVisitor vis{*this};
-    do_eval_stmt(vis, stmt);
+    EvalStmtVisitor sv{*this};
+    do_eval_stmt(sv, stmt);
 }
 
 void EvalEnv::eval_which(ulam::Ref<ulam::ast::Which> which) {

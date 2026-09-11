@@ -164,7 +164,7 @@ SEMA_HEADER_FILES = \
 	libulam/sema/eval/init.hpp \
 	libulam/sema/eval/options.hpp \
 	libulam/sema/eval/stack.hpp \
-	libulam/sema/eval/visitor.hpp \
+	libulam/sema/eval/stmt_visitor.hpp \
 	libulam/sema/eval/which.hpp \
 	libulam/sema/expr_error.hpp \
 	libulam/sema/expr_res.hpp \
@@ -186,7 +186,7 @@ SEMA_SOURCE_FILES = \
 	src/sema/eval/helper.cpp \
 	src/sema/eval/init.cpp \
 	src/sema/eval/stack.cpp \
-	src/sema/eval/visitor.cpp \
+	src/sema/eval/stmt_visitor.cpp \
 	src/sema/eval/which.cpp \
 	src/sema/expr_res.cpp \
 	src/sema/debug/out.cpp \
@@ -380,8 +380,8 @@ test_ulam_SOURCES = \
 	tests/ULAM/eval/test_context.hpp \
 	tests/ULAM/eval/test_context.cpp \
 	tests/ULAM/eval/util.hpp \
-	tests/ULAM/eval/visitor.hpp \
-	tests/ULAM/eval/visitor.cpp \
+	tests/ULAM/eval/stmt_visitor.hpp \
+	tests/ULAM/eval/stmt_visitor.cpp \
 	tests/ULAM/eval/which.hpp \
 	tests/ULAM/eval/which.cpp \
 	tests/ULAM/out.hpp \
