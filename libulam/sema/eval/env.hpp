@@ -34,6 +34,14 @@ public:
     using AsCondScopeRaii = ScopeStack::Raii<AsCondScope>;
     using VarDefaults = std::map<Ref<Var>, ExprRes>;
 
+    using EvalWithCast = std::function<ExprRes(EvalCast&)>;
+    using EvalWithCond = std::function<CondRes(EvalCond&)>;
+    using EvalWithExprVisitor = std::function<ExprRes(EvalExprVisitor&)>;
+    using EvalWithInit = std::function<bool(EvalInit&)>;
+    using EvalWithFuncall = std::function<ExprRes(EvalFuncall&)>;
+    using EvalWithStmtVisitor = std::function<void(EvalStmtVisitor&)>;
+    using EvalWithWhich = std::function<void(EvalWhich&)>;
+
     class ScopeSwitchRaii {
         friend EvalEnv;
 
@@ -102,51 +110,51 @@ public:
 
     virtual ExprRes eval(Ref<ast::Block> block);
 
-    virtual ExprRes eval_noexec(Ref<Fun> fun);
+    ExprRes eval_noexec(Ref<Fun> fun);
 
     virtual void eval_fun_body(Ref<ast::FunDefBody> body);
 
-    virtual void eval_stmt(Ref<ast::Stmt> stmt);
+    void eval_stmt(Ref<ast::Stmt> stmt);
 
-    virtual void eval_which(Ref<ast::Which> which);
+    void eval_which(Ref<ast::Which> which);
 
-    virtual ExprRes eval_expr(Ref<ast::Expr> expr);
+    ExprRes eval_expr(Ref<ast::Expr> expr);
 
-    virtual ExprRes eval_equal(
+    ExprRes eval_equal(
         Ref<ast::Expr> node,
         Ref<ast::Expr> l_node,
         ExprRes&& left,
         Ref<ast::Expr> r_node,
         ExprRes&& right);
 
-    virtual CondRes eval_cond(Ref<ast::Cond> cond);
+    CondRes eval_cond(Ref<ast::Cond> cond);
 
-    virtual ExprRes
+    ExprRes
     cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl = false);
 
-    virtual ExprRes cast(
+    ExprRes cast(
         Ref<ast::Node> node,
         BuiltinTypeId bi_type_id,
         ExprRes&& arg,
         bool expl = false);
 
-    virtual ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
+    ExprRes cast_to_idx(Ref<ast::Node> node, ExprRes&& arg);
 
-    virtual ExprRes
+    ExprRes
     to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl = false);
 
-    virtual bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
-    virtual bool init_var_with(Ref<Var> var, ExprRes&& arg);
+    bool init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
+    bool init_var_with(Ref<Var> var, ExprRes&& arg);
 
-    virtual bool init_prop(Ref<Prop> prop, Ref<ast::InitValue> init);
+    bool init_prop(Ref<Prop> prop, Ref<ast::InitValue> init);
 
-    virtual ExprRes
+    ExprRes
     construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args);
 
-    virtual ExprRes
+    ExprRes
     call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args);
 
-    virtual ExprRes funcall(
+    ExprRes funcall(
         Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args);
 
     StackRaii stack_raii(Ref<Fun> fun, LValue self);
@@ -183,6 +191,14 @@ public:
     ExprRes move_var_default(Ref<Var> var);
 
 protected:
+    virtual ExprRes eval_with_cast(EvalWithCast eval);
+    virtual CondRes eval_with_cond(EvalWithCond eval);
+    virtual ExprRes eval_with_expr_visitor(EvalWithExprVisitor eval);
+    virtual bool eval_with_init(EvalWithInit eval);
+    virtual ExprRes eval_with_funcall(EvalWithFuncall eval);
+    virtual void eval_with_stmt_visitor(EvalWithStmtVisitor eval);
+    virtual void eval_with_which(EvalWithWhich eval);
+
     virtual void do_eval_stmt(EvalStmtVisitor& es, Ref<ast::Stmt> stmt);
 
     virtual void do_eval_which(EvalWhich& ew, Ref<ast::Which> which);

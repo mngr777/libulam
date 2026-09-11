@@ -52,97 +52,6 @@ ExprRes EvalEnv::eval(ulam::Ref<ulam::ast::Block> block) {
     return Base::eval(block);
 }
 
-void EvalEnv::eval_stmt(ulam::Ref<ulam::ast::Stmt> stmt) {
-    EvalStmtVisitor sv{*this};
-    do_eval_stmt(sv, stmt);
-}
-
-void EvalEnv::eval_which(ulam::Ref<ulam::ast::Which> which) {
-    EvalWhich ew{*this};
-    do_eval_which(ew, which);
-}
-
-ExprRes EvalEnv::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
-    EvalExprVisitor ev{*this};
-    return do_eval_expr(ev, expr);
-}
-
-ExprRes EvalEnv::eval_equal(
-    ulam::Ref<ulam::ast::Expr> node,
-    ulam::Ref<ulam::ast::Expr> l_node,
-    ExprRes&& left,
-    ulam::Ref<ulam::ast::Expr> r_node,
-    ExprRes&& right) {
-    EvalExprVisitor ev{*this};
-    return do_eval_equal(
-        ev, node, l_node, std::move(left), r_node, std::move(right));
-}
-
-CondRes EvalEnv::eval_cond(ulam::Ref<ulam::ast::Cond> cond) {
-    EvalCond ec{*this};
-    return do_eval_cond(ec, cond);
-}
-
-ExprRes EvalEnv::cast(
-    ulam::Ref<ulam::ast::Node> node,
-    ulam::Ref<ulam::Type> type,
-    ExprRes&& arg,
-    bool expl) {
-    EvalCast cast{*this};
-    return do_cast(cast, node, type, std::move(arg), expl);
-}
-
-ExprRes EvalEnv::cast(
-    ulam::Ref<ulam::ast::Node> node,
-    ulam::BuiltinTypeId bi_type_id,
-    ExprRes&& arg,
-    bool expl) {
-    EvalCast cast{*this};
-    return do_cast(cast, node, bi_type_id, std::move(arg), expl);
-}
-
-ExprRes EvalEnv::cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
-    EvalCast cast{*this};
-    return do_cast_to_idx(cast, node, std::move(arg));
-}
-
-bool EvalEnv::init_var(
-    ulam::Ref<ulam::Var> var,
-    ulam::Ref<ulam::ast::InitValue> init,
-    bool in_expr) {
-    EvalInit ei{*this};
-    return do_init_var(ei, var, init, in_expr);
-}
-
-bool EvalEnv::init_prop(
-    ulam::Ref<ulam::Prop> prop, ulam::Ref<ulam::ast::InitValue> init) {
-    EvalInit ei{*this};
-    return do_init_prop(ei, prop, init);
-}
-
-ExprRes EvalEnv::construct(
-    ulam::Ref<ulam::ast::Node> node,
-    ulam::Ref<ulam::Class> cls,
-    ExprResList&& args) {
-    EvalFuncall ef{*this};
-    return do_construct(ef, node, cls, std::move(args));
-}
-
-ExprRes EvalEnv::call(
-    ulam::Ref<ulam::ast::Node> node, ExprRes&& callable, ExprResList&& args) {
-    EvalFuncall ef{*this};
-    return do_call(ef, node, std::move(callable), std::move(args));
-}
-
-ExprRes EvalEnv::funcall(
-    ulam::Ref<ulam::ast::Node> node,
-    ulam::Ref<ulam::Fun> fun,
-    ExprRes&& obj,
-    ExprResList&& args) {
-    EvalFuncall ef{*this};
-    return do_funcall(ef, node, fun, std::move(obj), std::move(args));
-}
-
 EvalTestContext& EvalEnv::test_ctx() {
     ulam_assert(!_test_ctx.empty());
     return _test_ctx;
@@ -150,4 +59,39 @@ EvalTestContext& EvalEnv::test_ctx() {
 
 EvalEnv::EvalTestContextRaii EvalEnv::test_ctx_raii(ulam::LValue active_atom) {
     return {*this, active_atom};
+}
+
+ExprRes EvalEnv::eval_with_cast(EvalWithCast eval) {
+    EvalCast ec{*this};
+    return eval(ec);
+}
+
+CondRes EvalEnv::eval_with_cond(EvalWithCond eval) {
+    EvalCond ec{*this};
+    return eval(ec);
+}
+
+ExprRes EvalEnv::eval_with_expr_visitor(EvalWithExprVisitor eval) {
+    EvalExprVisitor ev{*this};
+    return eval(ev);
+}
+
+bool EvalEnv::eval_with_init(EvalWithInit eval) {
+    EvalInit ei{*this};
+    return eval(ei);
+}
+
+ExprRes EvalEnv::eval_with_funcall(EvalWithFuncall eval) {
+    EvalFuncall ef{*this};
+    return eval(ef);
+}
+
+void EvalEnv::eval_with_stmt_visitor(EvalWithStmtVisitor eval) {
+    EvalStmtVisitor es{*this};
+    return eval(es);
+}
+
+void EvalEnv::eval_with_which(EvalWithWhich eval) {
+    EvalWhich ew{*this};
+    return eval(ew);
 }
