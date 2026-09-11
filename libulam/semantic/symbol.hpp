@@ -103,6 +103,8 @@ public:
         _symbols.erase(name_id);
     }
 
+    std::size_t size() const { return _symbols.size(); }
+
 private:
     Map _symbols;
 };
