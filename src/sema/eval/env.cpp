@@ -155,29 +155,23 @@ ExprRes EvalEnv::eval(Ref<ast::Block> block) {
 }
 
 ExprRes EvalEnv::eval_noexec(Ref<Fun> fun) {
-    return eval_with_funcall([&](EvalFuncall& ef) {
-        return ef.eval_noexec(fun);
-    });
+    return eval_with_funcall(
+        [&](EvalFuncall& ef) { return ef.eval_noexec(fun); });
 }
 
 void EvalEnv::eval_fun_body(Ref<ast::FunDefBody> body) { eval_stmt(body); }
 
 void EvalEnv::eval_stmt(Ref<ast::Stmt> stmt) {
-    eval_with_stmt_visitor([&](EvalStmtVisitor& sv) {
-        do_eval_stmt(sv, stmt);
-    });
+    eval_with_stmt_visitor([&](EvalStmtVisitor& sv) { stmt->accept(sv); });
 }
 
 void EvalEnv::eval_which(Ref<ast::Which> which) {
-    eval_with_which([&](EvalWhich& ew) {
-        do_eval_which(ew, which);
-    });
+    eval_with_which([&](EvalWhich& ew) { ew.eval_which(which); });
 }
 
 ExprRes EvalEnv::eval_expr(Ref<ast::Expr> expr) {
-    return eval_with_expr_visitor([&](EvalExprVisitor& ev) {
-        return do_eval_expr(ev, expr);
-    });
+    return eval_with_expr_visitor(
+        [&](EvalExprVisitor& ev) { return expr->accept(ev); });
 }
 
 ExprRes EvalEnv::eval_equal(
@@ -187,35 +181,32 @@ ExprRes EvalEnv::eval_equal(
     Ref<ast::Expr> r_node,
     ExprRes&& right) {
     return eval_with_expr_visitor([&](EvalExprVisitor& ev) {
-        return do_eval_equal(
-            ev, node, l_node, std::move(left), r_node, std::move(right));
+        return ev.binary_op(
+            node, Op::Equal, l_node, std::move(left), r_node, std::move(right));
     });
 }
 
 CondRes EvalEnv::eval_cond(Ref<ast::Cond> cond) {
-    return eval_with_cond([&](EvalCond& ec) {
-        return do_eval_cond(ec, cond);
-    });
+    return eval_with_cond([&](EvalCond& ec) { return ec.eval_cond(cond); });
 }
 
 ExprRes
 EvalEnv::cast(Ref<ast::Node> node, Ref<Type> type, ExprRes&& arg, bool expl) {
     return eval_with_cast([&](EvalCast& ec) {
-        return do_cast(ec, node, type, std::move(arg), expl);
+        return ec.cast(node, type, std::move(arg), expl);
     });
 }
 
 ExprRes EvalEnv::cast(
     Ref<ast::Node> node, BuiltinTypeId bi_type_id, ExprRes&& arg, bool expl) {
     return eval_with_cast([&](EvalCast& ec) {
-        return do_cast(ec, node, bi_type_id, std::move(arg), expl);
+        return ec.cast(node, bi_type_id, std::move(arg), expl);
     });
 }
 
 ExprRes EvalEnv::cast_to_idx(Ref<ast::Node> node, ExprRes&& arg) {
-    return eval_with_cast([&](EvalCast& ec) {
-        return do_cast_to_idx(ec, node, std::move(arg));
-    });
+    return eval_with_cast(
+        [&](EvalCast& ec) { return ec.cast_to_idx(node, std::move(arg)); });
 }
 
 ExprRes EvalEnv::to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl) {
@@ -223,41 +214,38 @@ ExprRes EvalEnv::to_boolean(Ref<ast::Expr> expr, ExprRes&& arg, bool expl) {
 }
 
 bool EvalEnv::init_var(Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
-    return eval_with_init([&](EvalInit& ei) {
-        return do_init_var(ei, var, init, in_expr);
-    });
+    return eval_with_init(
+        [&](EvalInit& ei) { return ei.init_var(var, init, in_expr); });
 }
 
 bool EvalEnv::init_var_with(Ref<Var> var, ExprRes&& arg) {
-    return eval_with_init([&](EvalInit& ei) {
-        return do_init_var_with(ei, var, std::move(arg));
-    });
+    return eval_with_init(
+        [&](EvalInit& ei) { return ei.init_var_with(var, std::move(arg)); });
 }
 
 bool EvalEnv::init_prop(Ref<Prop> prop, Ref<ast::InitValue> init) {
-    return eval_with_init([&](EvalInit& ei) {
-        return do_init_prop(ei, prop, init);
-    });
+    return eval_with_init(
+        [&](EvalInit& ei) { return ei.init_prop(prop, init); });
 }
 
 ExprRes
 EvalEnv::construct(Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args) {
     return eval_with_funcall([&](EvalFuncall& ef) {
-        return do_construct(ef, node, cls, std::move(args));
+        return ef.construct(node, cls, std::move(args));
     });
 }
 
 ExprRes
 EvalEnv::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
     return eval_with_funcall([&](EvalFuncall& ef) {
-        return do_call(ef, node, std::move(callable), std::move(args));
+        return ef.call(node, std::move(callable), std::move(args));
     });
 }
 
 ExprRes EvalEnv::funcall(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     return eval_with_funcall([&](EvalFuncall& ef) {
-        return do_funcall(ef, node, fun, std::move(obj), std::move(args));
+        return ef.funcall(node, fun, std::move(obj), std::move(args));
     });
 }
 
@@ -374,92 +362,6 @@ void EvalEnv::eval_with_stmt_visitor(EvalWithStmtVisitor eval) {
 void EvalEnv::eval_with_which(EvalWithWhich eval) {
     EvalWhich ew{*this};
     return eval(ew);
-}
-
-void EvalEnv::do_eval_stmt(EvalStmtVisitor& sv, Ref<ast::Stmt> stmt) {
-    stmt->accept(sv);
-}
-
-void EvalEnv::do_eval_which(EvalWhich& ew, Ref<ast::Which> which) {
-    ew.eval_which(which);
-}
-
-ExprRes EvalEnv::do_eval_expr(EvalExprVisitor& ev, Ref<ast::Expr> expr) {
-    return expr->accept(ev);
-}
-
-ExprRes EvalEnv::do_eval_equal(
-    EvalExprVisitor& ev,
-    Ref<ast::Expr> node,
-    Ref<ast::Expr> l_node,
-    ExprRes&& left,
-    Ref<ast::Expr> r_node,
-    ExprRes&& right) {
-    return ev.binary_op(
-        node, Op::Equal, l_node, std::move(left), r_node, std::move(right));
-}
-
-CondRes EvalEnv::do_eval_cond(EvalCond& ec, Ref<ast::Cond> cond) {
-    return ec.eval_cond(cond);
-}
-
-ExprRes EvalEnv::do_cast(
-    EvalCast& ec,
-    Ref<ast::Node> node,
-    Ref<Type> type,
-    ExprRes&& arg,
-    bool expl) {
-    return ec.cast(node, type, std::move(arg), expl);
-}
-
-ExprRes EvalEnv::do_cast(
-    EvalCast& ec,
-    Ref<ast::Node> node,
-    BuiltinTypeId bi_type_id,
-    ExprRes&& arg,
-    bool expl) {
-    return ec.cast(node, bi_type_id, std::move(arg), expl);
-}
-
-ExprRes
-EvalEnv::do_cast_to_idx(EvalCast& ec, Ref<ast::Node> node, ExprRes&& arg) {
-    return ec.cast_to_idx(node, std::move(arg));
-}
-
-bool EvalEnv::do_init_var(
-    EvalInit& ei, Ref<Var> var, Ref<ast::InitValue> init, bool in_expr) {
-    return ei.init_var(var, init, in_expr);
-}
-
-bool EvalEnv::do_init_var_with(EvalInit& ei, Ref<Var> var, ExprRes&& arg) {
-    return ei.init_var_with(var, std::move(arg));
-}
-
-bool EvalEnv::do_init_prop(
-    EvalInit& ei, Ref<Prop> prop, Ref<ast::InitValue> init) {
-    return ei.init_prop(prop, init);
-}
-
-ExprRes EvalEnv::do_construct(
-    EvalFuncall& ef, Ref<ast::Node> node, Ref<Class> cls, ExprResList&& args) {
-    return ef.construct(node, cls, std::move(args));
-}
-
-ExprRes EvalEnv::do_call(
-    EvalFuncall& ef,
-    Ref<ast::Node> node,
-    ExprRes&& callable,
-    ExprResList&& args) {
-    return ef.call(node, std::move(callable), std::move(args));
-}
-
-ExprRes EvalEnv::do_funcall(
-    EvalFuncall& ef,
-    Ref<ast::Node> node,
-    Ref<Fun> fun,
-    ExprRes&& obj,
-    ExprResList&& args) {
-    return ef.funcall(node, fun, std::move(obj), std::move(args));
 }
 
 } // namespace ulam::sema

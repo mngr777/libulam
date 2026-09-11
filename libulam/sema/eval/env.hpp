@@ -199,66 +199,6 @@ protected:
     virtual void eval_with_stmt_visitor(EvalWithStmtVisitor eval);
     virtual void eval_with_which(EvalWithWhich eval);
 
-    virtual void do_eval_stmt(EvalStmtVisitor& es, Ref<ast::Stmt> stmt);
-
-    virtual void do_eval_which(EvalWhich& ew, Ref<ast::Which> which);
-
-    virtual ExprRes do_eval_expr(EvalExprVisitor& ev, Ref<ast::Expr> expr);
-
-    virtual ExprRes do_eval_equal(
-        EvalExprVisitor& ev,
-        Ref<ast::Expr> node,
-        Ref<ast::Expr> l_node,
-        ExprRes&& left,
-        Ref<ast::Expr> r_node,
-        ExprRes&& right);
-
-    virtual CondRes do_eval_cond(EvalCond& ec, Ref<ast::Cond> cond);
-
-    virtual ExprRes do_cast(
-        EvalCast& ec,
-        Ref<ast::Node> node,
-        Ref<Type> type,
-        ExprRes&& arg,
-        bool expl);
-
-    virtual ExprRes do_cast(
-        EvalCast& ec,
-        Ref<ast::Node> node,
-        BuiltinTypeId bi_type_id,
-        ExprRes&& arg,
-        bool expl);
-
-    virtual ExprRes
-    do_cast_to_idx(EvalCast& ec, Ref<ast::Node> node, ExprRes&& arg);
-
-    virtual bool do_init_var(
-        EvalInit& ei, Ref<Var> var, Ref<ast::InitValue> init, bool in_expr);
-
-    virtual bool do_init_var_with(EvalInit& ei, Ref<Var> var, ExprRes&& arg);
-
-    virtual bool
-    do_init_prop(EvalInit& ei, Ref<Prop> prop, Ref<ast::InitValue> init);
-
-    virtual ExprRes do_construct(
-        EvalFuncall& ef,
-        Ref<ast::Node> node,
-        Ref<Class> cls,
-        ExprResList&& args);
-
-    virtual ExprRes do_call(
-        EvalFuncall& ef,
-        Ref<ast::Node> node,
-        ExprRes&& callable,
-        ExprResList&& args);
-
-    virtual ExprRes do_funcall(
-        EvalFuncall& ef,
-        Ref<ast::Node> node,
-        Ref<Fun> fun,
-        ExprRes&& obj,
-        ExprResList&& args);
-
 private:
     eval_flags_t _flags;
     ProgramScope _program_scope;
