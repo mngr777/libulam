@@ -6,6 +6,7 @@
 #include <libulam/semantic/typed_value.hpp>
 #include <libulam/semantic/value.hpp>
 #include <list>
+#include <type_traits>
 #include <utility>
 
 namespace ulam {
@@ -15,6 +16,15 @@ class Type;
 namespace ulam::sema {
 
 class ExprRes {
+private:
+    template <typename T>
+    using EnablePtrIfPtr =
+        typename std::enable_if<std::is_pointer_v<T>, T>::type;
+
+    template <typename T>
+    using EnableRefIfNotPtr =
+        typename std::enable_if<std::negation_v<std::is_pointer<T>>, T&>::type;
+
 public:
     using flags_t = std::uint16_t;
     static constexpr flags_t NoFlags = 0;
@@ -68,26 +78,41 @@ public:
 
     bool has_data() const { return _data.has_value(); }
 
-    template <typename T> T data() const {
-        ulam_assert(has_data());
-        return std::any_cast<T>(_data);
-    }
+    Data& data() { return _data; }
+    const Data& data() const { return _data; }
 
-    template <typename T, typename V> T data(V&& def) const {
-        if (has_data())
-            return std::any_cast<T>(_data);
-        return T{std::forward<V>(def)};
-    }
-
-    template <typename T> void set_data(T data) { _data = std::move(data); }
+    void set_data(Data&& data) { _data = std::move(data); }
 
     Data move_data() {
         Data data;
-        std::swap(_data, data);
-        return data;
+        return std::exchange(_data, std::move(data));
     }
 
     void uns_data() { _data.reset(); }
+
+    // return reference if T is not a pointer
+    template <typename T> EnableRefIfNotPtr<T> data_as() {
+        ulam_assert(has_data());
+        return *std::any_cast<T>(&_data);
+    }
+
+    template <typename T> const EnableRefIfNotPtr<T> data_as() const {
+        return const_cast<ExprRes&>(*this).data_as<T>();
+    }
+
+    // return pointer if T is pointer
+    template <typename T> EnablePtrIfPtr<T> data_as() {
+        ulam_assert(has_data());
+        return std::any_cast<T>(&_data);
+    }
+
+    template <typename T> const EnablePtrIfPtr<T> data_as() const {
+        return const_cast<ExprRes&>(*this).data_as<T>();
+    }
+
+    template <typename T> void set_data_as(T&& data) {
+        _data = std::move(data);
+    }
 
 private:
     TypedValue _typed_value;

@@ -71,7 +71,7 @@ ExprRes EvalFuncall::funcall_obj(
     }
     auto res = Base::funcall_obj(node, fun, std::move(obj), std::move(args));
     if (!data.empty())
-        res.set_data(data);
+        exp::set_data(res, data);
     return res;
 }
 

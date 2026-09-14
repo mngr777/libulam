@@ -16,15 +16,15 @@ namespace exp {
 
 std::string data(const ExprRes& res) {
     ulam_assert(res.has_data());
-    ulam_assert(!res.data<std::string>().empty());
-    auto data = res.data<std::string>();
+    ulam_assert(!res.data_as<std::string>().empty());
+    auto data = res.data_as<std::string>();
     return data;
 }
 
 void set_data(ExprRes& res, std::string data) {
     ulam_assert(!data.empty());
     res.set_flags(exp::NoFlags);
-    res.set_data<std::string>(std::move(data));
+    res.set_data_as<std::string>(std::move(data));
 }
 
 void set_data(ExprRes& res, const std::string_view data) {

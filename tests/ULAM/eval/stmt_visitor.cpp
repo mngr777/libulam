@@ -137,7 +137,7 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
 
     auto res = ret_res(node);
     if (res.has_data()) {
-        gen().append(res.data<std::string>());
+        gen().append(exp::data(res));
         gen().append("return");
     }
 }
