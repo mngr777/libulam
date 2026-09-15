@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const ulam::Meta::Value& value) {
         [&](const std::string& str) { os << '"' << str << '"'; },
         [&](const ulam::Meta::List<std::string>& list) {
             for (const auto& str : list)
-                os << "\"" <<str << "\" ";
+                os << "\"" << str << "\" ";
         },
         [&](auto&&) { ulam_assert(false); });
     return os;

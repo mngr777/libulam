@@ -141,7 +141,8 @@ bool Parser::parse_value(std::string&& name, Type type, bool is_multi) {
 bool Parser::parse_string(std::string&& name, bool is_multi) {
     auto value = do_parse_string();
     if (is_multi) {
-        _meta.append(std::move(name), Meta::List<std::string>{std::move(value)});
+        _meta.append(
+            std::move(name), Meta::List<std::string>{std::move(value)});
         return false;
     }
     return !_meta.set(std::move(name), std::move(value));

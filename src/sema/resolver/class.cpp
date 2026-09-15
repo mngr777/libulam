@@ -1,6 +1,6 @@
-#include <libulam/sema/resolver/class.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/resolver.hpp>
+#include <libulam/sema/resolver/class.hpp>
 #include <libulam/semantic/def.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/view.hpp>

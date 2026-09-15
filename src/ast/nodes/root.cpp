@@ -9,7 +9,9 @@ namespace ulam::ast {
 Root::Root() {}
 Root::~Root() {} // for Program destructor
 
-bool Root::has_module(str_id_t name_id) const { return _name_id_map.has(name_id); }
+bool Root::has_module(str_id_t name_id) const {
+    return _name_id_map.has(name_id);
+}
 
 void Root::add_module(Ptr<ModuleDef>&& mod) {
     ulam_assert(!_name_id_map.has(mod->name_id()));

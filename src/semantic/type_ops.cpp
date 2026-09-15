@@ -1,5 +1,4 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/semantic/type_ops.hpp>
 
 namespace ulam::ops {

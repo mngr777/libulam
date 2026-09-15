@@ -97,7 +97,7 @@ public:
         VarSet _var_set;
     };
 
-    explicit EvalEnv(Ref<Program> program, eval_flags_t flags = evl::NoFlags);
+    explicit EvalEnv(Ref<Program> program, eval_flags_t flags = eval::NoFlags);
 
     EvalEnv(EvalEnv&&) = default;
     EvalEnv& operator=(EvalEnv&&) = default;

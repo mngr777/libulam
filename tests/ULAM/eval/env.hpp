@@ -36,7 +36,7 @@ public:
 
     explicit EvalEnv(
         ulam::Ref<ulam::Program> program,
-        ulam::sema::eval_flags_t flags = ulam::sema::evl::NoFlags):
+        ulam::sema::eval_flags_t flags = ulam::sema::eval::NoFlags):
         Base{program, flags}, _codegen{program} {}
 
     ExprRes eval(ulam::Ref<ulam::ast::Block> block) override;

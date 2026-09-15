@@ -95,7 +95,7 @@ ExprRes EvalExprVisitor::visit(Ref<ast::BinaryOp> node) {
         return left;
 
     // short-circuit?
-    if (!has_flag(evl::NoExec) && (op == Op::And || op == Op::Or)) {
+    if (!has_flag(eval::NoExec) && (op == Op::And || op == Op::Or)) {
         auto bool_res = env().to_boolean(node->lhs(), left.copy());
         auto truth = is_true(bool_res);
         if (!truth.has_value())
@@ -356,11 +356,11 @@ ExprRes EvalExprVisitor::visit(Ref<ast::ArrayAccess> node) {
 ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
     const auto& val = res.value();
     if (res && !val.is_consteval()) {
-        if (has_flag(evl::Consteval)) {
+        if (has_flag(eval::Consteval)) {
             diag().error(node, "not consteval");
             return {ExprError::NotConsteval};
         }
-        if (has_flag(evl::NoExec) &&
+        if (has_flag(eval::NoExec) &&
             !(val.is_lvalue() && val.lvalue().is<BoundFunSet>()) &&
             val.has_rvalue()) {
             auto empty = val.is_lvalue()
@@ -526,7 +526,7 @@ Ref<Class> EvalExprVisitor::class_base_classid(
     Ref<ast::Expr> expr, ExprRes& obj, Ref<Class> cls, ExprRes&& classid) {
     ulam_assert(expr);
 
-    if (classid.value().empty() && has_flag(evl::NoExec))
+    if (classid.value().empty() && has_flag(eval::NoExec))
         return cls; // return current class if not executing
 
     auto int_class_id = classid.value().copy_rvalue().get<Integer>();
@@ -832,7 +832,7 @@ ExprRes EvalExprVisitor::class_name(Ref<ast::ClassName> node, Ref<Class> cls) {
 
 ExprResPair
 EvalExprVisitor::ternary_eval_branches_noexec(Ref<ast::Ternary> node) {
-    auto fr = env().flags_raii(flags() | evl::NoExec);
+    auto fr = env().flags_raii(flags() | eval::NoExec);
     auto if_true = node->if_true();
     auto if_false = node->if_false();
     return {if_true->accept(*this), if_false->accept(*this)};
@@ -858,18 +858,18 @@ ExprRes EvalExprVisitor::ternary_eval(
     }
 
     // disable dereference casts
-    auto fr = env().add_flags_raii(evl::NoDerefCast);
+    auto fr = env().add_flags_raii(eval::NoDerefCast);
 
     auto cond_rval = cond_res.move_value().move_rvalue();
     bool cond_bool = builtins().boolean()->is_true(cond_rval);
 
     // use noexec result if possible
     if (cond_bool &&
-        (has_flag(evl::NoExec) || if_true_res.value().has_rvalue())) {
+        (has_flag(eval::NoExec) || if_true_res.value().has_rvalue())) {
         return env().cast(node->if_true(), type, std::move(if_true_res));
     }
     if (!cond_bool &&
-        (has_flag(evl::NoExec) || if_false_res.value().has_rvalue())) {
+        (has_flag(eval::NoExec) || if_false_res.value().has_rvalue())) {
         return env().cast(node->if_false(), type, std::move(if_false_res));
     }
 
@@ -1204,7 +1204,7 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
         from = env().cast(node, to_type, std::move(from), true);
 
     auto lval = to.move_value().lvalue();
-    if (has_flag(evl::NoExec))
+    if (has_flag(eval::NoExec))
         return std::move(to);
     return to.derived(to.type(), lval.assign(from.move_value().move_rvalue()));
 }

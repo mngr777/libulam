@@ -1,5 +1,4 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/semantic/type/class_kind.hpp>
 
 namespace ulam {

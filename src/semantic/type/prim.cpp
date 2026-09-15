@@ -1,5 +1,4 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/type/prim.hpp>
 

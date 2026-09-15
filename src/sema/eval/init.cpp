@@ -70,7 +70,7 @@ void EvalInit::var_init_expr(Ref<Var> var, ExprRes&& init, bool in_expr) {
 void EvalInit::var_init_default(Ref<Var> var, bool in_expr) {
     var_init_common(var, in_expr);
     auto type = var->type();
-    auto rval = (!has_flag(evl::NoExec) || var->is_const())
+    auto rval = (!has_flag(eval::NoExec) || var->is_const())
                     ? type->construct_default()
                     : type->construct_ph();
     var->set_value(Value{std::move(rval)});

@@ -31,7 +31,9 @@ elt_id_t ElementRegistry::add(Ref<Class> cls) {
 
 Ref<Class> ElementRegistry::get(elt_id_t id) const {
     ulam_assert(id < _elements.size());
-    ulam_assert(_elements[id] || (id == NoEltId && _class_options.empty_element_name.empty()));
+    ulam_assert(
+        _elements[id] ||
+        (id == NoEltId && _class_options.empty_element_name.empty()));
     return _elements[id];
 }
 

@@ -1,7 +1,6 @@
-#include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <cstdlib>
 #include <iostream>
+#include <libulam/assert.hpp>
 #include <libulam/ast/node.hpp>
 #include <libulam/diag.hpp>
 

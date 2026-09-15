@@ -21,7 +21,7 @@ BasicScopeIter& BasicScopeIter::operator++() {
 
 bool BasicScopeIter::operator==(const BasicScopeIter& other) const {
     return (is_end() && other.is_end()) ||
-        (_scope == other._scope && _it == other._it);
+           (_scope == other._scope && _it == other._it);
 }
 
 bool BasicScopeIter::operator!=(const BasicScopeIter& other) const {

@@ -43,9 +43,7 @@ void Def::set_cls_tpl(Ref<ClassTpl> cls_tpl) {
     _cls_tpl = cls_tpl;
 }
 
-bool Def::has_scope_version() const {
-    return _scope_version != NoScopeVersion;
-}
+bool Def::has_scope_version() const { return _scope_version != NoScopeVersion; }
 
 scope_version_t Def::scope_version() const {
     ulam_assert(has_scope_version());

@@ -30,7 +30,7 @@ ExprRes EvalFuncall::construct_funcall(
     ulam::RValue&& rval,
     ExprResList&& args) {
     std::string data;
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         data = arg_data(args) + "Self";
     auto res = Base::construct_funcall(
         node, cls, fun, std::move(rval), std::move(args));
@@ -46,7 +46,7 @@ ExprRes EvalFuncall::funcall_callable(
     ExprResList&& args,
     ulam::Ref<ulam::Class> eff_cls) {
     std::string data;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(callable);
         replace(data, "{args}", arg_data(args));
         replace(data, "{fun}", str(fun->name_id()));
@@ -64,7 +64,7 @@ ExprRes EvalFuncall::funcall_obj(
     ExprRes&& obj,
     ExprResList&& args) {
     std::string data;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(obj);
         auto call_data = arg_data(args) + std::string{str(fun->name_id())};
         data = exp::data_combine(data, call_data, ".");
@@ -88,14 +88,14 @@ ExprRes EvalFuncall::do_funcall(
     if (is_test) {
         // set NoExec after `test` is called, unless executing (NoCodegen is
         // set)
-        if (!has_flag(evl::NoCodegen))
-            fr = env().add_flags_raii(ulam::sema::evl::NoExec);
+        if (!has_flag(eval::NoCodegen))
+            fr = env().add_flags_raii(ulam::sema::eval::NoExec);
         // if executing, set exec context
-        if (!has_flag(ulam::sema::evl::NoExec))
+        if (!has_flag(ulam::sema::eval::NoExec))
             tcr = test_ctx_raii(self);
     }
     auto res = Base::do_funcall(node, fun, self, std::move(args), eff_cls);
-    if (is_test && !has_flag(ulam::sema::evl::NoExec)) {
+    if (is_test && !has_flag(ulam::sema::eval::NoExec)) {
         // executed test function, set return value as status
         ulam_assert(res.type()->bi_type_id() == ulam::IntId);
         ulam_assert(res.value().is_rvalue());
@@ -111,7 +111,7 @@ ExprRes EvalFuncall::do_funcall_native(
     ulam::Ref<ulam::Fun> fun,
     ulam::LValue self,
     ExprResList&& args) {
-    if (has_flag(ulam::sema::evl::NoExec))
+    if (has_flag(ulam::sema::eval::NoExec))
         return empty_ret_val(node, fun);
 
     auto res = call_native(node, fun, self, std::move(args));
@@ -125,7 +125,7 @@ ExprResList EvalFuncall::cast_args(
     ulam::Ref<ulam::Fun> fun,
     ExprResList&& args) {
     // do not omit consteval casts for arguments (t3233)
-    auto fr = env().remove_flags_raii(evl::NoConstevalCast);
+    auto fr = env().remove_flags_raii(eval::NoConstevalCast);
     return Base::cast_args(node, fun, std::move(args));
 }
 
@@ -136,7 +136,7 @@ ExprRes EvalFuncall::cast_arg(
     ulam::Ref<ulam::Type> to,
     ExprRes&& arg) {
     arg = Base::cast_arg(node, fun, param, to, std::move(arg));
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         auto data = exp::data(arg);
         if (!arg.type()->is_same(param->type()) ||
             (to->is_ref() && param->is_const() && !arg.value().is_consteval()))

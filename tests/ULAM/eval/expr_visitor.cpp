@@ -35,7 +35,7 @@ constexpr char FuncallPh[] = "{args}{fun}";
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Cast> node) {
     auto res = Base::visit(node);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         if (!res.has_flag(exp::ExplCast) && !res.has_flag(exp::ImplCast))
             exp::add_cast(res, true);
     }
@@ -43,7 +43,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Cast> node) {
 }
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
-    if (has_flag(evl::NoCodegen))
+    if (has_flag(eval::NoCodegen))
         return Base::visit(node);
 
     auto cond_res = ternary_eval_cond(node);
@@ -63,7 +63,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
     }
 
     {
-        auto fr = env().add_flags_raii(ulam::sema::evl::NoDerefCast);
+        auto fr = env().add_flags_raii(ulam::sema::eval::NoDerefCast);
         if_true_res = env().cast(node->if_true(), type, std::move(if_true_res));
         if_false_res =
             env().cast(node->if_false(), type, std::move(if_false_res));
@@ -92,14 +92,14 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
     auto res = Base::visit(node);
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         exp::set_data(res, std::string{node->value() ? "true" : "false"});
     return res;
 }
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
     auto res = Base::visit(node);
-    if (has_flag(evl::NoCodegen))
+    if (has_flag(eval::NoCodegen))
         return res;
 
     ulam_assert(res.value().is_consteval());
@@ -115,7 +115,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
     auto res = Base::visit(node);
-    if (has_flag(evl::NoCodegen))
+    if (has_flag(eval::NoCodegen))
         return res;
 
     res.value().with_rvalue([&](const auto& rval) {
@@ -133,7 +133,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
     ExprRes&& left,
     ulam::Ref<ulam::ast::Expr> r_node,
     ExprRes&& right) {
-    if (has_flag(evl::NoCodegen)) {
+    if (has_flag(eval::NoCodegen)) {
         return Base::apply_binary_op(
             node, op, std::move(lval_res), l_node, std::move(left), r_node,
             std::move(right));
@@ -163,7 +163,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
             std::move(right));
     }
 
-    bool no_fold = has_flag(evl::NoConstFold) ||
+    bool no_fold = has_flag(eval::NoConstFold) ||
                    left.has_flag(exp::NoConstFold) ||
                    right.has_flag(exp::NoConstFold);
 
@@ -261,7 +261,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
     ulam::Ref<ulam::ast::Expr> arg_node,
     ExprRes&& arg,
     ulam::Ref<ulam::Type> type) {
-    if (has_flag(evl::NoCodegen)) {
+    if (has_flag(eval::NoCodegen)) {
         return Base::apply_unary_op(
             node, op, std::move(lval_res), arg_node, std::move(arg), type);
     }
@@ -275,7 +275,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
     }
 
     auto data = exp::data(arg);
-    bool no_fold = has_flag(evl::NoConstFold) || arg.has_flag(exp::NoConstFold);
+    bool no_fold = has_flag(eval::NoConstFold) || arg.has_flag(exp::NoConstFold);
 
     if (arg.has_flag(exp::NumLit) &&
         (op == ulam::Op::UnaryMinus || op == ulam::Op::UnaryPlus)) {
@@ -325,7 +325,7 @@ ExprRes EvalExprVisitor::apply_unary_op(
 
 ExprRes EvalExprVisitor::post_inc_dec_dummy() {
     auto res = Base::post_inc_dec_dummy();
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         exp::set_data(res, "1");
     return res;
 }
@@ -333,7 +333,7 @@ ExprRes EvalExprVisitor::post_inc_dec_dummy() {
 ExprRes EvalExprVisitor::type_op_construct(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Class> cls) {
     auto res = Base::type_op_construct(node, cls);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         // Class.instanceof ( args )Self .
         auto strf = gen().make_strf();
         auto op_str = out::type_str(strf, cls) + ".instanceof";
@@ -345,7 +345,7 @@ ExprRes EvalExprVisitor::type_op_construct(
 ExprRes EvalExprVisitor::type_op_default(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ulam::Ref<ulam::Type> type) {
     auto res = Base::type_op_default(node, type);
-    if (has_flag(evl::NoCodegen))
+    if (has_flag(eval::NoCodegen))
         return res;
 
     auto strf = gen().make_strf();
@@ -365,7 +365,7 @@ ExprRes EvalExprVisitor::type_op_default(
 ExprRes EvalExprVisitor::type_op_expr_construct(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
     std::string data;
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         data = exp::data(arg);
     auto res = Base::type_op_expr_construct(node, std::move(arg));
     if (!data.empty()) {
@@ -381,7 +381,7 @@ ExprRes EvalExprVisitor::type_op_expr_default(
     ulam::Ref<ulam::Class> base) {
 
     std::string data;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         if (node->op() == ulam::TypeOp::AtomOf &&
             !arg.type()->deref()->is_atom()) {
             // NOTE: a hack to remove _single_ redundand member access before
@@ -413,14 +413,14 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 
 ExprRes EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
     auto res = Base::ident_self(node);
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         exp::set_self(res);
     return res;
 }
 
 ExprRes EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
     auto res = Base::ident_super(node);
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         exp::set_data(res, "super");
     return res;
 }
@@ -428,10 +428,10 @@ ExprRes EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
 ExprRes EvalExprVisitor::ident_var(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Var> var) {
     auto res = Base::ident_var(node, var);
-    if (has_flag(evl::NoCodegen))
+    if (has_flag(eval::NoCodegen))
         return res;
 
-    bool no_fold = has_flag(evl::NoConstFold);
+    bool no_fold = has_flag(eval::NoConstFold);
     if (!no_fold && util::can_fold(res)) {
         res.value().with_rvalue([&](const ulam::RValue& rval) {
             auto strf = gen().make_strf();
@@ -448,7 +448,7 @@ ExprRes EvalExprVisitor::ident_var(
 ExprRes EvalExprVisitor::ident_prop(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Prop> prop) {
     auto res = Base::ident_prop(node, prop);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         exp::set_self(res);
         exp::add_member_access(res, str(prop->name_id()), true);
     }
@@ -458,7 +458,7 @@ ExprRes EvalExprVisitor::ident_prop(
 ExprRes EvalExprVisitor::ident_fset(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::FunSet> fset) {
     auto res = Base::ident_fset(node, fset);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         exp::set_self(res);
         exp::add_member_access(res, FuncallPh, true);
     }
@@ -468,7 +468,7 @@ ExprRes EvalExprVisitor::ident_fset(
 ExprRes EvalExprVisitor::array_access_class(
     ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     bool before_member_access = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         before_member_access = obj.has_flag(exp::MemberAccess);
         if (before_member_access)
             exp::remove_member_access_op(obj);
@@ -484,7 +484,7 @@ ExprRes EvalExprVisitor::array_access_string(
     ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     std::string data;
     bool before_member_access = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(obj);
         before_member_access = obj.has_flag(exp::MemberAccess);
     }
@@ -501,7 +501,7 @@ ExprRes EvalExprVisitor::array_access_array(
     ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     std::string data, idx_data;
     bool before_member_access = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         idx_data = exp::data(idx);
         data = exp::data(obj);
         before_member_access = obj.has_flag(exp::MemberAccess);
@@ -525,9 +525,9 @@ ExprRes EvalExprVisitor::member_access_var(
     std::string data;
     bool no_fold = false;
     bool is_self = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_var(node, std::move(obj), var);
@@ -568,9 +568,9 @@ ExprRes EvalExprVisitor::member_access_prop(
     std::string data;
     bool no_fold = false;
     bool is_self = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_prop(node, std::move(obj), prop);
@@ -595,9 +595,9 @@ ExprRes EvalExprVisitor::member_access_fset(
     std::string data;
     bool no_fold = false;
     bool is_self = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(obj);
-        no_fold = has_flag(evl::NoConstFold) || obj.has_flag(exp::NoConstFold);
+        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(exp::NoConstFold);
         is_self = obj.has_flag(exp::Self);
     }
     auto res = Base::member_access_fset(node, std::move(obj), fset, base);
@@ -614,7 +614,7 @@ ExprRes EvalExprVisitor::class_const_access(
     ulam::Ref<ulam::ast::ClassConstAccess> node, ulam::Ref<ulam::Var> var) {
     std::string data;
     auto res = Base::class_const_access(node, var);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         auto type = var->type();
         if (!util::can_fold(type)) {
             exp::set_data(res, str(var->name_id()));
@@ -639,7 +639,7 @@ ExprRes EvalExprVisitor::bind(
     ulam_assert(obj);
     std::string data;
     bool is_self = false;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         data = exp::data(obj);
         is_self = obj.has_flag(exp::Self);
     }
@@ -654,7 +654,7 @@ ExprRes EvalExprVisitor::bind(
 ExprRes
 EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
     res = Base::negate(node, std::move(res));
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         exp::remove_member_access_op(res);
         exp::append(res, "!");
         exp::append(res, ".");
@@ -667,7 +667,7 @@ ExprRes EvalExprVisitor::class_name(
     auto res = (node->kind() == ulam::ClassNameMangled)
                    ? class_name_mangled(node, cls)
                    : Base::class_name(node, cls);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         ulam_assert(res.type()->is(ulam::StringId));
         ulam_assert(res.value().is_rvalue());
         ulam_assert(res.value().rvalue().is<ulam::String>());
@@ -693,7 +693,7 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_ident(
     ExprRes& obj,
     ulam::Ref<ulam::Class> cls,
     ulam::Ref<ulam::ast::TypeIdent> ident) {
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         exp::append(obj, std::string{str(ident->name_id())});
         exp::append(obj, ".");
     }
@@ -705,7 +705,7 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_type_spec(
     ExprRes& obj,
     ulam::Ref<ulam::Class> cls,
     ulam::Ref<ulam::ast::TypeSpec> type_spec) {
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         // NOTE: ident string only, t41384
         exp::append(obj, std::string{str(type_spec->ident()->name_id())});
         exp::append(obj, ".");
@@ -718,7 +718,7 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_classid(
     ExprRes& obj,
     ulam::Ref<ulam::Class> cls,
     ExprRes&& classid) {
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         exp::remove_member_access_op(obj);
         exp::append(obj, exp::data(classid));
         exp::append(obj, ".[]");

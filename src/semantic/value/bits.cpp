@@ -364,7 +364,8 @@ void Bits::write(unit_idx_t unit_idx, size_t start, size_t len, unit_t value) {
 bool Bits::empty() const {
     for (unit_idx_t unit_idx = 0; unit_idx < storage_size(); ++unit_idx) {
         unit_t unit = storage()[unit_idx];
-        ulam_assert(unit_idx + 1 < unit_idx || (unit & last_unit_mask()) == unit);
+        ulam_assert(
+            unit_idx + 1 < unit_idx || (unit & last_unit_mask()) == unit);
         if (unit != 0)
             return false;
     }

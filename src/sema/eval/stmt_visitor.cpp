@@ -48,10 +48,10 @@ void EvalStmtVisitor::visit(Ref<ast::If> node) {
 
     auto sr = env().scope_raii();
     auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-    if (!is_true.has_value() && !has_flag(evl::NoExec))
+    if (!is_true.has_value() && !has_flag(eval::NoExec))
         throw EvalExceptError("condition cannot be evaluated");
 
-    if (has_flag(evl::NoExec) || is_true.value()) {
+    if (has_flag(eval::NoExec) || is_true.value()) {
         if (!as_cond_ctx.empty()) {
             auto sr = env().as_cond_scope_raii(as_cond_ctx);
             node->if_branch()->accept(*this);
@@ -59,7 +59,7 @@ void EvalStmtVisitor::visit(Ref<ast::If> node) {
             node->if_branch()->accept(*this);
         }
     }
-    if (has_flag(evl::NoExec) || !is_true.value()) {
+    if (has_flag(eval::NoExec) || !is_true.value()) {
         if (node->has_else_branch())
             node->else_branch()->accept(*this);
     }
@@ -95,7 +95,7 @@ void EvalStmtVisitor::visit(Ref<ast::For> node) {
         auto sr = env().scope_raii();
         if (node->has_cond()) {
             auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            if (!is_true.has_value() && !has_flag(evl::NoExec))
+            if (!is_true.has_value() && !has_flag(eval::NoExec))
                 throw EvalExceptError("condition cannot be evaluated");
 
             done = !is_true.has_value() || !is_true.value();
@@ -114,7 +114,7 @@ void EvalStmtVisitor::visit(Ref<ast::For> node) {
         if (!done && node->has_upd())
             env().eval_expr(node->upd());
 
-        if (has_flag(evl::NoExec))
+        if (has_flag(eval::NoExec))
             break;
     }
 }
@@ -181,7 +181,7 @@ void EvalStmtVisitor::visit(Ref<ast::While> node) {
         auto sr = env().scope_raii();
         if (node->has_cond()) {
             auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            if (!is_true.has_value() && !has_flag(evl::NoExec))
+            if (!is_true.has_value() && !has_flag(eval::NoExec))
                 throw EvalExceptError("condition cannot be evaluated");
 
             done = !is_true.has_value() || !is_true.value();
@@ -197,7 +197,7 @@ void EvalStmtVisitor::visit(Ref<ast::While> node) {
             done = loop();
         }
 
-        if (has_flag(evl::NoExec))
+        if (has_flag(eval::NoExec))
             break;
     }
 }

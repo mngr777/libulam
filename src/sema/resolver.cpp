@@ -151,7 +151,8 @@ bool Resolver::resolve(Ref<Var> var) {
         if (node->has_init()) {
             EvalEnv::FlagsRaii fr{};
             if (!var->is_local() && !var->type()->is_ref())
-                fr = env().add_flags_raii(evl::Consteval); // class/module const
+                fr =
+                    env().add_flags_raii(eval::Consteval); // class/module const
             bool ok = env().init_var(var, node->init(), _in_expr);
             RET_UPD_STATE(var, ok);
         }
@@ -197,7 +198,7 @@ bool Resolver::init_default_value(Ref<Prop> prop) {
 
     DEF_SCOPE(prop, ssr, scope_view);
 
-    auto fr = env().add_flags_raii(evl::Consteval);
+    auto fr = env().add_flags_raii(eval::Consteval);
     bool ok = env().init_prop(prop, prop->node()->init());
     RET_UPD_STATE(prop, ok);
 }
@@ -536,7 +537,7 @@ bitsize_t Resolver::bitsize_for(Ref<ast::Expr> expr, BuiltinTypeId bi_type_id) {
     }
 
     // consteval
-    auto fr = env().add_flags_raii(evl::Consteval);
+    auto fr = env().add_flags_raii(eval::Consteval);
 
     // eval
     ExprRes res = env().eval_expr(expr);
@@ -703,7 +704,7 @@ array_size_t Resolver::array_size(Ref<ast::Expr> expr) {
     debug() << __FUNCTION__ << "\n" << line_at(expr);
 
     // consteval
-    auto fr = env().add_flags_raii(evl::Consteval);
+    auto fr = env().add_flags_raii(eval::Consteval);
 
     ExprRes res = env().eval_expr(expr);
     if (!res)
@@ -764,7 +765,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
     ulam_assert(args);
 
     std::pair<TypedValueList, bool> res;
-    auto fr = env().add_flags_raii(evl::Consteval);
+    auto fr = env().add_flags_raii(eval::Consteval);
 
     // eval args
     ExprResList arg_res_list;

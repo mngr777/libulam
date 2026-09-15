@@ -1,5 +1,4 @@
 #include <libulam/assert.hpp>
-#include <libulam/assert.hpp>
 #include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/ops.hpp>

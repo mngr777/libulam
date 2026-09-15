@@ -43,7 +43,7 @@ void EvalWhich::eval_cases(Context& ctx) {
 
 OptBool EvalWhich::eval_case(Context& ctx, Ref<ast::WhichCase> case_) {
     auto matched = match_conds(ctx, case_->conds());
-    if (!matched.has_value() && !has_flag(evl::NoExec))
+    if (!matched.has_value() && !has_flag(eval::NoExec))
         throw EvalExceptError("cannot eval conditions");
     if (matched.value_or(true)) {
         auto branch = [&]() { env().eval_stmt(case_->branch()); };
@@ -113,7 +113,7 @@ ExprRes EvalWhich::match_expr_res(
     auto res = env().eval_equal(
         case_expr, which_expr, std::move(which_res), case_expr,
         std::move(case_res));
-    if (!res || (!has_flag(evl::NoExec) && res.value().empty()))
+    if (!res || (!has_flag(eval::NoExec) && res.value().empty()))
         throw EvalExceptError("failed to match eval which case");
     return env().to_boolean(case_expr, std::move(res));
 }

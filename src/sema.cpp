@@ -15,7 +15,8 @@ Ref<Program> init(Context& ctx, Ref<ast::Root> ast) {
     return ast->program();
 }
 
-Ref<Module> init(Context& ctx, Ref<ast::Root> ast, Ref<ast::ModuleDef> module_def) {
+Ref<Module>
+init(Context& ctx, Ref<ast::Root> ast, Ref<ast::ModuleDef> module_def) {
     sema::Init init{ctx, ast};
     init.visit(module_def);
     return module_def->module();

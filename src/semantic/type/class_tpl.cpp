@@ -108,9 +108,7 @@ Ptr<Class> ClassTpl::inst(TypedValueList&& args) {
             [&](Ref<Prop> prop) -> Ref<Def> {
                 return cls->add_prop(prop->type_node(), prop->node());
             },
-            [&](Ref<Fun> fun) -> Ref<Def> {
-                return cls->add_fun(fun->node());
-            },
+            [&](Ref<Fun> fun) -> Ref<Def> { return cls->add_fun(fun->node()); },
             [&](auto) -> Ref<Def> { unreachable(); });
         def->set_cls_tpl(this);
     }

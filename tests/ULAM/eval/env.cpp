@@ -48,7 +48,7 @@ ExprRes EvalEnv::eval(ulam::Ref<ulam::ast::Block> block) {
     Base::eval(block);
 
     // exec
-    auto fr = add_flags_raii(evl::NoCodegen);
+    auto fr = add_flags_raii(eval::NoCodegen);
     return Base::eval(block);
 }
 

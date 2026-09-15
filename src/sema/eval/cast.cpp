@@ -34,7 +34,7 @@ EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
 
     auto from = arg.type();
     if (from->is_same(to)) {
-        if (!to->is_ref() && !has_flag(evl::NoDerefCast) &&
+        if (!to->is_ref() && !has_flag(eval::NoDerefCast) &&
             arg.value().is_lvalue()) {
             arg = deref(std::move(arg));
             return {arg.derived(to, arg.move_value()), CastOk};

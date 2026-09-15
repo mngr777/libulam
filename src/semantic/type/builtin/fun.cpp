@@ -5,9 +5,7 @@ namespace ulam {
 
 bitsize_t FunType::bitsize() const { unreachable(); }
 
-RValue FunType::load(const BitsView data, bitsize_t off) {
-    unreachable();
-}
+RValue FunType::load(const BitsView data, bitsize_t off) { unreachable(); }
 
 void FunType::store(BitsView data, bitsize_t off, const RValue& rval) {
     unreachable();

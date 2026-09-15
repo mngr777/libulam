@@ -189,7 +189,7 @@ ulam::Ptr<ulam::Var> EvalStmtVisitor::make_var(
     bool is_const) {
     // EvalEnv::FlagsRaii fr{};
     // if (is_const)
-    //     fr = env().add_flags_raii(evl::NoConstFold);
+    //     fr = env().add_flags_raii(eval::NoConstFold);
     return Base::make_var(type_name, node, is_const);
 }
 

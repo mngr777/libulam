@@ -198,9 +198,15 @@ RValue RValue::copy() const {
     if (empty())
         return RValue{};
     return accept(
-        [&](const Bits& bits) { return RValue{bits.copy(), is_consteval()}; },
-        [&](DataPtr data) { return RValue{data->copy(), is_consteval()}; },
-        [&](auto value) { return RValue{value, is_consteval()}; });
+        [&](const Bits& bits) {
+            return RValue{bits.copy(), is_consteval()};
+        },
+        [&](DataPtr data) {
+            return RValue{data->copy(), is_consteval()};
+        },
+        [&](auto value) {
+            return RValue{value, is_consteval()};
+        });
 }
 
 DataView RValue::data_view() {

@@ -32,7 +32,7 @@ ExprRes EvalCast::cast(
     ExprRes&& arg,
     bool expl) {
     auto res = Base::cast(node, type, std::move(arg), expl);
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         unset_internal_res_flags(res);
     return res;
 }
@@ -43,22 +43,22 @@ ExprRes EvalCast::cast(
     ExprRes&& arg,
     bool expl) {
     auto res = Base::cast(node, bi_type_id, std::move(arg), expl);
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         unset_internal_res_flags(res);
     return res;
 }
 
 ExprRes EvalCast::cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
-    auto fr = env().add_flags_raii(evl::NoConstevalCast);
+    auto fr = env().add_flags_raii(eval::NoConstevalCast);
     auto type = builtins().int_type();
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         auto arg_type = arg.type()->deref();
         if ((arg_type->is(ulam::UnsignedId) || arg.type()->is(ulam::IntId)) &&
             arg_type->is_impl_castable_to(type))
             arg.set_flag(exp::OmitCastInternal);
     }
     auto [res, _] = do_cast(node, type, std::move(arg), false);
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         unset_internal_res_flags(res);
     return std::move(res);
 }
@@ -66,7 +66,7 @@ ExprRes EvalCast::cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
 ExprRes EvalCast::cast_atom_to_nonelement_empty(
     ulam::Ref<ulam::ast::Node> node, ulam::Ref<ulam::Class> to, ExprRes&& arg) {
     std::string data;
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         data = exp::data(arg);
     auto res = Base::cast_atom_to_nonelement_empty(node, to, std::move(arg));
     if (!data.empty())
@@ -82,7 +82,7 @@ ExprRes EvalCast::cast_class_fun(
     auto res = Base::cast_class_fun(node, fun, std::move(arg), expl);
     // no need to add "cast" unless second cast is required (or cast is
     // explicit)
-    if (!has_flag(evl::NoCodegen) && !expl)
+    if (!has_flag(eval::NoCodegen) && !expl)
         res.set_flag(exp::OmitCastInternal);
     return res;
 }
@@ -94,7 +94,7 @@ ExprRes EvalCast::cast_default(
     bool expl) {
     // hack for t3416
     bool self_instanceof_to_atom = false;
-    if (!has_flag(evl::NoCodegen))
+    if (!has_flag(eval::NoCodegen))
         self_instanceof_to_atom = exp::data(arg) == "self.instanceof";
     auto res = Base::cast_default(node, to, std::move(arg), expl);
     if (!self_instanceof_to_atom)
@@ -136,11 +136,11 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
     bool omit_cast = res.has_flag(exp::OmitCastInternal);
     res.uns_flag(exp::OmitCastInternal);
 
-    if (!res || has_flag(evl::NoCodegen) || omit_cast)
+    if (!res || has_flag(eval::NoCodegen) || omit_cast)
         return;
 
     auto data = exp::data(res);
-    bool no_const_cast = has_flag(evl::NoConstevalCast);
+    bool no_const_cast = has_flag(eval::NoConstevalCast);
 
     if (expl || !(no_const_cast && util::can_fold(res))) {
         if (!res.has_flag(exp::RefCastInternal)) {
@@ -153,7 +153,7 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
         }
 
     } else {
-        auto no_fold = has_flag(evl::NoConstFold);
+        auto no_fold = has_flag(eval::NoConstFold);
         if (!no_fold && util::can_fold(res)) {
             ulam_assert(res.value().is_consteval());
             res.value().with_rvalue([&](const ulam::RValue& rval) {

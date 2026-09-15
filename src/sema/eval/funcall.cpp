@@ -18,7 +18,7 @@
 namespace ulam::sema {
 
 ExprRes EvalFuncall::eval_noexec(Ref<Fun> fun) {
-    auto fr = env().add_flags_raii(evl::NoExec);
+    auto fr = env().add_flags_raii(eval::NoExec);
     auto obj = LValue::make_ph(LValue::DefaultFlags & ~value::IsXvalue);
     auto args = make_args_ph(fun);
     return do_funcall(fun->node(), fun, obj, std::move(args), fun->cls());
@@ -46,7 +46,7 @@ EvalFuncall::call(Ref<ast::Node> node, ExprRes&& callable, ExprResList&& args) {
     ulam_assert(args);
     ulam_assert(callable.type()->is(FunId));
 
-    if (flags() & evl::Consteval)
+    if (flags() & eval::Consteval)
         return {ExprError::NotConsteval};
 
     const auto& val = callable.value();
@@ -70,7 +70,7 @@ ExprRes EvalFuncall::funcall(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     ulam_assert(args);
 
-    if (flags() & evl::Consteval)
+    if (flags() & eval::Consteval)
         return {ExprError::NotConsteval};
 
     args = cast_args(node, fun, std::move(args));
@@ -95,7 +95,7 @@ ExprRes EvalFuncall::funcall_callable(
     ExprResList&& args,
     Ref<Class> eff_cls) {
     ulam_assert(callable.type()->is(FunId));
-    if (has_flag(evl::NoExec))
+    if (has_flag(eval::NoExec))
         return empty_ret_val(node, fun);
     auto val = callable.move_value();
     ulam_assert(!val.empty());
@@ -105,7 +105,7 @@ ExprRes EvalFuncall::funcall_callable(
 ExprRes EvalFuncall::funcall_obj(
     Ref<ast::Node> node, Ref<Fun> fun, ExprRes&& obj, ExprResList&& args) {
     ulam_assert(obj.type()->actual()->is_class());
-    if (has_flag(evl::NoExec))
+    if (has_flag(eval::NoExec))
         return empty_ret_val(node, fun);
     auto val = obj.move_value();
     auto self = val.empty() ? LValue{} : val.self();
@@ -127,7 +127,7 @@ ExprRes EvalFuncall::do_funcall(
         return {ExprError::FunctionIsPureVirtual};
     }
     ulam_assert(fun->node()->has_body());
-    ulam_assert(!self.empty() || has_flag(evl::NoExec));
+    ulam_assert(!self.empty() || has_flag(eval::NoExec));
 
     if (self.has_auto_scope_lvl())
         self.set_scope_lvl(env().scope_lvl() + 1);

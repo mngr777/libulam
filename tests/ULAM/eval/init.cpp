@@ -22,7 +22,7 @@ ExprRes EvalInit::eval_init(
     // for constants, omit consteval cast for scalars
     EvalEnv::FlagsRaii fr{};
     if ((var->is_const()) && !type->is_array() && !type->is_class())
-        fr = env().add_flags_raii(evl::NoConstevalCast);
+        fr = env().add_flags_raii(eval::NoConstevalCast);
     return Base::eval_init(var, std::move(init));
 }
 
@@ -58,7 +58,7 @@ ExprRes EvalInit::eval_class_list(
     ulam::Ref<ulam::ast::InitList> list,
     unsigned depth) {
     auto res = Base::eval_class_list(var, cls, list, depth);
-    if (!has_flag(evl::NoCodegen) && depth == 1) {
+    if (!has_flag(eval::NoCodegen) && depth == 1) {
         if (list->child_num() > 0) {
             // var_name ( args ) Self .
             auto data =
@@ -77,10 +77,10 @@ ExprRes EvalInit::eval_array_list(
     unsigned depth) {
     EvalEnv::FlagsRaii fr{};
     if (depth > 1)
-        fr = env().add_flags_raii(evl::NoConstFold);
+        fr = env().add_flags_raii(eval::NoConstFold);
     auto array =
         Base::eval_array_list(var, array_type, default_lval, list, depth);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         auto data = array.has_data() ? "{ " + exp::data(array) + " }"
                                      : std::string{"{ }"};
         exp::set_data(array, data);
@@ -96,9 +96,9 @@ ExprRes EvalInit::eval_class_map(
     unsigned depth) {
     EvalEnv::FlagsRaii fr{};
     if (depth > 1)
-        fr = env().add_flags_raii(evl::NoConstFold);
+        fr = env().add_flags_raii(eval::NoConstFold);
     auto obj = Base::eval_class_map(var, cls, default_lval, map, depth);
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         auto obj_data = obj.has_data() ? exp::data(obj) : std::string{};
         exp::set_data(obj, "{ " + obj_data + " }");
     }
@@ -113,7 +113,7 @@ ExprRes EvalInit::array_set(
     bool autofill,
     unsigned depth) {
     std::string data;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         if (!autofill)
             exp::append(array, value_str(var, item, depth), ", ");
         data = exp::data(array);
@@ -132,7 +132,7 @@ ExprRes EvalInit::construct_obj(
     ExprResList&& args) {
     bool is_default = args.empty();
     auto res = Base::construct_obj(var, cls, arg_list, std::move(args));
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         if (is_default)
             exp::set_data(res, "{ }");
     }
@@ -146,7 +146,7 @@ ExprRes EvalInit::obj_set(
     ExprRes&& prop_res,
     unsigned depth) {
     std::string data;
-    if (!has_flag(evl::NoCodegen)) {
+    if (!has_flag(eval::NoCodegen)) {
         auto label = "." + std::string{str(prop->name_id())};
         auto value = value_str(var, prop_res, depth);
         exp::append(obj, exp::data_combine(label, "=", value), ", ");

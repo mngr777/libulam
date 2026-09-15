@@ -24,7 +24,7 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
         auto dyn_type = res.value().dyn_obj_type(true);
         is_match = dyn_type->is_impl_refable_as(type, res.value());
     }
-    if (is_match.is_false() && !has_flag(evl::NoExec))
+    if (is_match.is_false() && !has_flag(eval::NoExec))
         return {is_match, AsCondContext{type}};
 
     if (as_cond->ident()->is_self()) {
@@ -72,7 +72,7 @@ EvalCond::as_cond_lvalue(Ref<ast::AsCond> node, ExprRes&& res, Ref<Type> type) {
         ulam_assert(res.value().is_lvalue());
         lval = res.move_value().lvalue().as(type);
     } else {
-        if (!has_flag(evl::NoExec)) {
+        if (!has_flag(eval::NoExec)) {
             diag().error(node, "empty value");
             throw EvalExceptError("empty value");
         }

@@ -6,8 +6,8 @@
 bool EvalHelper::in_main() const { return _env.stack_size() == 1; }
 
 bool EvalHelper::codegen_enabled() const {
-    bool is_enabled = in_main() && !_env.has_flag(evl::NoCodegen);
-    ulam_assert(!is_enabled || _env.has_flag(ulam::sema::evl::NoExec));
+    bool is_enabled = in_main() && !_env.has_flag(eval::NoCodegen);
+    ulam_assert(!is_enabled || _env.has_flag(ulam::sema::eval::NoExec));
     return is_enabled;
 }
 

@@ -3,7 +3,8 @@
 namespace ulam {
 
 cls_id_t ClassRegistry::add(Ref<Class> cls) {
-    ulam_assert(std::find(_classes.begin(), _classes.end(), cls) == _classes.end());
+    ulam_assert(
+        std::find(_classes.begin(), _classes.end(), cls) == _classes.end());
     _classes.push_back(cls);
     return _classes.size();
 }
