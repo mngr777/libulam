@@ -1,4 +1,3 @@
-#include <libulam/semantic/utils/strf.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/funcall.hpp>
@@ -6,6 +5,7 @@
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/prim.hpp>
+#include <libulam/semantic/utils/strf.hpp>
 
 namespace ulam::sema {
 

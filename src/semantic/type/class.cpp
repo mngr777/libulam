@@ -1,4 +1,3 @@
-#include <libulam/semantic/value/flags.hpp>
 #include <algorithm>
 #include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>
@@ -20,6 +19,7 @@
 #include <libulam/semantic/utils/strf.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <sstream>
 
 #ifdef DEBUG_CLASS

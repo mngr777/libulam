@@ -1,5 +1,3 @@
-#include <libulam/semantic/utils/strf.hpp>
-#include <libulam/semantic/value/flags.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -7,7 +5,9 @@
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/semantic/type/builtin/void.hpp>
+#include <libulam/semantic/utils/strf.hpp>
 #include <libulam/semantic/value/bound_fun_set.hpp>
+#include <libulam/semantic/value/flags.hpp>
 
 #ifdef DEBUG_EVAL
 #    define ULAM_DEBUG

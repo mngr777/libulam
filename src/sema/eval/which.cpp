@@ -1,8 +1,8 @@
-#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/which.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/flags.hpp>

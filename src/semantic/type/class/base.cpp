@@ -1,7 +1,7 @@
-#include <libulam/semantic/ops.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>
+#include <libulam/semantic/ops.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>

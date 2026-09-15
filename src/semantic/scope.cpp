@@ -1,7 +1,7 @@
-#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/scope/iter.hpp>
 #include <libulam/semantic/scope/view.hpp>
 #include <libulam/semantic/type/class.hpp>
@@ -215,8 +215,8 @@ str_id_t PersScope::last_change(version_t version) const {
 
 Scope::Symbol*
 PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
-    // NOTE: global types in module environment scope (scope::ModuleEnv, parent of
-    // scope::Module) count as local symbols: t3875
+    // NOTE: global types in module environment scope (scope::ModuleEnv, parent
+    // of scope::Module) count as local symbols: t3875
     if (params.local && is(scope::Class | scope::Params)) {
         ulam_assert(in(scope::Module));
         return parent(scope::Module)->get(name_id, params);

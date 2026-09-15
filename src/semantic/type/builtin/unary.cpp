@@ -1,10 +1,10 @@
-#include <libulam/semantic/value/flags.hpp>
 #include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>
 #include <libulam/semantic/type/builtin/unary.hpp>
 #include <libulam/semantic/type/builtin/unsigned.hpp>
 #include <libulam/semantic/type/builtins.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/utils/integer.hpp>
 
 namespace ulam {

@@ -1,11 +1,11 @@
-#include <libulam/sema/eval/flags.hpp>
-#include <libulam/semantic/value/flags.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/expr_visitor.hpp>
+#include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/funcall.hpp>
 #include <libulam/sema/eval/init.hpp>
 #include <libulam/semantic/typed_value.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <type_traits>
 
 // Where passing default_lval is actually needed (see t41167-...):

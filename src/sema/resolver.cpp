@@ -775,7 +775,7 @@ Resolver::eval_tpl_args(Ref<ast::ArgList> args, Ref<ClassTpl> tpl) {
 
     // param types and default values (if needed) are resolved in tpl scope
     auto scope_view = tpl->scope()->view(0);
-    BasicScope inh_scope{&scope_view};              // tmp inheritance scope
+    BasicScope inh_scope{&scope_view};                // tmp inheritance scope
     PersScope param_scope{&inh_scope, scope::Params}; // tmp param scope
 
     // create tmp class params

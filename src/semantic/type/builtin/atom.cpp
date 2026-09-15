@@ -1,10 +1,10 @@
-#include <libulam/semantic/value/flags.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/type/builtin/atom.hpp>
 #include <libulam/semantic/type/class.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/value.hpp>
 #include <libulam/semantic/value/data.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/semantic/value/types.hpp>
 
 namespace ulam {
