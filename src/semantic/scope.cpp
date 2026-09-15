@@ -1,4 +1,4 @@
-#include "libulam/semantic/scope/flags.hpp"
+#include <libulam/semantic/scope/flags.hpp>
 #include <libulam/semantic/program.hpp>
 #include <libulam/semantic/scope.hpp>
 #include <libulam/semantic/scope/class.hpp>

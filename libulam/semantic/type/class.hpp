@@ -1,5 +1,5 @@
 #pragma once
-#include "libulam/semantic/value/flags.hpp"
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>

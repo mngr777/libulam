@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace exp {
+namespace expr {
 
 std::string data(const ulam::sema::ExprRes& res);
 void set_data(ulam::sema::ExprRes& res, std::string data);
@@ -45,4 +45,4 @@ std::string data_combine(T data, Ts... rest) {
     }
 }
 
-} // namespace exp
+} // namespace expr

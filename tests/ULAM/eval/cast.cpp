@@ -20,8 +20,8 @@ namespace {
 using ExprRes = ulam::sema::ExprRes;
 
 void unset_internal_res_flags(ExprRes& res) {
-    res.uns_flag(exp::RefCastInternal);
-    res.uns_flag(exp::OmitCastInternal);
+    res.uns_flag(expr::RefCastInternal);
+    res.uns_flag(expr::OmitCastInternal);
 }
 
 } // namespace
@@ -55,7 +55,7 @@ ExprRes EvalCast::cast_to_idx(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
         auto arg_type = arg.type()->deref();
         if ((arg_type->is(ulam::UnsignedId) || arg.type()->is(ulam::IntId)) &&
             arg_type->is_impl_castable_to(type))
-            arg.set_flag(exp::OmitCastInternal);
+            arg.set_flag(expr::OmitCastInternal);
     }
     auto [res, _] = do_cast(node, type, std::move(arg), false);
     if (!has_flag(eval::NoCodegen))
@@ -67,10 +67,10 @@ ExprRes EvalCast::cast_atom_to_nonelement_empty(
     ulam::Ref<ulam::ast::Node> node, ulam::Ref<ulam::Class> to, ExprRes&& arg) {
     std::string data;
     if (!has_flag(eval::NoCodegen))
-        data = exp::data(arg);
+        data = expr::data(arg);
     auto res = Base::cast_atom_to_nonelement_empty(node, to, std::move(arg));
     if (!data.empty())
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     return res;
 }
 
@@ -83,7 +83,7 @@ ExprRes EvalCast::cast_class_fun(
     // no need to add "cast" unless second cast is required (or cast is
     // explicit)
     if (!has_flag(eval::NoCodegen) && !expl)
-        res.set_flag(exp::OmitCastInternal);
+        res.set_flag(expr::OmitCastInternal);
     return res;
 }
 
@@ -95,7 +95,7 @@ ExprRes EvalCast::cast_default(
     // hack for t3416
     bool self_instanceof_to_atom = false;
     if (!has_flag(eval::NoCodegen))
-        self_instanceof_to_atom = exp::data(arg) == "self.instanceof";
+        self_instanceof_to_atom = expr::data(arg) == "self.instanceof";
     auto res = Base::cast_default(node, to, std::move(arg), expl);
     if (!self_instanceof_to_atom)
         update_res(res, expl);
@@ -117,7 +117,7 @@ ExprRes EvalCast::take_ref(ulam::Ref<ulam::ast::Node> node, ExprRes&& arg) {
     auto res = Base::take_ref(node, std::move(arg));
     if (!is_ref) {
         update_res(res, false);
-        res.set_flag(exp::RefCastInternal);
+        res.set_flag(expr::RefCastInternal);
     }
     return res;
 }
@@ -127,29 +127,29 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     auto res = Base::deref(std::move(arg));
     if (is_ref) {
         update_res(res, false);
-        res.set_flag(exp::RefCastInternal);
+        res.set_flag(expr::RefCastInternal);
     }
     return res;
 }
 
 void EvalCast::update_res(ExprRes& res, bool expl) {
-    bool omit_cast = res.has_flag(exp::OmitCastInternal);
-    res.uns_flag(exp::OmitCastInternal);
+    bool omit_cast = res.has_flag(expr::OmitCastInternal);
+    res.uns_flag(expr::OmitCastInternal);
 
     if (!res || has_flag(eval::NoCodegen) || omit_cast)
         return;
 
-    auto data = exp::data(res);
+    auto data = expr::data(res);
     bool no_const_cast = has_flag(eval::NoConstevalCast);
 
     if (expl || !(no_const_cast && util::can_fold(res))) {
-        if (!res.has_flag(exp::RefCastInternal)) {
-            exp::add_cast(res, expl);
+        if (!res.has_flag(expr::RefCastInternal)) {
+            expr::add_cast(res, expl);
         } else {
-            res.uns_flag(exp::RefCastInternal);
-            res.uns_flag(exp::ImplCast);
-            res.uns_flag(exp::ExplCast);
-            res.set_flag(expl ? exp::ExplCast : exp::ImplCast);
+            res.uns_flag(expr::RefCastInternal);
+            res.uns_flag(expr::ImplCast);
+            res.uns_flag(expr::ExplCast);
+            res.set_flag(expl ? expr::ExplCast : expr::ImplCast);
         }
 
     } else {
@@ -160,7 +160,7 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
                 Stringifier stringifier{program()};
                 stringifier.options.unary_as_unsigned_lit = true;
                 stringifier.options.bool_as_unsigned_lit = true;
-                exp::set_data(res, stringifier.stringify(res.type(), rval));
+                expr::set_data(res, stringifier.stringify(res.type(), rval));
             });
         }
     }

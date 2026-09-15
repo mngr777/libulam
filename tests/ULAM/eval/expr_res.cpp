@@ -12,7 +12,7 @@ namespace {
 using ExprRes = ulam::sema::ExprRes;
 }
 
-namespace exp {
+namespace expr {
 
 std::string data(const ExprRes& res) {
     ulam_assert(res.has_data());
@@ -23,7 +23,7 @@ std::string data(const ExprRes& res) {
 
 void set_data(ExprRes& res, std::string data) {
     ulam_assert(!data.empty());
-    res.set_flags(exp::NoFlags);
+    res.set_flags(expr::NoFlags);
     res.set_data_as<std::string>(std::move(data));
 }
 
@@ -38,7 +38,7 @@ void set_data(ExprRes& res, const char* data) {
 void set_self(ExprRes& res) {
     ulam_assert(!res.has_data());
     set_data(res, "self");
-    res.set_flag(exp::Self);
+    res.set_flag(expr::Self);
 }
 
 bool add_cast(ExprRes& res, bool expl) {
@@ -69,7 +69,7 @@ void add_member_access(ExprRes& res, const char* data, bool is_self) {
 }
 
 void remove_member_access_op(ExprRes& res, bool remove_ident) {
-    auto data = exp::data(res);
+    auto data = expr::data(res);
     auto size = data.size();
 
     // .
@@ -106,7 +106,7 @@ void add_array_access(
 
 void append(ExprRes& res, const std::string& data, const std::string& sep) {
     if (res.has_data()) {
-        set_data(res, data_append(exp::data(res), data, sep));
+        set_data(res, data_append(expr::data(res), data, sep));
     } else {
         set_data(res, data);
     }
@@ -118,4 +118,4 @@ data_append(std::string data1, std::string data2, const std::string& sep) {
     return data1 + sep + data2;
 }
 
-} // namespace exp
+} // namespace expr

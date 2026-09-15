@@ -35,7 +35,7 @@ ExprRes EvalFuncall::construct_funcall(
     auto res = Base::construct_funcall(
         node, cls, fun, std::move(rval), std::move(args));
     if (!data.empty())
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     return res;
 }
 
@@ -47,14 +47,14 @@ ExprRes EvalFuncall::funcall_callable(
     ulam::Ref<ulam::Class> eff_cls) {
     std::string data;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(callable);
+        data = expr::data(callable);
         replace(data, "{args}", arg_data(args));
         replace(data, "{fun}", str(fun->name_id()));
     }
     auto res = Base::funcall_callable(
         node, fun, std::move(callable), std::move(args), eff_cls);
     if (!data.empty())
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     return res;
 }
 
@@ -65,13 +65,13 @@ ExprRes EvalFuncall::funcall_obj(
     ExprResList&& args) {
     std::string data;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(obj);
+        data = expr::data(obj);
         auto call_data = arg_data(args) + std::string{str(fun->name_id())};
-        data = exp::data_combine(data, call_data, ".");
+        data = expr::data_combine(data, call_data, ".");
     }
     auto res = Base::funcall_obj(node, fun, std::move(obj), std::move(args));
     if (!data.empty())
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     return res;
 }
 
@@ -137,10 +137,10 @@ ExprRes EvalFuncall::cast_arg(
     ExprRes&& arg) {
     arg = Base::cast_arg(node, fun, param, to, std::move(arg));
     if (!has_flag(eval::NoCodegen)) {
-        auto data = exp::data(arg);
+        auto data = expr::data(arg);
         if (!arg.type()->is_same(param->type()) ||
             (to->is_ref() && param->is_const() && !arg.value().is_consteval()))
-            exp::add_cast(arg);
+            expr::add_cast(arg);
     }
     return std::move(arg);
 }
@@ -151,6 +151,6 @@ std::string EvalFuncall::arg_data(const ExprResList& args) {
 
     std::string data = "(";
     for (const auto& arg : args)
-        data = exp::data_append(data, exp::data(arg));
-    return exp::data_append(data, ")");
+        data = expr::data_append(data, expr::data(arg));
+    return expr::data_append(data, ")");
 }

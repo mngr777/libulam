@@ -1,7 +1,7 @@
 #pragma once
 #include <libulam/sema/expr_res.hpp>
 
-namespace exp {
+namespace expr {
 
 using flags_t = ulam::sema::ExprRes::flags_t;
 static constexpr flags_t NoFlags = ulam::sema::ExprRes::NoFlags;
@@ -16,4 +16,4 @@ static constexpr flags_t MemberAccess = First << 5;
 static constexpr flags_t NumLit = First << 6;
 static constexpr flags_t NoConstFold = First << 7;
 
-} // namespace exp
+} // namespace expr

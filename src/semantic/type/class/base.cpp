@@ -1,4 +1,4 @@
-#include "libulam/semantic/ops.hpp"
+#include <libulam/semantic/ops.hpp>
 #include <libulam/ast/nodes/module.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/module.hpp>

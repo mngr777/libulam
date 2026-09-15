@@ -1,4 +1,4 @@
-#include "libulam/semantic/value/flags.hpp"
+#include <libulam/semantic/value/flags.hpp>
 #include <algorithm>
 #include <libulam/assert.hpp>
 #include <libulam/ast/nodes/module.hpp>

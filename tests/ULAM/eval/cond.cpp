@@ -20,7 +20,7 @@ CondRes EvalCond::eval_expr(ulam::Ref<ulam::ast::Expr> expr) {
     if (!res.type()->is(ulam::BoolId))
         res = env().to_boolean(expr, std::move(res));
 
-    gen().append(exp::data(res));
+    gen().append(expr::data(res));
     gen().append("cond");
 
     return {is_true(res), ulam::sema::AsCondContext{}};

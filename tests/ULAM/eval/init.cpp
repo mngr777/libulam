@@ -30,7 +30,7 @@ void EvalInit::var_init_expr(
     ulam::Ref<ulam::Var> var, ExprRes&& init, bool in_expr) {
     std::string data;
     if (!in_expr && codegen_enabled())
-        data = exp::data(init);
+        data = expr::data(init);
     Base::var_init_expr(var, std::move(init), in_expr);
     if (!in_expr && is_local_var(var) && codegen_enabled()) {
         gen().append("=");
@@ -62,8 +62,8 @@ ExprRes EvalInit::eval_class_list(
         if (list->child_num() > 0) {
             // var_name ( args ) Self .
             auto data =
-                exp::data_combine(str(var->name_id()), exp::data(res), ".");
-            exp::set_data(res, data);
+                expr::data_combine(str(var->name_id()), expr::data(res), ".");
+            expr::set_data(res, data);
         }
     }
     return res;
@@ -81,9 +81,9 @@ ExprRes EvalInit::eval_array_list(
     auto array =
         Base::eval_array_list(var, array_type, default_lval, list, depth);
     if (!has_flag(eval::NoCodegen)) {
-        auto data = array.has_data() ? "{ " + exp::data(array) + " }"
+        auto data = array.has_data() ? "{ " + expr::data(array) + " }"
                                      : std::string{"{ }"};
-        exp::set_data(array, data);
+        expr::set_data(array, data);
     }
     return array;
 }
@@ -99,8 +99,8 @@ ExprRes EvalInit::eval_class_map(
         fr = env().add_flags_raii(eval::NoConstFold);
     auto obj = Base::eval_class_map(var, cls, default_lval, map, depth);
     if (!has_flag(eval::NoCodegen)) {
-        auto obj_data = obj.has_data() ? exp::data(obj) : std::string{};
-        exp::set_data(obj, "{ " + obj_data + " }");
+        auto obj_data = obj.has_data() ? expr::data(obj) : std::string{};
+        expr::set_data(obj, "{ " + obj_data + " }");
     }
     return obj;
 }
@@ -115,13 +115,13 @@ ExprRes EvalInit::array_set(
     std::string data;
     if (!has_flag(eval::NoCodegen)) {
         if (!autofill)
-            exp::append(array, value_str(var, item, depth), ", ");
-        data = exp::data(array);
+            expr::append(array, value_str(var, item, depth), ", ");
+        data = expr::data(array);
     }
     array = Base::array_set(
         var, std::move(array), idx, std::move(item), autofill, depth);
     if (!data.empty())
-        exp::set_data(array, data);
+        expr::set_data(array, data);
     return std::move(array);
 }
 
@@ -134,7 +134,7 @@ ExprRes EvalInit::construct_obj(
     auto res = Base::construct_obj(var, cls, arg_list, std::move(args));
     if (!has_flag(eval::NoCodegen)) {
         if (is_default)
-            exp::set_data(res, "{ }");
+            expr::set_data(res, "{ }");
     }
     return res;
 }
@@ -149,18 +149,18 @@ ExprRes EvalInit::obj_set(
     if (!has_flag(eval::NoCodegen)) {
         auto label = "." + std::string{str(prop->name_id())};
         auto value = value_str(var, prop_res, depth);
-        exp::append(obj, exp::data_combine(label, "=", value), ", ");
-        data = exp::data(obj);
+        expr::append(obj, expr::data_combine(label, "=", value), ", ");
+        data = expr::data(obj);
     }
     obj = Base::obj_set(var, std::move(obj), prop, std::move(prop_res), depth);
     if (!data.empty())
-        exp::set_data(obj, data);
+        expr::set_data(obj, data);
     return std::move(obj);
 }
 
 std::string EvalInit::value_str(
     ulam::Ref<ulam::VarBase> var, const ExprRes& res, unsigned depth) {
-    auto data = exp::data(res);
+    auto data = expr::data(res);
     auto type = res.type();
     bool no_fold = depth > 1 || type->is_array() || type->is_class();
     // NOTE: not folding for const var values

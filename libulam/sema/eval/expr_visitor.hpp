@@ -1,5 +1,5 @@
 #pragma once
-#include "libulam/ast/nodes/type.hpp"
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
 #include <libulam/diag.hpp>

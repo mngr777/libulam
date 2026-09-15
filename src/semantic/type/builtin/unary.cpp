@@ -1,4 +1,4 @@
-#include "libulam/semantic/value/flags.hpp"
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/assert.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
 #include <libulam/semantic/type/builtin/int.hpp>

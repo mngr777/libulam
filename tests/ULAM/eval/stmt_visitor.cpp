@@ -101,7 +101,7 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     if (node->has_upd()) {
         auto upd_res = env().eval_expr(node->upd());
         if (upd_res.has_data())
-            gen().append(exp::data(upd_res));
+            gen().append(expr::data(upd_res));
     }
     gen().append("while");
     gen().block_close();
@@ -137,7 +137,7 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::Return> node) {
 
     auto res = ret_res(node);
     if (res.has_data()) {
-        gen().append(exp::data(res));
+        gen().append(expr::data(res));
         gen().append("return");
     }
 }
@@ -165,7 +165,7 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::ExprStmt> node) {
         return;
     auto res = env().eval_expr(node->expr());
     if (codegen_enabled())
-        gen().append(exp::data(res));
+        gen().append(expr::data(res));
 }
 
 void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::EmptyStmt> node) {

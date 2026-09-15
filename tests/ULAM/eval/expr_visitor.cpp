@@ -36,8 +36,8 @@ constexpr char FuncallPh[] = "{args}{fun}";
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Cast> node) {
     auto res = Base::visit(node);
     if (!has_flag(eval::NoCodegen)) {
-        if (!res.has_flag(exp::ExplCast) && !res.has_flag(exp::ImplCast))
-            exp::add_cast(res, true);
+        if (!res.has_flag(expr::ExplCast) && !res.has_flag(expr::ImplCast))
+            expr::add_cast(res, true);
     }
     return res;
 }
@@ -74,26 +74,26 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::Ternary> node) {
         return std::move(if_false_res);
     ulam_assert(if_true_res.type()->is_same(if_false_res.type()));
 
-    auto cond_data = exp::data(cond_res);
-    auto if_true_data = exp::data(if_true_res);
-    auto if_false_data = exp::data(if_false_res);
+    auto cond_data = expr::data(cond_res);
+    auto if_true_data = expr::data(if_true_res);
+    auto if_false_data = expr::data(if_false_res);
 
     auto res = ternary_eval(
         node, std::move(cond_res), type, std::move(if_true_res),
         std::move(if_false_res));
 
-    exp::append(res, cond_data);
-    exp::append(res, "? ");
-    exp::append(res, if_true_data);
-    exp::append(res, ": ");
-    exp::append(res, if_false_data);
+    expr::append(res, cond_data);
+    expr::append(res, "? ");
+    expr::append(res, if_true_data);
+    expr::append(res, ": ");
+    expr::append(res, if_false_data);
     return res;
 }
 
 ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::BoolLit> node) {
     auto res = Base::visit(node);
     if (!has_flag(eval::NoCodegen))
-        exp::set_data(res, std::string{node->value() ? "true" : "false"});
+        expr::set_data(res, std::string{node->value() ? "true" : "false"});
     return res;
 }
 
@@ -107,9 +107,9 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::NumLit> node) {
         auto strf = gen().make_strf();
         strf.options.unary_as_unsigned_lit = true;
         strf.options.bool_as_unsigned_lit = true;
-        exp::set_data(res, strf.stringify(res.type(), rval));
+        expr::set_data(res, strf.stringify(res.type(), rval));
     });
-    res.set_flag(exp::NumLit);
+    res.set_flag(expr::NumLit);
     return res;
 }
 
@@ -120,7 +120,7 @@ ExprRes EvalExprVisitor::visit(ulam::Ref<ulam::ast::StrLit> node) {
 
     res.value().with_rvalue([&](const auto& rval) {
         auto strf = gen().make_strf();
-        exp::set_data(res, strf.stringify(res.type(), rval));
+        expr::set_data(res, strf.stringify(res.type(), rval));
     });
     return res;
 }
@@ -164,13 +164,13 @@ ExprRes EvalExprVisitor::apply_binary_op(
     }
 
     bool no_fold = has_flag(eval::NoConstFold) ||
-                   left.has_flag(exp::NoConstFold) ||
-                   right.has_flag(exp::NoConstFold);
+                   left.has_flag(expr::NoConstFold) ||
+                   right.has_flag(expr::NoConstFold);
 
     switch (ulam::ops::kind(op)) {
     case ulam::ops::Kind::Assign:
         if (r_type != l_type && !right.value().is_consteval())
-            exp::add_cast(right);
+            expr::add_cast(right);
         break;
     case ulam::ops::Kind::Equality:
     case ulam::ops::Kind::Comparison:
@@ -178,19 +178,19 @@ ExprRes EvalExprVisitor::apply_binary_op(
             if (l_is_ref != r_is_ref) {
                 // cast an arg to exact type for comparison
                 // deref, t3695
-                exp::add_cast(l_is_ref ? left : right);
+                expr::add_cast(l_is_ref ? left : right);
             } else {
-                exp::add_cast(left);
-                exp::add_cast(right);
+                expr::add_cast(left);
+                expr::add_cast(right);
             }
         }
 
         if (l_type->is(ulam::BoolId) && r_type->is(ulam::BoolId)) {
             // Bool types are converted to Bool(1)
             if (l_type->bitsize() != 1)
-                exp::add_cast(left);
+                expr::add_cast(left);
             if (r_type->bitsize() != 1)
-                exp::add_cast(right);
+                expr::add_cast(right);
             break;
         }
 
@@ -200,18 +200,18 @@ ExprRes EvalExprVisitor::apply_binary_op(
         if (l_type->is_prim() && ulam::has_bitsize(l_type->bi_type_id())) {
             ulam_assert(r_type->is(l_type->bi_type_id()));
             if (l_type->bitsize() < r_type->bitsize()) {
-                exp::add_cast(left);
+                expr::add_cast(left);
             } else {
-                exp::add_cast(right);
+                expr::add_cast(right);
             }
         } else {
-            exp::add_cast(right);
+            expr::add_cast(right);
         }
         break;
     case ulam::ops::Kind::Numeric: {
         if (ulam::ops::is_assign(op)) {
             if (r_type != l_type)
-                exp::add_cast(right);
+                expr::add_cast(right);
 
         } else if (!l_type->is_class()) {
             // cast to 32 or 64 common bit width
@@ -221,9 +221,9 @@ ExprRes EvalExprVisitor::apply_binary_op(
             ulam_assert(size <= 64);
             size = (size > 32) ? 64 : 32;
             if (l_size != size)
-                exp::add_cast(left);
+                expr::add_cast(left);
             if (r_size != size)
-                exp::add_cast(right);
+                expr::add_cast(right);
         }
         break;
     }
@@ -234,7 +234,7 @@ ExprRes EvalExprVisitor::apply_binary_op(
     std::string op_str{ulam::ops::str(op)};
     if (op == ulam::Op::Sum || op == ulam::Op::Diff)
         op_str += "b";
-    auto data = exp::data_combine(exp::data(left), exp::data(right), op_str);
+    auto data = expr::data_combine(expr::data(left), expr::data(right), op_str);
 
     auto res = Base::apply_binary_op(
         node, op, std::move(lval_res), l_node, std::move(left), r_node,
@@ -244,13 +244,13 @@ ExprRes EvalExprVisitor::apply_binary_op(
     if (!no_fold && val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
             auto strf = gen().make_strf();
-            exp::set_data(res, strf.stringify(res.type(), rval));
+            expr::set_data(res, strf.stringify(res.type(), rval));
         });
     } else if (!empty(data)) {
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     }
     if (no_fold)
-        res.set_flag(exp::NoConstFold);
+        res.set_flag(expr::NoConstFold);
     return res;
 }
 
@@ -274,10 +274,10 @@ ExprRes EvalExprVisitor::apply_unary_op(
             node, op, std::move(lval_res), arg_node, std::move(arg), type);
     }
 
-    auto data = exp::data(arg);
-    bool no_fold = has_flag(eval::NoConstFold) || arg.has_flag(exp::NoConstFold);
+    auto data = expr::data(arg);
+    bool no_fold = has_flag(eval::NoConstFold) || arg.has_flag(expr::NoConstFold);
 
-    if (arg.has_flag(exp::NumLit) &&
+    if (arg.has_flag(expr::NumLit) &&
         (op == ulam::Op::UnaryMinus || op == ulam::Op::UnaryPlus)) {
         // +<num> | -<num>
         std::string op_str{ulam::ops::str(op)};
@@ -288,23 +288,23 @@ ExprRes EvalExprVisitor::apply_unary_op(
         bool is_int = arg.type()->deref()->is_same(builtins().int_type());
         std::string inc_str{is_int ? "1" : "1 cast"};
         std::string op_str{(op == ulam::Op::PreInc) ? "+=" : "-="};
-        data = exp::data_combine(data, inc_str, op_str);
+        data = expr::data_combine(data, inc_str, op_str);
 
     } else if (op == ulam::Op::PostInc || op == ulam::Op::PostDec) {
         // x 1 [cast] ++ | x 1 [cast] --
         bool is_int = arg.type()->deref()->is_same(builtins().int_type());
         std::string inc_str{is_int ? "1" : "1 cast"};
         std::string op_str{ulam::ops::str(op)};
-        data = exp::data_combine(data, inc_str, op_str);
+        data = expr::data_combine(data, inc_str, op_str);
 
     } else {
         // x <op> | x Type is
         std::string op_str{ulam::ops::str(op)};
         if (type) {
             auto strf = gen().make_strf();
-            data = exp::data_combine(data, out::type_str(strf, type));
+            data = expr::data_combine(data, out::type_str(strf, type));
         }
-        data = exp::data_combine(data, op_str);
+        data = expr::data_combine(data, op_str);
     }
 
     auto res = Base::apply_unary_op(
@@ -313,20 +313,20 @@ ExprRes EvalExprVisitor::apply_unary_op(
     if (!no_fold && val.is_consteval()) {
         val.with_rvalue([&](const ulam::RValue& rval) {
             auto strf = gen().make_strf();
-            exp::set_data(res, strf.stringify(res.type(), rval));
+            expr::set_data(res, strf.stringify(res.type(), rval));
         });
     } else {
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     }
     if (no_fold)
-        res.set_flag(exp::NoConstFold);
+        res.set_flag(expr::NoConstFold);
     return res;
 }
 
 ExprRes EvalExprVisitor::post_inc_dec_dummy() {
     auto res = Base::post_inc_dec_dummy();
     if (!has_flag(eval::NoCodegen))
-        exp::set_data(res, "1");
+        expr::set_data(res, "1");
     return res;
 }
 
@@ -337,7 +337,7 @@ ExprRes EvalExprVisitor::type_op_construct(
         // Class.instanceof ( args )Self .
         auto strf = gen().make_strf();
         auto op_str = out::type_str(strf, cls) + ".instanceof";
-        exp::set_data(res, exp::data_combine(op_str, exp::data(res), "."));
+        expr::set_data(res, expr::data_combine(op_str, expr::data(res), "."));
     }
     return res;
 }
@@ -353,11 +353,11 @@ ExprRes EvalExprVisitor::type_op_default(
         res.value().with_rvalue([&](const auto& rval) {
             strf.options.unary_as_unsigned_lit = true;
             strf.options.bool_as_unsigned_lit = true;
-            exp::set_data(res, strf.stringify(res.type(), rval));
+            expr::set_data(res, strf.stringify(res.type(), rval));
         });
     } else {
-        exp::append(res, out::type_str(strf, type));
-        exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
+        expr::append(res, out::type_str(strf, type));
+        expr::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
     }
     return res;
 }
@@ -366,11 +366,11 @@ ExprRes EvalExprVisitor::type_op_expr_construct(
     ulam::Ref<ulam::ast::TypeOpExpr> node, ExprRes&& arg) {
     std::string data;
     if (!has_flag(eval::NoCodegen))
-        data = exp::data(arg);
+        data = expr::data(arg);
     auto res = Base::type_op_expr_construct(node, std::move(arg));
     if (!data.empty()) {
         auto op_str = data + ".instanceof";
-        exp::set_data(res, exp::data_combine(op_str, exp::data(res), "."));
+        expr::set_data(res, expr::data_combine(op_str, expr::data(res), "."));
     }
     return res;
 }
@@ -387,11 +387,11 @@ ExprRes EvalExprVisitor::type_op_expr_default(
             // NOTE: a hack to remove _single_ redundand member access before
             // calling
             // `.atomof`, t3905
-            if (arg.has_flag(exp::MemberAccess) ||
-                arg.has_flag(exp::SelfMemberAccess))
-                exp::remove_member_access_op(arg, true);
+            if (arg.has_flag(expr::MemberAccess) ||
+                arg.has_flag(expr::SelfMemberAccess))
+                expr::remove_member_access_op(arg, true);
         }
-        data = exp::data(arg);
+        data = expr::data(arg);
     }
     auto res = Base::type_op_expr_default(node, std::move(arg), base);
 
@@ -401,11 +401,11 @@ ExprRes EvalExprVisitor::type_op_expr_default(
                 auto strf = gen().make_strf();
                 strf.options.unary_as_unsigned_lit = true;
                 strf.options.bool_as_unsigned_lit = true;
-                exp::set_data(res, strf.stringify(res.type(), rval));
+                expr::set_data(res, strf.stringify(res.type(), rval));
             });
         } else {
-            exp::set_data(res, data);
-            exp::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
+            expr::set_data(res, data);
+            expr::append(res, std::string{"."} + ulam::ops::str(node->op()), "");
         }
     }
     return res;
@@ -414,14 +414,14 @@ ExprRes EvalExprVisitor::type_op_expr_default(
 ExprRes EvalExprVisitor::ident_self(ulam::Ref<ulam::ast::Ident> node) {
     auto res = Base::ident_self(node);
     if (!has_flag(eval::NoCodegen))
-        exp::set_self(res);
+        expr::set_self(res);
     return res;
 }
 
 ExprRes EvalExprVisitor::ident_super(ulam::Ref<ulam::ast::Ident> node) {
     auto res = Base::ident_super(node);
     if (!has_flag(eval::NoCodegen))
-        exp::set_data(res, "super");
+        expr::set_data(res, "super");
     return res;
 }
 
@@ -437,10 +437,10 @@ ExprRes EvalExprVisitor::ident_var(
             auto strf = gen().make_strf();
             strf.options.unary_as_unsigned_lit = true;
             strf.options.bool_as_unsigned_lit = true;
-            exp::set_data(res, strf.stringify(res.type(), rval));
+            expr::set_data(res, strf.stringify(res.type(), rval));
         });
     } else {
-        exp::set_data(res, str(var->name_id()));
+        expr::set_data(res, str(var->name_id()));
     }
     return res;
 }
@@ -449,8 +449,8 @@ ExprRes EvalExprVisitor::ident_prop(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::Prop> prop) {
     auto res = Base::ident_prop(node, prop);
     if (!has_flag(eval::NoCodegen)) {
-        exp::set_self(res);
-        exp::add_member_access(res, str(prop->name_id()), true);
+        expr::set_self(res);
+        expr::add_member_access(res, str(prop->name_id()), true);
     }
     return res;
 }
@@ -459,8 +459,8 @@ ExprRes EvalExprVisitor::ident_fset(
     ulam::Ref<ulam::ast::Ident> node, ulam::Ref<ulam::FunSet> fset) {
     auto res = Base::ident_fset(node, fset);
     if (!has_flag(eval::NoCodegen)) {
-        exp::set_self(res);
-        exp::add_member_access(res, FuncallPh, true);
+        expr::set_self(res);
+        expr::add_member_access(res, FuncallPh, true);
     }
     return res;
 }
@@ -469,14 +469,14 @@ ExprRes EvalExprVisitor::array_access_class(
     ulam::Ref<ulam::ast::ArrayAccess> node, ExprRes&& obj, ExprRes&& idx) {
     bool before_member_access = false;
     if (!has_flag(eval::NoCodegen)) {
-        before_member_access = obj.has_flag(exp::MemberAccess);
+        before_member_access = obj.has_flag(expr::MemberAccess);
         if (before_member_access)
-            exp::remove_member_access_op(obj);
+            expr::remove_member_access_op(obj);
     }
 
     auto res = Base::array_access_class(node, std::move(obj), std::move(idx));
     if (before_member_access)
-        exp::append(res, ".");
+        expr::append(res, ".");
     return res;
 }
 
@@ -485,14 +485,14 @@ ExprRes EvalExprVisitor::array_access_string(
     std::string data;
     bool before_member_access = false;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(obj);
-        before_member_access = obj.has_flag(exp::MemberAccess);
+        data = expr::data(obj);
+        before_member_access = obj.has_flag(expr::MemberAccess);
     }
     auto res = Base::array_access_string(node, std::move(obj), std::move(idx));
     if (!data.empty()) {
-        exp::set_data(res, std::move(data));
-        exp::add_array_access(res, exp::data(idx), before_member_access);
-        res.set_flag(exp::NoConstFold);
+        expr::set_data(res, std::move(data));
+        expr::add_array_access(res, expr::data(idx), before_member_access);
+        res.set_flag(expr::NoConstFold);
     }
     return res;
 }
@@ -502,15 +502,15 @@ ExprRes EvalExprVisitor::array_access_array(
     std::string data, idx_data;
     bool before_member_access = false;
     if (!has_flag(eval::NoCodegen)) {
-        idx_data = exp::data(idx);
-        data = exp::data(obj);
-        before_member_access = obj.has_flag(exp::MemberAccess);
+        idx_data = expr::data(idx);
+        data = expr::data(obj);
+        before_member_access = obj.has_flag(expr::MemberAccess);
     }
     auto res = Base::array_access_array(node, std::move(obj), std::move(idx));
     if (!data.empty()) {
-        exp::set_data(res, std::move(data));
-        exp::add_array_access(res, idx_data, before_member_access);
-        res.set_flag(exp::NoConstFold); // do not fold result of [], t3881
+        expr::set_data(res, std::move(data));
+        expr::add_array_access(res, idx_data, before_member_access);
+        res.set_flag(expr::NoConstFold); // do not fold result of [], t3881
     }
     return res;
 }
@@ -526,13 +526,13 @@ ExprRes EvalExprVisitor::member_access_var(
     bool no_fold = false;
     bool is_self = false;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(obj);
-        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(exp::NoConstFold);
-        is_self = obj.has_flag(exp::Self);
+        data = expr::data(obj);
+        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(expr::NoConstFold);
+        is_self = obj.has_flag(expr::Self);
     }
     auto res = Base::member_access_var(node, std::move(obj), var);
     if (!data.empty()) {
-        exp::set_data(res, data);
+        expr::set_data(res, data);
         if (!no_fold && util::can_fold(res)) {
             res.value().with_rvalue([&](const ulam::RValue& rval) {
                 auto strf = gen().make_strf();
@@ -541,18 +541,18 @@ ExprRes EvalExprVisitor::member_access_var(
                 auto val_str = strf.stringify(res.type(), rval);
                 if (res.type()->is(ulam::StringId)) {
                     // t41273
-                    exp::set_data(res, val_str);
+                    expr::set_data(res, val_str);
                 } else {
-                    exp::add_member_access(res, val_str, is_self);
+                    expr::add_member_access(res, val_str, is_self);
                 }
-                res.set_flag(exp::NoConstFold); // e.g. t41221
+                res.set_flag(expr::NoConstFold); // e.g. t41221
             });
         } else {
             auto name = str(var->name_id());
-            exp::add_member_access(res, name, is_self);
+            expr::add_member_access(res, name, is_self);
         }
         if (no_fold)
-            res.set_flag(exp::NoConstFold);
+            res.set_flag(expr::NoConstFold);
     }
     return res;
 }
@@ -569,17 +569,17 @@ ExprRes EvalExprVisitor::member_access_prop(
     bool no_fold = false;
     bool is_self = false;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(obj);
-        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(exp::NoConstFold);
-        is_self = obj.has_flag(exp::Self);
+        data = expr::data(obj);
+        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(expr::NoConstFold);
+        is_self = obj.has_flag(expr::Self);
     }
     auto res = Base::member_access_prop(node, std::move(obj), prop);
     if (!data.empty()) {
         auto name = str(prop->name_id());
-        exp::set_data(res, data);
-        exp::add_member_access(res, name, is_self);
+        expr::set_data(res, data);
+        expr::add_member_access(res, name, is_self);
         if (no_fold)
-            res.set_flag(exp::NoConstFold);
+            res.set_flag(expr::NoConstFold);
     }
     return res;
 }
@@ -596,16 +596,16 @@ ExprRes EvalExprVisitor::member_access_fset(
     bool no_fold = false;
     bool is_self = false;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(obj);
-        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(exp::NoConstFold);
-        is_self = obj.has_flag(exp::Self);
+        data = expr::data(obj);
+        no_fold = has_flag(eval::NoConstFold) || obj.has_flag(expr::NoConstFold);
+        is_self = obj.has_flag(expr::Self);
     }
     auto res = Base::member_access_fset(node, std::move(obj), fset, base);
     if (!data.empty()) {
-        exp::set_data(res, data);
-        exp::add_member_access(res, FuncallPh, is_self);
+        expr::set_data(res, data);
+        expr::add_member_access(res, FuncallPh, is_self);
         if (no_fold)
-            res.set_flag(exp::NoConstFold);
+            res.set_flag(expr::NoConstFold);
     }
     return res;
 }
@@ -617,14 +617,14 @@ ExprRes EvalExprVisitor::class_const_access(
     if (!has_flag(eval::NoCodegen)) {
         auto type = var->type();
         if (!util::can_fold(type)) {
-            exp::set_data(res, str(var->name_id()));
-            res.set_flag(exp::NoConstFold);
+            expr::set_data(res, str(var->name_id()));
+            res.set_flag(expr::NoConstFold);
         } else {
             ulam_assert(!res.value().empty());
             ulam_assert(res.value().is_consteval());
             res.value().with_rvalue([&](const auto& rval) {
                 auto strf = gen().make_strf();
-                exp::set_data(res, strf.stringify(type, rval));
+                expr::set_data(res, strf.stringify(type, rval));
             });
         }
     }
@@ -640,13 +640,13 @@ ExprRes EvalExprVisitor::bind(
     std::string data;
     bool is_self = false;
     if (!has_flag(eval::NoCodegen)) {
-        data = exp::data(obj);
-        is_self = obj.has_flag(exp::Self);
+        data = expr::data(obj);
+        is_self = obj.has_flag(expr::Self);
     }
     auto res = Base::bind(node, fset, std::move(obj), base);
     if (!data.empty()) {
-        exp::set_data(res, data);
-        exp::add_member_access(res, FuncallPh, is_self);
+        expr::set_data(res, data);
+        expr::add_member_access(res, FuncallPh, is_self);
     }
     return res;
 }
@@ -655,9 +655,9 @@ ExprRes
 EvalExprVisitor::negate(ulam::Ref<ulam::ast::Expr> node, ExprRes&& res) {
     res = Base::negate(node, std::move(res));
     if (!has_flag(eval::NoCodegen)) {
-        exp::remove_member_access_op(res);
-        exp::append(res, "!");
-        exp::append(res, ".");
+        expr::remove_member_access_op(res);
+        expr::append(res, "!");
+        expr::append(res, ".");
     }
     return std::move(res);
 }
@@ -673,7 +673,7 @@ ExprRes EvalExprVisitor::class_name(
         ulam_assert(res.value().rvalue().is<ulam::String>());
         auto strf = gen().make_strf();
         auto data = strf.stringify(res.type(), res.value().rvalue());
-        exp::set_data(res, data);
+        expr::set_data(res, data);
     }
     return res;
 }
@@ -694,8 +694,8 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_ident(
     ulam::Ref<ulam::Class> cls,
     ulam::Ref<ulam::ast::TypeIdent> ident) {
     if (!has_flag(eval::NoCodegen)) {
-        exp::append(obj, std::string{str(ident->name_id())});
-        exp::append(obj, ".");
+        expr::append(obj, std::string{str(ident->name_id())});
+        expr::append(obj, ".");
     }
     return Base::class_base_ident(node, obj, cls, ident);
 }
@@ -707,8 +707,8 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_type_spec(
     ulam::Ref<ulam::ast::TypeSpec> type_spec) {
     if (!has_flag(eval::NoCodegen)) {
         // NOTE: ident string only, t41384
-        exp::append(obj, std::string{str(type_spec->ident()->name_id())});
-        exp::append(obj, ".");
+        expr::append(obj, std::string{str(type_spec->ident()->name_id())});
+        expr::append(obj, ".");
     }
     return Base::class_base_type_spec(node, obj, cls, type_spec);
 }
@@ -719,9 +719,9 @@ ulam::Ref<ulam::Class> EvalExprVisitor::class_base_classid(
     ulam::Ref<ulam::Class> cls,
     ExprRes&& classid) {
     if (!has_flag(eval::NoCodegen)) {
-        exp::remove_member_access_op(obj);
-        exp::append(obj, exp::data(classid));
-        exp::append(obj, ".[]");
+        expr::remove_member_access_op(obj);
+        expr::append(obj, expr::data(classid));
+        expr::append(obj, ".[]");
     }
     return Base::class_base_classid(expr, obj, cls, std::move(classid));
 }
