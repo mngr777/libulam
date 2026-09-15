@@ -16,8 +16,8 @@ public:
         Ref<Fun> fun,
         LValue self,
         Ref<Class> eff_cls,
-        scope_flags_t flags = scp::NoFlags):
-        BasicScope{fun->scope(), (scope_flags_t)(flags | scp::Fun | scp::Self)},
+        scope_flags_t flags = scope::NoFlags):
+        BasicScope{fun->scope(), (scope_flags_t)(flags | scope::Fun | scope::Self)},
         _fun{fun},
         _self{self},
         _eff_cls{eff_cls} {}

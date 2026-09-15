@@ -53,8 +53,8 @@ public:
     Scope(Scope&&) = default;
     Scope& operator=(Scope&&) = default;
 
-    virtual Scope* parent(scope_flags_t flags = scp::NoFlags) = 0;
-    const Scope* parent(scope_flags_t flags = scp::NoFlags) const;
+    virtual Scope* parent(scope_flags_t flags = scope::NoFlags) = 0;
+    const Scope* parent(scope_flags_t flags = scope::NoFlags) const;
 
     virtual Ref<Program> program() const;
     virtual Ref<Module> module() const;
@@ -102,10 +102,10 @@ protected:
 
 class ScopeBase : public Scope {
 public:
-    explicit ScopeBase(Scope* parent, scope_flags_t flags = scp::NoFlags):
+    explicit ScopeBase(Scope* parent, scope_flags_t flags = scope::NoFlags):
         _parent{parent}, _flags{flags} {}
 
-    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
+    Scope* parent(scope_flags_t flags = scope::NoFlags) override;
 
     scope_flags_t flags() const override { return _flags; }
 
@@ -125,7 +125,7 @@ class BasicScope : public ScopeBase {
     friend BasicScopeIter;
 
 public:
-    explicit BasicScope(Scope* parent, scope_flags_t flags = scp::NoFlags);
+    explicit BasicScope(Scope* parent, scope_flags_t flags = scope::NoFlags);
 
     BasicScope(BasicScope&&) = default;
     BasicScope& operator=(BasicScope&&) = default;
@@ -173,8 +173,8 @@ public:
     static constexpr version_t NoVersion = NoScopeVersion;
 
 public:
-    explicit PersScope(Scope* parent, scope_flags_t flags = scp::NoFlags):
-        ScopeBase{parent, (scope_flags_t)(flags | scp::Persistent)} {}
+    explicit PersScope(Scope* parent, scope_flags_t flags = scope::NoFlags):
+        ScopeBase{parent, (scope_flags_t)(flags | scope::Persistent)} {}
 
     PersScope(PersScope&&) = default;
     PersScope& operator=(PersScope&&) = default;

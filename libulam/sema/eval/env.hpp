@@ -159,17 +159,17 @@ public:
 
     StackRaii stack_raii(Ref<Fun> fun, LValue self);
 
-    ScopeRaii scope_raii(scope_flags_t flags = scp::NoFlags);
-    ScopeRaii scope_raii(Scope* parent, scope_flags_t flags = scp::NoFlags);
+    ScopeRaii scope_raii(scope_flags_t flags = scope::NoFlags);
+    ScopeRaii scope_raii(Scope* parent, scope_flags_t flags = scope::NoFlags);
 
     FunScopeRaii fun_scope_raii(
         Ref<Fun> fun,
         LValue self,
         Ref<Class> eff_cls,
-        scope_flags_t flags = scp::NoFlags);
+        scope_flags_t flags = scope::NoFlags);
 
     AsCondScopeRaii as_cond_scope_raii(
-        AsCondContext& as_cond_ctx, scope_flags_t flags = scp::NoFlags);
+        AsCondContext& as_cond_ctx, scope_flags_t flags = scope::NoFlags);
 
     ScopeSwitchRaii scope_switch_raii(Scope* scope);
 

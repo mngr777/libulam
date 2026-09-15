@@ -49,7 +49,7 @@ void RecVisitor::visit(Ref<ast::ModuleDef> node) {
             traverse(node);
         }
     }
-    ulam_assert(scope()->is(scp::Module));
+    ulam_assert(scope()->is(scope::Module));
     _module_def = {};
 }
 
@@ -102,10 +102,10 @@ void RecVisitor::visit(Ref<ast::FunDef> node) {
 void RecVisitor::visit(Ref<ast::FunDefBody> node) {
     ulam_assert(pass() == Pass::FunBodies);
     ulam_assert(_fun_def);
-    auto sr = _scope_stack.raii<BasicScope>(scope(), scp::Fun);
+    auto sr = _scope_stack.raii<BasicScope>(scope(), scope::Fun);
     if (do_visit(node))
         traverse(node);
-    ulam_assert(scope()->is(scp::Fun));
+    ulam_assert(scope()->is(scope::Fun));
 }
 
 void RecVisitor::visit(Ref<ast::Block> node) {
@@ -115,19 +115,19 @@ void RecVisitor::visit(Ref<ast::Block> node) {
 }
 
 void RecVisitor::visit(Ref<ast::For> node) {
-    auto sr = _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
+    auto sr = _scope_stack.raii<BasicScope>(scope(), scope::BreakAndContinue);
     if (do_visit(node))
         traverse(node);
 }
 
 void RecVisitor::visit(Ref<ast::While> node) {
-    auto sr = _scope_stack.raii<BasicScope>(scope(), scp::BreakAndContinue);
+    auto sr = _scope_stack.raii<BasicScope>(scope(), scope::BreakAndContinue);
     if (do_visit(node))
         traverse(node);
 }
 
 bool RecVisitor::do_visit(Ref<ast::ClassDef> node) {
-    ulam_assert(scope()->is(scp::Module));
+    ulam_assert(scope()->is(scope::Module));
     auto synced = sync_scope(node);
     ulam_assert(synced);
     return synced;

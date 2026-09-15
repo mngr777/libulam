@@ -10,8 +10,8 @@ class Class;
 class ClassScope : public PersScope {
 public:
     ClassScope(
-        Ref<Class> cls, Scope* parent, scope_flags_t flags = scp::NoFlags):
-        PersScope{parent, (scope_flags_t)(flags | scp::Class)}, _cls{cls} {}
+        Ref<Class> cls, Scope* parent, scope_flags_t flags = scope::NoFlags):
+        PersScope{parent, (scope_flags_t)(flags | scope::Class)}, _cls{cls} {}
 
     Ref<Class> self_cls() const override { return _cls; }
     Ref<Class> eff_cls() const override { return _cls; }

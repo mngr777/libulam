@@ -31,23 +31,23 @@ const Scope* Scope::parent(scope_flags_t flags) const {
 }
 
 Ref<Program> Scope::program() const {
-    auto scope = parent(scp::Program);
+    auto scope = parent(scope::Program);
     return scope ? scope->program() : nullptr;
 }
 
 Ref<Module> Scope::module() const {
-    auto scope = parent(scp::Module);
+    auto scope = parent(scope::Module);
     return scope ? scope->module() : nullptr;
 }
 
 Ref<Class> Scope::self_cls() const {
-    auto scope = parent(scp::Class);
+    auto scope = parent(scope::Class);
     return scope ? scope->self_cls() : nullptr;
 }
 
 Ref<Class> Scope::eff_cls() const {
     auto cur = this;
-    while ((cur = cur->parent(scp::Class | scp::Fun | scp::AsCond))) {
+    while ((cur = cur->parent(scope::Class | scope::Fun | scope::AsCond))) {
         auto cls = cur->eff_cls();
         if (cls)
             return cls;
@@ -56,7 +56,7 @@ Ref<Class> Scope::eff_cls() const {
 }
 
 Ref<Fun> Scope::fun() const {
-    auto scope = parent(scp::Fun);
+    auto scope = parent(scope::Fun);
     return scope ? scope->fun() : nullptr;
 }
 
@@ -69,7 +69,7 @@ bool Scope::has_self() const { return false; }
 
 LValue Scope::self() const {
     auto cur = this;
-    while ((cur = cur->parent(scp::Fun | scp::AsCond))) {
+    while ((cur = cur->parent(scope::Fun | scope::AsCond))) {
         if (cur->has_self())
             return cur->self();
     }
@@ -102,7 +102,7 @@ ScopeIter BasicScope::end() { return ScopeIter{BasicScopeIter{}}; }
 // ScopeBase
 
 Scope* ScopeBase::parent(scope_flags_t flags) {
-    return (!_parent || (flags == scp::NoFlags) || _parent->is(flags))
+    return (!_parent || (flags == scope::NoFlags) || _parent->is(flags))
                ? _parent
                : _parent->parent(flags);
 }
@@ -115,7 +115,7 @@ Scope::Symbol* ScopeBase::do_set(str_id_t name_id, Symbol&& symbol) {
 
 BasicScope::BasicScope(Scope* parent, scope_flags_t flags):
     ScopeBase{parent, flags} {
-    ulam_assert(!is(scp::Persistent));
+    ulam_assert(!is(scope::Persistent));
 }
 
 Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
@@ -153,10 +153,10 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
         if (!scope)
             return use_fallback ? fallback : nullptr;
 
-        if (scope->is(scp::Class | scp::Params) &&
+        if (scope->is(scope::Class | scope::Params) &&
             (params.local || scope->self_cls() != eff_cls_)) {
             // store current module scope
-            module_scope = scope->parent(scp::Module);
+            module_scope = scope->parent(scope::Module);
             ulam_assert(module_scope);
             if (params.local) {
                 // skip class scopes
@@ -165,7 +165,7 @@ Scope::Symbol* BasicScope::get(str_id_t name_id, const GetParams& params) {
                 // go to effective Self scope
                 scope = eff_cls_->scope();
             }
-        } else if (scope->is(scp::Module) && module_scope) {
+        } else if (scope->is(scope::Module) && module_scope) {
             // go back to current module scope
             scope = module_scope;
         }
@@ -215,18 +215,18 @@ str_id_t PersScope::last_change(version_t version) const {
 
 Scope::Symbol*
 PersScope::get(str_id_t name_id, version_t version, const GetParams& params) {
-    // NOTE: global types in module environment scope (scp::ModuleEnv, parent of
-    // scp::Module) count as local symbols: t3875
-    if (params.local && is(scp::Class | scp::Params)) {
-        ulam_assert(in(scp::Module));
-        return parent(scp::Module)->get(name_id, params);
+    // NOTE: global types in module environment scope (scope::ModuleEnv, parent of
+    // scope::Module) count as local symbols: t3875
+    if (params.local && is(scope::Class | scope::Params)) {
+        ulam_assert(in(scope::Module));
+        return parent(scope::Module)->get(name_id, params);
     }
 
     auto [cur_sym, is_final] = find(name_id, version);
     if (cur_sym && is_excluded(*cur_sym, params))
         cur_sym = nullptr;
 
-    if (cur_sym && !is_final && is(scp::Params) &&
+    if (cur_sym && !is_final && is(scope::Params) &&
         options().prefer_params_in_param_resolution)
         is_final = true;
 

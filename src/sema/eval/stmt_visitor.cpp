@@ -68,7 +68,7 @@ void EvalStmtVisitor::visit(Ref<ast::If> node) {
 void EvalStmtVisitor::visit(Ref<ast::For> node) {
     debug() << __FUNCTION__ << " For\n";
 
-    auto sr = env().scope_raii(scp::BreakAndContinue);
+    auto sr = env().scope_raii(scope::BreakAndContinue);
     if (node->has_init())
         node->init()->accept(*this);
 
@@ -126,7 +126,7 @@ void EvalStmtVisitor::visit(Ref<ast::Return> node) {
 
 void EvalStmtVisitor::visit(Ref<ast::Break> node) {
     debug() << __FUNCTION__ << " Break\n";
-    if (scope()->in(scp::Break)) {
+    if (scope()->in(scope::Break)) {
         throw EvalExceptBreak();
     } else {
         diag().error(node, "unexpected break");
@@ -135,7 +135,7 @@ void EvalStmtVisitor::visit(Ref<ast::Break> node) {
 
 void EvalStmtVisitor::visit(Ref<ast::Continue> node) {
     debug() << __FUNCTION__ << " Continue\n";
-    if (scope()->in(scp::Continue)) {
+    if (scope()->in(scope::Continue)) {
         throw EvalExceptContinue();
     } else {
         diag().error(node, "unexpected continue");
@@ -156,7 +156,7 @@ void EvalStmtVisitor::visit(Ref<ast::While> node) {
     debug() << __FUNCTION__ << " While\n";
     ulam_assert(node->has_cond());
 
-    auto sr = env().scope_raii(scp::BreakAndContinue);
+    auto sr = env().scope_raii(scope::BreakAndContinue);
 
     auto loop = [&]() -> bool {
         if (node->has_body()) {

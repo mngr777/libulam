@@ -5,7 +5,7 @@ namespace ulam {
 
 using scope_flags_t = std::uint16_t;
 
-namespace scp {
+namespace scope {
 static constexpr scope_flags_t NoFlags = 0;
 static constexpr scope_flags_t Persistent = 1;
 static constexpr scope_flags_t Program = 1 << 1;   // 2
@@ -22,6 +22,6 @@ static constexpr scope_flags_t Continue = 1 << 11; // 2048
 static constexpr scope_flags_t Last = 1 << 11;
 // combined
 static constexpr scope_flags_t BreakAndContinue = Break | Continue;
-} // namespace scp
+} // namespace scope
 
 } // namespace ulam

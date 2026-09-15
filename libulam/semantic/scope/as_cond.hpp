@@ -15,14 +15,14 @@ public:
         Ref<Class> self_cls,
         LValue self,
         Scope* parent,
-        scope_flags_t flags = scp::NoFlags):
-        BasicScope{parent, (scope_flags_t)(flags | scp::AsCond | scp::Self)},
+        scope_flags_t flags = scope::NoFlags):
+        BasicScope{parent, (scope_flags_t)(flags | scope::AsCond | scope::Self)},
         _self_cls{self_cls},
         _self{self} {}
 
     AsCondScope(
-        Ref<Var> var, Scope* parent, scope_flags_t flags = scp::NoFlags):
-        BasicScope{parent, (scope_flags_t)(flags | scp::AsCond)},
+        Ref<Var> var, Scope* parent, scope_flags_t flags = scope::NoFlags):
+        BasicScope{parent, (scope_flags_t)(flags | scope::AsCond)},
         _self_cls{},
         _self{} {
         set(var->name_id(), var);

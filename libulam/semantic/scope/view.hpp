@@ -22,7 +22,7 @@ public:
     void sync();
     std::pair<str_id_t, Symbol*> advance();
 
-    Scope* parent(scope_flags_t flags = scp::NoFlags) override;
+    Scope* parent(scope_flags_t flags = scope::NoFlags) override;
 
     Ref<Module> module() const override;
     Ref<Class> self_cls() const override;

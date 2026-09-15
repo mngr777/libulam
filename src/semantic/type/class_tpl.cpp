@@ -14,7 +14,7 @@ namespace ulam {
 ClassTpl::ClassTpl(
     const std::string_view name, Ref<ast::ClassDef> node, Ref<Module> module):
     TypeTpl{module->program()->type_id_gen()},
-    ClassBase{node, module, nullptr, scp::ClassTpl},
+    ClassBase{node, module, nullptr, scope::ClassTpl},
     _name{name} {
     set_module(module);
 }

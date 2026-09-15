@@ -10,18 +10,18 @@ namespace ulam::sema::dbg {
 void Out::print(Scope& scope) {
     hr2();
     for (auto cur = &scope; cur; cur = cur->parent()) {
-        if (cur->flags() == scp::NoFlags) {
+        if (cur->flags() == scope::NoFlags) {
             _os << "<no flags>\n";
         } else {
-            if (cur->flags() & scp::Program)
+            if (cur->flags() & scope::Program)
                 _os << "[program]\n";
-            if (cur->flags() & scp::ModuleEnv)
+            if (cur->flags() & scope::ModuleEnv)
                 _os << "[module-env]\n";
-            if (cur->flags() & scp::Module)
+            if (cur->flags() & scope::Module)
                 _os << "[module]\n";
-            if (cur->flags() & scp::ClassTpl)
+            if (cur->flags() & scope::ClassTpl)
                 _os << "[class-tpl]\n";
-            if (cur->flags() & scp::Class)
+            if (cur->flags() & scope::Class)
                 _os << "[class]\n";
         }
 

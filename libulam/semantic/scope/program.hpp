@@ -11,8 +11,8 @@ class Program;
 class ProgramScope : public BasicScope {
 public:
     explicit ProgramScope(
-        Ref<Program> program, scope_flags_t flags = scp::NoFlags):
-        BasicScope{nullptr, (scope_flags_t)(flags | scp::Program)},
+        Ref<Program> program, scope_flags_t flags = scope::NoFlags):
+        BasicScope{nullptr, (scope_flags_t)(flags | scope::Program)},
         _program{program} {}
 
     Ref<Program> program() const override { return _program; }

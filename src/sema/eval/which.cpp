@@ -16,7 +16,7 @@
 namespace ulam::sema {
 
 void EvalWhich::eval_which(Ref<ast::Which> node) {
-    auto sr = env().scope_raii(scp::Break);
+    auto sr = env().scope_raii(scope::Break);
     Context ctx{node};
     if (node->has_expr())
         ctx.which_var = make_which_var(ctx, node->expr());

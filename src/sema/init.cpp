@@ -40,7 +40,7 @@ void Init::visit(Ref<ast::ModuleDef> node) {
 bool Init::do_visit(Ref<ast::ClassDef> node) {
     ulam_assert(pass() == Pass::Module);
     ulam_assert(!node->cls() && !node->cls_tpl());
-    ulam_assert(scope()->is(scp::Module));
+    ulam_assert(scope()->is(scope::Module));
 
     // already defined?
     auto name_id = node->name_id();
@@ -76,10 +76,10 @@ void Init::visit(Ref<ast::TypeDef> node) {
         return;
     }
 
-    if (scope()->is(scp::Persistent)) {
-        if (scope()->is(scp::Module)) {
+    if (scope()->is(scope::Persistent)) {
+        if (scope()->is(scope::Module)) {
             module()->add_type_def(node);
-        } else if (scope()->is(scp::Class | scp::ClassTpl)) {
+        } else if (scope()->is(scope::Class | scope::ClassTpl)) {
             auto class_base = class_def()->cls_or_tpl();
             ulam_assert(class_base);
             class_base->add_type_def(node);
@@ -113,13 +113,13 @@ void Init::visit(Ref<ast::VarDefList> node) {
             continue;
         }
 
-        if (!scope()->is(scp::Persistent))
+        if (!scope()->is(scope::Persistent))
             continue;
 
         // add to module/class/tpl
-        if (scope()->is(scp::Module)) {
+        if (scope()->is(scope::Module)) {
             module()->add_const(node->type_name(), def);
-        } else if (scope()->is(scp::Class | scp::ClassTpl)) {
+        } else if (scope()->is(scope::Class | scope::ClassTpl)) {
             auto cls_base = class_def()->cls_or_tpl();
             ulam_assert(cls_base);
             if (node->is_const()) {
@@ -133,7 +133,7 @@ void Init::visit(Ref<ast::VarDefList> node) {
 }
 
 bool Init::do_visit(Ref<ast::FunDef> node) {
-    ulam_assert(scope()->is(scp::Class | scp::ClassTpl));
+    ulam_assert(scope()->is(scope::Class | scope::ClassTpl));
 
     // get class/tpl, name
     auto cls_base = class_def()->cls_or_tpl();

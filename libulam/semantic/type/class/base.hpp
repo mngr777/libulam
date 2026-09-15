@@ -46,7 +46,7 @@ public:
         Ref<ast::ClassDef> node,
         Ref<Module> module,
         Ref<Class> cls,
-        scope_flags_t scope_flags = scp::NoFlags);
+        scope_flags_t scope_flags = scope::NoFlags);
 
     virtual ~ClassBase();
 

@@ -74,7 +74,7 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     }
 
     auto cr = gen().ctx_stack().raii(gen::ForContext{});
-    auto sr = env().scope_raii(ulam::scp::BreakAndContinue);
+    auto sr = env().scope_raii(ulam::scope::BreakAndContinue);
     gen().block_open();
 
     // init
@@ -115,7 +115,7 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::While> node) {
 
     auto tmp_idx = std::to_string(gen().next_tmp_idx());
     auto cr = gen().ctx_stack().raii(gen::WhileContext{});
-    auto sr = env().scope_raii(ulam::scp::BreakAndContinue);
+    auto sr = env().scope_raii(ulam::scope::BreakAndContinue);
     gen().block_open();
 
     auto loop = [&]() { node->body()->accept(*this); };

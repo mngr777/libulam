@@ -10,7 +10,7 @@ class Module;
 class ModuleScope : public PersScope {
 public:
     ModuleScope(Ref<Module> module, Scope* parent, scope_flags_t flags):
-        PersScope{parent, (scope_flags_t)(flags | scp::Module)},
+        PersScope{parent, (scope_flags_t)(flags | scope::Module)},
         _module{module} {}
 
     Ref<Module> module() const override { return _module; }

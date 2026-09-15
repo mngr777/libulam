@@ -12,8 +12,8 @@ namespace ulam {
 Module::Module(Ref<Program> program, Ref<ast::ModuleDef> node):
     _program{program},
     _node{node},
-    _env_scope{make<BasicScope>(nullptr, scp::ModuleEnv)},
-    _scope{make<ModuleScope>(this, ref(_env_scope), scp::Module)} {}
+    _env_scope{make<BasicScope>(nullptr, scope::ModuleEnv)},
+    _scope{make<ModuleScope>(this, ref(_env_scope), scope::Module)} {}
 
 Module::~Module() {}
 
