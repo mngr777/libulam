@@ -210,7 +210,7 @@ void EvalStmtVisitor::visit(Ref<ast::Which> node) {
 Ref<AliasType> EvalStmtVisitor::type_def(Ref<ast::TypeDef> node) {
     Ptr<UserType> type = make<AliasType>(str_pool(), builtins(), nullptr, node);
     auto ref = ulam::ref(type);
-    if (!env().resolver(false).resolve(type->as_alias()))
+    if (!env().resolver().resolve(type->as_alias()))
         throw EvalExceptError("failed to resolve type");
     scope()->set(type->name_id(), std::move(type));
     return ref->as_alias();
@@ -231,7 +231,7 @@ Ptr<Var> EvalStmtVisitor::make_var(
     auto var_flags = is_const ? Var::Const : Var::NoFlags;
     auto var = make<Var>(type_name, node, Ref<Type>{}, var_flags);
     var->set_scope_lvl(env().stack_size());
-    if (!env().resolver(false).resolve(ref(var)))
+    if (!env().resolver().resolve(ref(var)))
         return {};
     debug() << "new var: " << str(var->name_id())
             << ", scope lvl: " << var->scope_lvl() << "\n";

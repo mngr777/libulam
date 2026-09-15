@@ -137,14 +137,14 @@ bool RecVisitor::do_visit(Ref<ast::TypeDef> node) {
     if (!sync_scope(node)) {
         Ptr<UserType> type = make<AliasType>(
             program()->str_pool(), program()->builtins(), nullptr, node);
-        _eval_env->resolver(false).resolve(type->as_alias());
+        _eval_env->resolver().resolve(type->as_alias());
         scope()->set(type->name_id(), std::move(type));
     }
     return true;
 }
 
 void RecVisitor::visit(Ref<ast::VarDefList> node) {
-    auto resolver = _eval_env->resolver(false);
+    auto resolver = _eval_env->resolver();
     for (unsigned n = 0; n < node->child_num(); ++n) {
         auto def = node->def(n);
         if (!sync_scope(def)) {

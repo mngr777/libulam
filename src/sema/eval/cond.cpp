@@ -1,4 +1,3 @@
-#include <libulam/types.hpp>
 #include <libulam/sema/eval/cond.hpp>
 #include <libulam/sema/eval/env.hpp>
 #include <libulam/sema/eval/except.hpp>
@@ -6,6 +5,7 @@
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/resolver.hpp>
 #include <libulam/semantic/type/builtin/bool.hpp>
+#include <libulam/types.hpp>
 
 namespace ulam::sema {
 
@@ -54,7 +54,7 @@ ExprRes EvalCond::eval_as_cond_ident(Ref<ast::Ident> ident) {
 }
 
 Ref<Type> EvalCond::resolve_as_cond_type(Ref<ast::TypeName> type_name) {
-    auto type = env().resolver(false).resolve_type_name(type_name, scope());
+    auto type = env().resolver().resolve_type_name(type_name, scope());
     if (!type)
         throw EvalExceptError("failed to resolve type");
     // TODO: can this actually be Atom?
