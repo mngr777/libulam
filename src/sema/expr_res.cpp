@@ -25,7 +25,7 @@ ExprRes ExprRes::copy() const {
 
 ExprRes ExprRes::derived(TypedValue&& tv, bool keep_all_flags) {
     ExprRes res{std::move(tv)};
-    res._data = _data;
+    std::swap(_data, res._data);
     res._flags = keep_all_flags ? _flags : _flags & ~NonStickyFlags;
     return res;
 }

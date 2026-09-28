@@ -46,6 +46,7 @@ public:
 
     ExprRes copy() const;
 
+    // NOTE: moves user data
     ExprRes derived(TypedValue&& tv, bool keep_all_flags = false);
     ExprRes derived(Ref<Type> type, Value&& val, bool keep_all_flags = false);
 
