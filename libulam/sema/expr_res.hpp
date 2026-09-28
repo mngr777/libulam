@@ -63,6 +63,7 @@ public:
     const Value& value() const { return _typed_value.value(); }
     const TypedValue& typed_value() const { return _typed_value; }
 
+    TypedValue copy_typed_value();
     TypedValue move_typed_value();
 
     Value move_value() { return _typed_value.move_value(); }

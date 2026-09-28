@@ -54,6 +54,11 @@ void ExprRes::set_is_super(bool is_super) {
     }
 }
 
+TypedValue ExprRes::copy_typed_value() {
+    ulam_assert(!is_nil());
+    return {_typed_value.copy()};
+}
+
 TypedValue ExprRes::move_typed_value() {
     ulam_assert(!is_nil());
     _error = ExprError::Nil;

@@ -225,7 +225,7 @@ ExprRes EvalInit::eval_array_list(
         make_array(var, array_type, use_default ? default_lval : LValue{});
 
     unsigned n = 0;
-    ExprRes item;
+    ExprRes last_item_copy;
     // fill with list items
     for (; n < std::min<unsigned>(list->size(), size); ++n) {
         // eval item
@@ -233,25 +233,27 @@ ExprRes EvalInit::eval_array_list(
         if (!default_lval.empty()) {
             item_default_lval = default_lval.array_access(n, true);
         }
-        item = eval_array_list_item(
+        auto item = eval_array_list_item(
             var, item_type, item_default_lval, list->get(n), depth + 1);
         if (!item)
             return item;
         // assign to array item
         bool copy = (n + 1 == list->size() && size > list->size());
         if (!item.value().empty()) {
-            auto item_copy = copy ? item.copy() : std::move(item);
+            if (copy)
+                last_item_copy = array_copy_last(item);
             array = array_set(
-                var, std::move(array), n, std::move(item_copy), false, depth);
+                var, std::move(array), n, std::move(item), false, depth);
         }
     }
     // fill rest with copies of the last value
-    if (!item.value().empty()) {
+    if (!last_item_copy.value().empty()) {
         for (; n < size; ++n) {
             bool copy = (n + 1 < size);
-            auto item_copy = copy ? item.copy() : std::move(item);
+            auto item = copy ? ExprRes{last_item_copy.copy_typed_value()}
+                             : std::move(last_item_copy);
             array = array_set(
-                var, std::move(array), n, std::move(item_copy), true, depth);
+                var, std::move(array), n, std::move(item), true, depth);
         }
     }
     return array;
@@ -316,6 +318,10 @@ ExprRes EvalInit::make_array(
                     ? default_lval.rvalue()
                     : array_type->construct_default(value::IsConsteval);
     return {array_type, Value{std::move(rval)}};
+}
+
+ExprRes EvalInit::array_copy_last(const ExprRes& item) {
+    return {item.type(), item.value().copy()};
 }
 
 ExprRes EvalInit::array_set(

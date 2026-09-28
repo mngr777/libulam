@@ -101,6 +101,8 @@ protected:
     virtual ExprRes make_array(
         Ref<VarBase> var, Ref<ArrayType> array_type, LValue default_lval);
 
+    virtual ExprRes array_copy_last(const ExprRes& item);
+
     virtual ExprRes array_set(
         Ref<VarBase> var,
         ExprRes&& array,
