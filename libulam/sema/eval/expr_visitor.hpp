@@ -1,7 +1,7 @@
 #pragma once
-#include <libulam/ast/nodes/type.hpp>
 #include <libulam/ast/expr_visitor.hpp>
 #include <libulam/ast/nodes.hpp>
+#include <libulam/ast/nodes/type.hpp>
 #include <libulam/diag.hpp>
 #include <libulam/sema/eval/flags.hpp>
 #include <libulam/sema/eval/helper.hpp>
@@ -178,6 +178,9 @@ protected:
 
     virtual ExprRes as_base(
         Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj);
+
+    // NOTE: passed by non-const ref
+    virtual ExprRes copy_assign_lvalue_expr(ExprRes& lval_res);
 
     virtual ExprRes assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
 
