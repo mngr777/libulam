@@ -116,6 +116,20 @@ protected:
         ExprRes&& arg,
         Ref<Type> type = {});
 
+    virtual ExprRes apply_prim_unary_op(
+        Ref<ast::Expr> node,
+        Op op,
+        ExprRes&& lval_res,
+        Ref<ast::Expr> arg_node,
+        ExprRes&& arg);
+
+    virtual ExprRes apply_object_unary_op(
+        Ref<ast::Expr> node,
+        Op op,
+        Ref<ast::Expr> arg_node,
+        ExprRes&& arg,
+        Ref<Type> type = {});
+
     virtual ExprRes ternary_eval_cond(Ref<ast::Ternary> node);
 
     virtual ExprResPair ternary_eval_branches_noexec(Ref<ast::Ternary> node);

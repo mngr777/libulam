@@ -744,56 +744,82 @@ ExprRes EvalExprVisitor::apply_unary_op(
 
     auto arg_type = arg.type()->deref();
     if (arg_type->is_prim()) {
-        RValue orig_rval;
-        if (op == Op::PostInc || op == Op::PostDec)
-            orig_rval = arg.value().copy_rvalue();
+        ulam_assert(!type); // only for `is` op
+        return apply_prim_unary_op(
+            node, op, std::move(lval_res), arg_node, std::move(arg));
 
-        auto tv =
-            arg_type->as_prim()->unary_op(op, arg.move_value().move_rvalue());
-
-        if (ops::is_inc_dec(op)) {
-            if (!lval_res.value().empty() && !tv.value().empty()) {
-                ExprRes lval_res_copy = lval_res.derived(
-                    lval_res.type(), Value{lval_res.value().lvalue()});
-                assign(node, std::move(lval_res_copy), std::move(tv));
-            }
-            if (ops::is_unary_pre_op(op))
-                return {std::move(lval_res)};
-            ulam_assert(ops::is_unary_post_op(op));
-            return lval_res.derived(
-                lval_res.type(), Value{std::move(orig_rval)});
-        }
-        return {std::move(tv)};
-
-    } else if (arg_type->is_object()) {
-        if (op == Op::Is) {
-            ulam_assert(type);
-            if (!check_is_object(node, type))
-                return {ExprError::NotObject};
-            ulam_assert(op == Op::Is);
-            if (!arg.value().has_rvalue())
-                return {builtins().boolean(), Value{RValue{}}};
-            // NOTE: using "real" dyn type, see t41365
-            auto dyn_type = arg.value().dyn_obj_type(true);
-            ulam_assert(type->is_class()); // TODO: check upstream
-            bool is =
-                dyn_type->is_class() &&
-                type->as_class()->is_same_or_base_of(dyn_type->as_class());
-            auto boolean = builtins().boolean();
-            return {boolean, Value{boolean->construct(is)}};
-
-        } else if (arg_type->is_class()) {
-            auto cls = arg_type->as_class();
-            auto fset = cls->op(op);
-            ulam_assert(fset);
-            ExprResList args;
-            if (op == Op::PostInc || op == Op::PostDec)
-                args.push_back(post_inc_dec_dummy());
-            arg = bind(node, fset, std::move(arg));
-            return env().call(node, std::move(arg), std::move(args));
-        }
+    } else {
+        ulam_assert(arg_type->is_object());
+        return apply_object_unary_op(node, op, arg_node, std::move(arg), type);
     }
-    unreachable();
+}
+
+ExprRes EvalExprVisitor::apply_prim_unary_op(
+    Ref<ast::Expr> node,
+    Op op,
+    ExprRes&& lval_res,
+    Ref<ast::Expr> arg_node,
+    ExprRes&& arg) {
+    auto prim_type = arg.type()->deref()->as_prim();
+
+    RValue orig_rval;
+    if (op == Op::PostInc || op == Op::PostDec)
+        orig_rval = arg.value().copy_rvalue();
+
+    auto tv = prim_type->unary_op(op, arg.move_value().move_rvalue());
+
+    if (ops::is_inc_dec(op)) {
+        if (!lval_res.value().empty() && !tv.value().empty()) {
+            ExprRes lval_res_copy = lval_res.derived(
+                lval_res.type(), Value{lval_res.value().lvalue()});
+            assign(node, std::move(lval_res_copy), std::move(tv));
+        }
+        if (ops::is_unary_pre_op(op))
+            return {std::move(lval_res)};
+        ulam_assert(ops::is_unary_post_op(op));
+        return lval_res.derived(lval_res.type(), Value{std::move(orig_rval)});
+    }
+
+    return {std::move(tv)};
+}
+
+ExprRes EvalExprVisitor::apply_object_unary_op(
+    Ref<ast::Expr> node,
+    Op op,
+    Ref<ast::Expr> arg_node,
+    ExprRes&& arg,
+    Ref<Type> type) {
+
+    auto arg_type = arg.type()->deref();
+    if (op == Op::Is) {
+        ulam_assert(type);
+
+        if (!check_is_object(node, type))
+            return {ExprError::NotObject};
+        ulam_assert(op == Op::Is);
+        if (!arg.value().has_rvalue())
+            return {builtins().boolean(), Value{RValue{}}};
+        // NOTE: using "real" dyn type, see t41365
+        auto dyn_type = arg.value().dyn_obj_type(true);
+        ulam_assert(type->is_class()); // TODO: check upstream
+        bool is = dyn_type->is_class() &&
+                  type->as_class()->is_same_or_base_of(dyn_type->as_class());
+        auto boolean = builtins().boolean();
+        return {boolean, Value{boolean->construct(is)}};
+
+    } else {
+        ulam_assert(arg_type->is_class());
+        ulam_assert(!type);
+
+        auto cls = arg_type->as_class();
+        auto fset = cls->op(op);
+        ulam_assert(fset);
+        ExprResList args;
+        if (op == Op::PostInc || op == Op::PostDec)
+            args.push_back(post_inc_dec_dummy());
+        arg = bind(node, fset, std::move(arg));
+        return env().call(node, std::move(arg), std::move(args));
+    }
 }
 
 ExprRes EvalExprVisitor::post_inc_dec_dummy() {
