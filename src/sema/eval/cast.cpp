@@ -37,7 +37,7 @@ EvalCast::do_cast(Ref<ast::Node> node, Ref<Type> to, ExprRes&& arg, bool expl) {
         if (!to->is_ref() && !has_flag(eval::NoDerefCast) &&
             arg.value().is_lvalue()) {
             arg = deref(std::move(arg));
-            return {arg.derived(to, arg.move_value()), CastOk};
+            return {arg.derive(to, arg.move_value()), CastOk};
         }
         return {std::move(arg), NoCast};
     }
@@ -204,7 +204,7 @@ ExprRes EvalCast::cast_default(
         diag().error(node, message);
         return {ExprError::InvalidCast};
     }
-    return arg.derived({to, arg.type()->cast_to(to, arg.move_value())});
+    return arg.derive({to, arg.type()->cast_to(to, arg.move_value())});
 }
 
 ExprRes EvalCast::cast_default(
@@ -219,7 +219,7 @@ ExprRes EvalCast::cast_default(
         return {ExprError::InvalidCast};
     }
     auto prim_type = arg.type()->as_prim();
-    return arg.derived(prim_type->cast_to(bi_type_id, arg.move_value()));
+    return arg.derive(prim_type->cast_to(bi_type_id, arg.move_value()));
 }
 
 ExprRes EvalCast::cast_atom_to_nonelement_empty(
@@ -253,7 +253,7 @@ ExprRes EvalCast::take_ref(Ref<ast::Node> node, ExprRes&& arg) {
         return {ExprError::InvalidCast};
     }
 
-    return arg.derived(type->ref_type(), arg.move_value());
+    return arg.derive(type->ref_type(), arg.move_value());
 }
 
 ExprRes EvalCast::deref(ExprRes&& arg) {
@@ -262,10 +262,10 @@ ExprRes EvalCast::deref(ExprRes&& arg) {
     Value val = arg.move_value().deref(deref_as_dyn_type);
 
     if (!arg.type()->deref()->is_object() || !val.has_rvalue())
-        return arg.derived(arg.type()->deref(), std::move(val));
+        return arg.derive(arg.type()->deref(), std::move(val));
 
     ulam_assert(val.has_rvalue());
-    return arg.derived(val.dyn_obj_type(), std::move(val));
+    return arg.derive(val.dyn_obj_type(), std::move(val));
 }
 
 } // namespace ulam::sema

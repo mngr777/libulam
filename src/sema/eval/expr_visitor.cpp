@@ -366,7 +366,7 @@ ExprRes EvalExprVisitor::check(Ref<ast::Expr> node, ExprRes&& res) {
             auto empty = val.is_lvalue()
                              ? Value{val.lvalue().derived()}
                              : Value{RValue{res.type()->construct_ph()}};
-            return res.derived(res.type(), std::move(empty), true);
+            return res.derive(res.type(), std::move(empty), true);
         }
     }
     return std::move(res);
@@ -770,14 +770,14 @@ ExprRes EvalExprVisitor::apply_prim_unary_op(
 
     if (ops::is_inc_dec(op)) {
         if (!lval_res.value().empty() && !tv.value().empty()) {
-            ExprRes lval_res_copy = lval_res.derived(
+            ExprRes lval_res_copy = lval_res.derive(
                 lval_res.type(), Value{lval_res.value().lvalue()});
             assign(node, std::move(lval_res_copy), std::move(tv));
         }
         if (ops::is_unary_pre_op(op))
             return {std::move(lval_res)};
         ulam_assert(ops::is_unary_post_op(op));
-        return lval_res.derived(lval_res.type(), Value{std::move(orig_rval)});
+        return lval_res.derive(lval_res.type(), Value{std::move(orig_rval)});
     }
 
     return {std::move(tv)};
@@ -1213,7 +1213,7 @@ ExprRes EvalExprVisitor::as_base(
     Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj) {
     auto cls = obj.type()->deref()->as_class();
     cls = class_base(node, obj, cls, base_type);
-    return obj.derived(cls, Value{obj.move_value().as(cls)});
+    return obj.derive(cls, Value{obj.move_value().as(cls)});
 }
 
 ExprRes EvalExprVisitor::copy_assign_lvalue_expr(ExprRes& lval_res) {
@@ -1236,7 +1236,7 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
     auto lval = to.move_value().lvalue();
     if (has_flag(eval::NoExec))
         return std::move(to);
-    return to.derived(to.type(), lval.assign(from.move_value().move_rvalue()));
+    return to.derive(to.type(), lval.assign(from.move_value().move_rvalue()));
 }
 
 ExprRes EvalExprVisitor::negate(Ref<ast::Expr> node, ExprRes&& res) {
@@ -1248,7 +1248,7 @@ ExprRes EvalExprVisitor::negate(Ref<ast::Expr> node, ExprRes&& res) {
         auto rval = type->construct(!type->is_true(val.move_rvalue()));
         val = Value{std::move(rval)};
     }
-    return res.derived(res.type(), std::move(val));
+    return res.derive(res.type(), std::move(val));
 }
 
 ExprResList EvalExprVisitor::eval_args(Ref<ast::ArgList> args) {
