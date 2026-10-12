@@ -96,6 +96,22 @@ protected:
         Ref<ast::Expr> r_node,
         ExprRes&& right);
 
+    virtual ExprRes apply_prim_binary_op_noassign(
+        Ref<ast::Expr> node,
+        Op op,
+        Ref<ast::Expr> l_node,
+        ExprRes&& left,
+        Ref<ast::Expr> r_node,
+        ExprRes&& right);
+
+    virtual ExprRes apply_class_binary_op_noassign(
+        Ref<ast::Expr> node,
+        Op op,
+        Ref<ast::Expr> l_node,
+        ExprRes&& left,
+        Ref<ast::Expr> r_node,
+        ExprRes&& right);
+
     virtual ExprRes call_negation_op(
         Ref<ast::Expr> node, Op op, ExprRes&& left, ExprResList&& args);
 

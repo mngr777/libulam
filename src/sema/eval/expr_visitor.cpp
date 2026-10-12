@@ -630,53 +630,86 @@ ExprRes EvalExprVisitor::apply_binary_op(
     ExprRes&& right) {
 
     auto l_type = left.type()->actual();
-    auto r_type = right.type()->actual();
-
-    if (left.type()->actual()->is_prim()) {
+    if (l_type->is_prim()) {
         if (op != Op::Assign) {
-            // primitive binary op
-            ulam_assert(r_type->is_prim());
-            auto l_rval = left.move_value().move_rvalue();
-            auto r_rval = right.move_value().move_rvalue();
-            right = {l_type->as_prim()->binary_op(
-                op, std::move(l_rval), r_type->as_prim(), std::move(r_rval))};
+            right = apply_prim_binary_op_noassign(
+                node, op, l_node, std::move(left), r_node, std::move(right));
         }
-    } else if (left.type()->actual()->is_class()) {
-        // class op
-        auto cls = left.type()->actual()->as_class();
+
+    } else if (l_type->is_class()) {
+        auto cls = l_type->as_class();
         if (op != Op::Assign || cls->has_op(Op::Assign)) {
-            auto cls = left.type()->actual()->as_class();
-
-            // get class op (or negation) fset
-            bool is_negation = false;
-            auto fset = cls->op(op);
-            if (!fset && program()->eval_options().implicit_class_negation_op) {
-                auto neg_op = ops::negation(op);
-                ulam_assert(neg_op != Op::None);
-                fset = cls->op(neg_op);
-                is_negation = true;
-            }
-            ulam_assert(fset);
-
-            // bind to object
-            left = bind(node, fset, std::move(left));
-            ExprResList args;
-            args.push_back(std::move(right));
-
-            return is_negation
-                       ? call_negation_op(
-                             node, op, std::move(left), std::move(args))
-                       : env().call(node, std::move(left), std::move(args));
+            return apply_class_binary_op_noassign(
+                node, op, l_node, std::move(left), r_node, std::move(right));
         }
     }
 
     // handle assignment
     if (ops::is_assign(op)) {
         if (lval_res.value().empty() || right.value().empty())
-            return std::move(left);
+            return std::move(lval_res);
         return assign(node, std::move(lval_res), std::move(right));
     }
     return std::move(right);
+}
+
+ExprRes EvalExprVisitor::apply_prim_binary_op_noassign(
+    Ref<ast::Expr> node,
+    Op op,
+    Ref<ast::Expr> l_node,
+    ExprRes&& left,
+    Ref<ast::Expr> r_node,
+    ExprRes&& right) {
+
+    assert(op != Op::Assign);
+
+    auto l_type = left.type()->actual();
+    auto r_type = right.type()->actual();
+    assert(l_type->is_prim() && r_type->is_prim());
+
+    auto l_prim_type = l_type->as_prim();
+    auto r_prim_type = r_type->as_prim();
+    auto l_rval = left.move_value().move_rvalue();
+    auto r_rval = right.move_value().move_rvalue();
+    auto tv = l_prim_type->binary_op(
+        op, std::move(l_rval), r_prim_type, std::move(r_rval));
+    return {std::move(tv)};
+}
+
+ExprRes EvalExprVisitor::apply_class_binary_op_noassign(
+    Ref<ast::Expr> node,
+    Op op,
+    Ref<ast::Expr> l_node,
+    ExprRes&& left,
+    Ref<ast::Expr> r_node,
+    ExprRes&& right) {
+
+    auto l_type = left.type()->actual();
+    assert(l_type->is_class());
+
+    auto cls = left.type()->actual()->as_class();
+    assert(op != Op::Assign || cls->has_op(Op::Assign));
+
+    // get class op (or negation) fset
+    bool is_negation = false;
+    auto fset = cls->op(op);
+    if (!fset && program()->eval_options().implicit_class_negation_op) {
+        auto neg_op = ops::negation(op);
+        ulam_assert(neg_op != Op::None);
+        fset = cls->op(neg_op);
+        is_negation = true;
+    }
+    ulam_assert(fset);
+
+    // bind to object
+    left = bind(node, fset, std::move(left));
+    ExprResList args;
+    args.push_back(std::move(right));
+
+    // call op method
+    return is_negation
+               ? call_negation_op(node, op, std::move(left), std::move(args))
+               : env().call(node, std::move(left), std::move(args));
 }
 
 ExprRes EvalExprVisitor::call_negation_op(
