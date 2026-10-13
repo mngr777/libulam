@@ -630,6 +630,8 @@ ExprRes EvalExprVisitor::apply_binary_op(
     ExprRes&& right) {
 
     auto l_type = left.type()->actual();
+    assert(op == Op::Assign || l_type->is_prim() || l_type->is_class());
+
     if (l_type->is_prim()) {
         if (op != Op::Assign) {
             right = apply_prim_binary_op_noassign(
