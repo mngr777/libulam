@@ -1585,6 +1585,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
     auto loc_id = _tok.loc_id();
     consume();
     Ptr<ast::Expr> inner{};
+    auto stop_flags = ctx.flags & (ExprStopAtComma | ExprStopAtEqual);
     if (_tok.in(tok::BuiltinTypeIdent, tok::TypeIdent)) {
         ctx.set_flag(ExprIsNotEmpty);
         // (Type) | (Type.<ident> | (Type.<type_op>
@@ -1615,6 +1616,7 @@ Ptr<ast::Expr> Parser::parse_paren_expr_or_cast(ExprContext& ctx) {
         ctx.uns_flag(ExprStopAtComma | ExprStopAtEqual);
         inner = parse_expr(ctx);
     }
+    ctx.set_flag(stop_flags); // restore old stop flags
     if (!inner || !expect(tok::ParenR))
         goto Panic;
     return tree_at<ast::ParenExpr>(loc_id, std::move(inner));
