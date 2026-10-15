@@ -139,6 +139,9 @@ protected:
         Ref<ast::Expr> arg_node,
         ExprRes&& arg);
 
+    virtual ExprRes apply_prim_unary_op_noassign(
+        Ref<ast::Expr> node, Op op, Ref<ast::Expr> arg_node, ExprRes&& arg);
+
     virtual ExprRes apply_object_unary_op(
         Ref<ast::Expr> node,
         Op op,
@@ -210,9 +213,12 @@ protected:
         Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj);
 
     // NOTE: passed by non-const ref
-    virtual ExprRes copy_assign_lvalue_expr(ExprRes& lval_res);
+    virtual ExprRes copy_lvalue(ExprRes& lval_res);
+    virtual ExprRes copy_rvalue(ExprRes& lval_res);
 
+    // TODO: make `assign` non-virtual
     virtual ExprRes assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
+    virtual ExprRes do_assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
 
     virtual ExprRes negate(Ref<ast::Expr> node, ExprRes&& res);
 

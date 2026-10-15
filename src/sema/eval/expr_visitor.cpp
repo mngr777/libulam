@@ -567,7 +567,7 @@ ExprRes EvalExprVisitor::binary_op(
     if (ops::is_assign(op)) {
         if (!check_is_assignable(node, left.value()))
             return {ExprError::NotAssignable};
-        lval_res = copy_assign_lvalue_expr(left);
+        lval_res = copy_lvalue(left);
     }
 
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
@@ -732,7 +732,7 @@ ExprRes EvalExprVisitor::unary_op(
         // store lvalue
         if (!check_is_assignable(node, arg.value()))
             return {ExprError::NotAssignable};
-        lval_res = copy_assign_lvalue_expr(arg);
+        lval_res = copy_lvalue(arg);
     }
 
     auto error = unary_op_type_check(op, arg.type());
@@ -795,27 +795,25 @@ ExprRes EvalExprVisitor::apply_prim_unary_op(
     ExprRes&& lval_res,
     Ref<ast::Expr> arg_node,
     ExprRes&& arg) {
-    auto prim_type = arg.type()->deref()->as_prim();
 
-    RValue orig_rval;
+    ExprRes rval_res;
     if (op == Op::PostInc || op == Op::PostDec)
-        orig_rval = arg.value().copy_rvalue();
+        rval_res = copy_rvalue(arg);
 
-    auto tv = prim_type->unary_op(op, arg.move_value().move_rvalue());
-
+    auto res = apply_prim_unary_op_noassign(node, op, arg_node, std::move(arg));
     if (ops::is_inc_dec(op)) {
-        if (!lval_res.value().empty() && !tv.value().empty()) {
-            ExprRes lval_res_copy = lval_res.derive(
-                lval_res.type(), Value{lval_res.value().lvalue()});
-            assign(node, std::move(lval_res_copy), std::move(tv));
-        }
-        if (ops::is_unary_pre_op(op))
-            return {std::move(lval_res)};
-        ulam_assert(ops::is_unary_post_op(op));
-        return lval_res.derive(lval_res.type(), Value{std::move(orig_rval)});
+        lval_res = assign(node, std::move(lval_res), std::move(res));
+        res = ops::is_unary_pre_op(op) ? std::move(lval_res)
+                                       : std::move(rval_res);
     }
+    return res;
+}
 
-    return {std::move(tv)};
+ExprRes EvalExprVisitor::apply_prim_unary_op_noassign(
+    Ref<ast::Expr> node, Op op, Ref<ast::Expr> arg_node, ExprRes&& arg) {
+    assert(arg.type()->deref()->is_prim());
+    auto prim_type = arg.type()->deref()->as_prim();
+    return {prim_type->unary_op(op, arg.move_value().move_rvalue())};
 }
 
 ExprRes EvalExprVisitor::apply_object_unary_op(
@@ -1251,8 +1249,13 @@ ExprRes EvalExprVisitor::as_base(
     return obj.derive(cls, Value{obj.move_value().as(cls)});
 }
 
-ExprRes EvalExprVisitor::copy_assign_lvalue_expr(ExprRes& lval_res) {
+ExprRes EvalExprVisitor::copy_lvalue(ExprRes& lval_res) {
+    assert(lval_res.value().is_lvalue());
     return lval_res.copy();
+}
+
+ExprRes EvalExprVisitor::copy_rvalue(ExprRes& res) {
+    return res.derived(res.type(), Value{res.value().copy_rvalue()});
 }
 
 ExprRes
@@ -1267,6 +1270,16 @@ EvalExprVisitor::assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
 
     if (!from_type->is_assignable_to(to_type, from.value()))
         from = env().cast(node, to_type, std::move(from), true);
+
+    return do_assign(node, std::move(to), std::move(from));
+}
+
+ExprRes
+EvalExprVisitor::do_assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
+    // asserting `assign` checks successful
+    assert(to.value().is_lvalue() && !to.value().lvalue().is_xvalue());
+    assert(
+        from.type()->deref()->is_assignable_to(to.type()->deref(), to.value()));
 
     auto lval = to.move_value().lvalue();
     if (has_flag(eval::NoExec))
