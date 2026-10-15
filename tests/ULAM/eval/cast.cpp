@@ -19,6 +19,9 @@ namespace {
 
 using ExprRes = ulam::sema::ExprRes;
 
+// NOTE: currently res is allowed to have no data, because
+// `EvalExprVisitor::apply_prim_*_op` methods are not overwritten in test
+
 void unset_internal_res_flags(ExprRes& res) {
     res.uns_flag(expr::RefCastInternal);
     res.uns_flag(expr::OmitCastInternal);
@@ -94,7 +97,7 @@ ExprRes EvalCast::cast_default(
     bool expl) {
     // hack for t3416
     bool self_instanceof_to_atom = false;
-    if (!has_flag(eval::NoCodegen))
+    if (!has_flag(eval::NoCodegen) && arg.has_data())
         self_instanceof_to_atom = expr::data(arg) == "self.instanceof";
     auto res = Base::cast_default(node, to, std::move(arg), expl);
     if (!self_instanceof_to_atom)
@@ -137,6 +140,9 @@ void EvalCast::update_res(ExprRes& res, bool expl) {
     res.uns_flag(expr::OmitCastInternal);
 
     if (!res || has_flag(eval::NoCodegen) || omit_cast)
+        return;
+
+    if (!res.has_data())
         return;
 
     auto data = expr::data(res);

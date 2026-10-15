@@ -1,3 +1,4 @@
+#include "libulam/sema/eval/flags.hpp"
 #include <libulam/assert.hpp>
 #include <libulam/sema/eval/cast.hpp>
 #include <libulam/sema/eval/env.hpp>
@@ -646,12 +647,9 @@ ExprRes EvalExprVisitor::apply_binary_op(
         }
     }
 
-    // handle assignment
-    if (ops::is_assign(op)) {
-        if (lval_res.value().empty() || right.value().empty())
-            return std::move(lval_res);
-        return assign(node, std::move(lval_res), std::move(right));
-    }
+    if (ops::is_assign(op))
+        right = assign(node, std::move(lval_res), std::move(right));
+
     return std::move(right);
 }
 
@@ -1255,7 +1253,7 @@ ExprRes EvalExprVisitor::copy_lvalue(ExprRes& lval_res) {
 }
 
 ExprRes EvalExprVisitor::copy_rvalue(ExprRes& res) {
-    return res.derived(res.type(), Value{res.value().copy_rvalue()});
+    return res.copy_as_rvalue();
 }
 
 ExprRes
@@ -1281,9 +1279,12 @@ EvalExprVisitor::do_assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from) {
     assert(
         from.type()->deref()->is_assignable_to(to.type()->deref(), to.value()));
 
-    auto lval = to.move_value().lvalue();
     if (has_flag(eval::NoExec))
         return std::move(to);
+
+    assert(!to.value().empty() && !from.value().empty());
+
+    auto lval = to.move_value().lvalue();
     return to.derive(to.type(), lval.assign(from.move_value().move_rvalue()));
 }
 

@@ -12,12 +12,15 @@ constexpr ExprRes::flags_t NonStickyFlags = ExprRes::Self;
 // ExprRes
 
 ExprRes ExprRes::copy() const {
-    ExprRes res;
-    if (ok()) {
-        res = {type(), value().copy()};
-    } else {
-        res = {error()};
-    }
+    auto res = ok() ? ExprRes{type(), value().copy()} : ExprRes{error()};
+    res._data = _data;
+    res._flags = _flags & ~NonStickyFlags;
+    return res;
+}
+
+ExprRes ExprRes::copy_as_rvalue() const {
+    auto res =
+        ok() ? ExprRes{type(), Value{value().copy_rvalue()}} : ExprRes{error()};
     res._data = _data;
     res._flags = _flags & ~NonStickyFlags;
     return res;

@@ -45,6 +45,7 @@ public:
     ExprRes& operator=(ExprRes&&) = default;
 
     ExprRes copy() const;
+    ExprRes copy_as_rvalue() const;
 
     // NOTE: moves user data
     ExprRes derive(TypedValue&& tv, bool keep_all_flags = false);

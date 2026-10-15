@@ -25,6 +25,8 @@ public:
     ExprRes visit(ulam::Ref<ulam::ast::StrLit> node) override;
 
 protected:
+    // TODO: use apply_*_op_noassign + assign
+
     ExprRes apply_binary_op(
         ulam::Ref<ulam::ast::Expr> node,
         ulam::Op op,
