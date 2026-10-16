@@ -146,7 +146,7 @@ protected:
         Ref<ast::Expr> node,
         ulam::Op op,
         ExprRes&& lval_res,
-        ExprRes&& rval_res,
+        ExprRes&& rval_copy_res,
         ExprRes&& res);
 
     virtual ExprRes apply_object_unary_op(
