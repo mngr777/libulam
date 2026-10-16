@@ -142,6 +142,13 @@ protected:
     virtual ExprRes apply_prim_unary_op_noassign(
         Ref<ast::Expr> node, Op op, Ref<ast::Expr> arg_node, ExprRes&& arg);
 
+    virtual ExprRes apply_prim_unary_op_update(
+        Ref<ast::Expr> node,
+        ulam::Op op,
+        ExprRes&& lval_res,
+        ExprRes&& rval_res,
+        ExprRes&& res);
+
     virtual ExprRes apply_object_unary_op(
         Ref<ast::Expr> node,
         Op op,
@@ -218,7 +225,8 @@ protected:
 
     // TODO: make `assign` non-virtual
     virtual ExprRes assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
-    virtual ExprRes do_assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
+    virtual ExprRes
+    do_assign(Ref<ast::Expr> node, ExprRes&& to, ExprRes&& from);
 
     virtual ExprRes negate(Ref<ast::Expr> node, ExprRes&& res);
 

@@ -800,9 +800,8 @@ ExprRes EvalExprVisitor::apply_prim_unary_op(
 
     auto res = apply_prim_unary_op_noassign(node, op, arg_node, std::move(arg));
     if (ops::is_inc_dec(op)) {
-        lval_res = assign(node, std::move(lval_res), std::move(res));
-        res = ops::is_unary_pre_op(op) ? std::move(lval_res)
-                                       : std::move(rval_res);
+        res = apply_prim_unary_op_update(
+            node, op, std::move(lval_res), std::move(rval_res), std::move(res));
     }
     return res;
 }
@@ -812,6 +811,18 @@ ExprRes EvalExprVisitor::apply_prim_unary_op_noassign(
     assert(arg.type()->deref()->is_prim());
     auto prim_type = arg.type()->deref()->as_prim();
     return {prim_type->unary_op(op, arg.move_value().move_rvalue())};
+}
+
+ExprRes EvalExprVisitor::apply_prim_unary_op_update(
+    Ref<ast::Expr> node,
+    Op op,
+    ExprRes&& lval_res,
+    ExprRes&& rval_res,
+    ExprRes&& res) {
+
+    assert(ops::is_inc_dec(op));
+    lval_res = assign(node, std::move(lval_res), std::move(res));
+    return ops::is_unary_pre_op(op) ? std::move(lval_res) : std::move(rval_res);
 }
 
 ExprRes EvalExprVisitor::apply_object_unary_op(
