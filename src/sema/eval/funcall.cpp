@@ -178,11 +178,11 @@ ExprRes EvalFuncall::do_funcall(
     debug() << "}\n";
 
     auto ret_type = fun->ret_type();
-    if (!ret_type->is(VoidId)) {
+    if (!has_flag(eval::NoExec) && !ret_type->is(VoidId)) {
         diag().error(fun->body_node(), "no return value");
         return {ExprError::NoReturn};
     }
-    return {builtins().void_type(), Value::make_r_ph()};
+    return {ret_type, Value::make_r_ph()};
 }
 
 ExprRes EvalFuncall::do_funcall_native(
