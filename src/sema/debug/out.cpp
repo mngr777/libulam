@@ -46,11 +46,11 @@ void Out::print(Scope::Symbol& sym) {
 }
 
 void Out::print_class_registry() {
-    const auto& list = _program->classes().list();
+    auto& cls_reg = _program->classes();
     hr();
-    _os << "# class registry (" << list.size() << "):\n";
+    _os << "# class registry (" << cls_reg.size() << "):\n";
     hr();
-    for (const auto cls : list)
+    for (const auto cls : cls_reg)
         _os << std::setw(5) << cls->class_id() << " " << cls->name() << "\n";
     hr2();
 }

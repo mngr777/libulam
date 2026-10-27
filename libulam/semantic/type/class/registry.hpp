@@ -13,11 +13,10 @@ public:
 
     Ref<Class> get(cls_id_t id) const;
 
-    const std::uint16_t size() const {
-        return _classes.size();
-    }
+    const std::uint16_t size() const { return _classes.size(); }
 
-    const auto& list() const { return _classes; }
+    auto begin() const { return _classes.begin(); }
+    auto end() const { return _classes.end(); }
 
 private:
     std::vector<Ref<Class>> _classes;
