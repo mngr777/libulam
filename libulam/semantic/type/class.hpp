@@ -1,5 +1,4 @@
 #pragma once
-#include <libulam/semantic/value/flags.hpp>
 #include <libulam/memory/ptr.hpp>
 #include <libulam/semantic/type.hpp>
 #include <libulam/semantic/type/builtin_type_id.hpp>
@@ -7,6 +6,7 @@
 #include <libulam/semantic/type/class/base.hpp>
 #include <libulam/semantic/type/conv.hpp>
 #include <libulam/semantic/value/bits.hpp>
+#include <libulam/semantic/value/flags.hpp>
 #include <libulam/semantic/value/types.hpp>
 #include <list>
 #include <map>
@@ -92,9 +92,12 @@ public:
     Ref<Prop> first_prop_over_max_bitsize();
 
     bool is_constructible() const override { return true; }
-    RValue construct_default(value::flags_t rval_flags = RValue::DefaultFlags) override;
-    RValue construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
-    RValue construct_ph(value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue construct_default(
+        value::flags_t rval_flags = RValue::DefaultFlags) override;
+    RValue
+    construct(Bits&& bits, value::flags_t rval_flags = RValue::DefaultFlags);
+    RValue
+    construct_ph(value::flags_t rval_flags = RValue::DefaultFlags) override;
 
     RValue load(const BitsView data, bitsize_t off) override;
     void store(BitsView data, bitsize_t off, const RValue& rval) override;
@@ -133,11 +136,10 @@ public:
     void add_conv(Ref<Fun> fun);
 
     const auto& type_defs() const { return _type_defs; }
-
     const auto& consts() const { return _consts; }
-
     const auto& props() const { return _props; }
-    const auto& all_props() const { return _all_props; } // + inherited
+    const auto& all_props() const { return _all_props; }
+    const auto& fsets() const { return _fsets; }
 
 protected:
     Ref<Class> _as_class() override { return this; }
@@ -160,8 +162,8 @@ private:
     void init_layout();
     void set_init_bits(Bits&& bits);
 
-    auto& convs() { return _convs; }
-    auto& fsets() { return _fsets; }
+    auto& conv_map() { return _conv_map; }
+    auto& fset_map() { return _fset_map; }
 
     Ref<Program> program() const;
 
@@ -172,9 +174,10 @@ private:
     std::list<Ref<AliasType>> _type_defs;
     std::list<Ref<Var>> _consts;
     std::list<Ref<Prop>> _props;
-    std::list<Ref<Prop>> _all_props;
-    std::map<type_id_t, Ref<Fun>> _convs;
-    std::map<str_id_t, Ref<FunSet>> _fsets;
+    std::list<Ref<Prop>> _all_props;  // + inherited
+    std::list<Ref<FunSet>> _fsets;
+    std::map<type_id_t, Ref<Fun>> _conv_map;
+    std::map<str_id_t, Ref<FunSet>> _fset_map;
     Bits _init_bits;
     mutable std::string _full_name;
     mutable std::string _mangled_name;

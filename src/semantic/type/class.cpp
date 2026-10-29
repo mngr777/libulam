@@ -499,8 +499,8 @@ ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {
     ConvList res;
     {
         // has exact conversion?
-        auto it = _convs.find(canon_->id());
-        if (it != _convs.end()) {
+        auto it = _conv_map.find(canon_->id());
+        if (it != _conv_map.end()) {
             res.push(it->second, ClassConvCost);
             return res;
         }
@@ -509,7 +509,7 @@ ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {
         return res;
 
     // class to primitive type to other primitive type
-    for (auto& [_, fun] : _convs) {
+    for (auto& [_, fun] : _conv_map) {
         auto ret_canon = fun->ret_type()->canon();
         if (!ret_canon->is_prim())
             continue;
@@ -528,7 +528,7 @@ ConvList Class::convs(Ref<const Type> type, bool allow_cast) const {
 
 ConvList Class::convs(BuiltinTypeId bi_type_id, bool allow_cast) const {
     ConvList res;
-    for (auto& [_, fun] : _convs) {
+    for (auto& [_, fun] : _conv_map) {
         auto ret_canon = fun->ret_type()->canon();
         if (!ret_canon->is_prim())
             continue;
@@ -547,15 +547,16 @@ ConvList Class::convs(BuiltinTypeId bi_type_id, bool allow_cast) const {
 
 void Class::add_conv(Ref<Fun> fun) {
     auto ret_canon = fun->ret_type()->canon();
-    ulam_assert(_convs.count(ret_canon->id()) == 0);
-    _convs[ret_canon->id()] = fun;
+    ulam_assert(_conv_map.count(ret_canon->id()) == 0);
+    _conv_map[ret_canon->id()] = fun;
 }
 
 Ref<FunSet> Class::add_fset(str_id_t name_id) {
     auto fset = ClassBase::add_fset(name_id);
     fset->set_cls(this);
-    ulam_assert(_fsets.count(name_id) == 0);
-    _fsets[name_id] = fset;
+    ulam_assert(_fset_map.count(name_id) == 0);
+    _fset_map[name_id] = fset;
+    _fsets.push_back(fset);
     return fset;
 }
 
@@ -626,7 +627,7 @@ void Class::add_ancestor(Ref<Class> cls, Ref<ast::TypeName> node) {
 void Class::merge_fsets() {
     auto merge_methods_and_ops = [&](Ref<Class> other) {
         // methods
-        for (auto [name_id, fset] : other->fsets()) {
+        for (auto [name_id, fset] : other->fset_map()) {
             auto sym = get(name_id);
             if (!sym || sym->is<FunSet>())
                 find_fset(name_id)->merge(fset, this, other);
@@ -647,8 +648,8 @@ void Class::merge_fsets() {
         merge_methods_and_ops(other);
 
         // conversions
-        for (auto [type_id, fun] : other->convs()) {
-            if (_convs.count(type_id) == 0)
+        for (auto [type_id, fun] : other->conv_map()) {
+            if (_conv_map.count(type_id) == 0)
                 add_conv(fun);
         }
     }

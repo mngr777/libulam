@@ -103,10 +103,10 @@ bool ClassResolver::resolve_props() {
 bool ClassResolver::resolve_funs() {
     if (!_resolver.resolve(_cls.constructors()))
         return false;
-    for (auto [_, fset] : _cls._fsets)
+    for (auto fset : _cls._fsets)
         if (!_resolver.resolve(fset))
             return false;
-    for (auto [_, fset] : _cls._convs)
+    for (auto [_, fset] : _cls._conv_map)
         if (!_resolver.resolve(fset))
             return false;
     for (auto& [_, fset] : _cls.ops())
