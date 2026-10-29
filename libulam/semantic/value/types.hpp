@@ -24,6 +24,7 @@ constexpr str_len_t NoStrLen = -1;
 
 using cls_id_t = std::uint16_t;
 constexpr cls_id_t NoClassId = 0;
+constexpr cls_id_t FirstClassId = 1;
 
 using elt_id_t = std::uint16_t;
 constexpr elt_id_t NoEltId = 0;
