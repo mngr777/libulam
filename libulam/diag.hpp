@@ -39,21 +39,26 @@ public:
         emit(Diag::Debug, std::forward<Ts>(args)...);
     }
 
+    void emit(Diag::Level lvl, const std::string& text);
+
     void
-    emit(Diag::Level lvl, Ref<const ast::Node> node, const std::string& text);
+    emit(Level lvl, Ref<const ast::Node> node, const std::string& text);
 
     void emit(
-        Diag::Level lvl,
+        Level lvl,
         loc_id_t loc_id,
         std::size_t len,
         const std::string& text);
 
     void emit(
-        Diag::Level lvl,
+        Level lvl,
         loc_id_t loc_id,
         int off,
         std::size_t len,
         const std::string& text);
+
+protected:
+    virtual void update_count(Level lvl);
 
 private:
     SrcMan& src_man() { return _src_man; }

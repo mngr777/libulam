@@ -9,11 +9,11 @@ namespace {
 
 constexpr unsigned MaxErrorNum = 10;
 
-constexpr char FatalPrefix[] = "Fatal error ";
-constexpr char ErrorPrefix[] = "Error ";
-constexpr char WarnPrefix[] = "Warning ";
-constexpr char NoticePrefix[] = "Notice ";
-constexpr char DebugPrefix[] = "Debug ";
+constexpr char FatalPrefix[] = "Fatal: ";
+constexpr char ErrorPrefix[] = "Error: ";
+constexpr char WarnPrefix[] = "Warning: ";
+constexpr char NoticePrefix[] = "Notice: ";
+constexpr char DebugPrefix[] = "Debug: ";
 
 const char* level_prefix(Diag::Level lvl) {
     switch (lvl) {
@@ -34,22 +34,23 @@ const char* level_prefix(Diag::Level lvl) {
 
 } // namespace
 
-void Diag::emit(
-    Diag::Level lvl, Ref<const ast::Node> node, const std::string& text) {
+void Diag::emit(Level lvl, const std::string& text) {
+    std::cerr << level_prefix(lvl) << text << "\n";
+    update_count(lvl);
+}
+
+void Diag::emit(Level lvl, Ref<const ast::Node> node, const std::string& text) {
     emit(lvl, node->loc_id(), 1, text);
 }
 
 void Diag::emit(
-    Diag::Level lvl,
-    loc_id_t loc_id,
-    std::size_t len,
-    const std::string& text) {
+    Level lvl, loc_id_t loc_id, std::size_t len, const std::string& text) {
     emit(lvl, loc_id, 0, len, text);
 }
 
 // TMP: output to stderr
 void Diag::emit(
-    Diag::Level lvl,
+    Level lvl,
     loc_id_t loc_id,
     int off,
     std::size_t len,
@@ -64,6 +65,10 @@ void Diag::emit(
         std::cerr << "\n";
     std::cerr << std::string(loc.chr() - 1, ' ') << "^\n";
     std::cerr << std::string(loc.chr() - 1, ' ') << text << "\n";
+    update_count(lvl);
+}
+
+void Diag::update_count(Level lvl) {
     if (lvl < Diag::Warn)
         ++_err_num;
     if (lvl == Diag::Fatal || _err_num == MaxErrorNum)
