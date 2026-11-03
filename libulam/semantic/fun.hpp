@@ -74,7 +74,7 @@ public:
     void set_ret_type(Ref<Type> ret_type) { _ret_type = ret_type; }
 
     Params& params() { return _params; }
-    const Params& param() const { return _params; }
+    const Params& params() const { return _params; }
 
     void add_param(Ref<ast::Param> node);
 
