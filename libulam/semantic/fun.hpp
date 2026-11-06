@@ -84,6 +84,7 @@ public:
     MatchRes match(const TypedValueRefList& args);
 
     Ref<Fun> find_override(Ref<const Class> cls);
+    Ref<const Fun> find_override(Ref<const Class> cls) const;
 
     Ref<PersScope> scope();
     Ref<PersScope> param_scope() { return ref(_param_scope); }
@@ -93,11 +94,11 @@ public:
     Ref<ast::ParamList> params_node() const;
     Ref<ast::FunDefBody> body_node() const;
 
-private:
-    void add_override(Ref<Fun> fun, Ref<Class> cls);
-
     bool has_overridden() const;
     Ref<Fun> overridden();
+
+private:
+    void add_override(Ref<Fun> fun, Ref<Class> cls);
     void set_overridden(Ref<Fun> fun);
 
     std::string mangled_param_types() const;

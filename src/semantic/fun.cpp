@@ -130,6 +130,10 @@ Ref<Fun> Fun::find_override(Ref<const Class> cls) {
     return (it != _overrides.end()) ? it->second : Ref<Fun>{};
 }
 
+Ref<const Fun> Fun::find_override(Ref<const Class> cls) const {
+    return const_cast<Fun&>(*this).find_override(cls);
+}
+
 Ref<PersScope> Fun::scope() { return cls()->scope(); }
 
 Ref<ast::FunRetType> Fun::ret_type_node() const {
