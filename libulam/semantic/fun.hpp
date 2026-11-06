@@ -137,6 +137,8 @@ public:
 
     auto begin() { return _funs.begin(); }
     auto end() { return _funs.end(); }
+    auto begin() const { return _funs.begin(); }
+    auto end() const { return _funs.end(); }
 
     std::size_t size() const { return _funs.size(); }
     bool empty() const { return _funs.empty(); }
