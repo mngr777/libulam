@@ -10,13 +10,12 @@ class Expr;
 
 class ExprVisitor {
 public:
-    using ExprRes = sema::ExprRes;
 
-#define EXPR_NODE(name, cls) virtual ExprRes visit(Ref<cls> node);
+#define EXPR_NODE(name, cls) virtual sema::ExprRes visit(Ref<cls> node);
 #include <libulam/ast/expr_nodes.inc.hpp>
 
 protected:
-    virtual ExprRes visit_default(Ref<Expr> node);
+    virtual sema::ExprRes visit_default(Ref<Expr> node);
 };
 
 } // namespace ulam::ast
