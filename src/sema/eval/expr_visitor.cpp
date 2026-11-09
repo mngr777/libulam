@@ -568,7 +568,7 @@ ExprRes EvalExprVisitor::binary_op(
     if (ops::is_assign(op)) {
         if (!check_is_assignable(node, left.value()))
             return {ExprError::NotAssignable};
-        lval_res = copy_lvalue(left);
+        lval_res = copy_lvalue(node, l_node, op, left);
     }
 
     auto recast = [&](Ref<ast::Expr> expr, TypeError error,
@@ -730,7 +730,7 @@ ExprRes EvalExprVisitor::unary_op(
         // store lvalue
         if (!check_is_assignable(node, arg.value()))
             return {ExprError::NotAssignable};
-        lval_res = copy_lvalue(arg);
+        lval_res = copy_lvalue(node, arg_node, op, arg);
     }
 
     auto error = unary_op_type_check(op, arg.type());
@@ -1259,7 +1259,8 @@ ExprRes EvalExprVisitor::as_base(
     return obj.derive(cls, Value{obj.move_value().as(cls)});
 }
 
-ExprRes EvalExprVisitor::copy_lvalue(ExprRes& lval_res) {
+ExprRes EvalExprVisitor::copy_lvalue(
+    Ref<ast::Expr> node, Ref<ast::Expr> arg_node, Op op, ExprRes& lval_res) {
     assert(lval_res.value().is_lvalue());
     return lval_res.copy();
 }

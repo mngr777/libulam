@@ -219,8 +219,9 @@ protected:
     virtual ExprRes as_base(
         Ref<ast::Expr> node, Ref<ast::BaseTypeSelect> base_type, ExprRes&& obj);
 
-    // NOTE: passed by non-const ref
-    virtual ExprRes copy_lvalue(ExprRes& lval_res);
+    // NOTE: expr res passed by non-const ref
+    virtual ExprRes copy_lvalue(
+        Ref<ast::Expr> node, Ref<ast::Expr> arg_node, Op op, ExprRes& lval_res);
     virtual ExprRes copy_rvalue(ExprRes& lval_res);
 
     // TODO: make `assign` non-virtual
