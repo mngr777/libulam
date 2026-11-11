@@ -7,7 +7,7 @@ using CondRes = EvalCond::CondRes;
 CondRes EvalCond::eval_as_cond(ulam::Ref<ulam::ast::AsCond> as_cond) {
     auto cond_res = Base::eval_as_cond(as_cond);
     if (codegen_enabled())
-        gen().add_as_cond(as_cond, cond_res.second.type());
+        gen().add_as_cond(as_cond, cond_res.as_cond_ctx().type());
     return cond_res;
 }
 

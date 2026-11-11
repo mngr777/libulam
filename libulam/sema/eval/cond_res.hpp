@@ -53,6 +53,27 @@ private:
     bool _is_self{false};
 };
 
-using CondRes = std::pair<OptBool, AsCondContext>;
+class CondRes {
+public:
+    CondRes(OptBool truth, ExprRes&& expr_res):
+        _truth{truth}, _expr_res{std::move(expr_res)} {}
+
+    CondRes(OptBool truth, AsCondContext&& as_cond_ctx):
+        _truth{truth}, _as_cond_ctx{std::move(as_cond_ctx)} {}
+
+    const OptBool& truth() { return _truth; }
+
+    const ExprRes& expr_res() const { return _expr_res; }
+    ExprRes move_expr_res() { return std::exchange(_expr_res, {}); }
+
+    const AsCondContext& as_cond_ctx() const { return _as_cond_ctx; }
+    AsCondContext& as_cond_ctx() { return _as_cond_ctx; }
+    AsCondContext move_as_cond_ctx() { return std::exchange(_as_cond_ctx, {}); }
+
+private:
+    OptBool _truth;
+    ExprRes _expr_res;
+    AsCondContext _as_cond_ctx;
+};
 
 } // namespace ulam::sema

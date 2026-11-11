@@ -47,19 +47,20 @@ void EvalStmtVisitor::visit(Ref<ast::If> node) {
     ulam_assert(node->has_if_branch());
 
     auto sr = env().scope_raii();
-    auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-    if (!is_true.has_value() && !has_flag(eval::NoExec))
+
+    auto cond_res = env().eval_cond(node->cond());
+    if (!cond_res.truth().has_value() && !has_flag(eval::NoExec))
         throw EvalExceptError("condition cannot be evaluated");
 
-    if (has_flag(eval::NoExec) || is_true.value()) {
-        if (!as_cond_ctx.empty()) {
-            auto sr = env().as_cond_scope_raii(as_cond_ctx);
+    if (has_flag(eval::NoExec) || cond_res.truth().value()) {
+        if (!cond_res.as_cond_ctx().empty()) {
+            auto sr = env().as_cond_scope_raii(cond_res.as_cond_ctx());
             node->if_branch()->accept(*this);
         } else {
             node->if_branch()->accept(*this);
         }
     }
-    if (has_flag(eval::NoExec) || !is_true.value()) {
+    if (has_flag(eval::NoExec) || !cond_res.truth().value()) {
         if (node->has_else_branch())
             node->else_branch()->accept(*this);
     }
@@ -94,14 +95,14 @@ void EvalStmtVisitor::visit(Ref<ast::For> node) {
 
         auto sr = env().scope_raii();
         if (node->has_cond()) {
-            auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            if (!is_true.has_value() && !has_flag(eval::NoExec))
+            auto cond_res = env().eval_cond(node->cond());
+            if (!cond_res.truth().has_value() && !has_flag(eval::NoExec))
                 throw EvalExceptError("condition cannot be evaluated");
 
-            done = !is_true.has_value() || !is_true.value();
+            done = !cond_res.truth().is_true();
             if (!done) {
-                if (!as_cond_ctx.empty()) {
-                    auto sr = env().as_cond_scope_raii(as_cond_ctx);
+                if (!cond_res.as_cond_ctx().empty()) {
+                    auto sr = env().as_cond_scope_raii(cond_res.as_cond_ctx());
                     done = loop();
                 } else {
                     done = loop();
@@ -180,14 +181,15 @@ void EvalStmtVisitor::visit(Ref<ast::While> node) {
 
         auto sr = env().scope_raii();
         if (node->has_cond()) {
-            auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
-            if (!is_true.has_value() && !has_flag(eval::NoExec))
+            // auto [is_true, as_cond_ctx] = env().eval_cond(node->cond());
+            auto cond_res = env().eval_cond(node->cond());
+            if (!cond_res.truth().has_value() && !has_flag(eval::NoExec))
                 throw EvalExceptError("condition cannot be evaluated");
 
-            done = !is_true.has_value() || !is_true.value();
+            done = !cond_res.truth().is_true();
             if (!done) {
-                if (!as_cond_ctx.empty()) {
-                    auto sr = env().as_cond_scope_raii(as_cond_ctx);
+                if (!cond_res.as_cond_ctx().empty()) {
+                    auto sr = env().as_cond_scope_raii(cond_res.as_cond_ctx());
                     done = loop();
                 } else {
                     done = loop();

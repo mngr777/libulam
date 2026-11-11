@@ -1,3 +1,4 @@
+#include "./stmt_visitor.hpp"
 #include "../out.hpp"
 #include "./cast.hpp"
 #include "./codegen.hpp"
@@ -5,7 +6,6 @@
 #include "./expr_res.hpp"
 #include "./funcall.hpp"
 #include "./init.hpp"
-#include "./stmt_visitor.hpp"
 #include <libulam/sema/eval/except.hpp>
 
 #ifdef DEBUG_EVAL
@@ -42,15 +42,15 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::If> node) {
     {
         auto sr = env().scope_raii();
         auto cond = node->cond();
-        auto [_, as_cond_ctx] = env().eval_cond(cond);
+        auto cond_res = env().eval_cond(cond);
 
         auto if_branch = [&]() {
             maybe_wrap_stmt(node->if_branch(), cond->is_as_cond());
         };
 
         // if-branch
-        if (!as_cond_ctx.empty()) {
-            auto sr = env().as_cond_scope_raii(as_cond_ctx);
+        if (!cond_res.as_cond_ctx().empty()) {
+            auto sr = env().as_cond_scope_raii(cond_res.as_cond_ctx());
             if_branch();
         } else {
             if_branch();
@@ -88,9 +88,9 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::For> node) {
         auto loop = [&]() {
             maybe_wrap_stmt(node->body(), cond->is_as_cond());
         };
-        auto [_, as_cond_ctx] = env().eval_cond(cond);
-        if (!as_cond_ctx.empty()) {
-            auto sr = env().as_cond_scope_raii(as_cond_ctx);
+        auto cond_res = env().eval_cond(cond);
+        if (!cond_res.as_cond_ctx().empty()) {
+            auto sr = env().as_cond_scope_raii(cond_res.as_cond_ctx());
             loop();
         } else {
             loop();
@@ -119,9 +119,9 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::While> node) {
     gen().block_open();
 
     auto loop = [&]() { node->body()->accept(*this); };
-    auto [_, as_cond_ctx] = env().eval_cond(node->cond());
-    if (!as_cond_ctx.empty()) {
-        auto sr = env().as_cond_scope_raii(as_cond_ctx);
+    auto cond_res = env().eval_cond(node->cond());
+    if (!cond_res.as_cond_ctx().empty()) {
+        auto sr = env().as_cond_scope_raii(cond_res.as_cond_ctx());
         loop();
     } else {
         loop();

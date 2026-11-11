@@ -40,7 +40,7 @@ CondRes EvalCond::eval_as_cond(Ref<ast::AsCond> as_cond) {
 CondRes EvalCond::eval_expr(Ref<ast::Expr> expr) {
     auto res = env().eval_expr(expr);
     res = env().to_boolean(expr, std::move(res));
-    return {is_true(res), AsCondContext{}};
+    return {is_true(res), std::move(res)};
 }
 
 ExprRes EvalCond::eval_as_cond_ident(Ref<ast::Ident> ident) {

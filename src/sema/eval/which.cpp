@@ -101,9 +101,9 @@ OptBool EvalWhich::match_as_cond(Context& ctx, Ref<ast::AsCond> as_cond) {
 
 OptBool EvalWhich::do_match_as_cond(
     Context& ctx, EvalCond& ec, Ref<ast::AsCond> as_cond) {
-    OptBool is_match;
-    std::tie(is_match, ctx.as_cond_ctx) = ec.eval_as_cond(as_cond);
-    return is_match;
+    auto cond_res = ec.eval_as_cond(as_cond);
+    ctx.as_cond_ctx = cond_res.move_as_cond_ctx();
+    return cond_res.truth();
 }
 
 ExprRes EvalWhich::match_expr_res(
