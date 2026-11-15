@@ -50,7 +50,7 @@ public:
     ULAM_AST_TUPLE_PROP(else_branch, 2)
 };
 
-class For : public Tuple<Stmt, Stmt, Cond, Expr, Stmt> {
+class For : public Tuple<Stmt, Stmt, Cond, ExprStmt, Stmt> {
     ULAM_AST_NODE
 public:
     using Tuple::Tuple;

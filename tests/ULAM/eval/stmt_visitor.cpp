@@ -98,11 +98,8 @@ void EvalStmtVisitor::visit(ulam::Ref<ulam::ast::For> node) {
     }
 
     gen().append("_" + gen().next_tmp_idx_str() + ":");
-    if (node->has_upd()) {
-        auto upd_res = env().eval_expr(node->upd());
-        if (upd_res.has_data())
-            gen().append(expr::data(upd_res));
-    }
+    if (node->has_upd())
+        env().eval_stmt(node->upd());
     gen().append("while");
     gen().block_close();
 }

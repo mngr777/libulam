@@ -1,4 +1,5 @@
 #include "src/meta/parser.hpp"
+#include "libulam/ast/nodes/stmts.hpp"
 #include "src/parser/number.hpp"
 #include "src/parser/string.hpp"
 #include <libulam/assert.hpp>
@@ -1166,9 +1167,11 @@ Ptr<ast::For> Parser::parse_for() {
     ok = expect(tok::Semicol) && ok;
 
     // <init>; <cond>; <upd>
-    Ptr<ast::Expr> upd;
+    Ptr<ast::ExprStmt> upd;
     if (!_tok.is(tok::ParenR)) {
-        upd = parse_expr();
+        auto expr = parse_expr();
+        if (expr)
+            upd = tree<ast::ExprStmt>(std::move(expr));
         ok = ok && upd;
     }
 

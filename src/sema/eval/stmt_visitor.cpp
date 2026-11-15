@@ -113,7 +113,7 @@ void EvalStmtVisitor::visit(Ref<ast::For> node) {
         }
 
         if (!done && node->has_upd())
-            env().eval_expr(node->upd());
+            env().eval_stmt(node->upd());
 
         if (has_flag(eval::NoExec))
             break;
