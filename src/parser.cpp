@@ -1142,6 +1142,7 @@ Ptr<ast::For> Parser::parse_for() {
     ulam_assert(_tok.is(tok::For));
 
     // for (
+    auto loc_id = _tok.loc_id();
     consume();
     if (!expect(tok::ParenL))
         return {};
@@ -1185,8 +1186,9 @@ Ptr<ast::For> Parser::parse_for() {
     if (!ok)
         return {};
 
-    return tree<ast::For>(
-        std::move(init), std::move(cond), std::move(upd), std::move(body));
+    return tree_at<ast::For>(
+        loc_id, std::move(init), std::move(cond), std::move(upd),
+        std::move(body));
 }
 
 Ptr<ast::While> Parser::parse_while() {
